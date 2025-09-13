@@ -2,6 +2,7 @@ import React, { Component } from "react";
 
 // Starting with a class component to demonstrate traditional React patterns
 // We'll refactor this to a functional component later to show modern approaches
+// Production deployment trigger
 class App extends Component {
   constructor(props) {
     super(props);
