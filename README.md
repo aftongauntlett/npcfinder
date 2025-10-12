@@ -6,6 +6,8 @@ A modern React application designed as a comprehensive personal dashboard for tr
 
 ## Features
 
+### Original Dashboard
+
 - **Movies**: Rate, track, and organize your film collection
 - **Music**: Personal soundtrack library and discovery zone
 - **Games**: Gaming backlog and achievement tracking
@@ -15,12 +17,26 @@ A modern React application designed as a comprehensive personal dashboard for tr
 - **Real-time Clock**: Always know what time it is
 - **90s/2000s Aesthetic**: Nostalgic web vibes with modern polish
 
+### Fitness Tracking (New!)
+
+- **Weight Tracking**: Log daily weight with notes and visualize trends
+- **Body Measurements**: Track waist, hip, chest, thigh, and arm measurements
+- **Workout Logging**: Record exercises with type, duration, and details
+- **Meal Tracking**: Log meals with quality tags and notes
+- **Dashboard Analytics**: View today's logs, streak counter, and progress charts
+- **Data Management**: Export/import your fitness data as JSON
+- **Dark/Light Mode**: System-aware theme with manual override
+- **Offline Storage**: All data stored locally with IndexedDB
+
 ## Tech Stack
 
-- **React 18** - Component-based UI library
+- **React 19** - Latest React with improved performance and features
 - **Vite** - Next-generation frontend tooling
-- **Tailwind CSS** - Utility-first CSS framework
+- **Tailwind CSS** - Utility-first CSS framework with dark mode support
 - **TanStack Query** - Data fetching and caching
+- **Dexie** - IndexedDB wrapper for offline data storage
+- **Recharts** - Composable charting library for React
+- **Lucide React** - Beautiful & consistent icon library
 - **Modern JavaScript** - ES6+ features and patterns
 
 ## Learning Goals
