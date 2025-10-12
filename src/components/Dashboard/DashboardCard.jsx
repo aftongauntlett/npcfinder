@@ -2,20 +2,18 @@ import React, { Component } from "react";
 
 class DashboardCard extends Component {
   render() {
-    const { id, title, description, gradient, isFavorite, onToggleFavorite } =
-      this.props;
+    const { title, description, gradient } = this.props;
 
     return (
       <div
-        className={`bg-gradient-to-br ${gradient} backdrop-blur-sm border border-white/10 rounded-xl p-6 hover:scale-105 transition-transform duration-300 cursor-pointer`}
+        className={`bg-white dark:bg-gray-800 bg-gradient-to-br ${gradient} border border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer group`}
       >
-        <h3 className="text-xl font-semibold mb-2">{title}</h3>
-        <p className="text-gray-300 text-sm">{description}</p>
-        <div className="flex justify-end mt-4">
-          <button onClick={() => onToggleFavorite(id)}>
-            {isFavorite ? "❤️" : "🤍"}
-          </button>
-        </div>
+        <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white group-hover:text-primary-dark transition-colors duration-200">
+          {title}
+        </h3>
+        <p className="text-gray-600 dark:text-gray-300 text-sm">
+          {description}
+        </p>
       </div>
     );
   }

@@ -26,10 +26,10 @@ class Header extends Component {
 
     return (
       <header className="flex justify-between items-center p-6">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-400 to-yellow-400 bg-clip-text text-transparent">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
           NPC Finder
         </h1>
-        <div className="text-sm bg-black/20 px-4 py-2 rounded-full backdrop-blur-sm">
+        <div className="text-sm bg-white/80 dark:bg-gray-800/80 px-4 py-2 rounded-lg backdrop-blur-sm border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300">
           {currentTime}
         </div>
       </header>
