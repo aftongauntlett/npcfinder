@@ -4,7 +4,7 @@ import { supabase } from "../lib/supabase";
  * Test Supabase connection and database setup
  * Open browser console to see results
  */
-export const testSupabaseConnection = async () => {
+export const testSupabaseConnection = async (): Promise<boolean> => {
   console.log("🧪 Testing Supabase Connection...");
   console.log("-----------------------------------");
 
@@ -56,10 +56,21 @@ export const testSupabaseConnection = async () => {
   }
 };
 
+interface MediaItem {
+  id?: string;
+  type: string;
+  title: string;
+  release_year: number;
+  description: string;
+  critic_rating: number;
+  audience_rating: number;
+  [key: string]: any;
+}
+
 /**
  * Add a test movie to the database
  */
-export const addTestMovie = async () => {
+export const addTestMovie = async (): Promise<MediaItem | false> => {
   try {
     // First, add to media_items
     const { data: mediaItem, error: mediaError } = await supabase

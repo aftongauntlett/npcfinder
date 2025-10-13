@@ -1,10 +1,38 @@
 import { supabase } from "./supabase";
+import type { PostgrestError, RealtimeChannel } from "@supabase/supabase-js";
+
+/**
+ * Suggestion from the database
+ */
+export interface Suggestion {
+  id: string;
+  title: string;
+  description: string;
+  status: "new" | "considering" | "in-progress" | "done";
+  created_by: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+/**
+ * Suggestion with user information (from view)
+ */
+export interface SuggestionWithUser extends Suggestion {
+  user_email?: string;
+  display_name?: string;
+}
+
+interface SuggestionResult<T> {
+  data: T | null;
+  error: PostgrestError | null;
+}
 
 /**
  * Fetch all suggestions with user information
- * @returns {Promise<{data: Array, error: Error}>}
  */
-export async function getSuggestions() {
+export async function getSuggestions(): Promise<
+  SuggestionResult<SuggestionWithUser[]>
+> {
   const { data, error } = await supabase
     .from("suggestions_with_users")
     .select("*")
@@ -15,10 +43,10 @@ export async function getSuggestions() {
 
 /**
  * Fetch suggestions by status
- * @param {string} status - The status to filter by ('new', 'considering', 'in-progress', 'done')
- * @returns {Promise<{data: Array, error: Error}>}
  */
-export async function getSuggestionsByStatus(status) {
+export async function getSuggestionsByStatus(
+  status: Suggestion["status"]
+): Promise<SuggestionResult<SuggestionWithUser[]>> {
   const { data, error } = await supabase
     .from("suggestions_with_users")
     .select("*")
@@ -30,13 +58,11 @@ export async function getSuggestionsByStatus(status) {
 
 /**
  * Create a new suggestion
- * @param {Object} suggestion - The suggestion object
- * @param {string} suggestion.title - Title of the suggestion
- * @param {string} suggestion.description - Detailed description
- * @param {string} userId - The ID of the user creating the suggestion
- * @returns {Promise<{data: Object, error: Error}>}
  */
-export async function createSuggestion(suggestion, userId) {
+export async function createSuggestion(
+  suggestion: Pick<Suggestion, "title" | "description">,
+  userId: string
+): Promise<SuggestionResult<Suggestion>> {
   const { data, error } = await supabase
     .from("suggestions")
     .insert([
@@ -55,11 +81,11 @@ export async function createSuggestion(suggestion, userId) {
 
 /**
  * Update a suggestion's status (admin only)
- * @param {string} suggestionId - The ID of the suggestion
- * @param {string} newStatus - The new status ('new', 'considering', 'in-progress', 'done')
- * @returns {Promise<{data: Object, error: Error}>}
  */
-export async function updateSuggestionStatus(suggestionId, newStatus) {
+export async function updateSuggestionStatus(
+  suggestionId: string,
+  newStatus: Suggestion["status"]
+): Promise<SuggestionResult<Suggestion>> {
   const { data, error } = await supabase
     .from("suggestions")
     .update({ status: newStatus })
@@ -72,11 +98,11 @@ export async function updateSuggestionStatus(suggestionId, newStatus) {
 
 /**
  * Update a suggestion's content (admin only)
- * @param {string} suggestionId - The ID of the suggestion
- * @param {Object} updates - The fields to update
- * @returns {Promise<{data: Object, error: Error}>}
  */
-export async function updateSuggestion(suggestionId, updates) {
+export async function updateSuggestion(
+  suggestionId: string,
+  updates: Partial<Pick<Suggestion, "title" | "description" | "status">>
+): Promise<SuggestionResult<Suggestion>> {
   const { data, error } = await supabase
     .from("suggestions")
     .update(updates)
@@ -89,10 +115,10 @@ export async function updateSuggestion(suggestionId, updates) {
 
 /**
  * Delete a suggestion (admin only)
- * @param {string} suggestionId - The ID of the suggestion to delete
- * @returns {Promise<{data: Object, error: Error}>}
  */
-export async function deleteSuggestion(suggestionId) {
+export async function deleteSuggestion(
+  suggestionId: string
+): Promise<SuggestionResult<Suggestion>> {
   const { data, error } = await supabase
     .from("suggestions")
     .delete()
@@ -105,10 +131,10 @@ export async function deleteSuggestion(suggestionId) {
 
 /**
  * Subscribe to real-time changes in suggestions
- * @param {Function} callback - Function to call when changes occur
- * @returns {Object} - Subscription object with unsubscribe method
  */
-export function subscribeSuggestions(callback) {
+export function subscribeSuggestions(
+  callback: (payload: any) => void
+): RealtimeChannel {
   const subscription = supabase
     .channel("suggestions_changes")
     .on(

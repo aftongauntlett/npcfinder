@@ -1,14 +1,31 @@
 import { supabase } from "./supabase";
+import type { PostgrestError } from "@supabase/supabase-js";
 
 /**
  * User Profile utilities
  * Handles fetching and updating user profile data
  */
 
+export interface UserProfile {
+  user_id: string;
+  display_name: string | null;
+  bio: string | null;
+  profile_picture_url: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface ProfileResult<T> {
+  data: T | null;
+  error: PostgrestError | null;
+}
+
 /**
  * Get user profile by user ID
  */
-export const getUserProfile = async (userId) => {
+export const getUserProfile = async (
+  userId: string
+): Promise<ProfileResult<UserProfile>> => {
   try {
     const { data, error } = await supabase
       .from("user_profiles")
@@ -35,7 +52,7 @@ export const getUserProfile = async (userId) => {
     return { data, error: null };
   } catch (error) {
     console.error("Get profile error:", error);
-    return { data: null, error };
+    return { data: null, error: error as PostgrestError };
   }
 };
 
@@ -43,7 +60,10 @@ export const getUserProfile = async (userId) => {
  * Create or update user profile
  * Uses upsert with conflict resolution on user_id
  */
-export const upsertUserProfile = async (userId, profileData) => {
+export const upsertUserProfile = async (
+  userId: string,
+  profileData: Partial<Omit<UserProfile, "user_id">>
+): Promise<ProfileResult<UserProfile>> => {
   try {
     const { data, error } = await supabase
       .from("user_profiles")
@@ -67,14 +87,17 @@ export const upsertUserProfile = async (userId, profileData) => {
     return { data, error: null };
   } catch (error) {
     console.error("Upsert profile error:", error);
-    return { data: null, error };
+    return { data: null, error: error as PostgrestError };
   }
 };
 
 /**
  * Update specific profile fields
  */
-export const updateUserProfile = async (userId, updates) => {
+export const updateUserProfile = async (
+  userId: string,
+  updates: Partial<Omit<UserProfile, "user_id">>
+): Promise<ProfileResult<UserProfile>> => {
   try {
     const { data, error } = await supabase
       .from("user_profiles")
@@ -87,14 +110,17 @@ export const updateUserProfile = async (userId, updates) => {
     return { data, error: null };
   } catch (error) {
     console.error("Update profile error:", error);
-    return { data: null, error };
+    return { data: null, error: error as PostgrestError };
   }
 };
 
 /**
  * Get display name for a user (falls back to email)
  */
-export const getDisplayName = async (userId, userEmail) => {
+export const getDisplayName = async (
+  userId: string,
+  userEmail?: string
+): Promise<string> => {
   const { data } = await getUserProfile(userId);
   return data?.display_name || userEmail || "User";
 };
