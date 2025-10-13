@@ -11,8 +11,12 @@ node_modules
 dist
 dist-ssr
 *.local
-REFACTORING_SUMMARY.md
-COMMIT_MESSAGE.md
+
+# Ignore all Markdown files
+*.md
+
+# Don't ignore README.md 
+!README.md
 
 # Editor directories and files
 .vscode/*

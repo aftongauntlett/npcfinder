@@ -1,9 +1,9 @@
 /* Theme Variables */
 :root {
-  /* Primary Colors (Sage Green) */
-  --color-primary: 156 175 136; /* #9CAF88 */
-  --color-primary-dark: 122 155 110; /* #7A9B6E */
-  --color-primary-light: 182 198 171; /* #B6C6AB */
+  /* Primary Colors (Mauve/Purple) */
+  --color-primary: 167 139 250; /* #A78BFA - violet-400 */
+  --color-primary-dark: 139 92 246; /* #8B5CF6 - violet-500 */
+  --color-primary-light: 196 181 253; /* #C4B5FD - violet-300 */
 
   /* Neutral Colors - Light Mode */
   --color-background: 249 250 251; /* gray-50 */
@@ -52,9 +52,9 @@
 /* Dark Mode */
 .dark {
   /* Primary Colors - Same in dark mode */
-  --color-primary: 156 175 136; /* #9CAF88 */
-  --color-primary-dark: 122 155 110; /* #7A9B6E */
-  --color-primary-light: 182 198 171; /* #B6C6AB */
+  --color-primary: 167 139 250; /* #A78BFA - violet-400 */
+  --color-primary-dark: 139 92 246; /* #8B5CF6 - violet-500 */
+  --color-primary-light: 196 181 253; /* #C4B5FD - violet-300 */
 
   /* Neutral Colors - Dark Mode */
   --color-background: 17 24 39; /* gray-900 */
