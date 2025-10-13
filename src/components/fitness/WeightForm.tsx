@@ -1,15 +1,28 @@
 import React, { useState } from "react";
 import db from "../../lib/database";
 
-const WeightForm = ({ onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState({
+interface WeightFormProps {
+  onSubmit: () => void;
+  onCancel: () => void;
+}
+
+interface WeightFormData {
+  date: string;
+  weight: string;
+  note: string;
+}
+
+const WeightForm: React.FC<WeightFormProps> = ({ onSubmit, onCancel }) => {
+  const [formData, setFormData] = useState<WeightFormData>({
     date: new Date().toISOString().split("T")[0],
     weight: "",
     note: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChange = (e) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -17,7 +30,7 @@ const WeightForm = ({ onSubmit, onCancel }) => {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.weight) return;
 
@@ -42,7 +55,7 @@ const WeightForm = ({ onSubmit, onCancel }) => {
       <div>
         <label
           htmlFor="weight-date"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
           Date
         </label>
@@ -52,17 +65,18 @@ const WeightForm = ({ onSubmit, onCancel }) => {
           name="date"
           value={formData.date}
           onChange={handleChange}
-          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
           required
+          aria-required="true"
         />
       </div>
 
       <div>
         <label
           htmlFor="weight"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
-          Weight (lbs)
+          Weight (lbs) <span className="text-red-500">*</span>
         </label>
         <input
           type="number"
@@ -71,16 +85,17 @@ const WeightForm = ({ onSubmit, onCancel }) => {
           name="weight"
           value={formData.weight}
           onChange={handleChange}
-          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
           placeholder="Enter weight in pounds"
           required
+          aria-required="true"
         />
       </div>
 
       <div>
         <label
           htmlFor="weight-note"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
           Note (optional)
         </label>
@@ -90,12 +105,12 @@ const WeightForm = ({ onSubmit, onCancel }) => {
           value={formData.note}
           onChange={handleChange}
           rows={3}
-          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors resize-none"
           placeholder="Any notes about this measurement..."
         />
       </div>
 
-      <div className="flex justify-end space-x-3 pt-4">
+      <div className="flex justify-end gap-3 pt-4">
         <button
           type="button"
           onClick={onCancel}

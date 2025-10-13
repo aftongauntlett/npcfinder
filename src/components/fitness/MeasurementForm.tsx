@@ -1,8 +1,34 @@
 import React, { useState } from "react";
 import db from "../../lib/database";
 
-const MeasurementForm = ({ onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState({
+interface MeasurementFormProps {
+  onSubmit: () => void;
+  onCancel: () => void;
+}
+
+interface MeasurementFormData {
+  date: string;
+  waist: string;
+  hip: string;
+  chest: string;
+  thigh: string;
+  arm: string;
+  note: string;
+}
+
+const MEASUREMENT_FIELDS = [
+  { name: "waist" as const, label: "Waist" },
+  { name: "hip" as const, label: "Hip" },
+  { name: "chest" as const, label: "Chest" },
+  { name: "thigh" as const, label: "Thigh" },
+  { name: "arm" as const, label: "Arm" },
+];
+
+const MeasurementForm: React.FC<MeasurementFormProps> = ({
+  onSubmit,
+  onCancel,
+}) => {
+  const [formData, setFormData] = useState<MeasurementFormData>({
     date: new Date().toISOString().split("T")[0],
     waist: "",
     hip: "",
@@ -13,7 +39,9 @@ const MeasurementForm = ({ onSubmit, onCancel }) => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChange = (e) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -21,12 +49,11 @@ const MeasurementForm = ({ onSubmit, onCancel }) => {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Check if at least one measurement is provided
-    const hasMeasurement = ["waist", "hip", "chest", "thigh", "arm"].some(
-      (field) => formData[field]
+    const hasMeasurement = MEASUREMENT_FIELDS.some(
+      (field) => formData[field.name]
     );
     if (!hasMeasurement) return;
 
@@ -34,11 +61,11 @@ const MeasurementForm = ({ onSubmit, onCancel }) => {
     try {
       await db.measurements.add({
         date: new Date(formData.date).toISOString(),
-        waist: formData.waist ? parseFloat(formData.waist) : null,
-        hip: formData.hip ? parseFloat(formData.hip) : null,
-        chest: formData.chest ? parseFloat(formData.chest) : null,
-        thigh: formData.thigh ? parseFloat(formData.thigh) : null,
-        arm: formData.arm ? parseFloat(formData.arm) : null,
+        waist: formData.waist ? parseFloat(formData.waist) : undefined,
+        hip: formData.hip ? parseFloat(formData.hip) : undefined,
+        chest: formData.chest ? parseFloat(formData.chest) : undefined,
+        thigh: formData.thigh ? parseFloat(formData.thigh) : undefined,
+        arm: formData.arm ? parseFloat(formData.arm) : undefined,
         note: formData.note,
         createdAt: new Date(),
       });
@@ -50,15 +77,7 @@ const MeasurementForm = ({ onSubmit, onCancel }) => {
     }
   };
 
-  const measurementFields = [
-    { name: "waist", label: "Waist" },
-    { name: "hip", label: "Hip" },
-    { name: "chest", label: "Chest" },
-    { name: "thigh", label: "Thigh" },
-    { name: "arm", label: "Arm" },
-  ];
-
-  const hasMeasurement = measurementFields.some(
+  const hasMeasurement = MEASUREMENT_FIELDS.some(
     (field) => formData[field.name]
   );
 
@@ -67,7 +86,7 @@ const MeasurementForm = ({ onSubmit, onCancel }) => {
       <div>
         <label
           htmlFor="measurement-date"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
           Date
         </label>
@@ -77,17 +96,22 @@ const MeasurementForm = ({ onSubmit, onCancel }) => {
           name="date"
           value={formData.date}
           onChange={handleChange}
-          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
           required
+          aria-required="true"
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        {measurementFields.map((field) => (
+      <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+        Enter at least one measurement (in inches)
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {MEASUREMENT_FIELDS.map((field) => (
           <div key={field.name}>
             <label
               htmlFor={field.name}
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
             >
               {field.label} (inches)
             </label>
@@ -98,8 +122,9 @@ const MeasurementForm = ({ onSubmit, onCancel }) => {
               name={field.name}
               value={formData[field.name]}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              placeholder={`${field.label} measurement`}
+              className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+              placeholder="0.00"
+              min="0"
             />
           </div>
         ))}
@@ -108,7 +133,7 @@ const MeasurementForm = ({ onSubmit, onCancel }) => {
       <div>
         <label
           htmlFor="measurement-note"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
           Note (optional)
         </label>
@@ -118,12 +143,12 @@ const MeasurementForm = ({ onSubmit, onCancel }) => {
           value={formData.note}
           onChange={handleChange}
           rows={3}
-          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors resize-none"
           placeholder="Any notes about these measurements..."
         />
       </div>
 
-      <div className="flex justify-end space-x-3 pt-4">
+      <div className="flex justify-end gap-3 pt-4">
         <button
           type="button"
           onClick={onCancel}

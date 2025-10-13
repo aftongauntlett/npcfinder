@@ -1,8 +1,28 @@
 import React, { useState } from "react";
 import db from "../../lib/database";
 
-const WorkoutForm = ({ onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState({
+interface WorkoutFormProps {
+  onSubmit: () => void;
+  onCancel: () => void;
+}
+
+interface WorkoutFormData {
+  date: string;
+  type: string;
+  duration: string;
+  exercises: string;
+  notes: string;
+}
+
+const WORKOUT_TYPES = [
+  { value: "strength", label: "Strength Training" },
+  { value: "walk", label: "Walking" },
+  { value: "swim", label: "Swimming" },
+  { value: "cardio", label: "Cardio" },
+] as const;
+
+const WorkoutForm: React.FC<WorkoutFormProps> = ({ onSubmit, onCancel }) => {
+  const [formData, setFormData] = useState<WorkoutFormData>({
     date: new Date().toISOString().split("T")[0],
     type: "strength",
     duration: "",
@@ -11,14 +31,11 @@ const WorkoutForm = ({ onSubmit, onCancel }) => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const workoutTypes = [
-    { value: "strength", label: "Strength Training" },
-    { value: "walk", label: "Walking" },
-    { value: "swim", label: "Swimming" },
-    { value: "cardio", label: "Cardio" },
-  ];
-
-  const handleChange = (e) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -26,7 +43,7 @@ const WorkoutForm = ({ onSubmit, onCancel }) => {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.duration) return;
 
@@ -53,7 +70,7 @@ const WorkoutForm = ({ onSubmit, onCancel }) => {
       <div>
         <label
           htmlFor="workout-date"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
           Date
         </label>
@@ -63,15 +80,16 @@ const WorkoutForm = ({ onSubmit, onCancel }) => {
           name="date"
           value={formData.date}
           onChange={handleChange}
-          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
           required
+          aria-required="true"
         />
       </div>
 
       <div>
         <label
           htmlFor="workout-type"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
           Workout Type
         </label>
@@ -80,10 +98,11 @@ const WorkoutForm = ({ onSubmit, onCancel }) => {
           name="type"
           value={formData.type}
           onChange={handleChange}
-          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
           required
+          aria-required="true"
         >
-          {workoutTypes.map((type) => (
+          {WORKOUT_TYPES.map((type) => (
             <option key={type.value} value={type.value}>
               {type.label}
             </option>
@@ -94,9 +113,9 @@ const WorkoutForm = ({ onSubmit, onCancel }) => {
       <div>
         <label
           htmlFor="workout-duration"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
-          Duration (minutes)
+          Duration (minutes) <span className="text-red-500">*</span>
         </label>
         <input
           type="number"
@@ -104,27 +123,28 @@ const WorkoutForm = ({ onSubmit, onCancel }) => {
           name="duration"
           value={formData.duration}
           onChange={handleChange}
-          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          placeholder="Duration in minutes"
+          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+          placeholder="e.g., 45"
           min="1"
           required
+          aria-required="true"
         />
       </div>
 
       <div>
         <label
-          htmlFor="exercises"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          htmlFor="workout-exercises"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
           Exercises (optional)
         </label>
         <textarea
-          id="exercises"
+          id="workout-exercises"
           name="exercises"
           value={formData.exercises}
           onChange={handleChange}
           rows={3}
-          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors resize-none"
           placeholder="List exercises performed..."
         />
       </div>
@@ -132,7 +152,7 @@ const WorkoutForm = ({ onSubmit, onCancel }) => {
       <div>
         <label
           htmlFor="workout-notes"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
           Notes (optional)
         </label>
@@ -142,12 +162,12 @@ const WorkoutForm = ({ onSubmit, onCancel }) => {
           value={formData.notes}
           onChange={handleChange}
           rows={3}
-          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          placeholder="Any additional notes about this workout..."
+          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors resize-none"
+          placeholder="How did it feel? Any achievements?"
         />
       </div>
 
-      <div className="flex justify-end space-x-3 pt-4">
+      <div className="flex justify-end gap-3 pt-4">
         <button
           type="button"
           onClick={onCancel}

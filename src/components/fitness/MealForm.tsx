@@ -1,38 +1,55 @@
 import React, { useState } from "react";
 import db from "../../lib/database";
 
-const MealForm = ({ onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState({
+interface MealFormProps {
+  onSubmit: () => void;
+  onCancel: () => void;
+}
+
+interface MealFormData {
+  date: string;
+  period: string;
+  quality: number;
+  notes: string;
+}
+
+const MEAL_PERIODS = [
+  { value: "breakfast", label: "Breakfast" },
+  { value: "lunch", label: "Lunch" },
+  { value: "dinner", label: "Dinner" },
+  { value: "snack", label: "Snack" },
+] as const;
+
+const QUALITY_OPTIONS = [
+  { value: 5, label: "Excellent - Very Healthy" },
+  { value: 4, label: "Good - Mostly Healthy" },
+  { value: 3, label: "Average - Balanced" },
+  { value: 2, label: "Fair - Could Be Better" },
+  { value: 1, label: "Poor - Unhealthy" },
+] as const;
+
+const MealForm: React.FC<MealFormProps> = ({ onSubmit, onCancel }) => {
+  const [formData, setFormData] = useState<MealFormData>({
     date: new Date().toISOString().split("T")[0],
     period: "breakfast",
-    quality: "balanced",
+    quality: 3,
     notes: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const mealPeriods = [
-    { value: "breakfast", label: "Breakfast" },
-    { value: "lunch", label: "Lunch" },
-    { value: "dinner", label: "Dinner" },
-    { value: "snack", label: "Snack" },
-  ];
-
-  const qualityTags = [
-    { value: "protein-forward", label: "Protein-Forward" },
-    { value: "balanced", label: "Balanced" },
-    { value: "high-carb", label: "High-Carb" },
-    { value: "treat", label: "Treat" },
-  ];
-
-  const handleChange = (e) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: name === "quality" ? parseInt(value, 10) : value,
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     setIsSubmitting(true);
@@ -57,7 +74,7 @@ const MealForm = ({ onSubmit, onCancel }) => {
       <div>
         <label
           htmlFor="meal-date"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
           Date
         </label>
@@ -67,15 +84,16 @@ const MealForm = ({ onSubmit, onCancel }) => {
           name="date"
           value={formData.date}
           onChange={handleChange}
-          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
           required
+          aria-required="true"
         />
       </div>
 
       <div>
         <label
           htmlFor="meal-period"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
           Meal Period
         </label>
@@ -84,10 +102,11 @@ const MealForm = ({ onSubmit, onCancel }) => {
           name="period"
           value={formData.period}
           onChange={handleChange}
-          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
           required
+          aria-required="true"
         >
-          {mealPeriods.map((period) => (
+          {MEAL_PERIODS.map((period) => (
             <option key={period.value} value={period.value}>
               {period.label}
             </option>
@@ -98,21 +117,22 @@ const MealForm = ({ onSubmit, onCancel }) => {
       <div>
         <label
           htmlFor="meal-quality"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
-          Quality Tag
+          Quality Rating
         </label>
         <select
           id="meal-quality"
           name="quality"
           value={formData.quality}
           onChange={handleChange}
-          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
           required
+          aria-required="true"
         >
-          {qualityTags.map((tag) => (
-            <option key={tag.value} value={tag.value}>
-              {tag.label}
+          {QUALITY_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
             </option>
           ))}
         </select>
@@ -121,7 +141,7 @@ const MealForm = ({ onSubmit, onCancel }) => {
       <div>
         <label
           htmlFor="meal-notes"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
           Notes
         </label>
@@ -131,12 +151,12 @@ const MealForm = ({ onSubmit, onCancel }) => {
           value={formData.notes}
           onChange={handleChange}
           rows={4}
-          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors resize-none"
           placeholder="What did you eat? How did it make you feel?"
         />
       </div>
 
-      <div className="flex justify-end space-x-3 pt-4">
+      <div className="flex justify-end gap-3 pt-4">
         <button
           type="button"
           onClick={onCancel}

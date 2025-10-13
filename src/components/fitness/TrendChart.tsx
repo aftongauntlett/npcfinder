@@ -9,7 +9,21 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const TrendChart = ({ title, data, dataKey, unit, color }) => {
+interface TrendChartProps {
+  title: string;
+  data: Array<Record<string, any>>;
+  dataKey: string;
+  unit: string;
+  color: string;
+}
+
+const TrendChart: React.FC<TrendChartProps> = ({
+  title,
+  data,
+  dataKey,
+  unit,
+  color,
+}) => {
   if (!data || data.length === 0) {
     return (
       <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
@@ -56,7 +70,7 @@ const TrendChart = ({ title, data, dataKey, unit, color }) => {
                 borderRadius: "8px",
                 color: "white",
               }}
-              formatter={(value) => [`${value} ${unit}`, title]}
+              formatter={(value: number) => [`${value} ${unit}`, title]}
               labelStyle={{ color: "#e5e7eb" }}
             />
             <Line
