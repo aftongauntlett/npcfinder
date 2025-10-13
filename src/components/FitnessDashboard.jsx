@@ -1,12 +1,23 @@
 import React, { useState, useEffect } from "react";
-import { Plus, TrendingUp, Target, Calendar, Activity } from "lucide-react";
+import {
+  Plus,
+  TrendingUp,
+  Target,
+  Calendar,
+  Activity,
+  Settings as SettingsIcon,
+} from "lucide-react";
 import db from "../lib/database";
 import QuickLogModal from "./fitness/QuickLogModal";
 import TrendChart from "./fitness/TrendChart";
 import RecentEntries from "./fitness/RecentEntries";
+import Settings from "./Settings";
+import StatCard from "./shared/StatCard";
+import Card from "./shared/Card";
 
 const FitnessDashboard = () => {
   const [showQuickLog, setShowQuickLog] = useState(false);
+  const [activeTab, setActiveTab] = useState("dashboard"); // "dashboard" or "settings"
   const [stats, setStats] = useState({
     todayLogs: 0,
     streak: 0,
@@ -135,121 +146,92 @@ const FitnessDashboard = () => {
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
           Fitness Dashboard
         </h1>
-        <button
-          onClick={() => setShowQuickLog(true)}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-          aria-label="Open quick log modal"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Quick Log
-        </button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Calendar className="h-6 w-6 text-gray-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                    Today's Logs
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900 dark:text-white">
-                    {stats.todayLogs}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Target className="h-6 w-6 text-green-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                    Day Streak
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900 dark:text-white">
-                    {stats.streak}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <TrendingUp className="h-6 w-6 text-blue-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                    Current Weight
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900 dark:text-white">
-                    {stats.recentWeight
-                      ? `${stats.recentWeight.weight} lbs`
-                      : "No data"}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Activity className="h-6 w-6 text-purple-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                    Recent Workouts
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900 dark:text-white">
-                    {stats.recentWorkouts.length}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setActiveTab("settings")}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            aria-label="Open settings"
+          >
+            <SettingsIcon className="w-4 h-4 mr-2" />
+            Settings
+          </button>
+          <button
+            onClick={() => setShowQuickLog(true)}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            aria-label="Open quick log modal"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Quick Log
+          </button>
         </div>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <TrendChart
-          title="Weight Trend"
-          data={weightData}
-          dataKey="weight"
-          unit="lbs"
-          color="#3B82F6"
-        />
-        <TrendChart
-          title="Waist Measurements"
-          data={waistData}
-          dataKey="waist"
-          unit="in"
-          color="#10B981"
-        />
-      </div>
+      {activeTab === "dashboard" ? (
+        <>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <StatCard
+              icon={Calendar}
+              label="Today's Logs"
+              value={stats.todayLogs}
+              iconColor="text-gray-400"
+            />
+            <StatCard
+              icon={Target}
+              label="Day Streak"
+              value={stats.streak}
+              iconColor="text-green-400"
+            />
+            <StatCard
+              icon={TrendingUp}
+              label="Current Weight"
+              value={
+                stats.recentWeight
+                  ? `${stats.recentWeight.weight} lbs`
+                  : "No data"
+              }
+              iconColor="text-blue-400"
+            />
+            <StatCard
+              icon={Activity}
+              label="Recent Workouts"
+              value={stats.recentWorkouts.length}
+              iconColor="text-purple-400"
+            />
+          </div>
 
-      {/* Recent Entries */}
-      <RecentEntries onDataChange={loadDashboardData} />
+          {/* Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <TrendChart
+              title="Weight Trend"
+              data={weightData}
+              dataKey="weight"
+              unit="lbs"
+              color="#3B82F6"
+            />
+            <TrendChart
+              title="Waist Measurements"
+              data={waistData}
+              dataKey="waist"
+              unit="in"
+              color="#10B981"
+            />
+          </div>
+
+          {/* Recent Entries */}
+          <RecentEntries onDataChange={loadDashboardData} />
+        </>
+      ) : (
+        <Card>
+          <button
+            onClick={() => setActiveTab("dashboard")}
+            className="mb-4 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+          >
+            ← Back to Dashboard
+          </button>
+          <Settings />
+        </Card>
+      )}
 
       {/* Quick Log Modal */}
       {showQuickLog && (

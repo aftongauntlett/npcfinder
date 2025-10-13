@@ -11,6 +11,8 @@ node_modules
 dist
 dist-ssr
 *.local
+REFACTORING_SUMMARY.md
+COMMIT_MESSAGE.md
 
 # Editor directories and files
 .vscode/*

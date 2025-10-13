@@ -8,7 +8,7 @@ class Hero extends Component {
           Welcome to Your Personal Dashboard
         </h2>
         <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-          Your one-stop shop for movies, music, games, restaurants, and
+          Your one-stop shop for entertainment, music, games, restaurants, and
           memories. Curated just for you.
         </p>
       </div>

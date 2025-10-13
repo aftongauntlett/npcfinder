@@ -2,16 +2,15 @@
 
 > Your personal dashboard for everything you love - curated just for you.
 
-A modern React application designed as a comprehensive personal dashboard for tracking movies, music, games, TV shows, restaurants, and journal entries. Built with learning and interview preparation in mind, this project demonstrates both traditional and modern React patterns.
+A modern React application designed as a comprehensive personal dashboard for tracking movies & TV shows, music, games, restaurants, and journal entries. Built with learning and interview preparation in mind, this project demonstrates both traditional and modern React patterns.
 
 ## Features
 
 ### Original Dashboard
 
-- **Movies**: Rate, track, and organize your film collection
+- **Movies & TV**: Track films and series, rate favorites, and discover new content
 - **Music**: Personal soundtrack library and discovery zone
 - **Games**: Gaming backlog and achievement tracking
-- **TV Shows**: Binge lists and episode tracking
 - **Food & Places**: Restaurant reviews and travel memories
 - **Journal**: Daily thoughts and creative expressions
 - **Real-time Clock**: Always know what time it is

@@ -1,14 +1,14 @@
 import React, { Component } from "react";
-import Header from "./components/shared/Header";
 import Footer from "./components/shared/Footer";
 import DashboardCard from "./components/Dashboard/DashboardCard";
 import Hero from "./components/Hero";
 import Navigation from "./components/Navigation";
 import FitnessDashboard from "./components/FitnessDashboard";
-import Settings from "./components/Settings";
 import StarryBackground from "./components/StarryBackground";
+import PageContainer from "./components/shared/PageContainer";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { cards } from "./data/dashboardCards";
+import { VIEWS } from "./utils/constants";
 
 class App extends Component {
   constructor(props) {
@@ -16,7 +16,7 @@ class App extends Component {
 
     this.state = {
       isLoading: true,
-      currentView: "home",
+      currentView: VIEWS.HOME,
     };
   }
 
@@ -30,14 +30,21 @@ class App extends Component {
     this.setState({ currentView: view });
   };
 
+  handleCardClick = (cardTitle) => {
+    // Convert card title to view name
+    if (cardTitle === "Fitness") {
+      this.setState({ currentView: VIEWS.FITNESS });
+    }
+    // Add more card handlers here as needed
+  };
+
   renderCurrentView() {
     const { currentView } = this.state;
 
     switch (currentView) {
-      case "home":
+      case VIEWS.HOME:
         return (
-          <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            <Header />
+          <PageContainer>
             <main className="container mx-auto px-6 py-12">
               <Hero />
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
@@ -47,24 +54,19 @@ class App extends Component {
                     title={card.title}
                     description={card.description}
                     gradient={card.gradient}
+                    onClick={() => this.handleCardClick(card.title)}
                   />
                 ))}
               </div>
               <Footer />
             </main>
-          </div>
+          </PageContainer>
         );
-      case "fitness":
+      case VIEWS.FITNESS:
         return (
-          <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+          <PageContainer>
             <FitnessDashboard />
-          </div>
-        );
-      case "settings":
-        return (
-          <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            <Settings />
-          </div>
+          </PageContainer>
         );
       default:
         return null;
@@ -72,7 +74,7 @@ class App extends Component {
   }
 
   render() {
-    const { isLoading, currentView } = this.state;
+    const { isLoading } = this.state;
 
     if (isLoading) {
       return (
@@ -86,14 +88,11 @@ class App extends Component {
 
     return (
       <ThemeProvider>
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 relative">
+        <PageContainer className="relative">
           <StarryBackground />
-          <Navigation
-            currentView={currentView}
-            onViewChange={this.handleViewChange}
-          />
+          <Navigation onViewChange={this.handleViewChange} />
           {this.renderCurrentView()}
-        </div>
+        </PageContainer>
       </ThemeProvider>
     );
   }

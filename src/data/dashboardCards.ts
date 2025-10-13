@@ -7,9 +7,9 @@ export type Card = {
 
 export const cards: Card[] = [
   {
-    title: "Movies",
+    title: "Movies & TV",
     description:
-      "Track what you've watched, rate favorites, and discover new films",
+      "Track films and series, rate favorites, and discover new content",
     gradient: "from-slate-500/10 to-gray-500/10",
     id: 1,
   },
@@ -26,9 +26,9 @@ export const cards: Card[] = [
     id: 3,
   },
   {
-    title: "TV Shows",
-    description: "Binge lists, episode tracking, and series discoveries",
-    gradient: "from-slate-600/10 to-gray-600/10",
+    title: "Fitness",
+    description: "Track workouts, meals, weight, and body measurements",
+    gradient: "from-green-500/10 to-emerald-500/10",
     id: 4,
   },
   {
@@ -42,5 +42,23 @@ export const cards: Card[] = [
     description: "Daily thoughts, memories, and creative expressions",
     gradient: "from-gray-600/10 to-blue-600/10",
     id: 6,
+  },
+  {
+    title: "News",
+    description: "Stay informed with curated articles and trending stories",
+    gradient: "from-red-500/10 to-orange-500/10",
+    id: 7,
+  },
+  {
+    title: "Bookmarks",
+    description: "Save and organize your favorite links and resources",
+    gradient: "from-purple-500/10 to-pink-500/10",
+    id: 8,
+  },
+  {
+    title: "Vault",
+    description: "Secure storage for private notes and important documents",
+    gradient: "from-indigo-500/10 to-purple-500/10",
+    id: 9,
   },
 ];
