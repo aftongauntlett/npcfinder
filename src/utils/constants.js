@@ -17,4 +17,6 @@ export const VIEWS = {
   HOME: "home",
   FITNESS: "fitness",
   MOVIES_TV: "movies-tv",
+  SETTINGS: "settings",
+  TEST: "test",
 };

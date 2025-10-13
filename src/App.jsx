@@ -6,10 +6,13 @@ import Navigation from "./components/Navigation";
 import FitnessDashboard from "./components/FitnessDashboard";
 import MoviesTV from "./components/MoviesTV";
 import AuthPage from "./components/AuthPage";
+import AdminPanel from "./components/AdminPanel";
+import UserSettings from "./components/UserSettings";
 import StarryBackground from "./components/StarryBackground";
 import PageContainer from "./components/shared/PageContainer";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import { isAdmin } from "./lib/admin";
 import { cards } from "./data/dashboardCards";
 import { VIEWS } from "./utils/constants";
 
@@ -79,6 +82,12 @@ class App extends Component {
             <MoviesTV />
           </PageContainer>
         );
+      case VIEWS.SETTINGS:
+        // Settings route - handled in AuthenticatedApp
+        return null;
+      case VIEWS.TEST:
+        // Admin-only route - return 403 if not admin
+        return null; // Will be handled in AuthenticatedApp
       default:
         return null;
     }
@@ -113,7 +122,7 @@ class App extends Component {
 }
 
 // Wrapper component to access auth context
-const AuthenticatedApp = ({ renderCurrentView, onViewChange }) => {
+const AuthenticatedApp = ({ renderCurrentView, onViewChange, currentView }) => {
   // We'll use a functional component here to access the auth context
   const [user, setUser] = React.useState(null);
   const [authLoading, setAuthLoading] = React.useState(true);
@@ -138,6 +147,16 @@ const AuthenticatedApp = ({ renderCurrentView, onViewChange }) => {
     });
   }, []);
 
+  // Check if user is admin (needs to be after user is set but before conditionals)
+  const userIsAdmin = user && isAdmin(user.id);
+
+  // Redirect non-admins trying to access admin panel
+  React.useEffect(() => {
+    if (currentView === VIEWS.TEST && user && !userIsAdmin) {
+      onViewChange(VIEWS.HOME);
+    }
+  }, [currentView, user, userIsAdmin, onViewChange]);
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
@@ -153,11 +172,50 @@ const AuthenticatedApp = ({ renderCurrentView, onViewChange }) => {
     return <AuthPage />;
   }
 
+  // Settings view
+  if (currentView === VIEWS.SETTINGS) {
+    return (
+      <PageContainer className="relative">
+        <StarryBackground />
+        <Navigation onViewChange={onViewChange} currentUser={user} />
+        <UserSettings
+          currentUser={user}
+          onClose={() => onViewChange(VIEWS.HOME)}
+        />
+      </PageContainer>
+    );
+  }
+
+  if (currentView === VIEWS.TEST) {
+    if (!userIsAdmin) {
+      return (
+        <PageContainer className="relative">
+          <StarryBackground />
+          <Navigation onViewChange={onViewChange} currentUser={user} />
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="text-white text-2xl">
+              Access Denied - Admin Only
+            </div>
+          </div>
+        </PageContainer>
+      );
+    }
+
+    // User is admin, show admin panel
+    return (
+      <PageContainer className="relative">
+        <StarryBackground />
+        <Navigation onViewChange={onViewChange} currentUser={user} />
+        <AdminPanel />
+      </PageContainer>
+    );
+  }
+
   // If user is logged in, show the app
   return (
     <PageContainer className="relative">
       <StarryBackground />
-      <Navigation onViewChange={onViewChange} />
+      <Navigation onViewChange={onViewChange} currentUser={user} />
       {renderCurrentView()}
     </PageContainer>
   );
