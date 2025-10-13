@@ -1,5 +1,19 @@
 import React from "react";
 
+/**
+ * @typedef {Object} ButtonProps
+ * @property {React.ReactNode} children
+ * @property {'primary' | 'secondary' | 'danger'} [variant]
+ * @property {'sm' | 'md' | 'lg'} [size]
+ * @property {'button' | 'submit' | 'reset'} [type]
+ * @property {boolean} [disabled]
+ * @property {() => void} [onClick]
+ * @property {string} [className]
+ */
+
+/**
+ * @param {ButtonProps} props
+ */
 const Button = ({
   children,
   variant = "primary",
