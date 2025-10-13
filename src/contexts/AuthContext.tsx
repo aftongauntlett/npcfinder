@@ -1,10 +1,15 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
-import PropTypes from "prop-types";
+import type { User } from "@supabase/supabase-js";
 import { getCurrentUser, onAuthStateChange } from "../lib/auth";
 
-const AuthContext = createContext({});
+interface AuthContextValue {
+  user: User | null;
+  loading: boolean;
+}
 
-export const useAuth = () => {
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+export const useAuth = (): AuthContextValue => {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error("useAuth must be used within AuthProvider");
@@ -12,15 +17,17 @@ export const useAuth = () => {
   return context;
 };
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+interface AuthProviderProps {
+  children: React.ReactNode;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing session on mount
     checkUser();
 
-    // Listen for auth changes
     const { data: authListener } = onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event);
 
@@ -33,7 +40,6 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     });
 
-    // Cleanup subscription on unmount
     return () => {
       authListener?.subscription?.unsubscribe();
     };
@@ -41,7 +47,7 @@ export const AuthProvider = ({ children }) => {
 
   const checkUser = async () => {
     try {
-      const { user: currentUser } = await getCurrentUser();
+      const { data: currentUser } = await getCurrentUser();
       setUser(currentUser);
     } catch (error) {
       console.error("Error checking user:", error);
@@ -51,14 +57,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const value = {
+  const value: AuthContextValue = {
     user,
     loading,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
-
-AuthProvider.propTypes = {
-  children: PropTypes.node.isRequired,
 };

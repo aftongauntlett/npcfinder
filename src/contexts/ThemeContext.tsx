@@ -2,17 +2,23 @@ import React, { useEffect, useState } from "react";
 import db from "../lib/database";
 import { ThemeContext } from "../hooks/useTheme";
 
-export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState("system");
-  const [resolvedTheme, setResolvedTheme] = useState("light");
+type ThemeOption = "light" | "dark" | "system";
+type ResolvedTheme = "light" | "dark";
+
+interface ThemeProviderProps {
+  children: React.ReactNode;
+}
+
+export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
+  const [theme, setTheme] = useState<ThemeOption>("system");
+  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>("light");
 
   useEffect(() => {
-    // Load theme from database
     const loadTheme = async () => {
       try {
         const settings = await db.settings.get(1);
-        if (settings && settings.theme) {
-          setTheme(settings.theme);
+        if (settings?.theme) {
+          setTheme(settings.theme as ThemeOption);
         }
       } catch (error) {
         console.error("Failed to load theme:", error);
@@ -45,7 +51,6 @@ export const ThemeProvider = ({ children }) => {
   }, [theme]);
 
   useEffect(() => {
-    // Apply theme to document
     const root = document.documentElement;
     if (resolvedTheme === "dark") {
       root.classList.add("dark");
@@ -54,7 +59,7 @@ export const ThemeProvider = ({ children }) => {
     }
   }, [resolvedTheme]);
 
-  const changeTheme = async (newTheme) => {
+  const changeTheme = async (newTheme: ThemeOption) => {
     setTheme(newTheme);
     try {
       await db.settings.update(1, {
