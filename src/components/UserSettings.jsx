@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
+import { useNavigate } from "react-router-dom";
 import { User, Save, X } from "lucide-react";
 import { getUserProfile, upsertUserProfile } from "../lib/profiles";
 import Button from "./shared/Button";
 
-const UserSettings = ({ currentUser, onClose }) => {
+const UserSettings = ({ currentUser }) => {
+  const navigate = useNavigate();
   const [profile, setProfile] = useState({
     display_name: "",
     bio: "",
@@ -67,7 +69,7 @@ const UserSettings = ({ currentUser, onClose }) => {
       } else {
         setMessage({ type: "success", text: "Profile updated successfully!" });
         setTimeout(() => {
-          if (onClose) onClose();
+          navigate("/");
         }, 1500);
       }
     } catch (error) {
@@ -98,15 +100,13 @@ const UserSettings = ({ currentUser, onClose }) => {
                 Profile Settings
               </h1>
             </div>
-            {onClose && (
-              <button
-                onClick={onClose}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                aria-label="Close"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            )}
+            <button
+              onClick={() => navigate("/")}
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              aria-label="Close"
+            >
+              <X className="w-6 h-6" />
+            </button>
           </div>
 
           {/* Message */}
@@ -222,16 +222,14 @@ const UserSettings = ({ currentUser, onClose }) => {
                 <Save className="w-4 h-4" />
                 {isSaving ? "Saving..." : "Save Changes"}
               </Button>
-              {onClose && (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={onClose}
-                  className="px-8"
-                >
-                  Cancel
-                </Button>
-              )}
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => navigate("/")}
+                className="px-8"
+              >
+                Cancel
+              </Button>
             </div>
           </form>
         </div>
@@ -242,7 +240,6 @@ const UserSettings = ({ currentUser, onClose }) => {
 
 UserSettings.propTypes = {
   currentUser: PropTypes.object.isRequired,
-  onClose: PropTypes.func,
 };
 
 export default UserSettings;
