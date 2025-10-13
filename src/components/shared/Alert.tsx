@@ -1,6 +1,14 @@
 import React from "react";
-import PropTypes from "prop-types";
 import { AlertCircle, CheckCircle, Info, AlertTriangle } from "lucide-react";
+
+type AlertType = "error" | "success" | "warning" | "info";
+
+interface AlertProps {
+  type?: AlertType;
+  title?: string;
+  children: React.ReactNode;
+  className?: string;
+}
 
 const ALERT_STYLES = {
   error: {
@@ -35,16 +43,28 @@ const ALERT_STYLES = {
     text: "text-blue-700 dark:text-blue-400",
     Icon: Info,
   },
-};
+} as const;
 
-const Alert = ({ type = "info", title, children, className = "" }) => {
+const Alert: React.FC<AlertProps> = ({
+  type = "info",
+  title,
+  children,
+  className = "",
+}) => {
   const styles = ALERT_STYLES[type];
   const Icon = styles.Icon;
 
   return (
-    <div className={`p-4 border rounded-lg ${styles.container} ${className}`}>
+    <div
+      className={`p-4 border rounded-lg ${styles.container} ${className}`}
+      role="alert"
+      aria-live="polite"
+    >
       <div className="flex items-start gap-3">
-        <Icon className={`w-5 h-5 ${styles.icon} flex-shrink-0 mt-0.5`} />
+        <Icon
+          className={`w-5 h-5 ${styles.icon} flex-shrink-0 mt-0.5`}
+          aria-hidden="true"
+        />
         <div className="flex-1">
           {title && (
             <h3 className={`font-medium ${styles.title} mb-1`}>{title}</h3>
@@ -54,13 +74,6 @@ const Alert = ({ type = "info", title, children, className = "" }) => {
       </div>
     </div>
   );
-};
-
-Alert.propTypes = {
-  type: PropTypes.oneOf(["error", "success", "warning", "info"]),
-  title: PropTypes.string,
-  children: PropTypes.node.isRequired,
-  className: PropTypes.string,
 };
 
 export default Alert;

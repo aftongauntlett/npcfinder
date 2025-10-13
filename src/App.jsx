@@ -1,7 +1,7 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Footer from "./components/shared/Footer";
-import DashboardCard from "./components/Dashboard/DashboardCard";
+import DashboardCard from "./components/dashboard/DashboardCard";
 import Hero from "./components/Hero";
 import Navigation from "./components/Navigation";
 import FitnessDashboard from "./components/FitnessDashboard";

@@ -1,20 +1,19 @@
 import React from "react";
 
-/**
- * @typedef {Object} ButtonProps
- * @property {React.ReactNode} children
- * @property {'primary' | 'secondary' | 'danger'} [variant]
- * @property {'sm' | 'md' | 'lg'} [size]
- * @property {'button' | 'submit' | 'reset'} [type]
- * @property {boolean} [disabled]
- * @property {() => void} [onClick]
- * @property {string} [className]
- */
+type ButtonVariant = "primary" | "secondary" | "danger";
+type ButtonSize = "sm" | "md" | "lg";
 
-/**
- * @param {ButtonProps} props
- */
-const Button = ({
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  children: React.ReactNode;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  type?: "button" | "submit" | "reset";
+  disabled?: boolean;
+  onClick?: () => void;
+  className?: string;
+}
+
+const Button: React.FC<ButtonProps> = ({
   children,
   variant = "primary",
   size = "md",
