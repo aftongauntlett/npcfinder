@@ -1,7 +1,14 @@
 /**
  * Suggestion statuses with their display properties
  */
-export const SUGGESTION_STATUSES = [
+
+export interface SuggestionStatus {
+  id: string;
+  label: string;
+  color: string;
+}
+
+export const SUGGESTION_STATUSES: readonly SuggestionStatus[] = [
   {
     id: "new",
     label: "New",
@@ -26,17 +33,23 @@ export const SUGGESTION_STATUSES = [
     color:
       "bg-green-100 dark:bg-green-900/30 border-green-300 dark:border-green-700",
   },
-];
+] as const;
+
+export type SuggestionStatusId = (typeof SUGGESTION_STATUSES)[number]["id"];
 
 /**
  * Error codes that indicate database setup is needed
  */
-export const DB_SETUP_ERROR_INDICATORS = [
+export const DB_SETUP_ERROR_INDICATORS: readonly string[] = [
   "relation",
   "does not exist",
   "not found",
   "could not find",
   "table",
-];
+] as const;
 
-export const DB_SETUP_ERROR_CODES = ["42P01", "PGRST116", "PGRST204"];
+export const DB_SETUP_ERROR_CODES: readonly string[] = [
+  "42P01",
+  "PGRST116",
+  "PGRST204",
+] as const;
