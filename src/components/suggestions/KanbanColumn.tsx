@@ -1,11 +1,28 @@
 import React from "react";
-import PropTypes from "prop-types";
 import SuggestionCard from "./SuggestionCard";
+import type { SuggestionWithUser } from "../../lib/suggestions";
 
-const KanbanColumn = ({
+interface StatusConfig {
+  id: string;
+  label: string;
+  color: string;
+}
+
+interface KanbanColumnProps {
+  status: StatusConfig;
+  suggestions: SuggestionWithUser[];
+  isAdmin?: boolean;
+  onDragOver: (e: React.DragEvent) => void;
+  onDrop: (e: React.DragEvent, statusId: string) => void;
+  onDragStart: (e: React.DragEvent, suggestion: SuggestionWithUser) => void;
+  onDelete: (id: string) => void;
+  onEdit: (id: string, updates: { title: string; description: string }) => void;
+}
+
+const KanbanColumn: React.FC<KanbanColumnProps> = ({
   status,
   suggestions,
-  isAdmin,
+  isAdmin = false,
   onDragOver,
   onDrop,
   onDragStart,
@@ -19,14 +36,14 @@ const KanbanColumn = ({
       onDrop={(e) => onDrop(e, status.id)}
     >
       {/* Column Header */}
-      <div className="mb-4">
+      <header className="mb-4">
         <h2 className="font-semibold text-gray-900 dark:text-white flex items-center justify-between">
           <span>{status.label}</span>
           <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
             {suggestions.length}
           </span>
         </h2>
-      </div>
+      </header>
 
       {/* Cards */}
       <div className="space-y-3 min-h-[200px]">
@@ -54,21 +71,6 @@ const KanbanColumn = ({
       </div>
     </div>
   );
-};
-
-KanbanColumn.propTypes = {
-  status: PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    label: PropTypes.string.isRequired,
-    color: PropTypes.string.isRequired,
-  }).isRequired,
-  suggestions: PropTypes.array.isRequired,
-  isAdmin: PropTypes.bool,
-  onDragOver: PropTypes.func.isRequired,
-  onDrop: PropTypes.func.isRequired,
-  onDragStart: PropTypes.func.isRequired,
-  onDelete: PropTypes.func.isRequired,
-  onEdit: PropTypes.func.isRequired,
 };
 
 export default KanbanColumn;

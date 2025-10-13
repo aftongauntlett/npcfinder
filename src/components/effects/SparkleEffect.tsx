@@ -1,15 +1,31 @@
 import React, { useState, useEffect } from "react";
-import PropTypes from "prop-types";
 
-/**
- * Reusable sparkle/shimmer effect component
- * Creates subtle floating particles on hover
- */
-const SparkleEffect = ({ children, className = "", intensity = "medium" }) => {
+type SparkleIntensity = "low" | "medium" | "high";
+
+interface SparkleEffectProps {
+  children: React.ReactNode;
+  className?: string;
+  intensity?: SparkleIntensity;
+}
+
+interface Particle {
+  id: number;
+  x: number;
+  y: number;
+  size: number;
+  delay: number;
+  duration: number;
+}
+
+const SparkleEffect: React.FC<SparkleEffectProps> = ({
+  children,
+  className = "",
+  intensity = "medium",
+}) => {
   const [isHovered, setIsHovered] = useState(false);
-  const [particles, setParticles] = useState([]);
+  const [particles, setParticles] = useState<Particle[]>([]);
 
-  const intensityMap = {
+  const intensityMap: Record<SparkleIntensity, number> = {
     low: 3,
     medium: 5,
     high: 8,
@@ -19,7 +35,6 @@ const SparkleEffect = ({ children, className = "", intensity = "medium" }) => {
 
   useEffect(() => {
     if (isHovered) {
-      // Generate random particles when hovering
       const newParticles = Array.from({ length: particleCount }, () => ({
         id: Math.random(),
         x: Math.random() * 100,
@@ -66,12 +81,6 @@ const SparkleEffect = ({ children, className = "", intensity = "medium" }) => {
         ))}
     </div>
   );
-};
-
-SparkleEffect.propTypes = {
-  children: PropTypes.node.isRequired,
-  className: PropTypes.string,
-  intensity: PropTypes.oneOf(["low", "medium", "high"]),
 };
 
 export default SparkleEffect;

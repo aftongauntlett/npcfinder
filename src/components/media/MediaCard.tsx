@@ -1,12 +1,29 @@
 import React from "react";
-import PropTypes from "prop-types";
-import { Star, Eye, Check, Clock, Shuffle } from "lucide-react";
+import { Star, Eye, Check, Clock } from "lucide-react";
 import SparkleEffect from "../effects/SparkleEffect";
 
-/**
- * Reusable media card for displaying movies, TV shows, games, books
- */
-const MediaCard = ({
+type MediaStatus =
+  | "watched"
+  | "to-watch"
+  | "played"
+  | "to-play"
+  | "read"
+  | "to-read";
+
+interface MediaCardProps {
+  id: string | number;
+  title: string;
+  subtitle?: string;
+  posterUrl?: string;
+  year?: string | number;
+  personalRating?: number;
+  criticRating?: number;
+  audienceRating?: number;
+  status?: MediaStatus;
+  onClick: (id: string | number) => void;
+}
+
+const MediaCard: React.FC<MediaCardProps> = ({
   id,
   title,
   subtitle,
@@ -15,7 +32,7 @@ const MediaCard = ({
   personalRating,
   criticRating,
   audienceRating,
-  status, // 'watched', 'to-watch', etc.
+  status,
   onClick,
 }) => {
   const getStatusIcon = () => {
@@ -48,23 +65,43 @@ const MediaCard = ({
     }
   };
 
+  const getStatusLabel = () => {
+    const labels: Record<MediaStatus, string> = {
+      watched: "Watched",
+      "to-watch": "To Watch",
+      played: "Played",
+      "to-play": "To Play",
+      read: "Read",
+      "to-read": "To Read",
+    };
+    return status ? labels[status] : "";
+  };
+
   return (
     <SparkleEffect intensity="low">
-      <div
+      <article
         onClick={() => onClick(id)}
         className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow cursor-pointer group"
+        role="button"
+        tabIndex={0}
+        onKeyPress={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            onClick(id);
+          }
+        }}
+        aria-label={`View details for ${title}`}
       >
         {/* Poster Image */}
         <div className="relative aspect-[2/3] bg-gray-200 dark:bg-gray-700">
           {posterUrl ? (
             <img
               src={posterUrl}
-              alt={title}
+              alt={`${title} poster`}
               className="w-full h-full object-cover"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-400">
-              <Eye className="w-12 h-12" />
+              <Eye className="w-12 h-12" aria-hidden="true" />
             </div>
           )}
 
@@ -72,6 +109,7 @@ const MediaCard = ({
           {status && (
             <div
               className={`absolute top-2 right-2 ${getStatusColor()} text-white px-2 py-1 rounded-full flex items-center gap-1 text-xs font-medium`}
+              aria-label={getStatusLabel()}
             >
               {getStatusIcon()}
             </div>
@@ -79,7 +117,7 @@ const MediaCard = ({
 
           {/* Overlay on Hover */}
           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-            <Eye className="w-8 h-8 text-white" />
+            <Eye className="w-8 h-8 text-white" aria-hidden="true" />
           </div>
         </div>
 
@@ -102,53 +140,44 @@ const MediaCard = ({
           {/* Ratings */}
           <div className="flex items-center gap-4 text-sm">
             {/* Personal Rating */}
-            {personalRating && (
-              <div className="flex items-center gap-1 text-primary">
-                <Star className="w-4 h-4 fill-current" />
+            {personalRating !== undefined && (
+              <div
+                className="flex items-center gap-1 text-primary"
+                aria-label={`Personal rating: ${personalRating} stars`}
+              >
+                <Star className="w-4 h-4 fill-current" aria-hidden="true" />
                 <span className="font-medium">{personalRating}</span>
               </div>
             )}
 
             {/* Critic Rating */}
-            {criticRating && (
-              <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
-                <span className="text-xs">🍅</span>
+            {criticRating !== undefined && (
+              <div
+                className="flex items-center gap-1 text-gray-600 dark:text-gray-400"
+                aria-label={`Critic rating: ${criticRating} percent`}
+              >
+                <span className="text-xs" aria-hidden="true">
+                  🍅
+                </span>
                 <span>{criticRating}%</span>
               </div>
             )}
 
             {/* Audience Rating */}
-            {audienceRating && (
-              <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
-                <Star className="w-3 h-3" />
+            {audienceRating !== undefined && (
+              <div
+                className="flex items-center gap-1 text-gray-600 dark:text-gray-400"
+                aria-label={`Audience rating: ${audienceRating}`}
+              >
+                <Star className="w-3 h-3" aria-hidden="true" />
                 <span>{audienceRating}</span>
               </div>
             )}
           </div>
         </div>
-      </div>
+      </article>
     </SparkleEffect>
   );
-};
-
-MediaCard.propTypes = {
-  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  title: PropTypes.string.isRequired,
-  subtitle: PropTypes.string,
-  posterUrl: PropTypes.string,
-  year: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  personalRating: PropTypes.number,
-  criticRating: PropTypes.number,
-  audienceRating: PropTypes.number,
-  status: PropTypes.oneOf([
-    "watched",
-    "to-watch",
-    "played",
-    "to-play",
-    "read",
-    "to-read",
-  ]),
-  onClick: PropTypes.func.isRequired,
 };
 
 export default MediaCard;

@@ -1,12 +1,45 @@
-import React, { useState } from "react";
-import PropTypes from "prop-types";
+import React, { useState, useEffect } from "react";
 import { X, Star, Calendar, Clock, Users, ExternalLink } from "lucide-react";
 import Button from "../shared/Button";
 
-/**
- * Detailed view modal for media items
- */
-const MediaDetailModal = ({
+type MediaStatus = "completed" | "in-progress" | "to-watch" | "dropped";
+
+interface MediaItem {
+  title: string;
+  poster?: string;
+  year?: number;
+  runtime?: string;
+  description?: string;
+  criticScore?: number;
+  audienceScore?: number;
+  externalUrl?: string;
+}
+
+interface FriendRating {
+  id: string;
+  name: string;
+  rating: number;
+}
+
+interface MediaDetailModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  item: MediaItem;
+  userRating?: number;
+  userStatus?: MediaStatus;
+  friendsRatings?: FriendRating[];
+  onRatingChange: (rating: number) => void;
+  onStatusChange: (status: MediaStatus) => void;
+}
+
+const STATUS_OPTIONS: Array<{ value: MediaStatus; label: string }> = [
+  { value: "completed", label: "Completed" },
+  { value: "in-progress", label: "In Progress" },
+  { value: "to-watch", label: "To Watch" },
+  { value: "dropped", label: "Dropped" },
+];
+
+const MediaDetailModal: React.FC<MediaDetailModalProps> = ({
   isOpen,
   onClose,
   item,
@@ -19,23 +52,36 @@ const MediaDetailModal = ({
   const [localRating, setLocalRating] = useState(userRating || 0);
   const [hoveredRating, setHoveredRating] = useState(0);
 
+  useEffect(() => {
+    // Close modal on Escape key
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleEscape);
+      document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const handleRatingSubmit = () => {
     onRatingChange(localRating);
   };
 
-  const statusOptions = [
-    { value: "completed", label: "Completed" },
-    { value: "in-progress", label: "In Progress" },
-    { value: "to-watch", label: "To Watch" },
-    { value: "dropped", label: "Dropped" },
-  ];
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
     >
       <div
         className="relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-y-auto"
@@ -51,25 +97,28 @@ const MediaDetailModal = ({
         </button>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-6 sm:p-8">
           {/* Header Section */}
-          <div className="flex gap-6 mb-6">
+          <div className="flex flex-col sm:flex-row gap-6 mb-6">
             {/* Poster */}
             {item.poster ? (
               <img
                 src={item.poster}
-                alt={item.title}
-                className="w-40 h-60 object-cover rounded-lg shadow-lg"
+                alt={`${item.title} poster`}
+                className="w-full sm:w-40 h-60 object-cover rounded-lg shadow-lg"
               />
             ) : (
-              <div className="w-40 h-60 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+              <div className="w-full sm:w-40 h-60 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
                 <span className="text-gray-400 text-sm">No Image</span>
               </div>
             )}
 
             {/* Info */}
             <div className="flex-1">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              <h2
+                id="modal-title"
+                className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2"
+              >
                 {item.title}
               </h2>
 
@@ -77,13 +126,13 @@ const MediaDetailModal = ({
               <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
                 {item.year && (
                   <div className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
+                    <Calendar className="w-4 h-4" aria-hidden="true" />
                     <span>{item.year}</span>
                   </div>
                 )}
                 {item.runtime && (
                   <div className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
+                    <Clock className="w-4 h-4" aria-hidden="true" />
                     <span>{item.runtime}</span>
                   </div>
                 )}
@@ -91,7 +140,7 @@ const MediaDetailModal = ({
 
               {/* External Ratings */}
               <div className="flex flex-wrap gap-4 mb-4">
-                {item.criticScore && (
+                {item.criticScore !== undefined && (
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-gray-600 dark:text-gray-400">
                       Critics:
@@ -101,7 +150,7 @@ const MediaDetailModal = ({
                     </span>
                   </div>
                 )}
-                {item.audienceScore && (
+                {item.audienceScore !== undefined && (
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-gray-600 dark:text-gray-400">
                       Audience:
@@ -115,11 +164,18 @@ const MediaDetailModal = ({
 
               {/* Status Selector */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  id="status-label"
+                >
                   Status
                 </label>
-                <div className="flex gap-2">
-                  {statusOptions.map((option) => (
+                <div
+                  className="flex flex-wrap gap-2"
+                  role="group"
+                  aria-labelledby="status-label"
+                >
+                  {STATUS_OPTIONS.map((option) => (
                     <button
                       key={option.value}
                       onClick={() => onStatusChange(option.value)}
@@ -128,6 +184,7 @@ const MediaDetailModal = ({
                           ? "bg-primary text-white"
                           : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                       }`}
+                      aria-pressed={userStatus === option.value}
                     >
                       {option.label}
                     </button>
@@ -137,11 +194,18 @@ const MediaDetailModal = ({
 
               {/* Rating Input */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  id="rating-label"
+                >
                   Your Rating
                 </label>
                 <div className="flex items-center gap-4">
-                  <div className="flex gap-1">
+                  <div
+                    className="flex gap-1"
+                    role="group"
+                    aria-labelledby="rating-label"
+                  >
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
                         key={star}
@@ -149,7 +213,7 @@ const MediaDetailModal = ({
                         onMouseLeave={() => setHoveredRating(0)}
                         onClick={() => setLocalRating(star)}
                         className="p-1 transition-transform hover:scale-110"
-                        aria-label={`Rate ${star} stars`}
+                        aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
                       >
                         <Star
                           className={`w-6 h-6 ${
@@ -157,6 +221,7 @@ const MediaDetailModal = ({
                               ? "fill-yellow-400 text-yellow-400"
                               : "text-gray-300 dark:text-gray-600"
                           }`}
+                          aria-hidden="true"
                         />
                       </button>
                     ))}
@@ -187,12 +252,12 @@ const MediaDetailModal = ({
           {friendsRatings && friendsRatings.length > 0 && (
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                Friends&apos; Ratings
+                <Users className="w-5 h-5" aria-hidden="true" />
+                Friends' Ratings
               </h3>
-              <div className="space-y-2">
+              <ul className="space-y-2">
                 {friendsRatings.map((friend) => (
-                  <div
+                  <li
                     key={friend.id}
                     className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
                   >
@@ -200,7 +265,10 @@ const MediaDetailModal = ({
                       {friend.name}
                     </span>
                     <div className="flex items-center gap-2">
-                      <div className="flex">
+                      <div
+                        className="flex"
+                        aria-label={`${friend.name} rated ${friend.rating} out of 5 stars`}
+                      >
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Star
                             key={star}
@@ -209,6 +277,7 @@ const MediaDetailModal = ({
                                 ? "fill-yellow-400 text-yellow-400"
                                 : "text-gray-300 dark:text-gray-600"
                             }`}
+                            aria-hidden="true"
                           />
                         ))}
                       </div>
@@ -216,9 +285,9 @@ const MediaDetailModal = ({
                         {friend.rating}/5
                       </span>
                     </div>
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           )}
 
@@ -231,10 +300,11 @@ const MediaDetailModal = ({
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-primary hover:text-primary-dark transition-colors"
               >
-                <ExternalLink className="w-4 h-4" />
+                <ExternalLink className="w-4 h-4" aria-hidden="true" />
                 <span className="text-sm font-medium">
                   View on External Site
                 </span>
+                <span className="sr-only">(opens in new tab)</span>
               </a>
             </div>
           )}
@@ -242,32 +312,6 @@ const MediaDetailModal = ({
       </div>
     </div>
   );
-};
-
-MediaDetailModal.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
-  item: PropTypes.shape({
-    title: PropTypes.string.isRequired,
-    poster: PropTypes.string,
-    year: PropTypes.number,
-    runtime: PropTypes.string,
-    description: PropTypes.string,
-    criticScore: PropTypes.number,
-    audienceScore: PropTypes.number,
-    externalUrl: PropTypes.string,
-  }).isRequired,
-  userRating: PropTypes.number,
-  userStatus: PropTypes.string,
-  friendsRatings: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.string.isRequired,
-      name: PropTypes.string.isRequired,
-      rating: PropTypes.number.isRequired,
-    })
-  ),
-  onRatingChange: PropTypes.func.isRequired,
-  onStatusChange: PropTypes.func.isRequired,
 };
 
 export default MediaDetailModal;

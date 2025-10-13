@@ -1,15 +1,27 @@
 import React, { useState } from "react";
-import PropTypes from "prop-types";
 import { Plus, X } from "lucide-react";
 import Button from "../shared/Button";
 
-const NewSuggestionForm = ({ onSubmit, onCancel }) => {
+interface SuggestionFormData {
+  title: string;
+  description: string;
+}
+
+interface NewSuggestionFormProps {
+  onSubmit: (data: SuggestionFormData) => Promise<void>;
+  onCancel?: () => void;
+}
+
+const NewSuggestionForm: React.FC<NewSuggestionFormProps> = ({
+  onSubmit,
+  onCancel,
+}) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!title.trim()) {
@@ -34,25 +46,28 @@ const NewSuggestionForm = ({ onSubmit, onCancel }) => {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-      <div className="flex items-center justify-between mb-4">
+      <header className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <Plus className="w-5 h-5 text-purple-600" />
+          <Plus className="w-5 h-5 text-purple-600" aria-hidden="true" />
           New Suggestion
         </h3>
         {onCancel && (
           <button
             onClick={onCancel}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-            aria-label="Close"
+            aria-label="Close form"
           >
             <X className="w-5 h-5" />
           </button>
         )}
-      </div>
+      </header>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-600 dark:text-red-400">
+          <div
+            className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-600 dark:text-red-400"
+            role="alert"
+          >
             {error}
           </div>
         )}
@@ -62,7 +77,7 @@ const NewSuggestionForm = ({ onSubmit, onCancel }) => {
             htmlFor="title"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
-            Title *
+            Title <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -73,6 +88,8 @@ const NewSuggestionForm = ({ onSubmit, onCancel }) => {
             placeholder="e.g., Add dark mode toggle to navigation"
             disabled={isSubmitting}
             maxLength={200}
+            required
+            aria-required="true"
           />
         </div>
 
@@ -92,13 +109,17 @@ const NewSuggestionForm = ({ onSubmit, onCancel }) => {
             rows={4}
             disabled={isSubmitting}
             maxLength={1000}
+            aria-describedby="char-count"
           />
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          <p
+            id="char-count"
+            className="mt-1 text-xs text-gray-500 dark:text-gray-400"
+          >
             {description.length}/1000 characters
           </p>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex gap-3 pt-2">
           <Button
             type="submit"
             disabled={isSubmitting || !title.trim()}
@@ -120,11 +141,6 @@ const NewSuggestionForm = ({ onSubmit, onCancel }) => {
       </form>
     </div>
   );
-};
-
-NewSuggestionForm.propTypes = {
-  onSubmit: PropTypes.func.isRequired,
-  onCancel: PropTypes.func,
 };
 
 export default NewSuggestionForm;

@@ -1,9 +1,20 @@
 import React from "react";
-import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import SparkleEffect from "../effects/SparkleEffect";
 
-const DashboardCard = ({ title, description, gradient, route }) => {
+interface DashboardCardProps {
+  title: string;
+  description: string;
+  gradient: string;
+  route?: string;
+}
+
+const DashboardCard: React.FC<DashboardCardProps> = ({
+  title,
+  description,
+  gradient,
+  route,
+}) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
@@ -14,9 +25,10 @@ const DashboardCard = ({ title, description, gradient, route }) => {
 
   return (
     <SparkleEffect intensity="medium">
-      <div
+      <button
         onClick={handleClick}
-        className={`bg-white dark:bg-gray-800 bg-gradient-to-br ${gradient} border border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:shadow-lg transition-shadow duration-300 cursor-pointer group`}
+        className={`w-full text-left bg-white dark:bg-gray-800 bg-gradient-to-br ${gradient} border border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:shadow-lg transition-shadow duration-300 cursor-pointer group`}
+        aria-label={`Navigate to ${title}`}
       >
         <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white group-hover:text-primary transition-colors duration-300">
           {title}
@@ -24,16 +36,9 @@ const DashboardCard = ({ title, description, gradient, route }) => {
         <p className="text-gray-600 dark:text-gray-300 text-sm">
           {description}
         </p>
-      </div>
+      </button>
     </SparkleEffect>
   );
-};
-
-DashboardCard.propTypes = {
-  title: PropTypes.string.isRequired,
-  description: PropTypes.string.isRequired,
-  gradient: PropTypes.string.isRequired,
-  route: PropTypes.string,
 };
 
 export default DashboardCard;
