@@ -9,6 +9,7 @@ import MoviesTV from "./components/MoviesTV";
 import AuthPage from "./components/AuthPage";
 import AdminPanel from "./components/AdminPanel";
 import UserSettings from "./components/UserSettings";
+import Suggestions from "./components/Suggestions";
 import StarryBackground from "./components/StarryBackground";
 import PageContainer from "./components/shared/PageContainer";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -63,6 +64,10 @@ const AppLayout = ({ user }) => {
         <Route path="/fitness" element={<FitnessDashboard />} />
         <Route path="/movies-tv" element={<MoviesTV />} />
         <Route path="/settings" element={<UserSettings currentUser={user} />} />
+        <Route
+          path="/suggestions"
+          element={<Suggestions currentUser={user} />}
+        />
         <Route
           path="/admin"
           element={

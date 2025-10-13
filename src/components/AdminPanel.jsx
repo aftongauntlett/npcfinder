@@ -7,6 +7,9 @@ import {
   UserPlus,
   TrendingUp,
   Activity,
+  Search,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import Button from "./shared/Button";
@@ -22,6 +25,12 @@ const AdminPanel = () => {
   const [popularMedia, setPopularMedia] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // User list pagination and search
+  const [userSearch, setUserSearch] = useState("");
+  const [userPage, setUserPage] = useState(0);
+  const [totalUserPages, setTotalUserPages] = useState(0);
+  const USERS_PER_PAGE = 5;
 
   // Fetch all admin data
   const fetchAdminData = async () => {
@@ -39,10 +48,10 @@ const AdminPanel = () => {
           .eq("status", "accepted"),
       ]);
 
-      // Get total users from auth
+      // Get total users from user_profiles table
       const { count: userCount } = await supabase
-        .from("user_media")
-        .select("user_id", { count: "exact", head: true });
+        .from("user_profiles")
+        .select("*", { count: "exact", head: true });
 
       setStats({
         totalUsers: userCount || 0,
@@ -104,35 +113,61 @@ const AdminPanel = () => {
 
       setRecentActivity(recentRatings || []);
 
-      // Get unique users from user_media for user list
-      const { data: userMediaForUsers } = await supabase
-        .from("user_media")
-        .select("user_id, created_at")
-        .order("created_at", { ascending: false })
-        .limit(50);
-
-      // Get unique users
-      const uniqueUsers = {};
-      userMediaForUsers?.forEach((item) => {
-        if (!uniqueUsers[item.user_id]) {
-          uniqueUsers[item.user_id] = item.created_at;
-        }
-      });
-
-      const usersList = Object.entries(uniqueUsers)
-        .map(([id, created_at]) => ({ id, created_at, email: "User" }))
-        .slice(0, 10);
-
-      setUsers(usersList);
+      // Fetch users for current page (will be called separately)
     } catch (error) {
       console.error("Error fetching admin data:", error);
     }
     setLoading(false);
   };
 
+  // Separate function to fetch users with pagination and search
+  const fetchUsers = async () => {
+    try {
+      let query = supabase
+        .from("user_profiles")
+        .select("user_id, display_name, bio, created_at, updated_at", {
+          count: "exact",
+        });
+
+      // Apply search filter if there's a search term
+      if (userSearch.trim()) {
+        query = query.or(
+          `display_name.ilike.%${userSearch}%,bio.ilike.%${userSearch}%`
+        );
+      }
+
+      // Get total count for pagination
+      const { count } = await query;
+      setTotalUserPages(Math.ceil((count || 0) / USERS_PER_PAGE));
+
+      // Fetch paginated results
+      const { data: userProfiles } = await query
+        .order("created_at", { ascending: false })
+        .range(userPage * USERS_PER_PAGE, (userPage + 1) * USERS_PER_PAGE - 1);
+
+      const usersList =
+        userProfiles?.map((profile) => ({
+          id: profile.user_id,
+          display_name: profile.display_name || "No Name Set",
+          bio: profile.bio,
+          created_at: profile.created_at,
+          updated_at: profile.updated_at,
+        })) || [];
+
+      setUsers(usersList);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    }
+  };
+
   useEffect(() => {
     fetchAdminData();
   }, []);
+
+  useEffect(() => {
+    fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userPage, userSearch]);
 
   if (loading) {
     return (
@@ -230,29 +265,94 @@ const AdminPanel = () => {
           <div className="bg-white/5 backdrop-blur-sm rounded-lg p-6 border border-white/10">
             <div className="flex items-center gap-2 mb-4">
               <Users className="w-6 h-6 text-blue-400" />
-              <h2 className="text-2xl font-bold">Recent Users</h2>
+              <h2 className="text-2xl font-bold">Users</h2>
             </div>
+
+            {/* Search Bar */}
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search by name or bio..."
+                value={userSearch}
+                onChange={(e) => {
+                  setUserSearch(e.target.value);
+                  setUserPage(0); // Reset to first page on search
+                }}
+                className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
+            </div>
+
             {users.length > 0 ? (
-              <div className="space-y-3">
-                {users.map((user) => (
-                  <div
-                    key={user.id}
-                    className="flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
-                  >
-                    <div>
-                      <p className="font-medium">User</p>
-                      <p className="text-xs text-gray-400 font-mono">
-                        ID: {user.id.slice(0, 8)}...
+              <>
+                <div className="space-y-3 mb-4">
+                  {users.map((user) => (
+                    <div
+                      key={user.id}
+                      className="p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <p className="font-semibold text-lg">
+                            {user.display_name}
+                          </p>
+                          {user.bio && (
+                            <p className="text-sm text-gray-400 mt-1 italic">
+                              "{user.bio}"
+                            </p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-gray-500">
+                            Joined:{" "}
+                            {new Date(user.created_at).toLocaleDateString()}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Updated:{" "}
+                            {new Date(user.updated_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-500 font-mono">
+                        ID: {user.id}
                       </p>
                     </div>
-                    <p className="text-sm text-gray-400">
-                      {new Date(user.created_at).toLocaleDateString()}
-                    </p>
+                  ))}
+                </div>
+
+                {/* Pagination Controls */}
+                {totalUserPages > 1 && (
+                  <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                    <button
+                      onClick={() => setUserPage(Math.max(0, userPage - 1))}
+                      disabled={userPage === 0}
+                      className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      Previous
+                    </button>
+                    <span className="text-sm text-gray-400">
+                      Page {userPage + 1} of {totalUserPages}
+                    </span>
+                    <button
+                      onClick={() =>
+                        setUserPage(Math.min(totalUserPages - 1, userPage + 1))
+                      }
+                      disabled={userPage >= totalUserPages - 1}
+                      className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             ) : (
-              <p className="text-gray-400 italic">No users yet</p>
+              <p className="text-gray-400 italic">
+                {userSearch
+                  ? "No users found matching your search"
+                  : "No users yet"}
+              </p>
             )}
           </div>
         </div>

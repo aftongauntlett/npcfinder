@@ -41,17 +41,25 @@ export const getUserProfile = async (userId) => {
 
 /**
  * Create or update user profile
+ * Uses upsert with conflict resolution on user_id
  */
 export const upsertUserProfile = async (userId, profileData) => {
   try {
     const { data, error } = await supabase
       .from("user_profiles")
-      .upsert({
-        user_id: userId,
-        display_name: profileData.display_name || null,
-        bio: profileData.bio || null,
-        profile_picture_url: profileData.profile_picture_url || null,
-      })
+      .upsert(
+        {
+          user_id: userId,
+          display_name: profileData.display_name || null,
+          bio: profileData.bio || null,
+          profile_picture_url: profileData.profile_picture_url || null,
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: "user_id", // Specify which column to check for conflicts
+          ignoreDuplicates: false, // Update existing records
+        }
+      )
       .select()
       .single();
 

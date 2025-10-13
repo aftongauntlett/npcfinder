@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   LogOut,
   FlaskConical,
@@ -18,6 +18,7 @@ const Navigation = ({ currentUser }) => {
   const [displayName, setDisplayName] = useState(null);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -39,7 +40,7 @@ const Navigation = ({ currentUser }) => {
     };
 
     loadUserProfile();
-  }, [currentUser]);
+  }, [currentUser, location.pathname]); // Re-fetch when route changes
 
   const handleLogout = async () => {
     const confirmed = window.confirm("Are you sure you want to sign out?");
@@ -116,7 +117,7 @@ const Navigation = ({ currentUser }) => {
                       className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors whitespace-nowrap"
                     >
                       <FlaskConical className="w-4 h-4" />
-                      <span>Admin</span>
+                      <span>Admin Panel</span>
                     </button>
                   )}
 
