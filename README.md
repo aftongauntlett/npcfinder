@@ -109,6 +109,11 @@ Comprehensive guides available in the `docs/` folder:
 - **[Testing Guide](docs/TESTING_GUIDE.md)** - How to write and run tests
 - **[Test Results](TEST_RESULTS.md)** - Current test coverage (78 tests passing ✅)
 
+### Security
+
+- **[Security Checks Guide](docs/SECURITY_CHECKS.md)** - How to run security audits and interpret results
+- **[GitHub Security Checklist](docs/GITHUB_SECURITY_CHECKLIST.md)** - Pre-publication security review
+
 ### Roadmap
 
 - **[Feature Roadmap](ROADMAP.md)** - What's coming next

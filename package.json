@@ -11,7 +11,10 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
-    "prepare": "husky"
+    "prepare": "husky",
+    "audit": "npm audit --audit-level=moderate",
+    "audit:fix": "npm audit fix",
+    "security:check": "npm audit --audit-level=moderate && npm run lint && npm run test -- --run"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.75.0",
