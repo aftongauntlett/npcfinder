@@ -13,6 +13,7 @@ import {
   type Suggestion,
 } from "../lib/suggestions";
 import KanbanColumn from "./suggestions/KanbanColumn";
+import PageContentContainer from "./shared/PageContentContainer";
 import NewSuggestionForm from "./suggestions/NewSuggestionForm";
 import Button from "./shared/Button";
 import Alert from "./shared/Alert";
@@ -198,7 +199,7 @@ const Suggestions: React.FC<SuggestionsProps> = ({ currentUser }) => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
+    <PageContentContainer className="max-w-7xl">
       {/* Header */}
       <header className="mb-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -297,7 +298,7 @@ const Suggestions: React.FC<SuggestionsProps> = ({ currentUser }) => {
           </Button>
         </div>
       )}
-    </div>
+    </PageContentContainer>
   );
 };
 

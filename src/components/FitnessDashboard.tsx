@@ -14,6 +14,7 @@ import RecentEntries from "./fitness/RecentEntries";
 import Settings from "./Settings";
 import StatCard from "./shared/StatCard";
 import Card from "./shared/Card";
+import PageContentContainer from "./shared/PageContentContainer";
 
 interface Stats {
   todayLogs: number;
@@ -158,7 +159,7 @@ const FitnessDashboard: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+    <PageContentContainer>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
           Fitness Dashboard
@@ -168,7 +169,7 @@ const FitnessDashboard: React.FC = () => {
             onClick={() => setActiveTab("dashboard")}
             className={`px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm sm:text-base ${
               activeTab === "dashboard"
-                ? "bg-purple-600 text-white"
+                ? "bg-primary text-white"
                 : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
             }`}
             aria-label="View dashboard"
@@ -183,7 +184,7 @@ const FitnessDashboard: React.FC = () => {
             onClick={() => setActiveTab("settings")}
             className={`px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm sm:text-base ${
               activeTab === "settings"
-                ? "bg-purple-600 text-white"
+                ? "bg-primary text-white"
                 : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
             }`}
             aria-label="View settings"
@@ -263,7 +264,7 @@ const FitnessDashboard: React.FC = () => {
               </h3>
               <button
                 onClick={() => setShowQuickLog(true)}
-                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm sm:text-base"
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors text-sm sm:text-base"
               >
                 <Plus className="w-4 h-4" aria-hidden="true" />
                 Quick Log
@@ -281,7 +282,7 @@ const FitnessDashboard: React.FC = () => {
           )}
         </>
       )}
-    </div>
+    </PageContentContainer>
   );
 };
 

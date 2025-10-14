@@ -14,6 +14,7 @@ import {
 import { supabase } from "../lib/supabase";
 import Button from "./shared/Button";
 import InviteCodeManager from "./admin/InviteCodeManager";
+import PageContentContainer from "./shared/PageContentContainer";
 
 interface Stats {
   totalUsers: number;
@@ -256,7 +257,7 @@ const AdminPanel: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 text-white p-4 sm:p-8">
+    <PageContentContainer className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 text-white">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div>
@@ -591,7 +592,7 @@ const AdminPanel: React.FC = () => {
           </>
         )}
       </div>
-    </div>
+    </PageContentContainer>
   );
 };
 

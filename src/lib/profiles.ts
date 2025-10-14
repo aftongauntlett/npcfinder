@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import type { PostgrestError } from "@supabase/supabase-js";
+import type { ThemeColorName } from "../styles/colorThemes";
 
 /**
  * User Profile utilities
@@ -11,6 +12,8 @@ export interface UserProfile {
   display_name: string | null;
   bio: string | null;
   profile_picture_url: string | null;
+  visible_cards?: string[]; // Array of card IDs to show on dashboard
+  theme_color?: ThemeColorName; // User's chosen theme color
   created_at?: string;
   updated_at?: string;
 }
@@ -65,21 +68,30 @@ export const upsertUserProfile = async (
   profileData: Partial<Omit<UserProfile, "user_id">>
 ): Promise<ProfileResult<UserProfile>> => {
   try {
+    const updateData: Record<string, unknown> = {
+      user_id: userId,
+      display_name: profileData.display_name || null,
+      bio: profileData.bio || null,
+      profile_picture_url: profileData.profile_picture_url || null,
+      updated_at: new Date().toISOString(),
+    };
+
+    // Include visible_cards if provided
+    if (profileData.visible_cards !== undefined) {
+      updateData.visible_cards = profileData.visible_cards;
+    }
+
+    // Include theme_color if provided
+    if (profileData.theme_color !== undefined) {
+      updateData.theme_color = profileData.theme_color;
+    }
+
     const { data, error } = await supabase
       .from("user_profiles")
-      .upsert(
-        {
-          user_id: userId,
-          display_name: profileData.display_name || null,
-          bio: profileData.bio || null,
-          profile_picture_url: profileData.profile_picture_url || null,
-          updated_at: new Date().toISOString(),
-        },
-        {
-          onConflict: "user_id", // Specify which column to check for conflicts
-          ignoreDuplicates: false, // Update existing records
-        }
-      )
+      .upsert(updateData, {
+        onConflict: "user_id", // Specify which column to check for conflicts
+        ignoreDuplicates: false, // Update existing records
+      })
       .select()
       .single();
 
