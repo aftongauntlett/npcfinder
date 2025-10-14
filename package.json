@@ -1,7 +1,9 @@
 {
   "name": "npc-finder",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Your personal dashboard for entertainment, music, games, fitness, restaurants, and memories. Track, organize, and curate your life.",
+  "author": "Afton Gauntlett",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -14,7 +16,12 @@
     "prepare": "husky",
     "audit": "npm audit --audit-level=moderate",
     "audit:fix": "npm audit fix",
-    "security:check": "npm audit --audit-level=moderate && npm run lint && npm run test -- --run"
+    "security:check": "npm audit --audit-level=moderate && npm run lint && npm run test -- --run",
+    "db:migration:new": "npx supabase migration new",
+    "db:migration:push": "npx supabase db push",
+    "db:migration:status": "npx supabase migration list",
+    "db:reset": "npx supabase db reset",
+    "db:diff": "npx supabase db diff --linked"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.75.0",
@@ -50,6 +57,7 @@
     "jsdom": "^27.0.0",
     "lint-staged": "^16.2.4",
     "postcss": "^8.5.6",
+    "supabase": "^2.51.0",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.1",

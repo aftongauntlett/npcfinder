@@ -13,6 +13,10 @@ dist-ssr
 *.local
 coverage
 
+# Supabase
+.temp/
+.branches/
+
 # Ignore all Markdown files
 *.md
 
