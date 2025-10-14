@@ -8,6 +8,7 @@ import {
   Settings,
   ChevronDown,
 } from "lucide-react";
+import QuickSwitch from "./shared/QuickSwitch";
 import WeatherWidget from "./shared/WeatherWidget";
 import { signOut } from "../lib/auth";
 import { isAdmin } from "../lib/admin";
@@ -96,15 +97,16 @@ const Navigation: React.FC<NavigationProps> = ({ currentUser }) => {
             NPC Finder
           </h1>
 
-          {/* Right side: Weather and Profile Dropdown */}
+          {/* Right side: QuickSwitch, Weather Widget, and Profile Dropdown */}
           <div className="flex items-center gap-2 sm:gap-4">
+            <QuickSwitch />
             <WeatherWidget />
 
             {/* Profile Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-2 px-2 sm:px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="flex items-center gap-2 px-2 sm:px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary-light transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
                 aria-label="Profile menu"
                 aria-expanded={isDropdownOpen}
                 aria-haspopup="true"

@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import type { User } from "@supabase/supabase-js";
 import Footer from "./components/shared/Footer";
 import DashboardCard from "./components/dashboard/DashboardCard";
-import Hero from "./components/Hero";
+import DashboardHeader from "./components/dashboard/DashboardHeader";
 import Navigation from "./components/Navigation";
 import FitnessDashboard from "./components/FitnessDashboard";
 import MoviesTV from "./components/MoviesTV";
@@ -17,26 +17,82 @@ import PageContainer from "./components/shared/PageContainer";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { isAdmin } from "./lib/admin";
+import { getUserProfile } from "./lib/profiles";
 import { cards } from "./data/dashboardCards";
+import { useTheme } from "./hooks/useTheme";
 
 // Home page component
-const HomePage: React.FC = () => (
-  <main className="container mx-auto px-6 py-12">
-    <Hero />
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-      {cards.map((card) => (
-        <DashboardCard
-          key={card.id}
-          title={card.title}
-          description={card.description}
-          gradient={card.gradient}
-          route={card.route}
-        />
-      ))}
-    </div>
-    <Footer />
-  </main>
-);
+interface HomePageProps {
+  user: User;
+}
+
+const HomePage: React.FC<HomePageProps> = ({ user }) => {
+  const [displayName, setDisplayName] = useState<string | null>(null);
+  const [visibleCards, setVisibleCards] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { changeThemeColor } = useTheme();
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const { data } = await getUserProfile(user.id);
+        setDisplayName(data?.display_name || null);
+
+        // If user has card preferences, use them. Otherwise show all cards
+        const allCardIds = cards.map((c) => c.cardId);
+        setVisibleCards(data?.visible_cards || allCardIds);
+
+        // Load and apply user's theme color
+        if (data?.theme_color) {
+          changeThemeColor(data.theme_color);
+        }
+      } catch (error) {
+        console.error("Failed to load profile:", error);
+        // Default to showing all cards
+        setVisibleCards(cards.map((c) => c.cardId));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void loadProfile();
+  }, [user.id, changeThemeColor]);
+
+  // Filter cards based on user preferences
+  const filteredCards = cards.filter((card) =>
+    visibleCards.includes(card.cardId)
+  );
+
+  if (isLoading) {
+    return (
+      <main className="container mx-auto px-6 py-12">
+        <div className="text-center text-gray-600 dark:text-gray-400">
+          Loading your dashboard...
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="container mx-auto px-6 py-12">
+      {/* Greeting Header */}
+      <DashboardHeader displayName={displayName || undefined} />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        {filteredCards.map((card) => (
+          <DashboardCard
+            key={card.id}
+            title={card.title}
+            description={card.description}
+            gradient={card.gradient}
+            route={card.route}
+          />
+        ))}
+      </div>
+      <Footer />
+    </main>
+  );
+};
 
 // Protected Route wrapper for admin routes
 interface ProtectedAdminRouteProps {
@@ -74,7 +130,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ user }) => {
       <StarryBackground />
       <Navigation currentUser={user} />
       <Routes>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<HomePage user={user} />} />
         <Route path="/fitness" element={<FitnessDashboard />} />
         <Route path="/movies-tv" element={<MoviesTV />} />
         <Route path="/settings" element={<UserSettings currentUser={user} />} />
