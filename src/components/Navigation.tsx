@@ -68,7 +68,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentUser }) => {
 
   const handleMenuItemClick = (path: string) => {
     setIsDropdownOpen(false);
-    navigate(path);
+    void navigate(path);
   };
 
   const showAdminButton = currentUser && isAdmin(currentUser.id);
@@ -83,13 +83,13 @@ const Navigation: React.FC<NavigationProps> = ({ currentUser }) => {
         <div className="flex justify-between items-center h-16">
           {/* Left side: Title (clickable to go home) */}
           <h1
-            onClick={() => navigate("/")}
+            onClick={() => void navigate("/")}
             className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white cursor-pointer hover:text-primary transition-colors"
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
-                navigate("/");
+                void navigate("/");
               }
             }}
           >

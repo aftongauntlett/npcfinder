@@ -9,9 +9,14 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+interface ChartDataPoint {
+  date: string;
+  [key: string]: string | number | undefined;
+}
+
 interface TrendChartProps {
   title: string;
-  data: Array<Record<string, string | number | null | undefined>>;
+  data: ChartDataPoint[];
   dataKey: string;
   unit: string;
   color: string;

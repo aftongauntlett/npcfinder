@@ -19,7 +19,7 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
 
   const handleClick = () => {
     if (route) {
-      navigate(route);
+      void navigate(route);
     }
   };
 

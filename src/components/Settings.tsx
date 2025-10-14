@@ -54,7 +54,7 @@ const Settings: React.FC = () => {
         ...settings,
         updatedAt: new Date(),
       });
-      changeTheme(settings.theme as "light" | "dark" | "system");
+      await changeTheme(settings.theme as "light" | "dark" | "system");
       alert("Settings saved!");
     } catch (error) {
       console.error("Failed to save settings:", error);

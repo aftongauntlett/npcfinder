@@ -43,14 +43,14 @@ const Suggestions: React.FC<SuggestionsProps> = ({ currentUser }) => {
     void loadSuggestions();
 
     // Subscribe to real-time updates
-    const subscription = subscribeSuggestions(async (payload) => {
+    const subscription = subscribeSuggestions((payload) => {
       console.log("Real-time update:", payload);
       // Reload suggestions when changes occur
-      await loadSuggestions();
+      void loadSuggestions();
     });
 
     return () => {
-      subscription.unsubscribe();
+      void subscription.unsubscribe();
     };
   }, []);
 

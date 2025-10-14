@@ -26,6 +26,7 @@ interface ChartDataPoint {
   date: string;
   weight?: number;
   waist?: number;
+  [key: string]: string | number | undefined;
 }
 
 const FitnessDashboard: React.FC = () => {
@@ -268,7 +269,7 @@ const FitnessDashboard: React.FC = () => {
                 Quick Log
               </button>
             </div>
-            <RecentEntries onDataChange={loadDashboardData} />
+            <RecentEntries onDataChange={() => void loadDashboardData()} />
           </Card>
 
           {/* Quick Log Modal */}

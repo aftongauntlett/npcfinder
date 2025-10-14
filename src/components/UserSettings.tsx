@@ -86,7 +86,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
       } else {
         setMessage({ type: "success", text: "Profile updated successfully!" });
         void setTimeout(() => {
-          navigate("/");
+          void navigate("/");
         }, 1500);
       }
     } catch (error) {
@@ -121,7 +121,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
               </h1>
             </div>
             <button
-              onClick={() => navigate("/")}
+              onClick={() => void navigate("/")}
               className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               aria-label="Close"
             >
@@ -252,7 +252,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => navigate("/")}
+                onClick={() => void navigate("/")}
                 className="px-8"
               >
                 Cancel
