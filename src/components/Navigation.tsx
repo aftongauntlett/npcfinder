@@ -83,13 +83,13 @@ const Navigation: React.FC<NavigationProps> = ({ currentUser }) => {
         <div className="flex justify-between items-center h-16">
           {/* Left side: Title (clickable to go home) */}
           <h1
-            onClick={() => void navigate("/")}
+            onClick={() => void navigate("/app")}
             className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white cursor-pointer hover:text-primary transition-colors"
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
-                void navigate("/");
+                void navigate("/app");
               }
             }}
           >
@@ -139,7 +139,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentUser }) => {
 
                   {/* Settings */}
                   <button
-                    onClick={() => handleMenuItemClick("/settings")}
+                    onClick={() => handleMenuItemClick("/app/settings")}
                     className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors whitespace-nowrap text-left"
                     role="menuitem"
                   >
@@ -150,7 +150,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentUser }) => {
                   {/* Admin (if user is admin) */}
                   {showAdminButton && (
                     <button
-                      onClick={() => handleMenuItemClick("/admin")}
+                      onClick={() => handleMenuItemClick("/app/admin")}
                       className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors whitespace-nowrap text-left"
                       role="menuitem"
                     >

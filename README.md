@@ -1,8 +1,23 @@
 # NPC Finder
 
-> Your personal dashboard for everything you love - curated just for you.
+> **Track what matters. Share with friends. Keep it private.**
 
-A modern React application designed as a comprehensive personal dashboard for tracking movies & TV shows, music, games, books, fitness, restaurants, and more. Built with learning and modern React best practices in mind.
+A modern, invite-only React app for tracking movies, TV shows, games, books, and more. Built with privacy in mind - your data is protected from other users, with plans for end-to-end encryption for truly sensitive content.
+
+## 🔐 Privacy-First Design
+
+**Invite-Only Access** - No public signups. Share codes with trusted friends only.
+
+**Two-Tier Security Model:**
+
+- **Standard Security**: Media tracking with friend sharing (current)
+- **E2E Encryption**: Diary & health data that even the admin can't see (planned)
+
+**Learn More:**
+
+- 📖 [Privacy Reality Check](docs/PRIVACY_REALITY_CHECK.md) - What we can (and can't) promise
+- 🗺️ [Feature Roadmap](ROADMAP.md) - What's coming next
+- 🔮 [Future E2E Encryption](docs/FUTURE_E2E_ENCRYPTION.md) - Technical plan for sensitive data
 
 ## ✨ Features
 
@@ -70,43 +85,127 @@ Comprehensive tracking for Movies, TV Shows, Games, and Books with:
 
 Comprehensive guides available in the `docs/` folder:
 
+### Getting Started
+
 - **[Quick Start Guide](docs/QUICK_START.md)** - Get up and running in 30 minutes
+- **[Invite System Setup](INVITE_SYSTEM_QUICKSTART.md)** - How invite codes work
+- **[Deployment Checklist](docs/DEPLOYMENT_CHECKLIST.md)** - Pre-launch checklist
+
+### Features & Architecture
+
 - **[Media System Guide](docs/MEDIA_SYSTEM_GUIDE.md)** - Complete architecture and implementation details
 - **[Supabase Setup](docs/SUPABASE_SETUP.md)** - Database schema and configuration
 - **[API Setup](docs/API_SETUP.md)** - External API integration guide
-- **[Sparkle Effect](docs/SPARKLE_EFFECT.md)** - Using the sparkle hover effect
-- **[System Summary](docs/SUMMARY.md)** - Overview of the entire media tracking system
+
+### Privacy & Security
+
+- **[Privacy Reality Check](docs/PRIVACY_REALITY_CHECK.md)** - Honest explanation of what's private
+- **[Talking to Friends About Privacy](docs/TALKING_TO_FRIENDS_ABOUT_PRIVACY.md)** - How to explain security to users
+- **[Future E2E Encryption](docs/FUTURE_E2E_ENCRYPTION.md)** - Plan for diary & health encryption
+- **[GitHub Security Checklist](docs/GITHUB_SECURITY_CHECKLIST.md)** - Pre-publication security review
+
+### Testing
+
+- **[Testing Guide](docs/TESTING_GUIDE.md)** - How to write and run tests
+- **[Test Results](TEST_RESULTS.md)** - Current test coverage (78 tests passing ✅)
+
+### Roadmap
+
+- **[Feature Roadmap](ROADMAP.md)** - What's coming next
 
 **Start here**: `docs/QUICK_START.md` for step-by-step setup instructions!
 
-## 🎓 Learning Goals
+## 🎓 Learning Goals & Portfolio Value
 
 This project demonstrates:
 
-- **Class Components → Functional Components**: Traditional patterns vs modern hooks
-- **State Management**: From `this.state` to `useState` and beyond
-- **Component Architecture**: Reusable, composable components
-- **Modern React Patterns**: Context, custom hooks, and best practices
+- **Modern React Patterns**: Hooks, Context, custom hooks, and best practices
+- **Security Architecture**: Invite-only system with Row-Level Security (RLS)
+- **Database Design**: Relational database with Supabase and PostgreSQL
 - **API Integration**: Multiple external APIs with error handling
-- **Database Design**: Relational database with Supabase
+- **Testing**: Comprehensive test suite with Vitest (78 tests passing)
+- **Privacy by Design**: Two-tier security model (standard + E2E encryption)
+- **TypeScript**: Type-safe development with proper interfaces
+- **Component Architecture**: Reusable, composable components
+- **Authentication & Authorization**: Secure invite code system
 - **Accessibility**: ARIA labels, keyboard navigation, semantic HTML
-- **Performance**: Controlled inputs, PropTypes validation
+- **Performance**: Optimized builds, lazy loading, efficient state management
+
+**For Recruiters**: This is a production-ready app showcasing full-stack development, security consciousness, and thoughtful architecture.
+
+## 🤝 Privacy Promise
+
+**What IS Private:**
+
+- Your data is protected from other users via Row-Level Security
+- No selling, sharing, or third-party access
+- No analytics or tracking
+- Invite-only for trusted friends
+
+**What Is NOT Private (Yet):**
+
+- This isn't end-to-end encrypted like Signal (for media tracking)
+- Admin can technically access the database
+- Supabase (hosting provider) can access data
+
+**Future Plans:**
+
+- E2E encryption for diary entries (truly private thoughts)
+- E2E encryption for health data (weight, fitness metrics)
+- Standard security for social features (movies, recommendations)
+
+Read the full explanation: [Privacy Reality Check](docs/PRIVACY_REALITY_CHECK.md)
+
+## 🗺️ Roadmap
+
+**Current Phase:** MVP Complete ✅
+
+- ✅ Invite-only authentication
+- ✅ Media tracking (movies, TV, games, books)
+- ✅ Demo landing page
+- ✅ Comprehensive testing
+
+**Next Phase:** Social Features 👥
+
+- Friend system
+- Share recommendations
+- Activity feed
+
+**Future Phase:** E2E Encryption 🔐
+
+- Encrypted diary entries
+- Encrypted health tracking
+- Password-protected unlock
+
+See the full roadmap: [ROADMAP.md](ROADMAP.md)
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
 - Node.js 18+ and npm
+- Supabase account (free tier works!)
 - Git
 
 ### Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/aftongauntlett/npcfinder.git
+cd npcfinder
+
 # Install dependencies
 npm install
 
+# Set up environment variables
+cp .env.example .env.local
+# Edit .env.local with your Supabase credentials
+
 # Start development server
 npm run dev
+
+# Run tests
+npm test
 
 # Build for production
 npm run build
@@ -115,17 +214,25 @@ npm run build
 npm run preview
 ```
 
+### First-Time Setup
+
+1. **Set up Supabase** - Run the SQL scripts in your Supabase dashboard
+2. **Create invite codes** - Use the admin panel to generate codes
+3. **Invite friends** - Share codes via Signal or secure messaging
+4. **Deploy** - Push to Vercel/Netlify
+
+See [Quick Start Guide](docs/QUICK_START.md) for detailed instructions.
+
 ---
 
-_This is a personal learning project focused on React fundamentals and interview preparation. Not intended for commercial use._+ Vite
+## 📬 Contact
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Questions about privacy, security, or features? Check the docs or open an issue!
 
-Currently, two official plugins are available:
+## 📄 License
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+This is a personal project for learning and portfolio purposes.
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+_Built with ❤️ and a focus on privacy, security, and modern React patterns._

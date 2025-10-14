@@ -1,9 +1,11 @@
 import { supabase } from "./supabase";
 import type { AuthError, Session, User } from "@supabase/supabase-js";
+import { validateInviteCode, consumeInviteCode } from "./inviteCodes";
 
 /**
  * Authentication utilities
  * Handles user sign up, sign in, sign out, and session management
+ * Now with invite-only security
  */
 
 interface AuthResult<T> {
@@ -12,19 +14,47 @@ interface AuthResult<T> {
 }
 
 /**
- * Sign up a new user
+ * Sign up a new user with invite code validation
+ * SECURITY: Requires valid invite code for registration
  */
 export const signUp = async (
   email: string,
-  password: string
+  password: string,
+  inviteCode: string
 ): Promise<AuthResult<User>> => {
   try {
+    // Step 1: Validate invite code BEFORE creating account
+    const { data: isValid, error: validateError } = await validateInviteCode(
+      inviteCode
+    );
+
+    if (validateError || !isValid) {
+      const error = new Error("Invalid or expired invite code") as AuthError;
+      error.name = "InviteCodeError";
+      throw error;
+    }
+
+    // Step 2: Create the user account
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
 
     if (error) throw error;
+    if (!data.user) throw new Error("User creation failed");
+
+    // Step 3: Consume the invite code (mark as used)
+    const { error: consumeError } = await consumeInviteCode(
+      inviteCode,
+      data.user.id
+    );
+
+    if (consumeError) {
+      console.error("Failed to consume invite code:", consumeError);
+      // Note: User is already created at this point
+      // Consider implementing cleanup if this is critical
+    }
+
     return { data: data.user, error: null };
   } catch (error) {
     console.error("Sign up error:", error);

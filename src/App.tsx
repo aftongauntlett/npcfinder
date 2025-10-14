@@ -12,6 +12,7 @@ import AdminPanel from "./components/AdminPanel";
 import UserSettings from "./components/UserSettings";
 import Suggestions from "./components/Suggestions";
 import StarryBackground from "./components/StarryBackground";
+import DemoLanding from "./components/DemoLanding";
 import PageContainer from "./components/shared/PageContainer";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -73,24 +74,30 @@ const AppLayout: React.FC<AppLayoutProps> = ({ user }) => {
       <StarryBackground />
       <Navigation currentUser={user} />
       <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/fitness" element={<FitnessDashboard />} />
-        <Route path="/movies-tv" element={<MoviesTV />} />
-        <Route path="/settings" element={<UserSettings currentUser={user} />} />
+        <Route path="/app" element={<HomePage />} />
+        <Route path="/app/fitness" element={<FitnessDashboard />} />
+        <Route path="/app/movies-tv" element={<MoviesTV />} />
         <Route
-          path="/suggestions"
+          path="/app/settings"
+          element={<UserSettings currentUser={user} />}
+        />
+        <Route
+          path="/app/suggestions"
           element={<Suggestions currentUser={user} />}
         />
         <Route
-          path="/admin"
+          path="/app/admin"
           element={
             <ProtectedAdminRoute user={user}>
               <AdminPanel />
             </ProtectedAdminRoute>
           }
         />
-        {/* Catch all - redirect to home */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* Redirect authenticated users from root to app */}
+        <Route path="/" element={<Navigate to="/app" replace />} />
+        <Route path="/portal" element={<Navigate to="/app" replace />} />
+        {/* Catch all - redirect to app home */}
+        <Route path="*" element={<Navigate to="/app" replace />} />
       </Routes>
     </PageContainer>
   );
@@ -133,11 +140,29 @@ const AuthenticatedApp: React.FC = () => {
     );
   }
 
-  if (!user) {
-    return <AuthPage />;
-  }
+  return (
+    <Routes>
+      {/* Public demo landing page */}
+      <Route path="/" element={<DemoLanding />} />
 
-  return <AppLayout user={user} />;
+      {/* Hidden auth portal */}
+      <Route
+        path="/portal"
+        element={user ? <Navigate to="/app" replace /> : <AuthPage />}
+      />
+
+      {/* Protected app routes */}
+      <Route
+        path="/app/*"
+        element={
+          user ? <AppLayout user={user} /> : <Navigate to="/portal" replace />
+        }
+      />
+
+      {/* Catch all - redirect to home */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
 };
 
 // Main App component

@@ -4,11 +4,13 @@ import Button from "./shared/Button";
 
 /**
  * Authentication page with login and signup forms
+ * SECURITY: Requires invite code for signup (invite-only system)
  */
 const AuthPage: React.FC = () => {
   const [isLogin, setIsLogin] = useState<boolean>(true);
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [inviteCode, setInviteCode] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [message, setMessage] = useState<string>("");
@@ -32,6 +34,13 @@ const AuthPage: React.FC = () => {
       return;
     }
 
+    // Validate invite code for signup
+    if (!isLogin && !inviteCode.trim()) {
+      setError("Invite code is required to create an account");
+      setLoading(false);
+      return;
+    }
+
     try {
       if (isLogin) {
         // Sign in
@@ -42,14 +51,28 @@ const AuthPage: React.FC = () => {
           setMessage("Successfully signed in!");
         }
       } else {
-        // Sign up
-        const { error: signUpError } = await signUp(email, password);
+        // Sign up with invite code
+        const { error: signUpError } = await signUp(
+          email,
+          password,
+          inviteCode
+        );
         if (signUpError) {
-          setError(signUpError.message);
+          // Provide user-friendly error messages
+          if (signUpError.name === "InviteCodeError") {
+            setError(
+              "Invalid or expired invite code. Please check your code and try again."
+            );
+          } else {
+            setError(signUpError.message);
+          }
         } else {
-          setMessage("Account created! You can now sign in.");
+          setMessage(
+            "Account created! Please check your email to verify your account, then sign in."
+          );
           setIsLogin(true);
           setPassword("");
+          setInviteCode("");
         }
       }
     } catch (err) {
@@ -66,7 +89,9 @@ const AuthPage: React.FC = () => {
         {/* Logo/Title */}
         <div className="text-center">
           <h1 className="text-4xl font-bold text-white mb-2">NPC Finder</h1>
-          <p className="text-gray-300">Your personal dashboard</p>
+          <p className="text-gray-300">
+            {isLogin ? "Welcome back" : "Join by invitation only"}
+          </p>
         </div>
 
         {/* Auth Form */}
@@ -126,6 +151,32 @@ const AuthPage: React.FC = () => {
               </p>
             </div>
 
+            {/* Invite Code Input (only for signup) */}
+            {!isLogin && (
+              <div>
+                <label
+                  htmlFor="inviteCode"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Invite Code <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="inviteCode"
+                  type="text"
+                  value={inviteCode}
+                  onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white font-mono"
+                  placeholder="XXX-XXX-XXX-XXX"
+                  disabled={loading}
+                  required={!isLogin}
+                  maxLength={15}
+                />
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  🔒 This app is invite-only. Enter the code you received.
+                </p>
+              </div>
+            )}
+
             {/* Error Message */}
             {error && (
               <div
@@ -164,20 +215,24 @@ const AuthPage: React.FC = () => {
                 setIsLogin(!isLogin);
                 setError("");
                 setMessage("");
+                setInviteCode("");
               }}
               className="text-sm text-primary hover:text-primary-dark transition-colors"
               disabled={loading}
             >
               {isLogin
-                ? "Don't have an account? Sign up"
+                ? "Have an invite code? Create account"
                 : "Already have an account? Sign in"}
             </button>
           </div>
         </div>
 
-        {/* Info Note */}
-        <div className="text-center text-sm text-gray-300">
+        {/* Security Note */}
+        <div className="text-center text-sm text-gray-300 space-y-1">
           <p>🔒 Your data is secure and private</p>
+          {!isLogin && (
+            <p className="text-xs">Invite-only access • End-to-end security</p>
+          )}
         </div>
       </div>
     </div>

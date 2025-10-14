@@ -9,9 +9,11 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
+  Shield,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import Button from "./shared/Button";
+import InviteCodeManager from "./admin/InviteCodeManager";
 
 interface Stats {
   totalUsers: number;
@@ -69,6 +71,11 @@ const AdminPanel: React.FC = () => {
     []
   );
   const [loading, setLoading] = useState<boolean>(true);
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState<"overview" | "invites">(
+    "overview"
+  );
 
   // User list pagination and search
   const [userSearch, setUserSearch] = useState<string>("");
@@ -263,274 +270,326 @@ const AdminPanel: React.FC = () => {
           </Button>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-          <StatCard
-            icon={Users}
-            title="Active Users"
-            value={stats.totalUsers}
-            color="blue"
-          />
-          <StatCard
-            icon={Film}
-            title="Media Items"
-            value={stats.totalMediaItems}
-            color="purple"
-          />
-          <StatCard
-            icon={Star}
-            title="Total Ratings"
-            value={stats.totalRatings}
-            color="yellow"
-          />
-          <StatCard
-            icon={UserPlus}
-            title="Friendships"
-            value={stats.totalFriendships}
-            color="green"
-          />
+        {/* Tabs */}
+        <div className="mb-8 border-b border-white/10">
+          <div className="flex gap-4">
+            <button
+              onClick={() => setActiveTab("overview")}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === "overview"
+                  ? "text-white border-b-2 border-purple-500"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              <Activity className="w-4 h-4 inline mr-2" />
+              Overview
+            </button>
+            <button
+              onClick={() => setActiveTab("invites")}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === "invites"
+                  ? "text-white border-b-2 border-purple-500"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              <Shield className="w-4 h-4 inline mr-2" />
+              Invite Codes
+            </button>
+          </div>
         </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8">
-          {/* Popular Media */}
-          <section
-            className="bg-white/5 backdrop-blur-sm rounded-lg p-4 sm:p-6 border border-white/10"
-            aria-labelledby="popular-media-heading"
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <TrendingUp
-                className="w-6 h-6 text-purple-400"
-                aria-hidden="true"
+        {/* Tab Content */}
+        {activeTab === "invites" ? (
+          <InviteCodeManager />
+        ) : (
+          <>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+              <StatCard
+                icon={Users}
+                title="Active Users"
+                value={stats.totalUsers}
+                color="blue"
               />
-              <h2
-                id="popular-media-heading"
-                className="text-xl sm:text-2xl font-bold"
+              <StatCard
+                icon={Film}
+                title="Media Items"
+                value={stats.totalMediaItems}
+                color="purple"
+              />
+              <StatCard
+                icon={Star}
+                title="Total Ratings"
+                value={stats.totalRatings}
+                color="yellow"
+              />
+              <StatCard
+                icon={UserPlus}
+                title="Friendships"
+                value={stats.totalFriendships}
+                color="green"
+              />
+            </div>
+
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8">
+              {/* Popular Media */}
+              <section
+                className="bg-white/5 backdrop-blur-sm rounded-lg p-4 sm:p-6 border border-white/10"
+                aria-labelledby="popular-media-heading"
               >
-                Most Tracked Media
-              </h2>
-            </div>
-            {popularMedia.length > 0 ? (
-              <div className="space-y-3">
-                {popularMedia.map((item, index) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center gap-3 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+                <div className="flex items-center gap-2 mb-4">
+                  <TrendingUp
+                    className="w-6 h-6 text-purple-400"
+                    aria-hidden="true"
+                  />
+                  <h2
+                    id="popular-media-heading"
+                    className="text-xl sm:text-2xl font-bold"
                   >
-                    <span className="text-xl sm:text-2xl font-bold text-purple-400 min-w-8">
-                      #{index + 1}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold truncate">{item.title}</p>
-                      <p className="text-sm text-gray-400">
-                        {item.type} • {item.release_year || "N/A"}
-                      </p>
-                    </div>
-                    <span className="px-3 py-1 bg-purple-500/20 rounded-full text-sm font-medium whitespace-nowrap">
-                      {item.trackingCount}{" "}
-                      {item.trackingCount === 1 ? "user" : "users"}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-400 italic">No tracked media yet</p>
-            )}
-          </section>
-
-          {/* Recent Users */}
-          <section
-            className="bg-white/5 backdrop-blur-sm rounded-lg p-4 sm:p-6 border border-white/10"
-            aria-labelledby="users-heading"
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <Users className="w-6 h-6 text-blue-400" aria-hidden="true" />
-              <h2 id="users-heading" className="text-xl sm:text-2xl font-bold">
-                Users
-              </h2>
-            </div>
-
-            {/* Search Bar */}
-            <div className="relative mb-4">
-              <label htmlFor="user-search" className="sr-only">
-                Search users
-              </label>
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
-                aria-hidden="true"
-              />
-              <input
-                id="user-search"
-                type="text"
-                placeholder="Search by name or bio..."
-                value={userSearch}
-                onChange={(e) => {
-                  setUserSearch(e.target.value);
-                  setUserPage(0); // Reset to first page on search
-                }}
-                className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              />
-            </div>
-
-            {users.length > 0 ? (
-              <>
-                <div className="space-y-3 mb-4">
-                  {users.map((user) => (
-                    <article
-                      key={user.id}
-                      className="p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
-                    >
-                      <div className="flex flex-col sm:flex-row items-start justify-between mb-2 gap-2">
+                    Most Tracked Media
+                  </h2>
+                </div>
+                {popularMedia.length > 0 ? (
+                  <div className="space-y-3">
+                    {popularMedia.map((item, index) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center gap-3 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+                      >
+                        <span className="text-xl sm:text-2xl font-bold text-purple-400 min-w-8">
+                          #{index + 1}
+                        </span>
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-base sm:text-lg truncate">
-                            {user.display_name}
-                          </p>
-                          {user.bio && (
-                            <p className="text-sm text-gray-400 mt-1 italic line-clamp-2">
-                              "{user.bio}"
-                            </p>
-                          )}
-                        </div>
-                        <div className="text-left sm:text-right w-full sm:w-auto">
-                          <p className="text-xs text-gray-500">
-                            Joined:{" "}
-                            {new Date(user.created_at).toLocaleDateString()}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            Updated:{" "}
-                            {new Date(user.updated_at).toLocaleDateString()}
+                          <p className="font-semibold truncate">{item.title}</p>
+                          <p className="text-sm text-gray-400">
+                            {item.type} • {item.release_year || "N/A"}
                           </p>
                         </div>
+                        <span className="px-3 py-1 bg-purple-500/20 rounded-full text-sm font-medium whitespace-nowrap">
+                          {item.trackingCount}{" "}
+                          {item.trackingCount === 1 ? "user" : "users"}
+                        </span>
                       </div>
-                      <p className="text-xs text-gray-500 font-mono truncate">
-                        ID: {user.id}
-                      </p>
-                    </article>
-                  ))}
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-400 italic">No tracked media yet</p>
+                )}
+              </section>
+
+              {/* Recent Users */}
+              <section
+                className="bg-white/5 backdrop-blur-sm rounded-lg p-4 sm:p-6 border border-white/10"
+                aria-labelledby="users-heading"
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <Users className="w-6 h-6 text-blue-400" aria-hidden="true" />
+                  <h2
+                    id="users-heading"
+                    className="text-xl sm:text-2xl font-bold"
+                  >
+                    Users
+                  </h2>
                 </div>
 
-                {/* Pagination Controls */}
-                {totalUserPages > 1 && (
-                  <nav
-                    className="flex items-center justify-between pt-4 border-t border-white/10"
-                    aria-label="User pagination"
-                  >
-                    <button
-                      onClick={() => setUserPage(Math.max(0, userPage - 1))}
-                      disabled={userPage === 0}
-                      className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      aria-label="Previous page"
-                    >
-                      <ChevronLeft className="w-4 h-4" aria-hidden="true" />
-                      <span className="hidden sm:inline">Previous</span>
-                    </button>
-                    <span className="text-sm text-gray-400" aria-current="page">
-                      Page {userPage + 1} of {totalUserPages}
-                    </span>
-                    <button
-                      onClick={() =>
-                        setUserPage(Math.min(totalUserPages - 1, userPage + 1))
-                      }
-                      disabled={userPage >= totalUserPages - 1}
-                      className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      aria-label="Next page"
-                    >
-                      <span className="hidden sm:inline">Next</span>
-                      <ChevronRight className="w-4 h-4" aria-hidden="true" />
-                    </button>
-                  </nav>
-                )}
-              </>
-            ) : (
-              <p className="text-gray-400 italic">
-                {userSearch
-                  ? "No users found matching your search"
-                  : "No users yet"}
-              </p>
-            )}
-          </section>
-        </div>
+                {/* Search Bar */}
+                <div className="relative mb-4">
+                  <label htmlFor="user-search" className="sr-only">
+                    Search users
+                  </label>
+                  <Search
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+                    aria-hidden="true"
+                  />
+                  <input
+                    id="user-search"
+                    type="text"
+                    placeholder="Search by name or bio..."
+                    value={userSearch}
+                    onChange={(e) => {
+                      setUserSearch(e.target.value);
+                      setUserPage(0); // Reset to first page on search
+                    }}
+                    className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                </div>
 
-        {/* Recent Activity */}
-        <section
-          className="bg-white/5 backdrop-blur-sm rounded-lg p-4 sm:p-6 border border-white/10"
-          aria-labelledby="activity-heading"
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <Activity className="w-6 h-6 text-green-400" aria-hidden="true" />
-            <h2 id="activity-heading" className="text-xl sm:text-2xl font-bold">
-              Recent Activity
-            </h2>
-          </div>
-          {recentActivity.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[600px]">
-                <thead>
-                  <tr className="border-b border-white/10">
-                    <th className="text-left p-3 text-gray-400 font-medium">
-                      Media
-                    </th>
-                    <th className="text-left p-3 text-gray-400 font-medium">
-                      Type
-                    </th>
-                    <th className="text-left p-3 text-gray-400 font-medium">
-                      Status
-                    </th>
-                    <th className="text-left p-3 text-gray-400 font-medium">
-                      Rating
-                    </th>
-                    <th className="text-left p-3 text-gray-400 font-medium">
-                      Date
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentActivity.map((activity) => (
-                    <tr
-                      key={activity.id}
-                      className="border-b border-white/5 hover:bg-white/5 transition-colors"
-                    >
-                      <td className="p-3 font-medium">
-                        {activity.media_items?.title || "Unknown"}
-                      </td>
-                      <td className="p-3">
-                        <span className="px-2 py-1 bg-purple-500/20 rounded text-xs">
-                          {activity.media_items?.type || "N/A"}
-                        </span>
-                      </td>
-                      <td className="p-3 text-sm">{activity.status}</td>
-                      <td className="p-3">
-                        {activity.personal_rating ? (
-                          <div
-                            className="flex items-center gap-1"
-                            aria-label={`${activity.personal_rating} stars`}
-                          >
-                            {[...Array(activity.personal_rating)].map(
-                              (_, i) => (
-                                <Star
-                                  key={i}
-                                  className="w-4 h-4 fill-yellow-400 text-yellow-400"
-                                  aria-hidden="true"
-                                />
-                              )
-                            )}
+                {users.length > 0 ? (
+                  <>
+                    <div className="space-y-3 mb-4">
+                      {users.map((user) => (
+                        <article
+                          key={user.id}
+                          className="p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+                        >
+                          <div className="flex flex-col sm:flex-row items-start justify-between mb-2 gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-base sm:text-lg truncate">
+                                {user.display_name}
+                              </p>
+                              {user.bio && (
+                                <p className="text-sm text-gray-400 mt-1 italic line-clamp-2">
+                                  "{user.bio}"
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-left sm:text-right w-full sm:w-auto">
+                              <p className="text-xs text-gray-500">
+                                Joined:{" "}
+                                {new Date(user.created_at).toLocaleDateString()}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                Updated:{" "}
+                                {new Date(user.updated_at).toLocaleDateString()}
+                              </p>
+                            </div>
                           </div>
-                        ) : (
-                          <span className="text-gray-500">-</span>
-                        )}
-                      </td>
-                      <td className="p-3 text-sm text-gray-400">
-                        {new Date(activity.created_at).toLocaleDateString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                          <p className="text-xs text-gray-500 font-mono truncate">
+                            ID: {user.id}
+                          </p>
+                        </article>
+                      ))}
+                    </div>
+
+                    {/* Pagination Controls */}
+                    {totalUserPages > 1 && (
+                      <nav
+                        className="flex items-center justify-between pt-4 border-t border-white/10"
+                        aria-label="User pagination"
+                      >
+                        <button
+                          onClick={() => setUserPage(Math.max(0, userPage - 1))}
+                          disabled={userPage === 0}
+                          className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          aria-label="Previous page"
+                        >
+                          <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+                          <span className="hidden sm:inline">Previous</span>
+                        </button>
+                        <span
+                          className="text-sm text-gray-400"
+                          aria-current="page"
+                        >
+                          Page {userPage + 1} of {totalUserPages}
+                        </span>
+                        <button
+                          onClick={() =>
+                            setUserPage(
+                              Math.min(totalUserPages - 1, userPage + 1)
+                            )
+                          }
+                          disabled={userPage >= totalUserPages - 1}
+                          className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          aria-label="Next page"
+                        >
+                          <span className="hidden sm:inline">Next</span>
+                          <ChevronRight
+                            className="w-4 h-4"
+                            aria-hidden="true"
+                          />
+                        </button>
+                      </nav>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-gray-400 italic">
+                    {userSearch
+                      ? "No users found matching your search"
+                      : "No users yet"}
+                  </p>
+                )}
+              </section>
             </div>
-          ) : (
-            <p className="text-gray-400 italic">No activity yet</p>
-          )}
-        </section>
+
+            {/* Recent Activity */}
+            <section
+              className="bg-white/5 backdrop-blur-sm rounded-lg p-4 sm:p-6 border border-white/10"
+              aria-labelledby="activity-heading"
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <Activity
+                  className="w-6 h-6 text-green-400"
+                  aria-hidden="true"
+                />
+                <h2
+                  id="activity-heading"
+                  className="text-xl sm:text-2xl font-bold"
+                >
+                  Recent Activity
+                </h2>
+              </div>
+              {recentActivity.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[600px]">
+                    <thead>
+                      <tr className="border-b border-white/10">
+                        <th className="text-left p-3 text-gray-400 font-medium">
+                          Media
+                        </th>
+                        <th className="text-left p-3 text-gray-400 font-medium">
+                          Type
+                        </th>
+                        <th className="text-left p-3 text-gray-400 font-medium">
+                          Status
+                        </th>
+                        <th className="text-left p-3 text-gray-400 font-medium">
+                          Rating
+                        </th>
+                        <th className="text-left p-3 text-gray-400 font-medium">
+                          Date
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentActivity.map((activity) => (
+                        <tr
+                          key={activity.id}
+                          className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                        >
+                          <td className="p-3 font-medium">
+                            {activity.media_items?.title || "Unknown"}
+                          </td>
+                          <td className="p-3">
+                            <span className="px-2 py-1 bg-purple-500/20 rounded text-xs">
+                              {activity.media_items?.type || "N/A"}
+                            </span>
+                          </td>
+                          <td className="p-3 text-sm">{activity.status}</td>
+                          <td className="p-3">
+                            {activity.personal_rating ? (
+                              <div
+                                className="flex items-center gap-1"
+                                aria-label={`${activity.personal_rating} stars`}
+                              >
+                                {[...Array(activity.personal_rating)].map(
+                                  (_, i) => (
+                                    <Star
+                                      key={i}
+                                      className="w-4 h-4 fill-yellow-400 text-yellow-400"
+                                      aria-hidden="true"
+                                    />
+                                  )
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-gray-500">-</span>
+                            )}
+                          </td>
+                          <td className="p-3 text-sm text-gray-400">
+                            {new Date(activity.created_at).toLocaleDateString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="text-gray-400 italic">No activity yet</p>
+              )}
+            </section>
+          </>
+        )}
       </div>
     </div>
   );
