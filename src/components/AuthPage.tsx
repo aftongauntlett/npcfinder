@@ -75,7 +75,13 @@ const AuthPage: React.FC = () => {
             {isLogin ? "Sign In" : "Create Account"}
           </h2>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void handleSubmit(e);
+            }}
+            className="space-y-6"
+          >
             {/* Email Input */}
             <div>
               <label

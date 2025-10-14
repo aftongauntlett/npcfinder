@@ -20,7 +20,7 @@ const RecentEntries: React.FC<RecentEntriesProps> = ({ onDataChange }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadRecentEntries();
+    void loadRecentEntries();
   }, []);
 
   const loadRecentEntries = async () => {
@@ -67,7 +67,9 @@ const RecentEntries: React.FC<RecentEntriesProps> = ({ onDataChange }) => {
           ? db.workouts
           : db.meals;
 
-      await table.delete(entry.id!);
+      if (entry.id !== undefined) {
+        await table.delete(entry.id);
+      }
       await loadRecentEntries();
       onDataChange();
     } catch (error) {
@@ -188,7 +190,7 @@ const RecentEntries: React.FC<RecentEntriesProps> = ({ onDataChange }) => {
               </div>
 
               <button
-                onClick={() => handleDelete(entry)}
+                onClick={() => void handleDelete(entry)}
                 className="p-2 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                 aria-label={`Delete ${entry.type} entry from ${new Date(
                   entry.date

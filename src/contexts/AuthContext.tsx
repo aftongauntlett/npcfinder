@@ -26,9 +26,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    checkUser();
+    void checkUser();
 
-    const { data: authListener } = onAuthStateChange(async (event, session) => {
+    const { data: authListener } = onAuthStateChange((event, session) => {
       console.log("Auth state changed:", event);
 
       if (session?.user) {

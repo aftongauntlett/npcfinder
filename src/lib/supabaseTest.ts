@@ -64,7 +64,7 @@ interface MediaItem {
   description: string;
   critic_rating: number;
   audience_rating: number;
-  [key: string]: any;
+  [key: string]: string | number | undefined;
 }
 
 /**

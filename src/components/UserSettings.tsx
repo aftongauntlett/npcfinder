@@ -32,7 +32,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
   const [message, setMessage] = useState<Message | null>(null);
 
   useEffect(() => {
-    loadProfile();
+    void loadProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser]);
 
@@ -85,7 +85,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
         setMessage({ type: "error", text: "Failed to save profile" });
       } else {
         setMessage({ type: "success", text: "Profile updated successfully!" });
-        setTimeout(() => {
+        void setTimeout(() => {
           navigate("/");
         }, 1500);
       }
@@ -144,7 +144,13 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
           )}
 
           {/* Form */}
-          <form onSubmit={handleSave} className="space-y-6">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void handleSave(e);
+            }}
+            className="space-y-6"
+          >
             {/* Display Name */}
             <div>
               <label

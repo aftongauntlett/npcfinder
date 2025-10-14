@@ -42,17 +42,26 @@ const Navigation: React.FC<NavigationProps> = ({ currentUser }) => {
     const loadUserProfile = async () => {
       if (!currentUser) return;
 
-      const { data } = await getUserProfile(currentUser.id);
-      setDisplayName(data?.display_name || currentUser.email || "User");
+      try {
+        const { data } = await getUserProfile(currentUser.id);
+        setDisplayName(data?.display_name || currentUser.email || "User");
+      } catch (error) {
+        console.error("Failed to load user profile:", error);
+        setDisplayName(currentUser.email || "User");
+      }
     };
 
-    loadUserProfile();
+    void loadUserProfile();
   }, [currentUser, location.pathname]);
 
   const handleLogout = async () => {
     const confirmed = window.confirm("Are you sure you want to sign out?");
     if (confirmed) {
-      await signOut();
+      try {
+        await signOut();
+      } catch (error) {
+        console.error("Failed to sign out:", error);
+      }
     }
     setIsDropdownOpen(false);
   };
@@ -158,7 +167,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentUser }) => {
 
                   {/* Sign Out */}
                   <button
-                    onClick={handleLogout}
+                    onClick={() => void handleLogout()}
                     className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors whitespace-nowrap text-left"
                     role="menuitem"
                   >

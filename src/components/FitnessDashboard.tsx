@@ -43,7 +43,7 @@ const FitnessDashboard: React.FC = () => {
   const [waistData, setWaistData] = useState<ChartDataPoint[]>([]);
 
   useEffect(() => {
-    loadDashboardData();
+    void loadDashboardData();
   }, []);
 
   const loadDashboardData = async () => {
@@ -152,7 +152,7 @@ const FitnessDashboard: React.FC = () => {
   };
 
   const handleLogAdded = () => {
-    loadDashboardData();
+    void loadDashboardData();
     setShowQuickLog(false);
   };
 

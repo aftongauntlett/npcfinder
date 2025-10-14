@@ -130,13 +130,20 @@ const AdminPanel: React.FC = () => {
 
         // Add tracking count to each item
         const mediaWithCounts: PopularMediaItem[] =
-          popularMediaData?.map((item: any) => ({
-            id: item.id,
-            title: item.title,
-            type: item.type,
-            release_year: item.release_year,
-            trackingCount: mediaCounts[item.id],
-          })) || [];
+          popularMediaData?.map(
+            (item: {
+              id: string;
+              title: string;
+              type: string;
+              release_year: number;
+            }) => ({
+              id: item.id,
+              title: item.title,
+              type: item.type,
+              release_year: item.release_year,
+              trackingCount: mediaCounts[item.id],
+            })
+          ) || [];
 
         setPopularMedia(
           mediaWithCounts.sort((a, b) => b.trackingCount - a.trackingCount)
@@ -214,11 +221,11 @@ const AdminPanel: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchAdminData();
+    void fetchAdminData();
   }, []);
 
   useEffect(() => {
-    fetchUsers();
+    void fetchUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userPage, userSearch]);
 
@@ -251,7 +258,7 @@ const AdminPanel: React.FC = () => {
               Platform insights and user management
             </p>
           </div>
-          <Button onClick={fetchAdminData} variant="secondary">
+          <Button onClick={() => void fetchAdminData()} variant="secondary">
             Refresh Data
           </Button>
         </div>

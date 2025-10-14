@@ -40,7 +40,7 @@ const Suggestions: React.FC<SuggestionsProps> = ({ currentUser }) => {
   const userIsAdmin = currentUser && isAdmin(currentUser.id);
 
   useEffect(() => {
-    loadSuggestions();
+    void loadSuggestions();
 
     // Subscribe to real-time updates
     const subscription = subscribeSuggestions(async (payload) => {
@@ -171,10 +171,7 @@ const Suggestions: React.FC<SuggestionsProps> = ({ currentUser }) => {
         targetStatus === "in-progress" ||
         targetStatus === "done")
     ) {
-      await handleStatusChange(
-        draggedItem.id,
-        targetStatus as SuggestionStatus
-      );
+      await handleStatusChange(draggedItem.id, targetStatus);
     }
 
     setDraggedItem(null);
@@ -267,10 +264,12 @@ const Suggestions: React.FC<SuggestionsProps> = ({ currentUser }) => {
               suggestions={getSuggestionsByStatus(status.id)}
               isAdmin={userIsAdmin}
               onDragOver={handleDragOver}
-              onDrop={handleDrop}
+              onDrop={(e, targetStatusId) => void handleDrop(e, targetStatusId)}
               onDragStart={handleDragStart}
-              onDelete={handleDeleteSuggestion}
-              onEdit={handleEditSuggestion}
+              onDelete={(id) => void handleDeleteSuggestion(id)}
+              onEdit={(id, updatedData) =>
+                void handleEditSuggestion(id, updatedData)
+              }
             />
           ))}
         </div>

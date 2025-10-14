@@ -102,11 +102,16 @@ const AuthenticatedApp: React.FC = () => {
   const [authLoading, setAuthLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    import("./lib/auth").then(({ getCurrentUser, onAuthStateChange }) => {
-      getCurrentUser().then(({ data: currentUser }) => {
-        setUser(currentUser);
-        setAuthLoading(false);
-      });
+    void import("./lib/auth").then(({ getCurrentUser, onAuthStateChange }) => {
+      void getCurrentUser()
+        .then(({ data: currentUser }) => {
+          setUser(currentUser);
+          setAuthLoading(false);
+        })
+        .catch((error) => {
+          console.error("Failed to get current user:", error);
+          setAuthLoading(false);
+        });
 
       const { data: authListener } = onAuthStateChange((_event, session) => {
         setUser(session?.user || null);

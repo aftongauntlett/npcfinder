@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { DEFAULT_LOCATION } from "../../utils/constants";
 
 interface WeatherData {
@@ -10,34 +10,7 @@ const WeatherWidget: React.FC = () => {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetchWeatherWithLocation();
-
-    const interval = setInterval(() => {
-      fetchWeatherWithLocation();
-    }, 600000); // Refresh every 10 minutes
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchWeatherWithLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          fetchWeather(latitude, longitude);
-        },
-        () => {
-          // Fallback to default location
-          fetchWeather(DEFAULT_LOCATION.latitude, DEFAULT_LOCATION.longitude);
-        }
-      );
-    } else {
-      fetchWeather(DEFAULT_LOCATION.latitude, DEFAULT_LOCATION.longitude);
-    }
-  };
-
-  const fetchWeather = async (latitude: number, longitude: number) => {
+  const fetchWeather = useCallback(async (latitude: number, longitude: number) => {
     try {
       const response = await fetch(
         `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weathercode&temperature_unit=fahrenheit&timezone=auto`
@@ -54,7 +27,34 @@ const WeatherWidget: React.FC = () => {
       console.error("Failed to fetch weather:", error);
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  const fetchWeatherWithLocation = useCallback(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          void fetchWeather(latitude, longitude);
+        },
+        () => {
+          // Fallback to default location
+          void fetchWeather(DEFAULT_LOCATION.latitude, DEFAULT_LOCATION.longitude);
+        }
+      );
+    } else {
+      void fetchWeather(DEFAULT_LOCATION.latitude, DEFAULT_LOCATION.longitude);
+    }
+  }, [fetchWeather]);
+
+  useEffect(() => {
+    void fetchWeatherWithLocation();
+
+    const interval = setInterval(() => {
+      void fetchWeatherWithLocation();
+    }, 600000); // Refresh every 10 minutes
+
+    return () => clearInterval(interval);
+  }, [fetchWeatherWithLocation]);
 
   const getWeatherDescription = (code: number): string => {
     // WMO Weather interpretation codes

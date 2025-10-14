@@ -16,7 +16,7 @@ const Settings: React.FC = () => {
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
   useEffect(() => {
-    loadSettings();
+    void loadSettings();
   }, []);
 
   const loadSettings = async () => {
@@ -106,7 +106,7 @@ const Settings: React.FC = () => {
           db.settings.bulkPut(data.settings || []),
         ]);
         alert("Data imported successfully!");
-        loadSettings();
+        void loadSettings();
       } catch (error) {
         console.error("Failed to import data:", error);
         alert("Failed to import data");
@@ -180,7 +180,7 @@ const Settings: React.FC = () => {
         </div>
 
         <button
-          onClick={handleSave}
+          onClick={() => void handleSave()}
           disabled={isSaving}
           className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
@@ -195,7 +195,7 @@ const Settings: React.FC = () => {
         </h3>
         <div className="flex flex-wrap gap-4">
           <button
-            onClick={exportData}
+            onClick={() => void exportData()}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             <Download className="w-4 h-4" aria-hidden="true" />

@@ -70,7 +70,13 @@ const MealForm: React.FC<MealFormProps> = ({ onSubmit, onCancel }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        void handleSubmit(e);
+      }}
+      className="space-y-4"
+    >
       <div>
         <label
           htmlFor="meal-date"

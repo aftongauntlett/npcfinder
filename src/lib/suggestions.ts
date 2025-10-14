@@ -133,7 +133,11 @@ export async function deleteSuggestion(
  * Subscribe to real-time changes in suggestions
  */
 export function subscribeSuggestions(
-  callback: (payload: any) => void
+  callback: (payload: {
+    eventType: string;
+    new: Record<string, unknown>;
+    old: Record<string, unknown>;
+  }) => void
 ): RealtimeChannel {
   const subscription = supabase
     .channel("suggestions_changes")

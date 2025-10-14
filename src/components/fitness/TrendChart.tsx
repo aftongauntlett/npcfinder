@@ -11,7 +11,7 @@ import {
 
 interface TrendChartProps {
   title: string;
-  data: Array<Record<string, any>>;
+  data: Array<Record<string, string | number | null | undefined>>;
   dataKey: string;
   unit: string;
   color: string;

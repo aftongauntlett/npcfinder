@@ -24,7 +24,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         console.error("Failed to load theme:", error);
       }
     };
-    loadTheme();
+    void loadTheme();
   }, []);
 
   useEffect(() => {

@@ -75,10 +75,10 @@ const Books: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   // Handle search
-  const handleSearch = async (query: string) => {
+  const handleSearch = (query: string) => {
     setSearchQuery(query);
     if (!query.trim()) {
-      loadUserItems();
+      void loadUserItems();
       return;
     }
 
@@ -98,7 +98,7 @@ const Books: React.FC = () => {
   };
 
   // Load user's saved items
-  const loadUserItems = async () => {
+  const loadUserItems = () => {
     setLoading(true);
     try {
       // TODO: Implement Supabase query for books
@@ -152,7 +152,7 @@ const Books: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleRatingChange = async (rating: number) => {
+  const handleRatingChange = (rating: number) => {
     if (!selectedItem) return;
     // TODO: Update rating in database
     setMediaItems((prev) =>
@@ -163,7 +163,7 @@ const Books: React.FC = () => {
     setSelectedItem((prev) => (prev ? { ...prev, userRating: rating } : null));
   };
 
-  const handleStatusChange = async (status: MediaDetailStatus) => {
+  const handleStatusChange = (status: MediaDetailStatus) => {
     if (!selectedItem) return;
     // Map MediaDetailStatus to MediaStatus for Books
     const bookStatus: MediaStatus = status === "completed" ? "read" : "to-read";
@@ -179,7 +179,7 @@ const Books: React.FC = () => {
   };
 
   useEffect(() => {
-    loadUserItems();
+    void loadUserItems();
   }, [activeFilters]);
 
   const searchBar = (
