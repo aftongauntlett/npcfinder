@@ -6,9 +6,10 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: "rgb(var(--color-primary) / <alpha-value>)",
-          dark: "rgb(var(--color-primary-dark) / <alpha-value>)",
-          light: "rgb(var(--color-primary-light) / <alpha-value>)",
+          DEFAULT: "var(--color-primary)",
+          dark: "var(--color-primary-dark)",
+          light: "var(--color-primary-light)",
+          pale: "var(--color-primary-pale)",
         },
         background: "rgb(var(--color-background) / <alpha-value>)",
         surface: {

@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Default theme color (purple) - will be overridden dynamically */
+  --color-primary: #9333ea;
+  --color-primary-dark: #7e22ce;
+  --color-primary-light: #a855f7;
+  --color-primary-pale: #f3e8ff;
+  --color-primary-ring: #9333ea;
+  --color-text-on-primary: #ffffff;
+}
+
 @layer utilities {
   /* Shimmer animation for sparkle effect */
   @keyframes shimmer {

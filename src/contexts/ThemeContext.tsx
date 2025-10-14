@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import db from "../lib/database";
 import { ThemeContext } from "../hooks/useTheme";
+import { type ThemeColorName, getTheme } from "../styles/colorThemes";
 
 type ThemeOption = "light" | "dark" | "system";
 type ResolvedTheme = "light" | "dark";
@@ -12,6 +13,7 @@ interface ThemeProviderProps {
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [theme, setTheme] = useState<ThemeOption>("system");
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>("light");
+  const [themeColor, setThemeColor] = useState<ThemeColorName>("purple");
 
   useEffect(() => {
     const loadTheme = async () => {
@@ -59,6 +61,19 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     }
   }, [resolvedTheme]);
 
+  // Apply theme color CSS custom properties
+  useEffect(() => {
+    const colorTheme = getTheme(themeColor);
+    const root = document.documentElement;
+
+    root.style.setProperty("--color-primary", colorTheme.primary);
+    root.style.setProperty("--color-primary-dark", colorTheme.primaryDark);
+    root.style.setProperty("--color-primary-light", colorTheme.primaryLight);
+    root.style.setProperty("--color-primary-pale", colorTheme.primaryPale);
+    root.style.setProperty("--color-primary-ring", colorTheme.primaryRing);
+    root.style.setProperty("--color-text-on-primary", colorTheme.textOnPrimary);
+  }, [themeColor]);
+
   const changeTheme = async (newTheme: ThemeOption) => {
     setTheme(newTheme);
     try {
@@ -71,8 +86,20 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     }
   };
 
+  const changeThemeColor = (newColor: ThemeColorName) => {
+    setThemeColor(newColor);
+  };
+
   return (
-    <ThemeContext.Provider value={{ theme, resolvedTheme, changeTheme }}>
+    <ThemeContext.Provider
+      value={{
+        theme,
+        resolvedTheme,
+        themeColor,
+        changeTheme,
+        changeThemeColor,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );

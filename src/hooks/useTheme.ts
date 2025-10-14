@@ -1,4 +1,5 @@
 import React, { useContext } from "react";
+import type { ThemeColorName } from "../styles/colorThemes";
 
 type ThemeOption = "light" | "dark" | "system";
 type ResolvedTheme = "light" | "dark";
@@ -6,7 +7,9 @@ type ResolvedTheme = "light" | "dark";
 interface ThemeContextValue {
   theme: ThemeOption;
   resolvedTheme: ResolvedTheme;
+  themeColor: ThemeColorName;
   changeTheme: (newTheme: ThemeOption) => Promise<void>;
+  changeThemeColor: (newColor: ThemeColorName) => void;
 }
 
 export const ThemeContext = React.createContext<ThemeContextValue | undefined>(
