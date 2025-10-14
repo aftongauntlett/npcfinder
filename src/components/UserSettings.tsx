@@ -4,6 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { User as UserIcon, Save, X } from "lucide-react";
 import { getUserProfile, upsertUserProfile } from "../lib/profiles";
 import Button from "./shared/Button";
+import PageContentContainer from "./shared/PageContentContainer";
+import DashboardCustomizer from "./settings/DashboardCustomizer";
+import ColorThemePicker from "./settings/ColorThemePicker";
+import { cards } from "../data/dashboardCards";
+import { type ThemeColorName } from "../styles/colorThemes";
+import { useTheme } from "../hooks/useTheme";
 
 interface UserSettingsProps {
   currentUser: User;
@@ -11,8 +17,8 @@ interface UserSettingsProps {
 
 interface ProfileData {
   display_name: string;
-  bio: string;
-  profile_picture_url: string;
+  visible_cards: string[];
+  theme_color: ThemeColorName;
 }
 
 interface Message {
@@ -22,10 +28,15 @@ interface Message {
 
 const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
   const navigate = useNavigate();
+  const { changeThemeColor } = useTheme();
+
+  // Default to all cards visible
+  const allCardIds = cards.map((c) => c.cardId);
+
   const [profile, setProfile] = useState<ProfileData>({
     display_name: "",
-    bio: "",
-    profile_picture_url: "",
+    visible_cards: allCardIds,
+    theme_color: "purple",
   });
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -48,9 +59,14 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
       } else if (data) {
         setProfile({
           display_name: data.display_name || currentUser.email || "",
-          bio: data.bio || "",
-          profile_picture_url: data.profile_picture_url || "",
+          visible_cards: data.visible_cards || allCardIds,
+          theme_color: (data.theme_color as ThemeColorName) || "purple",
         });
+
+        // Apply theme color immediately
+        if (data.theme_color) {
+          changeThemeColor(data.theme_color);
+        }
       }
     } catch (error) {
       console.error("Error loading profile:", error);
@@ -71,6 +87,26 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
     setMessage(null);
   };
 
+  const handleToggleCard = (cardId: string) => {
+    setProfile((prev) => {
+      const isVisible = prev.visible_cards.includes(cardId);
+      const newVisibleCards = isVisible
+        ? prev.visible_cards.filter((id) => id !== cardId)
+        : [...prev.visible_cards, cardId];
+
+      // Ensure at least one card is visible
+      if (newVisibleCards.length === 0) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        visible_cards: newVisibleCards,
+      };
+    });
+    setMessage(null);
+  };
+
   const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!currentUser) return;
@@ -84,10 +120,13 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
       if (error) {
         setMessage({ type: "error", text: "Failed to save profile" });
       } else {
+        // Apply theme color immediately after save
+        changeThemeColor(profile.theme_color);
         setMessage({ type: "success", text: "Profile updated successfully!" });
-        void setTimeout(() => {
-          void navigate("/");
-        }, 1500);
+        // Navigate back to dashboard after successful save
+        setTimeout(() => {
+          void navigate("/app");
+        }, 1000);
       }
     } catch (error) {
       console.error("Error saving profile:", error);
@@ -106,14 +145,14 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 py-8 sm:py-12 px-4">
+    <PageContentContainer className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
       <div className="max-w-2xl mx-auto">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 sm:p-8">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <UserIcon
-                className="w-6 sm:w-8 h-6 sm:h-8 text-purple-600"
+                className="w-6 sm:w-8 h-6 sm:h-8 text-primary"
                 aria-hidden="true"
               />
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
@@ -121,7 +160,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
               </h1>
             </div>
             <button
-              onClick={() => void navigate("/")}
+              onClick={() => void navigate("/app")}
               className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               aria-label="Close"
             >
@@ -166,102 +205,55 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
                 value={profile.display_name}
                 onChange={handleChange}
                 placeholder="Your display name"
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                This is how others will see your name
+                This is how your name appears in the greeting
               </p>
             </div>
 
-            {/* Bio */}
-            <div>
-              <label
-                htmlFor="bio"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Bio
-              </label>
-              <textarea
-                id="bio"
-                name="bio"
-                value={profile.bio}
-                onChange={handleChange}
-                placeholder="Tell us about yourself..."
-                rows={4}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
+            {/* Divider */}
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+              <ColorThemePicker
+                selectedColor={profile.theme_color}
+                onColorChange={(color) => {
+                  setProfile((prev) => ({ ...prev, theme_color: color }));
+                  setMessage(null);
+                }}
               />
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Brief description for your profile
-              </p>
             </div>
 
-            {/* Profile Picture URL */}
-            <div>
-              <label
-                htmlFor="profile_picture_url"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Profile Picture URL
-              </label>
-              <input
-                type="url"
-                id="profile_picture_url"
-                name="profile_picture_url"
-                value={profile.profile_picture_url}
-                onChange={handleChange}
-                placeholder="https://example.com/your-photo.jpg"
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            {/* Divider */}
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+              <DashboardCustomizer
+                visibleCards={profile.visible_cards}
+                onToggleCard={handleToggleCard}
               />
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Link to your profile picture
-              </p>
             </div>
 
-            {/* Preview */}
-            {profile.profile_picture_url && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Profile Picture Preview
-                </label>
-                <div className="flex items-center gap-4">
-                  <img
-                    src={profile.profile_picture_url}
-                    alt="Profile preview"
-                    className="w-16 sm:w-20 h-16 sm:h-20 rounded-full object-cover border-2 border-purple-600"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                  />
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    This is how your profile picture will appear
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Save Button */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Button
-                type="submit"
-                disabled={isSaving}
-                className="flex-1 flex items-center justify-center gap-2"
-              >
-                <Save className="w-4 h-4" aria-hidden="true" />
-                {isSaving ? "Saving..." : "Save Changes"}
-              </Button>
+            {/* Action Buttons */}
+            <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => void navigate("/")}
-                className="px-8"
+                onClick={() => void navigate("/app")}
+                className="px-8 sm:flex-1"
               >
                 Cancel
               </Button>
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="px-8 sm:flex-1 inline-flex items-center justify-center gap-2 font-medium rounded-md text-sm bg-green-600 hover:bg-green-700 text-white disabled:bg-green-400 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors shadow-sm"
+              >
+                <Save className="w-4 h-4" aria-hidden="true" />
+                {isSaving ? "Saving..." : "Save Changes"}
+              </button>
             </div>
           </form>
         </div>
       </div>
-    </div>
+    </PageContentContainer>
   );
 };
 
