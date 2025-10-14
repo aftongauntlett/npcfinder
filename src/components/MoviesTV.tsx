@@ -106,6 +106,8 @@ const MoviesTV: React.FC = () => {
           title: "The Shawshank Redemption",
           type: "movie",
           year: 1994,
+          poster:
+            "https://image.tmdb.org/t/p/w500/9cqNxx0GxF0bflZmeSMuL5tnGzr.jpg",
           userRating: 5,
           userStatus: "watched",
           criticScore: 91,
@@ -116,6 +118,8 @@ const MoviesTV: React.FC = () => {
           title: "Breaking Bad",
           type: "tv",
           year: 2008,
+          poster:
+            "https://image.tmdb.org/t/p/w500/ggFHVNu6YYI5L9pCfOacjizRGt.jpg",
           userRating: 5,
           userStatus: "watched",
           criticScore: 96,
@@ -126,10 +130,48 @@ const MoviesTV: React.FC = () => {
           title: "Inception",
           type: "movie",
           year: 2010,
+          poster:
+            "https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg",
           userRating: 4,
           userStatus: "watched",
           criticScore: 87,
           audienceScore: 91,
+        },
+        {
+          id: "4",
+          title: "The Dark Knight",
+          type: "movie",
+          year: 2008,
+          poster:
+            "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg",
+          userRating: 5,
+          userStatus: "watched",
+          criticScore: 94,
+          audienceScore: 94,
+        },
+        {
+          id: "5",
+          title: "Stranger Things",
+          type: "tv",
+          year: 2016,
+          poster:
+            "https://image.tmdb.org/t/p/w500/49WJfeN0moxb9IPfGn8AIqMGskD.jpg",
+          userRating: 4,
+          userStatus: "to-watch",
+          criticScore: 89,
+          audienceScore: 89,
+        },
+        {
+          id: "6",
+          title: "Pulp Fiction",
+          type: "movie",
+          year: 1994,
+          poster:
+            "https://image.tmdb.org/t/p/w500/d5iIlFn5s0ImszYzBPb8JPIfbXD.jpg",
+          userRating: 5,
+          userStatus: "watched",
+          criticScore: 92,
+          audienceScore: 96,
         },
       ];
       setMediaItems(placeholderItems);
@@ -217,7 +259,7 @@ const MoviesTV: React.FC = () => {
   );
 
   const mainContent = (
-    <>
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
       {loading ? (
         <div className="col-span-full flex items-center justify-center py-12">
           <div className="text-gray-500 dark:text-gray-400">Loading...</div>
@@ -247,7 +289,7 @@ const MoviesTV: React.FC = () => {
           />
         ))
       )}
-    </>
+    </div>
   );
 
   const sidebarContent = (

@@ -26,12 +26,12 @@ interface MediaCardProps {
 const MediaCard: React.FC<MediaCardProps> = ({
   id,
   title,
-  subtitle,
+  subtitle: _subtitle,
   posterUrl,
   year,
   personalRating,
-  criticRating,
-  audienceRating,
+  criticRating: _criticRating,
+  audienceRating: _audienceRating,
   status,
   onClick,
 }) => {
@@ -81,7 +81,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
     <SparkleEffect intensity="low">
       <article
         onClick={() => onClick(id)}
-        className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow cursor-pointer group"
+        className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-200 cursor-pointer group hover:scale-105"
         role="button"
         tabIndex={0}
         onKeyPress={(e) => {
@@ -91,89 +91,67 @@ const MediaCard: React.FC<MediaCardProps> = ({
         }}
         aria-label={`View details for ${title}`}
       >
-        {/* Poster Image */}
+        {/* Poster Image - Taller aspect ratio for grid */}
         <div className="relative aspect-[2/3] bg-gray-200 dark:bg-gray-700">
           {posterUrl ? (
             <img
               src={posterUrl}
               alt={`${title} poster`}
               className="w-full h-full object-cover"
+              loading="lazy"
+              onError={(e) => {
+                // Hide broken images and show fallback
+                (e.target as HTMLImageElement).style.display = "none";
+                const parent = (e.target as HTMLImageElement).parentElement;
+                if (parent && !parent.querySelector(".fallback-icon")) {
+                  const fallback = document.createElement("div");
+                  fallback.className =
+                    "fallback-icon absolute inset-0 flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800";
+                  fallback.innerHTML =
+                    '<svg class="w-16 h-16 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg><span class="text-xs">No Image</span>';
+                  parent.appendChild(fallback);
+                }
+              }}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-400">
-              <Eye className="w-12 h-12" aria-hidden="true" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800">
+              <Eye className="w-16 h-16 mb-2" aria-hidden="true" />
+              <span className="text-xs">No Image</span>
             </div>
           )}
 
           {/* Status Badge */}
           {status && (
             <div
-              className={`absolute top-2 right-2 ${getStatusColor()} text-white px-2 py-1 rounded-full flex items-center gap-1 text-xs font-medium`}
+              className={`absolute top-2 right-2 ${getStatusColor()} text-white px-2 py-1 rounded-full flex items-center gap-1 text-xs font-medium shadow-lg`}
               aria-label={getStatusLabel()}
             >
               {getStatusIcon()}
             </div>
           )}
 
-          {/* Overlay on Hover */}
-          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-            <Eye className="w-8 h-8 text-white" aria-hidden="true" />
+          {/* Overlay on Hover - Shows title and quick info */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
+            <h3 className="font-semibold text-sm text-white mb-1 line-clamp-2">
+              {title}
+            </h3>
+            <div className="flex items-center justify-between text-xs text-white/90">
+              {year && <span>{year}</span>}
+              {personalRating !== undefined && (
+                <div className="flex items-center gap-1">
+                  <Star className="w-3 h-3 fill-current" />
+                  <span>{personalRating}</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="p-4">
-          <h3 className="font-semibold text-gray-900 dark:text-white mb-1 line-clamp-2 group-hover:text-primary transition-colors">
+        {/* Minimal bottom info - only visible on larger screens */}
+        <div className="p-2 hidden sm:block">
+          <h3 className="font-medium text-xs text-gray-900 dark:text-white line-clamp-1">
             {title}
           </h3>
-          {subtitle && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-              {subtitle}
-            </p>
-          )}
-          {year && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-              {year}
-            </p>
-          )}
-
-          {/* Ratings */}
-          <div className="flex items-center gap-4 text-sm">
-            {/* Personal Rating */}
-            {personalRating !== undefined && (
-              <div
-                className="flex items-center gap-1 text-primary"
-                aria-label={`Personal rating: ${personalRating} stars`}
-              >
-                <Star className="w-4 h-4 fill-current" aria-hidden="true" />
-                <span className="font-medium">{personalRating}</span>
-              </div>
-            )}
-
-            {/* Critic Rating */}
-            {criticRating !== undefined && (
-              <div
-                className="flex items-center gap-1 text-gray-600 dark:text-gray-400"
-                aria-label={`Critic rating: ${criticRating} percent`}
-              >
-                <span className="text-xs" aria-hidden="true">
-                  🍅
-                </span>
-                <span>{criticRating}%</span>
-              </div>
-            )}
-
-            {/* Audience Rating */}
-            {audienceRating !== undefined && (
-              <div
-                className="flex items-center gap-1 text-gray-600 dark:text-gray-400"
-                aria-label={`Audience rating: ${audienceRating}`}
-              >
-                <Star className="w-3 h-3" aria-hidden="true" />
-                <span>{audienceRating}</span>
-              </div>
-            )}
-          </div>
         </div>
       </article>
     </SparkleEffect>

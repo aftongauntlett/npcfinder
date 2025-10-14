@@ -74,28 +74,22 @@ const AppLayout: React.FC<AppLayoutProps> = ({ user }) => {
       <StarryBackground />
       <Navigation currentUser={user} />
       <Routes>
-        <Route path="/app" element={<HomePage />} />
-        <Route path="/app/fitness" element={<FitnessDashboard />} />
-        <Route path="/app/movies-tv" element={<MoviesTV />} />
+        <Route path="/" element={<HomePage />} />
+        <Route path="/fitness" element={<FitnessDashboard />} />
+        <Route path="/movies-tv" element={<MoviesTV />} />
+        <Route path="/settings" element={<UserSettings currentUser={user} />} />
         <Route
-          path="/app/settings"
-          element={<UserSettings currentUser={user} />}
-        />
-        <Route
-          path="/app/suggestions"
+          path="/suggestions"
           element={<Suggestions currentUser={user} />}
         />
         <Route
-          path="/app/admin"
+          path="/admin"
           element={
             <ProtectedAdminRoute user={user}>
               <AdminPanel />
             </ProtectedAdminRoute>
           }
         />
-        {/* Redirect authenticated users from root to app */}
-        <Route path="/" element={<Navigate to="/app" replace />} />
-        <Route path="/portal" element={<Navigate to="/app" replace />} />
         {/* Catch all - redirect to app home */}
         <Route path="*" element={<Navigate to="/app" replace />} />
       </Routes>
