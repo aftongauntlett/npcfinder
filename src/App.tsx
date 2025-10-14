@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import type { User } from "@supabase/supabase-js";
 import Footer from "./components/shared/Footer";
 import DashboardCard from "./components/dashboard/DashboardCard";
 import Hero from "./components/Hero";
@@ -18,7 +19,7 @@ import { isAdmin } from "./lib/admin";
 import { cards } from "./data/dashboardCards";
 
 // Home page component
-const HomePage = () => (
+const HomePage: React.FC = () => (
   <main className="container mx-auto px-6 py-12">
     <Hero />
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
@@ -37,7 +38,15 @@ const HomePage = () => (
 );
 
 // Protected Route wrapper for admin routes
-const ProtectedAdminRoute = ({ user, children }) => {
+interface ProtectedAdminRouteProps {
+  user: User;
+  children: React.ReactNode;
+}
+
+const ProtectedAdminRoute: React.FC<ProtectedAdminRouteProps> = ({
+  user,
+  children,
+}) => {
   if (!user) {
     return <Navigate to="/" replace />;
   }
@@ -50,11 +59,15 @@ const ProtectedAdminRoute = ({ user, children }) => {
     );
   }
 
-  return children;
+  return <>{children}</>;
 };
 
 // Main App Layout (authenticated users)
-const AppLayout = ({ user }) => {
+interface AppLayoutProps {
+  user: User;
+}
+
+const AppLayout: React.FC<AppLayoutProps> = ({ user }) => {
   return (
     <PageContainer className="relative">
       <StarryBackground />
@@ -84,18 +97,18 @@ const AppLayout = ({ user }) => {
 };
 
 // Authenticated App Wrapper
-const AuthenticatedApp = () => {
-  const [user, setUser] = React.useState(null);
-  const [authLoading, setAuthLoading] = React.useState(true);
+const AuthenticatedApp: React.FC = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState<boolean>(true);
 
-  React.useEffect(() => {
+  useEffect(() => {
     import("./lib/auth").then(({ getCurrentUser, onAuthStateChange }) => {
-      getCurrentUser().then(({ user: currentUser }) => {
+      getCurrentUser().then(({ data: currentUser }) => {
         setUser(currentUser);
         setAuthLoading(false);
       });
 
-      const { data: authListener } = onAuthStateChange((event, session) => {
+      const { data: authListener } = onAuthStateChange((_event, session) => {
         setUser(session?.user || null);
       });
 
@@ -123,7 +136,7 @@ const AuthenticatedApp = () => {
 };
 
 // Main App component
-const App = () => {
+const App: React.FC = () => {
   return (
     <BrowserRouter>
       <ThemeProvider>

@@ -7,7 +7,10 @@ interface SuggestionCardProps {
   suggestion: SuggestionWithUser;
   isAdmin?: boolean;
   onDelete?: (id: string) => void;
-  onEdit?: (id: string, updates: { title: string; description: string }) => void;
+  onEdit?: (
+    id: string,
+    updates: { title: string; description: string }
+  ) => void;
 }
 
 const SuggestionCard: React.FC<SuggestionCardProps> = ({
