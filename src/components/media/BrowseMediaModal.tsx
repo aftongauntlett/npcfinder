@@ -1,0 +1,211 @@
+import { useState } from "react";
+import { X, Search, Plus, Loader } from "lucide-react";
+import MediaCard from "./MediaCard";
+
+interface BrowseMediaModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  mediaType: "music" | "books" | "games" | "movies";
+  onAdd: (item: MediaItem) => Promise<void>;
+  searchFunction: (query: string) => Promise<MediaItem[]>;
+}
+
+interface MediaItem {
+  id: string;
+  title: string;
+  type?: string;
+  year?: number;
+  poster?: string;
+  artist?: string;
+  album?: string;
+  author?: string;
+  platforms?: string[];
+  genres?: string[];
+}
+
+export function BrowseMediaModal({
+  isOpen,
+  onClose,
+  mediaType,
+  onAdd,
+  searchFunction,
+}: BrowseMediaModalProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<MediaItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [addingIds, setAddingIds] = useState<Set<string>>(new Set());
+
+  if (!isOpen) return null;
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    setLoading(true);
+    try {
+      const results = await searchFunction(searchQuery);
+      setSearchResults(results);
+    } catch (error) {
+      console.error("Search error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAdd = async (item: MediaItem) => {
+    setAddingIds((prev) => new Set(prev).add(item.id));
+    try {
+      await onAdd(item);
+      // Remove from results after successful add
+      setSearchResults((prev) => prev.filter((i) => i.id !== item.id));
+    } catch (error) {
+      console.error("Error adding item:", error);
+    } finally {
+      setAddingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(item.id);
+        return next;
+      });
+    }
+  };
+
+  const getTitle = () => {
+    switch (mediaType) {
+      case "music":
+        return "Browse Music";
+      case "books":
+        return "Browse Books";
+      case "games":
+        return "Browse Games";
+      case "movies":
+        return "Browse Movies & TV";
+      default:
+        return "Browse Media";
+    }
+  };
+
+  const getPlaceholder = () => {
+    switch (mediaType) {
+      case "music":
+        return "Search for songs, albums, or artists...";
+      case "books":
+        return "Search for books by title or author...";
+      case "games":
+        return "Search for games...";
+      case "movies":
+        return "Search for movies or TV shows...";
+      default:
+        return "Search...";
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="w-full max-w-6xl h-[90vh] bg-white dark:bg-gray-900 rounded-xl shadow-2xl flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {getTitle()}
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            aria-label="Close modal"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        {/* Search Bar */}
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <form
+            onSubmit={(e) => void handleSearch(e)}
+            className="flex gap-3"
+          >
+            <div className="flex-1 relative">
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                size={20}
+              />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={getPlaceholder()}
+                className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading || !searchQuery.trim()}
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium rounded-lg transition-colors disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader className="animate-spin" size={20} />
+                  Searching...
+                </>
+              ) : (
+                <>
+                  <Search size={20} />
+                  Search
+                </>
+              )}
+            </button>
+          </form>
+        </div>
+
+        {/* Results */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {loading ? (
+            <div className="flex items-center justify-center h-full">
+              <Loader className="animate-spin text-blue-600" size={48} />
+            </div>
+          ) : searchResults.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              {searchResults.map((item) => (
+                <div key={item.id} className="relative group">
+                  <MediaCard
+                    id={item.id}
+                    title={item.title}
+                    year={item.year}
+                    posterUrl={item.poster}
+                    onClick={() => {}} // Disable click in browse mode
+                  />
+                  <button
+                    onClick={() => void handleAdd(item)}
+                    disabled={addingIds.has(item.id)}
+                    className="absolute top-2 left-2 p-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all disabled:cursor-not-allowed flex items-center gap-1"
+                    aria-label={`Add ${item.title} to collection`}
+                  >
+                    {addingIds.has(item.id) ? (
+                      <Loader className="animate-spin" size={16} />
+                    ) : (
+                      <Plus size={16} />
+                    )}
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : searchQuery ? (
+            <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
+              <Search size={64} className="mb-4 opacity-50" />
+              <p className="text-lg">No results found for "{searchQuery}"</p>
+              <p className="text-sm mt-2">Try a different search term</p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
+              <Search size={64} className="mb-4 opacity-50" />
+              <p className="text-lg">
+                Start searching to discover new {mediaType}
+              </p>
+              <p className="text-sm mt-2">
+                Use the search bar above to find what you're looking for
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
