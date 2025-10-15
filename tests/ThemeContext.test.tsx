@@ -1,17 +1,20 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { ThemeProvider } from "../src/contexts/ThemeContext";
 import { useTheme } from "../src/hooks/useTheme";
-import db from "../src/lib/database";
+
+// Define mock functions before vi.mock calls
+const mockDbGet = vi.fn();
+const mockDbUpdate = vi.fn();
+const mockDbPut = vi.fn();
 
 // Mock the database
 vi.mock("../src/lib/database", () => ({
   default: {
     settings: {
-      get: vi.fn(),
-      update: vi.fn(),
-      put: vi.fn(),
+      get: (...args: unknown[]) => mockDbGet(...args),
+      update: (...args: unknown[]) => mockDbUpdate(...args),
+      put: (...args: unknown[]) => mockDbPut(...args),
     },
   },
 }));
@@ -23,8 +26,8 @@ Object.defineProperty(window, "matchMedia", {
     matches: false,
     media: query,
     onchange: null,
-    addListener: vi.fn(), // deprecated
-    removeListener: vi.fn(), // deprecated
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
@@ -53,8 +56,8 @@ describe("ThemeContext", () => {
     // Reset document classes
     document.documentElement.classList.remove("dark");
     // Mock successful database operations
-    vi.mocked(db.settings.get).mockResolvedValue(undefined);
-    vi.mocked(db.settings.update).mockResolvedValue(1);
+    mockDbGet.mockResolvedValue(undefined);
+    mockDbUpdate.mockResolvedValue(1);
   });
 
   it("should provide default theme values", async () => {
@@ -71,7 +74,7 @@ describe("ThemeContext", () => {
   });
 
   it("should load theme from database on mount", async () => {
-    vi.mocked(db.settings.get).mockResolvedValue({
+    mockDbGet.mockResolvedValue({
       id: 1,
       theme: "dark",
       goalWeight: null,
@@ -87,7 +90,7 @@ describe("ThemeContext", () => {
     );
 
     await waitFor(() => {
-      expect(db.settings.get).toHaveBeenCalledWith(1);
+      expect(mockDbGet).toHaveBeenCalledWith(1);
       expect(screen.getByTestId("theme")).toHaveTextContent("dark");
     });
   });
@@ -107,7 +110,7 @@ describe("ThemeContext", () => {
 
     await waitFor(() => {
       expect(screen.getByTestId("theme")).toHaveTextContent("dark");
-      expect(db.settings.update).toHaveBeenCalledWith(
+      expect(mockDbUpdate).toHaveBeenCalledWith(
         1,
         expect.objectContaining({
           theme: "dark",
@@ -117,7 +120,7 @@ describe("ThemeContext", () => {
   });
 
   it("should apply dark class to document when theme is dark", async () => {
-    vi.mocked(db.settings.get).mockResolvedValue({
+    mockDbGet.mockResolvedValue({
       id: 1,
       theme: "dark",
       goalWeight: null,
@@ -142,7 +145,7 @@ describe("ThemeContext", () => {
     const userEvent = userEventLib.default.setup();
 
     // Start with dark theme
-    vi.mocked(db.settings.get).mockResolvedValue({
+    mockDbGet.mockResolvedValue({
       id: 1,
       theme: "dark",
       goalWeight: null,
@@ -174,7 +177,7 @@ describe("ThemeContext", () => {
     const consoleErrorSpy = vi
       .spyOn(console, "error")
       .mockImplementation(() => {});
-    vi.mocked(db.settings.get).mockRejectedValue(new Error("Database error"));
+    mockDbGet.mockRejectedValue(new Error("Database error"));
 
     render(
       <ThemeProvider>

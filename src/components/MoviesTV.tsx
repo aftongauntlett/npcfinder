@@ -1,58 +1,49 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
+import { Film, Tv as TvIcon, ThumbsUp, ThumbsDown } from "lucide-react";
+import SendMediaModal from "./shared/SendMediaModal";
+import { searchMoviesAndTV } from "../utils/mediaSearchAdapters";
 import {
-  Send,
-  Film,
-  Tv,
-  ThumbsUp,
-  ThumbsDown,
-  User,
-} from "lucide-react";
-import SendMovieModal from "./media/SendMovieModal";
+  MediaRecommendationsLayout,
+  BaseRecommendation,
+  FriendSummary,
+} from "./shared/MediaRecommendationsLayout";
 
-interface MovieRecommendation {
-  id: string;
-  from_user_id: string;
-  to_user_id: string;
-  external_id: string;
-  title: string;
+// Extend BaseRecommendation with movie-specific fields
+interface MovieRecommendation
+  extends Omit<BaseRecommendation, "status" | "consumed_at"> {
   media_type: "movie" | "tv";
-  poster_url: string | null;
   release_date: string | null;
   overview: string | null;
+  // Override with movie-specific status types
   status: "pending" | "watched" | "hit" | "miss";
-  recommendation_type: "watch" | "rewatch";
-  sent_message: string | null;
+  watched_at: string | null; // Movie-specific timestamp field
   created_at: string;
-  watched_at: string | null;
-}
-
-interface FriendSummary {
-  user_id: string;
-  display_name: string;
-  pending_count: number;
-  total_count: number;
-  hit_count: number;
-  miss_count: number;
 }
 
 /**
  * Movies & TV Recommendations Dashboard
- * Calm, friend-based movie/TV sharing - similar to Music page
+ * Discover great movies and shows through trusted friend recommendations
  */
 const MoviesTV: React.FC = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [friendsWithRecs, setFriendsWithRecs] = useState<FriendSummary[]>([]);
   const [selectedView, setSelectedView] = useState<
-    "overview" | "friend" | "watchlist" | "archive"
+    "overview" | "friend" | "hits" | "misses" | "sent"
   >("overview");
   const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null);
   const [recommendations, setRecommendations] = useState<MovieRecommendation[]>(
     []
   );
   const [showSendModal, setShowSendModal] = useState(false);
+  const [quickStats, setQuickStats] = useState({
+    hits: 0,
+    misses: 0,
+    queue: 0,
+    sent: 0,
+  });
 
   // Load friends who have sent recommendations
   const loadFriendsWithRecommendations = useCallback(async () => {
@@ -91,6 +82,25 @@ const MoviesTV: React.FC = () => {
 
       // Get display names for all friends
       const friendIds = Array.from(friendMap.keys());
+
+      // Calculate quick stats from received recommendations
+      const allHits = recs?.filter((r) => r.status === "hit").length || 0;
+      const allMisses = recs?.filter((r) => r.status === "miss").length || 0;
+      const allQueue = recs?.filter((r) => r.status === "pending").length || 0;
+
+      // Get sent count (ALWAYS do this, even if no received recommendations)
+      const { count: sentCount } = await supabase
+        .from("movie_recommendations")
+        .select("*", { count: "exact", head: true })
+        .eq("from_user_id", user.id);
+
+      setQuickStats({
+        hits: allHits,
+        misses: allMisses,
+        queue: allQueue,
+        sent: sentCount || 0,
+      });
+
       if (friendIds.length === 0) {
         setFriendsWithRecs([]);
         setLoading(false);
@@ -104,21 +114,19 @@ const MoviesTV: React.FC = () => {
 
       if (profileError) throw profileError;
 
+      // Combine data
       const friends: FriendSummary[] =
         profiles?.map((profile) => {
           const stats = friendMap.get(profile.user_id)!;
           return {
             user_id: profile.user_id,
-            display_name: profile.display_name || "Anonymous",
+            display_name: profile.display_name,
             pending_count: stats.pending,
             total_count: stats.total,
             hit_count: stats.hits,
             miss_count: stats.misses,
           };
         }) || [];
-
-      // Sort by pending count (most new recs first)
-      friends.sort((a, b) => b.pending_count - a.pending_count);
 
       setFriendsWithRecs(friends);
     } catch (error) {
@@ -143,20 +151,26 @@ const MoviesTV: React.FC = () => {
             .eq("to_user_id", user.id)
             .eq("from_user_id", friendId)
             .order("created_at", { ascending: false });
-        } else if (view === "watchlist") {
-          // Placeholder for watchlist view
-          setRecommendations([]);
-          setLoading(false);
-          return;
-        } else if (view === "archive") {
-          // Placeholder for archive view
-          setRecommendations([]);
-          setLoading(false);
-          return;
+        } else if (view === "hits") {
+          // Show all hits from any friend
+          query = query
+            .eq("to_user_id", user.id)
+            .eq("status", "hit")
+            .order("watched_at", { ascending: false });
+        } else if (view === "misses") {
+          // Show all misses from any friend
+          query = query
+            .eq("to_user_id", user.id)
+            .eq("status", "miss")
+            .order("watched_at", { ascending: false });
+        } else if (view === "sent") {
+          // Show all recs sent by this user
+          query = query
+            .eq("from_user_id", user.id)
+            .order("created_at", { ascending: false });
         }
 
         const { data, error } = await query;
-
         if (error) throw error;
 
         setRecommendations(data || []);
@@ -169,25 +183,42 @@ const MoviesTV: React.FC = () => {
     [user]
   );
 
+  // Initial load
+  useEffect(() => {
+    void loadFriendsWithRecommendations();
+  }, [loadFriendsWithRecommendations]);
+
   // Handle view changes
-  const handleViewChange = (view: string, friendId?: string) => {
-    setSelectedView(view as any);
+  const handleViewChange = (
+    view: "overview" | "friend" | "hits" | "misses" | "sent",
+    friendId?: string
+  ) => {
+    setSelectedView(view);
     setSelectedFriendId(friendId || null);
+
     if (view !== "overview") {
       void loadRecommendations(view, friendId);
     }
   };
 
-  // Update recommendation status
+  // Mark a recommendation as watched/hit/miss
   const updateRecommendationStatus = async (
     recId: string,
-    status: "watched" | "hit" | "miss"
+    status: string,
+    comment?: string
   ) => {
     try {
-      const updates: any = {
-        status,
+      // Map 'consumed' back to 'watched' for movies
+      const dbStatus = status === "consumed" ? "watched" : status;
+
+      const updates: Record<string, string> = {
+        status: dbStatus,
         watched_at: new Date().toISOString(),
       };
+
+      if (comment) {
+        updates.comment = comment;
+      }
 
       const { error } = await supabase
         .from("movie_recommendations")
@@ -210,376 +241,171 @@ const MoviesTV: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    void loadFriendsWithRecommendations();
-  }, [loadFriendsWithRecommendations]);
-
-  // Render overview (default view)
-  const renderOverview = () => {
-    const pendingCount = friendsWithRecs.reduce(
-      (sum, f) => sum + f.pending_count,
-      0
-    );
-    const hitCount = friendsWithRecs.reduce((sum, f) => sum + f.hit_count, 0);
-    const missCount = friendsWithRecs.reduce(
-      (sum, f) => sum + f.miss_count,
-      0
-    );
+  // Render a movie recommendation card
+  const renderRecommendationCard = (
+    rec: MovieRecommendation,
+    isReceived: boolean
+  ) => {
+    const index = recommendations.indexOf(rec);
+    const MediaIcon = rec.media_type === "tv" ? TvIcon : Film;
 
     return (
-      <div className="space-y-8">
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 text-center">
-            <div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">
-              {hitCount}
-            </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              Your Hits
-            </div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 text-center">
-            <div className="text-2xl font-bold text-gray-600 dark:text-gray-400 mb-1">
-              {missCount}
-            </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              Your Misses
-            </div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 text-center">
-            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400 mb-1">
-              {pendingCount}
-            </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              Watching Queue
-            </div>
-          </div>
-        </div>
-
-        {/* From Friends Section */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              From Friends
-              {pendingCount > 0 && (
-                <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
-                  ({pendingCount} new)
-                </span>
-              )}
-            </h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+        <div className="flex items-center gap-4">
+          {/* Item Number */}
+          <div className="w-8 text-center text-gray-500 dark:text-gray-400 text-sm">
+            {index + 1}
           </div>
 
-          {friendsWithRecs.length === 0 ? (
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-8 text-center">
-              <Film className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500" />
-              <p className="text-gray-500 dark:text-gray-400 mb-2">
-                No recommendations yet
-              </p>
-              <p className="text-sm text-gray-400 dark:text-gray-500">
-                When friends send you movies or TV shows, they'll show up here
-              </p>
-            </div>
+          {/* Poster */}
+          {rec.poster_url ? (
+            <img
+              src={rec.poster_url}
+              alt={rec.title}
+              className="w-12 h-16 rounded object-cover"
+            />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {friendsWithRecs.map((friend) => (
-                <button
-                  key={friend.user_id}
-                  onClick={() => handleViewChange("friend", friend.user_id)}
-                  className="bg-white dark:bg-gray-800 rounded-lg p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                >
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                      <User className="w-5 h-5 text-blue-600 dark:text-blue-300" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-900 dark:text-white truncate">
-                        {friend.display_name}
-                      </div>
-                      {friend.pending_count > 0 && (
-                        <div className="text-sm text-blue-600 dark:text-blue-400">
-                          {friend.pending_count} new
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-                    <span>{friend.total_count} total</span>
-                    {friend.hit_count > 0 && (
-                      <span className="flex items-center gap-1">
-                        <ThumbsUp className="w-3 h-3" />
-                        {friend.hit_count}
-                      </span>
-                    )}
-                    {friend.miss_count > 0 && (
-                      <span className="flex items-center gap-1">
-                        <ThumbsDown className="w-3 h-3" />
-                        {friend.miss_count}
-                      </span>
-                    )}
-                  </div>
-                </button>
-              ))}
+            <div className="w-12 h-16 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
+              <MediaIcon className="w-6 h-6 text-gray-400 dark:text-gray-500" />
             </div>
           )}
-        </div>
-      </div>
-    );
-  };
 
-  // Render friend's recommendations
-  const renderFriendView = () => {
-    const friend = friendsWithRecs.find((f) => f.user_id === selectedFriendId);
-    if (!friend) return null;
-
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => handleViewChange("overview")}
-            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-          >
-            ← Back
-          </button>
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-            From {friend.display_name}
-          </h2>
-        </div>
-
-        {loading ? (
-          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-            Loading...
-          </div>
-        ) : recommendations.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-8 text-center">
-            <p className="text-gray-500 dark:text-gray-400">
-              No recommendations yet
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {recommendations.map((rec) => (
-              <div
-                key={rec.id}
-                className="bg-white dark:bg-gray-800 rounded-lg p-6 flex gap-4"
-              >
-                {/* Poster */}
-                {rec.poster_url ? (
-                  <img
-                    src={rec.poster_url}
-                    alt={rec.title}
-                    className="w-24 h-36 object-cover rounded"
-                  />
-                ) : (
-                  <div className="w-24 h-36 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
-                    {rec.media_type === "movie" ? (
-                      <Film size={32} className="text-gray-400" />
-                    ) : (
-                      <Tv size={32} className="text-gray-400" />
-                    )}
-                  </div>
-                )}
-
-                {/* Content */}
-                <div className="flex-1">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {rec.title}
-                      </h3>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        {rec.media_type === "movie" ? "Movie" : "TV Show"}
-                        {rec.release_date &&
-                          ` • ${rec.release_date.split("-")[0]}`}
-                      </div>
-                    </div>
-
-                    {/* Status Badge */}
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        rec.status === "pending"
-                          ? "bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300"
-                          : rec.status === "watched"
-                          ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300"
-                          : rec.status === "hit"
-                          ? "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300"
-                          : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-                      }`}
-                    >
-                      {rec.status === "pending" && "To Watch"}
-                      {rec.status === "watched" && "Watched"}
-                      {rec.status === "hit" && "Loved It!"}
-                      {rec.status === "miss" && "Not For Me"}
-                    </span>
-                  </div>
-
-                  {rec.recommendation_type && (
-                    <div className="mb-2">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs ${
-                          rec.recommendation_type === "watch"
-                            ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300"
-                            : "bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300"
-                        }`}
-                      >
-                        {rec.recommendation_type === "watch" ? (
-                          <>
-                            <Film size={12} />
-                            Watch
-                          </>
-                        ) : (
-                          <>
-                            <Tv size={12} />
-                            Rewatch
-                          </>
-                        )}
-                      </span>
-                    </div>
-                  )}
-
-                  {rec.sent_message && (
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 italic">
-                      "{rec.sent_message}"
-                    </p>
-                  )}
-
-                  {rec.overview && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
-                      {rec.overview}
-                    </p>
-                  )}
-
-                  {/* Action Buttons */}
-                  {rec.status === "pending" && (
-                    <div className="flex gap-2 flex-wrap">
-                      <button
-                        onClick={() =>
-                          updateRecommendationStatus(rec.id, "watched")
-                        }
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors"
-                      >
-                        Mark as Watched
-                      </button>
-                      <button
-                        onClick={() =>
-                          updateRecommendationStatus(rec.id, "hit")
-                        }
-                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm transition-colors flex items-center gap-2"
-                      >
-                        <ThumbsUp size={16} />
-                        Loved It
-                      </button>
-                      <button
-                        onClick={() =>
-                          updateRecommendationStatus(rec.id, "miss")
-                        }
-                        className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm transition-colors flex items-center gap-2"
-                      >
-                        <ThumbsDown size={16} />
-                        Not For Me
-                      </button>
-                    </div>
-                  )}
-                </div>
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <div className="font-medium text-gray-900 dark:text-white truncate">
+                {rec.title}
               </div>
-            ))}
+              {rec.media_type === "tv" && (
+                <span className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 px-2 py-0.5 rounded whitespace-nowrap">
+                  <TvIcon className="w-3 h-3" />
+                  TV
+                </span>
+              )}
+            </div>
+            {rec.release_date && (
+              <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                {rec.release_date}
+              </div>
+            )}
+            {rec.sent_message && (
+              <div className="text-xs text-gray-400 dark:text-gray-500 mt-1 italic">
+                "{rec.sent_message}"
+              </div>
+            )}
+            {rec.overview && (
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                {rec.overview}
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Status & Actions */}
+          <div className="flex items-center gap-2">
+            {isReceived && rec.status === "pending" ? (
+              <>
+                <button
+                  onClick={() =>
+                    void updateRecommendationStatus(rec.id, "consumed")
+                  }
+                  className="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+                >
+                  Mark Watched
+                </button>
+                <button
+                  onClick={() => void updateRecommendationStatus(rec.id, "hit")}
+                  className="px-3 py-1 text-sm bg-green-600 hover:bg-green-700 text-white rounded transition-colors"
+                >
+                  Loved It
+                </button>
+                <button
+                  onClick={() =>
+                    void updateRecommendationStatus(rec.id, "miss")
+                  }
+                  className="px-3 py-1 text-sm bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+                >
+                  Not For Me
+                </button>
+              </>
+            ) : (
+              <div className="flex items-center gap-2 text-sm">
+                {rec.status === "hit" && (
+                  <span className="text-green-600 dark:text-green-400 flex items-center gap-1">
+                    <ThumbsUp className="w-4 h-4" />
+                    Loved It
+                  </span>
+                )}
+                {rec.status === "miss" && (
+                  <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                    <ThumbsDown className="w-4 h-4" />
+                    Not For Me
+                  </span>
+                )}
+                {rec.status === "watched" && isReceived && (
+                  <span className="text-blue-600 dark:text-blue-400">
+                    Watched
+                  </span>
+                )}
+                {!isReceived && rec.status === "pending" && (
+                  <span className="text-gray-500 dark:text-gray-400">
+                    Pending
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     );
   };
-
-  // Render watchlist placeholder
-  const renderWatchlistView = () => (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => handleViewChange("overview")}
-          className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-        >
-          ← Back
-        </button>
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-          My Watchlist
-        </h2>
-      </div>
-
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-8 text-center">
-        <Film className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500" />
-        <p className="text-gray-500 dark:text-gray-400 mb-2">
-          Watchlist coming soon!
-        </p>
-        <p className="text-sm text-gray-400 dark:text-gray-500">
-          Personal watchlist with drag-and-drop ordering and public/private
-          settings
-        </p>
-      </div>
-    </div>
-  );
-
-  // Render archive placeholder
-  const renderArchiveView = () => (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => handleViewChange("overview")}
-          className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-        >
-          ← Back
-        </button>
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-          Watched Archive
-        </h2>
-      </div>
-
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-8 text-center">
-        <Tv className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500" />
-        <p className="text-gray-500 dark:text-gray-400 mb-2">
-          Archive coming soon!
-        </p>
-        <p className="text-sm text-gray-400 dark:text-gray-500">
-          View all watched movies/TV with your ratings and reviews
-        </p>
-      </div>
-    </div>
-  );
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Movies & TV
-            </h1>
-            <button
-              onClick={() => setShowSendModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-            >
-              <Send size={20} />
-              Send Recommendation
-            </button>
-          </div>
+      <MediaRecommendationsLayout
+        mediaType="Movies & TV"
+        mediaIcon={
+          <Film className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500" />
+        }
+        emptyMessage="No recommendations yet"
+        emptySubMessage="When friends recommend movies or TV shows, they'll show up here"
+        queueLabel="Watching Queue"
+        consumedLabel="Watched"
+        loading={loading}
+        friendsWithRecs={friendsWithRecs}
+        recommendations={recommendations}
+        quickStats={quickStats}
+        selectedView={selectedView}
+        selectedFriendId={selectedFriendId}
+        onViewChange={handleViewChange}
+        onSendClick={() => setShowSendModal(true)}
+        onStatusUpdate={updateRecommendationStatus}
+        renderRecommendationCard={renderRecommendationCard}
+      />
 
-          {/* Render current view */}
-          {selectedView === "overview" && renderOverview()}
-          {selectedView === "friend" && renderFriendView()}
-          {selectedView === "watchlist" && renderWatchlistView()}
-          {selectedView === "archive" && renderArchiveView()}
-        </div>
-      </div>
-
-      {/* Send Modal */}
-      {showSendModal && (
-        <SendMovieModal
-          isOpen={showSendModal}
-          onClose={() => setShowSendModal(false)}
-          onSent={async () => {
-            setShowSendModal(false);
-            await loadFriendsWithRecommendations();
-          }}
-        />
-      )}
+      {/* Send Movie/TV Modal */}
+      <SendMediaModal
+        isOpen={showSendModal}
+        onClose={() => setShowSendModal(false)}
+        onSent={() => {
+          // Refresh the data after sending
+          void loadFriendsWithRecommendations();
+          if (selectedView !== "overview") {
+            void loadRecommendations(
+              selectedView,
+              selectedFriendId || undefined
+            );
+          }
+        }}
+        mediaType="movies"
+        tableName="movie_recommendations"
+        searchPlaceholder="Search for movies or TV shows..."
+        searchFunction={searchMoviesAndTV}
+        recommendationTypes={[
+          { value: "watch", label: "Watch" },
+          { value: "rewatch", label: "Rewatch" },
+        ]}
+        defaultRecommendationType="watch"
+      />
     </>
   );
 };

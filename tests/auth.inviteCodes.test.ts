@@ -1,29 +1,33 @@
-/* eslint-disable @typescript-eslint/unbound-method */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/require-await */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { signUp } from "../src/lib/auth";
-import * as inviteCodes from "../src/lib/inviteCodes";
-import { supabase } from "../src/lib/supabase";
+
+// Define mock functions before vi.mock calls
+const mockSignUp = vi.fn();
+const mockValidateInviteCode = vi.fn();
+const mockConsumeInviteCode = vi.fn();
 
 // Mock dependencies
-vi.mock("../src/lib/supabase", () => ({
-  supabase: {
-    auth: {
-      signUp: vi.fn(),
-      signInWithPassword: vi.fn(),
-      signOut: vi.fn(),
-      getUser: vi.fn(),
-      getSession: vi.fn(),
-      onAuthStateChange: vi.fn(),
+vi.mock("../src/lib/supabase", () => {
+  return {
+    supabase: {
+      auth: {
+        signUp: (...args: unknown[]) => mockSignUp(...args),
+        signInWithPassword: vi.fn(),
+        signOut: vi.fn(),
+        getUser: vi.fn(),
+        getSession: vi.fn(),
+        onAuthStateChange: vi.fn(),
+      },
     },
-  },
-}));
+  };
+});
 
-vi.mock("../src/lib/inviteCodes", () => ({
-  validateInviteCode: vi.fn(),
-  consumeInviteCode: vi.fn(),
-}));
+vi.mock("../src/lib/inviteCodes", () => {
+  return {
+    validateInviteCode: (...args: unknown[]) => mockValidateInviteCode(...args),
+    consumeInviteCode: (...args: unknown[]) => mockConsumeInviteCode(...args),
+  };
+});
 
 describe("auth with invite codes", () => {
   beforeEach(() => {
@@ -32,7 +36,7 @@ describe("auth with invite codes", () => {
 
   describe("signUp", () => {
     it("should reject signup without valid invite code", async () => {
-      vi.mocked(inviteCodes.validateInviteCode).mockResolvedValue({
+      mockValidateInviteCode.mockResolvedValue({
         data: false,
         error: null,
       });
@@ -46,11 +50,11 @@ describe("auth with invite codes", () => {
       expect(result.data).toBeNull();
       expect(result.error).toBeTruthy();
       expect(result.error?.message).toContain("Invalid or expired invite code");
-      expect(supabase.auth.signUp).not.toHaveBeenCalled();
+      expect(mockSignUp).not.toHaveBeenCalled();
     });
 
     it("should reject signup when invite code validation errors", async () => {
-      vi.mocked(inviteCodes.validateInviteCode).mockResolvedValue({
+      mockValidateInviteCode.mockResolvedValue({
         data: null,
         error: new Error("Database error"),
       });
@@ -63,23 +67,23 @@ describe("auth with invite codes", () => {
 
       expect(result.data).toBeNull();
       expect(result.error).toBeTruthy();
-      expect(supabase.auth.signUp).not.toHaveBeenCalled();
+      expect(mockSignUp).not.toHaveBeenCalled();
     });
 
     it("should create user account with valid invite code", async () => {
       const mockUser = { id: "user-123", email: "test@example.com" };
 
-      vi.mocked(inviteCodes.validateInviteCode).mockResolvedValue({
+      mockValidateInviteCode.mockResolvedValue({
         data: true,
         error: null,
       });
 
-      vi.mocked(supabase.auth.signUp).mockResolvedValue({
+      mockSignUp.mockResolvedValue({
         data: { user: mockUser, session: null },
         error: null,
-      } as any);
+      });
 
-      vi.mocked(inviteCodes.consumeInviteCode).mockResolvedValue({
+      mockConsumeInviteCode.mockResolvedValue({
         data: true,
         error: null,
       });
@@ -90,14 +94,12 @@ describe("auth with invite codes", () => {
         "ABC-DEF-GHI-JKL"
       );
 
-      expect(inviteCodes.validateInviteCode).toHaveBeenCalledWith(
-        "ABC-DEF-GHI-JKL"
-      );
-      expect(supabase.auth.signUp).toHaveBeenCalledWith({
+      expect(mockValidateInviteCode).toHaveBeenCalledWith("ABC-DEF-GHI-JKL");
+      expect(mockSignUp).toHaveBeenCalledWith({
         email: "test@example.com",
         password: "password123",
       });
-      expect(inviteCodes.consumeInviteCode).toHaveBeenCalledWith(
+      expect(mockConsumeInviteCode).toHaveBeenCalledWith(
         "ABC-DEF-GHI-JKL",
         "user-123"
       );
@@ -108,17 +110,17 @@ describe("auth with invite codes", () => {
     it("should still create account even if code consumption fails", async () => {
       const mockUser = { id: "user-123", email: "test@example.com" };
 
-      vi.mocked(inviteCodes.validateInviteCode).mockResolvedValue({
+      mockValidateInviteCode.mockResolvedValue({
         data: true,
         error: null,
       });
 
-      vi.mocked(supabase.auth.signUp).mockResolvedValue({
+      mockSignUp.mockResolvedValue({
         data: { user: mockUser, session: null },
         error: null,
-      } as any);
+      });
 
-      vi.mocked(inviteCodes.consumeInviteCode).mockResolvedValue({
+      mockConsumeInviteCode.mockResolvedValue({
         data: false,
         error: new Error("Failed to consume"),
       });
@@ -135,16 +137,17 @@ describe("auth with invite codes", () => {
     });
 
     it("should handle Supabase auth errors", async () => {
-      vi.mocked(inviteCodes.validateInviteCode).mockResolvedValue({
+      mockValidateInviteCode.mockResolvedValue({
         data: true,
         error: null,
       });
 
       const authError = new Error("Email already exists");
-      vi.mocked(supabase.auth.signUp).mockResolvedValue({
+
+      mockSignUp.mockResolvedValue({
         data: { user: null, session: null },
         error: authError,
-      } as any);
+      });
 
       const result = await signUp(
         "test@example.com",
@@ -157,15 +160,15 @@ describe("auth with invite codes", () => {
     });
 
     it("should handle case when user creation returns no user", async () => {
-      vi.mocked(inviteCodes.validateInviteCode).mockResolvedValue({
+      mockValidateInviteCode.mockResolvedValue({
         data: true,
         error: null,
       });
 
-      vi.mocked(supabase.auth.signUp).mockResolvedValue({
+      mockSignUp.mockResolvedValue({
         data: { user: null, session: null },
         error: null,
-      } as any);
+      });
 
       const result = await signUp(
         "test@example.com",
@@ -182,19 +185,22 @@ describe("auth with invite codes", () => {
       const mockUser = { id: "user-123", email: "test@example.com" };
       const callOrder: string[] = [];
 
-      vi.mocked(inviteCodes.validateInviteCode).mockImplementation(async () => {
+      mockValidateInviteCode.mockImplementation(() => {
         callOrder.push("validate");
-        return { data: true, error: null };
+        return Promise.resolve({ data: true, error: null });
       });
 
-      vi.mocked(supabase.auth.signUp).mockImplementation(async () => {
+      mockSignUp.mockImplementation(() => {
         callOrder.push("signup");
-        return { data: { user: mockUser, session: null }, error: null } as any;
+        return Promise.resolve({
+          data: { user: mockUser, session: null },
+          error: null,
+        });
       });
 
-      vi.mocked(inviteCodes.consumeInviteCode).mockImplementation(async () => {
+      mockConsumeInviteCode.mockImplementation(() => {
         callOrder.push("consume");
-        return { data: true, error: null };
+        return Promise.resolve({ data: true, error: null });
       });
 
       await signUp("test@example.com", "password123", "ABC-DEF-GHI-JKL");
