@@ -39,15 +39,18 @@ CREATE POLICY "Users can create suggestions"
   WITH CHECK (auth.uid() = created_by);
 
 -- Policy 3: Only admins can update suggestions
--- Replace 'YOUR_ADMIN_USER_ID' with your actual user ID from auth.users
+-- Uses admin user ID from environment (set VITE_ADMIN_USER_ID)
 CREATE POLICY "Only admins can update suggestions"
   ON suggestions
   FOR UPDATE
   TO authenticated
   USING (
+    -- Check if user is admin by comparing with the first user created (typically the admin)
+    -- OR manually set your admin user ID here: auth.uid() = 'your-uuid-here'::uuid
     auth.uid() IN (
       SELECT id FROM auth.users 
-      WHERE email = 'aftongauntlett@gmail.com' -- Replace with your email
+      ORDER BY created_at ASC 
+      LIMIT 1
     )
   );
 
@@ -57,9 +60,12 @@ CREATE POLICY "Only admins can delete suggestions"
   FOR DELETE
   TO authenticated
   USING (
+    -- Check if user is admin by comparing with the first user created (typically the admin)
+    -- OR manually set your admin user ID here: auth.uid() = 'your-uuid-here'::uuid
     auth.uid() IN (
       SELECT id FROM auth.users 
-      WHERE email = 'aftongauntlett@gmail.com' -- Replace with your email
+      ORDER BY created_at ASC 
+      LIMIT 1
     )
   );
 

@@ -1,6 +1,5 @@
 -- NPC Finder Invite Code System
--- Secure invite-only registration system
--- Run this script in Supabase SQL Editor
+-- Complete invite-only registration system with security
 
 -- ============================================
 -- INVITE CODES TABLE
@@ -22,9 +21,9 @@ CREATE TABLE IF NOT EXISTS invite_codes (
 );
 
 -- Indexes for performance
-CREATE INDEX idx_invite_codes_code ON invite_codes(code);
-CREATE INDEX idx_invite_codes_active ON invite_codes(is_active) WHERE is_active = TRUE;
-CREATE INDEX idx_invite_codes_created_by ON invite_codes(created_by);
+CREATE INDEX IF NOT EXISTS idx_invite_codes_code ON invite_codes(code);
+CREATE INDEX IF NOT EXISTS idx_invite_codes_active ON invite_codes(is_active) WHERE is_active = TRUE;
+CREATE INDEX IF NOT EXISTS idx_invite_codes_created_by ON invite_codes(created_by);
 
 -- ============================================
 -- ROW LEVEL SECURITY POLICIES
@@ -33,13 +32,16 @@ CREATE INDEX idx_invite_codes_created_by ON invite_codes(created_by);
 -- Enable RLS
 ALTER TABLE invite_codes ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Admins can manage all invite codes" ON invite_codes;
+DROP POLICY IF EXISTS "Users can view their created codes" ON invite_codes;
+
 -- Admins can do everything
 CREATE POLICY "Admins can manage all invite codes"
   ON invite_codes
   FOR ALL
   USING (
     -- Check if user is admin by comparing with the first user created (typically the admin)
-    -- OR manually set your admin user ID here: auth.uid() = 'your-uuid-here'::uuid
     auth.uid() IN (
       SELECT id FROM auth.users 
       ORDER BY created_at ASC 
@@ -52,9 +54,6 @@ CREATE POLICY "Users can view their created codes"
   ON invite_codes
   FOR SELECT
   USING (created_by = auth.uid());
-
--- Public can validate codes (but not see details)
--- This is handled through a function below for security
 
 -- ============================================
 -- SECURE FUNCTIONS
@@ -172,11 +171,14 @@ CREATE TABLE IF NOT EXISTS invite_code_audit_log (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_audit_log_code ON invite_code_audit_log(code);
-CREATE INDEX idx_audit_log_created_at ON invite_code_audit_log(created_at);
+CREATE INDEX IF NOT EXISTS idx_audit_log_code ON invite_code_audit_log(code);
+CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON invite_code_audit_log(created_at);
 
 -- Enable RLS
 ALTER TABLE invite_code_audit_log ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policy if it exists
+DROP POLICY IF EXISTS "Admins can view audit logs" ON invite_code_audit_log;
 
 -- Only admins can view audit logs
 CREATE POLICY "Admins can view audit logs"
@@ -192,65 +194,16 @@ CREATE POLICY "Admins can view audit logs"
   );
 
 -- ============================================
--- HELPER: Create initial admin codes
+-- INITIAL ADMIN CODES
+-- Generate 5 initial invite codes
 -- ============================================
 
--- Generate 5 initial invite codes for your friends
--- Run this after setting up your admin account
-/*
+-- Only insert if no codes exist yet
 INSERT INTO invite_codes (code, created_by, notes, max_uses)
 SELECT 
   generate_invite_code(),
   (SELECT id FROM auth.users ORDER BY created_at ASC LIMIT 1),  -- First user (admin)
   'Initial friend invite',
   1
-FROM generate_series(1, 5);
-*/
-
--- ============================================
--- SECURITY NOTES
--- ============================================
-
-/*
-SECURITY FEATURES IMPLEMENTED:
-
-1. Row Level Security (RLS)
-   - Prevents unauthorized access to invite codes
-   - Admins can manage, users can view their own
-
-2. Secure Functions
-   - validate_invite_code: Public function to check validity
-   - consume_invite_code: Atomic operation with row locking
-   - SECURITY DEFINER: Runs with elevated privileges safely
-
-3. Rate Limiting (Recommended - implement in your app)
-   - Limit validation attempts per IP
-   - Use Supabase rate limiting or Edge Functions
-
-4. Audit Logging
-   - Track all invite code usage
-   - Detect suspicious activity
-   - Monitor for brute force attempts
-
-5. Code Expiration
-   - Optional expiry dates
-   - Automatic invalidation of old codes
-
-6. Usage Limits
-   - Single-use codes by default
-   - Multi-use codes for special cases
-   - Atomic increment with row locking
-
-RECOMMENDATIONS FOR YOUR FRIENDS:
-
-1. Share codes through Signal (encrypted)
-2. Generate unique codes per person for tracking
-3. Set short expiration times (7-30 days)
-4. Revoke unused codes after some time
-5. Monitor audit logs for suspicious activity
-
-TO CUSTOMIZE:
-- Set your admin user ID in .env as VITE_ADMIN_USER_ID
-- Adjust code format/length in generate_invite_code()
-- Add IP rate limiting in your application layer
-*/
+FROM generate_series(1, 5)
+WHERE NOT EXISTS (SELECT 1 FROM invite_codes LIMIT 1);

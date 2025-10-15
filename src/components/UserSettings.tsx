@@ -212,6 +212,27 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
               </p>
             </div>
 
+            {/* Email Address (Read-only) */}
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
+                Email Address
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={currentUser.email || ""}
+                disabled
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400 cursor-not-allowed"
+              />
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Your email cannot be changed
+              </p>
+            </div>
+
             {/* Divider */}
             <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
               <ColorThemePicker

@@ -11,6 +11,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import Button from "../shared/Button";
+import ConfirmationModal from "../shared/ConfirmationModal";
 import {
   createInviteCode,
   batchCreateInviteCodes,
@@ -36,6 +37,14 @@ const InviteCodeManager: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  // Revoke modal state
+  const [showRevokeModal, setShowRevokeModal] = useState(false);
+  const [codeToRevoke, setCodeToRevoke] = useState<{
+    id: string;
+    code: string;
+  } | null>(null);
+  const [revoking, setRevoking] = useState(false);
 
   // Create form state
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -105,20 +114,28 @@ const InviteCodeManager: React.FC = () => {
     }
   };
 
-  const handleRevokeCode = async (codeId: string) => {
-    if (!confirm("Are you sure you want to revoke this invite code?")) {
-      return;
-    }
+  const handleRevokeCode = (codeId: string, code: string) => {
+    setCodeToRevoke({ id: codeId, code });
+    setShowRevokeModal(true);
+  };
 
+  const confirmRevoke = async () => {
+    if (!codeToRevoke) return;
+
+    setRevoking(true);
     try {
-      const result = await revokeInviteCode(codeId);
+      const result = await revokeInviteCode(codeToRevoke.id);
       if (result.error) {
         alert(`Error revoking code: ${result.error.message}`);
       } else {
         await fetchCodes();
+        setShowRevokeModal(false);
+        setCodeToRevoke(null);
       }
     } catch (error) {
       console.error("Error revoking code:", error);
+    } finally {
+      setRevoking(false);
     }
   };
 
@@ -417,7 +434,7 @@ const InviteCodeManager: React.FC = () => {
                     <td className="px-4 py-3">
                       {code.is_active && (
                         <button
-                          onClick={() => void handleRevokeCode(code.id)}
+                          onClick={() => handleRevokeCode(code.id, code.code)}
                           className="text-red-400 hover:text-red-300 transition-colors flex items-center gap-1 text-sm"
                           title="Revoke code"
                         >
@@ -434,7 +451,7 @@ const InviteCodeManager: React.FC = () => {
         </div>
       </div>
 
-      {/* Security Notice */}
+      {/* Security Best Practices */}
       <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
         <div className="flex gap-3">
           <Shield className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
@@ -450,6 +467,26 @@ const InviteCodeManager: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Revoke Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showRevokeModal}
+        onClose={() => {
+          setShowRevokeModal(false);
+          setCodeToRevoke(null);
+        }}
+        onConfirm={() => void confirmRevoke()}
+        title="Revoke Invite Code"
+        message={
+          codeToRevoke
+            ? `Are you sure you want to revoke the code "${codeToRevoke.code}"? This action cannot be undone and the code will no longer be valid for registration.`
+            : ""
+        }
+        confirmText="Revoke Code"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={revoking}
+      />
     </div>
   );
 };
