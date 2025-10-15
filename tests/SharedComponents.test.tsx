@@ -120,7 +120,7 @@ describe("Footer Component", () => {
         <Footer />
       </BrowserRouter>
     );
-    expect(screen.getByText("Have a suggestion?")).toBeInTheDocument();
+    expect(screen.getByText("Suggestions")).toBeInTheDocument();
   });
 
   it("should render GitHub link", () => {
@@ -146,7 +146,9 @@ describe("Footer Component", () => {
     );
     const currentYear = new Date().getFullYear();
     expect(
-      screen.getByText(`© ${currentYear} NPC Finder. All rights reserved.`)
+      screen.getByText(`© ${currentYear} NPC Finder · Built by`, {
+        exact: false,
+      })
     ).toBeInTheDocument();
   });
 });

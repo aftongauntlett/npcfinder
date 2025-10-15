@@ -1,5 +1,6 @@
 import React from "react";
 import PageContainer from "../shared/PageContainer";
+import Breadcrumb from "../shared/Breadcrumb";
 
 interface MediaPageLayoutProps {
   title: string;
@@ -21,6 +22,7 @@ const MediaPageLayout: React.FC<MediaPageLayoutProps> = ({
   return (
     <PageContainer>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Breadcrumb />
         {/* Header Section */}
         <header className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
