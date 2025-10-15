@@ -7,8 +7,13 @@ import MediaListItem from "./media/MediaListItem";
 import LayoutToggle from "./media/LayoutToggle";
 import MediaActionButtons from "./media/MediaActionButtons";
 import MediaDetailModal from "./media/MediaDetailModal";
+import {
+  searchMusic,
+  getHighResArtwork,
+  getYearFromReleaseDate,
+} from "../lib/itunes";
 
-type MediaStatus = "played" | "to-play";
+type MediaStatus = "saved" | "to-listen";
 
 type MediaDetailStatus = "completed" | "in-progress" | "to-watch" | "dropped";
 
@@ -22,19 +27,36 @@ interface MediaItem {
   userStatus?: MediaStatus;
   criticScore?: number;
   audienceScore?: number;
+  artist?: string;
+  album?: string;
 }
 
-const GAME_FILTERS: Filter[] = [
+const MUSIC_FILTERS: Filter[] = [
   {
-    id: "platform",
-    label: "Platform",
+    id: "type",
+    label: "Type",
     type: "select",
     options: [
-      { value: "pc", label: "PC" },
-      { value: "playstation", label: "PlayStation" },
-      { value: "xbox", label: "Xbox" },
-      { value: "nintendo", label: "Nintendo Switch" },
-      { value: "mobile", label: "Mobile" },
+      { value: "all", label: "All" },
+      { value: "track", label: "Tracks" },
+      { value: "album", label: "Albums" },
+      { value: "artist", label: "Artists" },
+      { value: "playlist", label: "Playlists" },
+    ],
+  },
+  {
+    id: "genre",
+    label: "Genre",
+    type: "select",
+    options: [
+      { value: "pop", label: "Pop" },
+      { value: "rock", label: "Rock" },
+      { value: "hip-hop", label: "Hip Hop" },
+      { value: "electronic", label: "Electronic" },
+      { value: "jazz", label: "Jazz" },
+      { value: "classical", label: "Classical" },
+      { value: "country", label: "Country" },
+      { value: "r&b", label: "R&B" },
     ],
   },
   {
@@ -42,10 +64,8 @@ const GAME_FILTERS: Filter[] = [
     label: "Status",
     type: "select",
     options: [
-      { value: "completed", label: "Completed" },
-      { value: "playing", label: "Playing" },
-      { value: "to-play", label: "To Play" },
-      { value: "dropped", label: "Dropped" },
+      { value: "saved", label: "Saved" },
+      { value: "to-listen", label: "To Listen" },
     ],
   },
   {
@@ -54,6 +74,7 @@ const GAME_FILTERS: Filter[] = [
     type: "select",
     options: [
       { value: "title", label: "Title" },
+      { value: "artist", label: "Artist" },
       { value: "rating", label: "Your Rating" },
       { value: "year", label: "Release Year" },
       { value: "added", label: "Date Added" },
@@ -62,9 +83,10 @@ const GAME_FILTERS: Filter[] = [
 ] as const;
 
 /**
- * Games page with search, filtering, and personal ratings
+ * Music page with iTunes Search API, search, filtering, and personal ratings
+ * Users search for songs/albums, then save them with their own ratings to the database
  */
-const Games: React.FC = () => {
+const Music: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [activeFilters, setActiveFilters] = useState<Record<string, string>>(
     {}
@@ -75,23 +97,23 @@ const Games: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [layout, setLayout] = useState<"grid" | "list">(() => {
     // Load layout preference from localStorage
-    const saved = localStorage.getItem("games-layout");
-    return saved === "list" || saved === "grid" ? saved : "grid";
+    const saved = localStorage.getItem("music-layout");
+    return saved === "list" || saved === "grid" ? saved : "list";
   });
 
   // Save layout preference
   const handleLayoutChange = (newLayout: "grid" | "list") => {
     setLayout(newLayout);
-    localStorage.setItem("games-layout", newLayout);
+    localStorage.setItem("music-layout", newLayout);
   };
 
-  // Load user's games on mount and when filters change
+  // Load user's music on mount and when filters change
   useEffect(() => {
     void loadUserItems();
   }, [activeFilters]);
 
   // Handle search
-  const handleSearch = (query: string) => {
+  const handleSearch = async (query: string) => {
     setSearchQuery(query);
     if (!query.trim()) {
       void loadUserItems();
@@ -100,72 +122,130 @@ const Games: React.FC = () => {
 
     setLoading(true);
     try {
-      // TODO: Implement RAWG API search
-      console.log("Searching for games:", query);
+      // Search iTunes API
+      const results = await searchMusic(query, 20);
+
+      // Combine songs and albums into media items
+      const items: MediaItem[] = [];
+
+      // Add albums
+      results.albums.forEach((album) => {
+        items.push({
+          id: `album-${album.collectionId}`,
+          title: album.collectionName,
+          type: "album",
+          artist: album.artistName,
+          year: getYearFromReleaseDate(album.releaseDate),
+          poster: getHighResArtwork(album.artworkUrl100, 300),
+        });
+      });
+
+      // Add songs
+      results.songs.forEach((song) => {
+        items.push({
+          id: `track-${song.trackId}`,
+          title: song.trackName,
+          type: "track",
+          artist: song.artistName,
+          album: song.collectionName,
+          year: getYearFromReleaseDate(song.releaseDate),
+          poster: getHighResArtwork(song.artworkUrl100, 300),
+        });
+      });
+
+      setMediaItems(items);
       setLoading(false);
     } catch (error) {
-      console.error("Search error:", error);
+      console.error("Error searching music:", error);
       setLoading(false);
     }
   };
 
-  // Load user's saved items
+  // Handle filter changes
+  const handleFilterChange = (filterId: string, value: string) => {
+    setActiveFilters((prev) => ({
+      ...prev,
+      [filterId]: value,
+    }));
+  };
+
+  // Load user's saved music
   const loadUserItems = () => {
     setLoading(true);
     try {
-      // TODO: Implement Supabase query for games
+      // TODO: Load from Supabase and/or Spotify API
+      // For now, show placeholder data
       const placeholderItems: MediaItem[] = [
         {
           id: "1",
-          title: "The Legend of Zelda: Breath of the Wild",
-          type: "game",
-          year: 2017,
+          title: "Thriller",
+          type: "album",
+          artist: "Michael Jackson",
+          year: 1982,
           poster:
-            "https://media.rawg.io/media/games/cc1/cc196a5ad763955d6532cdba236f730c.jpg",
+            "https://coverartarchive.org/release/2225dd4c-ae9a-403b-8ea0-9e05014c778e/11497024856-500.jpg",
           userRating: 5,
-          userStatus: "played",
-          criticScore: 97,
-          audienceScore: 93,
+          userStatus: "saved",
+          criticScore: 96,
+          audienceScore: 95,
         },
         {
           id: "2",
-          title: "Elden Ring",
-          type: "game",
-          year: 2022,
+          title: "Abbey Road",
+          type: "album",
+          artist: "The Beatles",
+          year: 1969,
           poster:
-            "https://media.rawg.io/media/games/5ec/5ecac5cb026ec26a56efcc546364e348.jpg",
+            "https://coverartarchive.org/release/773ad3da-50bd-4ad8-a713-851d34e222f6/24216424133-500.jpg",
           userRating: 5,
-          userStatus: "played",
-          criticScore: 96,
-          audienceScore: 91,
+          userStatus: "saved",
+          criticScore: 100,
+          audienceScore: 98,
+        },
+        {
+          id: "3",
+          title: "Random Access Memories",
+          type: "album",
+          artist: "Daft Punk",
+          year: 2013,
+          poster:
+            "https://coverartarchive.org/release/c9a0c8d3-c3a8-4968-925f-4e17f21e4137/25077743723-500.jpg",
+          userRating: 4,
+          userStatus: "saved",
+          criticScore: 87,
+          audienceScore: 89,
         },
       ];
+
       setMediaItems(placeholderItems);
       setLoading(false);
     } catch (error) {
-      console.error("Load error:", error);
+      console.error("Error loading music:", error);
       setLoading(false);
     }
-  };
-
-  const handleFilterChange = (filterId: string, value: string) => {
-    setActiveFilters((prev) => ({ ...prev, [filterId]: value }));
-  };
-
-  const handleRandom = () => {
-    if (mediaItems.length === 0) return;
-    const randomIndex = Math.floor(Math.random() * mediaItems.length);
-    setSelectedItem(mediaItems[randomIndex]);
-    setIsModalOpen(true);
-  };
-
-  const handleTopLists = () => {
-    console.log("Show top 10 game lists");
   };
 
   const handleCardClick = (item: MediaItem) => {
     setSelectedItem(item);
     setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedItem(null);
+  };
+
+  const handleRandom = () => {
+    if (mediaItems.length > 0) {
+      const randomItem =
+        mediaItems[Math.floor(Math.random() * mediaItems.length)];
+      handleCardClick(randomItem);
+    }
+  };
+
+  const handleTopLists = () => {
+    console.log("Show top music lists");
+    // TODO: Implement top lists modal
   };
 
   const handleRatingChange = (rating: number) => {
@@ -181,17 +261,19 @@ const Games: React.FC = () => {
 
   const handleStatusChange = (status: MediaDetailStatus) => {
     if (!selectedItem) return;
-    // Map MediaDetailStatus to MediaStatus for Games
-    const gameStatus: MediaStatus =
-      status === "completed" ? "played" : "to-play";
+    // Map MediaDetailStatus to MediaStatus for Music
+    const musicStatus: MediaStatus =
+      status === "completed" ? "saved" : "to-listen";
     // TODO: Update status in database
     setMediaItems((prev) =>
       prev.map((item) =>
-        item.id === selectedItem.id ? { ...item, userStatus: gameStatus } : item
+        item.id === selectedItem.id
+          ? { ...item, userStatus: musicStatus }
+          : item
       )
     );
     setSelectedItem((prev) =>
-      prev ? { ...prev, userStatus: gameStatus } : null
+      prev ? { ...prev, userStatus: musicStatus } : null
     );
   };
 
@@ -202,7 +284,10 @@ const Games: React.FC = () => {
   const searchBar = (
     <div className="flex items-center gap-3">
       <div className="flex-1">
-        <MediaSearchBar onSearch={handleSearch} placeholder="Search games..." />
+        <MediaSearchBar
+          onSearch={(query) => void handleSearch(query)}
+          placeholder="Search songs, albums, artists..."
+        />
       </div>
       <LayoutToggle layout={layout} onLayoutChange={handleLayoutChange} />
     </div>
@@ -210,7 +295,7 @@ const Games: React.FC = () => {
 
   const filtersComponent = (
     <MediaFilters
-      filters={GAME_FILTERS}
+      filters={MUSIC_FILTERS}
       activeFilters={activeFilters}
       onFilterChange={handleFilterChange}
     />
@@ -244,7 +329,7 @@ const Games: React.FC = () => {
             <p className="text-gray-500 dark:text-gray-400 mb-4">
               {searchQuery
                 ? "No results found. Try a different search."
-                : "No games yet. Search to get started!"}
+                : "No music yet. Search to get started!"}
             </p>
           </div>
         </div>
@@ -255,7 +340,7 @@ const Games: React.FC = () => {
               key={item.id}
               id={item.id}
               title={item.title}
-              subtitle={`${item.year}`}
+              subtitle={item.artist || `${item.year}`}
               posterUrl={item.poster}
               year={item.year}
               personalRating={item.userRating}
@@ -269,7 +354,7 @@ const Games: React.FC = () => {
               key={item.id}
               id={item.id}
               title={item.title}
-              subtitle={`${item.year}`}
+              subtitle={item.artist || `${item.year}`}
               posterUrl={item.poster}
               year={item.year}
               personalRating={item.userRating}
@@ -291,29 +376,48 @@ const Games: React.FC = () => {
           Your Stats
         </h3>
         <div className="space-y-3">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600 dark:text-gray-400">
-              Total Games
-            </span>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600 dark:text-gray-400">Total</span>
             <span className="font-semibold text-gray-900 dark:text-white">
               {mediaItems.length}
             </span>
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600 dark:text-gray-400">Played</span>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600 dark:text-gray-400">Saved</span>
             <span className="font-semibold text-gray-900 dark:text-white">
-              {mediaItems.filter((item) => item.userStatus === "played").length}
+              {mediaItems.filter((item) => item.userStatus === "saved").length}
             </span>
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600 dark:text-gray-400">To Play</span>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600 dark:text-gray-400">To Listen</span>
             <span className="font-semibold text-gray-900 dark:text-white">
               {
-                mediaItems.filter((item) => item.userStatus === "to-play")
+                mediaItems.filter((item) => item.userStatus === "to-listen")
                   .length
               }
             </span>
           </div>
+        </div>
+      </div>
+
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          Quick Actions
+        </h3>
+        <div className="space-y-2">
+          <button
+            onClick={handleRandom}
+            disabled={mediaItems.length === 0}
+            className="w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            🎲 Random Pick
+          </button>
+          <button
+            onClick={handleTopLists}
+            className="w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+          >
+            🏆 Top Charts
+          </button>
         </div>
       </div>
     </div>
@@ -322,33 +426,34 @@ const Games: React.FC = () => {
   return (
     <>
       <MediaPageLayout
-        title="Games"
+        title="Music"
         searchBar={searchBar}
         filters={filtersComponent}
         actionButtons={actionButtons}
         content={mainContent}
         sidebar={sidebarContent}
       />
+
       {selectedItem && (
         <MediaDetailModal
           isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          onClose={handleCloseModal}
           item={{
             title: selectedItem.title,
-            poster: selectedItem.poster,
             year: selectedItem.year,
+            poster: selectedItem.poster,
             criticScore: selectedItem.criticScore,
             audienceScore: selectedItem.audienceScore,
+            description: selectedItem.artist
+              ? `Artist: ${selectedItem.artist}${
+                  selectedItem.album ? ` • Album: ${selectedItem.album}` : ""
+                }`
+              : undefined,
           }}
           userRating={selectedItem.userRating}
           userStatus={
-            selectedItem.userStatus === "played"
-              ? ("completed" as const)
-              : selectedItem.userStatus === "to-play"
-              ? ("to-watch" as const)
-              : undefined
+            selectedItem.userStatus === "saved" ? "completed" : "to-watch"
           }
-          friendsRatings={[]}
           onRatingChange={handleRatingChange}
           onStatusChange={handleStatusChange}
         />
@@ -357,4 +462,4 @@ const Games: React.FC = () => {
   );
 };
 
-export default Games;
+export default Music;

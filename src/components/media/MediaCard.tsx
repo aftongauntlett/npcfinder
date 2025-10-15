@@ -8,7 +8,9 @@ type MediaStatus =
   | "played"
   | "to-play"
   | "read"
-  | "to-read";
+  | "to-read"
+  | "saved"
+  | "to-listen";
 
 interface MediaCardProps {
   id: string | number;
@@ -40,10 +42,12 @@ const MediaCard: React.FC<MediaCardProps> = ({
       case "watched":
       case "played":
       case "read":
+      case "saved":
         return <Check className="w-4 h-4" />;
       case "to-watch":
       case "to-play":
       case "to-read":
+      case "to-listen":
         return <Clock className="w-4 h-4" />;
       default:
         return null;
@@ -55,10 +59,12 @@ const MediaCard: React.FC<MediaCardProps> = ({
       case "watched":
       case "played":
       case "read":
+      case "saved":
         return "bg-green-500";
       case "to-watch":
       case "to-play":
       case "to-read":
+      case "to-listen":
         return "bg-blue-500";
       default:
         return "bg-gray-500";
@@ -73,6 +79,8 @@ const MediaCard: React.FC<MediaCardProps> = ({
       "to-play": "To Play",
       read: "Read",
       "to-read": "To Read",
+      saved: "Saved",
+      "to-listen": "To Listen",
     };
     return status ? labels[status] : "";
   };

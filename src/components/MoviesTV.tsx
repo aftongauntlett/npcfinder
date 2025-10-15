@@ -3,6 +3,8 @@ import MediaPageLayout from "./layouts/MediaPageLayout";
 import MediaSearchBar from "./media/MediaSearchBar";
 import MediaFilters, { type Filter } from "./media/MediaFilters";
 import MediaCard from "./media/MediaCard";
+import MediaListItem from "./media/MediaListItem";
+import LayoutToggle from "./media/LayoutToggle";
 import MediaActionButtons from "./media/MediaActionButtons";
 import MediaDetailModal from "./media/MediaDetailModal";
 import { testSupabaseConnection } from "../lib/supabaseTest";
@@ -70,6 +72,17 @@ const MoviesTV: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [layout, setLayout] = useState<"grid" | "list">(() => {
+    // Load layout preference from localStorage
+    const saved = localStorage.getItem("movies-layout");
+    return saved === "list" || saved === "grid" ? saved : "grid";
+  });
+
+  // Save layout preference
+  const handleLayoutChange = (newLayout: "grid" | "list") => {
+    setLayout(newLayout);
+    localStorage.setItem("movies-layout", newLayout);
+  };
 
   // Test Supabase connection on mount
   useEffect(() => {
@@ -236,10 +249,15 @@ const MoviesTV: React.FC = () => {
   }, [activeFilters]);
 
   const searchBar = (
-    <MediaSearchBar
-      onSearch={handleSearch}
-      placeholder="Search movies & TV shows..."
-    />
+    <div className="flex items-center gap-3">
+      <div className="flex-1">
+        <MediaSearchBar
+          onSearch={handleSearch}
+          placeholder="Search movies & TV shows..."
+        />
+      </div>
+      <LayoutToggle layout={layout} onLayoutChange={handleLayoutChange} />
+    </div>
   );
 
   const filtersComponent = (
@@ -259,35 +277,61 @@ const MoviesTV: React.FC = () => {
   );
 
   const mainContent = (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+    <div
+      className={
+        layout === "grid"
+          ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
+          : "flex flex-col gap-3"
+      }
+    >
       {loading ? (
-        <div className="col-span-full flex items-center justify-center py-12">
-          <div className="text-gray-500 dark:text-gray-400">Loading...</div>
+        <div className={layout === "grid" ? "col-span-full" : ""}>
+          <div className="flex items-center justify-center py-12">
+            <div className="text-gray-500 dark:text-gray-400">Loading...</div>
+          </div>
         </div>
       ) : mediaItems.length === 0 ? (
-        <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-gray-500 dark:text-gray-400 mb-4">
-            {searchQuery
-              ? "No results found. Try a different search."
-              : "No movies or TV shows yet. Search to get started!"}
-          </p>
+        <div className={layout === "grid" ? "col-span-full" : ""}>
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
+              {searchQuery
+                ? "No results found. Try a different search."
+                : "No movies or TV shows yet. Search to get started!"}
+            </p>
+          </div>
         </div>
       ) : (
-        mediaItems.map((item) => (
-          <MediaCard
-            key={item.id}
-            id={item.id}
-            title={item.title}
-            subtitle={item.type === "movie" ? "Movie" : "TV Show"}
-            posterUrl={item.poster}
-            year={item.year}
-            personalRating={item.userRating}
-            criticRating={item.criticScore}
-            audienceRating={item.audienceScore}
-            status={item.userStatus}
-            onClick={() => handleCardClick(item)}
-          />
-        ))
+        mediaItems.map((item) =>
+          layout === "grid" ? (
+            <MediaCard
+              key={item.id}
+              id={item.id}
+              title={item.title}
+              subtitle={item.type === "movie" ? "Movie" : "TV Show"}
+              posterUrl={item.poster}
+              year={item.year}
+              personalRating={item.userRating}
+              criticRating={item.criticScore}
+              audienceRating={item.audienceScore}
+              status={item.userStatus}
+              onClick={() => handleCardClick(item)}
+            />
+          ) : (
+            <MediaListItem
+              key={item.id}
+              id={item.id}
+              title={item.title}
+              subtitle={item.type === "movie" ? "Movie" : "TV Show"}
+              posterUrl={item.poster}
+              year={item.year}
+              personalRating={item.userRating}
+              criticRating={item.criticScore}
+              audienceRating={item.audienceScore}
+              status={item.userStatus}
+              onClick={() => handleCardClick(item)}
+            />
+          )
+        )
       )}
     </div>
   );

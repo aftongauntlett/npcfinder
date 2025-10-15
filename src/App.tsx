@@ -7,6 +7,9 @@ import DashboardHeader from "./components/dashboard/DashboardHeader";
 import Navigation from "./components/Navigation";
 import FitnessDashboard from "./components/FitnessDashboard";
 import MoviesTV from "./components/MoviesTV";
+import Games from "./components/Games";
+import Books from "./components/Books";
+import Music from "./components/Music";
 import AuthPage from "./components/AuthPage";
 import AdminPanel from "./components/AdminPanel";
 import UserSettings from "./components/UserSettings";
@@ -133,6 +136,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ user }) => {
         <Route path="/" element={<HomePage user={user} />} />
         <Route path="/fitness" element={<FitnessDashboard />} />
         <Route path="/movies-tv" element={<MoviesTV />} />
+        <Route path="/games" element={<Games />} />
+        <Route path="/books" element={<Books />} />
+        <Route path="/music" element={<Music />} />
         <Route path="/settings" element={<UserSettings currentUser={user} />} />
         <Route
           path="/suggestions"

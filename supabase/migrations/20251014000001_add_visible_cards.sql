@@ -5,7 +5,7 @@
 
 -- Add visible_cards column with all cards visible by default
 ALTER TABLE user_profiles 
-ADD COLUMN IF NOT EXISTS visible_cards JSONB DEFAULT '["movies-tv", "music", "games", "fitness", "food-places", "journal", "news", "bookmarks", "vault"]'::jsonb;
+ADD COLUMN IF NOT EXISTS visible_cards JSONB DEFAULT '["movies-tv", "music", "games", "books", "fitness", "food-places", "journal", "news", "bookmarks"]'::jsonb;
 
 -- Add GIN index for faster JSONB queries
 CREATE INDEX IF NOT EXISTS idx_user_profiles_visible_cards ON user_profiles USING GIN (visible_cards);
