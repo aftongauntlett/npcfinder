@@ -1,577 +1,568 @@
 import React, { useState, useEffect, useCallback } from "react";
-import MediaPageLayout from "./layouts/MediaPageLayout";
-import MediaSearchBar from "./media/MediaSearchBar";
-import MediaFilters, { type Filter } from "./media/MediaFilters";
-import MediaCard from "./media/MediaCard";
-import MediaListItem from "./media/MediaListItem";
-import LayoutToggle from "./media/LayoutToggle";
-import MediaActionButtons from "./media/MediaActionButtons";
-import MediaDetailModal from "./media/MediaDetailModal";
-import { BrowseMediaModal } from "./media/BrowseMediaModal";
-import {
-  searchMusic,
-  getHighResArtwork,
-  getYearFromReleaseDate,
-} from "../lib/itunes";
-import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
-import { Plus } from "lucide-react";
+import { supabase } from "../lib/supabase";
+import {
+  Send,
+  Music as MusicIcon,
+  ThumbsUp,
+  ThumbsDown,
+  User,
+  Headphones,
+  Video,
+} from "lucide-react";
+import SendMusicModal from "./media/SendMusicModal";
 
-type MediaStatus = "saved" | "to-listen";
-
-type MediaDetailStatus = "completed" | "in-progress" | "to-watch" | "dropped";
-
-interface MediaItem {
+interface MusicRecommendation {
   id: string;
+  from_user_id: string;
+  to_user_id: string;
+  external_id: string;
   title: string;
-  type: string;
-  poster?: string;
-  year: number;
-  userRating?: number;
-  userStatus?: MediaStatus;
-  criticScore?: number;
-  audienceScore?: number;
-  artist?: string;
-  album?: string;
+  artist: string | null;
+  album: string | null;
+  media_type: string;
+  year: number | null;
+  poster_url: string | null;
+  status: "pending" | "listened" | "hit" | "miss";
+  recommendation_type: "listen" | "watch";
+  sent_message: string | null;
+  comment: string | null;
+  sent_at: string;
+  listened_at: string | null;
 }
 
-const MUSIC_FILTERS: Filter[] = [
-  {
-    id: "type",
-    label: "Type",
-    type: "select",
-    options: [
-      { value: "all", label: "All" },
-      { value: "track", label: "Tracks" },
-      { value: "album", label: "Albums" },
-      { value: "artist", label: "Artists" },
-    ],
-  },
-  {
-    id: "genre",
-    label: "Genre",
-    type: "select",
-    options: [
-      { value: "all", label: "All Genres" },
-      { value: "pop", label: "Pop" },
-      { value: "rock", label: "Rock" },
-      { value: "hip-hop", label: "Hip Hop" },
-      { value: "electronic", label: "Electronic" },
-      { value: "jazz", label: "Jazz" },
-      { value: "classical", label: "Classical" },
-      { value: "country", label: "Country" },
-      { value: "r&b", label: "R&B" },
-    ],
-  },
-  {
-    id: "status",
-    label: "Status",
-    type: "select",
-    options: [
-      { value: "all", label: "All" },
-      { value: "saved", label: "Saved" },
-      { value: "to-listen", label: "To Listen" },
-    ],
-  },
-  {
-    id: "sort",
-    label: "Sort By",
-    type: "select",
-    options: [
-      { value: "added", label: "Date Added" },
-      { value: "title", label: "Title" },
-      { value: "artist", label: "Artist" },
-      { value: "rating", label: "Your Rating" },
-      { value: "year", label: "Release Year" },
-    ],
-  },
-] as const;
+interface FriendSummary {
+  user_id: string;
+  display_name: string;
+  pending_count: number;
+  total_count: number;
+  hit_count: number;
+  miss_count: number;
+}
 
 /**
- * Music page with iTunes Search API, database integration, and personal ratings
- * Users browse iTunes to add music, then manage their collection with ratings and statuses
+ * Music Recommendations Dashboard
+ * Calm, friend-based music sharing - no pressure, just recommendations
  */
 const Music: React.FC = () => {
   const { user } = useAuth();
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [activeFilters, setActiveFilters] = useState<Record<string, string>>({
-    type: "all",
-    status: "all",
-    genre: "all",
-    sort: "added",
-  });
-  const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [isBrowseModalOpen, setIsBrowseModalOpen] = useState<boolean>(false);
-  const [layout, setLayout] = useState<"grid" | "list">(() => {
-    // Load layout preference from localStorage
-    const saved = localStorage.getItem("music-layout");
-    return saved === "list" || saved === "grid" ? saved : "grid";
-  });
+  const [loading, setLoading] = useState(true);
+  const [friendsWithRecs, setFriendsWithRecs] = useState<FriendSummary[]>([]);
+  const [selectedView, setSelectedView] = useState<
+    "overview" | "friend" | "hits" | "misses" | "sent"
+  >("overview");
+  const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null);
+  const [recommendations, setRecommendations] = useState<MusicRecommendation[]>(
+    []
+  );
+  const [showSendModal, setShowSendModal] = useState(false);
 
-  // Save layout preference
-  const handleLayoutChange = (newLayout: "grid" | "list") => {
-    setLayout(newLayout);
-    localStorage.setItem("music-layout", newLayout);
-  };
-
-  // Load user's saved music from Supabase
-  const loadUserItems = useCallback(async () => {
-    if (!user) {
-      setMediaItems([]);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      let query = supabase
-        .from("user_music")
-        .select("*")
-        .eq("user_id", user.id);
-
-      // Apply filters
-      if (activeFilters.type && activeFilters.type !== "all") {
-        query = query.eq("media_type", activeFilters.type);
-      }
-      if (activeFilters.status && activeFilters.status !== "all") {
-        query = query.eq("user_status", activeFilters.status);
-      }
-      if (activeFilters.genre && activeFilters.genre !== "all") {
-        query = query.eq("genre", activeFilters.genre);
-      }
-
-      // Apply search filter
-      if (searchQuery.trim()) {
-        query = query.or(
-          `title.ilike.%${searchQuery}%,artist.ilike.%${searchQuery}%,album.ilike.%${searchQuery}%`
-        );
-      }
-
-      // Apply sorting
-      switch (activeFilters.sort) {
-        case "title":
-          query = query.order("title", { ascending: true });
-          break;
-        case "artist":
-          query = query.order("artist", { ascending: true });
-          break;
-        case "rating":
-          query = query.order("user_rating", {
-            ascending: false,
-            nullsFirst: false,
-          });
-          break;
-        case "year":
-          query = query.order("year", { ascending: false });
-          break;
-        case "added":
-        default:
-          query = query.order("created_at", { ascending: false });
-          break;
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      const items: MediaItem[] =
-        data?.map((item) => ({
-          id: item.external_id,
-          title: item.title,
-          type: item.media_type,
-          artist: item.artist || undefined,
-          album: item.album || undefined,
-          year: item.year,
-          poster: item.poster_url || undefined,
-          userRating: item.user_rating || undefined,
-          userStatus: item.user_status,
-        })) || [];
-
-      setMediaItems(items);
-    } catch (error) {
-      console.error("Error loading music:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [user, activeFilters, searchQuery]);
-
-  // Load user's music on mount and when filters/search change
-  useEffect(() => {
-    void loadUserItems();
-  }, [loadUserItems]);
-
-  // Handle search - filters user's saved music
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-  };
-
-  // Search function for BrowseModal - searches iTunes API
-  const searchBrowseMusic = async (query: string): Promise<MediaItem[]> => {
-    const results = await searchMusic(query, 20);
-    const items: MediaItem[] = [];
-
-    // Add albums
-    results.albums.forEach((album) => {
-      items.push({
-        id: `album-${album.collectionId}`,
-        title: album.collectionName,
-        type: "album",
-        artist: album.artistName,
-        year: getYearFromReleaseDate(album.releaseDate),
-        poster: getHighResArtwork(album.artworkUrl100, 300),
-      });
-    });
-
-    // Add songs
-    results.songs.forEach((song) => {
-      items.push({
-        id: `track-${song.trackId}`,
-        title: song.trackName,
-        type: "track",
-        artist: song.artistName,
-        album: song.collectionName,
-        year: getYearFromReleaseDate(song.releaseDate),
-        poster: getHighResArtwork(song.artworkUrl100, 300),
-      });
-    });
-
-    return items;
-  };
-
-  // Add music to user's collection
-  const handleAddMusic = async (item: MediaItem) => {
+  // Load friends who have sent recommendations
+  const loadFriendsWithRecommendations = useCallback(async () => {
     if (!user) return;
 
     try {
-      const { error } = await supabase.from("user_music").insert({
-        user_id: user.id,
-        external_id: item.id,
-        title: item.title,
-        media_type: item.type || "track", // Default to track if type is missing
-        artist: item.artist,
-        album: item.album,
-        year: item.year,
-        poster_url: item.poster,
-        user_status: "saved",
+      setLoading(true);
+
+      // Get all recommendations sent to this user, grouped by sender
+      const { data: recs, error } = await supabase
+        .from("music_recommendations")
+        .select("from_user_id, status")
+        .eq("to_user_id", user.id);
+
+      if (error) throw error;
+
+      // Group by sender and count statuses
+      const friendMap = new Map<
+        string,
+        { pending: number; total: number; hits: number; misses: number }
+      >();
+
+      recs?.forEach((rec) => {
+        const existing = friendMap.get(rec.from_user_id) || {
+          pending: 0,
+          total: 0,
+          hits: 0,
+          misses: 0,
+        };
+        existing.total++;
+        if (rec.status === "pending") existing.pending++;
+        if (rec.status === "hit") existing.hits++;
+        if (rec.status === "miss") existing.misses++;
+        friendMap.set(rec.from_user_id, existing);
       });
 
-      if (error) {
-        // Check if it's a duplicate error
-        if (error.code === "23505") {
-          console.log("Item already in collection");
-          return;
-        }
-        throw error;
+      // Get display names for all friends
+      const friendIds = Array.from(friendMap.keys());
+      if (friendIds.length === 0) {
+        setFriendsWithRecs([]);
+        setLoading(false);
+        return;
       }
 
-      // Reload user's collection
-      await loadUserItems();
+      const { data: profiles, error: profileError } = await supabase
+        .from("user_profiles")
+        .select("user_id, display_name")
+        .in("user_id", friendIds);
+
+      if (profileError) throw profileError;
+
+      const friends: FriendSummary[] =
+        profiles?.map((profile) => {
+          const stats = friendMap.get(profile.user_id)!;
+          return {
+            user_id: profile.user_id,
+            display_name: profile.display_name || "Anonymous",
+            pending_count: stats.pending,
+            total_count: stats.total,
+            hit_count: stats.hits,
+            miss_count: stats.misses,
+          };
+        }) || [];
+
+      // Sort by pending count (most new recs first)
+      friends.sort((a, b) => b.pending_count - a.pending_count);
+
+      setFriendsWithRecs(friends);
     } catch (error) {
-      console.error("Error adding music:", error);
-      throw error;
+      console.error("Error loading friends:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  // Load recommendations for a specific view
+  const loadRecommendations = useCallback(
+    async (view: string, friendId?: string) => {
+      if (!user) return;
+
+      try {
+        setLoading(true);
+        let query = supabase.from("music_recommendations").select("*");
+
+        if (view === "friend" && friendId) {
+          // Show all recs from this friend
+          query = query
+            .eq("to_user_id", user.id)
+            .eq("from_user_id", friendId)
+            .order("sent_at", { ascending: false });
+        } else if (view === "hits") {
+          // Show all hits from any friend
+          query = query
+            .eq("to_user_id", user.id)
+            .eq("status", "hit")
+            .order("listened_at", { ascending: false });
+        } else if (view === "misses") {
+          // Show all misses from any friend
+          query = query
+            .eq("to_user_id", user.id)
+            .eq("status", "miss")
+            .order("listened_at", { ascending: false });
+        } else if (view === "sent") {
+          // Show all recs sent by this user
+          query = query
+            .eq("from_user_id", user.id)
+            .order("sent_at", { ascending: false });
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+
+        setRecommendations(data || []);
+      } catch (error) {
+        console.error("Error loading recommendations:", error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [user]
+  );
+
+  // Initial load
+  useEffect(() => {
+    void loadFriendsWithRecommendations();
+  }, [loadFriendsWithRecommendations]);
+
+  // Handle view changes
+  const handleViewChange = (
+    view: "overview" | "friend" | "hits" | "misses" | "sent",
+    friendId?: string
+  ) => {
+    setSelectedView(view);
+    setSelectedFriendId(friendId || null);
+
+    if (view !== "overview") {
+      void loadRecommendations(view, friendId);
     }
   };
 
-  // Handle filter changes
-  const handleFilterChange = (filterId: string, value: string) => {
-    setActiveFilters((prev) => ({
-      ...prev,
-      [filterId]: value,
-    }));
-  };
-
-  const handleCardClick = (item: MediaItem) => {
-    setSelectedItem(item);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedItem(null);
-  };
-
-  const handleRandom = () => {
-    if (mediaItems.length > 0) {
-      const randomItem =
-        mediaItems[Math.floor(Math.random() * mediaItems.length)];
-      handleCardClick(randomItem);
-    }
-  };
-
-  const handleTopLists = () => {
-    console.log("Show top music lists");
-    // TODO: Implement top lists modal
-  };
-
-  const handleRatingChange = async (rating: number) => {
-    if (!selectedItem || !user) return;
-
+  // Mark a recommendation as listened/hit/miss
+  const updateRecommendationStatus = async (
+    recId: string,
+    status: "listened" | "hit" | "miss",
+    comment?: string
+  ) => {
     try {
+      const updates: any = {
+        status,
+        listened_at: new Date().toISOString(),
+      };
+
+      if (comment) {
+        updates.comment = comment;
+      }
+
       const { error } = await supabase
-        .from("user_music")
-        .update({ user_rating: rating })
-        .eq("user_id", user.id)
-        .eq("external_id", selectedItem.id);
+        .from("music_recommendations")
+        .update(updates)
+        .eq("id", recId);
 
       if (error) throw error;
 
-      // Update local state
-      setMediaItems((prev) =>
-        prev.map((item) =>
-          item.id === selectedItem.id ? { ...item, userRating: rating } : item
-        )
-      );
-      setSelectedItem((prev) =>
-        prev ? { ...prev, userRating: rating } : null
-      );
+      // Refresh the current view
+      if (selectedView === "friend" && selectedFriendId) {
+        await loadRecommendations("friend", selectedFriendId);
+      } else {
+        await loadRecommendations(selectedView);
+      }
+
+      // Refresh friend counts
+      await loadFriendsWithRecommendations();
     } catch (error) {
-      console.error("Error updating rating:", error);
+      console.error("Error updating recommendation:", error);
     }
   };
 
-  const handleStatusChange = async (status: MediaDetailStatus) => {
-    if (!selectedItem || !user) return;
+  // Render overview (default view)
+  const renderOverview = () => (
+    <div className="space-y-8">
+      {/* From Friends Section */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            From Friends
+            {friendsWithRecs.reduce((sum, f) => sum + f.pending_count, 0) >
+              0 && (
+              <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
+                ({friendsWithRecs.reduce((sum, f) => sum + f.pending_count, 0)}{" "}
+                new)
+              </span>
+            )}
+          </h2>
+        </div>
 
-    // Map MediaDetailStatus to MediaStatus for Music
-    const musicStatus: MediaStatus =
-      status === "completed" ? "saved" : "to-listen";
-
-    try {
-      const { error } = await supabase
-        .from("user_music")
-        .update({ user_status: musicStatus })
-        .eq("user_id", user.id)
-        .eq("external_id", selectedItem.id);
-
-      if (error) throw error;
-
-      // Update local state
-      setMediaItems((prev) =>
-        prev.map((item) =>
-          item.id === selectedItem.id
-            ? { ...item, userStatus: musicStatus }
-            : item
-        )
-      );
-      setSelectedItem((prev) =>
-        prev ? { ...prev, userStatus: musicStatus } : null
-      );
-    } catch (error) {
-      console.error("Error updating status:", error);
-    }
-  };
-
-  const searchBar = (
-    <div className="flex items-center gap-3">
-      <div className="flex-1">
-        <MediaSearchBar
-          onSearch={handleSearch}
-          placeholder="Search your music collection..."
-        />
+        {friendsWithRecs.length === 0 ? (
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-8 text-center">
+            <MusicIcon className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500" />
+            <p className="text-gray-500 dark:text-gray-400 mb-2">
+              No recommendations yet
+            </p>
+            <p className="text-sm text-gray-400 dark:text-gray-500">
+              When friends send you music, it'll show up here
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {friendsWithRecs.map((friend) => (
+              <button
+                key={friend.user_id}
+                onClick={() => handleViewChange("friend", friend.user_id)}
+                className="bg-white dark:bg-gray-800 rounded-lg p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                    <User className="w-5 h-5 text-blue-600 dark:text-blue-300" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-gray-900 dark:text-white truncate">
+                      {friend.display_name}
+                    </div>
+                    {friend.pending_count > 0 && (
+                      <div className="text-sm text-blue-600 dark:text-blue-400">
+                        {friend.pending_count} new
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                  <span>{friend.total_count} total</span>
+                  {friend.hit_count > 0 && (
+                    <span className="flex items-center gap-1">
+                      <ThumbsUp className="w-3 h-3" />
+                      {friend.hit_count}
+                    </span>
+                  )}
+                  {friend.miss_count > 0 && (
+                    <span className="flex items-center gap-1">
+                      <ThumbsDown className="w-3 h-3" />
+                      {friend.miss_count}
+                    </span>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
-      <LayoutToggle layout={layout} onLayoutChange={handleLayoutChange} />
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <button
+          onClick={() => handleViewChange("hits")}
+          className="bg-white dark:bg-gray-800 rounded-lg p-6 text-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        >
+          <div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">
+            {friendsWithRecs.reduce((sum, f) => sum + f.hit_count, 0)}
+          </div>
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            Your Hits
+          </div>
+        </button>
+
+        <button
+          onClick={() => handleViewChange("misses")}
+          className="bg-white dark:bg-gray-800 rounded-lg p-6 text-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        >
+          <div className="text-2xl font-bold text-gray-600 dark:text-gray-400 mb-1">
+            {friendsWithRecs.reduce((sum, f) => sum + f.miss_count, 0)}
+          </div>
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            Your Misses
+          </div>
+        </button>
+
+        <button
+          onClick={() => handleViewChange("sent")}
+          className="bg-white dark:bg-gray-800 rounded-lg p-6 text-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        >
+          <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">
+            {/* TODO: Load sent count */}-
+          </div>
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            Your Sent
+          </div>
+        </button>
+
+        <button className="bg-white dark:bg-gray-800 rounded-lg p-6 text-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+          <div className="text-2xl font-bold text-orange-600 dark:text-orange-400 mb-1">
+            {friendsWithRecs.reduce((sum, f) => sum + f.pending_count, 0)}
+          </div>
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            Listening Queue
+          </div>
+        </button>
+      </div>
     </div>
   );
 
-  const filtersComponent = (
-    <MediaFilters
-      filters={MUSIC_FILTERS}
-      activeFilters={activeFilters}
-      onFilterChange={handleFilterChange}
-    />
-  );
+  // Render recommendation list (for friend/hits/misses/sent views)
+  const renderRecommendationList = () => {
+    const title =
+      selectedView === "friend"
+        ? `From ${
+            friendsWithRecs.find((f) => f.user_id === selectedFriendId)
+              ?.display_name || "Friend"
+          }`
+        : selectedView === "hits"
+        ? "Your Hits"
+        : selectedView === "misses"
+        ? "Your Misses"
+        : "Your Sent";
 
-  const actionButtons = (
-    <MediaActionButtons
-      onRandomClick={handleRandom}
-      onTopListsClick={handleTopLists}
-      disabled={mediaItems.length === 0}
-    />
-  );
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <button
+            onClick={() => handleViewChange("overview")}
+            className="text-blue-600 dark:text-blue-400 hover:underline"
+          >
+            ← Back to Music
+          </button>
+        </div>
 
-  const mainContent = (
-    <div
-      className={
-        layout === "grid"
-          ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
-          : "flex flex-col gap-3"
-      }
-    >
-      {loading ? (
-        <div className={layout === "grid" ? "col-span-full" : ""}>
-          <div className="flex items-center justify-center py-12">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+          {title}
+        </h2>
+
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="text-gray-500 dark:text-gray-400">Loading...</div>
+          </div>
+        ) : recommendations.length === 0 ? (
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-8 text-center">
+            <p className="text-gray-500 dark:text-gray-400">
+              No recommendations here yet
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-1">
+            {recommendations.map((rec, index) => (
+              <div
+                key={rec.id}
+                className="bg-white dark:bg-gray-800 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                <div className="flex items-center gap-4">
+                  {/* Track Number */}
+                  <div className="w-8 text-center text-gray-500 dark:text-gray-400 text-sm">
+                    {index + 1}
+                  </div>
+
+                  {/* Album Art */}
+                  {rec.poster_url ? (
+                    <img
+                      src={rec.poster_url}
+                      alt={rec.title}
+                      className="w-12 h-12 rounded object-cover"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
+                      <MusicIcon className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+                    </div>
+                  )}
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <div className="font-medium text-gray-900 dark:text-white truncate">
+                        {rec.title}
+                      </div>
+                      {rec.recommendation_type === "watch" && (
+                        <span className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 px-2 py-0.5 rounded whitespace-nowrap">
+                          <Video className="w-3 h-3" />
+                          Watch
+                        </span>
+                      )}
+                      {rec.recommendation_type === "listen" && (
+                        <span className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 rounded whitespace-nowrap">
+                          <Headphones className="w-3 h-3" />
+                          Listen
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                      {rec.artist}
+                      {rec.album && ` • ${rec.album}`}
+                      {rec.year && ` • ${rec.year}`}
+                    </div>
+                    {rec.sent_message && (
+                      <div className="text-xs text-gray-400 dark:text-gray-500 mt-1 italic">
+                        "{rec.sent_message}"
+                      </div>
+                    )}
+                    {rec.comment && (
+                      <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                        Your note: {rec.comment}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Status & Actions */}
+                  <div className="flex items-center gap-2">
+                    {rec.status === "pending" ? (
+                      <>
+                        <button
+                          onClick={() =>
+                            updateRecommendationStatus(rec.id, "listened")
+                          }
+                          className="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+                        >
+                          Mark Listened
+                        </button>
+                        <button
+                          onClick={() =>
+                            updateRecommendationStatus(rec.id, "hit")
+                          }
+                          className="px-3 py-1 text-sm bg-green-600 hover:bg-green-700 text-white rounded transition-colors"
+                        >
+                          Hit
+                        </button>
+                        <button
+                          onClick={() =>
+                            updateRecommendationStatus(rec.id, "miss")
+                          }
+                          className="px-3 py-1 text-sm bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+                        >
+                          Miss
+                        </button>
+                      </>
+                    ) : (
+                      <div className="flex items-center gap-2 text-sm">
+                        {rec.status === "hit" && (
+                          <span className="text-green-600 dark:text-green-400 flex items-center gap-1">
+                            <ThumbsUp className="w-4 h-4" />
+                            Hit
+                          </span>
+                        )}
+                        {rec.status === "miss" && (
+                          <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                            <ThumbsDown className="w-4 h-4" />
+                            Miss
+                          </span>
+                        )}
+                        {rec.status === "listened" && (
+                          <span className="text-blue-600 dark:text-blue-400">
+                            Listened
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Music
+          </h1>
+          <button
+            onClick={() => setShowSendModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
+            <Send size={20} />
+            Send Music
+          </button>
+        </div>
+
+        {/* Content */}
+        {loading && selectedView === "overview" ? (
+          <div className="text-center py-12">
             <div className="text-gray-500 dark:text-gray-400">
               Loading your music...
             </div>
           </div>
-        </div>
-      ) : mediaItems.length === 0 ? (
-        <div className={layout === "grid" ? "col-span-full" : ""}>
-          <div className="flex flex-col items-center justify-center py-12 text-center px-4">
-            <div className="bg-gray-100 dark:bg-gray-800 rounded-full p-6 mb-4">
-              <Plus size={48} className="text-gray-400 dark:text-gray-500" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              {searchQuery ? "No music found" : "Add your first music"}
-            </h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md">
-              {searchQuery
-                ? `No music matching "${searchQuery}" in your collection. Try a different search or add new music.`
-                : "Start building your music collection by browsing iTunes and adding your favorite songs and albums."}
-            </p>
-            <button
-              onClick={() => setIsBrowseModalOpen(true)}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
-            >
-              <Plus size={20} />
-              Browse Music
-            </button>
-          </div>
-        </div>
-      ) : (
-        mediaItems.map((item) =>
-          layout === "grid" ? (
-            <MediaCard
-              key={item.id}
-              id={item.id}
-              title={item.title}
-              subtitle={item.artist || `${item.year}`}
-              posterUrl={item.poster}
-              year={item.year}
-              personalRating={item.userRating}
-              criticRating={item.criticScore}
-              audienceRating={item.audienceScore}
-              status={item.userStatus}
-              onClick={() => handleCardClick(item)}
-            />
-          ) : (
-            <MediaListItem
-              key={item.id}
-              id={item.id}
-              title={item.title}
-              subtitle={item.artist || `${item.year}`}
-              posterUrl={item.poster}
-              year={item.year}
-              personalRating={item.userRating}
-              criticRating={item.criticScore}
-              audienceRating={item.audienceScore}
-              status={item.userStatus}
-              onClick={() => handleCardClick(item)}
-            />
-          )
-        )
-      )}
-    </div>
-  );
-
-  const sidebarContent = (
-    <div className="space-y-6">
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Your Stats
-        </h3>
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-gray-600 dark:text-gray-400">Total</span>
-            <span className="font-semibold text-gray-900 dark:text-white">
-              {mediaItems.length}
-            </span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-600 dark:text-gray-400">Saved</span>
-            <span className="font-semibold text-gray-900 dark:text-white">
-              {mediaItems.filter((item) => item.userStatus === "saved").length}
-            </span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-600 dark:text-gray-400">To Listen</span>
-            <span className="font-semibold text-gray-900 dark:text-white">
-              {
-                mediaItems.filter((item) => item.userStatus === "to-listen")
-                  .length
-              }
-            </span>
-          </div>
-        </div>
+        ) : selectedView === "overview" ? (
+          renderOverview()
+        ) : (
+          renderRecommendationList()
+        )}
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Quick Actions
-        </h3>
-        <div className="space-y-2">
-          <button
-            onClick={() => setIsBrowseModalOpen(true)}
-            className="w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors flex items-center gap-2"
-          >
-            <Plus size={16} />
-            Browse & Add Music
-          </button>
-          <button
-            onClick={handleRandom}
-            disabled={mediaItems.length === 0}
-            className="w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            🎲 Random Pick
-          </button>
-          <button
-            onClick={handleTopLists}
-            className="w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-          >
-            🏆 Top Charts
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  return (
-    <>
-      <MediaPageLayout
-        title="Music"
-        searchBar={searchBar}
-        filters={filtersComponent}
-        actionButtons={actionButtons}
-        content={mainContent}
-        sidebar={sidebarContent}
-      />
-
-      {selectedItem && (
-        <MediaDetailModal
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-          item={{
-            title: selectedItem.title,
-            year: selectedItem.year,
-            poster: selectedItem.poster,
-            criticScore: selectedItem.criticScore,
-            audienceScore: selectedItem.audienceScore,
-            description: selectedItem.artist
-              ? `Artist: ${selectedItem.artist}${
-                  selectedItem.album ? ` • Album: ${selectedItem.album}` : ""
-                }`
-              : undefined,
-          }}
-          userRating={selectedItem.userRating}
-          userStatus={
-            selectedItem.userStatus === "saved" ? "completed" : "to-watch"
+      {/* Send Music Modal */}
+      <SendMusicModal
+        isOpen={showSendModal}
+        onClose={() => setShowSendModal(false)}
+        onSent={() => {
+          // Refresh the data after sending
+          void loadFriendsWithRecommendations();
+          if (selectedView !== "overview") {
+            void loadRecommendations(
+              selectedView,
+              selectedFriendId || undefined
+            );
           }
-          onRatingChange={(rating) => void handleRatingChange(rating)}
-          onStatusChange={(status) => void handleStatusChange(status)}
-        />
-      )}
-
-      <BrowseMediaModal
-        isOpen={isBrowseModalOpen}
-        onClose={() => setIsBrowseModalOpen(false)}
-        mediaType="music"
-        onAdd={handleAddMusic as (item: unknown) => Promise<void>}
-        searchFunction={searchBrowseMusic}
+        }}
       />
-    </>
+    </div>
   );
 };
 
