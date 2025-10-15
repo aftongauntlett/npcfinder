@@ -118,10 +118,7 @@ export function BrowseMediaModal({
 
         {/* Search Bar */}
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-          <form
-            onSubmit={(e) => void handleSearch(e)}
-            className="flex gap-3"
-          >
+          <form onSubmit={(e) => void handleSearch(e)} className="flex gap-3">
             <div className="flex-1 relative">
               <Search
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
