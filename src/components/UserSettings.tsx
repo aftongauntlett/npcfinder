@@ -5,11 +5,11 @@ import { User as UserIcon, Save, X } from "lucide-react";
 import { getUserProfile, upsertUserProfile } from "../lib/profiles";
 import Button from "./shared/Button";
 import PageContentContainer from "./shared/PageContentContainer";
-import DashboardCustomizer from "./settings/DashboardCustomizer";
 import ColorThemePicker from "./settings/ColorThemePicker";
 import { cards } from "../data/dashboardCards";
 import { type ThemeColorName } from "../styles/colorThemes";
 import { useTheme } from "../hooks/useTheme";
+import DashboardCustomizer from "./settings/DashboardCustomizer";
 
 interface UserSettingsProps {
   currentUser: User;

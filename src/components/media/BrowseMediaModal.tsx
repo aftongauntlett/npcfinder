@@ -159,31 +159,99 @@ export function BrowseMediaModal({
               <Loader className="animate-spin text-blue-600" size={48} />
             </div>
           ) : searchResults.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-              {searchResults.map((item) => (
-                <div key={item.id} className="relative group">
-                  <MediaCard
-                    id={item.id}
-                    title={item.title}
-                    year={item.year}
-                    posterUrl={item.poster}
-                    onClick={() => {}} // Disable click in browse mode
-                  />
-                  <button
-                    onClick={() => void handleAdd(item)}
-                    disabled={addingIds.has(item.id)}
-                    className="absolute top-2 left-2 p-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all disabled:cursor-not-allowed flex items-center gap-1"
-                    aria-label={`Add ${item.title} to collection`}
+            mediaType === "music" ? (
+              // List view for music (Spotify-style)
+              <div className="space-y-1">
+                {searchResults.map((item, index) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
                   >
-                    {addingIds.has(item.id) ? (
-                      <Loader className="animate-spin" size={16} />
-                    ) : (
-                      <Plus size={16} />
+                    {/* Track Number / Album Icon */}
+                    <div className="w-10 text-center text-gray-500 dark:text-gray-400 text-sm">
+                      {index + 1}
+                    </div>
+
+                    {/* Album Art (small) */}
+                    {item.poster && (
+                      <img
+                        src={item.poster}
+                        alt={item.title}
+                        className="w-12 h-12 rounded object-cover"
+                      />
                     )}
-                  </button>
-                </div>
-              ))}
-            </div>
+
+                    {/* Title & Artist */}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-gray-900 dark:text-white truncate">
+                        {item.title}
+                      </div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                        {item.artist || "Unknown Artist"}
+                        {item.type === "album" && " • Album"}
+                        {item.type === "track" &&
+                          item.album &&
+                          ` • ${item.album}`}
+                      </div>
+                    </div>
+
+                    {/* Year */}
+                    {item.year && (
+                      <div className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
+                        {item.year}
+                      </div>
+                    )}
+
+                    {/* Add Button */}
+                    <button
+                      onClick={() => void handleAdd(item)}
+                      disabled={addingIds.has(item.id)}
+                      className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white text-sm font-medium rounded-full transition-colors disabled:cursor-not-allowed flex items-center gap-2 opacity-0 group-hover:opacity-100"
+                      aria-label={`Add ${item.title} to collection`}
+                    >
+                      {addingIds.has(item.id) ? (
+                        <>
+                          <Loader className="animate-spin" size={16} />
+                          Adding...
+                        </>
+                      ) : (
+                        <>
+                          <Plus size={16} />
+                          Add
+                        </>
+                      )}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              // Grid view for other media types
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {searchResults.map((item) => (
+                  <div key={item.id} className="relative group">
+                    <MediaCard
+                      id={item.id}
+                      title={item.title}
+                      year={item.year}
+                      posterUrl={item.poster}
+                      onClick={() => {}} // Disable click in browse mode
+                    />
+                    <button
+                      onClick={() => void handleAdd(item)}
+                      disabled={addingIds.has(item.id)}
+                      className="absolute top-2 left-2 p-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all disabled:cursor-not-allowed flex items-center gap-1"
+                      aria-label={`Add ${item.title} to collection`}
+                    >
+                      {addingIds.has(item.id) ? (
+                        <Loader className="animate-spin" size={16} />
+                      ) : (
+                        <Plus size={16} />
+                      )}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )
           ) : searchQuery ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
               <Search size={64} className="mb-4 opacity-50" />

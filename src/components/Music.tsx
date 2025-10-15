@@ -159,7 +159,10 @@ const Music: React.FC = () => {
           query = query.order("artist", { ascending: true });
           break;
         case "rating":
-          query = query.order("user_rating", { ascending: false, nullsFirst: false });
+          query = query.order("user_rating", {
+            ascending: false,
+            nullsFirst: false,
+          });
           break;
         case "year":
           query = query.order("year", { ascending: false });
