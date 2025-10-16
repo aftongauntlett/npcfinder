@@ -17,6 +17,8 @@ export interface InviteCode {
   created_at: string;
   used_at: string | null;
   notes: string | null;
+  used_by_email?: string | null; // Email of the user who used the code
+  created_by_email?: string | null; // Email of the admin who created the code
 }
 
 interface InviteCodeResult<T> {
@@ -136,13 +138,50 @@ export const getAllInviteCodes = async (): Promise<
   InviteCodeResult<InviteCode[]>
 > => {
   try {
-    const { data, error } = await supabase
+    // First get all invite codes (only active ones - excludes old revoked codes)
+    const { data: codes, error: codesError } = await supabase
       .from("invite_codes")
       .select("*")
+      .eq("is_active", true)
       .order("created_at", { ascending: false });
 
-    if (error) throw error;
-    return { data: data as InviteCode[], error: null };
+    if (codesError) throw codesError;
+
+    // Get unique user IDs for both created_by and used_by
+    const allUserIds = new Set<string>();
+    codes?.forEach((code) => {
+      if (code.created_by) allUserIds.add(code.created_by);
+      if (code.used_by) allUserIds.add(code.used_by);
+    });
+
+    // Fetch user emails from user_profiles
+    let userEmails: Record<string, string> = {};
+    if (allUserIds.size > 0) {
+      const { data: profiles } = await supabase
+        .from("user_profiles")
+        .select("user_id, email")
+        .in("user_id", Array.from(allUserIds));
+
+      if (profiles) {
+        userEmails = profiles.reduce((acc, profile) => {
+          if (profile.email) {
+            acc[profile.user_id] = profile.email;
+          }
+          return acc;
+        }, {} as Record<string, string>);
+      }
+    }
+
+    // Merge email data into codes
+    const codesWithEmails = codes?.map((code) => ({
+      ...code,
+      used_by_email: code.used_by ? userEmails[code.used_by] || null : null,
+      created_by_email: code.created_by
+        ? userEmails[code.created_by] || null
+        : null,
+    }));
+
+    return { data: codesWithEmails as InviteCode[], error: null };
   } catch (error) {
     console.error("Get invite codes error:", error);
     return { data: null, error: error as Error };
@@ -179,7 +218,8 @@ export const getMyInviteCodes = async (): Promise<
 };
 
 /**
- * Revoke (deactivate) an invite code
+ * Revoke (delete) an invite code
+ * Permanently removes the code from the database
  */
 export const revokeInviteCode = async (
   codeId: string
@@ -187,7 +227,7 @@ export const revokeInviteCode = async (
   try {
     const { error } = await supabase
       .from("invite_codes")
-      .update({ is_active: false })
+      .delete()
       .eq("id", codeId);
 
     if (error) throw error;

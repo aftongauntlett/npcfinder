@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Trash2, Scale, Ruler, Dumbbell, Utensils } from "lucide-react";
+import ConfirmationModal from "../shared/ConfirmationModal";
 import db from "../../lib/database";
 import type { Weight, Measurement, Workout, Meal } from "../../lib/database";
 
@@ -18,6 +19,9 @@ interface RecentEntriesProps {
 const RecentEntries: React.FC<RecentEntriesProps> = ({ onDataChange }) => {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState<Entry | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     void loadRecentEntries();
@@ -52,28 +56,36 @@ const RecentEntries: React.FC<RecentEntriesProps> = ({ onDataChange }) => {
     }
   };
 
-  const handleDelete = async (entry: Entry) => {
-    if (!confirm("Are you sure you want to delete this entry?")) {
-      return;
-    }
+  const handleDelete = (entry: Entry) => {
+    setEntryToDelete(entry);
+    setShowDeleteModal(true);
+  };
 
+  const confirmDelete = async () => {
+    if (!entryToDelete) return;
+
+    setIsDeleting(true);
     try {
       const table =
-        entry.type === "weight"
+        entryToDelete.type === "weight"
           ? db.weights
-          : entry.type === "measurement"
+          : entryToDelete.type === "measurement"
           ? db.measurements
-          : entry.type === "workout"
+          : entryToDelete.type === "workout"
           ? db.workouts
           : db.meals;
 
-      if (entry.id !== undefined) {
-        await table.delete(entry.id);
+      if (entryToDelete.id !== undefined) {
+        await table.delete(entryToDelete.id);
       }
       await loadRecentEntries();
       onDataChange();
     } catch (error) {
       console.error("Failed to delete entry:", error);
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteModal(false);
+      setEntryToDelete(null);
     }
   };
 
@@ -190,7 +202,7 @@ const RecentEntries: React.FC<RecentEntriesProps> = ({ onDataChange }) => {
               </div>
 
               <button
-                onClick={() => void handleDelete(entry)}
+                onClick={() => handleDelete(entry)}
                 className="p-2 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                 aria-label={`Delete ${entry.type} entry from ${new Date(
                   entry.date
@@ -202,6 +214,30 @@ const RecentEntries: React.FC<RecentEntriesProps> = ({ onDataChange }) => {
           ))}
         </ul>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setEntryToDelete(null);
+        }}
+        onConfirm={() => void confirmDelete()}
+        title="Delete Entry"
+        message={
+          entryToDelete
+            ? `Are you sure you want to delete this ${
+                entryToDelete.type
+              } entry from ${new Date(
+                entryToDelete.date
+              ).toLocaleDateString()}? This action cannot be undone.`
+            : ""
+        }
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </div>
   );
 };

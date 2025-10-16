@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import type { User } from "@supabase/supabase-js";
 import { Plus, Lightbulb, RefreshCw } from "lucide-react";
 import { isAdmin } from "../lib/admin";
+import ConfirmationModal from "./shared/ConfirmationModal";
 import {
   getSuggestions,
   createSuggestion,
@@ -37,6 +38,12 @@ const Suggestions: React.FC<SuggestionsProps> = ({ currentUser }) => {
   const [draggedItem, setDraggedItem] = useState<SuggestionWithUser | null>(
     null
   );
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [suggestionToDelete, setSuggestionToDelete] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const userIsAdmin = currentUser && isAdmin(currentUser.id);
 
@@ -92,20 +99,32 @@ const Suggestions: React.FC<SuggestionsProps> = ({ currentUser }) => {
     await loadSuggestions();
   };
 
-  const handleDeleteSuggestion = async (suggestionId: string) => {
-    if (!window.confirm("Are you sure you want to delete this suggestion?")) {
-      return;
+  const handleDeleteSuggestion = (suggestionId: string) => {
+    const suggestion = suggestions.find((s) => s.id === suggestionId);
+    if (suggestion) {
+      setSuggestionToDelete({ id: suggestionId, title: suggestion.title });
+      setShowDeleteModal(true);
     }
+  };
 
-    const { error: deleteError } = await deleteSuggestion(suggestionId);
+  const confirmDelete = async () => {
+    if (!suggestionToDelete) return;
+
+    setIsDeleting(true);
+    const { error: deleteError } = await deleteSuggestion(
+      suggestionToDelete.id
+    );
 
     if (deleteError) {
       console.error("Error deleting suggestion:", deleteError);
       setError("delete");
-      return;
+    } else {
+      await loadSuggestions();
     }
 
-    await loadSuggestions();
+    setIsDeleting(false);
+    setShowDeleteModal(false);
+    setSuggestionToDelete(null);
   };
 
   const handleEditSuggestion = async (
@@ -298,6 +317,26 @@ const Suggestions: React.FC<SuggestionsProps> = ({ currentUser }) => {
           </Button>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setSuggestionToDelete(null);
+        }}
+        onConfirm={() => void confirmDelete()}
+        title="Delete Suggestion"
+        message={
+          suggestionToDelete
+            ? `Are you sure you want to delete "${suggestionToDelete.title}"? This action cannot be undone.`
+            : ""
+        }
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </PageContentContainer>
   );
 };

@@ -4,7 +4,6 @@ import {
   Plus,
   Copy,
   Check,
-  XCircle,
   Shield,
   Clock,
   Users,
@@ -20,7 +19,7 @@ import {
   getInviteCodeStats,
   type InviteCode,
 } from "../../lib/inviteCodes";
-import { formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 
 /**
  * Admin component for managing invite codes
@@ -171,7 +170,7 @@ const InviteCodeManager: React.FC = () => {
     if (isUsedUp) {
       return (
         <span className="px-2 py-1 text-xs rounded-full bg-gray-500/20 text-gray-300 border border-gray-500/50">
-          Used Up
+          Redeemed
         </span>
       );
     }
@@ -340,115 +339,81 @@ const InviteCodeManager: React.FC = () => {
         </div>
       )}
 
-      {/* Codes List */}
-      <div className="bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-white/5 border-b border-white/10">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Code
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Uses
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Notes
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Created
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Expires
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/10">
-              {loading ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-4 py-8 text-center text-gray-400"
+      {/* Codes List - Simplified Card Design */}
+      <div className="space-y-3">
+        {loading ? (
+          <div className="bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 p-6 text-center text-gray-300">
+            <RefreshCw className="w-6 h-6 mx-auto mb-2 animate-spin" />
+            Loading codes...
+          </div>
+        ) : codes.length === 0 ? (
+          <div className="bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 p-6 text-center">
+            <Key className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+            <p className="text-gray-300">
+              No invite codes yet. Create one to get started.
+            </p>
+          </div>
+        ) : (
+          codes.map((code) => (
+            <div
+              key={code.id}
+              className="bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 p-4 hover:bg-white/8 transition-all"
+            >
+              {/* Main Row */}
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <code className="text-white font-mono text-lg font-semibold">
+                    {code.code}
+                  </code>
+                  <button
+                    onClick={() => void copyToClipboard(code.code)}
+                    className="text-gray-300 hover:text-white transition-colors p-1"
+                    title="Copy code"
                   >
-                    Loading codes...
-                  </td>
-                </tr>
-              ) : codes.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-4 py-8 text-center text-gray-400"
-                  >
-                    No invite codes yet. Create one to get started.
-                  </td>
-                </tr>
-              ) : (
-                codes.map((code) => (
-                  <tr
-                    key={code.id}
-                    className="hover:bg-white/5 transition-colors"
-                  >
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <code className="text-white font-mono text-sm bg-white/10 px-2 py-1 rounded">
-                          {code.code}
-                        </code>
-                        <button
-                          onClick={() => void copyToClipboard(code.code)}
-                          className="text-gray-400 hover:text-white transition-colors"
-                          title="Copy code"
-                        >
-                          {copiedCode === code.code ? (
-                            <Check className="w-4 h-4 text-green-400" />
-                          ) : (
-                            <Copy className="w-4 h-4" />
-                          )}
-                        </button>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">{getStatusBadge(code)}</td>
-                    <td className="px-4 py-3 text-gray-300 text-sm">
-                      {code.current_uses} / {code.max_uses}
-                    </td>
-                    <td className="px-4 py-3 text-gray-300 text-sm">
-                      {code.notes || "-"}
-                    </td>
-                    <td className="px-4 py-3 text-gray-400 text-sm">
-                      {formatDistanceToNow(new Date(code.created_at), {
-                        addSuffix: true,
-                      })}
-                    </td>
-                    <td className="px-4 py-3 text-gray-400 text-sm">
-                      {code.expires_at
-                        ? formatDistanceToNow(new Date(code.expires_at), {
-                            addSuffix: true,
-                          })
-                        : "Never"}
-                    </td>
-                    <td className="px-4 py-3">
-                      {code.is_active && (
-                        <button
-                          onClick={() => handleRevokeCode(code.id, code.code)}
-                          className="text-red-400 hover:text-red-300 transition-colors flex items-center gap-1 text-sm"
-                          title="Revoke code"
-                        >
-                          <XCircle className="w-4 h-4" />
-                          Revoke
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                    {copiedCode === code.code ? (
+                      <Check className="w-5 h-5 text-green-400" />
+                    ) : (
+                      <Copy className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+                <div className="flex items-center gap-3">
+                  {getStatusBadge(code)}
+                  {code.is_active && !code.used_by && (
+                    <button
+                      onClick={() => handleRevokeCode(code.id, code.code)}
+                      className="text-red-400 hover:text-red-300 text-sm font-medium transition-colors"
+                    >
+                      Revoke
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Details Row */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                {code.used_by_email && (
+                  <span className="text-blue-300">
+                    Used by {code.used_by_email}
+                  </span>
+                )}
+                {code.created_by_email && (
+                  <span className="text-gray-300">
+                    Sent by {code.created_by_email}
+                  </span>
+                )}
+                <span className="text-gray-300">
+                  {format(new Date(code.created_at), "MMM d, yyyy")}
+                </span>
+                {code.expires_at && (
+                  <span className="text-gray-300">
+                    Expires {format(new Date(code.expires_at), "MMM d, yyyy")}
+                  </span>
+                )}
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Security Best Practices */}
@@ -476,13 +441,13 @@ const InviteCodeManager: React.FC = () => {
           setCodeToRevoke(null);
         }}
         onConfirm={() => void confirmRevoke()}
-        title="Revoke Invite Code"
+        title="Delete Invite Code"
         message={
           codeToRevoke
-            ? `Are you sure you want to revoke the code "${codeToRevoke.code}"? This action cannot be undone and the code will no longer be valid for registration.`
+            ? `Are you sure you want to permanently delete the code "${codeToRevoke.code}"? This will remove it from the database and cannot be undone.`
             : ""
         }
-        confirmText="Revoke Code"
+        confirmText="Delete Code"
         cancelText="Cancel"
         variant="danger"
         isLoading={revoking}

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import QuickSwitch from "./shared/QuickSwitch";
 import WeatherWidget from "./shared/WeatherWidget";
+import ConfirmationModal from "./shared/ConfirmationModal";
 import { signOut } from "../lib/auth";
 import { isAdmin } from "../lib/admin";
 import { getUserProfile } from "../lib/profiles";
@@ -21,6 +22,8 @@ interface NavigationProps {
 const Navigation: React.FC<NavigationProps> = ({ currentUser }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [showSignOutModal, setShowSignOutModal] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -55,16 +58,21 @@ const Navigation: React.FC<NavigationProps> = ({ currentUser }) => {
     void loadUserProfile();
   }, [currentUser, location.pathname]);
 
-  const handleLogout = async () => {
-    const confirmed = window.confirm("Are you sure you want to sign out?");
-    if (confirmed) {
-      try {
-        await signOut();
-      } catch (error) {
-        console.error("Failed to sign out:", error);
-      }
+  const handleLogout = () => {
+    setShowSignOutModal(true);
+  };
+
+  const confirmSignOut = async () => {
+    setIsSigningOut(true);
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Failed to sign out:", error);
+    } finally {
+      setIsSigningOut(false);
+      setShowSignOutModal(false);
+      setIsDropdownOpen(false);
     }
-    setIsDropdownOpen(false);
   };
 
   const handleMenuItemClick = (path: string) => {
@@ -169,7 +177,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentUser }) => {
 
                   {/* Sign Out */}
                   <button
-                    onClick={() => void handleLogout()}
+                    onClick={handleLogout}
                     className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors whitespace-nowrap text-left"
                     role="menuitem"
                   >
@@ -182,6 +190,19 @@ const Navigation: React.FC<NavigationProps> = ({ currentUser }) => {
           </div>
         </div>
       </div>
+
+      {/* Sign Out Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showSignOutModal}
+        onClose={() => setShowSignOutModal(false)}
+        onConfirm={() => void confirmSignOut()}
+        title="Sign Out"
+        message="Are you sure you want to sign out? You'll need to log in again to access your account."
+        confirmText="Sign Out"
+        cancelText="Cancel"
+        variant="warning"
+        isLoading={isSigningOut}
+      />
     </nav>
   );
 };

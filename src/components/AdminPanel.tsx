@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
   Users,
-  Film,
   Star,
   UserPlus,
   TrendingUp,
@@ -21,6 +20,10 @@ interface Stats {
   totalMediaItems: number;
   totalRatings: number;
   totalFriendships: number;
+  newUsersThisWeek: number;
+  newUsersThisMonth: number;
+  activeUsers: number;
+  avgRatingsPerUser: number;
 }
 
 interface User {
@@ -65,6 +68,10 @@ const AdminPanel: React.FC = () => {
     totalMediaItems: 0,
     totalRatings: 0,
     totalFriendships: 0,
+    newUsersThisWeek: 0,
+    newUsersThisMonth: 0,
+    activeUsers: 0,
+    avgRatingsPerUser: 0,
   });
   const [users, setUsers] = useState<User[]>([]);
   const [popularMedia, setPopularMedia] = useState<PopularMediaItem[]>([]);
@@ -88,6 +95,12 @@ const AdminPanel: React.FC = () => {
   const fetchAdminData = async () => {
     setLoading(true);
     try {
+      // Calculate date ranges
+      const now = new Date();
+      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
       // Fetch counts
       const [mediaCount, ratingsCount, friendsCount] = await Promise.all([
         supabase
@@ -105,11 +118,43 @@ const AdminPanel: React.FC = () => {
         .from("user_profiles")
         .select("*", { count: "exact", head: true });
 
+      // Get new users this week
+      const { count: weekUsers } = await supabase
+        .from("user_profiles")
+        .select("*", { count: "exact", head: true })
+        .gte("created_at", oneWeekAgo.toISOString());
+
+      // Get new users this month
+      const { count: monthUsers } = await supabase
+        .from("user_profiles")
+        .select("*", { count: "exact", head: true })
+        .gte("created_at", oneMonthAgo.toISOString());
+
+      // Get active users (users who have added/rated media in last 30 days)
+      const { data: activeUserData } = await supabase
+        .from("user_media")
+        .select("user_id")
+        .gte("created_at", thirtyDaysAgo.toISOString());
+
+      const uniqueActiveUsers = new Set(
+        activeUserData?.map((item: { user_id: string }) => item.user_id) || []
+      ).size;
+
+      // Calculate average ratings per user
+      const avgRatings =
+        userCount && userCount > 0
+          ? Math.round((ratingsCount.count || 0) / userCount)
+          : 0;
+
       setStats({
         totalUsers: userCount || 0,
         totalMediaItems: mediaCount.count || 0,
         totalRatings: ratingsCount.count || 0,
         totalFriendships: friendsCount.count || 0,
+        newUsersThisWeek: weekUsers || 0,
+        newUsersThisMonth: monthUsers || 0,
+        activeUsers: uniqueActiveUsers,
+        avgRatingsPerUser: avgRatings,
       });
 
       // Fetch popular media (most tracked items)
@@ -308,28 +353,56 @@ const AdminPanel: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
               <StatCard
                 icon={Users}
-                title="Active Users"
+                title="Total Users"
                 value={stats.totalUsers}
                 color="blue"
               />
               <StatCard
-                icon={Film}
-                title="Media Items"
-                value={stats.totalMediaItems}
+                icon={Activity}
+                title="Active (30d)"
+                value={stats.activeUsers}
+                color="green"
+              />
+              <StatCard
+                icon={UserPlus}
+                title="New This Week"
+                value={stats.newUsersThisWeek}
                 color="purple"
               />
               <StatCard
                 icon={Star}
-                title="Total Ratings"
-                value={stats.totalRatings}
+                title="Avg Ratings/User"
+                value={stats.avgRatingsPerUser}
                 color="yellow"
               />
-              <StatCard
-                icon={UserPlus}
-                title="Friendships"
-                value={stats.totalFriendships}
-                color="green"
-              />
+            </div>
+
+            {/* Secondary Stats */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+              <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
+                <p className="text-gray-300 text-sm mb-1">New This Month</p>
+                <p className="text-2xl font-bold text-white">
+                  {stats.newUsersThisMonth}
+                </p>
+              </div>
+              <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
+                <p className="text-gray-300 text-sm mb-1">Total Ratings</p>
+                <p className="text-2xl font-bold text-white">
+                  {stats.totalRatings}
+                </p>
+              </div>
+              <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
+                <p className="text-gray-300 text-sm mb-1">Friendships</p>
+                <p className="text-2xl font-bold text-white">
+                  {stats.totalFriendships}
+                </p>
+              </div>
+              <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
+                <p className="text-gray-300 text-sm mb-1">Media Items</p>
+                <p className="text-2xl font-bold text-white">
+                  {stats.totalMediaItems}
+                </p>
+              </div>
             </div>
 
             {/* Main Content Grid */}
