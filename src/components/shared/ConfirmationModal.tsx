@@ -32,16 +32,19 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
       icon: "text-red-600 dark:text-red-400",
       button: "bg-red-600 hover:bg-red-700 focus:ring-red-500",
       bg: "bg-red-50 dark:bg-red-900/20",
+      useTheme: false,
     },
     warning: {
       icon: "text-yellow-600 dark:text-yellow-400",
       button: "bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500",
       bg: "bg-yellow-50 dark:bg-yellow-900/20",
+      useTheme: false,
     },
     info: {
-      icon: "text-blue-600 dark:text-blue-400",
-      button: "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500",
-      bg: "bg-blue-50 dark:bg-blue-900/20",
+      icon: "",
+      button: "",
+      bg: "",
+      useTheme: true, // Use theme color for info variant
     },
   };
 
@@ -62,9 +65,21 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-full ${styles.bg}`}>
+            <div
+              className={`p-2 rounded-full ${styles.useTheme ? "" : styles.bg}`}
+              style={
+                styles.useTheme
+                  ? { backgroundColor: "var(--color-primary-pale)" }
+                  : undefined
+              }
+            >
               <AlertTriangle
-                className={`w-6 h-6 ${styles.icon}`}
+                className={`w-6 h-6 ${styles.useTheme ? "" : styles.icon}`}
+                style={
+                  styles.useTheme
+                    ? { color: "var(--color-primary)" }
+                    : undefined
+                }
                 aria-hidden="true"
               />
             </div>
@@ -100,7 +115,16 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           <button
             onClick={onConfirm}
             disabled={isLoading}
-            className={`flex-1 px-4 py-2 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 ${styles.button}`}
+            className={`flex-1 px-4 py-2 text-white font-medium rounded-lg transition-opacity disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+              styles.useTheme ? "hover:opacity-90" : styles.button
+            }`}
+            style={
+              styles.useTheme
+                ? {
+                    backgroundColor: "var(--color-primary)",
+                  }
+                : undefined
+            }
           >
             {isLoading ? "Processing..." : confirmText}
           </button>

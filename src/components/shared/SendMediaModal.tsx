@@ -206,22 +206,39 @@ export default function SendMediaModal({
     setSending(true);
     try {
       // Create recommendations for each selected friend
-      const recommendations = Array.from(selectedFriends).map((friendId) => ({
-        from_user_id: user.id,
-        to_user_id: friendId,
-        external_id: selectedItem.external_id,
-        title: selectedItem.title,
-        artist: selectedItem.subtitle || null, // For music
-        album: null, // Could be extracted from media_type if needed
-        year: selectedItem.release_date
-          ? new Date(selectedItem.release_date).getFullYear()
-          : null,
-        poster_url: selectedItem.poster_url,
-        media_type: selectedItem.media_type || "unknown",
-        status: "pending",
-        recommendation_type: recommendationType,
-        sent_message: message || null,
-      }));
+      const recommendations = Array.from(selectedFriends).map((friendId) => {
+        const baseRecommendation = {
+          from_user_id: user.id,
+          to_user_id: friendId,
+          external_id: selectedItem.external_id,
+          title: selectedItem.title,
+          poster_url: selectedItem.poster_url,
+          media_type: selectedItem.media_type || "unknown",
+          status: "pending",
+          recommendation_type: recommendationType,
+          sent_message: message || null,
+        };
+
+        // Add media-type-specific fields
+        if (mediaType === "music") {
+          return {
+            ...baseRecommendation,
+            artist: selectedItem.subtitle || null,
+            album: null, // Could be extracted from media_type if needed
+            year: selectedItem.release_date
+              ? new Date(selectedItem.release_date).getFullYear()
+              : null,
+          };
+        } else if (mediaType === "movies") {
+          return {
+            ...baseRecommendation,
+            release_date: selectedItem.release_date || null,
+            overview: selectedItem.description || null,
+          };
+        }
+
+        return baseRecommendation;
+      });
 
       const { error } = await supabase.from(tableName).insert(recommendations);
 
@@ -367,22 +384,38 @@ export default function SendMediaModal({
                       onClick={() => toggleFriend(friend.user_id)}
                       className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
                         selectedFriends.has(friend.user_id)
-                          ? "bg-blue-100 dark:bg-blue-900"
+                          ? "text-white"
                           : "hover:bg-gray-100 dark:hover:bg-gray-700"
                       }`}
+                      style={
+                        selectedFriends.has(friend.user_id)
+                          ? { backgroundColor: "var(--color-primary-light)" }
+                          : undefined
+                      }
                     >
                       <div
                         className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
                           selectedFriends.has(friend.user_id)
-                            ? "bg-blue-600 border-blue-600"
+                            ? "text-white border-white"
                             : "border-gray-300 dark:border-gray-600"
                         }`}
+                        style={
+                          selectedFriends.has(friend.user_id)
+                            ? { backgroundColor: "var(--color-primary)" }
+                            : undefined
+                        }
                       >
                         {selectedFriends.has(friend.user_id) && (
                           <Check className="w-4 h-4 text-white" />
                         )}
                       </div>
-                      <span className="text-gray-900 dark:text-white">
+                      <span
+                        className={
+                          selectedFriends.has(friend.user_id)
+                            ? "text-white"
+                            : "text-gray-900 dark:text-white"
+                        }
+                      >
                         {friend.display_name}
                       </span>
                     </button>
@@ -395,26 +428,37 @@ export default function SendMediaModal({
           {/* Details Step */}
           {step === "details" && (
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Recommendation Type
-                </label>
-                <div className="flex gap-2">
-                  {recommendationTypes.map((type) => (
-                    <button
-                      key={type.value}
-                      onClick={() => setRecommendationType(type.value)}
-                      className={`flex-1 py-2 px-4 rounded-lg transition-colors ${
-                        recommendationType === type.value
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600"
-                      }`}
-                    >
-                      {type.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {/* Only show recommendation type selector if there are types AND it's relevant for this media */}
+              {recommendationTypes.length > 0 &&
+                // For movies, only show if it's a TV show
+                (mediaType !== "movies" ||
+                  selectedItem?.media_type === "tv") && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Recommendation Type
+                    </label>
+                    <div className="flex gap-2">
+                      {recommendationTypes.map((type) => (
+                        <button
+                          key={type.value}
+                          onClick={() => setRecommendationType(type.value)}
+                          className={`flex-1 py-2 px-4 rounded-lg transition-colors ${
+                            recommendationType === type.value
+                              ? "text-white"
+                              : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600"
+                          }`}
+                          style={
+                            recommendationType === type.value
+                              ? { backgroundColor: "var(--color-primary)" }
+                              : undefined
+                          }
+                        >
+                          {type.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -434,8 +478,14 @@ export default function SendMediaModal({
           {/* Success State */}
           {showSuccess && (
             <div className="flex flex-col items-center justify-center py-8">
-              <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mb-4">
-                <Check className="w-8 h-8 text-green-600 dark:text-green-300" />
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
+                style={{ backgroundColor: "var(--color-primary-pale)" }}
+              >
+                <Check
+                  className="w-8 h-8"
+                  style={{ color: "var(--color-primary)" }}
+                />
               </div>
               <p className="text-lg font-semibold text-gray-900 dark:text-white">
                 Sent!
@@ -462,7 +512,8 @@ export default function SendMediaModal({
               <button
                 onClick={handleContinue}
                 disabled={selectedFriends.size === 0}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                style={{ backgroundColor: "var(--color-primary)" }}
               >
                 Continue
               </button>
@@ -472,7 +523,8 @@ export default function SendMediaModal({
               <button
                 onClick={() => void handleSend()}
                 disabled={sending}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                style={{ backgroundColor: "var(--color-primary)" }}
               >
                 <Send className="w-4 h-4" />
                 {sending ? "Sending..." : "Send"}

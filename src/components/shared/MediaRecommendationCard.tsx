@@ -104,7 +104,8 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
               />
               <button
                 onClick={() => void handleSaveComment()}
-                className="px-2 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded"
+                className="px-2 py-1 text-sm text-white rounded hover:opacity-90"
+                style={{ backgroundColor: "var(--color-primary)" }}
               >
                 Save
               </button>
@@ -128,9 +129,25 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
                   onClick={() => void onStatusUpdate(rec.id, "hit")}
                   className={`px-3 py-1 text-sm rounded transition-colors ${
                     rec.status === "hit"
-                      ? "bg-green-600 text-white"
-                      : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-green-600 hover:text-white"
+                      ? "text-white"
+                      : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:text-white"
                   }`}
+                  style={
+                    rec.status === "hit"
+                      ? { backgroundColor: "var(--color-primary)" }
+                      : undefined
+                  }
+                  onMouseEnter={(e) => {
+                    if (rec.status !== "hit") {
+                      e.currentTarget.style.backgroundColor =
+                        "var(--color-primary)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (rec.status !== "hit") {
+                      e.currentTarget.style.backgroundColor = "";
+                    }
+                  }}
                   title={rec.status === "hit" ? "Hit!" : "Mark as hit"}
                 >
                   {rec.status === "hit" ? (
@@ -165,7 +182,8 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
               {!isAddingComment && (
                 <button
                   onClick={() => setIsAddingComment(true)}
-                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                  className="text-xs hover:underline"
+                  style={{ color: "var(--color-primary)" }}
                 >
                   {rec.comment ? "Edit note" : "Add note"}
                 </button>
@@ -176,7 +194,10 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
             <div className="flex flex-col items-end gap-2">
               <div className="text-sm">
                 {rec.status === "hit" && (
-                  <span className="text-green-600 dark:text-green-400 flex items-center gap-1">
+                  <span
+                    className="flex items-center gap-1"
+                    style={{ color: "var(--color-primary)" }}
+                  >
                     <ThumbsUp className="w-4 h-4" />
                     Hit
                   </span>
@@ -191,7 +212,10 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
                   rec.status === "watched" ||
                   rec.status === "read" ||
                   rec.status === "played") && (
-                  <span className="text-blue-600 dark:text-blue-400 capitalize">
+                  <span
+                    className="capitalize"
+                    style={{ color: "var(--color-primary)" }}
+                  >
                     {rec.status}
                   </span>
                 )}
