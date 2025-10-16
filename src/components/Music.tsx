@@ -1,15 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
-import {
-  Music as MusicIcon,
-  ThumbsUp,
-  ThumbsDown,
-  Headphones,
-  Video,
-} from "lucide-react";
+import { Music as MusicIcon, Headphones, Video } from "lucide-react";
 import SendMediaModal from "./shared/SendMediaModal";
 import { searchMusic } from "../utils/mediaSearchAdapters";
+import MediaRecommendationCard from "./shared/MediaRecommendationCard";
 import {
   MediaRecommendationsLayout,
   BaseRecommendation,
@@ -217,12 +212,16 @@ const Music: React.FC = () => {
       // Map 'consumed' back to 'listened' for music
       const dbStatus = status === "consumed" ? "listened" : status;
 
-      const updates: Record<string, string> = {
+      const updates: Record<string, string | null> = {
         status: dbStatus,
-        listened_at: new Date().toISOString(),
       };
 
-      if (comment) {
+      // Only update listened_at if status is being set (not when just adding comment)
+      if (dbStatus !== "pending") {
+        updates.listened_at = new Date().toISOString();
+      }
+
+      if (comment !== undefined) {
         updates.comment = comment;
       }
 
@@ -247,6 +246,28 @@ const Music: React.FC = () => {
     }
   };
 
+  // Delete (unsend) a recommendation
+  const deleteRecommendation = async (recId: string) => {
+    try {
+      const { error } = await supabase
+        .from("music_recommendations")
+        .delete()
+        .eq("id", recId);
+
+      if (error) throw error;
+
+      // Refresh the current view
+      if (selectedView === "sent") {
+        await loadRecommendations("sent");
+      }
+
+      // Refresh friend counts
+      await loadFriendsWithRecommendations();
+    } catch (error) {
+      console.error("Error deleting recommendation:", error);
+    }
+  };
+
   // Render a music recommendation card
   const renderRecommendationCard = (
     rec: MusicRecommendation,
@@ -255,15 +276,15 @@ const Music: React.FC = () => {
     const index = recommendations.indexOf(rec);
 
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-        <div className="flex items-center gap-4">
-          {/* Track Number */}
-          <div className="w-8 text-center text-gray-500 dark:text-gray-400 text-sm">
-            {index + 1}
-          </div>
-
-          {/* Album Art */}
-          {rec.poster_url ? (
+      <MediaRecommendationCard
+        key={rec.id}
+        rec={rec}
+        index={index}
+        isReceived={isReceived}
+        onStatusUpdate={updateRecommendationStatus}
+        onDelete={deleteRecommendation}
+        renderMediaArt={(rec) =>
+          rec.poster_url ? (
             <img
               src={rec.poster_url}
               alt={rec.title}
@@ -273,10 +294,10 @@ const Music: React.FC = () => {
             <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
               <MusicIcon className="w-6 h-6 text-gray-400 dark:text-gray-500" />
             </div>
-          )}
-
-          {/* Info */}
-          <div className="flex-1 min-w-0">
+          )
+        }
+        renderMediaInfo={(rec) => (
+          <>
             <div className="flex items-center gap-2">
               <div className="font-medium text-gray-900 dark:text-white truncate">
                 {rec.title}
@@ -299,74 +320,9 @@ const Music: React.FC = () => {
               {rec.album && ` • ${rec.album}`}
               {rec.year && ` • ${rec.year}`}
             </div>
-            {rec.sent_message && (
-              <div className="text-xs text-gray-400 dark:text-gray-500 mt-1 italic">
-                "{rec.sent_message}"
-              </div>
-            )}
-            {rec.comment && (
-              <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                Your note: {rec.comment}
-              </div>
-            )}
-          </div>
-
-          {/* Status & Actions */}
-          <div className="flex items-center gap-2">
-            {isReceived && rec.status === "pending" ? (
-              <>
-                <button
-                  onClick={() =>
-                    void updateRecommendationStatus(rec.id, "consumed")
-                  }
-                  className="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
-                >
-                  Mark Listened
-                </button>
-                <button
-                  onClick={() => void updateRecommendationStatus(rec.id, "hit")}
-                  className="px-3 py-1 text-sm bg-green-600 hover:bg-green-700 text-white rounded transition-colors"
-                >
-                  Hit
-                </button>
-                <button
-                  onClick={() =>
-                    void updateRecommendationStatus(rec.id, "miss")
-                  }
-                  className="px-3 py-1 text-sm bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
-                >
-                  Miss
-                </button>
-              </>
-            ) : (
-              <div className="flex items-center gap-2 text-sm">
-                {rec.status === "hit" && (
-                  <span className="text-green-600 dark:text-green-400 flex items-center gap-1">
-                    <ThumbsUp className="w-4 h-4" />
-                    Hit
-                  </span>
-                )}
-                {rec.status === "miss" && (
-                  <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
-                    <ThumbsDown className="w-4 h-4" />
-                    Miss
-                  </span>
-                )}
-                {rec.status === "listened" && isReceived && (
-                  <span className="text-blue-600 dark:text-blue-400">
-                    Listened
-                  </span>
-                )}
-                {!isReceived && rec.status === "pending" && (
-                  <span className="text-gray-500 dark:text-gray-400">
-                    Pending
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+          </>
+        )}
+      />
     );
   };
 
@@ -377,8 +333,8 @@ const Music: React.FC = () => {
         mediaIcon={
           <MusicIcon className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500" />
         }
-        emptyMessage="No recommendations yet"
-        emptySubMessage="When friends share their favorite music with you, it'll show up here"
+        emptyMessage="No music recommendations yet"
+        emptySubMessage="When friends share music with you, it'll show up here"
         queueLabel="Listening Queue"
         consumedLabel="Listened"
         loading={loading}
@@ -390,8 +346,8 @@ const Music: React.FC = () => {
         onViewChange={handleViewChange}
         onSendClick={() => setShowSendModal(true)}
         onStatusUpdate={updateRecommendationStatus}
+        onDelete={deleteRecommendation}
         renderRecommendationCard={renderRecommendationCard}
-        showConsumedBadge={true}
       />
 
       {/* Send Music Modal */}

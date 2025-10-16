@@ -82,18 +82,18 @@ export default function SendMediaModal({
 
     setLoadingFriends(true);
     try {
-      // Get friends from friendships table
-      const { data: friendships, error: friendshipsError } = await supabase
-        .from("friendships")
+      // Get friends from connections table
+      const { data: connections, error: connectionsError } = await supabase
+        .from("connections")
         .select("friend_id, user_id")
         .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
         .eq("status", "accepted");
 
-      if (friendshipsError) throw friendshipsError;
+      if (connectionsError) throw connectionsError;
 
       // Extract friend IDs
       const friendIds =
-        friendships?.map((f) =>
+        connections?.map((f) =>
           f.user_id === user.id ? f.friend_id : f.user_id
         ) || [];
 

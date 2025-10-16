@@ -19,7 +19,7 @@ interface Stats {
   totalUsers: number;
   totalMediaItems: number;
   totalRatings: number;
-  totalFriendships: number;
+  totalConnections: number;
   newUsersThisWeek: number;
   newUsersThisMonth: number;
   activeUsers: number;
@@ -67,7 +67,7 @@ const AdminPanel: React.FC = () => {
     totalUsers: 0,
     totalMediaItems: 0,
     totalRatings: 0,
-    totalFriendships: 0,
+    totalConnections: 0,
     newUsersThisWeek: 0,
     newUsersThisMonth: 0,
     activeUsers: 0,
@@ -102,13 +102,13 @@ const AdminPanel: React.FC = () => {
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
       // Fetch counts
-      const [mediaCount, ratingsCount, friendsCount] = await Promise.all([
+      const [mediaCount, ratingsCount, connectionsCount] = await Promise.all([
         supabase
           .from("media_items")
           .select("*", { count: "exact", head: true }),
         supabase.from("user_media").select("*", { count: "exact", head: true }),
         supabase
-          .from("friends")
+          .from("connections")
           .select("*", { count: "exact", head: true })
           .eq("status", "accepted"),
       ]);
@@ -150,7 +150,7 @@ const AdminPanel: React.FC = () => {
         totalUsers: userCount || 0,
         totalMediaItems: mediaCount.count || 0,
         totalRatings: ratingsCount.count || 0,
-        totalFriendships: friendsCount.count || 0,
+        totalConnections: connectionsCount.count || 0,
         newUsersThisWeek: weekUsers || 0,
         newUsersThisMonth: monthUsers || 0,
         activeUsers: uniqueActiveUsers,
@@ -392,9 +392,9 @@ const AdminPanel: React.FC = () => {
                 </p>
               </div>
               <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
-                <p className="text-gray-300 text-sm mb-1">Friendships</p>
+                <p className="text-gray-300 text-sm mb-1">Connections</p>
                 <p className="text-2xl font-bold text-white">
-                  {stats.totalFriendships}
+                  {stats.totalConnections}
                 </p>
               </div>
               <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">

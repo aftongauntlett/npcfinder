@@ -63,6 +63,7 @@ interface MediaRecommendationsLayoutProps<T extends BaseRecommendation> {
     status: string,
     comment?: string
   ) => void | Promise<void>;
+  onDelete?: (recId: string) => void | Promise<void>; // For unsending recommendations
 
   // Render functions for media-specific content
   renderRecommendationCard: (rec: T, isReceived: boolean) => React.ReactNode;

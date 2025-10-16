@@ -16,11 +16,11 @@ import { supabase } from "./supabase";
 export async function exportUserData(userId: string) {
   try {
     // Fetch all user data
-    const [userMedia, topLists, friends, userProfile] = await Promise.all([
+    const [userMedia, topLists, connections, userProfile] = await Promise.all([
       supabase.from("user_media").select("*").eq("user_id", userId),
       supabase.from("top_lists").select("*").eq("user_id", userId),
       supabase
-        .from("friends")
+        .from("connections")
         .select("*")
         .or(`user_id.eq.${userId},friend_id.eq.${userId}`),
       supabase.from("user_profiles").select("*").eq("user_id", userId).single(),
@@ -41,11 +41,11 @@ export async function exportUserData(userId: string) {
       profile: userProfile.data,
       media: userMedia.data,
       top_lists: topLists.data,
-      friends: friends.data,
+      connections: connections.data,
       metadata: {
         total_media_items: userMedia.data?.length || 0,
         total_lists: topLists.data?.length || 0,
-        total_friends: friends.data?.length || 0,
+        total_connections: connections.data?.length || 0,
       },
     };
 
@@ -98,7 +98,7 @@ export async function getUserDataSummary(userId: string) {
         .select("id", { count: "exact" })
         .eq("user_id", userId),
       supabase
-        .from("friends")
+        .from("connections")
         .select("id", { count: "exact" })
         .or(`user_id.eq.${userId},friend_id.eq.${userId}`),
       supabase
@@ -140,7 +140,7 @@ export async function deleteUserAccount(userId: string) {
       supabase.from("top_lists").delete().eq("user_id", userId),
       supabase.from("suggestions").delete().eq("user_id", userId),
       supabase
-        .from("friends")
+        .from("connections")
         .delete()
         .or(`user_id.eq.${userId},friend_id.eq.${userId}`),
       supabase.from("user_profiles").delete().eq("user_id", userId),

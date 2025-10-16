@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
-import { Film, Tv as TvIcon, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Film, Tv as TvIcon } from "lucide-react";
 import SendMediaModal from "./shared/SendMediaModal";
 import { searchMoviesAndTV } from "../utils/mediaSearchAdapters";
+import MediaRecommendationCard from "./shared/MediaRecommendationCard";
 import {
   MediaRecommendationsLayout,
   BaseRecommendation,
@@ -211,12 +212,16 @@ const MoviesTV: React.FC = () => {
       // Map 'consumed' back to 'watched' for movies
       const dbStatus = status === "consumed" ? "watched" : status;
 
-      const updates: Record<string, string> = {
+      const updates: Record<string, string | null> = {
         status: dbStatus,
-        watched_at: new Date().toISOString(),
       };
 
-      if (comment) {
+      // Only update watched_at if status is being set (not when just adding comment)
+      if (dbStatus !== "pending") {
+        updates.watched_at = new Date().toISOString();
+      }
+
+      if (comment !== undefined) {
         updates.comment = comment;
       }
 
@@ -241,6 +246,30 @@ const MoviesTV: React.FC = () => {
     }
   };
 
+  // Delete (unsend) a recommendation
+  const deleteRecommendation = async (recId: string) => {
+    try {
+      const { error } = await supabase
+        .from("movie_recommendations")
+        .delete()
+        .eq("id", recId);
+
+      if (error) throw error;
+
+      // Refresh the current view
+      if (selectedView === "friend" && selectedFriendId) {
+        await loadRecommendations("friend", selectedFriendId);
+      } else {
+        await loadRecommendations(selectedView);
+      }
+
+      // Refresh friend counts
+      await loadFriendsWithRecommendations();
+    } catch (error) {
+      console.error("Error deleting recommendation:", error);
+    }
+  };
+
   // Render a movie recommendation card
   const renderRecommendationCard = (
     rec: MovieRecommendation,
@@ -250,15 +279,15 @@ const MoviesTV: React.FC = () => {
     const MediaIcon = rec.media_type === "tv" ? TvIcon : Film;
 
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-        <div className="flex items-center gap-4">
-          {/* Item Number */}
-          <div className="w-8 text-center text-gray-500 dark:text-gray-400 text-sm">
-            {index + 1}
-          </div>
-
-          {/* Poster */}
-          {rec.poster_url ? (
+      <MediaRecommendationCard
+        key={rec.id}
+        rec={rec}
+        index={index}
+        isReceived={isReceived}
+        onStatusUpdate={updateRecommendationStatus}
+        onDelete={deleteRecommendation}
+        renderMediaArt={(rec) =>
+          rec.poster_url ? (
             <img
               src={rec.poster_url}
               alt={rec.title}
@@ -268,10 +297,10 @@ const MoviesTV: React.FC = () => {
             <div className="w-12 h-16 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
               <MediaIcon className="w-6 h-6 text-gray-400 dark:text-gray-500" />
             </div>
-          )}
-
-          {/* Info */}
-          <div className="flex-1 min-w-0">
+          )
+        }
+        renderMediaInfo={(rec) => (
+          <>
             <div className="flex items-center gap-2">
               <div className="font-medium text-gray-900 dark:text-white truncate">
                 {rec.title}
@@ -283,79 +312,17 @@ const MoviesTV: React.FC = () => {
                 </span>
               )}
             </div>
-            {rec.release_date && (
-              <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                {rec.release_date}
-              </div>
-            )}
-            {rec.sent_message && (
-              <div className="text-xs text-gray-400 dark:text-gray-500 mt-1 italic">
-                "{rec.sent_message}"
-              </div>
-            )}
+            <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+              {rec.release_date}
+            </div>
             {rec.overview && (
               <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
                 {rec.overview}
               </div>
             )}
-          </div>
-
-          {/* Status & Actions */}
-          <div className="flex items-center gap-2">
-            {isReceived && rec.status === "pending" ? (
-              <>
-                <button
-                  onClick={() =>
-                    void updateRecommendationStatus(rec.id, "consumed")
-                  }
-                  className="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
-                >
-                  Mark Watched
-                </button>
-                <button
-                  onClick={() => void updateRecommendationStatus(rec.id, "hit")}
-                  className="px-3 py-1 text-sm bg-green-600 hover:bg-green-700 text-white rounded transition-colors"
-                >
-                  Loved It
-                </button>
-                <button
-                  onClick={() =>
-                    void updateRecommendationStatus(rec.id, "miss")
-                  }
-                  className="px-3 py-1 text-sm bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
-                >
-                  Not For Me
-                </button>
-              </>
-            ) : (
-              <div className="flex items-center gap-2 text-sm">
-                {rec.status === "hit" && (
-                  <span className="text-green-600 dark:text-green-400 flex items-center gap-1">
-                    <ThumbsUp className="w-4 h-4" />
-                    Loved It
-                  </span>
-                )}
-                {rec.status === "miss" && (
-                  <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
-                    <ThumbsDown className="w-4 h-4" />
-                    Not For Me
-                  </span>
-                )}
-                {rec.status === "watched" && isReceived && (
-                  <span className="text-blue-600 dark:text-blue-400">
-                    Watched
-                  </span>
-                )}
-                {!isReceived && rec.status === "pending" && (
-                  <span className="text-gray-500 dark:text-gray-400">
-                    Pending
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+          </>
+        )}
+      />
     );
   };
 
@@ -379,6 +346,7 @@ const MoviesTV: React.FC = () => {
         onViewChange={handleViewChange}
         onSendClick={() => setShowSendModal(true)}
         onStatusUpdate={updateRecommendationStatus}
+        onDelete={deleteRecommendation}
         renderRecommendationCard={renderRecommendationCard}
       />
 
