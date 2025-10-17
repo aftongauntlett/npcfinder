@@ -1,145 +1,238 @@
 # NPC Finder
 
-A modern, invite-only personal dashboard for tracking movies, TV shows, games, books, fitness, and more. Built with React, TypeScript, and Supabase with a focus on privacy and customization.
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-19.1-61dafb)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-7.1-646cff)](https://vitejs.dev/)
+[![Supabase](https://img.shields.io/badge/Supabase-2.75-3ecf8e)](https://supabase.com/)
+[![GitHub commit activity](https://img.shields.io/github/commit-activity/m/aftongauntlett/npcfinder)](https://github.com/aftongauntlett/npcfinder/commits/main)
 
-## Privacy-First Design
+A privacy-focused recommendation engine for sharing movies, TV shows, and music with close friends. Built with modern React patterns, TypeScript, and Supabase.
 
-**Invite-Only Access** - No public signups. Share codes with trusted friends only.
+## Overview
 
-**Two-Tier Security Model:**
+NPC Finder is an invite-only platform where friends share media recommendations in a calm, intentional way. Track what you've watched and listened to, get recommendations from friends, and mark them as hits or misses.
 
-- Standard Security: Media tracking with friend sharing (current)
-- E2E Encryption: Diary and health data (planned)
+**Key Philosophy:**
 
-Read more: [Privacy Reality Check](docs/PRIVACY_REALITY_CHECK.md) | [Future E2E Encryption](docs/FUTURE_E2E_ENCRYPTION.md)
+- Privacy-first (invite-only, no public access)
+- Friend-focused (quality over quantity)
+- Intentional discovery (recommendations, not algorithms)
 
 ## Features
 
-### Media Tracking
+### Media Recommendations
 
-Comprehensive tracking for Movies, TV Shows, Games, and Books:
+**Music:**
 
-- Smart Search via external APIs (TMDB, RAWG, Google Books)
-- Personal Ratings with 1-5 star system
-- External critic and audience scores
-- Friend comparisons and recommendations
-- Top 10 custom lists
-- Random suggestion generator
+- Search songs and albums via iTunes API
+- Send recommendations to friends with personal notes
+- Mark recommendations as "listened", "hit", or "miss"
+- View friend recommendation history
 
-### Fitness Dashboard
+**Movies & TV:**
 
-- Weight tracking with trend visualization
-- Body measurements (waist, hip, chest, thigh, arm)
-- Workout logging with type, duration, and notes
-- Meal tracking with quality tags
-- Analytics and streak tracking
-- Export/import data as JSON
-- Offline storage with IndexedDB
+- Search via TMDB API with detailed metadata
+- Personal watch list management
+- Send recommendations with watch/rewatch suggestions
+- Track watched status and ratings
+
+### Social Features
+
+- Friend connections with automatic reciprocal relationships
+- View recommendations by friend
+- See what friends loved (hits) vs missed (misses)
+- Track sent recommendations and recipient responses
+
+### Suggestions System
+
+- Create suggestions for any topic
+- Friends vote on suggestions (Kanban-style)
+- Track suggestion status (pending, accepted, completed)
+- Archive completed suggestions
 
 ### Customization
 
-- Dashboard card visibility preferences
-- Custom theme colors (8 preset options)
-- Personalized greeting header
+- 8 preset theme colors
 - Dark/light mode with system detection
-- Responsive mobile-first design
-
-### Additional Sections
-
-- News, Bookmarks, Vault
-- Food & Places reviews
-- Journal for daily thoughts
+- Customizable dashboard card visibility
+- Personal greeting and display name
 
 ## Tech Stack
 
-## Tech Stack
+**Frontend:**
 
 - React 19 with TypeScript
-- Vite for build tooling
-- Tailwind CSS with dark mode
-- Supabase (PostgreSQL, auth, real-time)
-- Supabase CLI for automated database migrations
-- Dexie for offline IndexedDB storage
-- Recharts for data visualization
+- Vite for build tooling and HMR
+- TailwindCSS for styling
+- Framer Motion for animations
+- TanStack Query for server state management
+- React Router for navigation
 - Lucide React for icons
 
-**External APIs:** TMDB, RAWG, Google Books, Open-Meteo
+**Backend:**
+
+- Supabase (PostgreSQL + Auth + Realtime)
+- Row-Level Security (RLS) for data access control
+- Supabase CLI for database migrations
+
+**External APIs:**
+
+- TMDB (movies and TV)
+- iTunes (music search)
+
+**Testing:**
+
+- Vitest with React Testing Library
+- Simple, behavioral tests
+
+## Architecture
+
+**Project Structure:**
+
+```
+src/
+├── components/         # React components
+│   ├── pages/         # Page-level components
+│   ├── layouts/       # Layout templates
+│   ├── shared/        # Reusable UI components
+│   ├── media/         # Media-specific components
+│   └── admin/         # Admin panel components
+├── contexts/          # React Context providers
+├── hooks/             # Custom React hooks
+├── lib/               # Core utilities and API clients
+├── services/          # Business logic layer
+├── data/              # Mock data and constants
+└── utils/             # Helper functions
+```
+
+**Key Patterns:**
+
+- Service layer separates business logic from UI
+- Mock/real data toggle for development
+- Custom hooks for data fetching (TanStack Query)
+- Context for global state (auth, theme)
+
+See [services/README.md](src/services/README.md) for service layer documentation.
 
 ## Documentation
 
 ### Getting Started
 
-- [Quick Start Guide](docs/QUICK_START.md) - Setup in 30 minutes
-- [Invite System Setup](INVITE_SYSTEM_QUICKSTART.md) - How invite codes work
-- [Deployment Checklist](docs/DEPLOYMENT_CHECKLIST.md) - Pre-launch checklist
+- [Quick Start Guide](QUICK_START.md)
+- [Database Migrations](DATABASE_MIGRATIONS.md)
+- [API Setup](API_SETUP.md)
+- [Invite System](INVITE_SYSTEM_QUICKSTART.md)
 
-### Architecture
+### Architecture & Testing
 
-- [Media System Guide](docs/MEDIA_SYSTEM_GUIDE.md) - Complete implementation details
-- [Supabase Setup](docs/SUPABASE_SETUP.md) - Database schema and configuration
-- [Database Migrations](docs/DATABASE_MIGRATIONS.md) - Professional migration workflow
-- [API Setup](docs/API_SETUP.md) - External API integration
+- [Testing Strategy](TESTING_STRATEGY.md)
+- [Performance Audit](PERFORMANCE_AUDIT.md)
+- [Services Layer](src/services/README.md)
 
 ### Privacy & Security
 
-- [Privacy Reality Check](docs/PRIVACY_REALITY_CHECK.md) - Honest privacy explanation
-- [Future E2E Encryption](docs/FUTURE_E2E_ENCRYPTION.md) - Plan for sensitive data
-- [Security Checks](docs/SECURITY_CHECKS.md) - How to run security audits
+- [Privacy Reality Check](PRIVACY_REALITY_CHECK.md)
+- [Security Recommendations](SECURITY_RECOMMENDATIONS_REVIEW.md)
+- [Future: E2E Encryption](FUTURE_E2E_ENCRYPTION.md)
 
-### Testing
+## Privacy & Security
 
-- [Testing Guide](docs/TESTING_GUIDE.md) - Writing and running tests
-- [Test Results](TEST_RESULTS.md) - Current coverage (78 tests passing)
+**Your data is safe when others clone this repo.**
 
-## Project Showcase
+This app uses your own Supabase instance. When someone clones:
 
-This project demonstrates:
+- They must create their own Supabase project
+- They use their own database credentials
+- Your database and their database are completely separate
+- No way for data to mix or cross between instances
 
-- Modern React patterns (Hooks, Context, custom hooks)
-- Security architecture (invite-only, Row-Level Security)
-- Database design with PostgreSQL and automated migrations
-- External API integration with error handling
-- Comprehensive testing with Vitest
-- Privacy-conscious design decisions
-- TypeScript for type safety
-- Reusable component architecture
-- Accessibility (ARIA labels, keyboard navigation)
-- Performance optimization
+**How It Works:**
+
+```bash
+# Your setup (not in git)
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-key-here
+
+# Their setup (their own Supabase)
+VITE_SUPABASE_URL=https://their-project.supabase.co
+VITE_SUPABASE_ANON_KEY=their-key-here
+```
+
+Without your credentials, they cannot access your database. This is standard for all open-source projects.
 
 ## Privacy Model
 
-**What IS Private:**
+**Invite-Only Access:**
 
-- Data protected from other users via Row-Level Security
-- No selling, sharing, or third-party access
-- No analytics or tracking
-- Invite-only for trusted friends
+- No public signups
+- Admin-generated invite codes
+- One-time use codes with expiration
+- Trusted friend network only
 
-**What Is NOT Private (Yet):**
+**Database Security:**
 
-- Not end-to-end encrypted (for media tracking)
-- Admin can technically access database
-- Supabase hosting provider can access data
+- Each installation uses its own Supabase database
+- Row-Level Security (RLS) in PostgreSQL
+- Users can only access their own data and friends' shared data
+- JWT-based authentication
+- No tracking or analytics
 
-**Future Plans:**
+**Cloning This Repo:**
 
-- E2E encryption for diary entries
-- E2E encryption for health data
-- Standard security for social features
+- Safe - they use their own database instance
+- Your data stays on your Supabase instance
+- No connection between installations
+- Standard open-source model
 
-Full explanation: [Privacy Reality Check](docs/PRIVACY_REALITY_CHECK.md)
+**What's NOT Private:**
+
+- Not end-to-end encrypted (standard web app security)
+- Database admin can access data (on their own instance)
+- Supabase (hosting provider) can access data (on their own instance)
+
+See [Privacy Reality Check](PRIVACY_REALITY_CHECK.md) for full details.
+
+## Development Patterns
+
+**Service Layer:**
+
+- Separates business logic from React components
+- Easy to mock for testing
+- See [services/README.md](src/services/README.md)
+
+**Mock Data:**
+
+- Toggle between mock and real data via environment variable
+- Enables frontend development without backend setup
+- Useful for testing and demos
+
+**Component Organization:**
+
+- Pages for route-level components
+- Layouts for reusable page structures
+- Shared for common UI components
+- Feature folders for domain-specific components
+
+**Testing:**
+
+- Simple, behavioral tests with Vitest
+- Mock external dependencies
+- Test user interactions, not implementation details
 
 ## Quick Start
 
 ## Quick Start
 
-### Prerequisites
+**Can you clone and use this? Yes!**
+
+This is open-source. You can clone and run it with your own Supabase backend. Your data will be completely separate from mine.
+
+**Prerequisites:**
 
 - Node.js 18+
 - Supabase account (free tier)
-- Git
 
-### Installation
+**Installation:**
 
 ```bash
 git clone https://github.com/aftongauntlett/npcfinder.git
@@ -148,35 +241,47 @@ npm install
 
 # Set up environment variables
 cp .env.example .env.local
-# Add your Supabase credentials to .env.local
+# Add your Supabase URL and anon key to .env.local
 
-# Run database migrations
-npm run db:migration:push
-
-# Start development server
+# Run development server
 npm run dev
 
 # Run tests
 npm test
 ```
 
-### First-Time Setup
+**With Mock Data (No Database Required):**
 
-1. Set up Supabase - Run SQL scripts in your dashboard
-2. Create invite codes - Use admin panel
-3. Invite friends - Share codes securely
-4. Deploy - Push to Vercel/Netlify
+```bash
+# Add to .env.local
+VITE_USE_MOCK=true
 
-See [Quick Start Guide](docs/QUICK_START.md) for detailed instructions.
+# Start dev server - uses dummy data
+npm run dev
+```
 
-##Contact
+**Full Setup:**
+See [Quick Start Guide](QUICK_START.md) for complete database setup, invite codes, and deployment instructions.
 
-Questions? Check the docs or open an issue.
+**Note:** Each installation is independent. When you clone this repo and set up your own Supabase, you get your own private instance. There's no connection to my database or data.
+
+## Scripts
+
+```bash
+npm run dev              # Start development server
+npm run build            # Production build
+npm test                 # Run tests once
+npm run test:watch       # Run tests in watch mode
+npm run lint             # Run ESLint
+npm run db:migration:new # Create new database migration
+```
+
+## Contact
+
+Built by Afton Gauntlett
+
+- GitHub: [@aftongauntlett](https://github.com/aftongauntlett)
 
 ## License
 
-Personal project for learning and portfolio purposes.
-
----
-
-Built by Afton Gauntlett with a focus on privacy, security, and modern React patterns.
+Personal project. See LICENSE for details.

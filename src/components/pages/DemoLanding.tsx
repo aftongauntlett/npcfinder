@@ -23,30 +23,30 @@ const DemoLanding: React.FC = () => {
   const features = [
     {
       icon: Film,
-      title: "Media Tracking",
+      title: "Media Recommendations",
       description:
-        "Track movies, TV shows, games, and books with personal ratings and notes",
+        "Track movies, TV shows, and music with personal ratings. Share recommendations with friends.",
       color: "text-purple-400",
     },
     {
       icon: Users,
-      title: "Social Features",
+      title: "Friend Network",
       description:
-        "Connect with friends, share recommendations, and see what others are enjoying",
+        "Connect with friends, see what they recommend, and mark recommendations as hits or misses",
       color: "text-blue-400",
     },
     {
       icon: TrendingUp,
       title: "Suggestions System",
       description:
-        "Vote on friend suggestions and discover new content through your network",
+        "Create and vote on friend suggestions for anything - restaurants, activities, or ideas",
       color: "text-green-400",
     },
     {
       icon: Shield,
       title: "Privacy-First",
       description:
-        "Invite-only system with end-to-end security. Your data stays private.",
+        "Invite-only system with Row-Level Security. Your data stays between you and your friends.",
       color: "text-yellow-400",
     },
   ];

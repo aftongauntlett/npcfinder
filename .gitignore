@@ -17,11 +17,8 @@ coverage
 .temp/
 .branches/
 
-# Ignore all Markdown files
-*.md
-
-# Don't ignore README.md 
-!README.md
+# Ignore docs folder (development notes)
+docs/
 
 # Editor directories and files
 .vscode/*
