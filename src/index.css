@@ -12,6 +12,30 @@
   --color-text-on-primary: #ffffff;
 }
 
+/* Text selection highlighting */
+::selection {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+::-moz-selection {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+/* Input field selection highlighting */
+input::selection,
+textarea::selection {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+input::-moz-selection,
+textarea::-moz-selection {
+  background-color: var(--color-primary);
+  color: white;
+}
+
 @layer utilities {
   /* Shimmer animation for sparkle effect */
   @keyframes shimmer {

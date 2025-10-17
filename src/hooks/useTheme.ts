@@ -8,7 +8,7 @@ interface ThemeContextValue {
   theme: ThemeOption;
   resolvedTheme: ResolvedTheme;
   themeColor: ThemeColorName;
-  changeTheme: (newTheme: ThemeOption) => Promise<void>;
+  changeTheme: (newTheme: ThemeOption) => void;
   changeThemeColor: (newColor: ThemeColorName) => void;
 }
 

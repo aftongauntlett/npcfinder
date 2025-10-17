@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import db from "../lib/database";
 import { ThemeContext } from "../hooks/useTheme";
 import { type ThemeColorName, getTheme } from "../styles/colorThemes";
 
@@ -16,17 +15,24 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [themeColor, setThemeColor] = useState<ThemeColorName>("purple");
 
   useEffect(() => {
-    const loadTheme = async () => {
+    const loadTheme = () => {
       try {
-        const settings = await db.settings.get(1);
-        if (settings?.theme) {
-          setTheme(settings.theme as ThemeOption);
+        const savedTheme = localStorage.getItem("theme") as ThemeOption | null;
+        if (savedTheme) {
+          setTheme(savedTheme);
+        }
+
+        const savedColor = localStorage.getItem(
+          "themeColor"
+        ) as ThemeColorName | null;
+        if (savedColor) {
+          setThemeColor(savedColor);
         }
       } catch (error) {
         console.error("Failed to load theme:", error);
       }
     };
-    void loadTheme();
+    loadTheme();
   }, []);
 
   useEffect(() => {
@@ -74,13 +80,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     root.style.setProperty("--color-text-on-primary", colorTheme.textOnPrimary);
   }, [themeColor]);
 
-  const changeTheme = async (newTheme: ThemeOption) => {
+  const changeTheme = (newTheme: ThemeOption) => {
     setTheme(newTheme);
     try {
-      await db.settings.update(1, {
-        theme: newTheme,
-        updatedAt: new Date(),
-      });
+      localStorage.setItem("theme", newTheme);
     } catch (error) {
       console.error("Failed to save theme:", error);
     }
@@ -88,6 +91,11 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   const changeThemeColor = (newColor: ThemeColorName) => {
     setThemeColor(newColor);
+    try {
+      localStorage.setItem("themeColor", newColor);
+    } catch (error) {
+      console.error("Failed to save theme color:", error);
+    }
   };
 
   return (
