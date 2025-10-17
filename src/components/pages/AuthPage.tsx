@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { signIn, signUp } from "../lib/auth";
-import Button from "./shared/Button";
+import { signIn, signUp } from "../../lib/auth";
+import Button from "../shared/Button";
 
 /**
  * Authentication page with login and signup forms

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import type { User } from "@supabase/supabase-js";
 import { Plus, Lightbulb, RefreshCw } from "lucide-react";
-import { isAdmin } from "../lib/admin";
-import ConfirmationModal from "./shared/ConfirmationModal";
+import { isAdmin } from "../../lib/admin";
+import ConfirmationModal from "../shared/ConfirmationModal";
 import {
   getSuggestions,
   createSuggestion,
@@ -12,14 +12,14 @@ import {
   subscribeSuggestions,
   type SuggestionWithUser,
   type Suggestion,
-} from "../lib/suggestions";
-import KanbanColumn from "./suggestions/KanbanColumn";
-import PageContentContainer from "./shared/PageContentContainer";
-import NewSuggestionForm from "./suggestions/NewSuggestionForm";
-import Button from "./shared/Button";
-import Alert from "./shared/Alert";
-import { SUGGESTION_STATUSES } from "../utils/suggestionConstants";
-import { isSetupError } from "../utils/errorUtils";
+} from "../../lib/suggestions";
+import KanbanColumn from "../suggestions/KanbanColumn";
+import PageContentContainer from "../layouts/PageContentContainer";
+import NewSuggestionForm from "../suggestions/NewSuggestionForm";
+import Button from "../shared/Button";
+import Alert from "../shared/Alert";
+import { SUGGESTION_STATUSES } from "../../utils/suggestionConstants";
+import { isSetupError } from "../../utils/errorUtils";
 
 const STATUSES = SUGGESTION_STATUSES;
 

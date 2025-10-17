@@ -1,26 +1,30 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useAuth } from "../contexts/AuthContext";
-import { supabase } from "../lib/supabase";
-import { Film, Tv as TvIcon } from "lucide-react";
-import SendMediaModal from "./shared/SendMediaModal";
-import { searchMoviesAndTV } from "../utils/mediaSearchAdapters";
-import MediaRecommendationCard from "./shared/MediaRecommendationCard";
+import { useAuth } from "../../contexts/AuthContext";
+import { Film, Tv as TvIcon, Send, ListVideo, Lightbulb } from "lucide-react";
+import SendMediaModal from "../shared/SendMediaModal";
+import { searchMoviesAndTV } from "../../utils/mediaSearchAdapters";
+import MediaRecommendationCard from "../shared/MediaRecommendationCard";
 import {
   MediaRecommendationsLayout,
   BaseRecommendation,
   FriendSummary,
-} from "./shared/MediaRecommendationsLayout";
+} from "../shared/MediaRecommendationsLayout";
+import * as recommendationsService from "../../services/recommendationsService";
+import type { Recommendation } from "../../data/mockData";
+import PersonalWatchList from "../media/PersonalWatchList";
+import MediaPageTemplate from "../layouts/MediaPageTemplate";
 
 // Extend BaseRecommendation with movie-specific fields
-interface MovieRecommendation
-  extends Omit<BaseRecommendation, "status" | "consumed_at"> {
+interface MovieRecommendation extends BaseRecommendation {
   media_type: "movie" | "tv";
   release_date: string | null;
   overview: string | null;
+  poster_url: string | null;
   // Override with movie-specific status types
   status: "pending" | "watched" | "hit" | "miss";
-  watched_at: string | null; // Movie-specific timestamp field
+  watched_at: string | null; // Movie-specific timestamp field (maps to consumed_at)
   created_at: string;
+  sender_comment: string | null; // Required by MediaRecommendationCard
 }
 
 /**
@@ -29,6 +33,12 @@ interface MovieRecommendation
  */
 const MoviesTV: React.FC = () => {
   const { user } = useAuth();
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState<"watchlist" | "suggestions">(
+    "watchlist"
+  );
+
   const [loading, setLoading] = useState(true);
   const [friendsWithRecs, setFriendsWithRecs] = useState<FriendSummary[]>([]);
   const [selectedView, setSelectedView] = useState<
@@ -53,83 +63,14 @@ const MoviesTV: React.FC = () => {
     try {
       setLoading(true);
 
-      // Get all recommendations sent to this user, grouped by sender
-      const { data: recs, error } = await supabase
-        .from("movie_recommendations")
-        .select("from_user_id, status")
-        .eq("to_user_id", user.id);
-
-      if (error) throw error;
-
-      // Group by sender and count statuses
-      const friendMap = new Map<
-        string,
-        { pending: number; total: number; hits: number; misses: number }
-      >();
-
-      recs?.forEach((rec) => {
-        const existing = friendMap.get(rec.from_user_id) || {
-          pending: 0,
-          total: 0,
-          hits: 0,
-          misses: 0,
-        };
-        existing.total++;
-        if (rec.status === "pending") existing.pending++;
-        if (rec.status === "hit") existing.hits++;
-        if (rec.status === "miss") existing.misses++;
-        friendMap.set(rec.from_user_id, existing);
-      });
-
-      // Get display names for all friends
-      const friendIds = Array.from(friendMap.keys());
-
-      // Calculate quick stats from received recommendations
-      const allHits = recs?.filter((r) => r.status === "hit").length || 0;
-      const allMisses = recs?.filter((r) => r.status === "miss").length || 0;
-      const allQueue = recs?.filter((r) => r.status === "pending").length || 0;
-
-      // Get sent count (ALWAYS do this, even if no received recommendations)
-      const { count: sentCount } = await supabase
-        .from("movie_recommendations")
-        .select("*", { count: "exact", head: true })
-        .eq("from_user_id", user.id);
-
-      setQuickStats({
-        hits: allHits,
-        misses: allMisses,
-        queue: allQueue,
-        sent: sentCount || 0,
-      });
-
-      if (friendIds.length === 0) {
-        setFriendsWithRecs([]);
-        setLoading(false);
-        return;
-      }
-
-      const { data: profiles, error: profileError } = await supabase
-        .from("user_profiles")
-        .select("user_id, display_name")
-        .in("user_id", friendIds);
-
-      if (profileError) throw profileError;
-
-      // Combine data
-      const friends: FriendSummary[] =
-        profiles?.map((profile) => {
-          const stats = friendMap.get(profile.user_id)!;
-          return {
-            user_id: profile.user_id,
-            display_name: profile.display_name,
-            pending_count: stats.pending,
-            total_count: stats.total,
-            hit_count: stats.hits,
-            miss_count: stats.misses,
-          };
-        }) || [];
-
+      // Use service layer to get friends with stats (movie + tv)
+      const friends =
+        await recommendationsService.getFriendsWithRecommendations("movie");
       setFriendsWithRecs(friends);
+
+      // Get quick stats
+      const stats = await recommendationsService.getQuickStats("movie");
+      setQuickStats(stats);
     } catch (error) {
       console.error("Error loading friends:", error);
     } finally {
@@ -144,37 +85,59 @@ const MoviesTV: React.FC = () => {
 
       try {
         setLoading(true);
-        let query = supabase.from("movie_recommendations").select("*");
+        let data: Recommendation[] = [];
 
         if (view === "friend" && friendId) {
           // Show all recs from this friend
-          query = query
-            .eq("to_user_id", user.id)
-            .eq("from_user_id", friendId)
-            .order("created_at", { ascending: false });
+          data = await recommendationsService.getRecommendationsFromFriend(
+            friendId,
+            "movie"
+          );
         } else if (view === "hits") {
           // Show all hits from any friend
-          query = query
-            .eq("to_user_id", user.id)
-            .eq("status", "hit")
-            .order("watched_at", { ascending: false });
+          data = await recommendationsService.getRecommendations({
+            direction: "received",
+            status: "hit",
+            mediaType: "movie",
+          });
         } else if (view === "misses") {
           // Show all misses from any friend
-          query = query
-            .eq("to_user_id", user.id)
-            .eq("status", "miss")
-            .order("watched_at", { ascending: false });
+          data = await recommendationsService.getRecommendations({
+            direction: "received",
+            status: "miss",
+            mediaType: "movie",
+          });
         } else if (view === "sent") {
           // Show all recs sent by this user
-          query = query
-            .eq("from_user_id", user.id)
-            .order("created_at", { ascending: false });
+          data = await recommendationsService.getRecommendations({
+            direction: "sent",
+            mediaType: "movie",
+          });
         }
 
-        const { data, error } = await query;
-        if (error) throw error;
+        // Map mock data to MovieRecommendation format
+        const mappedData: MovieRecommendation[] = data.map((rec) => ({
+          ...rec,
+          // Map mockData fields to component fields
+          sent_message: rec.sent_message || null,
+          comment: rec.recipient_note || null,
+          sender_comment: rec.sender_note || null,
+          sent_at: rec.created_at,
+          poster_url: rec.poster_url || null,
+          watched_at: rec.consumed_at || null,
+          // These fields aren't in mockData yet - will add later
+          overview: null,
+          release_date: rec.year ? `${rec.year}` : null,
+          // Filter only movie/tv types
+          media_type: rec.media_type as "movie" | "tv",
+          // Map 'consumed' status to 'watched' for movies
+          status:
+            rec.status === "consumed"
+              ? "watched"
+              : (rec.status as "pending" | "watched" | "hit" | "miss"),
+        }));
 
-        setRecommendations(data || []);
+        setRecommendations(mappedData);
       } catch (error) {
         console.error("Error loading recommendations:", error);
       } finally {
@@ -209,52 +172,45 @@ const MoviesTV: React.FC = () => {
     comment?: string
   ) => {
     try {
+      // Optimistic update - update local state immediately
+      setRecommendations((prev) =>
+        prev.map((rec) =>
+          rec.id === recId
+            ? {
+                ...rec,
+                status: status as MovieRecommendation["status"],
+                comment: comment || rec.comment,
+              }
+            : rec
+        )
+      );
+
       // Map 'consumed' back to 'watched' for movies
       const dbStatus = status === "consumed" ? "watched" : status;
 
-      const updates: Record<string, string | null> = {
-        status: dbStatus,
-      };
+      await recommendationsService.updateRecommendationStatus(
+        recId,
+        dbStatus as "pending" | "consumed" | "hit" | "miss",
+        comment
+      );
 
-      // Only update watched_at if status is being set (not when just adding comment)
-      if (dbStatus !== "pending") {
-        updates.watched_at = new Date().toISOString();
-      }
-
-      if (comment !== undefined) {
-        updates.comment = comment;
-      }
-
-      const { error } = await supabase
-        .from("movie_recommendations")
-        .update(updates)
-        .eq("id", recId);
-
-      if (error) throw error;
-
-      // Refresh the current view
+      // Refresh friend counts in background (don't await to avoid flicker)
+      void loadFriendsWithRecommendations();
+    } catch (error) {
+      console.error("Error updating recommendation:", error);
+      // On error, reload to get correct state
       if (selectedView === "friend" && selectedFriendId) {
         await loadRecommendations("friend", selectedFriendId);
       } else {
         await loadRecommendations(selectedView);
       }
-
-      // Refresh friend counts
-      await loadFriendsWithRecommendations();
-    } catch (error) {
-      console.error("Error updating recommendation:", error);
     }
   };
 
   // Delete (unsend) a recommendation
   const deleteRecommendation = async (recId: string) => {
     try {
-      const { error } = await supabase
-        .from("movie_recommendations")
-        .delete()
-        .eq("id", recId);
-
-      if (error) throw error;
+      await recommendationsService.deleteRecommendation(recId);
 
       // Refresh the current view
       if (selectedView === "friend" && selectedFriendId) {
@@ -328,27 +284,59 @@ const MoviesTV: React.FC = () => {
 
   return (
     <>
-      <MediaRecommendationsLayout
-        mediaType="Movies & TV"
-        mediaIcon={
-          <Film className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500" />
+      <MediaPageTemplate
+        pageTitle="Movies & TV"
+        pageDescription="Discover, track and recommend movies & tv shows."
+        tabs={[
+          {
+            id: "watchlist",
+            label: "Watch List",
+            icon: <ListVideo className="w-4 h-4" />,
+          },
+          {
+            id: "suggestions",
+            label: "Suggestions",
+            icon: <Lightbulb className="w-4 h-4" />,
+          },
+        ]}
+        activeTab={activeTab}
+        onTabChange={(tabId) =>
+          setActiveTab(tabId as "watchlist" | "suggestions")
         }
-        emptyMessage="No recommendations yet"
-        emptySubMessage="When friends recommend movies or TV shows, they'll show up here"
-        queueLabel="Watching Queue"
-        consumedLabel="Watched"
-        loading={loading}
-        friendsWithRecs={friendsWithRecs}
-        recommendations={recommendations}
-        quickStats={quickStats}
-        selectedView={selectedView}
-        selectedFriendId={selectedFriendId}
-        onViewChange={handleViewChange}
-        onSendClick={() => setShowSendModal(true)}
-        onStatusUpdate={updateRecommendationStatus}
-        onDelete={deleteRecommendation}
-        renderRecommendationCard={renderRecommendationCard}
-      />
+        primaryAction={{
+          label: "Recommend",
+          icon: <Send className="w-4 h-4" />,
+          onClick: () => setShowSendModal(true),
+          variant: "outline" as const,
+        }}
+      >
+        {/* Tab Content */}
+        {activeTab === "watchlist" ? (
+          <PersonalWatchList />
+        ) : (
+          <MediaRecommendationsLayout
+            mediaType="Movies & TV"
+            mediaIcon={
+              <Film className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500" />
+            }
+            emptyMessage="No recommendations yet"
+            emptySubMessage="When friends recommend movies or TV shows, they'll show up here"
+            queueLabel="Watching Queue"
+            consumedLabel="Watched"
+            loading={loading}
+            friendsWithRecs={friendsWithRecs}
+            recommendations={recommendations}
+            quickStats={quickStats}
+            selectedView={selectedView}
+            selectedFriendId={selectedFriendId}
+            onViewChange={handleViewChange}
+            onSendClick={undefined}
+            onStatusUpdate={updateRecommendationStatus}
+            onDelete={deleteRecommendation}
+            renderRecommendationCard={renderRecommendationCard}
+          />
+        )}
+      </MediaPageTemplate>
 
       {/* Send Movie/TV Modal */}
       <SendMediaModal

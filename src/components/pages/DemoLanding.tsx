@@ -12,8 +12,8 @@ import {
   Lock,
   Code,
 } from "lucide-react";
-import Button from "./shared/Button";
-import StarryBackground from "./StarryBackground";
+import Button from "../shared/Button";
+import StarryBackground from "../StarryBackground";
 
 /**
  * Public demo landing page for portfolio showcase

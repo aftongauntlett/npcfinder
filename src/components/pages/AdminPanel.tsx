@@ -10,10 +10,10 @@ import {
   ChevronRight,
   Shield,
 } from "lucide-react";
-import { supabase } from "../lib/supabase";
-import Button from "./shared/Button";
-import InviteCodeManager from "./admin/InviteCodeManager";
-import PageContentContainer from "./shared/PageContentContainer";
+import { supabase } from "../../lib/supabase";
+import Button from "../shared/Button";
+import InviteCodeManager from "../admin/InviteCodeManager";
+import PageContentContainer from "../layouts/PageContentContainer";
 
 interface Stats {
   totalUsers: number;
@@ -44,13 +44,12 @@ interface PopularMediaItem {
 
 interface RecentActivityItem {
   id: string;
-  status: string;
-  personal_rating?: number;
+  title: string;
+  media_type: string;
+  status?: string;
   created_at: string;
-  media_items?: {
-    title?: string;
-    type?: string;
-  };
+  from_user_id?: string;
+  to_user_id?: string;
 }
 
 type StatColor = "blue" | "purple" | "yellow" | "green";
@@ -101,17 +100,20 @@ const AdminPanel: React.FC = () => {
       const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-      // Fetch counts
-      const [mediaCount, ratingsCount, connectionsCount] = await Promise.all([
-        supabase
-          .from("media_items")
-          .select("*", { count: "exact", head: true }),
-        supabase.from("user_media").select("*", { count: "exact", head: true }),
-        supabase
-          .from("connections")
-          .select("*", { count: "exact", head: true })
-          .eq("status", "accepted"),
-      ]);
+      // Fetch connections count
+      const { count: connectionsCount } = await supabase
+        .from("connections")
+        .select("*", { count: "exact", head: true });
+
+      // Count watchlist items
+      const { count: watchlistCount } = await supabase
+        .from("user_watchlist")
+        .select("*", { count: "exact", head: true });
+
+      // Count watched archive items (these have ratings)
+      const { count: watchedCount } = await supabase
+        .from("user_watched_archive")
+        .select("*", { count: "exact", head: true });
 
       // Get total users from user_profiles table
       const { count: userCount } = await supabase
@@ -130,95 +132,93 @@ const AdminPanel: React.FC = () => {
         .select("*", { count: "exact", head: true })
         .gte("created_at", oneMonthAgo.toISOString());
 
-      // Get active users (users who have added/rated media in last 30 days)
-      const { data: activeUserData } = await supabase
-        .from("user_media")
+      // Get active users (users who have added items in last 30 days)
+      const { data: recentWatchlist } = await supabase
+        .from("user_watchlist")
         .select("user_id")
-        .gte("created_at", thirtyDaysAgo.toISOString());
+        .gte("added_at", thirtyDaysAgo.toISOString());
 
-      const uniqueActiveUsers = new Set(
-        activeUserData?.map((item: { user_id: string }) => item.user_id) || []
-      ).size;
+      const { data: recentArchive } = await supabase
+        .from("user_watched_archive")
+        .select("user_id")
+        .gte("watched_at", thirtyDaysAgo.toISOString());
 
-      // Calculate average ratings per user
+      const activeUserIds = new Set([
+        ...(recentWatchlist?.map((item) => item.user_id) || []),
+        ...(recentArchive?.map((item) => item.user_id) || []),
+      ]);
+
+      const uniqueActiveUsers = activeUserIds.size;
+
+      // Calculate average ratings per user (watched items have ratings)
       const avgRatings =
         userCount && userCount > 0
-          ? Math.round((ratingsCount.count || 0) / userCount)
+          ? Math.round((watchedCount || 0) / userCount)
           : 0;
 
       setStats({
         totalUsers: userCount || 0,
-        totalMediaItems: mediaCount.count || 0,
-        totalRatings: ratingsCount.count || 0,
-        totalConnections: connectionsCount.count || 0,
+        totalMediaItems: (watchlistCount || 0) + (watchedCount || 0),
+        totalRatings: watchedCount || 0,
+        totalConnections: connectionsCount || 0,
         newUsersThisWeek: weekUsers || 0,
         newUsersThisMonth: monthUsers || 0,
         activeUsers: uniqueActiveUsers,
         avgRatingsPerUser: avgRatings,
       });
 
-      // Fetch popular media (most tracked items)
-      const { data: userMediaData } = await supabase
-        .from("user_media")
-        .select("media_id");
+      // Fetch popular media (most tracked items from watchlist + archive)
+      const { data: watchlistData } = await supabase
+        .from("user_watchlist")
+        .select("external_id, title, media_type");
 
-      // Count occurrences of each media_id
-      const mediaCounts: Record<string, number> = {};
-      userMediaData?.forEach((item: { media_id: string }) => {
-        mediaCounts[item.media_id] = (mediaCounts[item.media_id] || 0) + 1;
+      const { data: archiveData } = await supabase
+        .from("user_watched_archive")
+        .select("external_id, title, media_type");
+
+      // Combine and count occurrences
+      const allMedia = [...(watchlistData || []), ...(archiveData || [])];
+      const mediaCounts: Record<
+        string,
+        { count: number; title: string; type: string }
+      > = {};
+
+      allMedia.forEach((item) => {
+        if (item.external_id) {
+          if (!mediaCounts[item.external_id]) {
+            mediaCounts[item.external_id] = {
+              count: 0,
+              title: item.title || "Unknown",
+              type: item.media_type || "N/A",
+            };
+          }
+          mediaCounts[item.external_id].count++;
+        }
       });
 
-      // Get top 10 media IDs
-      const topMediaIds = Object.entries(mediaCounts)
-        .sort(([, a], [, b]) => b - a)
+      // Get top 10
+      const topMedia = Object.entries(mediaCounts)
+        .sort(([, a], [, b]) => b.count - a.count)
         .slice(0, 10)
-        .map(([id]) => id);
+        .map(([id, data]) => ({
+          id,
+          title: data.title,
+          type: data.type,
+          trackingCount: data.count,
+        }));
 
-      // Fetch details for popular media
-      if (topMediaIds.length > 0) {
-        const { data: popularMediaData } = await supabase
-          .from("media_items")
-          .select("*")
-          .in("id", topMediaIds);
+      setPopularMedia(topMedia);
 
-        // Add tracking count to each item
-        const mediaWithCounts: PopularMediaItem[] =
-          popularMediaData?.map(
-            (item: {
-              id: string;
-              title: string;
-              type: string;
-              release_year: number;
-            }) => ({
-              id: item.id,
-              title: item.title,
-              type: item.type,
-              release_year: item.release_year,
-              trackingCount: mediaCounts[item.id],
-            })
-          ) || [];
-
-        setPopularMedia(
-          mediaWithCounts.sort((a, b) => b.trackingCount - a.trackingCount)
-        );
-      }
-
-      // Fetch recent activity (last 10 ratings/additions)
-      const { data: recentRatings } = await supabase
-        .from("user_media")
+      // Fetch recent activity (movie recommendations)
+      const { data: recentRecs } = await supabase
+        .from("movie_recommendations")
         .select(
-          `
-          *,
-          media_items (
-            title,
-            type
-          )
-        `
+          "id, title, media_type, status, created_at, from_user_id, to_user_id"
         )
         .order("created_at", { ascending: false })
         .limit(10);
 
-      setRecentActivity(recentRatings || []);
+      setRecentActivity(recentRecs || []);
     } catch (error) {
       console.error("Error fetching admin data:", error);
     }
@@ -608,7 +608,7 @@ const AdminPanel: React.FC = () => {
                           Status
                         </th>
                         <th className="text-left p-3 text-gray-400 font-medium">
-                          Rating
+                          Activity
                         </th>
                         <th className="text-left p-3 text-gray-400 font-medium">
                           Date
@@ -622,33 +622,20 @@ const AdminPanel: React.FC = () => {
                           className="border-b border-white/5 hover:bg-white/5 transition-colors"
                         >
                           <td className="p-3 font-medium">
-                            {activity.media_items?.title || "Unknown"}
+                            {activity.title || "Unknown"}
                           </td>
                           <td className="p-3">
                             <span className="px-2 py-1 bg-purple-500/20 rounded text-xs">
-                              {activity.media_items?.type || "N/A"}
+                              {activity.media_type || "N/A"}
                             </span>
                           </td>
-                          <td className="p-3 text-sm">{activity.status}</td>
+                          <td className="p-3 text-sm">
+                            {activity.status || "pending"}
+                          </td>
                           <td className="p-3">
-                            {activity.personal_rating ? (
-                              <div
-                                className="flex items-center gap-1"
-                                aria-label={`${activity.personal_rating} stars`}
-                              >
-                                {[...Array(activity.personal_rating)].map(
-                                  (_, i) => (
-                                    <Star
-                                      key={i}
-                                      className="w-4 h-4 fill-yellow-400 text-yellow-400"
-                                      aria-hidden="true"
-                                    />
-                                  )
-                                )}
-                              </div>
-                            ) : (
-                              <span className="text-gray-500">-</span>
-                            )}
+                            <span className="text-xs text-gray-400">
+                              Recommendation
+                            </span>
                           </td>
                           <td className="p-3 text-sm text-gray-400">
                             {new Date(activity.created_at).toLocaleDateString()}

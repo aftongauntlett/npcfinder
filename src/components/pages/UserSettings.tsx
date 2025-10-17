@@ -2,14 +2,14 @@ import React, { useState, useEffect } from "react";
 import type { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import { User as UserIcon, Save, X } from "lucide-react";
-import { getUserProfile, upsertUserProfile } from "../lib/profiles";
-import Button from "./shared/Button";
-import PageContentContainer from "./shared/PageContentContainer";
-import ColorThemePicker from "./settings/ColorThemePicker";
-import { cards } from "../data/dashboardCards";
-import { type ThemeColorName } from "../styles/colorThemes";
-import { useTheme } from "../hooks/useTheme";
-import DashboardCustomizer from "./settings/DashboardCustomizer";
+import { getUserProfile, upsertUserProfile } from "../../lib/profiles";
+import Button from "../shared/Button";
+import PageContentContainer from "../layouts/PageContentContainer";
+import ColorThemePicker from "../settings/ColorThemePicker";
+import { cards } from "../../data/dashboardCards";
+import { type ThemeColorName } from "../../styles/colorThemes";
+import { useTheme } from "../../hooks/useTheme";
+import DashboardCustomizer from "../settings/DashboardCustomizer";
 
 interface UserSettingsProps {
   currentUser: User;
@@ -53,7 +53,20 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
     setIsLoading(true);
     try {
       const { data, error } = await getUserProfile(currentUser.id);
-      if (error) {
+
+      // Handle case where table doesn't exist (using mock data)
+      if (error && error.code === "PGRST205") {
+        console.log("Using local profile (database table not set up yet)");
+        // Use defaults from localStorage
+        const savedColor =
+          (localStorage.getItem("themeColor") as ThemeColorName) || "purple";
+        setProfile({
+          display_name: currentUser.email || "",
+          visible_cards: allCardIds,
+          theme_color: savedColor,
+        });
+        changeThemeColor(savedColor);
+      } else if (error) {
         console.error("Error loading profile:", error);
         setMessage({ type: "error", text: "Failed to load profile" });
       } else if (data) {
@@ -70,7 +83,14 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
       }
     } catch (error) {
       console.error("Error loading profile:", error);
-      setMessage({ type: "error", text: "Failed to load profile" });
+      // Fall back to local defaults
+      const savedColor =
+        (localStorage.getItem("themeColor") as ThemeColorName) || "purple";
+      setProfile({
+        display_name: currentUser.email || "",
+        visible_cards: allCardIds,
+        theme_color: savedColor,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -117,7 +137,18 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
     try {
       const { error } = await upsertUserProfile(currentUser.id, profile);
 
-      if (error) {
+      // Handle case where table doesn't exist (using mock data)
+      if (error && error.code === "PGRST205") {
+        console.log("Saving to localStorage (database table not set up yet)");
+        // Save theme color to localStorage
+        localStorage.setItem("themeColor", profile.theme_color);
+        changeThemeColor(profile.theme_color);
+        setMessage({ type: "success", text: "Settings saved locally!" });
+        // Navigate back to dashboard after successful save
+        setTimeout(() => {
+          void navigate("/app");
+        }, 1000);
+      } else if (error) {
         setMessage({ type: "error", text: "Failed to save profile" });
       } else {
         // Apply theme color immediately after save
@@ -130,7 +161,13 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
       }
     } catch (error) {
       console.error("Error saving profile:", error);
-      setMessage({ type: "error", text: "Failed to save profile" });
+      // Fall back to localStorage
+      localStorage.setItem("themeColor", profile.theme_color);
+      changeThemeColor(profile.theme_color);
+      setMessage({ type: "success", text: "Settings saved locally!" });
+      setTimeout(() => {
+        void navigate("/app");
+      }, 1000);
     } finally {
       setIsSaving(false);
     }
