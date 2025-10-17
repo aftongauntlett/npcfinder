@@ -7,6 +7,7 @@ import {
   User as UserIcon,
   Settings,
   ChevronDown,
+  ShieldCheck,
 } from "lucide-react";
 import QuickSwitch from "./shared/QuickSwitch";
 import WeatherWidget from "./shared/WeatherWidget";
@@ -81,6 +82,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentUser }) => {
   };
 
   const showAdminButton = currentUser && isAdmin(currentUser.id);
+  const userIsAdmin = currentUser && isAdmin(currentUser.id);
 
   return (
     <nav
@@ -119,7 +121,11 @@ const Navigation: React.FC<NavigationProps> = ({ currentUser }) => {
                 aria-expanded={isDropdownOpen}
                 aria-haspopup="true"
               >
-                <UserIcon className="w-5 h-5" aria-hidden="true" />
+                {userIsAdmin ? (
+                  <ShieldCheck className="w-5 h-5" aria-hidden="true" />
+                ) : (
+                  <UserIcon className="w-5 h-5" aria-hidden="true" />
+                )}
                 <ChevronDown
                   className={`w-4 h-4 transition-transform ${
                     isDropdownOpen ? "rotate-180" : ""

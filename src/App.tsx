@@ -5,18 +5,16 @@ import Footer from "./components/shared/Footer";
 import DashboardCard from "./components/dashboard/DashboardCard";
 import DashboardHeader from "./components/dashboard/DashboardHeader";
 import Navigation from "./components/Navigation";
-import FitnessDashboard from "./components/FitnessDashboard";
-import MoviesTV from "./components/MoviesTV";
-import Games from "./components/Games";
-import Books from "./components/Books";
-import Music from "./components/Music";
-import AuthPage from "./components/AuthPage";
-import AdminPanel from "./components/AdminPanel";
-import UserSettings from "./components/UserSettings";
-import Suggestions from "./components/Suggestions";
+import MoviesTV from "./components/pages/MoviesTV";
+import Music from "./components/pages/Music";
+import AuthPage from "./components/pages/AuthPage";
+import AdminPanel from "./components/pages/AdminPanel";
+import UserSettings from "./components/pages/UserSettings";
+import Suggestions from "./components/pages/Suggestions";
 import StarryBackground from "./components/StarryBackground";
-import DemoLanding from "./components/DemoLanding";
-import PageContainer from "./components/shared/PageContainer";
+import DemoLanding from "./components/pages/DemoLanding";
+import PageContainer from "./components/layouts/PageContainer";
+import DevIndicator from "./components/dev/DevIndicator";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { isAdmin } from "./lib/admin";
@@ -81,7 +79,7 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
       {/* Greeting Header */}
       <DashboardHeader displayName={displayName || undefined} />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredCards.map((card) => (
           <DashboardCard
             key={card.id}
@@ -128,16 +126,16 @@ interface AppLayoutProps {
 }
 
 const AppLayout: React.FC<AppLayoutProps> = ({ user }) => {
+  const userIsAdmin = isAdmin(user.id);
+
   return (
     <PageContainer className="relative">
       <StarryBackground />
       <Navigation currentUser={user} />
+      <DevIndicator isAdmin={userIsAdmin} />
       <Routes>
         <Route path="/" element={<HomePage user={user} />} />
-        <Route path="/fitness" element={<FitnessDashboard />} />
         <Route path="/movies-tv" element={<MoviesTV />} />
-        <Route path="/games" element={<Games />} />
-        <Route path="/books" element={<Books />} />
         <Route path="/music" element={<Music />} />
         <Route path="/settings" element={<UserSettings currentUser={user} />} />
         <Route
