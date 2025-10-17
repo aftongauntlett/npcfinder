@@ -1,5 +1,5 @@
 import React from "react";
-import Breadcrumb from "./Breadcrumb";
+import Breadcrumb from "../shared/Breadcrumb";
 
 interface PageContentContainerProps {
   children: React.ReactNode;
