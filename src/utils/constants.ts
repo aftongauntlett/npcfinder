@@ -15,7 +15,6 @@ export const WEATHER_REFRESH_INTERVAL = 600000;
 // View names
 export const VIEWS = {
   HOME: "home",
-  FITNESS: "fitness",
   MOVIES_TV: "movies-tv",
   SETTINGS: "settings",
   TEST: "test",

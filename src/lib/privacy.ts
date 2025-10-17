@@ -16,15 +16,24 @@ import { supabase } from "./supabase";
 export async function exportUserData(userId: string) {
   try {
     // Fetch all user data
-    const [userMedia, topLists, connections, userProfile] = await Promise.all([
-      supabase.from("user_media").select("*").eq("user_id", userId),
-      supabase.from("top_lists").select("*").eq("user_id", userId),
-      supabase
-        .from("connections")
-        .select("*")
-        .or(`user_id.eq.${userId},friend_id.eq.${userId}`),
-      supabase.from("user_profiles").select("*").eq("user_id", userId).single(),
-    ]);
+    const [watchlist, archive, movieRecs, connections, userProfile] =
+      await Promise.all([
+        supabase.from("user_watchlist").select("*").eq("user_id", userId),
+        supabase.from("user_watched_archive").select("*").eq("user_id", userId),
+        supabase
+          .from("movie_recommendations")
+          .select("*")
+          .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`),
+        supabase
+          .from("connections")
+          .select("*")
+          .or(`user_id.eq.${userId},friend_id.eq.${userId}`),
+        supabase
+          .from("user_profiles")
+          .select("*")
+          .eq("user_id", userId)
+          .single(),
+      ]);
 
     // Get user auth info (email only, not password)
     const {
@@ -39,12 +48,14 @@ export async function exportUserData(userId: string) {
         created_at: user?.created_at,
       },
       profile: userProfile.data,
-      media: userMedia.data,
-      top_lists: topLists.data,
+      watchlist: watchlist.data,
+      watched_archive: archive.data,
+      movie_recommendations: movieRecs.data,
       connections: connections.data,
       metadata: {
-        total_media_items: userMedia.data?.length || 0,
-        total_lists: topLists.data?.length || 0,
+        total_watchlist_items: watchlist.data?.length || 0,
+        total_watched_items: archive.data?.length || 0,
+        total_recommendations: movieRecs.data?.length || 0,
         total_connections: connections.data?.length || 0,
       },
     };
@@ -88,29 +99,35 @@ export function downloadDataAsJson(
  */
 export async function getUserDataSummary(userId: string) {
   try {
-    const [userMedia, topLists, friends, suggestions] = await Promise.all([
-      supabase
-        .from("user_media")
-        .select("id", { count: "exact" })
-        .eq("user_id", userId),
-      supabase
-        .from("top_lists")
-        .select("id", { count: "exact" })
-        .eq("user_id", userId),
-      supabase
-        .from("connections")
-        .select("id", { count: "exact" })
-        .or(`user_id.eq.${userId},friend_id.eq.${userId}`),
-      supabase
-        .from("suggestions")
-        .select("id", { count: "exact" })
-        .eq("user_id", userId),
-    ]);
+    const [watchlist, archive, movieRecs, friends, suggestions] =
+      await Promise.all([
+        supabase
+          .from("user_watchlist")
+          .select("id", { count: "exact" })
+          .eq("user_id", userId),
+        supabase
+          .from("user_watched_archive")
+          .select("id", { count: "exact" })
+          .eq("user_id", userId),
+        supabase
+          .from("movie_recommendations")
+          .select("id", { count: "exact" })
+          .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`),
+        supabase
+          .from("connections")
+          .select("id", { count: "exact" })
+          .or(`user_id.eq.${userId},friend_id.eq.${userId}`),
+        supabase
+          .from("suggestions")
+          .select("id", { count: "exact" })
+          .eq("created_by", userId),
+      ]);
 
     return {
       data: {
-        media_items_count: userMedia.count || 0,
-        top_lists_count: topLists.count || 0,
+        watchlist_count: watchlist.count || 0,
+        watched_count: archive.count || 0,
+        recommendations_count: movieRecs.count || 0,
         friends_count: friends.count || 0,
         suggestions_count: suggestions.count || 0,
       },
@@ -136,9 +153,13 @@ export async function deleteUserAccount(userId: string) {
   try {
     // Delete all user data in correct order (respecting foreign keys)
     await Promise.all([
-      supabase.from("user_media").delete().eq("user_id", userId),
-      supabase.from("top_lists").delete().eq("user_id", userId),
-      supabase.from("suggestions").delete().eq("user_id", userId),
+      supabase.from("user_watchlist").delete().eq("user_id", userId),
+      supabase.from("user_watched_archive").delete().eq("user_id", userId),
+      supabase
+        .from("movie_recommendations")
+        .delete()
+        .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`),
+      supabase.from("suggestions").delete().eq("created_by", userId),
       supabase
         .from("connections")
         .delete()
@@ -179,10 +200,10 @@ export const DATA_WE_COLLECT = {
     preferences: "App settings and preferences",
   },
   content: {
-    media_items: "Movies, TV shows, books, games you track",
-    ratings: "Your ratings and reviews",
+    watchlist: "Movies and TV shows you want to watch",
+    watched_archive: "Movies and TV shows you've watched with ratings",
     notes: "Personal notes you add",
-    top_lists: "Your curated top lists",
+    recommendations: "Recommendations you send and receive",
     suggestions: "Recommendations you make to friends",
   },
   social: {

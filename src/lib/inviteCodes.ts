@@ -56,7 +56,7 @@ export const validateInviteCode = async (
 ): Promise<InviteCodeResult<boolean>> => {
   try {
     const { data, error } = await supabase.rpc("validate_invite_code", {
-      code_to_check: code.toUpperCase().trim(),
+      code_value: code.toUpperCase().trim(),
     });
 
     if (error) throw error;
@@ -77,7 +77,7 @@ export const consumeInviteCode = async (
 ): Promise<InviteCodeResult<boolean>> => {
   try {
     const { data, error } = await supabase.rpc("consume_invite_code", {
-      code_to_use: code.toUpperCase().trim(),
+      code_value: code.toUpperCase().trim(),
       user_id: userId,
     });
 
