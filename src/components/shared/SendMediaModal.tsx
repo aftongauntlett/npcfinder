@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { X, Search, Send, Check } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
+import { getFriends } from "../../lib/connections";
 
 // Generic media item interface
 export interface MediaItem {
@@ -82,36 +83,17 @@ export default function SendMediaModal({
 
     setLoadingFriends(true);
     try {
-      // Get friends from connections table
-      const { data: connections, error: connectionsError } = await supabase
-        .from("connections")
-        .select("friend_id, user_id")
-        .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
-        .eq("status", "accepted");
+      // Use the connections service (works with mock or real data)
+      const { data: friendsList, error: friendsError } = await getFriends(
+        user.id
+      );
 
-      if (connectionsError) throw connectionsError;
-
-      // Extract friend IDs
-      const friendIds =
-        connections?.map((f) =>
-          f.user_id === user.id ? f.friend_id : f.user_id
-        ) || [];
-
-      if (friendIds.length === 0) {
+      if (friendsError) {
+        console.error("Error loading friends:", friendsError);
         setFriends([]);
-        setLoadingFriends(false);
-        return;
+      } else {
+        setFriends(friendsList || []);
       }
-
-      // Get friend profiles
-      const { data: profiles, error: profilesError } = await supabase
-        .from("user_profiles")
-        .select("user_id, display_name")
-        .in("user_id", friendIds);
-
-      if (profilesError) throw profilesError;
-
-      setFriends(profiles || []);
     } catch (error) {
       console.error("Error loading friends:", error);
       setFriends([]);
@@ -225,9 +207,8 @@ export default function SendMediaModal({
             ...baseRecommendation,
             artist: selectedItem.subtitle || null,
             album: null, // Could be extracted from media_type if needed
-            year: selectedItem.release_date
-              ? new Date(selectedItem.release_date).getFullYear()
-              : null,
+            release_date: selectedItem.release_date || null,
+            preview_url: null, // Could add preview URL if available from API
           };
         } else if (mediaType === "movies") {
           return {
@@ -347,12 +328,12 @@ export default function SendMediaModal({
             </div>
           )}
 
-          {/* Friends Step */}
+          {/* Connections Step */}
           {step === "friends" && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-medium text-gray-900 dark:text-white">
-                  Select Friends
+                  Select Connections
                 </h3>
                 {friends.length > 1 && (
                   <button
@@ -367,12 +348,14 @@ export default function SendMediaModal({
               </div>
 
               {loadingFriends && (
-                <p className="text-center text-gray-500">Loading friends...</p>
+                <p className="text-center text-gray-500">
+                  Loading connections...
+                </p>
               )}
 
               {!loadingFriends && friends.length === 0 && (
                 <p className="text-center text-gray-500">
-                  No friends yet. Add friends to send recommendations!
+                  No connections available.
                 </p>
               )}
 

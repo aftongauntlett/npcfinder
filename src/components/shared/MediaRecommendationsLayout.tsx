@@ -1,5 +1,6 @@
 import React from "react";
-import { User, ThumbsUp, ThumbsDown, Send } from "lucide-react";
+import { User, ThumbsUp, ThumbsDown, Send, ArrowLeft } from "lucide-react";
+import Button from "./Button";
 
 // Generic recommendation interface that all media types must conform to
 export interface BaseRecommendation {
@@ -57,7 +58,7 @@ interface MediaRecommendationsLayoutProps<T extends BaseRecommendation> {
     view: "overview" | "friend" | "hits" | "misses" | "sent",
     friendId?: string
   ) => void;
-  onSendClick: () => void;
+  onSendClick?: () => void;
   onStatusUpdate: (
     recId: string,
     status: string,
@@ -83,7 +84,7 @@ export function MediaRecommendationsLayout<T extends BaseRecommendation>({
   mediaIcon,
   emptyMessage,
   emptySubMessage,
-  queueLabel,
+  queueLabel: _queueLabel, // Reserved for future use - removed from UI
   consumedLabel: _consumedLabel, // Reserved for future use
   loading,
   friendsWithRecs,
@@ -101,7 +102,7 @@ export function MediaRecommendationsLayout<T extends BaseRecommendation>({
   const renderOverview = () => (
     <div className="space-y-8">
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <button
           onClick={() => onViewChange("hits")}
           className="bg-white dark:bg-gray-800 rounded-lg p-6 text-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
@@ -137,15 +138,6 @@ export function MediaRecommendationsLayout<T extends BaseRecommendation>({
             Your Sent
           </div>
         </button>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 text-center">
-          <div className="text-2xl font-bold text-orange-600 dark:text-orange-400 mb-1">
-            {quickStats.queue}
-          </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            {queueLabel}
-          </div>
-        </div>
       </div>
 
       {/* From Friends Section */}
@@ -243,9 +235,10 @@ export function MediaRecommendationsLayout<T extends BaseRecommendation>({
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={() => onViewChange("overview")}
-            className="text-blue-600 dark:text-blue-400 hover:underline"
+            className="flex items-center gap-2 px-3 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
           >
-            ← Back to {mediaType}
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to {mediaType}</span>
           </button>
         </div>
 
@@ -284,13 +277,15 @@ export function MediaRecommendationsLayout<T extends BaseRecommendation>({
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             {mediaType}
           </h1>
-          <button
-            onClick={onSendClick}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Send className="w-4 h-4" />
-            Send {mediaType}
-          </button>
+          {onSendClick && (
+            <Button
+              onClick={onSendClick}
+              variant="outline"
+              icon={<Send className="w-4 h-4" />}
+            >
+              Recommend
+            </Button>
+          )}
         </div>
 
         {/* Content */}
