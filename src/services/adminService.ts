@@ -1,9 +1,48 @@
 /**
  * Admin Service - Real Supabase Implementation
  * Handles admin-related data fetching and operations
+ *
+ * SECURITY NOTE: All functions in this service should only be called by authenticated
+ * admin users. The AdminContext (useAdmin hook) should gate access to admin routes.
+ * RLS policies provide additional backend protection.
  */
 
 import { supabase } from "../lib/supabase";
+
+/**
+ * Verify the current user has admin privileges
+ * Used as a security check before performing admin operations
+ */
+const verifyAdminAccess = async (): Promise<boolean> => {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      console.warn("Admin operation attempted without authentication");
+      return false;
+    }
+
+    const { data: profile } = await supabase
+      .from("user_profiles")
+      .select("is_admin")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!profile?.is_admin) {
+      console.warn(
+        `Unauthorized admin operation attempted by user: ${user.id}`
+      );
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error verifying admin access:", error);
+    return false;
+  }
+};
 
 export interface AdminStats {
   totalUsers: number;
@@ -19,6 +58,7 @@ export interface AdminStats {
 export interface UserProfile {
   id: string;
   display_name: string;
+  email?: string;
   bio?: string;
   is_admin?: boolean;
   created_at: string;
@@ -45,8 +85,15 @@ export interface RecentActivity {
 
 /**
  * Fetch admin statistics
+ * SECURITY: Requires admin privileges
  */
 export const getAdminStats = async (): Promise<AdminStats> => {
+  // Verify admin access
+  const hasAccess = await verifyAdminAccess();
+  if (!hasAccess) {
+    throw new Error("Unauthorized: Admin privileges required");
+  }
+
   const now = new Date();
   const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -122,17 +169,27 @@ export const getAdminStats = async (): Promise<AdminStats> => {
 
 /**
  * Fetch users with pagination and search
+ * SECURITY: Requires admin privileges
  */
 export const getUsers = async (
   page: number,
   perPage: number,
   searchTerm: string = ""
 ): Promise<{ users: UserProfile[]; totalPages: number }> => {
+  // Verify admin access
+  const hasAccess = await verifyAdminAccess();
+  if (!hasAccess) {
+    throw new Error("Unauthorized: Admin privileges required");
+  }
+
   let query = supabase
     .from("user_profiles")
-    .select("user_id, display_name, bio, is_admin, created_at, updated_at", {
-      count: "exact",
-    });
+    .select(
+      "user_id, display_name, email, bio, is_admin, created_at, updated_at",
+      {
+        count: "exact",
+      }
+    );
 
   // Apply search filter if there's a search term
   if (searchTerm.trim()) {
@@ -155,6 +212,7 @@ export const getUsers = async (
       (profile: {
         user_id: string;
         display_name?: string;
+        email?: string;
         bio?: string;
         is_admin?: boolean;
         created_at: string;
@@ -162,6 +220,7 @@ export const getUsers = async (
       }) => ({
         id: profile.user_id,
         display_name: profile.display_name || "No Name Set",
+        email: profile.email,
         bio: profile.bio,
         is_admin: profile.is_admin || false,
         created_at: profile.created_at,
@@ -174,8 +233,15 @@ export const getUsers = async (
 
 /**
  * Fetch popular media (most tracked items)
+ * SECURITY: Requires admin privileges
  */
 export const getPopularMedia = async (): Promise<PopularMedia[]> => {
+  // Verify admin access
+  const hasAccess = await verifyAdminAccess();
+  if (!hasAccess) {
+    throw new Error("Unauthorized: Admin privileges required");
+  }
+
   // Fetch watchlist data
   const { data: watchlistData } = await supabase
     .from("user_watchlist")
@@ -222,8 +288,15 @@ export const getPopularMedia = async (): Promise<PopularMedia[]> => {
 
 /**
  * Fetch recent activity (movie recommendations)
+ * SECURITY: Requires admin privileges
  */
 export const getRecentActivity = async (): Promise<RecentActivity[]> => {
+  // Verify admin access
+  const hasAccess = await verifyAdminAccess();
+  if (!hasAccess) {
+    throw new Error("Unauthorized: Admin privileges required");
+  }
+
   const { data: recentRecs } = await supabase
     .from("movie_recommendations")
     .select(
