@@ -1,60 +1,39 @@
 /**
- * Recommendations Service Layer
- * Separates data/API logic from React components
- * Makes it easy to swap mock data for real database later
+ * Recommendations Service - Main Entry Point
+ * Switches between mock and real implementation based on VITE_USE_MOCK
  */
 
-import {
-  mockApi,
-  getUserProfile as getMockUserProfile,
-  CURRENT_USER_ID,
-  type Recommendation,
-  type UserProfile,
-} from "../data/mockData";
+import { USE_MOCK_DATA } from "./config";
+import { supabase } from "../lib/supabase";
+import * as mockService from "./recommendationsService.mock";
+import * as realService from "./recommendationsService.real";
 
-// ============================================
-// TYPES
-// ============================================
-
-export interface RecommendationFilters {
-  direction?: "received" | "sent";
-  mediaType?: "song" | "album" | "movie" | "tv";
-  status?: "pending" | "consumed" | "hit" | "miss";
-  fromUserId?: string;
-}
-
-export interface FriendStats {
-  user_id: string;
-  display_name: string;
-  pending_count: number;
-  total_count: number;
-  hit_count: number;
-  miss_count: number;
-}
-
-export interface QuickStats {
-  hits: number;
-  misses: number;
-  queue: number;
-  sent: number;
-}
-
-// ============================================
-// USER FUNCTIONS
-// ============================================
-
-/**
- * Get user profile by ID
- */
-export function getUserProfile(userId: string): UserProfile | null {
-  return getMockUserProfile(userId) || null;
-}
+// Export types
+export type {
+  RecommendationFilters,
+  FriendStats,
+  QuickStats,
+  Recommendation,
+  UserProfile,
+} from "./recommendationsService.types";
 
 /**
  * Get current user ID
  */
-export function getCurrentUserId(): string {
-  return CURRENT_USER_ID;
+async function getCurrentUserId(): Promise<string> {
+  if (USE_MOCK_DATA) {
+    return mockService.getCurrentUserId();
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("No authenticated user");
+  }
+
+  return user.id;
 }
 
 // ============================================
@@ -65,9 +44,13 @@ export function getCurrentUserId(): string {
  * Get recommendations with filters
  */
 export async function getRecommendations(
-  filters: RecommendationFilters
-): Promise<Recommendation[]> {
-  return mockApi.getRecommendations(CURRENT_USER_ID, filters);
+  filters: import("./recommendationsService.types").RecommendationFilters
+): Promise<import("./recommendationsService.types").Recommendation[]> {
+  if (USE_MOCK_DATA) {
+    return mockService.getRecommendations(filters);
+  }
+  const userId = await getCurrentUserId();
+  return realService.getRecommendations(userId, filters);
 }
 
 /**
@@ -76,12 +59,12 @@ export async function getRecommendations(
 export async function getRecommendationsFromFriend(
   friendId: string,
   mediaType?: "song" | "album" | "movie" | "tv"
-): Promise<Recommendation[]> {
-  const allRecs = await mockApi.getRecommendations(CURRENT_USER_ID, {
-    direction: "received",
-    mediaType,
-  });
-  return allRecs.filter((rec) => rec.from_user_id === friendId);
+): Promise<import("./recommendationsService.types").Recommendation[]> {
+  if (USE_MOCK_DATA) {
+    return mockService.getRecommendationsFromFriend(friendId, mediaType);
+  }
+  const userId = await getCurrentUserId();
+  return realService.getRecommendationsFromFriend(userId, friendId, mediaType);
 }
 
 /**
@@ -89,134 +72,117 @@ export async function getRecommendationsFromFriend(
  */
 export async function getFriendsWithRecommendations(
   mediaType?: "song" | "album" | "movie" | "tv"
-): Promise<FriendStats[]> {
-  // Get all received recommendations
-  const recs = await mockApi.getRecommendations(CURRENT_USER_ID, {
-    direction: "received",
-    mediaType,
-  });
-
-  // Group by sender and count statuses
-  const friendMap = new Map<
-    string,
-    { pending: number; total: number; hits: number; misses: number }
-  >();
-
-  recs.forEach((rec) => {
-    const existing = friendMap.get(rec.from_user_id) || {
-      pending: 0,
-      total: 0,
-      hits: 0,
-      misses: 0,
-    };
-    existing.total++;
-    if (rec.status === "pending") existing.pending++;
-    if (rec.status === "hit") existing.hits++;
-    if (rec.status === "miss") existing.misses++;
-    friendMap.set(rec.from_user_id, existing);
-  });
-
-  // Get display names for all friends
-  const friendIds = Array.from(friendMap.keys());
-  const friends: FriendStats[] = friendIds.map((friendId) => {
-    const profile = getMockUserProfile(friendId);
-    const stats = friendMap.get(friendId)!;
-    return {
-      user_id: friendId,
-      display_name: profile?.display_name || "Unknown User",
-      pending_count: stats.pending,
-      total_count: stats.total,
-      hit_count: stats.hits,
-      miss_count: stats.misses,
-    };
-  });
-
-  return friends;
+): Promise<import("./recommendationsService.types").FriendStats[]> {
+  if (USE_MOCK_DATA) {
+    return mockService.getFriendsWithRecommendations(mediaType);
+  }
+  const userId = await getCurrentUserId();
+  return realService.getFriendsWithRecommendations(userId, mediaType);
 }
 
 /**
- * Get quick stats (hits, misses, queue, sent counts)
+ * Get quick stats for dashboard
  */
 export async function getQuickStats(
   mediaType?: "song" | "album" | "movie" | "tv"
-): Promise<QuickStats> {
-  // Get received recommendations
-  const receivedRecs = await mockApi.getRecommendations(CURRENT_USER_ID, {
-    direction: "received",
-    mediaType,
-  });
-
-  // Get sent recommendations
-  const sentRecs = await mockApi.getRecommendations(CURRENT_USER_ID, {
-    direction: "sent",
-    mediaType,
-  });
-
-  return {
-    hits: receivedRecs.filter((r) => r.status === "hit").length,
-    misses: receivedRecs.filter((r) => r.status === "miss").length,
-    queue: receivedRecs.filter((r) => r.status === "pending").length,
-    sent: sentRecs.length,
-  };
+): Promise<import("./recommendationsService.types").QuickStats> {
+  if (USE_MOCK_DATA) {
+    return mockService.getQuickStats(mediaType);
+  }
+  const userId = await getCurrentUserId();
+  return realService.getQuickStats(userId, mediaType);
 }
 
 // ============================================
-// RECOMMENDATION MUTATIONS
+// MUTATIONS
 // ============================================
 
 /**
- * Update recommendation status (pending → consumed/hit/miss)
+ * Update recommendation status
  */
 export async function updateRecommendationStatus(
   recId: string,
-  status: "pending" | "consumed" | "hit" | "miss",
-  recipientNote?: string
+  status: "pending" | "consumed" | "watched" | "hit" | "miss",
+  mediaType: "song" | "album" | "movie" | "tv"
 ): Promise<void> {
-  await mockApi.updateStatus(recId, status, recipientNote);
+  const tableName =
+    mediaType === "song" || mediaType === "album"
+      ? "music_recommendations"
+      : "movie_recommendations";
+
+  // Convert status based on media type for database compatibility
+  const dbStatus =
+    mediaType === "movie" || mediaType === "tv"
+      ? status === "consumed"
+        ? "watched"
+        : status
+      : status === "watched"
+      ? "consumed"
+      : status;
+
+  if (USE_MOCK_DATA) {
+    // Mock service uses "consumed" for everything
+    const mockStatus = dbStatus === "watched" ? "consumed" : dbStatus;
+    return mockService.updateRecommendationStatus(recId, mockStatus);
+  }
+
+  return realService.updateRecommendationStatus(recId, dbStatus, tableName);
 }
 
 /**
- * Update sender's personal note on a recommendation they sent
+ * Delete a recommendation
+ */
+export async function deleteRecommendation(recId: string): Promise<void> {
+  if (USE_MOCK_DATA) {
+    return mockService.deleteRecommendation(recId);
+  }
+
+  // Try both tables
+  try {
+    await realService.deleteRecommendation(recId, "movie_recommendations");
+  } catch {
+    await realService.deleteRecommendation(recId, "music_recommendations");
+  }
+}
+
+/**
+ * Update sender's note on a recommendation
  */
 export async function updateSenderNote(
   recId: string,
-  senderNote: string
+  note: string
 ): Promise<void> {
-  await mockApi.updateSenderNote(recId, senderNote);
+  if (USE_MOCK_DATA) {
+    return mockService.updateSenderNote(recId, note);
+  }
+
+  // Try both tables
+  try {
+    await realService.updateSenderNote(recId, note, "movie_recommendations");
+  } catch {
+    await realService.updateSenderNote(recId, note, "music_recommendations");
+  }
 }
 
 /**
- * Delete (unsend) a recommendation
+ * Update recipient's note on a recommendation
  */
-export async function deleteRecommendation(recId: string): Promise<void> {
-  await mockApi.deleteRecommendation(recId);
-}
-
-/**
- * Mark recommendation(s) as opened (when recipient first views them)
- */
-export async function markRecommendationsAsOpened(
-  recIds: string[]
+export async function updateRecipientNote(
+  recId: string,
+  note: string
 ): Promise<void> {
-  await Promise.all(recIds.map((id) => mockApi.markAsOpened(id)));
+  if (USE_MOCK_DATA) {
+    // Mock service doesn't have this function, skip
+    return Promise.resolve();
+  }
+
+  // Try both tables
+  try {
+    await realService.updateRecipientNote(recId, note, "movie_recommendations");
+  } catch {
+    await realService.updateRecipientNote(recId, note, "music_recommendations");
+  }
 }
 
-// ============================================
-// USER PROFILE MAPPING
-// ============================================
-
-/**
- * Get display names for multiple users
- */
-export function getUserProfiles(userIds: string[]): Map<string, string> {
-  const profileMap = new Map<string, string>();
-
-  userIds.forEach((userId) => {
-    const profile = getMockUserProfile(userId);
-    if (profile) {
-      profileMap.set(userId, profile.display_name);
-    }
-  });
-
-  return profileMap;
-}
+// Legacy exports for mock compatibility
+export const getUserProfile = USE_MOCK_DATA ? mockService.getUserProfile : null;

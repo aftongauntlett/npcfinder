@@ -28,6 +28,29 @@ ALTER TABLE user_profiles
 ADD CONSTRAINT user_profiles_theme_color_check 
 CHECK (theme_color IN ('blue', 'purple', 'pink', 'green', 'orange', 'red', 'teal', 'indigo'));
 
+-- Update the prevent_is_admin_change trigger to allow postgres superuser
+CREATE OR REPLACE FUNCTION prevent_is_admin_change()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- If is_admin is being changed
+  IF OLD.is_admin != NEW.is_admin THEN
+    -- Allow change if current role is postgres (superuser in dashboard)
+    IF current_user = 'postgres' THEN
+      RETURN NEW;
+    END IF;
+    
+    -- Check if the current user is an admin (for app-level changes)
+    IF NOT EXISTS (
+      SELECT 1 FROM user_profiles 
+      WHERE user_id = auth.uid() AND is_admin = true
+    ) THEN
+      RAISE EXCEPTION 'Only administrators can change admin status';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Update existing profiles to populate email from auth.users
 UPDATE user_profiles 
 SET email = auth.users.email
