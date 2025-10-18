@@ -13,7 +13,6 @@ import {
   ShieldOff,
 } from "lucide-react";
 import Button from "../shared/Button";
-import InviteCodeManager from "../admin/InviteCodeManager";
 import PageContentContainer from "../layouts/PageContentContainer";
 import ConfirmationModal from "../shared/ConfirmationModal";
 import { useAdmin } from "../../contexts/AdminContext";
@@ -24,6 +23,7 @@ import {
   useRecentActivity,
   useToggleAdminStatus,
 } from "../../hooks/useAdminQueries";
+import InviteCodeManager from "../admin/InviteCodeManager";
 
 type StatColor = "blue" | "purple" | "yellow" | "green";
 

@@ -16,9 +16,18 @@ export const getSupabase = (): SupabaseClient => {
 
   // Validate that environment variables are loaded
   if (!supabaseUrl || !supabaseKey) {
-    throw new Error(
-      "Missing Supabase environment variables. Make sure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set."
-    );
+    // Check if we're in production
+    const isProduction = window.location.hostname !== "localhost";
+
+    if (isProduction) {
+      throw new Error(
+        "Database connection unavailable. The site administrator needs to configure environment variables on the hosting platform."
+      );
+    } else {
+      throw new Error(
+        "Missing Supabase environment variables. Make sure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set in your .env.local file."
+      );
+    }
   }
 
   supabaseInstance = createClient(supabaseUrl, supabaseKey);
