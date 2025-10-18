@@ -30,7 +30,14 @@ export const getSupabase = (): SupabaseClient => {
     }
   }
 
-  supabaseInstance = createClient(supabaseUrl, supabaseKey);
+  supabaseInstance = createClient(supabaseUrl, supabaseKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      storage: window.localStorage,
+    },
+  });
   return supabaseInstance;
 };
 
