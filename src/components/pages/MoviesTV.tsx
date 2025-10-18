@@ -137,42 +137,46 @@ const MoviesTV: React.FC = () => {
         isReceived={isReceived}
         onStatusUpdate={updateRecommendationStatus}
         onDelete={deleteRecommendation}
-        renderMediaArt={(rec) =>
-          rec.poster_url ? (
+        renderMediaArt={(r) => {
+          const movieRec = r as unknown as MovieRecommendation;
+          return movieRec.poster_url ? (
             <img
-              src={rec.poster_url}
-              alt={rec.title}
+              src={movieRec.poster_url}
+              alt={movieRec.title}
               className="w-12 h-16 rounded object-cover"
             />
           ) : (
             <div className="w-12 h-16 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
               <MediaIcon className="w-6 h-6 text-gray-400 dark:text-gray-500" />
             </div>
-          )
-        }
-        renderMediaInfo={(rec) => (
-          <>
-            <div className="flex items-center gap-2">
-              <div className="font-medium text-gray-900 dark:text-white truncate">
-                {rec.title}
+          );
+        }}
+        renderMediaInfo={(r) => {
+          const movieRec = r as unknown as MovieRecommendation;
+          return (
+            <>
+              <div className="flex items-center gap-2">
+                <div className="font-medium text-gray-900 dark:text-white truncate">
+                  {movieRec.title}
+                </div>
+                {movieRec.media_type === "tv" && (
+                  <span className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 px-2 py-0.5 rounded whitespace-nowrap">
+                    <TvIcon className="w-3 h-3" />
+                    TV
+                  </span>
+                )}
               </div>
-              {rec.media_type === "tv" && (
-                <span className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 px-2 py-0.5 rounded whitespace-nowrap">
-                  <TvIcon className="w-3 h-3" />
-                  TV
-                </span>
+              <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                {movieRec.release_date}
+              </div>
+              {movieRec.overview && (
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                  {movieRec.overview}
+                </div>
               )}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
-              {rec.release_date}
-            </div>
-            {rec.overview && (
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                {rec.overview}
-              </div>
-            )}
-          </>
-        )}
+            </>
+          );
+        }}
       />
     );
   };
