@@ -12,7 +12,7 @@ import { AdminProvider, useAdmin } from "./contexts/AdminContext";
 
 // Lazy load authenticated components to avoid Supabase imports on landing page
 const HomePage = React.lazy(() => import("./components/pages/HomePage"));
-const Navigation = React.lazy(() => import("./components/Navigation"));
+const Sidebar = React.lazy(() => import("./components/Sidebar"));
 const MoviesTV = React.lazy(() => import("./components/pages/MoviesTV"));
 const Music = React.lazy(() => import("./components/pages/Music"));
 const UserSettings = React.lazy(
@@ -74,11 +74,13 @@ const AppLayout: React.FC<AppLayoutProps> = ({ user }) => {
           </div>
         }
       >
-        <Navigation currentUser={user} />
+        <Sidebar currentUser={user} />
         <DevIndicator isAdmin={userIsAdmin} />
+
+        {/* Main content - no top nav, sidebar handles everything */}
         <Routes>
           <Route path="/" element={<HomePage user={user} />} />
-          <Route path="/movies-tv" element={<MoviesTV />} />
+          <Route path="/movies" element={<MoviesTV />} />
           <Route path="/music" element={<Music />} />
           <Route
             path="/settings"

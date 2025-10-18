@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import Button from "../shared/Button";
 import ConfirmationModal from "../shared/ConfirmationModal";
+import StatCard from "../shared/StatCard";
 import {
   useInviteCodes,
   useInviteCodeStats,
@@ -263,7 +264,7 @@ const InviteCodeManager: React.FC = () => {
 // ============================================
 
 /**
- * Stats Cards Component
+ * Stats Cards Component - Using shared StatCard
  */
 interface StatsCardsProps {
   stats: {
@@ -277,44 +278,34 @@ interface StatsCardsProps {
 const StatsCards = memo<StatsCardsProps>(({ stats }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-gray-400 text-sm">Total Codes</p>
-            <p className="text-2xl font-bold text-white">{stats.total}</p>
-          </div>
-          <Key className="w-8 h-8 text-blue-400" />
-        </div>
-      </div>
-      <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-gray-400 text-sm">Active</p>
-            <p className="text-2xl font-bold text-green-400">{stats.active}</p>
-          </div>
-          <Check className="w-8 h-8 text-green-400" />
-        </div>
-      </div>
-      <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-gray-400 text-sm">Used</p>
-            <p className="text-2xl font-bold text-gray-400">{stats.used}</p>
-          </div>
-          <Users className="w-8 h-8 text-gray-400" />
-        </div>
-      </div>
-      <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-gray-400 text-sm">Expired</p>
-            <p className="text-2xl font-bold text-orange-400">
-              {stats.expired}
-            </p>
-          </div>
-          <Clock className="w-8 h-8 text-orange-400" />
-        </div>
-      </div>
+      <StatCard
+        icon={Key}
+        label="Total Codes"
+        value={stats.total}
+        iconColor="text-blue-400"
+        valueColor="text-white dark:text-white"
+      />
+      <StatCard
+        icon={Check}
+        label="Active"
+        value={stats.active}
+        iconColor="text-green-400"
+        valueColor="text-green-400"
+      />
+      <StatCard
+        icon={Users}
+        label="Used"
+        value={stats.used}
+        iconColor="text-gray-400"
+        valueColor="text-gray-400"
+      />
+      <StatCard
+        icon={Clock}
+        label="Expired"
+        value={stats.expired}
+        iconColor="text-orange-400"
+        valueColor="text-orange-400"
+      />
     </div>
   );
 });

@@ -1,4 +1,5 @@
-import React, { useState, memo, useCallback } from "react";
+import React, { useState, memo, useCallback, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import {
   Users,
   Star,
@@ -12,9 +13,10 @@ import {
   ShieldCheck,
   ShieldOff,
 } from "lucide-react";
-import Button from "../shared/Button";
-import PageContentContainer from "../layouts/PageContentContainer";
+import MainLayout from "../layouts/MainLayout";
+import ContentLayout from "../layouts/ContentLayout";
 import ConfirmationModal from "../shared/ConfirmationModal";
+import StatCard from "../shared/StatCard";
 import { useAdmin } from "../../contexts/AdminContext";
 import {
   useAdminStats,
@@ -25,18 +27,10 @@ import {
 } from "../../hooks/useAdminQueries";
 import InviteCodeManager from "../admin/InviteCodeManager";
 
-type StatColor = "blue" | "purple" | "yellow" | "green";
-
-interface StatCardProps {
-  icon: React.ElementType;
-  title: string;
-  value: number;
-  color: StatColor;
-}
-
 interface User {
   id: string;
   display_name: string;
+  email?: string;
   bio?: string;
   is_admin?: boolean;
   created_at: string;
@@ -48,11 +42,31 @@ interface User {
  */
 const AdminPanel: React.FC = () => {
   const { refreshAdminStatus } = useAdmin();
+  const location = useLocation();
+
+  // Super admin user ID (protected from admin privilege revocation)
+  const SUPER_ADMIN_ID =
+    import.meta.env.VITE_SUPER_ADMIN_USER_ID ||
+    "adfa92d6-532b-47be-9101-bbfced9f73b4";
+
+  // Get tab from URL query parameter
+  const searchParams = new URLSearchParams(location.search);
+  const tabFromUrl = searchParams.get("tab") as
+    | "overview"
+    | "invite-codes"
+    | null;
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<"overview" | "invites">(
-    "overview"
+  const [activeTab, setActiveTab] = useState<"overview" | "invite-codes">(
+    tabFromUrl || "overview"
   );
+
+  // Update active tab when URL changes
+  useEffect(() => {
+    if (tabFromUrl) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [tabFromUrl]);
 
   // User list pagination and search
   const [userSearch, setUserSearch] = useState<string>("");
@@ -69,11 +83,11 @@ const AdminPanel: React.FC = () => {
 
   // Queries
   const { data: stats, isLoading: statsLoading } = useAdminStats();
-  const {
-    data: usersData,
-    isLoading: usersLoading,
-    refetch: refetchUsers,
-  } = useAdminUsers(userPage, USERS_PER_PAGE, userSearch);
+  const { data: usersData, isLoading: usersLoading } = useAdminUsers(
+    userPage,
+    USERS_PER_PAGE,
+    userSearch
+  );
   const { data: popularMedia, isLoading: popularMediaLoading } =
     usePopularMedia();
   const { data: recentActivity, isLoading: recentActivityLoading } =
@@ -115,10 +129,6 @@ const AdminPanel: React.FC = () => {
     }
   }, [userToToggle, toggleAdminMutation, refreshAdminStatus]);
 
-  const handleRefreshData = useCallback(() => {
-    void refetchUsers();
-  }, [refetchUsers]);
-
   // Loading state for initial data
   const isLoading = statsLoading;
 
@@ -142,50 +152,13 @@ const AdminPanel: React.FC = () => {
   }
 
   return (
-    <PageContentContainer className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 text-white">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-          <div>
-            <h1 className="text-3xl sm:text-4xl font-bold mb-2">Admin Panel</h1>
-            <p className="text-gray-300">
-              Platform insights and user management
-            </p>
-          </div>
-          <Button onClick={handleRefreshData} variant="secondary">
-            Refresh Data
-          </Button>
-        </div>
-
-        {/* Tabs */}
-        <div className="mb-8 border-b border-white/10">
-          <div className="flex gap-4">
-            <button
-              onClick={() => setActiveTab("overview")}
-              className={`px-4 py-2 font-medium transition-colors ${
-                activeTab === "overview"
-                  ? "text-white border-b-2 border-purple-500"
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              <Activity className="w-4 h-4 inline mr-2" />
-              Overview
-            </button>
-            <button
-              onClick={() => setActiveTab("invites")}
-              className={`px-4 py-2 font-medium transition-colors ${
-                activeTab === "invites"
-                  ? "text-white border-b-2 border-purple-500"
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              <Shield className="w-4 h-4 inline mr-2" />
-              Invite Codes
-            </button>
-          </div>
-        </div>
-
+    <MainLayout>
+      <ContentLayout
+        title="Admin Panel"
+        description="Platform insights and user management"
+      >
         {/* Tab Content */}
-        {activeTab === "invites" ? (
+        {activeTab === "invite-codes" ? (
           <InviteCodeManager />
         ) : (
           <>
@@ -194,27 +167,31 @@ const AdminPanel: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
                 <StatCard
                   icon={Users}
-                  title="Total Users"
+                  label="Total Users"
                   value={stats.totalUsers}
-                  color="blue"
+                  iconColor="text-blue-400"
+                  valueColor="text-blue-400"
                 />
                 <StatCard
                   icon={Activity}
-                  title="Active (30d)"
+                  label="Active (30d)"
                   value={stats.activeUsers}
-                  color="green"
+                  iconColor="text-green-400"
+                  valueColor="text-green-400"
                 />
                 <StatCard
                   icon={UserPlus}
-                  title="New This Week"
+                  label="New This Week"
                   value={stats.newUsersThisWeek}
-                  color="purple"
+                  iconColor="text-purple-400"
+                  valueColor="text-purple-400"
                 />
                 <StatCard
                   icon={Star}
-                  title="Avg Ratings/User"
+                  label="Avg Ratings/User"
                   value={stats.avgRatingsPerUser}
-                  color="yellow"
+                  iconColor="text-yellow-400"
+                  valueColor="text-yellow-400"
                 />
               </div>
             )}
@@ -222,26 +199,26 @@ const AdminPanel: React.FC = () => {
             {/* Secondary Stats */}
             {stats && (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-                <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
-                  <p className="text-gray-300 text-sm mb-1">New This Month</p>
+                <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10 text-center">
+                  <p className="text-gray-300 text-sm mb-2">New This Month</p>
                   <p className="text-2xl font-bold text-white">
                     {stats.newUsersThisMonth}
                   </p>
                 </div>
-                <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
-                  <p className="text-gray-300 text-sm mb-1">Total Ratings</p>
+                <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10 text-center">
+                  <p className="text-gray-300 text-sm mb-2">Total Ratings</p>
                   <p className="text-2xl font-bold text-white">
                     {stats.totalRatings}
                   </p>
                 </div>
-                <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
-                  <p className="text-gray-300 text-sm mb-1">Connections</p>
+                <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10 text-center">
+                  <p className="text-gray-300 text-sm mb-2">Connections</p>
                   <p className="text-2xl font-bold text-white">
                     {stats.totalConnections}
                   </p>
                 </div>
-                <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
-                  <p className="text-gray-300 text-sm mb-1">Media Items</p>
+                <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10 text-center">
+                  <p className="text-gray-300 text-sm mb-2">Media Items</p>
                   <p className="text-2xl font-bold text-white">
                     {stats.totalMediaItems}
                   </p>
@@ -267,6 +244,7 @@ const AdminPanel: React.FC = () => {
                 userPage={userPage}
                 totalUserPages={totalUserPages}
                 onToggleAdmin={handleToggleAdminClick}
+                superAdminId={SUPER_ADMIN_ID}
               />
             </div>
 
@@ -277,7 +255,7 @@ const AdminPanel: React.FC = () => {
             />
           </>
         )}
-      </div>
+      </ContentLayout>
 
       {/* Admin Toggle Confirmation Modal */}
       <ConfirmationModal
@@ -304,51 +282,13 @@ const AdminPanel: React.FC = () => {
         variant={userToToggle?.isAdmin ? "danger" : "info"}
         isLoading={toggleAdminMutation.isPending}
       />
-    </PageContentContainer>
+    </MainLayout>
   );
 };
 
 // ============================================
 // Sub-Components (Memoized for Performance)
 // ============================================
-
-/**
- * Stat Card Component
- */
-const StatCard = memo<StatCardProps>(({ icon: Icon, title, value, color }) => {
-  const colorClasses: Record<StatColor, string> = {
-    blue: "from-blue-500/20 to-blue-600/20 border-blue-500/30",
-    purple: "from-purple-500/20 to-purple-600/20 border-purple-500/30",
-    yellow: "from-yellow-500/20 to-yellow-600/20 border-yellow-500/30",
-    green: "from-green-500/20 to-green-600/20 border-green-500/30",
-  };
-
-  const iconColorClasses: Record<StatColor, string> = {
-    blue: "text-blue-400",
-    purple: "text-purple-400",
-    yellow: "text-yellow-400",
-    green: "text-green-400",
-  };
-
-  return (
-    <div
-      className={`bg-gradient-to-br ${colorClasses[color]} backdrop-blur-sm rounded-lg p-4 sm:p-6 border`}
-    >
-      <div className="flex items-center gap-3 mb-2">
-        <Icon
-          className={`w-6 sm:w-8 h-6 sm:h-8 ${iconColorClasses[color]}`}
-          aria-hidden="true"
-        />
-        <h3 className="text-gray-300 font-medium text-sm sm:text-base">
-          {title}
-        </h3>
-      </div>
-      <p className="text-3xl sm:text-4xl font-bold">{value.toLocaleString()}</p>
-    </div>
-  );
-});
-
-StatCard.displayName = "StatCard";
 
 /**
  * Popular Media Section
@@ -368,37 +308,42 @@ const PopularMediaSection = memo<PopularMediaSectionProps>(
   ({ popularMedia, isLoading }) => {
     return (
       <section
-        className="bg-white/5 backdrop-blur-sm rounded-lg p-4 sm:p-6 border border-white/10"
+        className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm"
         aria-labelledby="popular-media-heading"
       >
         <div className="flex items-center gap-2 mb-4">
-          <TrendingUp className="w-6 h-6 text-purple-400" aria-hidden="true" />
+          <TrendingUp
+            className="w-6 h-6 text-primary dark:text-primary-light"
+            aria-hidden="true"
+          />
           <h2
             id="popular-media-heading"
-            className="text-xl sm:text-2xl font-bold"
+            className="text-xl font-bold text-gray-900 dark:text-white font-heading"
           >
             Most Tracked Media
           </h2>
         </div>
         {isLoading ? (
-          <p className="text-gray-400 italic">Loading...</p>
+          <p className="text-gray-600 dark:text-gray-400 italic">Loading...</p>
         ) : popularMedia.length > 0 ? (
           <div className="space-y-3">
             {popularMedia.map((item, index) => (
               <div
                 key={item.id}
-                className="flex items-center gap-3 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+                className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
               >
-                <span className="text-xl sm:text-2xl font-bold text-purple-400 min-w-8">
+                <span className="text-2xl font-bold text-primary dark:text-primary-light min-w-8">
                   #{index + 1}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold truncate">{item.title}</p>
-                  <p className="text-sm text-gray-400">
+                  <p className="font-semibold truncate text-gray-900 dark:text-white">
+                    {item.title}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     {item.type} • {item.release_year || "N/A"}
                   </p>
                 </div>
-                <span className="px-3 py-1 bg-purple-500/20 rounded-full text-sm font-medium whitespace-nowrap">
+                <span className="px-3 py-1 bg-primary/10 text-primary dark:text-primary-light rounded-full text-sm font-medium whitespace-nowrap">
                   {item.trackingCount}{" "}
                   {item.trackingCount === 1 ? "user" : "users"}
                 </span>
@@ -406,7 +351,9 @@ const PopularMediaSection = memo<PopularMediaSectionProps>(
             ))}
           </div>
         ) : (
-          <p className="text-gray-400 italic">No tracked media yet</p>
+          <p className="text-gray-600 dark:text-gray-400 italic">
+            No tracked media yet
+          </p>
         )}
       </section>
     );
@@ -427,6 +374,7 @@ interface UsersSectionProps {
   userPage: number;
   totalUserPages: number;
   onToggleAdmin: (user: User) => void;
+  superAdminId: string;
 }
 
 const UsersSection = memo<UsersSectionProps>(
@@ -439,15 +387,22 @@ const UsersSection = memo<UsersSectionProps>(
     userPage,
     totalUserPages,
     onToggleAdmin,
+    superAdminId,
   }) => {
     return (
       <section
-        className="bg-white/5 backdrop-blur-sm rounded-lg p-4 sm:p-6 border border-white/10"
+        className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm"
         aria-labelledby="users-heading"
       >
         <div className="flex items-center gap-2 mb-4">
-          <Users className="w-6 h-6 text-blue-400" aria-hidden="true" />
-          <h2 id="users-heading" className="text-xl sm:text-2xl font-bold">
+          <Users
+            className="w-6 h-6 text-primary dark:text-primary-light"
+            aria-hidden="true"
+          />
+          <h2
+            id="users-heading"
+            className="text-xl font-bold text-gray-900 dark:text-white font-heading"
+          >
             Users
           </h2>
         </div>
@@ -470,32 +425,39 @@ const UsersSection = memo<UsersSectionProps>(
               setUserSearch(e.target.value);
               setUserPage(0); // Reset to first page on search
             }}
-            className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
 
         {isLoading ? (
-          <p className="text-gray-400 italic">Loading users...</p>
+          <p className="text-gray-600 dark:text-gray-400 italic">
+            Loading users...
+          </p>
         ) : users.length > 0 ? (
           <>
             <div className="space-y-3 mb-4">
               {users.map((user) => (
                 <article
                   key={user.id}
-                  className="p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+                  className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                 >
                   <div className="flex flex-col sm:flex-row items-start justify-between mb-2 gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <p className="font-semibold text-base sm:text-lg truncate">
+                        <p className="font-semibold text-base sm:text-lg truncate text-gray-900 dark:text-white">
                           {user.display_name}
                         </p>
                         {user.is_admin && (
                           <span title="Admin">
-                            <ShieldCheck className="w-4 h-4 text-purple-400 flex-shrink-0" />
+                            <ShieldCheck className="w-4 h-4 text-primary dark:text-primary-light flex-shrink-0" />
                           </span>
                         )}
                       </div>
+                      {user.email && (
+                        <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
+                          {user.email}
+                        </p>
+                      )}
                       {user.bio && (
                         <p className="text-sm text-gray-400 mt-1 italic line-clamp-2">
                           "{user.bio}"
@@ -504,45 +466,49 @@ const UsersSection = memo<UsersSectionProps>(
                     </div>
                     <div className="flex flex-col sm:items-end gap-2 w-full sm:w-auto">
                       <div className="text-left sm:text-right">
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-400">
                           Joined:{" "}
                           {new Date(user.created_at).toLocaleDateString()}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-400">
                           Updated:{" "}
                           {new Date(user.updated_at).toLocaleDateString()}
                         </p>
                       </div>
-                      <button
-                        onClick={() => onToggleAdmin(user)}
-                        className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-                          user.is_admin
-                            ? "bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 border border-purple-500/50"
-                            : "bg-gray-500/20 text-gray-300 hover:bg-gray-500/30 border border-gray-500/50"
-                        }`}
-                        title={
-                          user.is_admin
-                            ? "Remove admin privileges"
-                            : "Grant admin privileges"
-                        }
-                      >
-                        {user.is_admin ? (
-                          <>
-                            <ShieldOff className="w-3 h-3" />
-                            <span>Remove Admin</span>
-                          </>
-                        ) : (
-                          <>
-                            <ShieldCheck className="w-3 h-3" />
-                            <span>Make Admin</span>
-                          </>
-                        )}
-                      </button>
+                      {user.id === superAdminId ? (
+                        <div className="flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium bg-purple-500/20 text-purple-300 border border-purple-500/50">
+                          <Shield className="w-3 h-3" />
+                          <span>Owner</span>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => onToggleAdmin(user)}
+                          className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                            user.is_admin
+                              ? "bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 border border-purple-500/50"
+                              : "bg-gray-500/20 text-gray-300 hover:bg-gray-500/30 border border-gray-500/50"
+                          }`}
+                          title={
+                            user.is_admin
+                              ? "Remove admin privileges"
+                              : "Grant admin privileges"
+                          }
+                        >
+                          {user.is_admin ? (
+                            <>
+                              <ShieldOff className="w-3 h-3" />
+                              <span>Remove Admin</span>
+                            </>
+                          ) : (
+                            <>
+                              <ShieldCheck className="w-3 h-3" />
+                              <span>Make Admin</span>
+                            </>
+                          )}
+                        </button>
+                      )}
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500 font-mono truncate">
-                    ID: {user.id}
-                  </p>
                 </article>
               ))}
             </div>
@@ -611,35 +577,43 @@ const RecentActivitySection = memo<RecentActivitySectionProps>(
   ({ recentActivity, isLoading }) => {
     return (
       <section
-        className="bg-white/5 backdrop-blur-sm rounded-lg p-4 sm:p-6 border border-white/10"
+        className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm"
         aria-labelledby="activity-heading"
       >
         <div className="flex items-center gap-2 mb-4">
-          <Activity className="w-6 h-6 text-green-400" aria-hidden="true" />
-          <h2 id="activity-heading" className="text-xl sm:text-2xl font-bold">
+          <Activity
+            className="w-6 h-6 text-primary dark:text-primary-light"
+            aria-hidden="true"
+          />
+          <h2
+            id="activity-heading"
+            className="text-xl font-bold text-gray-900 dark:text-white font-heading"
+          >
             Recent Activity
           </h2>
         </div>
         {isLoading ? (
-          <p className="text-gray-400 italic">Loading activity...</p>
+          <p className="text-gray-600 dark:text-gray-400 italic">
+            Loading activity...
+          </p>
         ) : recentActivity.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[600px]">
               <thead>
-                <tr className="border-b border-white/10">
-                  <th className="text-left p-3 text-gray-400 font-medium">
+                <tr className="border-b border-gray-200 dark:border-gray-700">
+                  <th className="text-left p-3 text-gray-600 dark:text-gray-400 font-medium">
                     Media
                   </th>
-                  <th className="text-left p-3 text-gray-400 font-medium">
+                  <th className="text-left p-3 text-gray-600 dark:text-gray-400 font-medium">
                     Type
                   </th>
-                  <th className="text-left p-3 text-gray-400 font-medium">
+                  <th className="text-left p-3 text-gray-600 dark:text-gray-400 font-medium">
                     Status
                   </th>
-                  <th className="text-left p-3 text-gray-400 font-medium">
+                  <th className="text-left p-3 text-gray-600 dark:text-gray-400 font-medium">
                     Activity
                   </th>
-                  <th className="text-left p-3 text-gray-400 font-medium">
+                  <th className="text-left p-3 text-gray-600 dark:text-gray-400 font-medium">
                     Date
                   </th>
                 </tr>
@@ -648,7 +622,7 @@ const RecentActivitySection = memo<RecentActivitySectionProps>(
                 {recentActivity.map((activity) => (
                   <tr
                     key={activity.id}
-                    className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                    className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     <td className="p-3 font-medium">
                       {activity.title || "Unknown"}

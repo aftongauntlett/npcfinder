@@ -9,7 +9,6 @@ import {
   ChevronDown,
   ShieldCheck,
 } from "lucide-react";
-import QuickSwitch from "./shared/QuickSwitch";
 import WeatherWidget from "./shared/WeatherWidget";
 import ConfirmationModal from "./shared/ConfirmationModal";
 import { signOut } from "../lib/auth";
@@ -93,9 +92,8 @@ const Navigation: React.FC<NavigationProps> = ({ currentUser }) => {
             NPC Finder
           </h1>
 
-          {/* Right side: QuickSwitch, Weather Widget, and Profile Dropdown */}
+          {/* Right side: Weather Widget and Profile Dropdown */}
           <div className="flex items-center gap-2 sm:gap-4">
-            <QuickSwitch />
             <WeatherWidget />
 
             {/* Profile Dropdown */}
