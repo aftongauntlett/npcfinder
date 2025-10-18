@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import type { User } from "@supabase/supabase-js";
 import { Plus, Lightbulb, RefreshCw } from "lucide-react";
-import { isAdmin } from "../../lib/admin";
+import { useAdmin } from "../../contexts/AdminContext";
 import ConfirmationModal from "../shared/ConfirmationModal";
 import {
   getSuggestions,
@@ -45,7 +45,7 @@ const Suggestions: React.FC<SuggestionsProps> = ({ currentUser }) => {
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const userIsAdmin = currentUser && isAdmin(currentUser.id);
+  const { isAdmin: userIsAdmin } = useAdmin();
 
   useEffect(() => {
     void loadSuggestions();

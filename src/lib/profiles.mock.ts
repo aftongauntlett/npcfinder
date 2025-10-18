@@ -55,6 +55,7 @@ export const getUserProfile = async (
     profile_picture_url: null,
     visible_cards: [],
     theme_color: "purple",
+    is_admin: false, // Default: not admin
   };
 
   return { data: defaultProfile, error: null };
@@ -80,6 +81,7 @@ export const upsertUserProfile = async (
       profileData.profile_picture_url ?? existing?.profile_picture_url ?? null,
     visible_cards: profileData.visible_cards ?? existing?.visible_cards ?? [],
     theme_color: profileData.theme_color ?? existing?.theme_color ?? "purple",
+    is_admin: profileData.is_admin ?? existing?.is_admin ?? false, // Default: not admin
     created_at: existing?.created_at ?? new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };

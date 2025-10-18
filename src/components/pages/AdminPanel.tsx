@@ -9,11 +9,16 @@ import {
   ChevronLeft,
   ChevronRight,
   Shield,
+  ShieldCheck,
+  ShieldOff,
 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import Button from "../shared/Button";
 import InviteCodeManager from "../admin/InviteCodeManager";
 import PageContentContainer from "../layouts/PageContentContainer";
+import ConfirmationModal from "../shared/ConfirmationModal";
+import { toggleUserAdminStatus } from "../../lib/admin";
+import { useAdmin } from "../../contexts/AdminContext";
 
 interface Stats {
   totalUsers: number;
@@ -30,6 +35,7 @@ interface User {
   id: string;
   display_name: string;
   bio?: string;
+  is_admin?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -62,6 +68,8 @@ interface StatCardProps {
 }
 
 const AdminPanel: React.FC = () => {
+  const { refreshAdminStatus } = useAdmin();
+
   const [stats, setStats] = useState<Stats>({
     totalUsers: 0,
     totalMediaItems: 0,
@@ -89,6 +97,15 @@ const AdminPanel: React.FC = () => {
   const [userPage, setUserPage] = useState<number>(0);
   const [totalUserPages, setTotalUserPages] = useState<number>(0);
   const USERS_PER_PAGE = 5;
+
+  // Admin toggle state
+  const [showAdminToggleModal, setShowAdminToggleModal] = useState(false);
+  const [userToToggle, setUserToToggle] = useState<{
+    id: string;
+    name: string;
+    isAdmin: boolean;
+  } | null>(null);
+  const [isTogglingAdmin, setIsTogglingAdmin] = useState(false);
 
   // Fetch all admin data
   const fetchAdminData = async () => {
@@ -230,9 +247,12 @@ const AdminPanel: React.FC = () => {
     try {
       let query = supabase
         .from("user_profiles")
-        .select("user_id, display_name, bio, created_at, updated_at", {
-          count: "exact",
-        });
+        .select(
+          "user_id, display_name, bio, is_admin, created_at, updated_at",
+          {
+            count: "exact",
+          }
+        );
 
       // Apply search filter if there's a search term
       if (userSearch.trim()) {
@@ -256,12 +276,14 @@ const AdminPanel: React.FC = () => {
             user_id: string;
             display_name?: string;
             bio?: string;
+            is_admin?: boolean;
             created_at: string;
             updated_at: string;
           }) => ({
             id: profile.user_id,
             display_name: profile.display_name || "No Name Set",
             bio: profile.bio,
+            is_admin: profile.is_admin || false,
             created_at: profile.created_at,
             updated_at: profile.updated_at,
           })
@@ -270,6 +292,43 @@ const AdminPanel: React.FC = () => {
       setUsers(usersList);
     } catch (error) {
       console.error("Error fetching users:", error);
+    }
+  };
+
+  const handleToggleAdminClick = (user: User) => {
+    setUserToToggle({
+      id: user.id,
+      name: user.display_name,
+      isAdmin: user.is_admin || false,
+    });
+    setShowAdminToggleModal(true);
+  };
+
+  const confirmToggleAdmin = async () => {
+    if (!userToToggle) return;
+
+    setIsTogglingAdmin(true);
+    try {
+      const result = await toggleUserAdminStatus(
+        userToToggle.id,
+        !userToToggle.isAdmin
+      );
+
+      if (result.success) {
+        // Refresh user list
+        await fetchUsers();
+        // Refresh admin status in context (in case we're removing our own admin)
+        await refreshAdminStatus();
+        setShowAdminToggleModal(false);
+        setUserToToggle(null);
+      } else {
+        alert(`Error toggling admin status: ${result.error}`);
+      }
+    } catch (error) {
+      console.error("Error toggling admin status:", error);
+      alert("An unexpected error occurred");
+    } finally {
+      setIsTogglingAdmin(false);
     }
   };
 
@@ -499,24 +558,62 @@ const AdminPanel: React.FC = () => {
                         >
                           <div className="flex flex-col sm:flex-row items-start justify-between mb-2 gap-2">
                             <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-base sm:text-lg truncate">
-                                {user.display_name}
-                              </p>
+                              <div className="flex items-center gap-2 mb-1">
+                                <p className="font-semibold text-base sm:text-lg truncate">
+                                  {user.display_name}
+                                </p>
+                                {user.is_admin && (
+                                  <span title="Admin">
+                                    <ShieldCheck className="w-4 h-4 text-purple-400 flex-shrink-0" />
+                                  </span>
+                                )}
+                              </div>
                               {user.bio && (
                                 <p className="text-sm text-gray-400 mt-1 italic line-clamp-2">
                                   "{user.bio}"
                                 </p>
                               )}
                             </div>
-                            <div className="text-left sm:text-right w-full sm:w-auto">
-                              <p className="text-xs text-gray-500">
-                                Joined:{" "}
-                                {new Date(user.created_at).toLocaleDateString()}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                Updated:{" "}
-                                {new Date(user.updated_at).toLocaleDateString()}
-                              </p>
+                            <div className="flex flex-col sm:items-end gap-2 w-full sm:w-auto">
+                              <div className="text-left sm:text-right">
+                                <p className="text-xs text-gray-500">
+                                  Joined:{" "}
+                                  {new Date(
+                                    user.created_at
+                                  ).toLocaleDateString()}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  Updated:{" "}
+                                  {new Date(
+                                    user.updated_at
+                                  ).toLocaleDateString()}
+                                </p>
+                              </div>
+                              <button
+                                onClick={() => handleToggleAdminClick(user)}
+                                className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                                  user.is_admin
+                                    ? "bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 border border-purple-500/50"
+                                    : "bg-gray-500/20 text-gray-300 hover:bg-gray-500/30 border border-gray-500/50"
+                                }`}
+                                title={
+                                  user.is_admin
+                                    ? "Remove admin privileges"
+                                    : "Grant admin privileges"
+                                }
+                              >
+                                {user.is_admin ? (
+                                  <>
+                                    <ShieldOff className="w-3 h-3" />
+                                    <span>Remove Admin</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <ShieldCheck className="w-3 h-3" />
+                                    <span>Make Admin</span>
+                                  </>
+                                )}
+                              </button>
                             </div>
                           </div>
                           <p className="text-xs text-gray-500 font-mono truncate">
@@ -652,6 +749,32 @@ const AdminPanel: React.FC = () => {
           </>
         )}
       </div>
+
+      {/* Admin Toggle Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showAdminToggleModal}
+        onClose={() => {
+          setShowAdminToggleModal(false);
+          setUserToToggle(null);
+        }}
+        onConfirm={() => void confirmToggleAdmin()}
+        title={
+          userToToggle?.isAdmin
+            ? "Remove Admin Privileges"
+            : "Grant Admin Privileges"
+        }
+        message={
+          userToToggle
+            ? userToToggle.isAdmin
+              ? `Are you sure you want to remove admin privileges from "${userToToggle.name}"? They will no longer be able to access the admin panel or manage invite codes.`
+              : `Are you sure you want to grant admin privileges to "${userToToggle.name}"? They will be able to access the admin panel, manage invite codes, and view all user data.`
+            : ""
+        }
+        confirmText={userToToggle?.isAdmin ? "Remove Admin" : "Make Admin"}
+        cancelText="Cancel"
+        variant={userToToggle?.isAdmin ? "danger" : "info"}
+        isLoading={isTogglingAdmin}
+      />
     </PageContentContainer>
   );
 };

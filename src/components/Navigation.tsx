@@ -13,7 +13,7 @@ import QuickSwitch from "./shared/QuickSwitch";
 import WeatherWidget from "./shared/WeatherWidget";
 import ConfirmationModal from "./shared/ConfirmationModal";
 import { signOut } from "../lib/auth";
-import { isAdmin } from "../lib/admin";
+import { useAdmin } from "../contexts/AdminContext";
 import { getUserProfile } from "../lib/profiles";
 
 interface NavigationProps {
@@ -81,8 +81,8 @@ const Navigation: React.FC<NavigationProps> = ({ currentUser }) => {
     void navigate(path);
   };
 
-  const showAdminButton = currentUser && isAdmin(currentUser.id);
-  const userIsAdmin = currentUser && isAdmin(currentUser.id);
+  const { isAdmin: userIsAdmin } = useAdmin();
+  const showAdminButton = currentUser && userIsAdmin;
 
   return (
     <nav

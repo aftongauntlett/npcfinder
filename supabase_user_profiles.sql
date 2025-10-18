@@ -6,12 +6,16 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   display_name TEXT,
   theme_color TEXT DEFAULT 'blue' CHECK (theme_color IN ('blue', 'purple', 'pink', 'green', 'orange', 'red')),
+  is_admin BOOLEAN DEFAULT false NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Create index on display_name for search
 CREATE INDEX IF NOT EXISTS idx_user_profiles_display_name ON user_profiles(display_name);
+
+-- Create index on is_admin for faster admin queries
+CREATE INDEX IF NOT EXISTS idx_user_profiles_is_admin ON user_profiles(is_admin) WHERE is_admin = true;
 
 -- Enable Row Level Security
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;

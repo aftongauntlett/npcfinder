@@ -17,7 +17,7 @@ import PageContainer from "./components/layouts/PageContainer";
 import DevIndicator from "./components/dev/DevIndicator";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider } from "./contexts/AuthContext";
-import { isAdmin } from "./lib/admin";
+import { AdminProvider, useAdmin } from "./contexts/AdminContext";
 import { getUserProfile } from "./lib/profiles";
 import { cards } from "./data/dashboardCards";
 import { useTheme } from "./hooks/useTheme";
@@ -105,11 +105,21 @@ const ProtectedAdminRoute: React.FC<ProtectedAdminRouteProps> = ({
   user,
   children,
 }) => {
+  const { isAdmin, isLoading } = useAdmin();
+
   if (!user) {
     return <Navigate to="/" replace />;
   }
 
-  if (!isAdmin(user.id)) {
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-white text-2xl">Access Denied - Admin Only</div>
@@ -126,7 +136,7 @@ interface AppLayoutProps {
 }
 
 const AppLayout: React.FC<AppLayoutProps> = ({ user }) => {
-  const userIsAdmin = isAdmin(user.id);
+  const { isAdmin: userIsAdmin } = useAdmin();
 
   return (
     <PageContainer className="relative">
@@ -225,7 +235,9 @@ const App: React.FC = () => {
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          <AuthenticatedApp />
+          <AdminProvider>
+            <AuthenticatedApp />
+          </AdminProvider>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

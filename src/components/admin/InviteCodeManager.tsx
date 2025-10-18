@@ -140,7 +140,10 @@ const InviteCodeManager: React.FC = () => {
 
   const copyToClipboard = async (code: string) => {
     try {
-      await navigator.clipboard.writeText(code);
+      const inviteUrl = `${window.location.origin}/?invite=${code}`;
+      const message = `You've been invited to NPC Finder! 🎬\n\nClick this link to join: ${inviteUrl}\n\nOr use this code during sign-up: ${code}\n\nLooking forward to sharing recommendations with you!`;
+
+      await navigator.clipboard.writeText(message);
       setCopiedCode(code);
       setTimeout(() => setCopiedCode(null), 2000);
     } catch (error) {
@@ -368,7 +371,7 @@ const InviteCodeManager: React.FC = () => {
                   <button
                     onClick={() => void copyToClipboard(code.code)}
                     className="text-gray-300 hover:text-white transition-colors p-1"
-                    title="Copy code"
+                    title="Copy invitation message with link and code"
                   >
                     {copiedCode === code.code ? (
                       <Check className="w-5 h-5 text-green-400" />

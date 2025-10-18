@@ -14,6 +14,7 @@ export interface UserProfile {
   profile_picture_url: string | null;
   visible_cards?: string[]; // Array of card IDs to show on dashboard
   theme_color?: ThemeColorName; // User's chosen theme color
+  is_admin?: boolean; // Admin privileges
   created_at?: string;
   updated_at?: string;
 }
@@ -84,6 +85,14 @@ export const upsertUserProfile = async (
     // Include theme_color if provided
     if (profileData.theme_color !== undefined) {
       updateData.theme_color = profileData.theme_color;
+    }
+
+    // Include is_admin if provided (only set by admins via toggleUserAdminStatus)
+    if (profileData.is_admin !== undefined) {
+      updateData.is_admin = profileData.is_admin;
+    } else {
+      // Default to false for new users
+      updateData.is_admin = false;
     }
 
     const { data, error } = await supabase
