@@ -219,7 +219,13 @@ const AuthenticatedApp: React.FC = () => {
       <Route
         path="/app/*"
         element={
-          user ? <AppLayout user={user} /> : <Navigate to="/login" replace />
+          user ? (
+            <AdminProvider>
+              <AppLayout user={user} />
+            </AdminProvider>
+          ) : (
+            <Navigate to="/login" replace />
+          )
         }
       />
 
@@ -235,9 +241,7 @@ const App: React.FC = () => {
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          <AdminProvider>
-            <AuthenticatedApp />
-          </AdminProvider>
+          <AuthenticatedApp />
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>
