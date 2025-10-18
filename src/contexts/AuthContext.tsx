@@ -50,8 +50,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const { data: currentUser } = await getCurrentUser();
       setUser(currentUser);
-    } catch (error) {
-      console.error("Error checking user:", error);
+    } catch {
+      // Gracefully handle missing Supabase on public pages
+      console.log("Auth check skipped (likely on public page)");
       setUser(null);
     } finally {
       setLoading(false);

@@ -16,7 +16,7 @@ import DemoLanding from "./components/pages/DemoLanding";
 import PageContainer from "./components/layouts/PageContainer";
 import DevIndicator from "./components/dev/DevIndicator";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { AdminProvider, useAdmin } from "./contexts/AdminContext";
 import { getUserProfile } from "./lib/profiles";
 import { cards } from "./data/dashboardCards";
@@ -169,30 +169,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ user }) => {
 
 // Authenticated App Wrapper
 const AuthenticatedApp: React.FC = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    void import("./lib/auth").then(({ getCurrentUser, onAuthStateChange }) => {
-      void getCurrentUser()
-        .then(({ data: currentUser }) => {
-          setUser(currentUser);
-          setAuthLoading(false);
-        })
-        .catch((error) => {
-          console.error("Failed to get current user:", error);
-          setAuthLoading(false);
-        });
-
-      const { data: authListener } = onAuthStateChange((_event, session) => {
-        setUser(session?.user || null);
-      });
-
-      return () => {
-        authListener?.subscription?.unsubscribe();
-      };
-    });
-  }, []);
+  const { user, loading: authLoading } = useAuth();
 
   if (authLoading) {
     return (
