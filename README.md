@@ -118,22 +118,22 @@ See [services/README.md](src/services/README.md) for service layer documentation
 
 ### Getting Started
 
-- [Quick Start Guide](QUICK_START.md)
-- [Database Migrations](DATABASE_MIGRATIONS.md)
-- [API Setup](API_SETUP.md)
-- [Invite System](INVITE_SYSTEM_QUICKSTART.md)
+- [Quick Start Guide](01-QUICK-START.md)
+- [Database Migrations](02-DATABASE-MIGRATIONS.md)
+- [API Setup](03-API-SETUP.md)
+- [Invite System](04-INVITE-SYSTEM-QUICKSTART.md)
 
 ### Architecture & Testing
 
-- [Testing Strategy](TESTING_STRATEGY.md)
-- [Performance Audit](PERFORMANCE_AUDIT.md)
+- [Testing Strategy](05-TESTING-STRATEGY.md)
+- [Performance Audit](06-PERFORMANCE-AUDIT.md)
 - [Services Layer](src/services/README.md)
 
 ### Privacy & Security
 
-- [Privacy Reality Check](PRIVACY_REALITY_CHECK.md)
-- [Security Recommendations](SECURITY_RECOMMENDATIONS_REVIEW.md)
-- [Future: E2E Encryption](FUTURE_E2E_ENCRYPTION.md)
+- [Privacy Reality Check](07-PRIVACY-REALITY-CHECK.md)
+- [Security Recommendations](08-SECURITY-RECOMMENDATIONS-REVIEW.md)
+- [Future: E2E Encryption](09-FUTURE-E2E-ENCRYPTION.md)
 
 ## Privacy & Security
 
@@ -190,7 +190,7 @@ Without your credentials, they cannot access your database. This is standard for
 - Database admin can access data (on their own instance)
 - Supabase (hosting provider) can access data (on their own instance)
 
-See [Privacy Reality Check](PRIVACY_REALITY_CHECK.md) for full details.
+See [Privacy Reality Check](07-PRIVACY-REALITY-CHECK.md) for full details.
 
 ## Development Patterns
 
@@ -261,7 +261,7 @@ npm run dev
 ```
 
 **Full Setup:**
-See [Quick Start Guide](QUICK_START.md) for complete database setup, invite codes, and deployment instructions.
+See [Quick Start Guide](01-QUICK-START.md) for complete database setup, invite codes, and deployment instructions.
 
 **Note:** Each installation is independent. When you clone this repo and set up your own Supabase, you get your own private instance. There's no connection to my database or data.
 
