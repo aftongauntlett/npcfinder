@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import type { User } from "@supabase/supabase-js";
 import Footer from "./components/shared/Footer";
@@ -60,8 +60,9 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
   }, [user.id, changeThemeColor]);
 
   // Filter cards based on user preferences
-  const filteredCards = cards.filter((card) =>
-    visibleCards.includes(card.cardId)
+  const filteredCards = useMemo(
+    () => cards.filter((card) => visibleCards.includes(card.cardId)),
+    [visibleCards]
   );
 
   if (isLoading) {

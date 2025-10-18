@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { ThemeContext } from "../hooks/useTheme";
 import { type ThemeColorName, getTheme } from "../styles/colorThemes";
 
@@ -80,35 +80,36 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     root.style.setProperty("--color-text-on-primary", colorTheme.textOnPrimary);
   }, [themeColor]);
 
-  const changeTheme = (newTheme: ThemeOption) => {
+  const changeTheme = useCallback((newTheme: ThemeOption) => {
     setTheme(newTheme);
     try {
       localStorage.setItem("theme", newTheme);
     } catch (error) {
       console.error("Failed to save theme:", error);
     }
-  };
+  }, []);
 
-  const changeThemeColor = (newColor: ThemeColorName) => {
+  const changeThemeColor = useCallback((newColor: ThemeColorName) => {
     setThemeColor(newColor);
     try {
       localStorage.setItem("themeColor", newColor);
     } catch (error) {
       console.error("Failed to save theme color:", error);
     }
-  };
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      theme,
+      resolvedTheme,
+      themeColor,
+      changeTheme,
+      changeThemeColor,
+    }),
+    [theme, resolvedTheme, themeColor, changeTheme, changeThemeColor]
+  );
 
   return (
-    <ThemeContext.Provider
-      value={{
-        theme,
-        resolvedTheme,
-        themeColor,
-        changeTheme,
-        changeThemeColor,
-      }}
-    >
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
   );
 };

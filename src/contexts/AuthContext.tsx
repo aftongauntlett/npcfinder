@@ -1,4 +1,10 @@
-import React, { createContext, useState, useEffect, useContext } from "react";
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+  useMemo,
+} from "react";
 import type { User } from "@supabase/supabase-js";
 import { getCurrentUser, onAuthStateChange } from "../lib/auth";
 
@@ -59,10 +65,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const value: AuthContextValue = {
-    user,
-    loading,
-  };
+  const value = useMemo(
+    () => ({
+      user,
+      loading,
+    }),
+    [user, loading]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

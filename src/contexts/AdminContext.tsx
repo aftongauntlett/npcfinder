@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import { useAuth } from "./AuthContext";
 import { supabase } from "../lib/supabase";
 
@@ -17,7 +24,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const checkAdminStatus = async () => {
+  const checkAdminStatus = useCallback(async () => {
     if (!user) {
       setIsAdmin(false);
       setIsLoading(false);
@@ -55,21 +62,23 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]);
 
-  const refreshAdminStatus = async () => {
+  const refreshAdminStatus = useCallback(async () => {
     await checkAdminStatus();
-  };
+  }, [checkAdminStatus]);
 
   useEffect(() => {
     void checkAdminStatus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [checkAdminStatus]);
+
+  const value = useMemo(
+    () => ({ isAdmin, isLoading, refreshAdminStatus }),
+    [isAdmin, isLoading, refreshAdminStatus]
+  );
 
   return (
-    <AdminContext.Provider value={{ isAdmin, isLoading, refreshAdminStatus }}>
-      {children}
-    </AdminContext.Provider>
+    <AdminContext.Provider value={value}>{children}</AdminContext.Provider>
   );
 };
 
