@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { useAuth } from "../../contexts/AuthContext";
+import React, { useState, useMemo } from "react";
 import { Film, Tv as TvIcon, Send, ListVideo, Lightbulb } from "lucide-react";
 import SendMediaModal from "../shared/SendMediaModal";
 import { searchMoviesAndTV } from "../../utils/mediaSearchAdapters";
@@ -7,12 +6,16 @@ import MediaRecommendationCard from "../shared/MediaRecommendationCard";
 import {
   MediaRecommendationsLayout,
   BaseRecommendation,
-  FriendSummary,
 } from "../shared/MediaRecommendationsLayout";
-import * as recommendationsService from "../../services/recommendationsService";
-import type { Recommendation } from "../../data/mockData";
 import PersonalWatchList from "../media/PersonalWatchList";
 import MediaPageTemplate from "../layouts/MediaPageTemplate";
+import {
+  useFriendsWithMovieRecs,
+  useMovieStats,
+  useMovieRecommendations,
+  useUpdateMovieRecommendationStatus,
+  useDeleteMovieRecommendation,
+} from "../../hooks/useMovieQueries";
 
 // Extend BaseRecommendation with movie-specific fields
 interface MovieRecommendation extends BaseRecommendation {
@@ -32,125 +35,53 @@ interface MovieRecommendation extends BaseRecommendation {
  * Discover great movies and shows through trusted friend recommendations
  */
 const MoviesTV: React.FC = () => {
-  const { user } = useAuth();
-
   // Tab state
   const [activeTab, setActiveTab] = useState<"watchlist" | "suggestions">(
     "watchlist"
   );
 
-  const [loading, setLoading] = useState(true);
-  const [friendsWithRecs, setFriendsWithRecs] = useState<FriendSummary[]>([]);
   const [selectedView, setSelectedView] = useState<
     "overview" | "friend" | "hits" | "misses" | "sent"
   >("overview");
   const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null);
-  const [recommendations, setRecommendations] = useState<MovieRecommendation[]>(
-    []
-  );
   const [showSendModal, setShowSendModal] = useState(false);
-  const [quickStats, setQuickStats] = useState({
-    hits: 0,
-    misses: 0,
-    queue: 0,
-    sent: 0,
-  });
 
-  // Load friends who have sent recommendations
-  const loadFriendsWithRecommendations = useCallback(async () => {
-    if (!user) return;
+  // TanStack Query hooks - automatic loading, caching, refetching
+  const { data: friendsWithRecs = [], isLoading: friendsLoading } =
+    useFriendsWithMovieRecs();
 
-    try {
-      setLoading(true);
+  const { data: quickStats = { hits: 0, misses: 0, queue: 0, sent: 0 } } =
+    useMovieStats();
 
-      // Use service layer to get friends with stats (movie + tv)
-      const friends =
-        await recommendationsService.getFriendsWithRecommendations("movie");
-      setFriendsWithRecs(friends);
+  const { data: rawRecommendations = [], isLoading: recsLoading } =
+    useMovieRecommendations(selectedView, selectedFriendId || undefined);
 
-      // Get quick stats
-      const stats = await recommendationsService.getQuickStats("movie");
-      setQuickStats(stats);
-    } catch (error) {
-      console.error("Error loading friends:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
+  // Derive loading state
+  const loading = friendsLoading || recsLoading;
 
-  // Load recommendations for a specific view
-  const loadRecommendations = useCallback(
-    async (view: string, friendId?: string) => {
-      if (!user) return;
+  // Map raw recommendations to MovieRecommendation format with useMemo
+  const recommendations = useMemo<MovieRecommendation[]>(() => {
+    return rawRecommendations.map((rec) => ({
+      ...rec,
+      sent_message: rec.sent_message || null,
+      comment: rec.recipient_note || null,
+      sender_comment: rec.sender_note || null,
+      sent_at: rec.created_at,
+      poster_url: rec.poster_url || null,
+      watched_at: rec.consumed_at || null,
+      overview: null,
+      release_date: rec.year ? `${rec.year}` : null,
+      media_type: rec.media_type as "movie" | "tv",
+      status:
+        rec.status === "consumed"
+          ? "watched"
+          : (rec.status as "pending" | "watched" | "hit" | "miss"),
+    }));
+  }, [rawRecommendations]);
 
-      try {
-        setLoading(true);
-        let data: Recommendation[] = [];
-
-        if (view === "friend" && friendId) {
-          // Show all recs from this friend
-          data = await recommendationsService.getRecommendationsFromFriend(
-            friendId,
-            "movie"
-          );
-        } else if (view === "hits") {
-          // Show all hits from any friend
-          data = await recommendationsService.getRecommendations({
-            direction: "received",
-            status: "hit",
-            mediaType: "movie",
-          });
-        } else if (view === "misses") {
-          // Show all misses from any friend
-          data = await recommendationsService.getRecommendations({
-            direction: "received",
-            status: "miss",
-            mediaType: "movie",
-          });
-        } else if (view === "sent") {
-          // Show all recs sent by this user
-          data = await recommendationsService.getRecommendations({
-            direction: "sent",
-            mediaType: "movie",
-          });
-        }
-
-        // Map mock data to MovieRecommendation format
-        const mappedData: MovieRecommendation[] = data.map((rec) => ({
-          ...rec,
-          // Map mockData fields to component fields
-          sent_message: rec.sent_message || null,
-          comment: rec.recipient_note || null,
-          sender_comment: rec.sender_note || null,
-          sent_at: rec.created_at,
-          poster_url: rec.poster_url || null,
-          watched_at: rec.consumed_at || null,
-          // These fields aren't in mockData yet - will add later
-          overview: null,
-          release_date: rec.year ? `${rec.year}` : null,
-          // Filter only movie/tv types
-          media_type: rec.media_type as "movie" | "tv",
-          // Map 'consumed' status to 'watched' for movies
-          status:
-            rec.status === "consumed"
-              ? "watched"
-              : (rec.status as "pending" | "watched" | "hit" | "miss"),
-        }));
-
-        setRecommendations(mappedData);
-      } catch (error) {
-        console.error("Error loading recommendations:", error);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [user]
-  );
-
-  // Initial load
-  useEffect(() => {
-    void loadFriendsWithRecommendations();
-  }, [loadFriendsWithRecommendations]);
+  // TanStack Query mutations
+  const updateStatusMutation = useUpdateMovieRecommendationStatus();
+  const deleteRecMutation = useDeleteMovieRecommendation();
 
   // Handle view changes
   const handleViewChange = (
@@ -159,10 +90,6 @@ const MoviesTV: React.FC = () => {
   ) => {
     setSelectedView(view);
     setSelectedFriendId(friendId || null);
-
-    if (view !== "overview") {
-      void loadRecommendations(view, friendId);
-    }
   };
 
   // Mark a recommendation as watched/hit/miss
@@ -172,55 +99,23 @@ const MoviesTV: React.FC = () => {
     comment?: string
   ) => {
     try {
-      // Optimistic update - update local state immediately
-      setRecommendations((prev) =>
-        prev.map((rec) =>
-          rec.id === recId
-            ? {
-                ...rec,
-                status: status as MovieRecommendation["status"],
-                comment: comment || rec.comment,
-              }
-            : rec
-        )
-      );
-
       // Map 'consumed' back to 'watched' for movies
       const dbStatus = status === "consumed" ? "watched" : status;
 
-      await recommendationsService.updateRecommendationStatus(
+      await updateStatusMutation.mutateAsync({
         recId,
-        dbStatus as "pending" | "consumed" | "hit" | "miss",
-        comment
-      );
-
-      // Refresh friend counts in background (don't await to avoid flicker)
-      void loadFriendsWithRecommendations();
+        status: dbStatus,
+        comment,
+      });
     } catch (error) {
       console.error("Error updating recommendation:", error);
-      // On error, reload to get correct state
-      if (selectedView === "friend" && selectedFriendId) {
-        await loadRecommendations("friend", selectedFriendId);
-      } else {
-        await loadRecommendations(selectedView);
-      }
     }
   };
 
   // Delete (unsend) a recommendation
   const deleteRecommendation = async (recId: string) => {
     try {
-      await recommendationsService.deleteRecommendation(recId);
-
-      // Refresh the current view
-      if (selectedView === "friend" && selectedFriendId) {
-        await loadRecommendations("friend", selectedFriendId);
-      } else {
-        await loadRecommendations(selectedView);
-      }
-
-      // Refresh friend counts
-      await loadFriendsWithRecommendations();
+      await deleteRecMutation.mutateAsync(recId);
     } catch (error) {
       console.error("Error deleting recommendation:", error);
     }
@@ -343,14 +238,8 @@ const MoviesTV: React.FC = () => {
         isOpen={showSendModal}
         onClose={() => setShowSendModal(false)}
         onSent={() => {
-          // Refresh the data after sending
-          void loadFriendsWithRecommendations();
-          if (selectedView !== "overview") {
-            void loadRecommendations(
-              selectedView,
-              selectedFriendId || undefined
-            );
-          }
+          // TanStack Query will auto-invalidate and refresh after mutation
+          setShowSendModal(false);
         }}
         mediaType="movies"
         tableName="movie_recommendations"
