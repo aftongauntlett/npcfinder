@@ -2,13 +2,14 @@ import React, { useState, useEffect } from "react";
 import type { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { User as UserIcon, Save, X } from "lucide-react";
+import { User as UserIcon, Save } from "lucide-react";
 import { getUserProfile, upsertUserProfile } from "../../lib/profiles";
 import Button from "../shared/Button";
-import PageContentContainer from "../layouts/PageContentContainer";
+import MainLayout from "../layouts/MainLayout";
+import ContentLayout from "../layouts/ContentLayout";
 import ColorThemePicker from "../settings/ColorThemePicker";
 import { cards } from "../../data/dashboardCards";
-import { type ThemeColorName } from "../../styles/colorThemes";
+import { DEFAULT_THEME_COLOR } from "../../styles/colorThemes";
 import { useTheme } from "../../hooks/useTheme";
 import DashboardCustomizer from "../settings/DashboardCustomizer";
 
@@ -18,8 +19,9 @@ interface UserSettingsProps {
 
 interface ProfileData {
   display_name: string;
+  bio: string;
   visible_cards: string[];
-  theme_color: ThemeColorName;
+  theme_color: string; // Hex color
 }
 
 interface Message {
@@ -37,8 +39,9 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
 
   const [profile, setProfile] = useState<ProfileData>({
     display_name: "",
+    bio: "",
     visible_cards: allCardIds,
-    theme_color: "purple",
+    theme_color: DEFAULT_THEME_COLOR,
   });
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -61,9 +64,10 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
         console.log("Using local profile (database table not set up yet)");
         // Use defaults from localStorage
         const savedColor =
-          (localStorage.getItem("themeColor") as ThemeColorName) || "purple";
+          localStorage.getItem("themeColor") || DEFAULT_THEME_COLOR;
         setProfile({
           display_name: currentUser.email || "",
+          bio: "",
           visible_cards: allCardIds,
           theme_color: savedColor,
         });
@@ -74,8 +78,9 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
       } else if (data) {
         setProfile({
           display_name: data.display_name || currentUser.email || "",
+          bio: data.bio || "",
           visible_cards: data.visible_cards || allCardIds,
-          theme_color: (data.theme_color as ThemeColorName) || "purple",
+          theme_color: data.theme_color || DEFAULT_THEME_COLOR,
         });
 
         // Apply theme color immediately
@@ -87,9 +92,10 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
       console.error("Error loading profile:", error);
       // Fall back to local defaults
       const savedColor =
-        (localStorage.getItem("themeColor") as ThemeColorName) || "purple";
+        localStorage.getItem("themeColor") || DEFAULT_THEME_COLOR;
       setProfile({
         display_name: currentUser.email || "",
+        bio: "",
         visible_cards: allCardIds,
         theme_color: savedColor,
       });
@@ -182,122 +188,145 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="text-white text-lg sm:text-xl">Loading profile...</div>
-      </div>
+      <MainLayout>
+        <ContentLayout
+          title="Profile Settings"
+          description="Customize your profile and dashboard preferences"
+        >
+          <div className="flex items-center justify-center py-12">
+            <div className="text-gray-900 dark:text-white text-lg sm:text-xl">
+              Loading profile...
+            </div>
+          </div>
+        </ContentLayout>
+      </MainLayout>
     );
   }
 
   return (
-    <PageContentContainer className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 sm:p-8">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <UserIcon
-                className="w-6 sm:w-8 h-6 sm:h-8 text-primary"
-                aria-hidden="true"
-              />
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                Profile Settings
-              </h1>
+    <MainLayout>
+      <ContentLayout
+        title="Profile Settings"
+        description="Customize your profile and dashboard preferences"
+      >
+        {/* Message */}
+        {message && (
+          <div
+            role="alert"
+            className={`mb-6 p-4 rounded-lg ${
+              message.type === "success"
+                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+            }`}
+          >
+            {message.text}
+          </div>
+        )}
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void handleSave(e);
+          }}
+          className="space-y-6"
+        >
+          {/* Profile Information Card */}
+          <div className="bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700/50 dark:border-gray-700/50">
+            <h2 className="text-xl font-bold text-white dark:text-white mb-4 font-heading flex items-center gap-2">
+              <UserIcon className="w-5 h-5 text-primary" />
+              Profile Information
+            </h2>
+            <div className="space-y-4">
+              {/* Display Name */}
+              <div>
+                <label
+                  htmlFor="display_name"
+                  className="block text-sm font-medium text-gray-300 dark:text-gray-300 mb-2"
+                >
+                  Display Name
+                </label>
+                <input
+                  type="text"
+                  id="display_name"
+                  name="display_name"
+                  value={profile.display_name}
+                  onChange={handleChange}
+                  placeholder="Your display name"
+                  className="w-full px-4 py-2 border border-gray-600 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-900/50 dark:bg-gray-900/50 text-white dark:text-white placeholder-gray-500"
+                />
+                <p className="mt-1 text-sm text-gray-400 dark:text-gray-400">
+                  This is how your name appears in the greeting
+                </p>
+              </div>
+
+              {/* Email Address (Read-only) */}
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-300 dark:text-gray-300 mb-2"
+                >
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={currentUser.email || ""}
+                  disabled
+                  className="w-full px-4 py-2 border border-gray-600 dark:border-gray-600 rounded-lg bg-gray-900/30 dark:bg-gray-900/30 text-gray-500 dark:text-gray-500 cursor-not-allowed"
+                />
+                <p className="mt-1 text-sm text-gray-400 dark:text-gray-400">
+                  Your email cannot be changed
+                </p>
+              </div>
+
+              {/* Bio */}
+              <div>
+                <label
+                  htmlFor="bio"
+                  className="block text-sm font-medium text-gray-300 dark:text-gray-300 mb-2"
+                >
+                  Bio
+                </label>
+                <textarea
+                  id="bio"
+                  name="bio"
+                  value={profile.bio}
+                  onChange={handleChange}
+                  placeholder="Tell us about yourself..."
+                  maxLength={1000}
+                  rows={4}
+                  className="w-full px-4 py-2 border border-gray-600 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-900/50 dark:bg-gray-900/50 text-white dark:text-white placeholder-gray-500 resize-none"
+                />
+                <p className="mt-1 text-sm text-gray-400 dark:text-gray-400">
+                  {profile.bio.length}/1000 characters
+                </p>
+              </div>
             </div>
-            <button
-              onClick={() => void navigate("/app")}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-              aria-label="Close"
-            >
-              <X className="w-5 sm:w-6 h-5 sm:h-6" aria-hidden="true" />
-            </button>
           </div>
 
-          {/* Message */}
-          {message && (
-            <div
-              role="alert"
-              className={`mb-6 p-4 rounded-lg ${
-                message.type === "success"
-                  ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                  : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-              }`}
-            >
-              {message.text}
-            </div>
-          )}
+          {/* Theme Color Card */}
+          <div className="bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700/50 dark:border-gray-700/50">
+            <ColorThemePicker
+              selectedColor={profile.theme_color}
+              onColorChange={(color) => {
+                setProfile((prev) => ({ ...prev, theme_color: color }));
+                setMessage(null);
+              }}
+            />
+          </div>
 
-          {/* Form */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              void handleSave(e);
-            }}
-            className="space-y-6"
-          >
-            {/* Display Name */}
-            <div>
-              <label
-                htmlFor="display_name"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Display Name
-              </label>
-              <input
-                type="text"
-                id="display_name"
-                name="display_name"
-                value={profile.display_name}
-                onChange={handleChange}
-                placeholder="Your display name"
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                This is how your name appears in the greeting
-              </p>
-            </div>
+          {/* Dashboard Customization Card */}
+          <div className="bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700/50 dark:border-gray-700/50">
+            <DashboardCustomizer
+              visibleCards={profile.visible_cards}
+              onToggleCard={handleToggleCard}
+            />
+          </div>
 
-            {/* Email Address (Read-only) */}
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Email Address
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={currentUser.email || ""}
-                disabled
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400 cursor-not-allowed"
-              />
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Your email cannot be changed
-              </p>
-            </div>
-
-            {/* Divider */}
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-              <ColorThemePicker
-                selectedColor={profile.theme_color}
-                onColorChange={(color) => {
-                  setProfile((prev) => ({ ...prev, theme_color: color }));
-                  setMessage(null);
-                }}
-              />
-            </div>
-
-            {/* Divider */}
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
-              <DashboardCustomizer
-                visibleCards={profile.visible_cards}
-                onToggleCard={handleToggleCard}
-              />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
+          {/* Action Buttons Card */}
+          <div className="bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700/50 dark:border-gray-700/50">
+            <div className="flex flex-col-reverse sm:flex-row gap-3">
               <Button
                 type="button"
                 variant="secondary"
@@ -315,10 +344,10 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
                 {isSaving ? "Saving..." : "Save Changes"}
               </button>
             </div>
-          </form>
-        </div>
-      </div>
-    </PageContentContainer>
+          </div>
+        </form>
+      </ContentLayout>
+    </MainLayout>
   );
 };
 
