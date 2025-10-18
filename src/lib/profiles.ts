@@ -12,13 +12,6 @@ import * as realProfiles from "./profiles.real";
 // Export the UserProfile type (same for both implementations)
 export type { UserProfile } from "./profiles.real";
 
-// Log which implementation we're using
-if (USE_MOCK_DATA) {
-  console.log("🎭 Using MOCK profile data (localStorage)");
-} else {
-  console.log("🔌 Using REAL profile data (Supabase)");
-}
-
 // Export the appropriate implementation based on env variable
 const profileService = USE_MOCK_DATA ? mockProfiles : realProfiles;
 

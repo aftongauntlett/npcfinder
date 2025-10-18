@@ -102,6 +102,15 @@ export const signOut = async (): Promise<{ error: AuthError | null }> => {
  */
 export const getCurrentUser = async (): Promise<AuthResult<User>> => {
   try {
+    // Check if Supabase is configured before attempting to access it
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      // Not an error - just means we're on a public page without Supabase
+      return { data: null, error: null };
+    }
+
     const {
       data: { user },
       error,
@@ -137,5 +146,14 @@ export const getSession = async (): Promise<AuthResult<Session>> => {
 export const onAuthStateChange = (
   callback: (event: string, session: Session | null) => void
 ) => {
+  // Check if Supabase is configured before setting up listener
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    // Return a no-op subscription for public pages
+    return { data: { subscription: { unsubscribe: () => {} } } };
+  }
+
   return supabase.auth.onAuthStateChange(callback);
 };

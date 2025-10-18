@@ -1,89 +1,25 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import type { User } from "@supabase/supabase-js";
-import Footer from "./components/shared/Footer";
-import DashboardCard from "./components/dashboard/DashboardCard";
-import DashboardHeader from "./components/dashboard/DashboardHeader";
-import Navigation from "./components/Navigation";
-import MoviesTV from "./components/pages/MoviesTV";
-import Music from "./components/pages/Music";
-import AuthPage from "./components/pages/AuthPage";
-import AdminPanel from "./components/pages/AdminPanel";
-import UserSettings from "./components/pages/UserSettings";
-import Suggestions from "./components/pages/Suggestions";
 import StarryBackground from "./components/StarryBackground";
 import DemoLanding from "./components/pages/DemoLanding";
+import AuthPage from "./components/pages/AuthPage";
 import PageContainer from "./components/layouts/PageContainer";
 import DevIndicator from "./components/dev/DevIndicator";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { AdminProvider, useAdmin } from "./contexts/AdminContext";
-import { useProfileQuery } from "./hooks/useProfileQuery";
-import { cards } from "./data/dashboardCards";
-import { useTheme } from "./hooks/useTheme";
 
-// Home page component
-interface HomePageProps {
-  user: User;
-}
-
-const HomePage: React.FC<HomePageProps> = () => {
-  const { changeThemeColor } = useTheme();
-
-  // Fetch user profile with TanStack Query (automatic caching, shared with Navigation)
-  const { data: profile, isLoading } = useProfileQuery();
-
-  // Apply theme color when profile loads
-  const themeColorApplied = React.useRef(false);
-  React.useEffect(() => {
-    if (profile?.theme_color && !themeColorApplied.current) {
-      changeThemeColor(profile.theme_color);
-      themeColorApplied.current = true;
-    }
-  }, [profile?.theme_color, changeThemeColor]);
-
-  const displayName = profile?.display_name || null;
-
-  // If user has card preferences, use them. Otherwise show all cards
-  const allCardIds = cards.map((c) => c.cardId);
-  const visibleCards = profile?.visible_cards || allCardIds;
-
-  // Filter cards based on user preferences
-  const filteredCards = useMemo(
-    () => cards.filter((card) => visibleCards.includes(card.cardId)),
-    [visibleCards]
-  );
-
-  if (isLoading) {
-    return (
-      <main className="container mx-auto px-6 py-12">
-        <div className="text-center text-gray-600 dark:text-gray-400">
-          Loading your dashboard...
-        </div>
-      </main>
-    );
-  }
-
-  return (
-    <main className="container mx-auto px-6 py-12">
-      {/* Greeting Header */}
-      <DashboardHeader displayName={displayName || undefined} />
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCards.map((card) => (
-          <DashboardCard
-            key={card.id}
-            title={card.title}
-            description={card.description}
-            gradient={card.gradient}
-            route={card.route}
-          />
-        ))}
-      </div>
-      <Footer />
-    </main>
-  );
-};
+// Lazy load authenticated components to avoid Supabase imports on landing page
+const HomePage = React.lazy(() => import("./components/pages/HomePage"));
+const Navigation = React.lazy(() => import("./components/Navigation"));
+const MoviesTV = React.lazy(() => import("./components/pages/MoviesTV"));
+const Music = React.lazy(() => import("./components/pages/Music"));
+const UserSettings = React.lazy(
+  () => import("./components/pages/UserSettings")
+);
+const Suggestions = React.lazy(() => import("./components/pages/Suggestions"));
+const AdminPanel = React.lazy(() => import("./components/pages/AdminPanel"));
 
 // Protected Route wrapper for admin routes
 interface ProtectedAdminRouteProps {
@@ -131,28 +67,39 @@ const AppLayout: React.FC<AppLayoutProps> = ({ user }) => {
   return (
     <PageContainer className="relative">
       <StarryBackground />
-      <Navigation currentUser={user} />
-      <DevIndicator isAdmin={userIsAdmin} />
-      <Routes>
-        <Route path="/" element={<HomePage user={user} />} />
-        <Route path="/movies-tv" element={<MoviesTV />} />
-        <Route path="/music" element={<Music />} />
-        <Route path="/settings" element={<UserSettings currentUser={user} />} />
-        <Route
-          path="/suggestions"
-          element={<Suggestions currentUser={user} />}
-        />
-        <Route
-          path="/admin"
-          element={
-            <ProtectedAdminRoute user={user}>
-              <AdminPanel />
-            </ProtectedAdminRoute>
-          }
-        />
-        {/* Catch all - redirect to app home */}
-        <Route path="*" element={<Navigate to="/app" replace />} />
-      </Routes>
+      <React.Suspense
+        fallback={
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-gray-600 dark:text-gray-400">Loading...</div>
+          </div>
+        }
+      >
+        <Navigation currentUser={user} />
+        <DevIndicator isAdmin={userIsAdmin} />
+        <Routes>
+          <Route path="/" element={<HomePage user={user} />} />
+          <Route path="/movies-tv" element={<MoviesTV />} />
+          <Route path="/music" element={<Music />} />
+          <Route
+            path="/settings"
+            element={<UserSettings currentUser={user} />}
+          />
+          <Route
+            path="/suggestions"
+            element={<Suggestions currentUser={user} />}
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedAdminRoute user={user}>
+                <AdminPanel />
+              </ProtectedAdminRoute>
+            }
+          />
+          {/* Catch all - redirect to app home */}
+          <Route path="*" element={<Navigate to="/app" replace />} />
+        </Routes>
+      </React.Suspense>
     </PageContainer>
   );
 };
@@ -173,9 +120,6 @@ const AuthenticatedApp: React.FC = () => {
 
   return (
     <Routes>
-      {/* Public landing page - always accessible */}
-      <Route path="/" element={<DemoLanding />} />
-
       {/* Login/Signup page (invite-only) */}
       <Route
         path="/login"
@@ -207,9 +151,20 @@ const App: React.FC = () => {
   return (
     <BrowserRouter>
       <ThemeProvider>
-        <AuthProvider>
-          <AuthenticatedApp />
-        </AuthProvider>
+        <Routes>
+          {/* Public routes - NO AUTH REQUIRED */}
+          <Route path="/" element={<DemoLanding />} />
+
+          {/* All authenticated routes wrapped in AuthProvider */}
+          <Route
+            path="/*"
+            element={
+              <AuthProvider>
+                <AuthenticatedApp />
+              </AuthProvider>
+            }
+          />
+        </Routes>
       </ThemeProvider>
     </BrowserRouter>
   );
