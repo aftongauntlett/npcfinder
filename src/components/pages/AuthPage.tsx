@@ -1,12 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { signIn, signUp } from "../../lib/auth";
 import Button from "../shared/Button";
 
 /**
  * Authentication page with login and signup forms
  * SECURITY: Requires invite code for signup (invite-only system)
+ * Supports URL parameters: ?invite=CODE&email=user@example.com
  */
 const AuthPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const [isLogin, setIsLogin] = useState<boolean>(true);
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -14,6 +17,21 @@ const AuthPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [message, setMessage] = useState<string>("");
+
+  // Pre-fill form from URL parameters
+  useEffect(() => {
+    const inviteParam = searchParams.get("invite");
+    const emailParam = searchParams.get("email");
+
+    if (inviteParam) {
+      setInviteCode(inviteParam.toUpperCase());
+      setIsLogin(false); // Switch to signup mode if invite code is present
+    }
+
+    if (emailParam) {
+      setEmail(emailParam);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

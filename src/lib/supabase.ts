@@ -1,14 +1,35 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+let supabaseInstance: SupabaseClient | null = null;
 
-// Validate that environment variables are loaded
-if (!supabaseUrl || !supabaseKey) {
-  console.error("Missing Supabase environment variables!");
-  console.error("Make sure .env.local exists with:");
-  console.error("- VITE_SUPABASE_URL");
-  console.error("- VITE_SUPABASE_ANON_KEY");
-}
+/**
+ * Lazily creates and returns the Supabase client.
+ * This prevents initialization errors on pages that don't need Supabase.
+ */
+export const getSupabase = (): SupabaseClient => {
+  if (supabaseInstance) {
+    return supabaseInstance;
+  }
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+  // Validate that environment variables are loaded
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error(
+      "Missing Supabase environment variables. Make sure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set."
+    );
+  }
+
+  supabaseInstance = createClient(supabaseUrl, supabaseKey);
+  return supabaseInstance;
+};
+
+// Legacy export for backward compatibility
+// This will only initialize when actually accessed
+export const supabase = new Proxy({} as SupabaseClient, {
+  get: (_target, prop) => {
+    const client = getSupabase();
+    return client[prop as keyof SupabaseClient];
+  },
+});

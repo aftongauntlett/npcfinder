@@ -196,12 +196,12 @@ const AuthenticatedApp: React.FC = () => {
 
   return (
     <Routes>
-      {/* Public demo landing page */}
+      {/* Public landing page - always accessible */}
       <Route path="/" element={<DemoLanding />} />
 
-      {/* Hidden auth portal */}
+      {/* Login/Signup page (invite-only) */}
       <Route
-        path="/portal"
+        path="/login"
         element={user ? <Navigate to="/app" replace /> : <AuthPage />}
       />
 
@@ -209,11 +209,11 @@ const AuthenticatedApp: React.FC = () => {
       <Route
         path="/app/*"
         element={
-          user ? <AppLayout user={user} /> : <Navigate to="/portal" replace />
+          user ? <AppLayout user={user} /> : <Navigate to="/login" replace />
         }
       />
 
-      {/* Catch all - redirect to home */}
+      {/* Catch all - redirect to landing */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
