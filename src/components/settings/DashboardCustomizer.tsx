@@ -15,14 +15,14 @@ const DashboardCustomizer: React.FC<DashboardCustomizerProps> = ({
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-lg font-semibold text-white dark:text-white">
             Dashboard Cards
           </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-sm text-gray-400 dark:text-gray-400 mt-1">
             Choose which sections appear on your dashboard
           </p>
         </div>
-        <div className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="text-sm text-gray-400 dark:text-gray-400">
           {visibleCards.length} of {cards.length} visible
         </div>
       </div>
@@ -38,8 +38,8 @@ const DashboardCustomizer: React.FC<DashboardCustomizerProps> = ({
               onClick={() => onToggleCard(card.cardId)}
               className={`flex items-start gap-4 p-4 rounded-lg border-2 transition-all text-left ${
                 isVisible
-                  ? "border-primary bg-primary-pale/10 dark:bg-primary-pale/10"
-                  : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 opacity-60 hover:opacity-80"
+                  ? "border-primary bg-primary/10 dark:bg-primary/10"
+                  : "border-gray-700 dark:border-gray-700 bg-gray-900/30 dark:bg-gray-900/30 opacity-60 hover:opacity-80"
               }`}
             >
               {/* Icon */}
@@ -47,7 +47,7 @@ const DashboardCustomizer: React.FC<DashboardCustomizerProps> = ({
                 className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
                   isVisible
                     ? "bg-primary text-white"
-                    : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                    : "bg-gray-700 dark:bg-gray-700 text-gray-400 dark:text-gray-400"
                 }`}
               >
                 {isVisible ? (
@@ -62,8 +62,8 @@ const DashboardCustomizer: React.FC<DashboardCustomizerProps> = ({
                 <h4
                   className={`font-medium ${
                     isVisible
-                      ? "text-gray-900 dark:text-white"
-                      : "text-gray-500 dark:text-gray-400"
+                      ? "text-white dark:text-white"
+                      : "text-gray-400 dark:text-gray-400"
                   }`}
                 >
                   {card.title}
@@ -71,8 +71,8 @@ const DashboardCustomizer: React.FC<DashboardCustomizerProps> = ({
                 <p
                   className={`text-sm mt-1 ${
                     isVisible
-                      ? "text-gray-600 dark:text-gray-300"
-                      : "text-gray-400 dark:text-gray-500"
+                      ? "text-gray-300 dark:text-gray-300"
+                      : "text-gray-500 dark:text-gray-500"
                   }`}
                 >
                   {card.description}
@@ -85,7 +85,7 @@ const DashboardCustomizer: React.FC<DashboardCustomizerProps> = ({
                   className={`inline-block px-2.5 py-1 text-xs font-medium rounded-full ${
                     isVisible
                       ? "bg-primary text-white"
-                      : "bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300"
+                      : "bg-gray-700 dark:bg-gray-700 text-gray-300 dark:text-gray-300"
                   }`}
                 >
                   {isVisible ? "Visible" : "Hidden"}
@@ -97,8 +97,8 @@ const DashboardCustomizer: React.FC<DashboardCustomizerProps> = ({
       </div>
 
       {visibleCards.length === 0 && (
-        <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-          <p className="text-sm text-amber-800 dark:text-amber-200">
+        <div className="mt-4 p-4 bg-amber-900/30 dark:bg-amber-900/30 border border-amber-700/50 dark:border-amber-700/50 rounded-lg">
+          <p className="text-sm text-amber-300 dark:text-amber-300">
             ⚠️ You must have at least one card visible on your dashboard
           </p>
         </div>

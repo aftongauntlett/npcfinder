@@ -1,6 +1,9 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { ThemeContext } from "../hooks/useTheme";
-import { type ThemeColorName, getTheme } from "../styles/colorThemes";
+import {
+  DEFAULT_THEME_COLOR,
+  createColorVariations,
+} from "../styles/colorThemes";
 
 type ThemeOption = "light" | "dark" | "system";
 type ResolvedTheme = "light" | "dark";
@@ -12,7 +15,7 @@ interface ThemeProviderProps {
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [theme, setTheme] = useState<ThemeOption>("system");
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>("light");
-  const [themeColor, setThemeColor] = useState<ThemeColorName>("purple");
+  const [themeColor, setThemeColor] = useState<string>(DEFAULT_THEME_COLOR);
 
   useEffect(() => {
     const loadTheme = () => {
@@ -22,11 +25,12 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
           setTheme(savedTheme);
         }
 
-        const savedColor = localStorage.getItem(
-          "themeColor"
-        ) as ThemeColorName | null;
+        const savedColor = localStorage.getItem("themeColor");
         if (savedColor) {
-          setThemeColor(savedColor);
+          // Validate hex color format
+          if (/^#[0-9A-Fa-f]{6}$/.test(savedColor)) {
+            setThemeColor(savedColor);
+          }
         }
       } catch (error) {
         console.error("Failed to load theme:", error);
@@ -69,15 +73,21 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   // Apply theme color CSS custom properties
   useEffect(() => {
-    const colorTheme = getTheme(themeColor);
+    const colorVariations = createColorVariations(themeColor);
     const root = document.documentElement;
 
-    root.style.setProperty("--color-primary", colorTheme.primary);
-    root.style.setProperty("--color-primary-dark", colorTheme.primaryDark);
-    root.style.setProperty("--color-primary-light", colorTheme.primaryLight);
-    root.style.setProperty("--color-primary-pale", colorTheme.primaryPale);
-    root.style.setProperty("--color-primary-ring", colorTheme.primaryRing);
-    root.style.setProperty("--color-text-on-primary", colorTheme.textOnPrimary);
+    root.style.setProperty("--color-primary", colorVariations.primary);
+    root.style.setProperty("--color-primary-dark", colorVariations.primaryDark);
+    root.style.setProperty(
+      "--color-primary-light",
+      colorVariations.primaryLight
+    );
+    root.style.setProperty("--color-primary-pale", colorVariations.primaryPale);
+    root.style.setProperty("--color-primary-ring", colorVariations.primaryRing);
+    root.style.setProperty(
+      "--color-text-on-primary",
+      colorVariations.textOnPrimary
+    );
   }, [themeColor]);
 
   const changeTheme = useCallback((newTheme: ThemeOption) => {
@@ -89,12 +99,15 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     }
   }, []);
 
-  const changeThemeColor = useCallback((newColor: ThemeColorName) => {
-    setThemeColor(newColor);
-    try {
-      localStorage.setItem("themeColor", newColor);
-    } catch (error) {
-      console.error("Failed to save theme color:", error);
+  const changeThemeColor = useCallback((newColor: string) => {
+    // Validate hex color format
+    if (/^#[0-9A-Fa-f]{6}$/.test(newColor)) {
+      setThemeColor(newColor);
+      try {
+        localStorage.setItem("themeColor", newColor);
+      } catch (error) {
+        console.error("Failed to save theme color:", error);
+      }
     }
   }, []);
 

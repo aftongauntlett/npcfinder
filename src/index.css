@@ -63,4 +63,39 @@ textarea::-moz-selection {
       transform: translateY(-20px) scale(1);
     }
   }
+
+  .animate-sparkle {
+    animation: sparkle 1.5s ease-in-out;
+  }
+}
+
+/* Custom styles for react-colorful to match our dark theme */
+.react-colorful {
+  width: 200px;
+  height: 200px;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.react-colorful__saturation {
+  border-radius: 0.5rem 0.5rem 0 0;
+  border-bottom: none;
+}
+
+.react-colorful__last-control {
+  border-radius: 0 0 0.5rem 0.5rem;
+}
+
+.react-colorful__pointer {
+  width: 20px;
+  height: 20px;
+  border-width: 3px;
+  border-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.react-colorful__hue {
+  order: 1;
+  height: 12px;
+  border-radius: 0 0 0.5rem 0.5rem;
 }

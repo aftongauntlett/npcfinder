@@ -1,6 +1,5 @@
 import { supabase } from "./supabase";
 import type { PostgrestError } from "@supabase/supabase-js";
-import type { ThemeColorName } from "../styles/colorThemes";
 
 /**
  * User Profile utilities
@@ -13,7 +12,7 @@ export interface UserProfile {
   bio: string | null;
   profile_picture_url: string | null;
   visible_cards?: string[]; // Array of card IDs to show on dashboard
-  theme_color?: ThemeColorName; // User's chosen theme color
+  theme_color?: string; // User's chosen theme color (hex code)
   is_admin?: boolean; // Admin privileges
   created_at?: string;
   updated_at?: string;
@@ -87,12 +86,10 @@ export const upsertUserProfile = async (
       updateData.theme_color = profileData.theme_color;
     }
 
-    // Include is_admin if provided (only set by admins via toggleUserAdminStatus)
+    // Only include is_admin if explicitly provided
+    // This prevents accidentally changing admin status when updating other fields
     if (profileData.is_admin !== undefined) {
       updateData.is_admin = profileData.is_admin;
-    } else {
-      // Default to false for new users
-      updateData.is_admin = false;
     }
 
     const { data, error } = await supabase

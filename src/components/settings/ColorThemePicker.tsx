@@ -1,101 +1,124 @@
 import React from "react";
-import { Check } from "lucide-react";
-import { colorThemes, type ThemeColorName } from "../../styles/colorThemes";
+import { Palette } from "lucide-react";
+import { HexColorPicker } from "react-colorful";
+import { getContrastColor } from "../../styles/colorThemes";
 
 interface ColorThemePickerProps {
-  selectedColor: ThemeColorName;
-  onColorChange: (color: ThemeColorName) => void;
+  selectedColor: string; // Hex color
+  onColorChange: (color: string) => void;
 }
 
 const ColorThemePicker: React.FC<ColorThemePickerProps> = ({
   selectedColor,
   onColorChange,
 }) => {
-  const themes = Object.values(colorThemes);
-
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+        <h3 className="text-lg font-semibold text-white dark:text-white mb-2 flex items-center gap-2">
+          <Palette className="w-5 h-5 text-primary" />
           Theme Color
         </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Choose your preferred accent color throughout the app
+        <p className="text-sm text-gray-400 dark:text-gray-400">
+          Choose any color you like for your personalized theme
         </p>
       </div>
 
-      <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
-        {themes.map((theme) => {
-          const isSelected = theme.name === selectedColor;
+      {/* Color Picker */}
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+        {/* Color Picker Widget */}
+        <div className="flex-shrink-0">
+          <HexColorPicker
+            color={selectedColor}
+            onChange={onColorChange}
+            style={{ width: "200px", height: "200px" }}
+          />
+        </div>
 
-          return (
-            <button
-              key={theme.name}
-              type="button"
-              onClick={() => onColorChange(theme.name)}
-              className={`relative group flex flex-col items-center gap-2 p-2 rounded-lg transition-all ${
-                isSelected
-                  ? "ring-2 ring-offset-2 ring-gray-400 dark:ring-gray-600"
-                  : "hover:bg-gray-100 dark:hover:bg-gray-800"
-              }`}
-              title={theme.label}
-              aria-label={`Select ${theme.label} theme`}
-            >
-              {/* Color circle */}
-              <div
-                className={`w-12 h-12 rounded-full transition-transform ${
-                  isSelected ? "scale-110" : "group-hover:scale-105"
-                }`}
-                style={{ backgroundColor: theme.primary }}
-              >
-                {/* Checkmark for selected */}
-                {isSelected && (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Check
-                      className="w-6 h-6"
-                      style={{ color: theme.textOnPrimary }}
-                      aria-hidden="true"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Label */}
-              <span
-                className={`text-xs font-medium ${
-                  isSelected
-                    ? "text-gray-900 dark:text-white"
-                    : "text-gray-600 dark:text-gray-400"
-                }`}
-              >
-                {theme.label}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Preview */}
-      <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-16 h-16 rounded-lg flex items-center justify-center text-2xl font-bold"
-            style={{
-              backgroundColor: colorThemes[selectedColor].primary,
-              color: colorThemes[selectedColor].textOnPrimary,
-            }}
-          >
-            Aa
-          </div>
+        {/* Color Info and Preview */}
+        <div className="flex-1 space-y-4 w-full">
+          {/* Hex Input */}
           <div>
-            <p className="text-sm font-medium text-gray-900 dark:text-white">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Hex Color Code
+            </label>
+            <input
+              type="text"
+              value={selectedColor}
+              onChange={(e) => {
+                const value = e.target.value;
+                // Only update if it's a valid hex color or being typed
+                if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                  onColorChange(value);
+                }
+              }}
+              className="w-full px-4 py-2 bg-gray-900/50 border border-gray-700 rounded-lg text-white font-mono focus:ring-2 focus:ring-primary focus:border-transparent"
+              placeholder="#000000"
+              maxLength={7}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Enter a 6-digit hex code (e.g., #9333ea)
+            </p>
+          </div>
+
+          {/* Live Preview */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
               Preview
-            </p>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
-              This color will be used for buttons, links, and accents
-            </p>
+            </label>
+            <div
+              className="w-full h-20 rounded-lg flex items-center justify-center text-xl font-heading font-bold transition-colors"
+              style={{
+                backgroundColor: selectedColor,
+                color: getContrastColor(selectedColor),
+              }}
+            >
+              Example
+            </div>
+          </div>
+
+          {/* Example Elements */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              How it looks
+            </label>
+            <div className="flex flex-wrap gap-3 items-center">
+              {/* Solid Button Example */}
+              <button
+                type="button"
+                className="px-4 py-2 rounded-lg font-medium transition-colors"
+                style={{
+                  backgroundColor: selectedColor,
+                  color: getContrastColor(selectedColor),
+                }}
+              >
+                Solid Button
+              </button>
+
+              {/* Outline Button Example */}
+              <button
+                type="button"
+                className="px-4 py-2 rounded-lg font-medium transition-colors border-2"
+                style={{
+                  borderColor: selectedColor,
+                  color: selectedColor,
+                  backgroundColor: "transparent",
+                }}
+              >
+                Outline Button
+              </button>
+            </div>
           </div>
         </div>
+      </div>
+
+      {/* Info */}
+      <div className="p-3 bg-gray-900/30 rounded-lg border border-gray-700/30">
+        <p className="text-xs text-gray-400 leading-relaxed">
+          <span className="font-semibold">Tip:</span> This color will be used
+          throughout the app for buttons, links, highlights, and other accent
+          elements. Choose a color that you love!
+        </p>
       </div>
     </div>
   );
