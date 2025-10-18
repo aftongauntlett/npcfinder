@@ -20,6 +20,9 @@ CREATE INDEX IF NOT EXISTS idx_user_profiles_is_admin ON user_profiles(is_admin)
 -- Enable Row Level Security
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 
+-- Grant table-level permissions to authenticated users
+GRANT SELECT, INSERT, UPDATE, DELETE ON user_profiles TO authenticated;
+
 -- Policy 1: Anyone authenticated can view any profile (for displaying friend names, etc.)
 CREATE POLICY "Anyone can view profiles"
   ON user_profiles

@@ -47,6 +47,9 @@ CREATE INDEX IF NOT EXISTS idx_movie_recs_year ON movie_recommendations(year);
 -- Enable Row Level Security
 ALTER TABLE movie_recommendations ENABLE ROW LEVEL SECURITY;
 
+-- Grant table-level permissions to authenticated users
+GRANT SELECT, INSERT, UPDATE, DELETE ON movie_recommendations TO authenticated;
+
 -- Policy 1: Users can view recommendations they sent
 CREATE POLICY "Users can view recommendations they sent"
   ON movie_recommendations

@@ -47,6 +47,9 @@ CREATE INDEX IF NOT EXISTS idx_music_recs_media_type ON music_recommendations(me
 -- Enable Row Level Security
 ALTER TABLE music_recommendations ENABLE ROW LEVEL SECURITY;
 
+-- Grant table-level permissions to authenticated users
+GRANT SELECT, INSERT, UPDATE, DELETE ON music_recommendations TO authenticated;
+
 -- Policy 1: Users can view recommendations they sent
 CREATE POLICY "Users can view recommendations they sent"
   ON music_recommendations
