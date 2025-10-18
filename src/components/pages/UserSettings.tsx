@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import type { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { User as UserIcon, Save, X } from "lucide-react";
 import { getUserProfile, upsertUserProfile } from "../../lib/profiles";
 import Button from "../shared/Button";
@@ -28,6 +29,7 @@ interface Message {
 
 const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { changeThemeColor } = useTheme();
 
   // Default to all cards visible
@@ -151,6 +153,11 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
       } else if (error) {
         setMessage({ type: "error", text: "Failed to save profile" });
       } else {
+        // Invalidate the profile cache so Navigation updates immediately
+        await queryClient.invalidateQueries({
+          queryKey: ["user-profile", currentUser.id],
+        });
+
         // Apply theme color immediately after save
         changeThemeColor(profile.theme_color);
         setMessage({ type: "success", text: "Profile updated successfully!" });
