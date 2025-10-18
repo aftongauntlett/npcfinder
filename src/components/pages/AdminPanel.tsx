@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, memo, useCallback } from "react";
 import {
   Users,
   Star,
@@ -12,23 +12,26 @@ import {
   ShieldCheck,
   ShieldOff,
 } from "lucide-react";
-import { supabase } from "../../lib/supabase";
 import Button from "../shared/Button";
 import InviteCodeManager from "../admin/InviteCodeManager";
 import PageContentContainer from "../layouts/PageContentContainer";
 import ConfirmationModal from "../shared/ConfirmationModal";
-import { toggleUserAdminStatus } from "../../lib/admin";
 import { useAdmin } from "../../contexts/AdminContext";
+import {
+  useAdminStats,
+  useAdminUsers,
+  usePopularMedia,
+  useRecentActivity,
+  useToggleAdminStatus,
+} from "../../hooks/useAdminQueries";
 
-interface Stats {
-  totalUsers: number;
-  totalMediaItems: number;
-  totalRatings: number;
-  totalConnections: number;
-  newUsersThisWeek: number;
-  newUsersThisMonth: number;
-  activeUsers: number;
-  avgRatingsPerUser: number;
+type StatColor = "blue" | "purple" | "yellow" | "green";
+
+interface StatCardProps {
+  icon: React.ElementType;
+  title: string;
+  value: number;
+  color: StatColor;
 }
 
 interface User {
@@ -40,52 +43,11 @@ interface User {
   updated_at: string;
 }
 
-interface PopularMediaItem {
-  id: string;
-  title: string;
-  type: string;
-  release_year?: number;
-  trackingCount: number;
-}
-
-interface RecentActivityItem {
-  id: string;
-  title: string;
-  media_type: string;
-  status?: string;
-  created_at: string;
-  from_user_id?: string;
-  to_user_id?: string;
-}
-
-type StatColor = "blue" | "purple" | "yellow" | "green";
-
-interface StatCardProps {
-  icon: React.ElementType;
-  title: string;
-  value: number;
-  color: StatColor;
-}
-
+/**
+ * Admin Panel Component - Refactored with TanStack Query
+ */
 const AdminPanel: React.FC = () => {
   const { refreshAdminStatus } = useAdmin();
-
-  const [stats, setStats] = useState<Stats>({
-    totalUsers: 0,
-    totalMediaItems: 0,
-    totalRatings: 0,
-    totalConnections: 0,
-    newUsersThisWeek: 0,
-    newUsersThisMonth: 0,
-    activeUsers: 0,
-    avgRatingsPerUser: 0,
-  });
-  const [users, setUsers] = useState<User[]>([]);
-  const [popularMedia, setPopularMedia] = useState<PopularMediaItem[]>([]);
-  const [recentActivity, setRecentActivity] = useState<RecentActivityItem[]>(
-    []
-  );
-  const [loading, setLoading] = useState<boolean>(true);
 
   // Tab state
   const [activeTab, setActiveTab] = useState<"overview" | "invites">(
@@ -95,253 +57,72 @@ const AdminPanel: React.FC = () => {
   // User list pagination and search
   const [userSearch, setUserSearch] = useState<string>("");
   const [userPage, setUserPage] = useState<number>(0);
-  const [totalUserPages, setTotalUserPages] = useState<number>(0);
   const USERS_PER_PAGE = 5;
 
-  // Admin toggle state
+  // Admin toggle modal state
   const [showAdminToggleModal, setShowAdminToggleModal] = useState(false);
   const [userToToggle, setUserToToggle] = useState<{
     id: string;
     name: string;
     isAdmin: boolean;
   } | null>(null);
-  const [isTogglingAdmin, setIsTogglingAdmin] = useState(false);
 
-  // Fetch all admin data
-  const fetchAdminData = async () => {
-    setLoading(true);
-    try {
-      // Calculate date ranges
-      const now = new Date();
-      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  // Queries
+  const { data: stats, isLoading: statsLoading } = useAdminStats();
+  const {
+    data: usersData,
+    isLoading: usersLoading,
+    refetch: refetchUsers,
+  } = useAdminUsers(userPage, USERS_PER_PAGE, userSearch);
+  const { data: popularMedia, isLoading: popularMediaLoading } =
+    usePopularMedia();
+  const { data: recentActivity, isLoading: recentActivityLoading } =
+    useRecentActivity();
 
-      // Fetch connections count
-      const { count: connectionsCount } = await supabase
-        .from("connections")
-        .select("*", { count: "exact", head: true });
+  // Mutations
+  const toggleAdminMutation = useToggleAdminStatus();
 
-      // Count watchlist items
-      const { count: watchlistCount } = await supabase
-        .from("user_watchlist")
-        .select("*", { count: "exact", head: true });
+  // Extract users and total pages from query result
+  const users = usersData?.users || [];
+  const totalUserPages = usersData?.totalPages || 0;
 
-      // Count watched archive items (these have ratings)
-      const { count: watchedCount } = await supabase
-        .from("user_watched_archive")
-        .select("*", { count: "exact", head: true });
-
-      // Get total users from user_profiles table
-      const { count: userCount } = await supabase
-        .from("user_profiles")
-        .select("*", { count: "exact", head: true });
-
-      // Get new users this week
-      const { count: weekUsers } = await supabase
-        .from("user_profiles")
-        .select("*", { count: "exact", head: true })
-        .gte("created_at", oneWeekAgo.toISOString());
-
-      // Get new users this month
-      const { count: monthUsers } = await supabase
-        .from("user_profiles")
-        .select("*", { count: "exact", head: true })
-        .gte("created_at", oneMonthAgo.toISOString());
-
-      // Get active users (users who have added items in last 30 days)
-      const { data: recentWatchlist } = await supabase
-        .from("user_watchlist")
-        .select("user_id")
-        .gte("added_at", thirtyDaysAgo.toISOString());
-
-      const { data: recentArchive } = await supabase
-        .from("user_watched_archive")
-        .select("user_id")
-        .gte("watched_at", thirtyDaysAgo.toISOString());
-
-      const activeUserIds = new Set([
-        ...(recentWatchlist?.map((item) => item.user_id) || []),
-        ...(recentArchive?.map((item) => item.user_id) || []),
-      ]);
-
-      const uniqueActiveUsers = activeUserIds.size;
-
-      // Calculate average ratings per user (watched items have ratings)
-      const avgRatings =
-        userCount && userCount > 0
-          ? Math.round((watchedCount || 0) / userCount)
-          : 0;
-
-      setStats({
-        totalUsers: userCount || 0,
-        totalMediaItems: (watchlistCount || 0) + (watchedCount || 0),
-        totalRatings: watchedCount || 0,
-        totalConnections: connectionsCount || 0,
-        newUsersThisWeek: weekUsers || 0,
-        newUsersThisMonth: monthUsers || 0,
-        activeUsers: uniqueActiveUsers,
-        avgRatingsPerUser: avgRatings,
-      });
-
-      // Fetch popular media (most tracked items from watchlist + archive)
-      const { data: watchlistData } = await supabase
-        .from("user_watchlist")
-        .select("external_id, title, media_type");
-
-      const { data: archiveData } = await supabase
-        .from("user_watched_archive")
-        .select("external_id, title, media_type");
-
-      // Combine and count occurrences
-      const allMedia = [...(watchlistData || []), ...(archiveData || [])];
-      const mediaCounts: Record<
-        string,
-        { count: number; title: string; type: string }
-      > = {};
-
-      allMedia.forEach((item) => {
-        if (item.external_id) {
-          if (!mediaCounts[item.external_id]) {
-            mediaCounts[item.external_id] = {
-              count: 0,
-              title: item.title || "Unknown",
-              type: item.media_type || "N/A",
-            };
-          }
-          mediaCounts[item.external_id].count++;
-        }
-      });
-
-      // Get top 10
-      const topMedia = Object.entries(mediaCounts)
-        .sort(([, a], [, b]) => b.count - a.count)
-        .slice(0, 10)
-        .map(([id, data]) => ({
-          id,
-          title: data.title,
-          type: data.type,
-          trackingCount: data.count,
-        }));
-
-      setPopularMedia(topMedia);
-
-      // Fetch recent activity (movie recommendations)
-      const { data: recentRecs } = await supabase
-        .from("movie_recommendations")
-        .select(
-          "id, title, media_type, status, created_at, from_user_id, to_user_id"
-        )
-        .order("created_at", { ascending: false })
-        .limit(10);
-
-      setRecentActivity(recentRecs || []);
-    } catch (error) {
-      console.error("Error fetching admin data:", error);
-    }
-    setLoading(false);
-  };
-
-  // Separate function to fetch users with pagination and search
-  const fetchUsers = async () => {
-    try {
-      let query = supabase
-        .from("user_profiles")
-        .select(
-          "user_id, display_name, bio, is_admin, created_at, updated_at",
-          {
-            count: "exact",
-          }
-        );
-
-      // Apply search filter if there's a search term
-      if (userSearch.trim()) {
-        query = query.or(
-          `display_name.ilike.%${userSearch}%,bio.ilike.%${userSearch}%`
-        );
-      }
-
-      // Get total count for pagination
-      const { count } = await query;
-      setTotalUserPages(Math.ceil((count || 0) / USERS_PER_PAGE));
-
-      // Fetch paginated results
-      const { data: userProfiles } = await query
-        .order("created_at", { ascending: false })
-        .range(userPage * USERS_PER_PAGE, (userPage + 1) * USERS_PER_PAGE - 1);
-
-      const usersList: User[] =
-        userProfiles?.map(
-          (profile: {
-            user_id: string;
-            display_name?: string;
-            bio?: string;
-            is_admin?: boolean;
-            created_at: string;
-            updated_at: string;
-          }) => ({
-            id: profile.user_id,
-            display_name: profile.display_name || "No Name Set",
-            bio: profile.bio,
-            is_admin: profile.is_admin || false,
-            created_at: profile.created_at,
-            updated_at: profile.updated_at,
-          })
-        ) || [];
-
-      setUsers(usersList);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-    }
-  };
-
-  const handleToggleAdminClick = (user: User) => {
+  // Handlers
+  const handleToggleAdminClick = useCallback((user: User) => {
     setUserToToggle({
       id: user.id,
       name: user.display_name,
       isAdmin: user.is_admin || false,
     });
     setShowAdminToggleModal(true);
-  };
+  }, []);
 
-  const confirmToggleAdmin = async () => {
+  const confirmToggleAdmin = useCallback(async () => {
     if (!userToToggle) return;
 
-    setIsTogglingAdmin(true);
     try {
-      const result = await toggleUserAdminStatus(
-        userToToggle.id,
-        !userToToggle.isAdmin
-      );
+      await toggleAdminMutation.mutateAsync({
+        userId: userToToggle.id,
+        makeAdmin: !userToToggle.isAdmin,
+      });
 
-      if (result.success) {
-        // Refresh user list
-        await fetchUsers();
-        // Refresh admin status in context (in case we're removing our own admin)
-        await refreshAdminStatus();
-        setShowAdminToggleModal(false);
-        setUserToToggle(null);
-      } else {
-        alert(`Error toggling admin status: ${result.error}`);
-      }
+      // Refresh admin status in context (in case we're removing our own admin)
+      await refreshAdminStatus();
+      setShowAdminToggleModal(false);
+      setUserToToggle(null);
     } catch (error) {
       console.error("Error toggling admin status:", error);
       alert("An unexpected error occurred");
-    } finally {
-      setIsTogglingAdmin(false);
     }
-  };
+  }, [userToToggle, toggleAdminMutation, refreshAdminStatus]);
 
-  useEffect(() => {
-    void fetchAdminData();
-  }, []);
+  const handleRefreshData = useCallback(() => {
+    void refetchUsers();
+  }, [refetchUsers]);
 
-  useEffect(() => {
-    void fetchUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userPage, userSearch]);
+  // Loading state for initial data
+  const isLoading = statsLoading;
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 text-white p-8">
         <div className="max-w-7xl mx-auto">
@@ -370,7 +151,7 @@ const AdminPanel: React.FC = () => {
               Platform insights and user management
             </p>
           </div>
-          <Button onClick={() => void fetchAdminData()} variant="secondary">
+          <Button onClick={handleRefreshData} variant="secondary">
             Refresh Data
           </Button>
         </div>
@@ -409,343 +190,91 @@ const AdminPanel: React.FC = () => {
         ) : (
           <>
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-              <StatCard
-                icon={Users}
-                title="Total Users"
-                value={stats.totalUsers}
-                color="blue"
-              />
-              <StatCard
-                icon={Activity}
-                title="Active (30d)"
-                value={stats.activeUsers}
-                color="green"
-              />
-              <StatCard
-                icon={UserPlus}
-                title="New This Week"
-                value={stats.newUsersThisWeek}
-                color="purple"
-              />
-              <StatCard
-                icon={Star}
-                title="Avg Ratings/User"
-                value={stats.avgRatingsPerUser}
-                color="yellow"
-              />
-            </div>
+            {stats && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+                <StatCard
+                  icon={Users}
+                  title="Total Users"
+                  value={stats.totalUsers}
+                  color="blue"
+                />
+                <StatCard
+                  icon={Activity}
+                  title="Active (30d)"
+                  value={stats.activeUsers}
+                  color="green"
+                />
+                <StatCard
+                  icon={UserPlus}
+                  title="New This Week"
+                  value={stats.newUsersThisWeek}
+                  color="purple"
+                />
+                <StatCard
+                  icon={Star}
+                  title="Avg Ratings/User"
+                  value={stats.avgRatingsPerUser}
+                  color="yellow"
+                />
+              </div>
+            )}
 
             {/* Secondary Stats */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-              <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
-                <p className="text-gray-300 text-sm mb-1">New This Month</p>
-                <p className="text-2xl font-bold text-white">
-                  {stats.newUsersThisMonth}
-                </p>
+            {stats && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+                <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
+                  <p className="text-gray-300 text-sm mb-1">New This Month</p>
+                  <p className="text-2xl font-bold text-white">
+                    {stats.newUsersThisMonth}
+                  </p>
+                </div>
+                <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
+                  <p className="text-gray-300 text-sm mb-1">Total Ratings</p>
+                  <p className="text-2xl font-bold text-white">
+                    {stats.totalRatings}
+                  </p>
+                </div>
+                <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
+                  <p className="text-gray-300 text-sm mb-1">Connections</p>
+                  <p className="text-2xl font-bold text-white">
+                    {stats.totalConnections}
+                  </p>
+                </div>
+                <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
+                  <p className="text-gray-300 text-sm mb-1">Media Items</p>
+                  <p className="text-2xl font-bold text-white">
+                    {stats.totalMediaItems}
+                  </p>
+                </div>
               </div>
-              <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
-                <p className="text-gray-300 text-sm mb-1">Total Ratings</p>
-                <p className="text-2xl font-bold text-white">
-                  {stats.totalRatings}
-                </p>
-              </div>
-              <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
-                <p className="text-gray-300 text-sm mb-1">Connections</p>
-                <p className="text-2xl font-bold text-white">
-                  {stats.totalConnections}
-                </p>
-              </div>
-              <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
-                <p className="text-gray-300 text-sm mb-1">Media Items</p>
-                <p className="text-2xl font-bold text-white">
-                  {stats.totalMediaItems}
-                </p>
-              </div>
-            </div>
+            )}
 
             {/* Main Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8">
               {/* Popular Media */}
-              <section
-                className="bg-white/5 backdrop-blur-sm rounded-lg p-4 sm:p-6 border border-white/10"
-                aria-labelledby="popular-media-heading"
-              >
-                <div className="flex items-center gap-2 mb-4">
-                  <TrendingUp
-                    className="w-6 h-6 text-purple-400"
-                    aria-hidden="true"
-                  />
-                  <h2
-                    id="popular-media-heading"
-                    className="text-xl sm:text-2xl font-bold"
-                  >
-                    Most Tracked Media
-                  </h2>
-                </div>
-                {popularMedia.length > 0 ? (
-                  <div className="space-y-3">
-                    {popularMedia.map((item, index) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center gap-3 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
-                      >
-                        <span className="text-xl sm:text-2xl font-bold text-purple-400 min-w-8">
-                          #{index + 1}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold truncate">{item.title}</p>
-                          <p className="text-sm text-gray-400">
-                            {item.type} • {item.release_year || "N/A"}
-                          </p>
-                        </div>
-                        <span className="px-3 py-1 bg-purple-500/20 rounded-full text-sm font-medium whitespace-nowrap">
-                          {item.trackingCount}{" "}
-                          {item.trackingCount === 1 ? "user" : "users"}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-400 italic">No tracked media yet</p>
-                )}
-              </section>
+              <PopularMediaSection
+                popularMedia={popularMedia || []}
+                isLoading={popularMediaLoading}
+              />
 
-              {/* Recent Users */}
-              <section
-                className="bg-white/5 backdrop-blur-sm rounded-lg p-4 sm:p-6 border border-white/10"
-                aria-labelledby="users-heading"
-              >
-                <div className="flex items-center gap-2 mb-4">
-                  <Users className="w-6 h-6 text-blue-400" aria-hidden="true" />
-                  <h2
-                    id="users-heading"
-                    className="text-xl sm:text-2xl font-bold"
-                  >
-                    Users
-                  </h2>
-                </div>
-
-                {/* Search Bar */}
-                <div className="relative mb-4">
-                  <label htmlFor="user-search" className="sr-only">
-                    Search users
-                  </label>
-                  <Search
-                    className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
-                    aria-hidden="true"
-                  />
-                  <input
-                    id="user-search"
-                    type="text"
-                    placeholder="Search by name or bio..."
-                    value={userSearch}
-                    onChange={(e) => {
-                      setUserSearch(e.target.value);
-                      setUserPage(0); // Reset to first page on search
-                    }}
-                    className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  />
-                </div>
-
-                {users.length > 0 ? (
-                  <>
-                    <div className="space-y-3 mb-4">
-                      {users.map((user) => (
-                        <article
-                          key={user.id}
-                          className="p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
-                        >
-                          <div className="flex flex-col sm:flex-row items-start justify-between mb-2 gap-2">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <p className="font-semibold text-base sm:text-lg truncate">
-                                  {user.display_name}
-                                </p>
-                                {user.is_admin && (
-                                  <span title="Admin">
-                                    <ShieldCheck className="w-4 h-4 text-purple-400 flex-shrink-0" />
-                                  </span>
-                                )}
-                              </div>
-                              {user.bio && (
-                                <p className="text-sm text-gray-400 mt-1 italic line-clamp-2">
-                                  "{user.bio}"
-                                </p>
-                              )}
-                            </div>
-                            <div className="flex flex-col sm:items-end gap-2 w-full sm:w-auto">
-                              <div className="text-left sm:text-right">
-                                <p className="text-xs text-gray-500">
-                                  Joined:{" "}
-                                  {new Date(
-                                    user.created_at
-                                  ).toLocaleDateString()}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  Updated:{" "}
-                                  {new Date(
-                                    user.updated_at
-                                  ).toLocaleDateString()}
-                                </p>
-                              </div>
-                              <button
-                                onClick={() => handleToggleAdminClick(user)}
-                                className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-                                  user.is_admin
-                                    ? "bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 border border-purple-500/50"
-                                    : "bg-gray-500/20 text-gray-300 hover:bg-gray-500/30 border border-gray-500/50"
-                                }`}
-                                title={
-                                  user.is_admin
-                                    ? "Remove admin privileges"
-                                    : "Grant admin privileges"
-                                }
-                              >
-                                {user.is_admin ? (
-                                  <>
-                                    <ShieldOff className="w-3 h-3" />
-                                    <span>Remove Admin</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <ShieldCheck className="w-3 h-3" />
-                                    <span>Make Admin</span>
-                                  </>
-                                )}
-                              </button>
-                            </div>
-                          </div>
-                          <p className="text-xs text-gray-500 font-mono truncate">
-                            ID: {user.id}
-                          </p>
-                        </article>
-                      ))}
-                    </div>
-
-                    {/* Pagination Controls */}
-                    {totalUserPages > 1 && (
-                      <nav
-                        className="flex items-center justify-between pt-4 border-t border-white/10"
-                        aria-label="User pagination"
-                      >
-                        <button
-                          onClick={() => setUserPage(Math.max(0, userPage - 1))}
-                          disabled={userPage === 0}
-                          className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          aria-label="Previous page"
-                        >
-                          <ChevronLeft className="w-4 h-4" aria-hidden="true" />
-                          <span className="hidden sm:inline">Previous</span>
-                        </button>
-                        <span
-                          className="text-sm text-gray-400"
-                          aria-current="page"
-                        >
-                          Page {userPage + 1} of {totalUserPages}
-                        </span>
-                        <button
-                          onClick={() =>
-                            setUserPage(
-                              Math.min(totalUserPages - 1, userPage + 1)
-                            )
-                          }
-                          disabled={userPage >= totalUserPages - 1}
-                          className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          aria-label="Next page"
-                        >
-                          <span className="hidden sm:inline">Next</span>
-                          <ChevronRight
-                            className="w-4 h-4"
-                            aria-hidden="true"
-                          />
-                        </button>
-                      </nav>
-                    )}
-                  </>
-                ) : (
-                  <p className="text-gray-400 italic">
-                    {userSearch
-                      ? "No users found matching your search"
-                      : "No users yet"}
-                  </p>
-                )}
-              </section>
+              {/* Users Section */}
+              <UsersSection
+                users={users}
+                isLoading={usersLoading}
+                userSearch={userSearch}
+                setUserSearch={setUserSearch}
+                setUserPage={setUserPage}
+                userPage={userPage}
+                totalUserPages={totalUserPages}
+                onToggleAdmin={handleToggleAdminClick}
+              />
             </div>
 
             {/* Recent Activity */}
-            <section
-              className="bg-white/5 backdrop-blur-sm rounded-lg p-4 sm:p-6 border border-white/10"
-              aria-labelledby="activity-heading"
-            >
-              <div className="flex items-center gap-2 mb-4">
-                <Activity
-                  className="w-6 h-6 text-green-400"
-                  aria-hidden="true"
-                />
-                <h2
-                  id="activity-heading"
-                  className="text-xl sm:text-2xl font-bold"
-                >
-                  Recent Activity
-                </h2>
-              </div>
-              {recentActivity.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[600px]">
-                    <thead>
-                      <tr className="border-b border-white/10">
-                        <th className="text-left p-3 text-gray-400 font-medium">
-                          Media
-                        </th>
-                        <th className="text-left p-3 text-gray-400 font-medium">
-                          Type
-                        </th>
-                        <th className="text-left p-3 text-gray-400 font-medium">
-                          Status
-                        </th>
-                        <th className="text-left p-3 text-gray-400 font-medium">
-                          Activity
-                        </th>
-                        <th className="text-left p-3 text-gray-400 font-medium">
-                          Date
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {recentActivity.map((activity) => (
-                        <tr
-                          key={activity.id}
-                          className="border-b border-white/5 hover:bg-white/5 transition-colors"
-                        >
-                          <td className="p-3 font-medium">
-                            {activity.title || "Unknown"}
-                          </td>
-                          <td className="p-3">
-                            <span className="px-2 py-1 bg-purple-500/20 rounded text-xs">
-                              {activity.media_type || "N/A"}
-                            </span>
-                          </td>
-                          <td className="p-3 text-sm">
-                            {activity.status || "pending"}
-                          </td>
-                          <td className="p-3">
-                            <span className="text-xs text-gray-400">
-                              Recommendation
-                            </span>
-                          </td>
-                          <td className="p-3 text-sm text-gray-400">
-                            {new Date(activity.created_at).toLocaleDateString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <p className="text-gray-400 italic">No activity yet</p>
-              )}
-            </section>
+            <RecentActivitySection
+              recentActivity={recentActivity || []}
+              isLoading={recentActivityLoading}
+            />
           </>
         )}
       </div>
@@ -773,19 +302,20 @@ const AdminPanel: React.FC = () => {
         confirmText={userToToggle?.isAdmin ? "Remove Admin" : "Make Admin"}
         cancelText="Cancel"
         variant={userToToggle?.isAdmin ? "danger" : "info"}
-        isLoading={isTogglingAdmin}
+        isLoading={toggleAdminMutation.isPending}
       />
     </PageContentContainer>
   );
 };
 
-// Stat Card Component
-const StatCard: React.FC<StatCardProps> = ({
-  icon: Icon,
-  title,
-  value,
-  color,
-}) => {
+// ============================================
+// Sub-Components (Memoized for Performance)
+// ============================================
+
+/**
+ * Stat Card Component
+ */
+const StatCard = memo<StatCardProps>(({ icon: Icon, title, value, color }) => {
   const colorClasses: Record<StatColor, string> = {
     blue: "from-blue-500/20 to-blue-600/20 border-blue-500/30",
     purple: "from-purple-500/20 to-purple-600/20 border-purple-500/30",
@@ -816,6 +346,342 @@ const StatCard: React.FC<StatCardProps> = ({
       <p className="text-3xl sm:text-4xl font-bold">{value.toLocaleString()}</p>
     </div>
   );
-};
+});
+
+StatCard.displayName = "StatCard";
+
+/**
+ * Popular Media Section
+ */
+interface PopularMediaSectionProps {
+  popularMedia: Array<{
+    id: string;
+    title: string;
+    type: string;
+    release_year?: number;
+    trackingCount: number;
+  }>;
+  isLoading: boolean;
+}
+
+const PopularMediaSection = memo<PopularMediaSectionProps>(
+  ({ popularMedia, isLoading }) => {
+    return (
+      <section
+        className="bg-white/5 backdrop-blur-sm rounded-lg p-4 sm:p-6 border border-white/10"
+        aria-labelledby="popular-media-heading"
+      >
+        <div className="flex items-center gap-2 mb-4">
+          <TrendingUp className="w-6 h-6 text-purple-400" aria-hidden="true" />
+          <h2
+            id="popular-media-heading"
+            className="text-xl sm:text-2xl font-bold"
+          >
+            Most Tracked Media
+          </h2>
+        </div>
+        {isLoading ? (
+          <p className="text-gray-400 italic">Loading...</p>
+        ) : popularMedia.length > 0 ? (
+          <div className="space-y-3">
+            {popularMedia.map((item, index) => (
+              <div
+                key={item.id}
+                className="flex items-center gap-3 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+              >
+                <span className="text-xl sm:text-2xl font-bold text-purple-400 min-w-8">
+                  #{index + 1}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold truncate">{item.title}</p>
+                  <p className="text-sm text-gray-400">
+                    {item.type} • {item.release_year || "N/A"}
+                  </p>
+                </div>
+                <span className="px-3 py-1 bg-purple-500/20 rounded-full text-sm font-medium whitespace-nowrap">
+                  {item.trackingCount}{" "}
+                  {item.trackingCount === 1 ? "user" : "users"}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-400 italic">No tracked media yet</p>
+        )}
+      </section>
+    );
+  }
+);
+
+PopularMediaSection.displayName = "PopularMediaSection";
+
+/**
+ * Users Section
+ */
+interface UsersSectionProps {
+  users: User[];
+  isLoading: boolean;
+  userSearch: string;
+  setUserSearch: (search: string) => void;
+  setUserPage: (page: number) => void;
+  userPage: number;
+  totalUserPages: number;
+  onToggleAdmin: (user: User) => void;
+}
+
+const UsersSection = memo<UsersSectionProps>(
+  ({
+    users,
+    isLoading,
+    userSearch,
+    setUserSearch,
+    setUserPage,
+    userPage,
+    totalUserPages,
+    onToggleAdmin,
+  }) => {
+    return (
+      <section
+        className="bg-white/5 backdrop-blur-sm rounded-lg p-4 sm:p-6 border border-white/10"
+        aria-labelledby="users-heading"
+      >
+        <div className="flex items-center gap-2 mb-4">
+          <Users className="w-6 h-6 text-blue-400" aria-hidden="true" />
+          <h2 id="users-heading" className="text-xl sm:text-2xl font-bold">
+            Users
+          </h2>
+        </div>
+
+        {/* Search Bar */}
+        <div className="relative mb-4">
+          <label htmlFor="user-search" className="sr-only">
+            Search users
+          </label>
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+            aria-hidden="true"
+          />
+          <input
+            id="user-search"
+            type="text"
+            placeholder="Search by name or bio..."
+            value={userSearch}
+            onChange={(e) => {
+              setUserSearch(e.target.value);
+              setUserPage(0); // Reset to first page on search
+            }}
+            className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+        </div>
+
+        {isLoading ? (
+          <p className="text-gray-400 italic">Loading users...</p>
+        ) : users.length > 0 ? (
+          <>
+            <div className="space-y-3 mb-4">
+              {users.map((user) => (
+                <article
+                  key={user.id}
+                  className="p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+                >
+                  <div className="flex flex-col sm:flex-row items-start justify-between mb-2 gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-semibold text-base sm:text-lg truncate">
+                          {user.display_name}
+                        </p>
+                        {user.is_admin && (
+                          <span title="Admin">
+                            <ShieldCheck className="w-4 h-4 text-purple-400 flex-shrink-0" />
+                          </span>
+                        )}
+                      </div>
+                      {user.bio && (
+                        <p className="text-sm text-gray-400 mt-1 italic line-clamp-2">
+                          "{user.bio}"
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex flex-col sm:items-end gap-2 w-full sm:w-auto">
+                      <div className="text-left sm:text-right">
+                        <p className="text-xs text-gray-500">
+                          Joined:{" "}
+                          {new Date(user.created_at).toLocaleDateString()}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Updated:{" "}
+                          {new Date(user.updated_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => onToggleAdmin(user)}
+                        className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                          user.is_admin
+                            ? "bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 border border-purple-500/50"
+                            : "bg-gray-500/20 text-gray-300 hover:bg-gray-500/30 border border-gray-500/50"
+                        }`}
+                        title={
+                          user.is_admin
+                            ? "Remove admin privileges"
+                            : "Grant admin privileges"
+                        }
+                      >
+                        {user.is_admin ? (
+                          <>
+                            <ShieldOff className="w-3 h-3" />
+                            <span>Remove Admin</span>
+                          </>
+                        ) : (
+                          <>
+                            <ShieldCheck className="w-3 h-3" />
+                            <span>Make Admin</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 font-mono truncate">
+                    ID: {user.id}
+                  </p>
+                </article>
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalUserPages > 1 && (
+              <nav
+                className="flex items-center justify-between pt-4 border-t border-white/10"
+                aria-label="User pagination"
+              >
+                <button
+                  onClick={() => setUserPage(Math.max(0, userPage - 1))}
+                  disabled={userPage === 0}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+                  <span className="hidden sm:inline">Previous</span>
+                </button>
+                <span className="text-sm text-gray-400" aria-current="page">
+                  Page {userPage + 1} of {totalUserPages}
+                </span>
+                <button
+                  onClick={() =>
+                    setUserPage(Math.min(totalUserPages - 1, userPage + 1))
+                  }
+                  disabled={userPage >= totalUserPages - 1}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Next page"
+                >
+                  <span className="hidden sm:inline">Next</span>
+                  <ChevronRight className="w-4 h-4" aria-hidden="true" />
+                </button>
+              </nav>
+            )}
+          </>
+        ) : (
+          <p className="text-gray-400 italic">
+            {userSearch
+              ? "No users found matching your search"
+              : "No users yet"}
+          </p>
+        )}
+      </section>
+    );
+  }
+);
+
+UsersSection.displayName = "UsersSection";
+
+/**
+ * Recent Activity Section
+ */
+interface RecentActivitySectionProps {
+  recentActivity: Array<{
+    id: string;
+    title: string;
+    media_type: string;
+    status?: string;
+    created_at: string;
+  }>;
+  isLoading: boolean;
+}
+
+const RecentActivitySection = memo<RecentActivitySectionProps>(
+  ({ recentActivity, isLoading }) => {
+    return (
+      <section
+        className="bg-white/5 backdrop-blur-sm rounded-lg p-4 sm:p-6 border border-white/10"
+        aria-labelledby="activity-heading"
+      >
+        <div className="flex items-center gap-2 mb-4">
+          <Activity className="w-6 h-6 text-green-400" aria-hidden="true" />
+          <h2 id="activity-heading" className="text-xl sm:text-2xl font-bold">
+            Recent Activity
+          </h2>
+        </div>
+        {isLoading ? (
+          <p className="text-gray-400 italic">Loading activity...</p>
+        ) : recentActivity.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[600px]">
+              <thead>
+                <tr className="border-b border-white/10">
+                  <th className="text-left p-3 text-gray-400 font-medium">
+                    Media
+                  </th>
+                  <th className="text-left p-3 text-gray-400 font-medium">
+                    Type
+                  </th>
+                  <th className="text-left p-3 text-gray-400 font-medium">
+                    Status
+                  </th>
+                  <th className="text-left p-3 text-gray-400 font-medium">
+                    Activity
+                  </th>
+                  <th className="text-left p-3 text-gray-400 font-medium">
+                    Date
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentActivity.map((activity) => (
+                  <tr
+                    key={activity.id}
+                    className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                  >
+                    <td className="p-3 font-medium">
+                      {activity.title || "Unknown"}
+                    </td>
+                    <td className="p-3">
+                      <span className="px-2 py-1 bg-purple-500/20 rounded text-xs">
+                        {activity.media_type || "N/A"}
+                      </span>
+                    </td>
+                    <td className="p-3 text-sm">
+                      {activity.status || "pending"}
+                    </td>
+                    <td className="p-3">
+                      <span className="text-xs text-gray-400">
+                        Recommendation
+                      </span>
+                    </td>
+                    <td className="p-3 text-sm text-gray-400">
+                      {new Date(activity.created_at).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-gray-400 italic">No activity yet</p>
+        )}
+      </section>
+    );
+  }
+);
+
+RecentActivitySection.displayName = "RecentActivitySection";
 
 export default AdminPanel;

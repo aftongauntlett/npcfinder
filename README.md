@@ -4,9 +4,12 @@
 [![React](https://img.shields.io/badge/React-19.1-61dafb)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-7.1-646cff)](https://vitejs.dev/)
 [![Supabase](https://img.shields.io/badge/Supabase-2.75-3ecf8e)](https://supabase.com/)
+[![Status](https://img.shields.io/badge/Status-In%20Development-orange)](https://github.com/aftongauntlett/npcfinder)
 [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/aftongauntlett/npcfinder)](https://github.com/aftongauntlett/npcfinder/commits/main)
 
 A privacy-focused recommendation engine for sharing movies, TV shows, and music with close friends. Built with modern React patterns, TypeScript, and Supabase.
+
+> **⚠️ Active Development**: This project is actively being built and refactored. It's used personally but not all features are fully functional yet. Feel free to explore the code and architecture!
 
 ## Overview
 
@@ -107,10 +110,12 @@ src/
 
 **Key Patterns:**
 
-- Service layer separates business logic from UI
-- Mock/real data toggle for development
-- Custom hooks for data fetching (TanStack Query)
-- Context for global state (auth, theme)
+- **TanStack Query** for declarative server state management with automatic caching
+- **React.memo** and useCallback for performance optimization
+- **Service layer** separates business logic from UI components
+- **Mock/real data toggle** for development without backend setup
+- **Context providers** for global state (auth, theme, admin)
+- **Custom hooks** encapsulate data fetching and business logic
 
 See [services/README.md](src/services/README.md) for service layer documentation.
 
@@ -221,24 +226,32 @@ See [Privacy Reality Check](07-PRIVACY-REALITY-CHECK.md) for full details.
 
 ## Quick Start
 
-## Quick Start
+**Interested in the code?**
 
-**Can you clone and use this? Yes!**
-
-This is open-source. You can clone and run it with your own Supabase backend. Your data will be completely separate from mine.
+This is open-source and you can explore the architecture and implementation. The project is actively being refactored with modern patterns, so not everything is fully functional yet.
 
 **Prerequisites:**
 
 - Node.js 18+
-- Supabase account (free tier)
+- Supabase account (for full database features)
 
-**Installation:**
+**Quick Look (Mock Data - No Setup Required):**
 
 ```bash
 git clone https://github.com/aftongauntlett/npcfinder.git
 cd npcfinder
 npm install
 
+# Add to .env.local
+echo "VITE_USE_MOCK=true" > .env.local
+
+# Start dev server - uses dummy data, perfect for exploring the UI
+npm run dev
+```
+
+**Full Setup (Database Required):**
+
+```bash
 # Set up environment variables
 cp .env.example .env.local
 # Add your Supabase URL and anon key to .env.local
@@ -250,20 +263,10 @@ npm run dev
 npm test
 ```
 
-**With Mock Data (No Database Required):**
+**Full Setup Guide:**
+See [Quick Start Guide](01-QUICK-START.md) for complete database setup, migrations, invite codes, and deployment instructions.
 
-```bash
-# Add to .env.local
-VITE_USE_MOCK=true
-
-# Start dev server - uses dummy data
-npm run dev
-```
-
-**Full Setup:**
-See [Quick Start Guide](01-QUICK-START.md) for complete database setup, invite codes, and deployment instructions.
-
-**Note:** Each installation is independent. When you clone this repo and set up your own Supabase, you get your own private instance. There's no connection to my database or data.
+**Note:** Each installation uses its own Supabase instance. When you set up your own, you get a completely separate database—no connection to any other instance.
 
 ## Scripts
 

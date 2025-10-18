@@ -89,6 +89,9 @@ const DemoLanding: React.FC = () => {
           <div className="flex items-center gap-3">
             <Film className="w-8 h-8 text-purple-400" />
             <h1 className="text-2xl font-bold">NPC Finder</h1>
+            <span className="px-2 py-1 text-xs font-semibold bg-orange-500/20 text-orange-300 border border-orange-500/50 rounded-full">
+              IN DEVELOPMENT
+            </span>
           </div>
           <div className="flex items-center gap-4">
             <Link to="/app">
@@ -449,8 +452,12 @@ const DemoLanding: React.FC = () => {
         {/* CTA Section */}
         <section className="max-w-4xl mx-auto px-6 py-16 text-center">
           <h3 className="text-3xl font-bold mb-4">Interested in the Code?</h3>
-          <p className="text-xl text-gray-300 mb-8">
-            Check out the source code and see how this app is built.
+          <p className="text-xl text-gray-300 mb-2">
+            Explore the architecture and implementation on GitHub.
+          </p>
+          <p className="text-sm text-gray-400 mb-8">
+            Note: This project is actively being built and refactored. Not all
+            features are complete yet.
           </p>
           <div className="flex items-center justify-center gap-4">
             <a

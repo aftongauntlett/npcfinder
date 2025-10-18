@@ -46,4 +46,21 @@ export const queryKeys = {
     byStatus: (status: string) =>
       [...queryKeys.suggestions.all, "by-status", status] as const,
   },
+
+  // Admin
+  admin: {
+    all: ["admin"] as const,
+    stats: () => [...queryKeys.admin.all, "stats"] as const,
+    users: (page: number, searchTerm: string) =>
+      [...queryKeys.admin.all, "users", page, searchTerm] as const,
+    popularMedia: () => [...queryKeys.admin.all, "popular-media"] as const,
+    recentActivity: () => [...queryKeys.admin.all, "recent-activity"] as const,
+  },
+
+  // Invite codes
+  inviteCodes: {
+    all: ["invite-codes"] as const,
+    list: () => [...queryKeys.inviteCodes.all, "list"] as const,
+    stats: () => [...queryKeys.inviteCodes.all, "stats"] as const,
+  },
 };
