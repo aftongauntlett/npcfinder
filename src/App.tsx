@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useMemo } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import type { User } from "@supabase/supabase-js";
 import Footer from "./components/shared/Footer";
@@ -18,7 +18,7 @@ import DevIndicator from "./components/dev/DevIndicator";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { AdminProvider, useAdmin } from "./contexts/AdminContext";
-import { getUserProfile } from "./lib/profiles";
+import { useProfileQuery } from "./hooks/useProfileQuery";
 import { cards } from "./data/dashboardCards";
 import { useTheme } from "./hooks/useTheme";
 
@@ -27,37 +27,26 @@ interface HomePageProps {
   user: User;
 }
 
-const HomePage: React.FC<HomePageProps> = ({ user }) => {
-  const [displayName, setDisplayName] = useState<string | null>(null);
-  const [visibleCards, setVisibleCards] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+const HomePage: React.FC<HomePageProps> = () => {
   const { changeThemeColor } = useTheme();
 
-  useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        const { data } = await getUserProfile(user.id);
-        setDisplayName(data?.display_name || null);
+  // Fetch user profile with TanStack Query (automatic caching, shared with Navigation)
+  const { data: profile, isLoading } = useProfileQuery();
 
-        // If user has card preferences, use them. Otherwise show all cards
-        const allCardIds = cards.map((c) => c.cardId);
-        setVisibleCards(data?.visible_cards || allCardIds);
+  // Apply theme color when profile loads
+  const themeColorApplied = React.useRef(false);
+  React.useEffect(() => {
+    if (profile?.theme_color && !themeColorApplied.current) {
+      changeThemeColor(profile.theme_color);
+      themeColorApplied.current = true;
+    }
+  }, [profile?.theme_color, changeThemeColor]);
 
-        // Load and apply user's theme color
-        if (data?.theme_color) {
-          changeThemeColor(data.theme_color);
-        }
-      } catch (error) {
-        console.error("Failed to load profile:", error);
-        // Default to showing all cards
-        setVisibleCards(cards.map((c) => c.cardId));
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const displayName = profile?.display_name || null;
 
-    void loadProfile();
-  }, [user.id, changeThemeColor]);
+  // If user has card preferences, use them. Otherwise show all cards
+  const allCardIds = cards.map((c) => c.cardId);
+  const visibleCards = profile?.visible_cards || allCardIds;
 
   // Filter cards based on user preferences
   const filteredCards = useMemo(

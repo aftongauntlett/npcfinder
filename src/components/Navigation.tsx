@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import type { User } from "@supabase/supabase-js";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   LogOut,
   FlaskConical,
@@ -14,7 +14,7 @@ import WeatherWidget from "./shared/WeatherWidget";
 import ConfirmationModal from "./shared/ConfirmationModal";
 import { signOut } from "../lib/auth";
 import { useAdmin } from "../contexts/AdminContext";
-import { getUserProfile } from "../lib/profiles";
+import { useProfileQuery } from "../hooks/useProfileQuery";
 
 interface NavigationProps {
   currentUser: User | null;
@@ -22,12 +22,14 @@ interface NavigationProps {
 
 const Navigation: React.FC<NavigationProps> = ({ currentUser }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
-  const [displayName, setDisplayName] = useState<string | null>(null);
   const [showSignOutModal, setShowSignOutModal] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const location = useLocation();
+
+  // Fetch user profile with TanStack Query (automatic caching)
+  const { data: profile } = useProfileQuery();
+  const displayName = profile?.display_name || currentUser?.email || "User";
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -42,22 +44,6 @@ const Navigation: React.FC<NavigationProps> = ({ currentUser }) => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  useEffect(() => {
-    const loadUserProfile = async () => {
-      if (!currentUser) return;
-
-      try {
-        const { data } = await getUserProfile(currentUser.id);
-        setDisplayName(data?.display_name || currentUser.email || "User");
-      } catch (error) {
-        console.error("Failed to load user profile:", error);
-        setDisplayName(currentUser.email || "User");
-      }
-    };
-
-    void loadUserProfile();
-  }, [currentUser, location.pathname]);
 
   const handleLogout = () => {
     setShowSignOutModal(true);
