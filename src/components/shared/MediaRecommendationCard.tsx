@@ -401,4 +401,4 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
   );
 }
 
-export default MediaRecommendationCard;
+export default React.memo(MediaRecommendationCard);
