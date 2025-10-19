@@ -30,7 +30,11 @@ const ContentLayout: React.FC<ContentLayoutProps> = ({
   children,
 }) => {
   return (
-    <main className="min-h-screen">
+    <main
+      id="main-content"
+      tabIndex={-1}
+      className="min-h-screen focus:outline-none"
+    >
       {/* Page Header */}
       <header className="border-b border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm sticky top-0 z-30">
         <div className="container mx-auto px-6 py-4">

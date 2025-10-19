@@ -30,13 +30,13 @@ const Button: React.FC<ButtonProps> = ({
 
   const variantClasses = {
     primary:
-      "text-white hover:opacity-90 focus:ring-offset-2 border border-transparent shadow-sm",
+      "text-white hover:opacity-90 focus:ring-primary border border-transparent shadow-sm",
     secondary:
       "text-text-secondary bg-surface hover:bg-surface-elevated focus:ring-primary border border-border",
     danger:
       "text-white bg-red-600 hover:bg-red-700 focus:ring-red-500 border border-transparent shadow-sm",
     outline:
-      "bg-transparent border-2 hover:bg-gray-100 dark:hover:bg-gray-800 focus:ring-offset-2",
+      "bg-transparent border-2 hover:bg-gray-100 dark:hover:bg-gray-800 focus:ring-primary",
   };
 
   const sizeClasses = {

@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Plus, X } from "lucide-react";
 import Button from "../shared/Button";
+import Input from "../shared/Input";
+import Textarea from "../shared/Textarea";
 
 interface SuggestionFormData {
   title: string;
@@ -78,52 +80,29 @@ const NewSuggestionForm: React.FC<NewSuggestionFormProps> = ({
           </div>
         )}
 
-        <div>
-          <label
-            htmlFor="title"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-          >
-            Title <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            id="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
-            placeholder="e.g., Add dark mode toggle to navigation"
-            disabled={isSubmitting}
-            maxLength={200}
-            required
-            aria-required="true"
-          />
-        </div>
+        <Input
+          id="title"
+          label="Title"
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="e.g., Add dark mode toggle to navigation"
+          disabled={isSubmitting}
+          maxLength={200}
+          required
+        />
 
-        <div>
-          <label
-            htmlFor="description"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-          >
-            Description (optional)
-          </label>
-          <textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors resize-none"
-            placeholder="Provide more details about your suggestion..."
-            rows={4}
-            disabled={isSubmitting}
-            maxLength={1000}
-            aria-describedby="char-count"
-          />
-          <p
-            id="char-count"
-            className="mt-1 text-xs text-gray-500 dark:text-gray-400"
-          >
-            {description.length}/1000 characters
-          </p>
-        </div>
+        <Textarea
+          id="description"
+          label="Description (optional)"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Provide more details about your suggestion..."
+          rows={4}
+          disabled={isSubmitting}
+          maxLength={1000}
+          resize="none"
+        />
 
         <div className="flex gap-3 pt-2">
           <Button

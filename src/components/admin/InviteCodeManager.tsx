@@ -10,6 +10,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import Button from "../shared/Button";
+import Input from "../shared/Input";
 import ConfirmationModal from "../shared/ConfirmationModal";
 import StatCard from "../shared/StatCard";
 import {
@@ -317,60 +318,45 @@ const CreateCodeForm = memo<CreateCodeFormProps>(
           Create New Invite Code(s)
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Notes (optional)
-            </label>
-            <input
-              type="text"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="e.g., For John Doe"
-              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Max Uses Per Code
-            </label>
-            <input
-              type="number"
-              value={maxUses}
-              onChange={(e) => setMaxUses(parseInt(e.target.value) || 1)}
-              min="1"
-              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Expires In (days)
-            </label>
-            <input
-              type="number"
-              value={expiresInDays || ""}
-              onChange={(e) =>
-                setExpiresInDays(
-                  e.target.value ? parseInt(e.target.value) : undefined
-                )
-              }
-              placeholder="Never"
-              min="1"
-              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Number of Codes
-            </label>
-            <input
-              type="number"
-              value={batchCount}
-              onChange={(e) => setBatchCount(parseInt(e.target.value) || 1)}
-              min="1"
-              max="50"
-              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
-          </div>
+          <Input
+            id="invite-notes"
+            label="Notes (optional)"
+            type="text"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="e.g., For John Doe"
+          />
+          <Input
+            id="invite-max-uses"
+            label="Max Uses Per Code"
+            type="number"
+            value={maxUses}
+            onChange={(e) => setMaxUses(parseInt(e.target.value) || 1)}
+            min={1}
+          />
+          <Input
+            id="invite-expires"
+            label="Expires In (days)"
+            type="number"
+            value={expiresInDays || ""}
+            onChange={(e) =>
+              setExpiresInDays(
+                e.target.value ? parseInt(e.target.value) : undefined
+              )
+            }
+            placeholder="Never"
+            min={1}
+          />
+          <Input
+            id="invite-batch-count"
+            label="Number of Codes"
+            type="number"
+            value={batchCount}
+            onChange={(e) => setBatchCount(parseInt(e.target.value) || 1)}
+            min={1}
+            max={50}
+            helperText="Create up to 50 codes at once"
+          />
         </div>
         <div className="flex gap-2">
           <Button
@@ -431,7 +417,8 @@ const CodesList = memo<CodesListProps>(
       return (
         <button
           onClick={onCreateNew}
-          className="w-full bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 hover:border-purple-500/50 p-8 text-center transition-all hover:bg-white/8 group"
+          className="w-full bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 hover:border-purple-500/50 p-8 text-center transition-all hover:bg-white/8 group focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+          aria-label="Create your first invite code"
         >
           <Plus className="w-12 h-12 mx-auto mb-3 text-purple-400 group-hover:text-purple-300 transition-colors" />
           <p className="text-white text-lg font-semibold mb-1">
@@ -459,8 +446,9 @@ const CodesList = memo<CodesListProps>(
                 </code>
                 <button
                   onClick={() => onCopy(code.code)}
-                  className="text-gray-300 hover:text-white transition-colors p-1"
+                  className="text-gray-300 hover:text-white transition-colors p-1 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   title="Copy invitation message with link and code"
+                  aria-label={`Copy code ${code.code}`}
                 >
                   {copiedCode === code.code ? (
                     <Check className="w-5 h-5 text-green-400" />
@@ -474,7 +462,8 @@ const CodesList = memo<CodesListProps>(
                 {code.is_active && !code.used_by && (
                   <button
                     onClick={() => onRevoke(code.id, code.code)}
-                    className="text-red-400 hover:text-red-300 text-sm font-medium transition-colors"
+                    className="text-red-400 hover:text-red-300 text-sm font-medium transition-colors px-2 py-1 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                    aria-label={`Revoke code ${code.code}`}
                   >
                     Revoke
                   </button>
@@ -510,7 +499,8 @@ const CodesList = memo<CodesListProps>(
         {codes.length > 0 && !showCreateForm && (
           <button
             onClick={onCreateNew}
-            className="w-full bg-white/5 backdrop-blur-sm rounded-lg border border-dashed border-white/20 hover:border-purple-500/50 p-6 text-center transition-all hover:bg-white/8 group"
+            className="w-full bg-white/5 backdrop-blur-sm rounded-lg border border-dashed border-white/20 hover:border-purple-500/50 p-6 text-center transition-all hover:bg-white/8 group focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+            aria-label="Create new invite code"
           >
             <Plus className="w-8 h-8 mx-auto mb-2 text-purple-400 group-hover:text-purple-300 transition-colors" />
             <p className="text-white font-medium">Create New Invite Code</p>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { signIn, signUp } from "../../lib/auth";
 import Button from "../shared/Button";
+import Input from "../shared/Input";
 
 /**
  * Authentication page with login and signup forms
@@ -126,73 +127,49 @@ const AuthPage: React.FC = () => {
             className="space-y-6"
           >
             {/* Email Input */}
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
-                placeholder="you@example.com"
-                disabled={loading}
-                required
-              />
-            </div>
+            <Input
+              id="email"
+              label="Email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              disabled={loading}
+              required
+              error={error && error.includes("email") ? error : undefined}
+            />
 
             {/* Password Input */}
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
-                placeholder="••••••••"
-                disabled={loading}
-                required
-                minLength={8}
-              />
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                At least 8 characters
-              </p>
-            </div>
+            <Input
+              id="password"
+              label="Password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              disabled={loading}
+              required
+              minLength={8}
+              helperText="At least 8 characters"
+              error={error && error.includes("Password") ? error : undefined}
+            />
 
             {/* Invite Code Input (only for signup) */}
             {!isLogin && (
-              <div>
-                <label
-                  htmlFor="inviteCode"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                >
-                  Invite Code <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="inviteCode"
-                  type="text"
-                  value={inviteCode}
-                  onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white font-mono"
-                  placeholder="XXX-XXX-XXX-XXX"
-                  disabled={loading}
-                  required={!isLogin}
-                  maxLength={15}
-                />
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  🔒 This app is invite-only. Enter the code you received.
-                </p>
-              </div>
+              <Input
+                id="inviteCode"
+                label="Invite Code"
+                type="text"
+                value={inviteCode}
+                onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                placeholder="XXX-XXX-XXX-XXX"
+                disabled={loading}
+                required
+                maxLength={15}
+                inputClassName="font-mono"
+                helperText="🔒 This app is invite-only. Enter the code you received."
+                error={error && error.includes("invite") ? error : undefined}
+              />
             )}
 
             {/* Error Message */}

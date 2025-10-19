@@ -1,6 +1,5 @@
 import React from "react";
 import { User, ThumbsUp, ThumbsDown, Send, ArrowLeft } from "lucide-react";
-import Button from "./Button";
 
 // Generic recommendation interface that all media types must conform to
 export interface BaseRecommendation {
@@ -105,7 +104,8 @@ export function MediaRecommendationsLayout<T extends BaseRecommendation>({
       <div className="grid grid-cols-3 gap-4">
         <button
           onClick={() => onViewChange("hits")}
-          className="bg-white dark:bg-gray-800 rounded-lg p-6 text-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          className="bg-white dark:bg-gray-800 rounded-lg p-6 text-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+          aria-label="View your hits"
         >
           <div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">
             {quickStats.hits}
@@ -117,7 +117,8 @@ export function MediaRecommendationsLayout<T extends BaseRecommendation>({
 
         <button
           onClick={() => onViewChange("misses")}
-          className="bg-white dark:bg-gray-800 rounded-lg p-6 text-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          className="bg-white dark:bg-gray-800 rounded-lg p-6 text-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+          aria-label="View your misses"
         >
           <div className="text-2xl font-bold text-red-600 dark:text-red-400 mb-1">
             {quickStats.misses}
@@ -129,7 +130,8 @@ export function MediaRecommendationsLayout<T extends BaseRecommendation>({
 
         <button
           onClick={() => onViewChange("sent")}
-          className="bg-white dark:bg-gray-800 rounded-lg p-6 text-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          className="bg-white dark:bg-gray-800 rounded-lg p-6 text-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+          aria-label="View recommendations you sent"
         >
           <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">
             {quickStats.sent}
@@ -156,55 +158,86 @@ export function MediaRecommendationsLayout<T extends BaseRecommendation>({
         </div>
 
         {friendsWithRecs.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-8 text-center">
+          <button
+            onClick={onSendClick}
+            className="w-full bg-white dark:bg-gray-800 rounded-lg p-8 text-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-all group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+            aria-label="Send your first recommendation"
+          >
             {mediaIcon}
-            <p className="text-gray-500 dark:text-gray-400 mb-2">
+            <p className="text-gray-900 dark:text-white text-lg font-semibold mb-1">
               {emptyMessage}
             </p>
-            <p className="text-sm text-gray-400 dark:text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
               {emptySubMessage}
             </p>
-          </div>
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg transition-colors font-medium">
+              <Send className="w-4 h-4" />
+              Recommend
+            </div>
+          </button>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {friendsWithRecs.map((friend) => (
-              <button
-                key={friend.user_id}
-                onClick={() => onViewChange("friend", friend.user_id)}
-                className="bg-white dark:bg-gray-800 rounded-lg p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-blue-600 dark:text-blue-300" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-gray-900 dark:text-white truncate">
-                      {friend.display_name}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {friendsWithRecs.map((friend) => (
+                <button
+                  key={friend.user_id}
+                  onClick={() => onViewChange("friend", friend.user_id)}
+                  className="bg-white dark:bg-gray-800 rounded-lg p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+                  aria-label={`View recommendations from ${
+                    friend.display_name
+                  }${
+                    friend.pending_count > 0
+                      ? ` (${friend.pending_count} new)`
+                      : ""
+                  }`}
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                      <User className="w-5 h-5 text-blue-600 dark:text-blue-300" />
                     </div>
-                    {friend.pending_count > 0 && (
-                      <div className="text-sm text-blue-600 dark:text-blue-400">
-                        {friend.pending_count} new
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-gray-900 dark:text-white truncate">
+                        {friend.display_name}
                       </div>
+                      {friend.pending_count > 0 && (
+                        <div className="text-sm text-blue-600 dark:text-blue-400">
+                          {friend.pending_count} new
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                    <span>{friend.total_count} total</span>
+                    {friend.hit_count > 0 && (
+                      <span className="flex items-center gap-1">
+                        <ThumbsUp className="w-3 h-3" />
+                        {friend.hit_count}
+                      </span>
+                    )}
+                    {friend.miss_count > 0 && (
+                      <span className="flex items-center gap-1">
+                        <ThumbsDown className="w-3 h-3" />
+                        {friend.miss_count}
+                      </span>
                     )}
                   </div>
-                </div>
-                <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-                  <span>{friend.total_count} total</span>
-                  {friend.hit_count > 0 && (
-                    <span className="flex items-center gap-1">
-                      <ThumbsUp className="w-3 h-3" />
-                      {friend.hit_count}
-                    </span>
-                  )}
-                  {friend.miss_count > 0 && (
-                    <span className="flex items-center gap-1">
-                      <ThumbsDown className="w-3 h-3" />
-                      {friend.miss_count}
-                    </span>
-                  )}
-                </div>
+                </button>
+              ))}
+            </div>
+
+            {/* Create New Recommendation Card */}
+            {onSendClick && (
+              <button
+                onClick={onSendClick}
+                className="w-full bg-white dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-primary dark:hover:border-primary p-6 text-center transition-all hover:bg-gray-50 dark:hover:bg-gray-700 group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+                aria-label="Send new recommendation"
+              >
+                <Send className="w-8 h-8 mx-auto mb-2 text-primary group-hover:text-primary-dark transition-colors" />
+                <p className="text-gray-900 dark:text-white font-medium">
+                  Send New Recommendation
+                </p>
               </button>
-            ))}
+            )}
           </div>
         )}
       </div>
@@ -235,7 +268,8 @@ export function MediaRecommendationsLayout<T extends BaseRecommendation>({
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={() => onViewChange("overview")}
-            className="flex items-center gap-2 px-3 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+            aria-label={`Back to ${mediaType} overview`}
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back to {mediaType}</span>
@@ -272,22 +306,6 @@ export function MediaRecommendationsLayout<T extends BaseRecommendation>({
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            {mediaType}
-          </h1>
-          {onSendClick && (
-            <Button
-              onClick={onSendClick}
-              variant="outline"
-              icon={<Send className="w-4 h-4" />}
-            >
-              Recommend
-            </Button>
-          )}
-        </div>
-
         {/* Content */}
         {selectedView === "overview"
           ? renderOverview()

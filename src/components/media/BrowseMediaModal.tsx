@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Search, Plus, Loader } from "lucide-react";
+import FocusTrap from "focus-trap-react";
 import MediaCard from "./MediaCard";
 
 interface BrowseMediaModalProps {
@@ -34,6 +35,23 @@ export function BrowseMediaModal({
   const [searchResults, setSearchResults] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [addingIds, setAddingIds] = useState<Set<string>>(new Set());
+
+  // Handle ESC key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleEscape);
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -101,176 +119,185 @@ export function BrowseMediaModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-6xl h-[90vh] bg-white dark:bg-gray-900 rounded-xl shadow-2xl flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {getTitle()}
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            aria-label="Close modal"
-          >
-            <X size={24} />
-          </button>
-        </div>
-
-        {/* Search Bar */}
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-          <form onSubmit={(e) => void handleSearch(e)} className="flex gap-3">
-            <div className="flex-1 relative">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                size={20}
-              />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={getPlaceholder()}
-                className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-              />
-            </div>
+      <FocusTrap
+        focusTrapOptions={{
+          initialFocus: false,
+          escapeDeactivates: false, // We handle ESC manually
+          clickOutsideDeactivates: true,
+          returnFocusOnDeactivate: true,
+        }}
+      >
+        <div className="w-full max-w-6xl h-[90vh] bg-white dark:bg-gray-900 rounded-xl shadow-2xl flex flex-col focus:outline-none">
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              {getTitle()}
+            </h2>
             <button
-              type="submit"
-              disabled={loading || !searchQuery.trim()}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium rounded-lg transition-colors disabled:cursor-not-allowed flex items-center gap-2"
+              onClick={onClose}
+              className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Close modal"
             >
-              {loading ? (
-                <>
-                  <Loader className="animate-spin" size={20} />
-                  Searching...
-                </>
-              ) : (
-                <>
-                  <Search size={20} />
-                  Search
-                </>
-              )}
+              <X size={24} />
             </button>
-          </form>
-        </div>
+          </div>
 
-        {/* Results */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {loading ? (
-            <div className="flex items-center justify-center h-full">
-              <Loader className="animate-spin text-blue-600" size={48} />
-            </div>
-          ) : searchResults.length > 0 ? (
-            mediaType === "music" ? (
-              // List view for music (Spotify-style)
-              <div className="space-y-1">
-                {searchResults.map((item, index) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
-                  >
-                    {/* Track Number / Album Icon */}
-                    <div className="w-10 text-center text-gray-500 dark:text-gray-400 text-sm">
-                      {index + 1}
-                    </div>
+          {/* Search Bar */}
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+            <form onSubmit={(e) => void handleSearch(e)} className="flex gap-3">
+              <div className="flex-1 relative">
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={20}
+                />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={getPlaceholder()}
+                  className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading || !searchQuery.trim()}
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium rounded-lg transition-colors disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <Loader className="animate-spin" size={20} />
+                    Searching...
+                  </>
+                ) : (
+                  <>
+                    <Search size={20} />
+                    Search
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
 
-                    {/* Album Art (small) */}
-                    {item.poster && (
-                      <img
-                        src={item.poster}
-                        alt={item.title}
-                        className="w-12 h-12 rounded object-cover"
-                      />
-                    )}
-
-                    {/* Title & Artist */}
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-900 dark:text-white truncate">
-                        {item.title}
-                      </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                        {item.artist || "Unknown Artist"}
-                        {item.type === "album" && " • Album"}
-                        {item.type === "track" &&
-                          item.album &&
-                          ` • ${item.album}`}
-                      </div>
-                    </div>
-
-                    {/* Year */}
-                    {item.year && (
-                      <div className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
-                        {item.year}
-                      </div>
-                    )}
-
-                    {/* Add Button */}
-                    <button
-                      onClick={() => void handleAdd(item)}
-                      disabled={addingIds.has(item.id)}
-                      className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white text-sm font-medium rounded-full transition-colors disabled:cursor-not-allowed flex items-center gap-2 opacity-0 group-hover:opacity-100"
-                      aria-label={`Add ${item.title} to collection`}
+          {/* Results */}
+          <div className="flex-1 overflow-y-auto p-6">
+            {loading ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader className="animate-spin text-blue-600" size={48} />
+              </div>
+            ) : searchResults.length > 0 ? (
+              mediaType === "music" ? (
+                // List view for music (Spotify-style)
+                <div className="space-y-1">
+                  {searchResults.map((item, index) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
                     >
-                      {addingIds.has(item.id) ? (
-                        <>
-                          <Loader className="animate-spin" size={16} />
-                          Adding...
-                        </>
-                      ) : (
-                        <>
-                          <Plus size={16} />
-                          Add
-                        </>
+                      {/* Track Number / Album Icon */}
+                      <div className="w-10 text-center text-gray-500 dark:text-gray-400 text-sm">
+                        {index + 1}
+                      </div>
+
+                      {/* Album Art (small) */}
+                      {item.poster && (
+                        <img
+                          src={item.poster}
+                          alt={item.title}
+                          className="w-12 h-12 rounded object-cover"
+                        />
                       )}
-                    </button>
-                  </div>
-                ))}
+
+                      {/* Title & Artist */}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-gray-900 dark:text-white truncate">
+                          {item.title}
+                        </div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                          {item.artist || "Unknown Artist"}
+                          {item.type === "album" && " • Album"}
+                          {item.type === "track" &&
+                            item.album &&
+                            ` • ${item.album}`}
+                        </div>
+                      </div>
+
+                      {/* Year */}
+                      {item.year && (
+                        <div className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
+                          {item.year}
+                        </div>
+                      )}
+
+                      {/* Add Button */}
+                      <button
+                        onClick={() => void handleAdd(item)}
+                        disabled={addingIds.has(item.id)}
+                        className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white text-sm font-medium rounded-full transition-colors disabled:cursor-not-allowed flex items-center gap-2 opacity-0 group-hover:opacity-100"
+                        aria-label={`Add ${item.title} to collection`}
+                      >
+                        {addingIds.has(item.id) ? (
+                          <>
+                            <Loader className="animate-spin" size={16} />
+                            Adding...
+                          </>
+                        ) : (
+                          <>
+                            <Plus size={16} />
+                            Add
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                // Grid view for other media types
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  {searchResults.map((item) => (
+                    <div key={item.id} className="relative group">
+                      <MediaCard
+                        id={item.id}
+                        title={item.title}
+                        year={item.year}
+                        posterUrl={item.poster}
+                        onClick={() => {}} // Disable click in browse mode
+                      />
+                      <button
+                        onClick={() => void handleAdd(item)}
+                        disabled={addingIds.has(item.id)}
+                        className="absolute top-2 left-2 p-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all disabled:cursor-not-allowed flex items-center gap-1"
+                        aria-label={`Add ${item.title} to collection`}
+                      >
+                        {addingIds.has(item.id) ? (
+                          <Loader className="animate-spin" size={16} />
+                        ) : (
+                          <Plus size={16} />
+                        )}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )
+            ) : searchQuery ? (
+              <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                <Search size={64} className="mb-4 opacity-50" />
+                <p className="text-lg">No results found for "{searchQuery}"</p>
+                <p className="text-sm mt-2">Try a different search term</p>
               </div>
             ) : (
-              // Grid view for other media types
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                {searchResults.map((item) => (
-                  <div key={item.id} className="relative group">
-                    <MediaCard
-                      id={item.id}
-                      title={item.title}
-                      year={item.year}
-                      posterUrl={item.poster}
-                      onClick={() => {}} // Disable click in browse mode
-                    />
-                    <button
-                      onClick={() => void handleAdd(item)}
-                      disabled={addingIds.has(item.id)}
-                      className="absolute top-2 left-2 p-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all disabled:cursor-not-allowed flex items-center gap-1"
-                      aria-label={`Add ${item.title} to collection`}
-                    >
-                      {addingIds.has(item.id) ? (
-                        <Loader className="animate-spin" size={16} />
-                      ) : (
-                        <Plus size={16} />
-                      )}
-                    </button>
-                  </div>
-                ))}
+              <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                <Search size={64} className="mb-4 opacity-50" />
+                <p className="text-lg">
+                  Start searching to discover new {mediaType}
+                </p>
+                <p className="text-sm mt-2">
+                  Use the search bar above to find what you're looking for
+                </p>
               </div>
-            )
-          ) : searchQuery ? (
-            <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
-              <Search size={64} className="mb-4 opacity-50" />
-              <p className="text-lg">No results found for "{searchQuery}"</p>
-              <p className="text-sm mt-2">Try a different search term</p>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
-              <Search size={64} className="mb-4 opacity-50" />
-              <p className="text-lg">
-                Start searching to discover new {mediaType}
-              </p>
-              <p className="text-sm mt-2">
-                Use the search bar above to find what you're looking for
-              </p>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      </FocusTrap>
     </div>
   );
 }

@@ -193,8 +193,8 @@ const AdminOverview: React.FC = () => {
         )}
 
         {/* User Management Section */}
-        <div className="bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 p-6 mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div className="bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 overflow-hidden mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-6 border-b border-white/10">
             <h3 className="text-xl font-bold text-white">User Management</h3>
             <div className="relative w-full sm:w-64">
               <input
@@ -206,17 +206,18 @@ const AdminOverview: React.FC = () => {
                   setUserPage(0);
                 }}
                 className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                aria-label="Search users"
               />
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             </div>
           </div>
 
           {usersLoading ? (
-            <div className="text-center py-8 text-gray-300">
+            <div className="text-center py-8 text-gray-300 px-6">
               Loading users...
             </div>
           ) : users.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">
+            <div className="text-center py-8 text-gray-400 px-6">
               No users found{userSearch && ` matching "${userSearch}"`}
             </div>
           ) : (
@@ -224,17 +225,17 @@ const AdminOverview: React.FC = () => {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-white/10 text-left">
-                      <th className="pb-3 text-sm font-semibold text-gray-300">
+                    <tr className="border-b border-white/10 text-left bg-white/5">
+                      <th className="py-3 px-6 text-sm font-semibold text-gray-300">
                         User
                       </th>
-                      <th className="pb-3 text-sm font-semibold text-gray-300">
+                      <th className="py-3 px-6 text-sm font-semibold text-gray-300">
                         Email
                       </th>
-                      <th className="pb-3 text-sm font-semibold text-gray-300">
+                      <th className="py-3 px-6 text-sm font-semibold text-gray-300">
                         Role
                       </th>
-                      <th className="pb-3 text-sm font-semibold text-gray-300">
+                      <th className="py-3 px-6 text-sm font-semibold text-gray-300">
                         Actions
                       </th>
                     </tr>
@@ -245,17 +246,17 @@ const AdminOverview: React.FC = () => {
                         key={user.id}
                         className="border-b border-white/5 hover:bg-white/5 transition-colors"
                       >
-                        <td className="py-4">
+                        <td className="py-4 px-6">
                           <div className="font-medium text-white">
                             {user.display_name}
                           </div>
                         </td>
-                        <td className="py-4">
+                        <td className="py-4 px-6">
                           <div className="text-gray-300 text-sm">
                             {user.email || "N/A"}
                           </div>
                         </td>
-                        <td className="py-4">
+                        <td className="py-4 px-6">
                           <span
                             className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                               user.is_admin
@@ -273,18 +274,32 @@ const AdminOverview: React.FC = () => {
                             )}
                           </span>
                         </td>
-                        <td className="py-4">
-                          {user.id !== SUPER_ADMIN_ID && (
+                        <td className="py-4 px-6">
+                          {user.id !== SUPER_ADMIN_ID ? (
                             <button
                               onClick={() => handleToggleAdminClick(user)}
-                              className={`text-sm font-medium transition-colors ${
+                              className={`inline-flex items-center gap-1.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 px-3 py-1.5 rounded-lg ${
                                 user.is_admin
-                                  ? "text-red-400 hover:text-red-300"
-                                  : "text-purple-400 hover:text-purple-300"
+                                  ? "text-red-400 hover:text-red-300 hover:bg-red-500/10 focus-visible:ring-red-500"
+                                  : "text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 focus-visible:ring-purple-500"
                               }`}
+                              aria-label={
+                                user.is_admin
+                                  ? `Remove admin privileges from ${user.display_name}`
+                                  : `Grant admin privileges to ${user.display_name}`
+                              }
                             >
+                              <ShieldCheck className="w-4 h-4" />
                               {user.is_admin ? "Remove Admin" : "Make Admin"}
                             </button>
+                          ) : (
+                            <div
+                              className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 cursor-not-allowed px-3 py-1.5"
+                              title="Super admin privileges cannot be modified"
+                            >
+                              <ShieldCheck className="w-4 h-4" />
+                              <span>Protected</span>
+                            </div>
                           )}
                         </td>
                       </tr>
@@ -295,11 +310,12 @@ const AdminOverview: React.FC = () => {
 
               {/* Pagination */}
               {totalUserPages > 1 && (
-                <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/10">
+                <div className="flex items-center justify-between px-6 py-4 border-t border-white/10">
                   <button
                     onClick={() => setUserPage((p) => Math.max(0, p - 1))}
                     disabled={userPage === 0}
-                    className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-300 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-300 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded"
+                    aria-label="Previous page"
                   >
                     <ChevronLeft className="w-4 h-4" />
                     Previous
@@ -312,7 +328,8 @@ const AdminOverview: React.FC = () => {
                       setUserPage((p) => Math.min(totalUserPages - 1, p + 1))
                     }
                     disabled={userPage >= totalUserPages - 1}
-                    className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-300 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-300 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded"
+                    aria-label="Next page"
                   >
                     Next
                     <ChevronRight className="w-4 h-4" />

@@ -31,16 +31,20 @@ const IconButton: React.FC<IconButtonProps> = ({
   className = "",
 }) => {
   const baseStyles =
-    "p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
+    "p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800";
 
   const variantStyles = {
     default:
-      "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600",
-    success: "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400",
-    warning: "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400",
-    danger: "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400",
-    primary: "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400",
-    active: "text-white", // Will use inline style for backgroundColor
+      "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 focus-visible:ring-gray-400",
+    success:
+      "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 focus-visible:ring-green-500",
+    warning:
+      "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 focus-visible:ring-orange-500",
+    danger:
+      "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 focus-visible:ring-red-500",
+    primary:
+      "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 focus-visible:ring-primary",
+    active: "text-white focus-visible:ring-primary", // Will use inline style for backgroundColor
   };
 
   const handleClick = () => {

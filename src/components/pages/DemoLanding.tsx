@@ -140,7 +140,7 @@ const DemoLanding: React.FC = () => {
               href="https://github.com/aftongauntlett/npcfinder"
               target="_blank"
               rel="noopener noreferrer"
-              className="group"
+              className="group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CCCCFF] focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded-lg"
             >
               <button className="flex items-center gap-3 text-lg px-8 py-4 rounded-lg border-2 border-[#CCCCFF]/50 bg-transparent text-white hover:bg-[#CCCCFF]/20 hover:border-[#CCCCFF] transition-all duration-500 ease-out">
                 <Github className="w-6 h-6 transition-transform duration-500 ease-out group-hover:rotate-12" />
@@ -379,7 +379,9 @@ const DemoLanding: React.FC = () => {
             <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden hover:border-blue-400/50 hover:bg-white/10 transition-all duration-500 ease-out">
               <button
                 onClick={() => toggleAccordion("purpose")}
-                className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-white/[0.08] transition-colors duration-500 ease-out group"
+                className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-white/[0.08] transition-colors duration-500 ease-out group focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-inset"
+                aria-expanded={openAccordions.has("purpose")}
+                aria-controls="purpose-content"
               >
                 <span className="text-lg font-semibold text-white group-hover:text-blue-100 transition-colors duration-500 ease-out">
                   Purpose
@@ -391,7 +393,10 @@ const DemoLanding: React.FC = () => {
                 />
               </button>
               {openAccordions.has("purpose") && (
-                <div className="px-6 py-5 text-gray-300 leading-relaxed border-t border-white/5">
+                <div
+                  id="purpose-content"
+                  className="px-6 py-5 text-gray-300 leading-relaxed border-t border-white/5"
+                >
                   This application was built to solve a real problem — keeping
                   track of media recommendations among a close friend group.
                   It's designed to be private, secure, and intuitive.
@@ -403,7 +408,9 @@ const DemoLanding: React.FC = () => {
             <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden hover:border-green-400/50 hover:bg-white/10 transition-all duration-500 ease-out">
               <button
                 onClick={() => toggleAccordion("invite-only")}
-                className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-white/[0.08] transition-colors duration-500 ease-out group"
+                className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-white/[0.08] transition-colors duration-500 ease-out group focus:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-inset"
+                aria-expanded={openAccordions.has("invite-only")}
+                aria-controls="invite-only-content"
               >
                 <span className="text-lg font-semibold text-white group-hover:text-green-100 transition-colors duration-500 ease-out">
                   Why Invite-Only?
@@ -415,7 +422,10 @@ const DemoLanding: React.FC = () => {
                 />
               </button>
               {openAccordions.has("invite-only") && (
-                <div className="px-6 py-5 text-gray-300 leading-relaxed border-t border-white/5">
+                <div
+                  id="invite-only-content"
+                  className="px-6 py-5 text-gray-300 leading-relaxed border-t border-white/5"
+                >
                   This app is intentionally not public. It serves my friends and
                   me, and the invite system ensures only trusted users have
                   access. Security and privacy are paramount.
@@ -427,7 +437,9 @@ const DemoLanding: React.FC = () => {
             <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden hover:border-cyan-400/50 hover:bg-white/10 transition-all duration-500 ease-out">
               <button
                 onClick={() => toggleAccordion("open-source")}
-                className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-white/[0.08] transition-colors duration-500 ease-out group"
+                className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-white/[0.08] transition-colors duration-500 ease-out group focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-inset"
+                aria-expanded={openAccordions.has("open-source")}
+                aria-controls="open-source-content"
               >
                 <span className="text-lg font-semibold text-white group-hover:text-cyan-100 transition-colors duration-500 ease-out">
                   Open Source
@@ -439,7 +451,10 @@ const DemoLanding: React.FC = () => {
                 />
               </button>
               {openAccordions.has("open-source") && (
-                <div className="px-6 py-5 text-gray-300 leading-relaxed border-t border-white/5">
+                <div
+                  id="open-source-content"
+                  className="px-6 py-5 text-gray-300 leading-relaxed border-t border-white/5"
+                >
                   The source code is available on GitHub for those interested in
                   the technical implementation. Feel free to explore the
                   architecture and see how it's built.

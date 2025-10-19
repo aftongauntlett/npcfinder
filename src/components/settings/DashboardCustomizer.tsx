@@ -36,11 +36,15 @@ const DashboardCustomizer: React.FC<DashboardCustomizerProps> = ({
               key={card.cardId}
               type="button"
               onClick={() => onToggleCard(card.cardId)}
-              className={`flex items-start gap-4 p-4 rounded-lg border-2 transition-all text-left ${
+              className={`flex items-start gap-4 p-4 rounded-lg border-2 transition-all text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
                 isVisible
                   ? "border-primary bg-primary/10 dark:bg-primary/10"
                   : "border-gray-700 dark:border-gray-700 bg-gray-900/30 dark:bg-gray-900/30 opacity-60 hover:opacity-80"
               }`}
+              aria-label={`${isVisible ? "Hide" : "Show"} ${
+                card.title
+              } card on dashboard`}
+              aria-pressed={isVisible}
             >
               {/* Icon */}
               <div

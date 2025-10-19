@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { AlertTriangle, X } from "lucide-react";
+import FocusTrap from "focus-trap-react";
 import Button from "../shared/Button";
 
 interface ConfirmationModalProps {
@@ -25,6 +26,23 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   variant = "warning",
   isLoading = false,
 }) => {
+  // Handle ESC key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !isLoading) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleEscape);
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isOpen, onClose, isLoading]);
+
   if (!isOpen) return null;
 
   const variantStyles = {
@@ -58,78 +76,89 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
       aria-modal="true"
       aria-labelledby="modal-title"
     >
-      <div
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 transform transition-all"
-        onClick={(e) => e.stopPropagation()}
+      <FocusTrap
+        focusTrapOptions={{
+          initialFocus: false,
+          escapeDeactivates: false, // We handle ESC manually
+          clickOutsideDeactivates: true,
+          returnFocusOnDeactivate: true,
+        }}
       >
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div
-              className={`p-2 rounded-full ${styles.useTheme ? "" : styles.bg}`}
+        <div
+          className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 transform transition-all focus:outline-none"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div
+                className={`p-2 rounded-full ${
+                  styles.useTheme ? "" : styles.bg
+                }`}
+                style={
+                  styles.useTheme
+                    ? { backgroundColor: "var(--color-primary-pale)" }
+                    : undefined
+                }
+              >
+                <AlertTriangle
+                  className={`w-6 h-6 ${styles.useTheme ? "" : styles.icon}`}
+                  style={
+                    styles.useTheme
+                      ? { color: "var(--color-primary)" }
+                      : undefined
+                  }
+                  aria-hidden="true"
+                />
+              </div>
+              <h3
+                id="modal-title"
+                className="text-lg font-semibold text-gray-900 dark:text-white"
+              >
+                {title}
+              </h3>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" aria-hidden="true" />
+            </button>
+          </div>
+
+          {/* Message */}
+          <p className="text-gray-600 dark:text-gray-300 mb-6">{message}</p>
+
+          {/* Actions */}
+          <div className="flex flex-col-reverse sm:flex-row gap-3">
+            <Button
+              variant="secondary"
+              onClick={onClose}
+              disabled={isLoading}
+              className="flex-1"
+            >
+              {cancelText}
+            </Button>
+            <button
+              onClick={onConfirm}
+              disabled={isLoading}
+              className={`flex-1 px-4 py-2 text-white font-medium rounded-lg transition-opacity disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                styles.useTheme ? "hover:opacity-90" : styles.button
+              }`}
               style={
                 styles.useTheme
-                  ? { backgroundColor: "var(--color-primary-pale)" }
+                  ? {
+                      backgroundColor: "var(--color-primary)",
+                    }
                   : undefined
               }
             >
-              <AlertTriangle
-                className={`w-6 h-6 ${styles.useTheme ? "" : styles.icon}`}
-                style={
-                  styles.useTheme
-                    ? { color: "var(--color-primary)" }
-                    : undefined
-                }
-                aria-hidden="true"
-              />
-            </div>
-            <h3
-              id="modal-title"
-              className="text-lg font-semibold text-gray-900 dark:text-white"
-            >
-              {title}
-            </h3>
+              {isLoading ? "Processing..." : confirmText}
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" aria-hidden="true" />
-          </button>
         </div>
-
-        {/* Message */}
-        <p className="text-gray-600 dark:text-gray-300 mb-6">{message}</p>
-
-        {/* Actions */}
-        <div className="flex flex-col-reverse sm:flex-row gap-3">
-          <Button
-            variant="secondary"
-            onClick={onClose}
-            disabled={isLoading}
-            className="flex-1"
-          >
-            {cancelText}
-          </Button>
-          <button
-            onClick={onConfirm}
-            disabled={isLoading}
-            className={`flex-1 px-4 py-2 text-white font-medium rounded-lg transition-opacity disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-              styles.useTheme ? "hover:opacity-90" : styles.button
-            }`}
-            style={
-              styles.useTheme
-                ? {
-                    backgroundColor: "var(--color-primary)",
-                  }
-                : undefined
-            }
-          >
-            {isLoading ? "Processing..." : confirmText}
-          </button>
-        </div>
-      </div>
+      </FocusTrap>
     </div>
   );
 };

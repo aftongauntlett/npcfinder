@@ -5,6 +5,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { User as UserIcon, Save } from "lucide-react";
 import { getUserProfile, upsertUserProfile } from "../../lib/profiles";
 import Button from "../shared/Button";
+import Input from "../shared/Input";
+import Textarea from "../shared/Textarea";
 import MainLayout from "../layouts/MainLayout";
 import ContentLayout from "../layouts/ContentLayout";
 import ColorThemePicker from "../settings/ColorThemePicker";
@@ -238,70 +240,40 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
             </h2>
             <div className="space-y-4">
               {/* Display Name */}
-              <div>
-                <label
-                  htmlFor="display_name"
-                  className="block text-sm font-medium text-gray-300 dark:text-gray-300 mb-2"
-                >
-                  Display Name
-                </label>
-                <input
-                  type="text"
-                  id="display_name"
-                  name="display_name"
-                  value={profile.display_name}
-                  onChange={handleChange}
-                  placeholder="Your display name"
-                  className="w-full px-4 py-2 border border-gray-600 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-900/50 dark:bg-gray-900/50 text-white dark:text-white placeholder-gray-500"
-                />
-                <p className="mt-1 text-sm text-gray-400 dark:text-gray-400">
-                  This is how your name appears in the greeting
-                </p>
-              </div>
+              <Input
+                id="display_name"
+                name="display_name"
+                label="Display Name"
+                type="text"
+                value={profile.display_name}
+                onChange={handleChange}
+                placeholder="Your display name"
+                helperText="This is how your name appears in the greeting"
+              />
 
               {/* Email Address (Read-only) */}
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-300 dark:text-gray-300 mb-2"
-                >
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={currentUser.email || ""}
-                  disabled
-                  className="w-full px-4 py-2 border border-gray-600 dark:border-gray-600 rounded-lg bg-gray-900/30 dark:bg-gray-900/30 text-gray-500 dark:text-gray-500 cursor-not-allowed"
-                />
-                <p className="mt-1 text-sm text-gray-400 dark:text-gray-400">
-                  Your email cannot be changed
-                </p>
-              </div>
+              <Input
+                id="email"
+                name="email"
+                label="Email Address"
+                type="email"
+                value={currentUser.email || ""}
+                disabled
+                helperText="Your email cannot be changed"
+              />
 
               {/* Bio */}
-              <div>
-                <label
-                  htmlFor="bio"
-                  className="block text-sm font-medium text-gray-300 dark:text-gray-300 mb-2"
-                >
-                  Bio
-                </label>
-                <textarea
-                  id="bio"
-                  name="bio"
-                  value={profile.bio}
-                  onChange={handleChange}
-                  placeholder="Tell us about yourself..."
-                  maxLength={1000}
-                  rows={4}
-                  className="w-full px-4 py-2 border border-gray-600 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-900/50 dark:bg-gray-900/50 text-white dark:text-white placeholder-gray-500 resize-none"
-                />
-                <p className="mt-1 text-sm text-gray-400 dark:text-gray-400">
-                  {profile.bio.length}/1000 characters
-                </p>
-              </div>
+              <Textarea
+                id="bio"
+                name="bio"
+                label="Bio"
+                value={profile.bio}
+                onChange={handleChange}
+                placeholder="Tell us about yourself..."
+                maxLength={1000}
+                rows={4}
+                resize="none"
+              />
             </div>
           </div>
 

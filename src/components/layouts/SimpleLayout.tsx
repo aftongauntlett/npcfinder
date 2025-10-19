@@ -17,7 +17,12 @@ const SimpleLayout: React.FC<SimpleLayoutProps> = ({
   showWeather = true,
 }) => {
   return (
-    <main className={`min-h-screen flex flex-col ${className}`} role="main">
+    <main
+      id="main-content"
+      tabIndex={-1}
+      className={`min-h-screen flex flex-col focus:outline-none ${className}`}
+      role="main"
+    >
       {showWeather && (
         <div className="fixed top-4 right-6 z-50">
           <WeatherWidget />

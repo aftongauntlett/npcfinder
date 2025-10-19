@@ -144,6 +144,14 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
     if (window.innerWidth < 768) {
       setIsCollapsed(true);
     }
+    // Focus main content area after navigation for keyboard accessibility
+    // Small delay to ensure DOM is updated after route change
+    setTimeout(() => {
+      const mainContent = document.getElementById("main-content");
+      if (mainContent) {
+        mainContent.focus();
+      }
+    }, 100);
   };
 
   const toggleCollapse = () => {
@@ -189,7 +197,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
           {isCollapsed ? (
             <button
               onClick={() => void navigate("/app")}
-              className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center"
+              className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
               aria-label="Go to dashboard"
             >
               <Home className="w-5 h-5 text-primary" aria-hidden="true" />
@@ -197,7 +205,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
           ) : (
             <button
               onClick={() => void navigate("/app")}
-              className="text-xl font-bold text-gray-900 dark:text-white hover:text-primary dark:hover:text-primary-light transition-colors font-heading whitespace-nowrap"
+              className="text-xl font-bold text-gray-900 dark:text-white hover:text-primary dark:hover:text-primary-light transition-colors font-heading whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 rounded"
             >
               NPC Finder
             </button>
@@ -216,7 +224,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
                 <li key={item.id}>
                   <button
                     onClick={() => handleNavigation(item.path)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
                       active
                         ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light font-medium"
                         : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -256,7 +264,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
                             <li key={subItem.id}>
                               <button
                                 onClick={() => handleNavigation(subItem.path)}
-                                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
+                                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
                                   subActive
                                     ? "bg-blue-500/20 text-blue-400 dark:bg-blue-500/30 dark:text-blue-300 font-medium"
                                     : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -292,7 +300,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
                                           onClick={() =>
                                             handleNavigation(nestedSubItem.path)
                                           }
-                                          className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-all duration-200 ${
+                                          className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
                                             nestedActive
                                               ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light font-medium"
                                               : "text-gray-500 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -386,7 +394,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
                   <div key={item.id}>
                     <button
                       onClick={() => handleNavigation(item.path)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
                         active
                           ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light font-medium"
                           : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -445,7 +453,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
               {/* Sign Out */}
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
                 aria-label="Sign Out"
               >
                 <LogOut className="w-4 h-4" aria-hidden="true" />
@@ -458,7 +466,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
           <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
             <button
               onClick={toggleCollapse}
-              className="w-full flex items-center justify-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="w-full flex items-center justify-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
               aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >

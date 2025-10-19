@@ -112,7 +112,7 @@ const HomePage: React.FC<HomePageProps> = () => {
                 setShowGettingStarted(false);
                 localStorage.setItem("hideGettingStarted", "true");
               }}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 p-1"
               aria-label="Dismiss getting started"
             >
               <X className="w-5 h-5" />
