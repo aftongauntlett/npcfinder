@@ -14,11 +14,14 @@ import {
   LogOut,
   Activity,
   UserPlus,
+  ListVideo,
+  Lightbulb,
 } from "lucide-react";
-import { useAdmin } from "../contexts/AdminContext";
-import { useProfileQuery } from "../hooks/useProfileQuery";
-import ConfirmationModal from "./shared/ConfirmationModal";
-import { signOut } from "../lib/auth";
+import { useAdmin } from "../../contexts/AdminContext";
+import { useSidebar } from "../../contexts/SidebarContext";
+import { useProfileQuery } from "../../hooks/useProfileQuery";
+import ConfirmationModal from "./ConfirmationModal";
+import { signOut } from "../../lib/auth";
 
 interface SidebarProps {
   currentUser: { id: string; email?: string } | null;
@@ -35,7 +38,26 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { id: "dashboard", label: "Dashboard", icon: Home, path: "/app" },
-  { id: "movies", label: "Movies & TV", icon: Film, path: "/app/movies" },
+  {
+    id: "movies",
+    label: "Movies & TV",
+    icon: Film,
+    path: "/app/movies",
+    subItems: [
+      {
+        id: "movies-watchlist",
+        label: "Watch List",
+        icon: ListVideo,
+        path: "/app/movies/watchlist",
+      },
+      {
+        id: "movies-suggestions",
+        label: "Suggestions",
+        icon: Lightbulb,
+        path: "/app/movies/suggestions",
+      },
+    ],
+  },
   { id: "music", label: "Music", icon: Music, path: "/app/music" },
   { id: "books", label: "Books", icon: BookOpen, path: "/app/books" },
   { id: "games", label: "Games", icon: Gamepad2, path: "/app/games" },
@@ -54,13 +76,13 @@ const USER_MENU_ITEMS: NavItem[] = [
         id: "admin-overview",
         label: "Overview",
         icon: Activity,
-        path: "/app/admin?tab=overview",
+        path: "/app/admin/overview",
       },
       {
         id: "admin-invites",
         label: "Invite Codes",
         icon: UserPlus,
-        path: "/app/admin?tab=invite-codes",
+        path: "/app/admin/invite-codes",
       },
     ],
   },
@@ -76,6 +98,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAdmin } = useAdmin();
+  const { isCollapsed, setIsCollapsed } = useSidebar();
   const { data: profile } = useProfileQuery();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -114,35 +137,6 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
       setShowSignOutModal(false);
     }
   };
-
-  // Get initial collapsed state from localStorage, default to false on desktop, true on mobile
-  const getInitialCollapsed = () => {
-    const saved = localStorage.getItem("sidebar-collapsed");
-    if (saved !== null) {
-      return saved === "true";
-    }
-    // Default: collapsed on mobile, expanded on desktop
-    return window.innerWidth < 768;
-  };
-
-  const [isCollapsed, setIsCollapsed] = useState(getInitialCollapsed);
-
-  // Save collapsed state to localStorage
-  useEffect(() => {
-    localStorage.setItem("sidebar-collapsed", isCollapsed.toString());
-  }, [isCollapsed]);
-
-  // Auto-collapse on mobile resize
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 768 && !isCollapsed) {
-        setIsCollapsed(true);
-      }
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [isCollapsed]);
 
   const handleNavigation = (path: string) => {
     void navigate(path);
@@ -242,7 +236,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
                     )}
                   </button>
 
-                  {/* Render sub-items if they exist and sidebar is not collapsed */}
+                  {/* Render sub-items if they exist and sidebar is not collapsed and parent is active */}
                   {!isCollapsed && hasSubItems && active && (
                     <ul className="mt-1 ml-8 space-y-1">
                       {item
@@ -251,12 +245,10 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
                         )
                         .map((subItem) => {
                           const SubIcon = subItem.icon;
+                          // Check if this sub-item is active (exact path match only)
                           const subActive =
-                            location.pathname === subItem.path.split("?")[0] ||
-                            (location.pathname.startsWith(item.path) &&
-                              location.search.includes(
-                                subItem.path.split("?")[1] || ""
-                              ));
+                            location.pathname === subItem.path ||
+                            location.pathname === subItem.path.split("?")[0];
                           const hasNestedSubItems =
                             subItem.subItems && subItem.subItems.length > 0;
 
@@ -266,10 +258,11 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
                                 onClick={() => handleNavigation(subItem.path)}
                                 className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
                                   subActive
-                                    ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light font-medium"
+                                    ? "bg-blue-500/20 text-blue-400 dark:bg-blue-500/30 dark:text-blue-300 font-medium"
                                     : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                                 }`}
                                 aria-label={subItem.label}
+                                aria-current={subActive ? "page" : undefined}
                               >
                                 <SubIcon
                                   className="w-4 h-4 flex-shrink-0"
@@ -393,7 +386,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
                   <div key={item.id}>
                     <button
                       onClick={() => handleNavigation(item.path)}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm ${
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
                         active
                           ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light font-medium"
                           : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -402,7 +395,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
                       aria-current={active ? "page" : undefined}
                     >
                       <Icon
-                        className={`w-4 h-4 flex-shrink-0 ${
+                        className={`w-5 h-5 flex-shrink-0 ${
                           active ? "text-primary dark:text-primary-light" : ""
                         }`}
                         aria-hidden="true"
@@ -412,30 +405,28 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
 
                     {/* Render sub-items if they exist and item is active */}
                     {hasSubItems && active && (
-                      <div className="mt-1 ml-6 space-y-1">
+                      <div className="mt-1 ml-8 space-y-1">
                         {item.subItems!.map((subItem) => {
                           const SubIcon = subItem.icon;
-                          // Check if this specific sub-item is active
-                          const subActive = location.search
-                            ? location.search.includes(
-                                subItem.path.split("?")[1] || ""
-                              )
-                            : false;
+                          // Check if this specific sub-item is active (exact path match)
+                          const subActive =
+                            location.pathname === subItem.path ||
+                            location.pathname === subItem.path.split("?")[0];
 
                           return (
                             <button
                               key={subItem.id}
                               onClick={() => handleNavigation(subItem.path)}
-                              className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-all duration-200 ${
+                              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
                                 subActive
-                                  ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light font-medium"
-                                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200"
+                                  ? "bg-blue-500/20 text-blue-400 dark:bg-blue-500/30 dark:text-blue-300 font-medium"
+                                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                               }`}
                               aria-label={subItem.label}
                               aria-current={subActive ? "page" : undefined}
                             >
                               <SubIcon
-                                className="w-3 h-3 flex-shrink-0"
+                                className="w-4 h-4 flex-shrink-0"
                                 aria-hidden="true"
                               />
                               <span className="truncate">{subItem.label}</span>

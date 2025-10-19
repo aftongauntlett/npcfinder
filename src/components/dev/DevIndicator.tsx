@@ -17,8 +17,8 @@ const DevIndicator: React.FC<DevIndicatorProps> = ({ isAdmin }) => {
   if (!isAdmin) return null;
 
   return (
-    <div className="fixed bottom-2 left-2 z-40 text-xs text-gray-500 dark:text-gray-600 font-mono">
-      <div className="opacity-50">
+    <div className="fixed bottom-4 right-4 z-40 text-xs text-gray-500 dark:text-gray-600 font-mono pointer-events-none">
+      <div className="opacity-50 bg-white/80 dark:bg-gray-800/80 px-2 py-1 rounded backdrop-blur-sm">
         dev {USE_MOCK_DATA ? "• mock" : "• live"}
       </div>
     </div>

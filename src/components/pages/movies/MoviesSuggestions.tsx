@@ -1,21 +1,21 @@
 import React, { useState, useMemo } from "react";
-import { Film, Tv as TvIcon, Send, ListVideo, Lightbulb } from "lucide-react";
-import SendMediaModal from "../shared/SendMediaModal";
-import { searchMoviesAndTV } from "../../utils/mediaSearchAdapters";
-import MediaRecommendationCard from "../shared/MediaRecommendationCard";
+import { Film, Tv as TvIcon } from "lucide-react";
+import SendMediaModal from "../../shared/SendMediaModal";
+import { searchMoviesAndTV } from "../../../utils/mediaSearchAdapters";
+import MediaRecommendationCard from "../../shared/MediaRecommendationCard";
 import {
   MediaRecommendationsLayout,
   BaseRecommendation,
-} from "../shared/MediaRecommendationsLayout";
-import PersonalWatchList from "../media/PersonalWatchList";
-import MediaPageTemplate from "../layouts/MediaPageTemplate";
+} from "../../shared/MediaRecommendationsLayout";
+import ContentLayout from "../../layouts/ContentLayout";
+import MainLayout from "../../layouts/MainLayout";
 import {
   useFriendsWithMovieRecs,
   useMovieStats,
   useMovieRecommendations,
   useUpdateMovieRecommendationStatus,
   useDeleteMovieRecommendation,
-} from "../../hooks/useMovieQueries";
+} from "../../../hooks/useMovieQueries";
 
 // Extend BaseRecommendation with movie-specific fields
 interface MovieRecommendation extends BaseRecommendation {
@@ -23,43 +23,34 @@ interface MovieRecommendation extends BaseRecommendation {
   release_date: string | null;
   overview: string | null;
   poster_url: string | null;
-  // Override with movie-specific status types
   status: "pending" | "watched" | "hit" | "miss";
-  watched_at: string | null; // Movie-specific timestamp field (maps to consumed_at)
+  watched_at: string | null;
   created_at: string;
-  sender_comment: string | null; // Required by MediaRecommendationCard
+  sender_comment: string | null;
 }
 
 /**
- * Movies & TV Recommendations Dashboard
- * Discover great movies and shows through trusted friend recommendations
+ * Movies & TV Suggestions Page
+ * View and manage movie/TV show recommendations from friends
  */
-const MoviesTV: React.FC = () => {
-  // Tab state
-  const [activeTab, setActiveTab] = useState<"watchlist" | "suggestions">(
-    "watchlist"
-  );
-
+const MoviesSuggestions: React.FC = () => {
   const [selectedView, setSelectedView] = useState<
     "overview" | "friend" | "hits" | "misses" | "sent"
   >("overview");
   const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null);
   const [showSendModal, setShowSendModal] = useState(false);
 
-  // TanStack Query hooks - automatic loading, caching, refetching
+  // TanStack Query hooks
   const { data: friendsWithRecs = [], isLoading: friendsLoading } =
     useFriendsWithMovieRecs();
-
   const { data: quickStats = { hits: 0, misses: 0, queue: 0, sent: 0 } } =
     useMovieStats();
-
   const { data: rawRecommendations = [], isLoading: recsLoading } =
     useMovieRecommendations(selectedView, selectedFriendId || undefined);
 
-  // Derive loading state
   const loading = friendsLoading || recsLoading;
 
-  // Map raw recommendations to MovieRecommendation format with useMemo
+  // Map raw recommendations to MovieRecommendation format
   const recommendations = useMemo<MovieRecommendation[]>(() => {
     return rawRecommendations.map((rec) => ({
       ...rec,
@@ -68,22 +59,21 @@ const MoviesTV: React.FC = () => {
       sender_comment: rec.sender_note || null,
       sent_at: rec.created_at,
       poster_url: rec.poster_url || null,
-      watched_at: rec.consumed_at || null,
-      overview: null,
+      watched_at: rec.watched_at || null,
+      overview: rec.overview || null,
       release_date: rec.year ? `${rec.year}` : null,
       media_type: rec.media_type as "movie" | "tv",
       status:
-        rec.status === "consumed"
+        rec.status === "consumed" || rec.status === "watched"
           ? "watched"
-          : (rec.status as "pending" | "watched" | "hit" | "miss"),
+          : rec.status,
     }));
   }, [rawRecommendations]);
 
-  // TanStack Query mutations
+  // Mutations
   const updateStatusMutation = useUpdateMovieRecommendationStatus();
   const deleteRecMutation = useDeleteMovieRecommendation();
 
-  // Handle view changes
   const handleViewChange = (
     view: "overview" | "friend" | "hits" | "misses" | "sent",
     friendId?: string
@@ -92,16 +82,13 @@ const MoviesTV: React.FC = () => {
     setSelectedFriendId(friendId || null);
   };
 
-  // Mark a recommendation as watched/hit/miss
   const updateRecommendationStatus = async (
     recId: string,
     status: string,
     comment?: string
   ) => {
     try {
-      // Map 'consumed' back to 'watched' for movies
       const dbStatus = status === "consumed" ? "watched" : status;
-
       await updateStatusMutation.mutateAsync({
         recId,
         status: dbStatus,
@@ -112,7 +99,6 @@ const MoviesTV: React.FC = () => {
     }
   };
 
-  // Delete (unsend) a recommendation
   const deleteRecommendation = async (recId: string) => {
     try {
       await deleteRecMutation.mutateAsync(recId);
@@ -121,7 +107,6 @@ const MoviesTV: React.FC = () => {
     }
   };
 
-  // Render a movie recommendation card
   const renderRecommendationCard = (
     rec: MovieRecommendation,
     isReceived: boolean
@@ -182,67 +167,39 @@ const MoviesTV: React.FC = () => {
   };
 
   return (
-    <>
-      <MediaPageTemplate
-        pageTitle="Movies & TV"
-        pageDescription="Discover, track and recommend movies & tv shows."
-        tabs={[
-          {
-            id: "watchlist",
-            label: "Watch List",
-            icon: <ListVideo className="w-4 h-4" />,
-          },
-          {
-            id: "suggestions",
-            label: "Suggestions",
-            icon: <Lightbulb className="w-4 h-4" />,
-          },
-        ]}
-        activeTab={activeTab}
-        onTabChange={(tabId) =>
-          setActiveTab(tabId as "watchlist" | "suggestions")
-        }
-        primaryAction={{
-          label: "Recommend",
-          icon: <Send className="w-4 h-4" />,
-          onClick: () => setShowSendModal(true),
-          variant: "outline" as const,
-        }}
+    <MainLayout>
+      <ContentLayout
+        title="Suggestions"
+        description="Discover movies and TV shows recommended by your friends."
       >
-        {/* Tab Content */}
-        {activeTab === "watchlist" ? (
-          <PersonalWatchList />
-        ) : (
-          <MediaRecommendationsLayout
-            mediaType="Movies & TV"
-            mediaIcon={
-              <Film className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500" />
-            }
-            emptyMessage="No recommendations yet"
-            emptySubMessage="When friends recommend movies or TV shows, they'll show up here"
-            queueLabel="Watching Queue"
-            consumedLabel="Watched"
-            loading={loading}
-            friendsWithRecs={friendsWithRecs}
-            recommendations={recommendations}
-            quickStats={quickStats}
-            selectedView={selectedView}
-            selectedFriendId={selectedFriendId}
-            onViewChange={handleViewChange}
-            onSendClick={undefined}
-            onStatusUpdate={updateRecommendationStatus}
-            onDelete={deleteRecommendation}
-            renderRecommendationCard={renderRecommendationCard}
-          />
-        )}
-      </MediaPageTemplate>
+        <MediaRecommendationsLayout
+          mediaType="Movies & TV"
+          mediaIcon={
+            <Film className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500" />
+          }
+          emptyMessage="No recommendations yet"
+          emptySubMessage="When friends recommend movies or TV shows, they'll show up here"
+          queueLabel="Watching Queue"
+          consumedLabel="Watched"
+          loading={loading}
+          friendsWithRecs={friendsWithRecs}
+          recommendations={recommendations}
+          quickStats={quickStats}
+          selectedView={selectedView}
+          selectedFriendId={selectedFriendId}
+          onViewChange={handleViewChange}
+          onSendClick={() => setShowSendModal(true)}
+          onStatusUpdate={updateRecommendationStatus}
+          onDelete={deleteRecommendation}
+          renderRecommendationCard={renderRecommendationCard}
+        />
+      </ContentLayout>
 
       {/* Send Movie/TV Modal */}
       <SendMediaModal
         isOpen={showSendModal}
         onClose={() => setShowSendModal(false)}
         onSent={() => {
-          // TanStack Query will auto-invalidate and refresh after mutation
           setShowSendModal(false);
         }}
         mediaType="movies"
@@ -255,8 +212,8 @@ const MoviesTV: React.FC = () => {
         ]}
         defaultRecommendationType="watch"
       />
-    </>
+    </MainLayout>
   );
 };
 
-export default MoviesTV;
+export default MoviesSuggestions;

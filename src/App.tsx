@@ -1,7 +1,7 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import type { User } from "@supabase/supabase-js";
-import StarryBackground from "./components/StarryBackground";
+import StarryBackground from "./components/shared/StarryBackground";
 import DemoLanding from "./components/pages/DemoLanding";
 import AuthPage from "./components/pages/AuthPage";
 import PageContainer from "./components/layouts/PageContainer";
@@ -9,17 +9,28 @@ import DevIndicator from "./components/dev/DevIndicator";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { AdminProvider, useAdmin } from "./contexts/AdminContext";
+import { SidebarProvider } from "./contexts/SidebarContext";
 
 // Lazy load authenticated components to avoid Supabase imports on landing page
 const HomePage = React.lazy(() => import("./components/pages/HomePage"));
-const Sidebar = React.lazy(() => import("./components/Sidebar"));
-const MoviesTV = React.lazy(() => import("./components/pages/MoviesTV"));
+const Sidebar = React.lazy(() => import("./components/shared/Sidebar"));
+const MoviesWatchlist = React.lazy(
+  () => import("./components/pages/movies/MoviesWatchlist")
+);
+const MoviesSuggestions = React.lazy(
+  () => import("./components/pages/movies/MoviesSuggestions")
+);
 const Music = React.lazy(() => import("./components/pages/Music"));
 const UserSettings = React.lazy(
   () => import("./components/pages/UserSettings")
 );
 const Suggestions = React.lazy(() => import("./components/pages/Suggestions"));
-const AdminPanel = React.lazy(() => import("./components/pages/AdminPanel"));
+const AdminOverview = React.lazy(
+  () => import("./components/pages/admin/AdminOverview")
+);
+const AdminInviteCodes = React.lazy(
+  () => import("./components/pages/admin/AdminInviteCodes")
+);
 
 // Protected Route wrapper for admin routes
 interface ProtectedAdminRouteProps {
@@ -65,44 +76,69 @@ const AppLayout: React.FC<AppLayoutProps> = ({ user }) => {
   const { isAdmin: userIsAdmin } = useAdmin();
 
   return (
-    <PageContainer className="relative">
-      <StarryBackground />
-      <React.Suspense
-        fallback={
-          <div className="flex items-center justify-center min-h-screen">
-            <div className="text-gray-600 dark:text-gray-400">Loading...</div>
-          </div>
-        }
-      >
-        <Sidebar currentUser={user} />
-        <DevIndicator isAdmin={userIsAdmin} />
+    <SidebarProvider>
+      <PageContainer className="relative">
+        <StarryBackground />
+        <React.Suspense
+          fallback={
+            <div className="flex items-center justify-center min-h-screen">
+              <div className="text-gray-600 dark:text-gray-400">Loading...</div>
+            </div>
+          }
+        >
+          <Sidebar currentUser={user} />
+          <DevIndicator isAdmin={userIsAdmin} />
 
-        {/* Main content - no top nav, sidebar handles everything */}
-        <Routes>
-          <Route path="/" element={<HomePage user={user} />} />
-          <Route path="/movies" element={<MoviesTV />} />
-          <Route path="/music" element={<Music />} />
-          <Route
-            path="/settings"
-            element={<UserSettings currentUser={user} />}
-          />
-          <Route
-            path="/suggestions"
-            element={<Suggestions currentUser={user} />}
-          />
-          <Route
-            path="/admin"
-            element={
-              <ProtectedAdminRoute user={user}>
-                <AdminPanel />
-              </ProtectedAdminRoute>
-            }
-          />
-          {/* Catch all - redirect to app home */}
-          <Route path="*" element={<Navigate to="/app" replace />} />
-        </Routes>
-      </React.Suspense>
-    </PageContainer>
+          {/* Main content - no top nav, sidebar handles everything */}
+          <Routes>
+            <Route path="/" element={<HomePage user={user} />} />
+
+            {/* Movies & TV nested routes */}
+            <Route path="/movies/watchlist" element={<MoviesWatchlist />} />
+            <Route path="/movies/suggestions" element={<MoviesSuggestions />} />
+            <Route
+              path="/movies"
+              element={<Navigate to="/app/movies/watchlist" replace />}
+            />
+
+            <Route path="/music" element={<Music />} />
+            <Route
+              path="/settings"
+              element={<UserSettings currentUser={user} />}
+            />
+            <Route
+              path="/suggestions"
+              element={<Suggestions currentUser={user} />}
+            />
+
+            {/* Admin nested routes */}
+            <Route
+              path="/admin/overview"
+              element={
+                <ProtectedAdminRoute user={user}>
+                  <AdminOverview />
+                </ProtectedAdminRoute>
+              }
+            />
+            <Route
+              path="/admin/invite-codes"
+              element={
+                <ProtectedAdminRoute user={user}>
+                  <AdminInviteCodes />
+                </ProtectedAdminRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={<Navigate to="/app/admin/overview" replace />}
+            />
+
+            {/* Catch all - redirect to app home */}
+            <Route path="*" element={<Navigate to="/app" replace />} />
+          </Routes>
+        </React.Suspense>
+      </PageContainer>
+    </SidebarProvider>
   );
 };
 

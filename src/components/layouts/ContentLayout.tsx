@@ -1,5 +1,4 @@
 import React from "react";
-import WeatherWidget from "../shared/WeatherWidget";
 
 interface Tab {
   id: string;
@@ -13,14 +12,14 @@ interface ContentLayoutProps {
   tabs?: Tab[];
   activeTab?: string;
   onTabChange?: (tabId: string) => void;
-  actions?: React.ReactNode;
   children: React.ReactNode;
 }
 
 /**
  * ContentLayout - Reusable layout for content pages
- * Provides consistent header with title, description, tabs, and action buttons
+ * Provides consistent header with title, description, and tabs
  * Used by: Movies, Music, Books, Games, Admin, etc.
+ * Note: Weather widget only on dashboard, action buttons in main content
  */
 const ContentLayout: React.FC<ContentLayoutProps> = ({
   title,
@@ -28,7 +27,6 @@ const ContentLayout: React.FC<ContentLayoutProps> = ({
   tabs,
   activeTab,
   onTabChange,
-  actions,
   children,
 }) => {
   return (
@@ -36,29 +34,15 @@ const ContentLayout: React.FC<ContentLayoutProps> = ({
       {/* Page Header */}
       <header className="border-b border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm sticky top-0 z-30">
         <div className="container mx-auto px-6 py-4">
-          {/* Top row: Title and Weather */}
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <div className="flex-1 min-w-0">
-              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2">
-                {title}
-              </h1>
-              {description && (
-                <p className="text-gray-600 dark:text-gray-300">
-                  {description}
-                </p>
-              )}
-            </div>
-
-            {/* Weather Widget - Top Right */}
-            <div className="flex-shrink-0">
-              <WeatherWidget />
-            </div>
+          {/* Title and Description */}
+          <div className="mb-4">
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2">
+              {title}
+            </h1>
+            {description && (
+              <p className="text-gray-600 dark:text-gray-300">{description}</p>
+            )}
           </div>
-
-          {/* Action Buttons */}
-          {actions && (
-            <div className="flex items-center gap-2 mb-4">{actions}</div>
-          )}
 
           {/* Tabs */}
           {tabs && tabs.length > 0 && (

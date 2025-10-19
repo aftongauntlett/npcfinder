@@ -43,11 +43,7 @@ const InviteCodeManager: React.FC = () => {
   const [batchCount, setBatchCount] = useState(1);
 
   // Queries
-  const {
-    data: codes = [],
-    isLoading: codesLoading,
-    refetch: refetchCodes,
-  } = useInviteCodes();
+  const { data: codes = [], isLoading: codesLoading } = useInviteCodes();
   const {
     data: stats = { total: 0, active: 0, used: 0, expired: 0 },
     isLoading: statsLoading,
@@ -173,36 +169,6 @@ const InviteCodeManager: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Shield className="w-8 h-8 text-purple-400" />
-          <div>
-            <h2 className="text-2xl font-bold text-white">Invite Codes</h2>
-            <p className="text-gray-400 text-sm">
-              Manage secure invite-only access
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => void refetchCodes()}
-            variant="secondary"
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Refresh
-          </Button>
-          <Button
-            onClick={() => setShowCreateForm(!showCreateForm)}
-            className="flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Create Code
-          </Button>
-        </div>
-      </div>
-
       {/* Stats Cards */}
       <StatsCards stats={stats} />
 
@@ -228,8 +194,10 @@ const InviteCodeManager: React.FC = () => {
         codes={codes}
         isLoading={isLoading}
         copiedCode={copiedCode}
+        showCreateForm={showCreateForm}
         onCopy={(code) => void copyToClipboard(code)}
         onRevoke={handleRevokeCode}
+        onCreateNew={() => setShowCreateForm(true)}
         getStatusBadge={getStatusBadge}
       />
 
@@ -432,13 +400,24 @@ interface CodesListProps {
   codes: InviteCode[];
   isLoading: boolean;
   copiedCode: string | null;
+  showCreateForm: boolean;
   onCopy: (code: string) => void;
   onRevoke: (id: string, code: string) => void;
+  onCreateNew: () => void;
   getStatusBadge: (code: InviteCode) => React.ReactElement;
 }
 
 const CodesList = memo<CodesListProps>(
-  ({ codes, isLoading, copiedCode, onCopy, onRevoke, getStatusBadge }) => {
+  ({
+    codes,
+    isLoading,
+    copiedCode,
+    showCreateForm,
+    onCopy,
+    onRevoke,
+    onCreateNew,
+    getStatusBadge,
+  }) => {
     if (isLoading) {
       return (
         <div className="bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 p-6 text-center text-gray-300">
@@ -448,14 +427,20 @@ const CodesList = memo<CodesListProps>(
       );
     }
 
-    if (codes.length === 0) {
+    if (codes.length === 0 && !showCreateForm) {
       return (
-        <div className="bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 p-6 text-center">
-          <Key className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-          <p className="text-gray-300">
-            No invite codes yet. Create one to get started.
+        <button
+          onClick={onCreateNew}
+          className="w-full bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 hover:border-purple-500/50 p-8 text-center transition-all hover:bg-white/8 group"
+        >
+          <Plus className="w-12 h-12 mx-auto mb-3 text-purple-400 group-hover:text-purple-300 transition-colors" />
+          <p className="text-white text-lg font-semibold mb-1">
+            Create Invite Code
           </p>
-        </div>
+          <p className="text-gray-400 text-sm">
+            Get started by creating your first invite code
+          </p>
+        </button>
       );
     }
 
@@ -520,6 +505,17 @@ const CodesList = memo<CodesListProps>(
             </div>
           </div>
         ))}
+
+        {/* Create New Card - shown only when there are existing codes and form is not open */}
+        {codes.length > 0 && !showCreateForm && (
+          <button
+            onClick={onCreateNew}
+            className="w-full bg-white/5 backdrop-blur-sm rounded-lg border border-dashed border-white/20 hover:border-purple-500/50 p-6 text-center transition-all hover:bg-white/8 group"
+          >
+            <Plus className="w-8 h-8 mx-auto mb-2 text-purple-400 group-hover:text-purple-300 transition-colors" />
+            <p className="text-white font-medium">Create New Invite Code</p>
+          </button>
+        )}
       </div>
     );
   }

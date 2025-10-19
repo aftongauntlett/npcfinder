@@ -14,7 +14,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import Button from "../shared/Button";
-import StarryBackground from "../StarryBackground";
+import StarryBackground from "../shared/StarryBackground";
 
 /**
  * Public demo landing page for portfolio showcase
