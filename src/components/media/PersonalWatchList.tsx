@@ -15,6 +15,7 @@ import { MediaItem } from "../shared/SendMediaModal";
 import SearchMovieModal from "../shared/SearchMovieModal";
 import MovieDetailModal from "./MovieDetailModal";
 import Button from "../shared/Button";
+import EmptyState from "../shared/EmptyState";
 
 interface WatchListItem {
   id: string;
@@ -377,23 +378,13 @@ const PersonalWatchList: React.FC = () => {
         {/* Right side: View Toggle and Add Button */}
         <div className="flex items-center gap-3">
           {/* Add Button - Enhanced Primary CTA */}
-          <button
+          <Button
             onClick={() => setShowSearchModal(true)}
-            className="group relative inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white rounded-lg overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 shadow-lg"
-            style={{
-              background:
-                "linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%)",
-            }}
+            variant="primary"
+            icon={<Plus className="w-4 h-4" />}
           >
-            {/* Animated shine effect */}
-            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-
-            {/* Icon with animation */}
-            <Plus className="w-5 h-5 transition-transform duration-300 group-hover:rotate-90" />
-
-            {/* Text */}
-            <span className="relative">Add Movie/Show</span>
-          </button>
+            Add Movie/Show
+          </Button>
 
           {/* View Mode Toggle */}
           <div className="flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
@@ -432,27 +423,34 @@ const PersonalWatchList: React.FC = () => {
 
       {/* Watch List Items */}
       {filteredWatchList.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-gray-400 dark:text-gray-500 mb-4">
-            {filter === "to-watch" && <Eye className="w-16 h-16 mx-auto" />}
-            {filter === "watched" && <Check className="w-16 h-16 mx-auto" />}
-            {filter === "all" && <Film className="w-16 h-16 mx-auto" />}
-          </div>
-          <p className="text-gray-600 dark:text-gray-400">
-            {filter === "to-watch" && "No unwatched items"}
-            {filter === "watched" && "No watched items yet"}
-            {filter === "all" && "Your watch list is empty"}
-          </p>
-          {filter === "all" && (
-            <Button
-              onClick={() => setShowSearchModal(true)}
-              variant="outline"
-              className="mt-4"
-              icon={<Plus className="w-4 h-4" />}
-            >
-              Add your first movie or show
-            </Button>
-          )}
+        <div className="mt-8">
+          <EmptyState
+            icon={filter === "all" ? Plus : filter === "to-watch" ? Eye : Check}
+            title={
+              filter === "to-watch"
+                ? "No unwatched items"
+                : filter === "watched"
+                ? "No watched items yet"
+                : "Add your first movie or show"
+            }
+            description={
+              filter === "all"
+                ? "Get started by adding to your watch list"
+                : undefined
+            }
+            iconSize="w-12 h-12"
+            iconColor={filter === "all" ? "text-purple-400" : undefined}
+            action={
+              filter === "all"
+                ? {
+                    label: "Add your first movie or show",
+                    onClick: () => setShowSearchModal(true),
+                    variant: "primary",
+                  }
+                : undefined
+            }
+            showButton={true}
+          />
         </div>
       ) : viewMode === "grid" ? (
         // Grid View

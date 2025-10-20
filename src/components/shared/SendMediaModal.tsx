@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { X, Search, Send, Check } from "lucide-react";
-import FocusTrap from "focus-trap-react";
+import { Search, Send, Check } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
 import { getFriends } from "../../lib/connections";
+import Modal from "./Modal";
+import Button from "./Button";
 
 // Generic media item interface
 export interface MediaItem {
@@ -270,279 +271,258 @@ export default function SendMediaModal({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <FocusTrap
-        focusTrapOptions={{
-          initialFocus: false,
-          escapeDeactivates: false, // We handle ESC manually
-          clickOutsideDeactivates: true,
-          returnFocusOnDeactivate: true,
-        }}
-      >
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col focus:outline-none">
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Send {mediaType.charAt(0).toUpperCase() + mediaType.slice(1)}{" "}
-              Recommendation
-            </h2>
-            <button
-              onClick={handleClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title={`Send ${
+        mediaType.charAt(0).toUpperCase() + mediaType.slice(1)
+      } Recommendation`}
+      maxWidth="2xl"
+    >
+      {/* Content */}
+      <div className="overflow-y-auto p-6 max-h-[60vh]">
+        {/* Search Step */}
+        {step === "search" && (
+          <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={searchPlaceholder}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                autoFocus
+              />
+            </div>
 
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto p-4">
-            {/* Search Step */}
-            {step === "search" && (
-              <div className="space-y-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={searchPlaceholder}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    autoFocus
-                  />
-                </div>
-
-                {searching && (
-                  <p className="text-center text-gray-500">Searching...</p>
-                )}
-
-                {!searching && searchQuery && searchResults.length === 0 && (
-                  <p className="text-center text-gray-500">No results found</p>
-                )}
-
-                {searchResults.length > 0 && (
-                  <div className="space-y-2">
-                    {searchResults.map((item) => (
-                      <button
-                        key={item.external_id}
-                        onClick={() => handleItemSelect(item)}
-                        className="w-full flex items-center gap-3 p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-left"
-                      >
-                        {item.poster_url && (
-                          <img
-                            src={item.poster_url}
-                            alt={item.title}
-                            className="w-12 h-12 rounded object-cover"
-                          />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 dark:text-white truncate">
-                            {item.title}
-                          </p>
-                          {item.subtitle && (
-                            <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                              {item.subtitle}
-                            </p>
-                          )}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+            {searching && (
+              <p className="text-center text-gray-500">Searching...</p>
             )}
 
-            {/* Connections Step */}
-            {step === "friends" && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-medium text-gray-900 dark:text-white">
-                    Select Connections
-                  </h3>
-                  {friends.length > 1 && (
-                    <button
-                      onClick={toggleAllFriends}
-                      className="text-sm text-blue-600 hover:text-blue-700"
-                    >
-                      {selectedFriends.size === friends.length
-                        ? "Deselect All"
-                        : "Select All"}
-                    </button>
-                  )}
-                </div>
-
-                {loadingFriends && (
-                  <p className="text-center text-gray-500">
-                    Loading connections...
-                  </p>
-                )}
-
-                {!loadingFriends && friends.length === 0 && (
-                  <p className="text-center text-gray-500">
-                    No connections available.
-                  </p>
-                )}
-
-                {friends.length > 0 && (
-                  <div className="space-y-2">
-                    {friends.map((friend) => (
-                      <button
-                        key={friend.user_id}
-                        onClick={() => toggleFriend(friend.user_id)}
-                        className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                          selectedFriends.has(friend.user_id)
-                            ? "text-white"
-                            : "hover:bg-gray-100 dark:hover:bg-gray-700"
-                        }`}
-                        style={
-                          selectedFriends.has(friend.user_id)
-                            ? { backgroundColor: "var(--color-primary-light)" }
-                            : undefined
-                        }
-                      >
-                        <div
-                          className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                            selectedFriends.has(friend.user_id)
-                              ? "text-white border-white"
-                              : "border-gray-300 dark:border-gray-600"
-                          }`}
-                          style={
-                            selectedFriends.has(friend.user_id)
-                              ? { backgroundColor: "var(--color-primary)" }
-                              : undefined
-                          }
-                        >
-                          {selectedFriends.has(friend.user_id) && (
-                            <Check className="w-4 h-4 text-white" />
-                          )}
-                        </div>
-                        <span
-                          className={
-                            selectedFriends.has(friend.user_id)
-                              ? "text-white"
-                              : "text-gray-900 dark:text-white"
-                          }
-                        >
-                          {friend.display_name}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+            {!searching && searchQuery && searchResults.length === 0 && (
+              <p className="text-center text-gray-500">No results found</p>
             )}
 
-            {/* Details Step */}
-            {step === "details" && (
-              <div className="space-y-4">
-                {/* Only show recommendation type selector if there are types AND it's relevant for this media */}
-                {recommendationTypes.length > 0 &&
-                  // For movies, only show if it's a TV show
-                  (mediaType !== "movies" ||
-                    selectedItem?.media_type === "tv") && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Recommendation Type
-                      </label>
-                      <div className="flex gap-2">
-                        {recommendationTypes.map((type) => (
-                          <button
-                            key={type.value}
-                            onClick={() => setRecommendationType(type.value)}
-                            className={`flex-1 py-2 px-4 rounded-lg transition-colors ${
-                              recommendationType === type.value
-                                ? "text-white"
-                                : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600"
-                            }`}
-                            style={
-                              recommendationType === type.value
-                                ? { backgroundColor: "var(--color-primary)" }
-                                : undefined
-                            }
-                          >
-                            {type.label}
-                          </button>
-                        ))}
-                      </div>
+            {searchResults.length > 0 && (
+              <div className="space-y-2">
+                {searchResults.map((item) => (
+                  <button
+                    key={item.external_id}
+                    onClick={() => handleItemSelect(item)}
+                    className="w-full flex items-center gap-3 p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-left"
+                  >
+                    {item.poster_url && (
+                      <img
+                        src={item.poster_url}
+                        alt={item.title}
+                        className="w-12 h-12 rounded object-cover"
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 dark:text-white truncate">
+                        {item.title}
+                      </p>
+                      {item.subtitle && (
+                        <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                          {item.subtitle}
+                        </p>
+                      )}
                     </div>
-                  )}
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Message (Optional)
-                  </label>
-                  <textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Add a note about why you're recommending this..."
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
-                    rows={3}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Success State */}
-            {showSuccess && (
-              <div className="flex flex-col items-center justify-center py-8">
-                <div
-                  className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
-                  style={{ backgroundColor: "var(--color-primary-pale)" }}
-                >
-                  <Check
-                    className="w-8 h-8"
-                    style={{ color: "var(--color-primary)" }}
-                  />
-                </div>
-                <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Sent!
-                </p>
+                  </button>
+                ))}
               </div>
             )}
           </div>
+        )}
 
-          {/* Footer */}
-          {!showSuccess && (
-            <div className="flex items-center justify-between p-4 border-t border-gray-200 dark:border-gray-700">
-              <button
-                onClick={
-                  step === "search"
-                    ? handleClose
-                    : () => setStep(step === "details" ? "friends" : "search")
-                }
-                className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                {step === "search" ? "Cancel" : "Back"}
-              </button>
-
-              {step === "friends" && (
+        {/* Connections Step */}
+        {step === "friends" && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-gray-900 dark:text-white">
+                Select Connections
+              </h3>
+              {friends.length > 1 && (
                 <button
-                  onClick={handleContinue}
-                  disabled={selectedFriends.size === 0}
-                  className="px-4 py-2 text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
-                  style={{ backgroundColor: "var(--color-primary)" }}
+                  onClick={toggleAllFriends}
+                  className="text-sm text-blue-600 hover:text-blue-700"
                 >
-                  Continue
-                </button>
-              )}
-
-              {step === "details" && (
-                <button
-                  onClick={() => void handleSend()}
-                  disabled={sending}
-                  className="flex items-center gap-2 px-4 py-2 text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
-                  style={{ backgroundColor: "var(--color-primary)" }}
-                >
-                  <Send className="w-4 h-4" />
-                  {sending ? "Sending..." : "Send"}
+                  {selectedFriends.size === friends.length
+                    ? "Deselect All"
+                    : "Select All"}
                 </button>
               )}
             </div>
+
+            {loadingFriends && (
+              <p className="text-center text-gray-500">
+                Loading connections...
+              </p>
+            )}
+
+            {!loadingFriends && friends.length === 0 && (
+              <p className="text-center text-gray-500">
+                No connections available.
+              </p>
+            )}
+
+            {friends.length > 0 && (
+              <div className="space-y-2">
+                {friends.map((friend) => (
+                  <button
+                    key={friend.user_id}
+                    onClick={() => toggleFriend(friend.user_id)}
+                    className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                      selectedFriends.has(friend.user_id)
+                        ? "text-white"
+                        : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                    }`}
+                    style={
+                      selectedFriends.has(friend.user_id)
+                        ? { backgroundColor: "var(--color-primary-light)" }
+                        : undefined
+                    }
+                  >
+                    <div
+                      className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                        selectedFriends.has(friend.user_id)
+                          ? "text-white border-white"
+                          : "border-gray-300 dark:border-gray-600"
+                      }`}
+                      style={
+                        selectedFriends.has(friend.user_id)
+                          ? { backgroundColor: "var(--color-primary)" }
+                          : undefined
+                      }
+                    >
+                      {selectedFriends.has(friend.user_id) && (
+                        <Check className="w-4 h-4 text-white" />
+                      )}
+                    </div>
+                    <span
+                      className={
+                        selectedFriends.has(friend.user_id)
+                          ? "text-white"
+                          : "text-gray-900 dark:text-white"
+                      }
+                    >
+                      {friend.display_name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Details Step */}
+        {step === "details" && (
+          <div className="space-y-4">
+            {/* Only show recommendation type selector if there are types AND it's relevant for this media */}
+            {recommendationTypes.length > 0 &&
+              // For movies, only show if it's a TV show
+              (mediaType !== "movies" || selectedItem?.media_type === "tv") && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Recommendation Type
+                  </label>
+                  <div className="flex gap-2">
+                    {recommendationTypes.map((type) => (
+                      <button
+                        key={type.value}
+                        onClick={() => setRecommendationType(type.value)}
+                        className={`flex-1 py-2 px-4 rounded-lg transition-colors ${
+                          recommendationType === type.value
+                            ? "text-white"
+                            : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600"
+                        }`}
+                        style={
+                          recommendationType === type.value
+                            ? { backgroundColor: "var(--color-primary)" }
+                            : undefined
+                        }
+                      >
+                        {type.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Message (Optional)
+              </label>
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Add a note about why you're recommending this..."
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
+                rows={3}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Success State */}
+        {showSuccess && (
+          <div className="flex flex-col items-center justify-center py-8">
+            <div
+              className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
+              style={{ backgroundColor: "var(--color-primary-pale)" }}
+            >
+              <Check
+                className="w-8 h-8"
+                style={{ color: "var(--color-primary)" }}
+              />
+            </div>
+            <p className="text-lg font-semibold text-gray-900 dark:text-white">
+              Sent!
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      {!showSuccess && (
+        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
+          <Button
+            variant="secondary"
+            onClick={
+              step === "search"
+                ? handleClose
+                : () => setStep(step === "details" ? "friends" : "search")
+            }
+            className="!border-red-600 !text-red-600 hover:!bg-red-600 hover:!text-white"
+          >
+            {step === "search" ? "Cancel" : "Back"}
+          </Button>
+
+          {step === "friends" && (
+            <Button
+              variant="primary"
+              onClick={handleContinue}
+              disabled={selectedFriends.size === 0}
+            >
+              Continue
+            </Button>
+          )}
+
+          {step === "details" && (
+            <Button
+              variant="primary"
+              onClick={() => void handleSend()}
+              disabled={sending}
+              loading={sending}
+              icon={<Send className="w-4 h-4" />}
+            >
+              {sending ? "Sending..." : "Send"}
+            </Button>
           )}
         </div>
-      </FocusTrap>
-    </div>
+      )}
+    </Modal>
   );
 }

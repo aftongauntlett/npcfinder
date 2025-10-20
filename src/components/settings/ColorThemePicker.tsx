@@ -2,6 +2,8 @@ import React from "react";
 import { Palette } from "lucide-react";
 import { HexColorPicker } from "react-colorful";
 import { getContrastColor } from "../../styles/colorThemes";
+import Button from "../shared/Button";
+import { Save } from "lucide-react";
 
 interface ColorThemePickerProps {
   selectedColor: string; // Hex color
@@ -83,30 +85,13 @@ const ColorThemePicker: React.FC<ColorThemePickerProps> = ({
               How it looks
             </label>
             <div className="flex flex-wrap gap-3 items-center">
-              {/* Solid Button Example */}
-              <button
-                type="button"
-                className="px-4 py-2 rounded-lg font-medium transition-colors"
-                style={{
-                  backgroundColor: selectedColor,
-                  color: getContrastColor(selectedColor),
-                }}
-              >
-                Solid Button
-              </button>
+              {/* Primary Button Example */}
+              <Button variant="primary" icon={<Save className="w-4 h-4" />}>
+                Primary Button
+              </Button>
 
-              {/* Outline Button Example */}
-              <button
-                type="button"
-                className="px-4 py-2 rounded-lg font-medium transition-colors border-2"
-                style={{
-                  borderColor: selectedColor,
-                  color: selectedColor,
-                  backgroundColor: "transparent",
-                }}
-              >
-                Outline Button
-              </button>
+              {/* Secondary Button Example */}
+              <Button variant="secondary">Secondary Button</Button>
             </div>
           </div>
         </div>

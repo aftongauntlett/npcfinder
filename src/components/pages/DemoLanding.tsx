@@ -13,7 +13,6 @@ import {
   Code,
   ChevronDown,
 } from "lucide-react";
-import Button from "../shared/Button";
 import StarryBackground from "../shared/StarryBackground";
 
 /**
@@ -85,23 +84,24 @@ const DemoLanding: React.FC = () => {
 
       {/* Header */}
       <header className="relative z-10 border-b border-white/10 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Film className="w-8 h-8 text-purple-400" />
-            <h1 className="text-2xl font-bold">NPC Finder</h1>
-            <span className="px-2 py-1 text-xs font-semibold bg-orange-500/20 text-orange-300 border border-orange-500/50 rounded-full">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-start justify-between">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Film className="w-7 h-7 sm:w-8 sm:h-8 text-purple-400" />
+            <h1 className="text-xl sm:text-2xl font-bold">NPC Finder</h1>
+            <span className="px-2 py-0.5 sm:py-1 text-xs font-semibold bg-orange-500/20 text-orange-300 border border-orange-500/50 rounded-full whitespace-nowrap">
               IN DEVELOPMENT
             </span>
           </div>
-          <div className="flex items-center gap-4">
-            <Link to="/app">
-              <Button
-                variant="secondary"
-                className="flex items-center gap-2 text-sm"
-              >
+          <div className="flex items-center">
+            <Link
+              to="/app"
+              className="focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CCCCFF] focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded-lg"
+              aria-label="Login"
+            >
+              <button className="flex items-center gap-2 text-sm px-3 sm:px-4 py-2 rounded border-2 border-[#CCCCFF]/50 bg-transparent text-white hover:bg-[#CCCCFF]/20 hover:border-[#CCCCFF] transition-all duration-200 whitespace-nowrap">
                 <Lock className="w-4 h-4" />
-                Login
-              </Button>
+                <span className="hidden sm:inline">Login</span>
+              </button>
             </Link>
           </div>
         </div>
@@ -142,7 +142,7 @@ const DemoLanding: React.FC = () => {
               rel="noopener noreferrer"
               className="group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CCCCFF] focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded-lg"
             >
-              <button className="flex items-center gap-3 text-lg px-8 py-4 rounded-lg border-2 border-[#CCCCFF]/50 bg-transparent text-white hover:bg-[#CCCCFF]/20 hover:border-[#CCCCFF] transition-all duration-500 ease-out">
+              <button className="flex items-center gap-3 text-lg px-8 py-4 rounded-lg border-2 border-[#CCCCFF]/50 bg-transparent text-white hover:bg-[#CCCCFF]/20 hover:border-[#CCCCFF] transition-all duration-500 ease-out whitespace-nowrap">
                 <Github className="w-6 h-6 transition-transform duration-500 ease-out group-hover:rotate-12" />
                 View Source Code
               </button>
@@ -474,26 +474,28 @@ const DemoLanding: React.FC = () => {
             Note: This project is actively being built and refactored. Not all
             features are complete yet.
           </p>
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
             <a
               href="https://aftongauntlett.com"
               target="_blank"
               rel="noopener noreferrer"
+              className="group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CCCCFF] focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded-lg"
             >
-              <Button className="flex items-center gap-2">
+              <button className="flex items-center gap-2 px-6 py-3 rounded-lg border-2 border-[#CCCCFF] bg-[#CCCCFF] text-gray-900 font-medium hover:bg-[#BBBBEE] hover:border-[#BBBBEE] transition-all duration-200 whitespace-nowrap">
                 <ExternalLink className="w-4 h-4" />
                 View Portfolio
-              </Button>
+              </button>
             </a>
             <a
               href="https://github.com/aftongauntlett/npcfinder"
               target="_blank"
               rel="noopener noreferrer"
+              className="group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CCCCFF] focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded-lg"
             >
-              <Button variant="secondary" className="flex items-center gap-2">
+              <button className="flex items-center gap-2 px-6 py-3 rounded-lg border-2 border-[#CCCCFF]/50 bg-transparent text-white hover:bg-[#CCCCFF]/20 hover:border-[#CCCCFF] transition-all duration-200 whitespace-nowrap">
                 <Github className="w-4 h-4" />
                 View Source Code
-              </Button>
+              </button>
             </a>
           </div>
         </section>

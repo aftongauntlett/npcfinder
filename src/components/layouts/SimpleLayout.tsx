@@ -28,7 +28,9 @@ const SimpleLayout: React.FC<SimpleLayoutProps> = ({
           <WeatherWidget />
         </div>
       )}
-      <div className="container mx-auto px-6 py-12 flex-1">{children}</div>
+      <div className="container mx-auto px-6 py-12 flex-1 flex flex-col">
+        {children}
+      </div>
     </main>
   );
 };

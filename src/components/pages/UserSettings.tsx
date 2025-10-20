@@ -298,23 +298,24 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
 
           {/* Action Buttons Card */}
           <div className="bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700/50 dark:border-gray-700/50">
-            <div className="flex flex-col-reverse sm:flex-row gap-3">
+            <div className="flex gap-3 justify-end">
               <Button
                 type="button"
                 variant="secondary"
                 onClick={() => void navigate("/app")}
-                className="px-8 sm:flex-1"
+                className="!border-red-600 !text-red-600 hover:!bg-red-600 hover:!text-white"
               >
                 Cancel
               </Button>
-              <button
+              <Button
                 type="submit"
+                variant="primary"
+                icon={<Save className="w-4 h-4" />}
+                loading={isSaving}
                 disabled={isSaving}
-                className="px-8 sm:flex-1 inline-flex items-center justify-center gap-2 font-medium rounded-md text-sm bg-green-600 hover:bg-green-700 text-white disabled:bg-green-400 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors shadow-sm"
               >
-                <Save className="w-4 h-4" aria-hidden="true" />
                 {isSaving ? "Saving..." : "Save Changes"}
-              </button>
+              </Button>
             </div>
           </div>
         </form>

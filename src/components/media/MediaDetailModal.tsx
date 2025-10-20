@@ -76,7 +76,7 @@ const MediaDetailModal: React.FC<MediaDetailModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
+      className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black bg-opacity-50 overflow-y-auto"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -91,7 +91,7 @@ const MediaDetailModal: React.FC<MediaDetailModalProps> = ({
         }}
       >
         <div
-          className="relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-y-auto focus:outline-none"
+          className="relative w-full max-w-4xl my-8 max-h-[85vh] bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-y-auto focus:outline-none"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Close Button */}

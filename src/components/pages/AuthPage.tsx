@@ -193,12 +193,15 @@ const AuthPage: React.FC = () => {
             )}
 
             {/* Submit Button */}
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading
-                ? "Please wait..."
-                : isLogin
-                ? "Sign In"
-                : "Create Account"}
+            <Button
+              type="submit"
+              variant="primary"
+              size="md"
+              fullWidth
+              loading={loading}
+              disabled={loading}
+            >
+              {isLogin ? "Sign In" : "Create Account"}
             </Button>
           </form>
 

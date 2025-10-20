@@ -118,7 +118,7 @@ export function BrowseMediaModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
       <FocusTrap
         focusTrapOptions={{
           initialFocus: false,
@@ -127,7 +127,7 @@ export function BrowseMediaModal({
           returnFocusOnDeactivate: true,
         }}
       >
-        <div className="w-full max-w-6xl h-[90vh] bg-white dark:bg-gray-900 rounded-xl shadow-2xl flex flex-col focus:outline-none">
+        <div className="w-full max-w-6xl my-8 max-h-[85vh] bg-white dark:bg-gray-900 rounded-xl shadow-2xl flex flex-col focus:outline-none">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">

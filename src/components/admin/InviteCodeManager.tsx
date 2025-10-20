@@ -13,6 +13,7 @@ import Button from "../shared/Button";
 import Input from "../shared/Input";
 import ConfirmationModal from "../shared/ConfirmationModal";
 import StatCard from "../shared/StatCard";
+import EmptyState from "../shared/EmptyState";
 import {
   useInviteCodes,
   useInviteCodeStats,
@@ -358,18 +359,21 @@ const CreateCodeForm = memo<CreateCodeFormProps>(
             helperText="Create up to 50 codes at once"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-3 justify-end">
+          <Button
+            onClick={onCancel}
+            variant="secondary"
+            className="!border-red-600 !text-red-600 hover:!bg-red-600 hover:!text-white"
+          >
+            Cancel
+          </Button>
           <Button
             onClick={onSubmit}
+            variant="primary"
+            loading={isCreating}
             disabled={isCreating}
-            className="flex items-center gap-2"
           >
-            {isCreating
-              ? "Creating..."
-              : `Create ${batchCount > 1 ? `${batchCount} Codes` : "Code"}`}
-          </Button>
-          <Button onClick={onCancel} variant="secondary">
-            Cancel
+            Create {batchCount > 1 ? `${batchCount} Codes` : "Code"}
           </Button>
         </div>
       </div>
@@ -415,19 +419,17 @@ const CodesList = memo<CodesListProps>(
 
     if (codes.length === 0 && !showCreateForm) {
       return (
-        <button
-          onClick={onCreateNew}
-          className="w-full bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 hover:border-purple-500/50 p-8 text-center transition-all hover:bg-white/8 group focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
-          aria-label="Create your first invite code"
-        >
-          <Plus className="w-12 h-12 mx-auto mb-3 text-purple-400 group-hover:text-purple-300 transition-colors" />
-          <p className="text-white text-lg font-semibold mb-1">
-            Create Invite Code
-          </p>
-          <p className="text-gray-400 text-sm">
-            Get started by creating your first invite code
-          </p>
-        </button>
+        <EmptyState
+          icon={Plus}
+          title="Create Invite Code"
+          description="Get started by creating your first invite code"
+          iconColor="text-purple-400"
+          action={{
+            label: "Create Invite Code",
+            onClick: onCreateNew,
+            variant: "primary",
+          }}
+        />
       );
     }
 
@@ -495,16 +497,20 @@ const CodesList = memo<CodesListProps>(
           </div>
         ))}
 
-        {/* Create New Card - shown only when there are existing codes and form is not open */}
+        {/* Create New Button - shown only when there are existing codes and form is not open */}
         {codes.length > 0 && !showCreateForm && (
-          <button
-            onClick={onCreateNew}
-            className="w-full bg-white/5 backdrop-blur-sm rounded-lg border border-dashed border-white/20 hover:border-purple-500/50 p-6 text-center transition-all hover:bg-white/8 group focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
-            aria-label="Create new invite code"
-          >
-            <Plus className="w-8 h-8 mx-auto mb-2 text-purple-400 group-hover:text-purple-300 transition-colors" />
-            <p className="text-white font-medium">Create New Invite Code</p>
-          </button>
+          <div className="flex justify-end">
+            <button
+              onClick={onCreateNew}
+              className="inline-flex items-center gap-2 bg-white/5 backdrop-blur-sm rounded-lg border border-dashed border-white/20 hover:border-purple-500/50 px-6 py-3 transition-all hover:bg-white/8 group focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+              aria-label="Create new invite code"
+            >
+              <Plus className="w-5 h-5 text-purple-400 group-hover:text-purple-300 transition-colors" />
+              <span className="text-white font-medium">
+                Create New Invite Code
+              </span>
+            </button>
+          </div>
         )}
       </div>
     );
