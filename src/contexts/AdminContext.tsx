@@ -1,11 +1,5 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-} from "react";
+import React, { createContext, useContext, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "./AuthContext";
 import { supabase } from "../lib/supabase";
 
@@ -17,32 +11,34 @@ interface AdminContextType {
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
+/**
+ * AdminProvider with TanStack Query
+ * Prevents duplicate queries by caching admin status check
+ */
 export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const { user } = useAuth();
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  const checkAdminStatus = useCallback(async () => {
-    if (!user) {
-      setIsAdmin(false);
-      setIsLoading(false);
-      return;
-    }
+  // Use TanStack Query to check admin status (cached, deduplicated)
+  const { data: isAdmin = false, isLoading } = useQuery({
+    queryKey: ["admin-status", user?.id],
+    queryFn: async () => {
+      if (!user) return false;
 
-    setIsLoading(true);
-    try {
-      // Check database first
-      const { data, error } = await supabase
-        .from("user_profiles")
-        .select("is_admin")
-        .eq("user_id", user.id)
-        .single();
+      try {
+        // Check database for admin status
+        const { data, error } = await supabase
+          .from("user_profiles")
+          .select("is_admin")
+          .eq("user_id", user.id)
+          .single();
 
-      if (!error && data) {
-        setIsAdmin(data.is_admin || false);
-      } else {
+        if (!error && data) {
+          return data.is_admin || false;
+        }
+
         // Fallback to environment variable only if database fails
         const adminUserId = import.meta.env.VITE_ADMIN_USER_ID;
         const fallbackIsAdmin =
@@ -50,27 +46,30 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
           adminUserId !== "your_user_id_here" &&
           user.id === adminUserId;
 
-        setIsAdmin(fallbackIsAdmin || false);
-
         if (error) {
           console.warn("Failed to check admin status from database:", error);
         }
+
+        return fallbackIsAdmin || false;
+      } catch (error) {
+        console.error("Error checking admin status:", error);
+        return false;
       }
-    } catch (error) {
-      console.error("Error checking admin status:", error);
-      setIsAdmin(false);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user]);
+    },
+    enabled: !!user, // Only run query when user exists
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+  });
 
-  const refreshAdminStatus = useCallback(async () => {
-    await checkAdminStatus();
-  }, [checkAdminStatus]);
-
-  useEffect(() => {
-    void checkAdminStatus();
-  }, [checkAdminStatus]);
+  // Function to manually refresh admin status (e.g., after toggling admin)
+  const refreshAdminStatus = useMemo(
+    () => async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["admin-status", user?.id],
+      });
+    },
+    [queryClient, user?.id]
+  );
 
   const value = useMemo(
     () => ({ isAdmin, isLoading, refreshAdminStatus }),

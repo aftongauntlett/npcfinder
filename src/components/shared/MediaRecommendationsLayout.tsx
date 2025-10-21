@@ -230,6 +230,15 @@ export function MediaRecommendationsLayout<T extends BaseRecommendation>({
         ? "Your Misses"
         : "Your Sent";
 
+    const emptyStateMessage =
+      selectedView === "hits"
+        ? "No hits yet!"
+        : selectedView === "misses"
+        ? "No misses yet!"
+        : selectedView === "sent"
+        ? "You haven't sent any recommendations yet"
+        : "No recommendations here yet";
+
     const isReceivedView =
       selectedView === "friend" ||
       selectedView === "hits" ||
@@ -259,7 +268,7 @@ export function MediaRecommendationsLayout<T extends BaseRecommendation>({
         ) : recommendations.length === 0 ? (
           <div className="bg-white dark:bg-gray-800 rounded-lg p-8 text-center">
             <p className="text-gray-500 dark:text-gray-400">
-              No recommendations here yet
+              {emptyStateMessage}
             </p>
           </div>
         ) : (

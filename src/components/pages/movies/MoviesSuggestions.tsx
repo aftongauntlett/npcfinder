@@ -4,17 +4,20 @@ import SendMediaModal from "../../shared/SendMediaModal";
 import { searchMoviesAndTV } from "../../../utils/mediaSearchAdapters";
 import MediaRecommendationCard from "../../shared/MediaRecommendationCard";
 import {
-  MediaRecommendationsLayout,
+  InlineRecommendationsLayout,
   BaseRecommendation,
-} from "../../shared/MediaRecommendationsLayout";
+} from "../../shared/InlineRecommendationsLayout";
 import ContentLayout from "../../layouts/ContentLayout";
 import MainLayout from "../../layouts/MainLayout";
+import { useAuth } from "../../../contexts/AuthContext";
 import {
   useFriendsWithMovieRecs,
   useMovieStats,
   useMovieRecommendations,
   useUpdateMovieRecommendationStatus,
   useDeleteMovieRecommendation,
+  useUpdateSenderNote,
+  useUpdateRecipientNote,
 } from "../../../hooks/useMovieQueries";
 
 // Extend BaseRecommendation with movie-specific fields
@@ -32,55 +35,84 @@ interface MovieRecommendation extends BaseRecommendation {
 /**
  * Movies & TV Suggestions Page
  * View and manage movie/TV show recommendations from friends
+ *
+ * @param embedded - When true, hides outer MainLayout/ContentLayout (used in tabbed view)
  */
-const MoviesSuggestions: React.FC = () => {
-  const [selectedView, setSelectedView] = useState<
-    "overview" | "friend" | "hits" | "misses" | "sent"
-  >("overview");
-  const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null);
+interface MoviesSuggestionsProps {
+  embedded?: boolean;
+}
+
+const MoviesSuggestions: React.FC<MoviesSuggestionsProps> = ({
+  embedded = false,
+}) => {
   const [showSendModal, setShowSendModal] = useState(false);
+  const { user } = useAuth();
 
   // TanStack Query hooks
   const { data: friendsWithRecs = [], isLoading: friendsLoading } =
     useFriendsWithMovieRecs();
   const { data: quickStats = { hits: 0, misses: 0, queue: 0, sent: 0 } } =
     useMovieStats();
-  const { data: rawRecommendations = [], isLoading: recsLoading } =
-    useMovieRecommendations(selectedView, selectedFriendId || undefined);
 
-  const loading = friendsLoading || recsLoading;
+  // Fetch all recommendation types
+  const { data: hitsData = [] } = useMovieRecommendations("hits");
+  const { data: missesData = [] } = useMovieRecommendations("misses");
+  const { data: sentData = [] } = useMovieRecommendations("sent");
+  const { data: pendingData = [] } = useMovieRecommendations("queue");
 
-  // Map raw recommendations to MovieRecommendation format
-  const recommendations = useMemo<MovieRecommendation[]>(() => {
-    return rawRecommendations.map((rec) => ({
-      ...rec,
-      sent_message: rec.sent_message || null,
-      comment: rec.recipient_note || null,
-      sender_comment: rec.sender_note || null,
-      sent_at: rec.created_at,
-      poster_url: rec.poster_url || null,
-      watched_at: rec.watched_at || null,
-      overview: rec.overview || null,
-      release_date: rec.year ? `${rec.year}` : null,
-      media_type: rec.media_type as "movie" | "tv",
-      status:
-        rec.status === "consumed" || rec.status === "watched"
-          ? "watched"
-          : rec.status,
-    }));
-  }, [rawRecommendations]);
+  const loading = friendsLoading;
+
+  // Create name lookup map from all data sources
+  const userNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+
+    // Add senders from friends list
+    friendsWithRecs.forEach((friend) => {
+      map.set(friend.user_id, friend.display_name);
+    });
+
+    // Add names from hits data (sender_name)
+    hitsData.forEach((rec: any) => {
+      if (rec.sender_name && rec.from_user_id) {
+        map.set(rec.from_user_id, rec.sender_name);
+      }
+    });
+
+    // Add names from misses data (sender_name)
+    missesData.forEach((rec: any) => {
+      if (rec.sender_name && rec.from_user_id) {
+        map.set(rec.from_user_id, rec.sender_name);
+      }
+    });
+
+    // Add names from pending data (sender_name)
+    pendingData.forEach((rec: any) => {
+      if (rec.sender_name && rec.from_user_id) {
+        map.set(rec.from_user_id, rec.sender_name);
+      }
+    });
+
+    // Add recipients from sent data (recipient_name)
+    sentData.forEach((rec: any) => {
+      if (rec.recipient_name && rec.to_user_id) {
+        map.set(rec.to_user_id, rec.recipient_name);
+      }
+    });
+
+    return map;
+  }, [friendsWithRecs, hitsData, missesData, pendingData, sentData]);
+
+  // Filter out self from friends list
+  const filteredFriendsWithRecs = useMemo(() => {
+    if (!user) return friendsWithRecs;
+    return friendsWithRecs.filter((friend) => friend.user_id !== user.id);
+  }, [friendsWithRecs, user]);
 
   // Mutations
   const updateStatusMutation = useUpdateMovieRecommendationStatus();
   const deleteRecMutation = useDeleteMovieRecommendation();
-
-  const handleViewChange = (
-    view: "overview" | "friend" | "hits" | "misses" | "sent",
-    friendId?: string
-  ) => {
-    setSelectedView(view);
-    setSelectedFriendId(friendId || null);
-  };
+  const updateSenderNoteMutation = useUpdateSenderNote();
+  const updateRecipientNoteMutation = useUpdateRecipientNote();
 
   const updateRecommendationStatus = async (
     recId: string,
@@ -92,10 +124,28 @@ const MoviesSuggestions: React.FC = () => {
       await updateStatusMutation.mutateAsync({
         recId,
         status: dbStatus,
-        comment,
       });
+
+      // If comment is provided, update recipient's note
+      if (comment !== undefined) {
+        await updateRecipientNoteMutation.mutateAsync({
+          recId,
+          note: comment,
+        });
+      }
     } catch (error) {
       console.error("Error updating recommendation:", error);
+    }
+  };
+
+  const updateSenderComment = async (recId: string, senderComment: string) => {
+    try {
+      await updateSenderNoteMutation.mutateAsync({
+        recId,
+        note: senderComment,
+      });
+    } catch (error) {
+      console.error("Error updating sender comment:", error);
     }
   };
 
@@ -109,10 +159,15 @@ const MoviesSuggestions: React.FC = () => {
 
   const renderRecommendationCard = (
     rec: MovieRecommendation,
-    isReceived: boolean
+    isReceived: boolean,
+    index = 0
   ) => {
-    const index = recommendations.indexOf(rec);
     const MediaIcon = rec.media_type === "tv" ? TvIcon : Film;
+
+    // Get the appropriate user name based on direction
+    const senderName = isReceived
+      ? userNameMap.get(rec.from_user_id) || "Unknown User"
+      : userNameMap.get(rec.to_user_id) || "Unknown User";
 
     return (
       <MediaRecommendationCard
@@ -120,8 +175,10 @@ const MoviesSuggestions: React.FC = () => {
         rec={rec}
         index={index}
         isReceived={isReceived}
+        senderName={senderName}
         onStatusUpdate={updateRecommendationStatus}
         onDelete={deleteRecommendation}
+        onUpdateSenderComment={updateSenderComment}
         renderMediaArt={(r) => {
           const movieRec = r as unknown as MovieRecommendation;
           return movieRec.poster_url ? (
@@ -166,32 +223,97 @@ const MoviesSuggestions: React.FC = () => {
     );
   };
 
-  return (
-    <MainLayout>
-      <ContentLayout
-        title="Suggestions"
-        description="Discover movies and TV shows recommended by your friends."
-      >
-        <MediaRecommendationsLayout
-          mediaType="Movies & TV"
-          mediaIcon={Film}
-          emptyMessage="No recommendations yet"
-          emptySubMessage="When friends recommend movies or TV shows, they'll show up here"
-          queueLabel="Watching Queue"
-          consumedLabel="Watched"
-          loading={loading}
-          friendsWithRecs={friendsWithRecs}
-          recommendations={recommendations}
-          quickStats={quickStats}
-          selectedView={selectedView}
-          selectedFriendId={selectedFriendId}
-          onViewChange={handleViewChange}
-          onSendClick={() => setShowSendModal(true)}
-          onStatusUpdate={updateRecommendationStatus}
-          onDelete={deleteRecommendation}
-          renderRecommendationCard={renderRecommendationCard}
-        />
-      </ContentLayout>
+  // Transform data for inline layout
+  const hits: MovieRecommendation[] = (hitsData || []).map((rec: any) => ({
+    ...rec,
+    sent_message: rec.sent_message || null,
+    comment: rec.recipient_note || null,
+    sender_comment: rec.sender_note || null,
+    sent_at: rec.created_at,
+    poster_url: rec.poster_url || null,
+    watched_at: rec.watched_at || null,
+    overview: rec.overview || null,
+    release_date: rec.year ? `${rec.year}` : null,
+    media_type: rec.media_type as "movie" | "tv",
+    status: "hit" as const,
+  }));
+
+  const misses: MovieRecommendation[] = (missesData || []).map((rec: any) => ({
+    ...rec,
+    sent_message: rec.sent_message || null,
+    comment: rec.recipient_note || null,
+    sender_comment: rec.sender_note || null,
+    sent_at: rec.created_at,
+    poster_url: rec.poster_url || null,
+    watched_at: rec.watched_at || null,
+    overview: rec.overview || null,
+    release_date: rec.year ? `${rec.year}` : null,
+    media_type: rec.media_type as "movie" | "tv",
+    status: "miss" as const,
+  }));
+
+  const sent: MovieRecommendation[] = (sentData || []).map((rec: any) => ({
+    ...rec,
+    sent_message: rec.sent_message || null,
+    comment: rec.recipient_note || null,
+    sender_comment: rec.sender_note || null,
+    sent_at: rec.created_at,
+    poster_url: rec.poster_url || null,
+    watched_at: rec.watched_at || null,
+    overview: rec.overview || null,
+    release_date: rec.year ? `${rec.year}` : null,
+    media_type: rec.media_type as "movie" | "tv",
+    status:
+      rec.status === "consumed" || rec.status === "watched"
+        ? "watched"
+        : rec.status,
+  }));
+
+  // Build friend recommendations map from pending data
+  const friendRecommendations = new Map<string, MovieRecommendation[]>();
+
+  // Transform pending data
+  const pendingRecs: MovieRecommendation[] = (pendingData || []).map(
+    (rec: any) => ({
+      ...rec,
+      sent_message: rec.sent_message || null,
+      comment: rec.recipient_note || null,
+      sender_comment: rec.sender_note || null,
+      sent_at: rec.created_at,
+      poster_url: rec.poster_url || null,
+      watched_at: rec.watched_at || null,
+      overview: rec.overview || null,
+      release_date: rec.year ? `${rec.year}` : null,
+      media_type: rec.media_type as "movie" | "tv",
+      status: "pending" as const,
+    })
+  );
+
+  // Group by sender
+  pendingRecs.forEach((rec) => {
+    const senderId = rec.from_user_id;
+    if (!friendRecommendations.has(senderId)) {
+      friendRecommendations.set(senderId, []);
+    }
+    friendRecommendations.get(senderId)!.push(rec);
+  });
+
+  const content = (
+    <>
+      <InlineRecommendationsLayout
+        mediaType="Movies & TV"
+        mediaIcon={Film}
+        emptyMessage="No recommendations yet"
+        emptySubMessage="When friends recommend movies or TV shows, they'll show up here"
+        loading={loading}
+        friendsWithRecs={filteredFriendsWithRecs}
+        quickStats={quickStats}
+        hits={hits}
+        misses={misses}
+        sent={sent}
+        friendRecommendations={friendRecommendations}
+        renderRecommendationCard={renderRecommendationCard}
+      />
 
       {/* Send Movie/TV Modal */}
       <SendMediaModal
@@ -210,6 +332,23 @@ const MoviesSuggestions: React.FC = () => {
         ]}
         defaultRecommendationType="watch"
       />
+    </>
+  );
+
+  // If embedded, return content without layouts
+  if (embedded) {
+    return content;
+  }
+
+  // Otherwise, wrap in full page layout
+  return (
+    <MainLayout>
+      <ContentLayout
+        title="Suggestions"
+        description="Discover movies and TV shows recommended by your friends."
+      >
+        {content}
+      </ContentLayout>
     </MainLayout>
   );
 };

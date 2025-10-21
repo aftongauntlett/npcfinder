@@ -7,8 +7,8 @@ interface MainLayoutProps {
 
 /**
  * MainLayout - Base layout for all authenticated pages
- * Provides proper spacing for sidebar and ensures consistent layout
- * Responds to sidebar collapse/expand state
+ * Provides proper spacing for sidebar on desktop, full width on mobile
+ * Mobile uses top navigation instead of sidebar
  */
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const { isCollapsed } = useSidebar();
@@ -16,9 +16,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen transition-all duration-300">
       {/* Main content area with responsive sidebar spacing */}
+      {/* Mobile: no sidebar (full width), Desktop: sidebar padding */}
       <div
-        className={`transition-all duration-300 ${
-          isCollapsed ? "pl-16" : "pl-16 md:pl-64"
+        className={`transition-all duration-300 md:${
+          isCollapsed ? "pl-16" : "pl-64"
         }`}
       >
         {children}

@@ -35,9 +35,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     void checkUser();
 
-    const { data: authListener } = onAuthStateChange((event, session) => {
-      console.log("Auth state changed:", event);
-
+    const { data: authListener } = onAuthStateChange((_event, session) => {
       if (session?.user) {
         setUser(session.user);
       } else {

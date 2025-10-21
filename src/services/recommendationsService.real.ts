@@ -11,10 +11,10 @@ import type {
   Recommendation,
 } from "./recommendationsService.types";
 
-// Map of media types to table names
+// Map of media types to table names (use views that include user names)
 const TABLE_MAP = {
-  movie: "movie_recommendations",
-  tv: "movie_recommendations",
+  movie: "movie_recommendations_with_users",
+  tv: "movie_recommendations_with_users",
   song: "music_recommendations",
   album: "music_recommendations",
 } as const;
@@ -28,11 +28,11 @@ export async function getRecommendations(
 ): Promise<Recommendation[]> {
   const { direction, mediaType, status, fromUserId } = filters;
 
-  // Determine which table to query
+  // Determine which table/view to query (use view for movies/tv to get user names)
   const tableName =
     mediaType && mediaType in TABLE_MAP
       ? TABLE_MAP[mediaType]
-      : "movie_recommendations"; // default to movies
+      : "movie_recommendations_with_users"; // default to movies view
 
   let query = supabase.from(tableName).select("*");
 

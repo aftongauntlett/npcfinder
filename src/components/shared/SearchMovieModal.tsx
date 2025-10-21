@@ -72,12 +72,7 @@ const SearchMovieModal: React.FC<SearchMovieModalProps> = ({
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Add Movie or TV Show"
-      maxWidth="2xl"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} title="Add Media" maxWidth="2xl">
       {/* Search Input */}
       <div className="p-6 border-b border-gray-200 dark:border-gray-700">
         <div className="relative">

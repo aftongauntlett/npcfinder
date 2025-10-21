@@ -291,9 +291,9 @@ export default function SendMediaModal({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title={`Send ${
+      title={`Recommend ${
         mediaType.charAt(0).toUpperCase() + mediaType.slice(1)
-      } Recommendation`}
+      }`}
       maxWidth="2xl"
     >
       {/* Content */}

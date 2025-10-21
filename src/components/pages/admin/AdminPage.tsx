@@ -424,8 +424,10 @@ const AdminPage: React.FC = () => {
                   onClick={() => setShowCreateForm(true)}
                   variant="primary"
                   icon={<Plus className="w-4 h-4" />}
+                  hideTextOnMobile
+                  aria-label="Create invite code"
                 >
-                  Create Code
+                  Create
                 </Button>
               )}
             </div>

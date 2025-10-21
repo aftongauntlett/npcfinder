@@ -6,6 +6,7 @@ import DemoLanding from "./components/pages/DemoLanding";
 import AuthPage from "./components/pages/AuthPage";
 import PageContainer from "./components/layouts/PageContainer";
 import DevIndicator from "./components/dev/DevIndicator";
+import { DesktopOnlyGuard } from "./components/layouts/DesktopOnlyGuard";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { AdminProvider, useAdmin } from "./contexts/AdminContext";
@@ -14,11 +15,8 @@ import { SidebarProvider } from "./contexts/SidebarContext";
 // Lazy load authenticated components to avoid Supabase imports on landing page
 const HomePage = React.lazy(() => import("./components/pages/HomePage"));
 const Sidebar = React.lazy(() => import("./components/shared/Sidebar"));
-const MoviesWatchlist = React.lazy(
-  () => import("./components/pages/movies/MoviesWatchlist")
-);
-const MoviesSuggestions = React.lazy(
-  () => import("./components/pages/movies/MoviesSuggestions")
+const MoviesPage = React.lazy(
+  () => import("./components/pages/movies/MoviesPage")
 );
 const Music = React.lazy(() => import("./components/pages/Music"));
 const UserSettings = React.lazy(
@@ -90,13 +88,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ user }) => {
           <Routes>
             <Route path="/" element={<HomePage user={user} />} />
 
-            {/* Movies & TV nested routes */}
-            <Route path="/movies/watchlist" element={<MoviesWatchlist />} />
-            <Route path="/movies/suggestions" element={<MoviesSuggestions />} />
-            <Route
-              path="/movies"
-              element={<Navigate to="/app/movies/watchlist" replace />}
-            />
+            {/* Movies & TV - consolidated single route */}
+            <Route path="/movies" element={<MoviesPage />} />
 
             <Route path="/music" element={<Music />} />
             <Route
@@ -174,20 +167,22 @@ const App: React.FC = () => {
   return (
     <BrowserRouter>
       <ThemeProvider>
-        <Routes>
-          {/* Public routes - NO AUTH REQUIRED */}
-          <Route path="/" element={<DemoLanding />} />
+        <DesktopOnlyGuard>
+          <Routes>
+            {/* Public routes - NO AUTH REQUIRED */}
+            <Route path="/" element={<DemoLanding />} />
 
-          {/* All authenticated routes wrapped in AuthProvider */}
-          <Route
-            path="/*"
-            element={
-              <AuthProvider>
-                <AuthenticatedApp />
-              </AuthProvider>
-            }
-          />
-        </Routes>
+            {/* All authenticated routes wrapped in AuthProvider */}
+            <Route
+              path="/*"
+              element={
+                <AuthProvider>
+                  <AuthenticatedApp />
+                </AuthProvider>
+              }
+            />
+          </Routes>
+        </DesktopOnlyGuard>
       </ThemeProvider>
     </BrowserRouter>
   );

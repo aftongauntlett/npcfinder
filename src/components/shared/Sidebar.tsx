@@ -12,8 +12,6 @@ import {
   ChevronRight,
   User as UserIcon,
   LogOut,
-  ListVideo,
-  Lightbulb,
 } from "lucide-react";
 import { useAdmin } from "../../contexts/AdminContext";
 import { useSidebar } from "../../contexts/SidebarContext";
@@ -41,20 +39,6 @@ const NAV_ITEMS: NavItem[] = [
     label: "Movies & TV",
     icon: Film,
     path: "/app/movies",
-    subItems: [
-      {
-        id: "movies-watchlist",
-        label: "Watch List",
-        icon: ListVideo,
-        path: "/app/movies/watchlist",
-      },
-      {
-        id: "movies-suggestions",
-        label: "Suggestions",
-        icon: Lightbulb,
-        path: "/app/movies/suggestions",
-      },
-    ],
   },
   { id: "music", label: "Music", icon: Music, path: "/app/music" },
   { id: "books", label: "Books", icon: BookOpen, path: "/app/books" },
@@ -169,9 +153,9 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - Hidden on mobile, visible on desktop */}
       <aside
-        className={`fixed left-0 top-0 h-screen bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out z-40 flex flex-col overflow-hidden ${
+        className={`hidden md:fixed left-0 top-0 h-screen bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out z-40 md:flex flex-col overflow-hidden ${
           isCollapsed ? "w-16" : "w-64"
         }`}
         aria-label="Main sidebar navigation"

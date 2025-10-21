@@ -27,7 +27,7 @@ const DashboardCustomizer: React.FC<DashboardCustomizerProps> = ({
         </div>
       </div>
 
-      <div className="grid gap-3">
+      <div className="grid gap-2 sm:gap-3">
         {cards.map((card) => {
           const isVisible = visibleCards.includes(card.cardId);
 
@@ -36,7 +36,7 @@ const DashboardCustomizer: React.FC<DashboardCustomizerProps> = ({
               key={card.cardId}
               type="button"
               onClick={() => onToggleCard(card.cardId)}
-              className={`flex items-start gap-4 p-4 rounded-lg border-2 transition-all text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+              className={`flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg border-2 transition-all text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
                 isVisible
                   ? "border-primary bg-primary/10 dark:bg-primary/10"
                   : "border-gray-700 dark:border-gray-700 bg-gray-900/30 dark:bg-gray-900/30 opacity-60 hover:opacity-80"
@@ -48,23 +48,26 @@ const DashboardCustomizer: React.FC<DashboardCustomizerProps> = ({
             >
               {/* Icon */}
               <div
-                className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
+                className={`flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${
                   isVisible
                     ? "bg-primary text-white"
                     : "bg-gray-700 dark:bg-gray-700 text-gray-400 dark:text-gray-400"
                 }`}
               >
                 {isVisible ? (
-                  <Eye className="w-5 h-5" aria-hidden="true" />
+                  <Eye className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
                 ) : (
-                  <EyeOff className="w-5 h-5" aria-hidden="true" />
+                  <EyeOff
+                    className="w-4 h-4 sm:w-5 sm:h-5"
+                    aria-hidden="true"
+                  />
                 )}
               </div>
 
               {/* Content */}
               <div className="flex-1 min-w-0">
                 <h4
-                  className={`font-medium ${
+                  className={`font-medium text-sm sm:text-base ${
                     isVisible
                       ? "text-white dark:text-white"
                       : "text-gray-400 dark:text-gray-400"
@@ -73,7 +76,7 @@ const DashboardCustomizer: React.FC<DashboardCustomizerProps> = ({
                   {card.title}
                 </h4>
                 <p
-                  className={`text-sm mt-1 ${
+                  className={`text-xs sm:text-sm mt-0.5 sm:mt-1 ${
                     isVisible
                       ? "text-gray-300 dark:text-gray-300"
                       : "text-gray-500 dark:text-gray-500"
@@ -86,7 +89,7 @@ const DashboardCustomizer: React.FC<DashboardCustomizerProps> = ({
               {/* Status badge */}
               <div className="flex-shrink-0">
                 <span
-                  className={`inline-block px-2.5 py-1 text-xs font-medium rounded-full ${
+                  className={`inline-block px-2 sm:px-2.5 py-0.5 sm:py-1 text-xs font-medium rounded-full ${
                     isVisible
                       ? "bg-primary text-white"
                       : "bg-gray-700 dark:bg-gray-700 text-gray-300 dark:text-gray-300"

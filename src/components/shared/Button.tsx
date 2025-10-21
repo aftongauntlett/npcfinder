@@ -24,6 +24,7 @@ export interface ButtonProps
   fullWidth?: boolean;
   className?: string;
   "aria-label"?: string;
+  hideTextOnMobile?: boolean; // Show only icon on mobile screens
 }
 
 /**
@@ -57,6 +58,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       className = "",
       type = "button",
       "aria-label": ariaLabel,
+      hideTextOnMobile = false,
       ...props
     },
     ref
@@ -71,10 +73,18 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       );
     }
 
+    // Accessibility check for mobile-hidden text
+    if (hideTextOnMobile && !ariaLabel && !props["aria-labelledby"]) {
+      console.warn(
+        "Button: Buttons with hideTextOnMobile require aria-label for accessibility"
+      );
+    }
+
     // Build class names
     const classes = [
-      // Base layout
-      "inline-flex items-center justify-center gap-2",
+      // Base layout - responsive gap
+      "inline-flex items-center justify-center",
+      hideTextOnMobile ? "gap-0 sm:gap-2" : "gap-2", // No gap on mobile when text is hidden
       "font-medium",
       // Border - squared corners per requirements
       "rounded border-2",
@@ -112,11 +122,34 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       ],
     };
 
-    // Size styles
-    const sizeStyles: Record<ButtonSize, string> = {
-      sm: isIconOnly ? "p-1.5" : "px-3 py-1.5 text-sm",
-      md: isIconOnly ? "p-2" : "px-4 py-2 text-sm",
-      lg: isIconOnly ? "p-3" : "px-6 py-3 text-base",
+    // Size styles - with responsive padding for hideTextOnMobile
+    const getSizeStyles = (): string => {
+      if (isIconOnly) {
+        const iconOnlySizes: Record<ButtonSize, string> = {
+          sm: "p-1.5",
+          md: "p-2",
+          lg: "p-3",
+        };
+        return iconOnlySizes[size];
+      }
+
+      if (hideTextOnMobile) {
+        // On mobile (icon-only), use icon-only padding; on desktop, use normal padding
+        const responsiveSizes: Record<ButtonSize, string> = {
+          sm: "p-1.5 sm:px-3 sm:py-1.5 text-sm",
+          md: "p-2 sm:px-4 sm:py-2 text-sm",
+          lg: "p-3 sm:px-6 sm:py-3 text-base",
+        };
+        return responsiveSizes[size];
+      }
+
+      // Normal buttons with text
+      const normalSizes: Record<ButtonSize, string> = {
+        sm: "px-3 py-1.5 text-sm",
+        md: "px-4 py-2 text-sm",
+        lg: "px-6 py-3 text-base",
+      };
+      return normalSizes[size];
     };
 
     // Icon size
@@ -167,7 +200,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const combinedClasses = [
       ...classes,
       ...variantStyles[variant],
-      sizeStyles[size],
+      getSizeStyles(),
       className,
     ]
       .filter(Boolean)
@@ -192,7 +225,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           </span>
         )}
 
-        {children && <span>{children}</span>}
+        {children && (
+          <span className={hideTextOnMobile ? "hidden sm:inline" : ""}>
+            {children}
+          </span>
+        )}
 
         {!loading && icon && iconPosition === "right" && (
           <span className="flex-shrink-0 inline-flex items-center justify-center">

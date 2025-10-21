@@ -4,8 +4,7 @@ import {
   X,
   Film,
   Tv,
-  Eye,
-  EyeOff,
+  Play,
   List,
   Check,
   Grid3x3,
@@ -27,28 +26,36 @@ import {
   useToggleWatchlistWatched,
   useDeleteFromWatchlist,
 } from "../../hooks/useWatchlistQueries";
+import { useViewMode } from "../../hooks/useViewMode";
 import type { WatchlistItem } from "../../services/recommendationsService";
 
 type FilterType = "all" | "to-watch" | "watched";
 type SortType = "date-added" | "title" | "year" | "rating";
-type ViewMode = "grid" | "list";
 
-const PersonalWatchList: React.FC = () => {
+interface PersonalWatchListProps {
+  initialFilter?: FilterType;
+  embedded?: boolean;
+}
+
+const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
+  initialFilter = "all",
+  embedded: _embedded = false, // Reserved for future tabbed layout
+}) => {
   // Fetch watchlist from database
   const { data: watchList = [] } = useWatchlist();
   const addToWatchlist = useAddToWatchlist();
   const toggleWatched = useToggleWatchlistWatched();
   const deleteFromWatchlist = useDeleteFromWatchlist();
 
-  const [filter, setFilter] = useState<FilterType>("all");
+  // Filter is controlled by tabs (initialFilter prop), not by dropdown
+  const [filter] = useState<FilterType>(initialFilter);
   const [sortBy, setSortBy] = useState<SortType>("date-added");
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [viewMode, setViewMode] = useViewMode("grid");
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState<WatchlistItem | null>(
     null
   );
-  const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
   const [movieToRecommend, setMovieToRecommend] =
@@ -114,327 +121,200 @@ const PersonalWatchList: React.FC = () => {
   const toWatchCount = watchList.filter((item) => !item.watched).length;
   const watchedCount = watchList.filter((item) => item.watched).length;
 
+  // Determine if we should show controls based on current filter context
+  const hasItemsForCurrentFilter =
+    filter === "all"
+      ? watchList.length > 0
+      : filter === "to-watch"
+      ? toWatchCount > 0
+      : watchedCount > 0;
+
   return (
     <div className="space-y-6">
-      {/* Header with Filter, Sort, View Toggle, and Add Button - Only show if watchlist has items */}
-      {watchList.length > 0 && (
-        <div className="flex items-center justify-between gap-4">
-          {/* Left side: Filter and Sort */}
-          <div className="flex items-center gap-3">
-            {/* Filter Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setShowFilterMenu(!showFilterMenu)}
-                className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                <span className="font-medium">
-                  {filter === "all" && "All"}
-                  {filter === "to-watch" && "To Watch"}
-                  {filter === "watched" && "Watched"}
-                </span>
-                <ChevronDown className="w-4 h-4 text-gray-500" />
-              </button>
+      {/* Header with Sort, View Toggle, Add/Import Buttons - Only show if there are items for current filter */}
+      {hasItemsForCurrentFilter && (
+        <>
+          <div className="flex items-center justify-between gap-4">
+            {/* Left side: Sort and View Toggle */}
+            <div className="flex items-center gap-3">
+              {/* Sort Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowSortMenu(!showSortMenu)}
+                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  <span className="font-medium">
+                    {sortBy === "date-added" && "Sort: Date Added"}
+                    {sortBy === "title" && "Sort: Title (A-Z)"}
+                    {sortBy === "year" && "Sort: Year"}
+                    {sortBy === "rating" && "Sort: Rating"}
+                  </span>
+                  <ChevronDown className="w-4 h-4 text-gray-500" />
+                </button>
 
-              {showFilterMenu && (
-                <>
-                  <div
-                    className="fixed inset-0 z-10"
-                    onClick={() => setShowFilterMenu(false)}
-                  />
-                  <div className="absolute top-full left-0 mt-2 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-20 py-2 overflow-hidden">
-                    <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-700">
-                      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                        Filter by Status
-                      </p>
+                {showSortMenu && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setShowSortMenu(false)}
+                    />
+                    <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-20 py-1 overflow-hidden">
+                      <button
+                        onClick={() => {
+                          setSortBy("date-added");
+                          setShowSortMenu(false);
+                        }}
+                        className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
+                          sortBy === "date-added"
+                            ? "bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-semibold"
+                            : "text-gray-700 dark:text-gray-300"
+                        }`}
+                      >
+                        {sortBy === "date-added" && (
+                          <Check className="w-4 h-4 inline-block mr-2 text-primary" />
+                        )}
+                        Sort: Date Added
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSortBy("title");
+                          setShowSortMenu(false);
+                        }}
+                        className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
+                          sortBy === "title"
+                            ? "bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-semibold"
+                            : "text-gray-700 dark:text-gray-300"
+                        }`}
+                      >
+                        {sortBy === "title" && (
+                          <Check className="w-4 h-4 inline-block mr-2 text-primary" />
+                        )}
+                        Sort: Title (A-Z)
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSortBy("year");
+                          setShowSortMenu(false);
+                        }}
+                        className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
+                          sortBy === "year"
+                            ? "bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-semibold"
+                            : "text-gray-700 dark:text-gray-300"
+                        }`}
+                      >
+                        {sortBy === "year" && (
+                          <Check className="w-4 h-4 inline-block mr-2 text-primary" />
+                        )}
+                        Sort: Year
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSortBy("rating");
+                          setShowSortMenu(false);
+                        }}
+                        className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
+                          sortBy === "rating"
+                            ? "bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-semibold"
+                            : "text-gray-700 dark:text-gray-300"
+                        }`}
+                      >
+                        {sortBy === "rating" && (
+                          <Check className="w-4 h-4 inline-block mr-2 text-primary" />
+                        )}
+                        Sort: Rating
+                      </button>
                     </div>
-                    <button
-                      onClick={() => {
-                        setFilter("all");
-                        setShowFilterMenu(false);
-                      }}
-                      className={`w-full px-4 py-3 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center justify-between transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
-                        filter === "all"
-                          ? "bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-semibold"
-                          : "text-gray-700 dark:text-gray-300"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`p-1.5 rounded-lg ${
-                            filter === "all"
-                              ? "bg-gray-200 dark:bg-gray-600"
-                              : "bg-gray-100 dark:bg-gray-700"
-                          }`}
-                        >
-                          <Film className="w-4 h-4" />
-                        </div>
-                        <span>All Movies & Shows</span>
-                      </div>
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full ${
-                          filter === "all"
-                            ? "bg-gray-200 dark:bg-gray-600 text-gray-900 dark:text-white font-semibold"
-                            : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
-                        }`}
-                      >
-                        {watchList.length}
-                      </span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setFilter("to-watch");
-                        setShowFilterMenu(false);
-                      }}
-                      className={`w-full px-4 py-3 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center justify-between transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
-                        filter === "to-watch"
-                          ? "bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-semibold"
-                          : "text-gray-700 dark:text-gray-300"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`p-1.5 rounded-lg ${
-                            filter === "to-watch"
-                              ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
-                              : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
-                          }`}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </div>
-                        <span>To Watch</span>
-                      </div>
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full ${
-                          filter === "to-watch"
-                            ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-semibold"
-                            : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
-                        }`}
-                      >
-                        {toWatchCount}
-                      </span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setFilter("watched");
-                        setShowFilterMenu(false);
-                      }}
-                      className={`w-full px-4 py-3 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center justify-between transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
-                        filter === "watched"
-                          ? "bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-semibold"
-                          : "text-gray-700 dark:text-gray-300"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`p-1.5 rounded-lg ${
-                            filter === "watched"
-                              ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400"
-                              : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
-                          }`}
-                        >
-                          <Check className="w-4 h-4" />
-                        </div>
-                        <span>Watched</span>
-                      </div>
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full ${
-                          filter === "watched"
-                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 font-semibold"
-                            : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
-                        }`}
-                      >
-                        {watchedCount}
-                      </span>
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
+                  </>
+                )}
+              </div>
 
-            {/* Sort Dropdown - Styled to match filter */}
-            <div className="relative">
-              <button
-                onClick={() => setShowSortMenu(!showSortMenu)}
-                className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                <span className="font-medium">
-                  {sortBy === "date-added" && "Sort: Date Added"}
-                  {sortBy === "title" && "Sort: Title (A-Z)"}
-                  {sortBy === "year" && "Sort: Year"}
-                  {sortBy === "rating" && "Sort: Rating"}
-                </span>
-                <ChevronDown className="w-4 h-4 text-gray-500" />
-              </button>
-
-              {showSortMenu && (
-                <>
-                  <div
-                    className="fixed inset-0 z-10"
-                    onClick={() => setShowSortMenu(false)}
-                  />
-                  <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-20 py-1 overflow-hidden">
-                    <button
-                      onClick={() => {
-                        setSortBy("date-added");
-                        setShowSortMenu(false);
-                      }}
-                      className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
-                        sortBy === "date-added"
-                          ? "bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-semibold"
-                          : "text-gray-700 dark:text-gray-300"
-                      }`}
-                    >
-                      {sortBy === "date-added" && (
-                        <Check className="w-4 h-4 inline-block mr-2 text-primary" />
-                      )}
-                      Sort: Date Added
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSortBy("title");
-                        setShowSortMenu(false);
-                      }}
-                      className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
-                        sortBy === "title"
-                          ? "bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-semibold"
-                          : "text-gray-700 dark:text-gray-300"
-                      }`}
-                    >
-                      {sortBy === "title" && (
-                        <Check className="w-4 h-4 inline-block mr-2 text-primary" />
-                      )}
-                      Sort: Title (A-Z)
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSortBy("year");
-                        setShowSortMenu(false);
-                      }}
-                      className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
-                        sortBy === "year"
-                          ? "bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-semibold"
-                          : "text-gray-700 dark:text-gray-300"
-                      }`}
-                    >
-                      {sortBy === "year" && (
-                        <Check className="w-4 h-4 inline-block mr-2 text-primary" />
-                      )}
-                      Sort: Year
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSortBy("rating");
-                        setShowSortMenu(false);
-                      }}
-                      className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
-                        sortBy === "rating"
-                          ? "bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-semibold"
-                          : "text-gray-700 dark:text-gray-300"
-                      }`}
-                    >
-                      {sortBy === "rating" && (
-                        <Check className="w-4 h-4 inline-block mr-2 text-primary" />
-                      )}
-                      Sort: Rating
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Right side: View Toggle and Add Button */}
-          <div className="flex items-center gap-3">
-            {/* Add Button - Enhanced Primary CTA - Only show when watchlist has items */}
-            {watchList.length > 0 && (
-              <>
-                <Button
-                  onClick={() => setShowSearchModal(true)}
-                  variant="primary"
-                  icon={<Plus className="w-4 h-4" />}
+              {/* View Mode Toggle */}
+              <div className="flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`p-2 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+                    viewMode === "grid"
+                      ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white"
+                      : "hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
+                  }`}
+                  title="Grid view"
+                  aria-label="Switch to grid view"
+                  aria-pressed={viewMode === "grid"}
                 >
-                  Add Movie/Show
-                </Button>
-                <Button
-                  onClick={() => setShowImportModal(true)}
-                  variant="secondary"
-                  icon={<Upload className="w-4 h-4" />}
+                  <Grid3x3 className="w-4 h-4" aria-hidden="true" />
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`p-2 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+                    viewMode === "list"
+                      ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white"
+                      : "hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
+                  }`}
+                  title="List view"
+                  aria-label="Switch to list view"
+                  aria-pressed={viewMode === "list"}
                 >
-                  Import List
-                </Button>
-              </>
-            )}
-
-            {/* View Mode Toggle */}
-            <div className="flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`p-2 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
-                  viewMode === "grid"
-                    ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white"
-                    : "hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
-                }`}
-                title="Grid view"
-                aria-label="Switch to grid view"
-                aria-pressed={viewMode === "grid"}
-              >
-                <Grid3x3 className="w-4 h-4" aria-hidden="true" />
-              </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={`p-2 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
-                  viewMode === "list"
-                    ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white"
-                    : "hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
-                }`}
-                title="List view"
-                aria-label="Switch to list view"
-                aria-pressed={viewMode === "list"}
-              >
-                <List className="w-4 h-4" aria-hidden="true" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Separator - Only show if watchlist has items */}
-      {watchList.length > 0 && (
-        <div className="border-b border-gray-200 dark:border-gray-700" />
-      )}
-
-      {/* Watch List Items */}
-      {filteredWatchList.length === 0 ? (
-        <div className="mt-8">
-          {filter === "all" ? (
-            <MediaEmptyState
-              icon={Plus}
-              title="Add your first movie or show"
-              description="Search for a movie or import a list from Notion, Excel, or any text source"
-              actions={[
-                {
-                  label: "Add Movie",
-                  onClick: () => setShowSearchModal(true),
-                  variant: "primary",
-                  icon: Plus,
-                },
-                {
-                  label: "Import List",
-                  onClick: () => setShowImportModal(true),
-                  variant: "secondary",
-                  icon: Upload,
-                },
-              ]}
-            />
-          ) : (
-            <div className="text-center py-12">
-              <div className="text-gray-500 dark:text-gray-400">
-                {filter === "to-watch"
-                  ? "No unwatched items"
-                  : "No watched items yet"}
+                  <List className="w-4 h-4" aria-hidden="true" />
+                </button>
               </div>
             </div>
-          )}
+
+            {/* Right side: Add and Import Buttons */}
+            <div className="flex items-center gap-3">
+              {/* Add Button - Enhanced Primary CTA - Only show when watchlist has items */}
+              {watchList.length > 0 && (
+                <>
+                  <Button
+                    onClick={() => setShowSearchModal(true)}
+                    variant="primary"
+                    icon={<Plus className="w-4 h-4" />}
+                  >
+                    Add
+                  </Button>
+                  <Button
+                    onClick={() => setShowImportModal(true)}
+                    variant="secondary"
+                    icon={<Upload className="w-4 h-4" />}
+                  >
+                    Import
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Watch List Items or Empty State */}
+      {!hasItemsForCurrentFilter ? (
+        // Show nice card when there are NO items for current filter
+        <MediaEmptyState
+          icon={Plus}
+          title="Add your first movie or show"
+          description="Search for a movie or import a list from Notion, Excel, or any text source"
+          actions={[
+            {
+              label: "Add",
+              onClick: () => setShowSearchModal(true),
+              variant: "primary",
+              icon: Plus,
+            },
+            {
+              label: "Import",
+              onClick: () => setShowImportModal(true),
+              variant: "secondary",
+              icon: Upload,
+            },
+          ]}
+        />
+      ) : filteredWatchList.length === 0 ? (
+        // Show simple message when user changes filter to something with no results
+        <div className="text-center py-12">
+          <div className="text-gray-500 dark:text-gray-400">
+            {filter === "to-watch"
+              ? "No unwatched items"
+              : "No watched items yet"}
+          </div>
         </div>
       ) : viewMode === "grid" ? (
         // Grid View
@@ -509,36 +389,7 @@ const PersonalWatchList: React.FC = () => {
 
                 {/* Actions */}
                 <div className="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void handleToggleWatched(item.id);
-                    }}
-                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
-                      item.watched
-                        ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 focus-visible:ring-green-500"
-                        : "bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus-visible:ring-primary"
-                    }`}
-                    title={
-                      item.watched ? "Mark as unwatched" : "Mark as watched"
-                    }
-                    aria-label={
-                      item.watched ? "Mark as unwatched" : "Mark as watched"
-                    }
-                  >
-                    {item.watched ? (
-                      <>
-                        <Eye className="w-4 h-4" />
-                        <span className="hidden sm:inline">Watched</span>
-                      </>
-                    ) : (
-                      <>
-                        <EyeOff className="w-4 h-4" />
-                        <span className="hidden sm:inline">Watch</span>
-                      </>
-                    )}
-                  </button>
-
+                  {/* Recommend button */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -547,22 +398,39 @@ const PersonalWatchList: React.FC = () => {
                     }}
                     className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
                     aria-label="Recommend to friends"
-                    title="Recommend to friends"
+                    title="Recommend"
                   >
                     <Send className="w-5 h-5" />
                   </button>
 
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void handleRemoveFromWatchList(item.id);
-                    }}
-                    className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
-                    aria-label="Remove from watch list"
-                    title="Remove from list"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
+                  {/* Watch/Remove button based on status */}
+                  {item.watched ? (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void handleRemoveFromWatchList(item.id);
+                      }}
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
+                      aria-label="Remove from list"
+                      title="Remove"
+                    >
+                      <X className="w-5 h-5" />
+                      <span className="hidden sm:inline">Remove</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void handleToggleWatched(item.id);
+                      }}
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
+                      aria-label="Mark as watched"
+                      title="Watched"
+                    >
+                      <Play className="w-5 h-5" />
+                      <span className="hidden sm:inline">Watched</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -624,28 +492,7 @@ const PersonalWatchList: React.FC = () => {
 
               {/* Actions */}
               <div className="flex items-center gap-2 flex-shrink-0">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    void handleToggleWatched(item.id);
-                  }}
-                  className={`p-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
-                    item.watched
-                      ? "focus-visible:ring-green-500"
-                      : "focus-visible:ring-primary"
-                  }`}
-                  title={item.watched ? "Mark as unwatched" : "Mark as watched"}
-                  aria-label={
-                    item.watched ? "Mark as unwatched" : "Mark as watched"
-                  }
-                >
-                  {item.watched ? (
-                    <Eye className="w-5 h-5 text-green-600 dark:text-green-400" />
-                  ) : (
-                    <EyeOff className="w-5 h-5 text-gray-400" />
-                  )}
-                </button>
-
+                {/* Recommend button */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -654,27 +501,42 @@ const PersonalWatchList: React.FC = () => {
                   }}
                   className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
                   aria-label="Recommend to friends"
-                  title="Recommend to friends"
+                  title="Recommend"
                 >
                   <Send className="w-5 h-5" />
                 </button>
 
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    void handleRemoveFromWatchList(item.id);
-                  }}
-                  className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
-                  aria-label="Remove from watch list"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                {/* Watch/Remove button based on status */}
+                {item.watched ? (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void handleRemoveFromWatchList(item.id);
+                    }}
+                    className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
+                    aria-label="Remove from list"
+                    title="Remove"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void handleToggleWatched(item.id);
+                    }}
+                    className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
+                    aria-label="Mark as watched"
+                    title="Watched"
+                  >
+                    <Play className="w-5 h-5" />
+                  </button>
+                )}
               </div>
             </div>
           ))}
         </div>
       )}
-
       {/* Search Modal */}
       <SearchMovieModal
         isOpen={showSearchModal}
@@ -682,7 +544,6 @@ const PersonalWatchList: React.FC = () => {
         onAdd={handleAddToWatchList}
         existingIds={watchList.map((item) => item.external_id)}
       />
-
       {/* Send/Recommend Modal */}
       <SendMediaModal
         isOpen={showSendModal}
@@ -716,7 +577,6 @@ const PersonalWatchList: React.FC = () => {
             : undefined
         }
       />
-
       {/* Movie Detail Modal */}
       {selectedMovie && (
         <MovieDetailModal
@@ -727,7 +587,6 @@ const PersonalWatchList: React.FC = () => {
           onRemove={handleRemoveFromWatchList}
         />
       )}
-
       {/* Import Media Modal */}
       <ImportMediaModal
         isOpen={showImportModal}

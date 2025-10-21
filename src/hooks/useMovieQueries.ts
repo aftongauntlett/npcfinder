@@ -9,22 +9,24 @@ import { queryKeys } from "../lib/queryKeys";
 
 /**
  * Get friends who have sent movie/TV recommendations
+ * Note: Pass undefined to get BOTH movies and TV shows (they're in the same table)
  */
 export function useFriendsWithMovieRecs() {
   return useQuery({
-    queryKey: queryKeys.friends.withRecs("movie"),
+    queryKey: queryKeys.friends.withRecs("movies-tv"),
     queryFn: () =>
-      recommendationsService.getFriendsWithRecommendations("movie"),
+      recommendationsService.getFriendsWithRecommendations(undefined),
   });
 }
 
 /**
  * Get quick stats for movies/TV
+ * Note: Pass undefined to get BOTH movies and TV shows (they're in the same table)
  */
 export function useMovieStats() {
   return useQuery({
-    queryKey: queryKeys.stats.quick("movie"),
-    queryFn: () => recommendationsService.getQuickStats("movie"),
+    queryKey: queryKeys.stats.quick("movies-tv"),
+    queryFn: () => recommendationsService.getQuickStats(undefined),
   });
 }
 
@@ -40,32 +42,41 @@ export function useMovieRecommendations(view: string, friendId?: string) {
       }
 
       if (view === "friend" && friendId) {
+        // Don't pass mediaType - fetch both movies AND TV shows
         return recommendationsService.getRecommendationsFromFriend(
           friendId,
-          "movie"
+          undefined
         );
       }
 
+      if (view === "queue") {
+        // Fetch all pending recommendations (for friend grouping)
+        return recommendationsService.getRecommendations({
+          direction: "received",
+          status: "pending",
+        });
+      }
+
       if (view === "hits") {
+        // Don't pass mediaType - fetch both movies AND TV shows
         return recommendationsService.getRecommendations({
           direction: "received",
           status: "hit",
-          mediaType: "movie",
         });
       }
 
       if (view === "misses") {
+        // Don't pass mediaType - fetch both movies AND TV shows
         return recommendationsService.getRecommendations({
           direction: "received",
           status: "miss",
-          mediaType: "movie",
         });
       }
 
       if (view === "sent") {
+        // Don't pass mediaType - fetch both movies AND TV shows
         return recommendationsService.getRecommendations({
           direction: "sent",
-          mediaType: "movie",
         });
       }
 
@@ -123,6 +134,46 @@ export function useDeleteMovieRecommendation() {
       // Invalidate all movie-related queries so both sender and receiver see updates
       void queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
       void queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+      void queryClient.invalidateQueries({
+        queryKey: ["movie-recommendations"],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.recommendations.all,
+      });
+    },
+  });
+}
+
+/**
+ * Update sender's note mutation
+ */
+export function useUpdateSenderNote() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ recId, note }: { recId: string; note: string }) =>
+      recommendationsService.updateSenderNote(recId, note),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ["movie-recommendations"],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.recommendations.all,
+      });
+    },
+  });
+}
+
+/**
+ * Update recipient's note mutation
+ */
+export function useUpdateRecipientNote() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ recId, note }: { recId: string; note: string }) =>
+      recommendationsService.updateRecipientNote(recId, note),
+    onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: ["movie-recommendations"],
       });
