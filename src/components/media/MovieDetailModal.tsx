@@ -5,7 +5,6 @@ import {
   Calendar,
   Clock,
   Users,
-  ExternalLink,
   Film,
   Tv,
   Eye,
@@ -82,9 +81,6 @@ const MovieDetailModal: React.FC<MovieDetailModalProps> = ({
   const releaseYear = item.release_date
     ? new Date(item.release_date).getFullYear()
     : null;
-
-  // Build TMDB URL
-  const tmdbUrl = `https://www.themoviedb.org/${item.media_type}/${item.external_id}`;
 
   const handleToggleWatched = () => {
     onToggleWatched(item.id);
@@ -259,13 +255,6 @@ const MovieDetailModal: React.FC<MovieDetailModalProps> = ({
                     className="!border-red-600 !text-red-600 hover:!bg-red-600 hover:!text-white"
                   >
                     Remove from List
-                  </Button>
-                  <Button
-                    onClick={() => window.open(tmdbUrl, "_blank")}
-                    variant="secondary"
-                    icon={<ExternalLink className="w-4 h-4" />}
-                  >
-                    View on TMDB
                   </Button>
                 </div>
               </div>

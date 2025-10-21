@@ -494,7 +494,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
         message="Are you sure you want to sign out? You'll need to log in again to access your account."
         confirmText="Sign Out"
         cancelText="Cancel"
-        variant="warning"
+        variant="danger"
         isLoading={isSigningOut}
       />
     </>

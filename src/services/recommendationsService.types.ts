@@ -33,6 +33,7 @@ export interface Recommendation {
   media_type: "song" | "album" | "movie" | "tv";
   title: string;
   artist?: string;
+  album?: string;
   release_date?: string;
   overview?: string;
   poster_url?: string;

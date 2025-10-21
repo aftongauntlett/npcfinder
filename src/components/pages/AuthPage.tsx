@@ -79,8 +79,13 @@ const AuthPage: React.FC = () => {
         if (signUpError) {
           // Provide user-friendly error messages
           if (signUpError.name === "InviteCodeError") {
+            setError("Email does not match invite code");
+          } else if (
+            signUpError.message.includes("already") ||
+            signUpError.message.includes("invalid")
+          ) {
             setError(
-              "Invalid or expired invite code. Please check your code and try again."
+              "This email is already registered. Please sign in instead."
             );
           } else {
             setError(signUpError.message);

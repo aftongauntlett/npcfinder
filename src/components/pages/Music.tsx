@@ -19,14 +19,14 @@ import {
 // Extend BaseRecommendation with music-specific fields
 interface MusicRecommendation extends BaseRecommendation {
   artist: string | null;
-  album: string | null;
+  album?: string | null;
   media_type: string;
   year: number | null;
-  recommendation_type: "listen" | "watch" | "rewatch" | "relisten";
+  recommendation_type: "listen" | "watch" | "rewatch" | "relisten" | "study";
   poster_url: string | null;
   // Override with music-specific status types
   status: "pending" | "listened" | "hit" | "miss";
-  consumed_at: string | null; // Music-specific timestamp field
+  consumed_at?: string | null; // Music-specific timestamp field
   opened_at: string | null; // When recipient first viewed this recommendation
   sender_note: string | null; // Sender's own note about this recommendation
   recipient_note: string | null; // Recipient's note
@@ -72,9 +72,12 @@ const Music: React.FC = () => {
       album: rec.album || null,
       year: rec.year || null,
       poster_url: rec.poster_url || null,
-      consumed_at: rec.consumed_at || null,
+      consumed_at: rec.watched_at || null,
       opened_at: rec.opened_at || null,
-      status: rec.status === "consumed" ? "listened" : rec.status,
+      status:
+        rec.status === "consumed" || rec.status === "watched"
+          ? "listened"
+          : rec.status,
     }));
   }, [rawRecommendations]);
 
@@ -93,9 +96,9 @@ const Music: React.FC = () => {
   const updateRecommendationStatus = async (
     recId: string,
     status: string,
-    comment?: string
+    _comment?: string
   ) => {
-    await updateStatusMutation.mutateAsync({ recId, status, comment });
+    await updateStatusMutation.mutateAsync({ recId, status });
   };
 
   // Delete (unsend) a recommendation using mutation
@@ -179,9 +182,7 @@ const Music: React.FC = () => {
     <>
       <MediaRecommendationsLayout
         mediaType="Music"
-        mediaIcon={
-          <MusicIcon className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500" />
-        }
+        mediaIcon={MusicIcon}
         emptyMessage="No music recommendations yet"
         emptySubMessage="When friends share music with you, it'll show up here"
         queueLabel="Listening Queue"

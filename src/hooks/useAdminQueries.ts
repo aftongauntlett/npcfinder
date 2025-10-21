@@ -95,25 +95,14 @@ export function useInviteCodeStats() {
 
 /**
  * Mutation: Create a single invite code
+ * Simplified: only requires email, always 30 days, max 1 use
  */
 export function useCreateInviteCode() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      notes,
-      maxUses = 1,
-      expiresInDays,
-    }: {
-      notes?: string;
-      maxUses?: number;
-      expiresInDays?: number;
-    }) => {
-      const result = await inviteCodesLib.createInviteCode(
-        notes,
-        maxUses,
-        expiresInDays
-      );
+    mutationFn: async (intendedEmail: string) => {
+      const result = await inviteCodesLib.createInviteCode(intendedEmail);
       if (result.error) throw result.error;
       return result.data;
     },

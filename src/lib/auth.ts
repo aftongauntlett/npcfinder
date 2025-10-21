@@ -24,12 +24,16 @@ export const signUp = async (
 ): Promise<AuthResult<User>> => {
   try {
     // Step 1: Validate invite code BEFORE creating account
+    // Now includes email validation for extra security
     const { data: isValid, error: validateError } = await validateInviteCode(
-      inviteCode
+      inviteCode,
+      email
     );
 
     if (validateError || !isValid) {
-      const error = new Error("Invalid or expired invite code") as AuthError;
+      const error = new Error(
+        "Invalid invite code or email does not match the intended recipient"
+      ) as AuthError;
       error.name = "InviteCodeError";
       throw error;
     }
@@ -52,7 +56,7 @@ export const signUp = async (
     if (consumeError) {
       console.error("Failed to consume invite code:", consumeError);
       // Note: User is already created at this point
-      // Consider implementing cleanup if this is critical
+      // The code should still be marked as used via database trigger
     }
 
     return { data: data.user, error: null };

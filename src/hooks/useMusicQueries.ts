@@ -84,23 +84,26 @@ export function useUpdateRecommendationStatus() {
     mutationFn: ({
       recId,
       status,
-      comment,
+      mediaType = "song",
     }: {
       recId: string;
       status: string;
-      comment?: string;
+      mediaType?: "song" | "album";
     }) =>
       recommendationsService.updateRecommendationStatus(
         recId,
         status as "pending" | "consumed" | "hit" | "miss",
-        comment
+        mediaType
       ),
     onSuccess: () => {
-      // Invalidate relevant queries to refetch fresh data
+      // Invalidate all music-related queries so both sender and receiver see updates
       void queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
       void queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
       void queryClient.invalidateQueries({
         queryKey: ["music-recommendations"],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.recommendations.all,
       });
     },
   });
@@ -116,10 +119,14 @@ export function useDeleteRecommendation() {
     mutationFn: (recId: string) =>
       recommendationsService.deleteRecommendation(recId),
     onSuccess: () => {
+      // Invalidate all music-related queries so both sender and receiver see updates
       void queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
       void queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
       void queryClient.invalidateQueries({
         queryKey: ["music-recommendations"],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.recommendations.all,
       });
     },
   });

@@ -48,7 +48,7 @@ export interface AdminStats {
   totalUsers: number;
   totalMediaItems: number;
   totalRatings: number;
-  totalConnections: number;
+  totalInviteCodes: number; // Admin-specific: total invite codes created
   newUsersThisWeek: number;
   newUsersThisMonth: number;
   activeUsers: number;
@@ -99,9 +99,9 @@ export const getAdminStats = async (): Promise<AdminStats> => {
   const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  // Fetch connections count
-  const { count: connectionsCount } = await supabase
-    .from("connections")
+  // Count invite codes (admin-specific metric)
+  const { count: inviteCodesCount } = await supabase
+    .from("invite_codes")
     .select("*", { count: "exact", head: true });
 
   // Count watchlist items
@@ -159,7 +159,7 @@ export const getAdminStats = async (): Promise<AdminStats> => {
     totalUsers: userCount || 0,
     totalMediaItems: (watchlistCount || 0) + (watchedCount || 0),
     totalRatings: watchedCount || 0,
-    totalConnections: connectionsCount || 0,
+    totalInviteCodes: inviteCodesCount || 0,
     newUsersThisWeek: weekUsers || 0,
     newUsersThisMonth: monthUsers || 0,
     activeUsers: uniqueActiveUsers,

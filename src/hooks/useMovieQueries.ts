@@ -85,22 +85,26 @@ export function useUpdateMovieRecommendationStatus() {
     mutationFn: ({
       recId,
       status,
-      comment,
+      mediaType = "movie",
     }: {
       recId: string;
       status: string;
-      comment?: string;
+      mediaType?: "movie" | "tv";
     }) =>
       recommendationsService.updateRecommendationStatus(
         recId,
         status as "pending" | "consumed" | "hit" | "miss",
-        comment
+        mediaType
       ),
     onSuccess: () => {
+      // Invalidate all movie-related queries so both sender and receiver see updates
       void queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
       void queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
       void queryClient.invalidateQueries({
         queryKey: ["movie-recommendations"],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.recommendations.all,
       });
     },
   });
@@ -116,10 +120,14 @@ export function useDeleteMovieRecommendation() {
     mutationFn: (recId: string) =>
       recommendationsService.deleteRecommendation(recId),
     onSuccess: () => {
+      // Invalidate all movie-related queries so both sender and receiver see updates
       void queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
       void queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
       void queryClient.invalidateQueries({
         queryKey: ["movie-recommendations"],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.recommendations.all,
       });
     },
   });

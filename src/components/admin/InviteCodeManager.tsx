@@ -2,12 +2,11 @@ import React, { useState, useCallback, memo } from "react";
 import {
   Key,
   Plus,
-  Copy,
-  Check,
   Shield,
   Clock,
   Users,
   RefreshCw,
+  Check,
 } from "lucide-react";
 import Button from "../shared/Button";
 import Input from "../shared/Input";
@@ -18,7 +17,6 @@ import {
   useInviteCodes,
   useInviteCodeStats,
   useCreateInviteCode,
-  useBatchCreateInviteCodes,
   useRevokeInviteCode,
 } from "../../hooks/useAdminQueries";
 import type { InviteCode } from "../../lib/inviteCodes";
@@ -29,6 +27,9 @@ import { format } from "date-fns";
  */
 const InviteCodeManager: React.FC = () => {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [newlyCreatedCodes, setNewlyCreatedCodes] = useState<Set<string>>(
+    new Set()
+  );
 
   // Revoke modal state
   const [showRevokeModal, setShowRevokeModal] = useState(false);
@@ -39,10 +40,7 @@ const InviteCodeManager: React.FC = () => {
 
   // Create form state
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [notes, setNotes] = useState("");
-  const [maxUses, setMaxUses] = useState(1);
-  const [expiresInDays, setExpiresInDays] = useState<number | undefined>(30);
-  const [batchCount, setBatchCount] = useState(1);
+  const [intendedEmail, setIntendedEmail] = useState("");
 
   // Queries
   const { data: codes = [], isLoading: codesLoading } = useInviteCodes();
@@ -53,33 +51,38 @@ const InviteCodeManager: React.FC = () => {
 
   // Mutations
   const createCodeMutation = useCreateInviteCode();
-  const batchCreateMutation = useBatchCreateInviteCodes();
   const revokeMutation = useRevokeInviteCode();
 
   // Handlers
   const handleCreateCode = useCallback(async () => {
+    if (!intendedEmail.trim()) {
+      alert("Please enter an email address");
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(intendedEmail)) {
+      alert("Please enter a valid email address");
+      return;
+    }
+
     try {
-      if (batchCount > 1) {
-        await batchCreateMutation.mutateAsync({
-          count: batchCount,
-          notes,
-          maxUses,
-          expiresInDays,
-        });
-      } else {
-        await createCodeMutation.mutateAsync({
-          notes,
-          maxUses,
-          expiresInDays,
-        });
+      const result = await createCodeMutation.mutateAsync(intendedEmail);
+
+      // Mark newly created code for highlighting
+      if (result) {
+        setNewlyCreatedCodes(new Set([result.code]));
+
+        // Clear highlights after 5 seconds
+        setTimeout(() => {
+          setNewlyCreatedCodes(new Set());
+        }, 5000);
       }
 
       // Reset form
       setShowCreateForm(false);
-      setNotes("");
-      setMaxUses(1);
-      setExpiresInDays(30);
-      setBatchCount(1);
+      setIntendedEmail("");
     } catch (error) {
       console.error("Error creating invite code:", error);
       alert(
@@ -88,14 +91,7 @@ const InviteCodeManager: React.FC = () => {
         }`
       );
     }
-  }, [
-    batchCount,
-    notes,
-    maxUses,
-    expiresInDays,
-    createCodeMutation,
-    batchCreateMutation,
-  ]);
+  }, [intendedEmail, createCodeMutation]);
 
   const handleRevokeCode = useCallback((codeId: string, code: string) => {
     setCodeToRevoke({ id: codeId, code });
@@ -119,13 +115,23 @@ const InviteCodeManager: React.FC = () => {
     }
   }, [codeToRevoke, revokeMutation]);
 
-  const copyToClipboard = useCallback(async (code: string) => {
+  const copyCodeOnly = useCallback(async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopiedCode(`${code}-code`);
+      setTimeout(() => setCopiedCode(null), 2000);
+    } catch (error) {
+      console.error("Failed to copy:", error);
+    }
+  }, []);
+
+  const copyCodeWithMessage = useCallback(async (code: string) => {
     try {
       const inviteUrl = `${window.location.origin}/?invite=${code}`;
       const message = `You've been invited to NPC Finder! 🎬\n\nClick this link to join: ${inviteUrl}\n\nOr use this code during sign-up: ${code}\n\nLooking forward to sharing recommendations with you!`;
 
       await navigator.clipboard.writeText(message);
-      setCopiedCode(code);
+      setCopiedCode(`${code}-message`);
       setTimeout(() => setCopiedCode(null), 2000);
     } catch (error) {
       console.error("Failed to copy:", error);
@@ -166,8 +172,7 @@ const InviteCodeManager: React.FC = () => {
   }, []);
 
   const isLoading = codesLoading || statsLoading;
-  const isCreating =
-    createCodeMutation.isPending || batchCreateMutation.isPending;
+  const isCreating = createCodeMutation.isPending;
 
   return (
     <div className="space-y-6">
@@ -177,14 +182,8 @@ const InviteCodeManager: React.FC = () => {
       {/* Create Form */}
       {showCreateForm && (
         <CreateCodeForm
-          notes={notes}
-          setNotes={setNotes}
-          maxUses={maxUses}
-          setMaxUses={setMaxUses}
-          expiresInDays={expiresInDays}
-          setExpiresInDays={setExpiresInDays}
-          batchCount={batchCount}
-          setBatchCount={setBatchCount}
+          intendedEmail={intendedEmail}
+          setIntendedEmail={setIntendedEmail}
           isCreating={isCreating}
           onSubmit={() => void handleCreateCode()}
           onCancel={() => setShowCreateForm(false)}
@@ -196,8 +195,10 @@ const InviteCodeManager: React.FC = () => {
         codes={codes}
         isLoading={isLoading}
         copiedCode={copiedCode}
+        newlyCreatedCodes={newlyCreatedCodes}
         showCreateForm={showCreateForm}
-        onCopy={(code) => void copyToClipboard(code)}
+        onCopyCode={(code) => void copyCodeOnly(code)}
+        onCopyMessage={(code) => void copyCodeWithMessage(code)}
         onRevoke={handleRevokeCode}
         onCreateNew={() => setShowCreateForm(true)}
         getStatusBadge={getStatusBadge}
@@ -283,81 +284,43 @@ const StatsCards = memo<StatsCardsProps>(({ stats }) => {
 StatsCards.displayName = "StatsCards";
 
 /**
- * Create Code Form Component
+ * Create Code Form Component - Simplified
  */
 interface CreateCodeFormProps {
-  notes: string;
-  setNotes: (notes: string) => void;
-  maxUses: number;
-  setMaxUses: (maxUses: number) => void;
-  expiresInDays: number | undefined;
-  setExpiresInDays: (days: number | undefined) => void;
-  batchCount: number;
-  setBatchCount: (count: number) => void;
+  intendedEmail: string;
+  setIntendedEmail: (email: string) => void;
   isCreating: boolean;
   onSubmit: () => void;
   onCancel: () => void;
 }
 
 const CreateCodeForm = memo<CreateCodeFormProps>(
-  ({
-    notes,
-    setNotes,
-    maxUses,
-    setMaxUses,
-    expiresInDays,
-    setExpiresInDays,
-    batchCount,
-    setBatchCount,
-    isCreating,
-    onSubmit,
-    onCancel,
-  }) => {
+  ({ intendedEmail, setIntendedEmail, isCreating, onSubmit, onCancel }) => {
     return (
       <div className="bg-white/5 backdrop-blur-sm rounded-lg p-6 border border-white/10">
         <h3 className="text-lg font-semibold text-white mb-4">
-          Create New Invite Code(s)
+          Create New Invite Code
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <p className="text-gray-300 text-sm mb-4">
+          Create a secure invite code for a specific person. The code will
+          expire in 30 days and can only be used once by the email address you
+          specify.
+        </p>
+        <div className="mb-4">
           <Input
-            id="invite-notes"
-            label="Notes (optional)"
-            type="text"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="e.g., For John Doe"
+            id="invite-email"
+            label="Recipient's Email Address"
+            type="email"
+            value={intendedEmail}
+            onChange={(e) => setIntendedEmail(e.target.value)}
+            placeholder="friend@example.com"
+            required
+            autoFocus
           />
-          <Input
-            id="invite-max-uses"
-            label="Max Uses Per Code"
-            type="number"
-            value={maxUses}
-            onChange={(e) => setMaxUses(parseInt(e.target.value) || 1)}
-            min={1}
-          />
-          <Input
-            id="invite-expires"
-            label="Expires In (days)"
-            type="number"
-            value={expiresInDays || ""}
-            onChange={(e) =>
-              setExpiresInDays(
-                e.target.value ? parseInt(e.target.value) : undefined
-              )
-            }
-            placeholder="Never"
-            min={1}
-          />
-          <Input
-            id="invite-batch-count"
-            label="Number of Codes"
-            type="number"
-            value={batchCount}
-            onChange={(e) => setBatchCount(parseInt(e.target.value) || 1)}
-            min={1}
-            max={50}
-            helperText="Create up to 50 codes at once"
-          />
+          <p className="text-xs text-gray-400 mt-2">
+            ⚡ The invite code can only be used by this email address (extra
+            security)
+          </p>
         </div>
         <div className="flex gap-3 justify-end">
           <Button
@@ -371,9 +334,9 @@ const CreateCodeForm = memo<CreateCodeFormProps>(
             onClick={onSubmit}
             variant="primary"
             loading={isCreating}
-            disabled={isCreating}
+            disabled={isCreating || !intendedEmail.trim()}
           >
-            Create {batchCount > 1 ? `${batchCount} Codes` : "Code"}
+            Generate Code
           </Button>
         </div>
       </div>
@@ -390,8 +353,10 @@ interface CodesListProps {
   codes: InviteCode[];
   isLoading: boolean;
   copiedCode: string | null;
+  newlyCreatedCodes: Set<string>;
   showCreateForm: boolean;
-  onCopy: (code: string) => void;
+  onCopyCode: (code: string) => void;
+  onCopyMessage: (code: string) => void;
   onRevoke: (id: string, code: string) => void;
   onCreateNew: () => void;
   getStatusBadge: (code: InviteCode) => React.ReactElement;
@@ -401,9 +366,11 @@ const CodesList = memo<CodesListProps>(
   ({
     codes,
     isLoading,
+    newlyCreatedCodes,
     copiedCode,
     showCreateForm,
-    onCopy,
+    onCopyCode,
+    onCopyMessage,
     onRevoke,
     onCreateNew,
     getStatusBadge,
@@ -435,67 +402,107 @@ const CodesList = memo<CodesListProps>(
 
     return (
       <div className="space-y-3">
-        {codes.map((code) => (
-          <div
-            key={code.id}
-            className="bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 p-4 hover:bg-white/8 transition-all"
-          >
-            {/* Main Row */}
-            <div className="flex items-center justify-between gap-3 mb-2">
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <code className="text-white font-mono text-lg font-semibold">
-                  {code.code}
-                </code>
-                <button
-                  onClick={() => onCopy(code.code)}
-                  className="text-gray-300 hover:text-white transition-colors p-1 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                  title="Copy invitation message with link and code"
-                  aria-label={`Copy code ${code.code}`}
-                >
-                  {copiedCode === code.code ? (
-                    <Check className="w-5 h-5 text-green-400" />
-                  ) : (
-                    <Copy className="w-5 h-5" />
+        {codes.map((code) => {
+          const isNewlyCreated = newlyCreatedCodes.has(code.code);
+          const isRedeemed = code.used_by !== null;
+
+          return (
+            <div
+              key={code.id}
+              className={`backdrop-blur-sm rounded-lg border p-4 transition-all ${
+                isNewlyCreated
+                  ? "bg-purple-500/20 border-purple-500/60 shadow-lg shadow-purple-500/20 animate-pulse"
+                  : "bg-white/5 border-white/10 hover:bg-white/8"
+              }`}
+            >
+              {/* Main Row */}
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <code className="text-white font-mono text-lg font-semibold">
+                    {code.code}
+                  </code>
+                  {isNewlyCreated && (
+                    <span className="text-xs bg-purple-500/30 text-purple-200 px-2 py-0.5 rounded-full border border-purple-500/50">
+                      NEW
+                    </span>
                   )}
-                </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => onCopyCode(code.code)}
+                      className="text-gray-300 hover:text-white transition-colors px-2 py-1 rounded text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                      title="Copy code only"
+                      aria-label={`Copy code ${code.code}`}
+                    >
+                      {copiedCode === `${code.code}-code` ? (
+                        <span className="text-green-400">✓ Code</span>
+                      ) : (
+                        "Copy Code"
+                      )}
+                    </button>
+                    <span className="text-gray-500">|</span>
+                    <button
+                      onClick={() => onCopyMessage(code.code)}
+                      className="text-gray-300 hover:text-white transition-colors px-2 py-1 rounded text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
+                      title="Copy invitation message with link and code"
+                      aria-label={`Copy invitation message for ${code.code}`}
+                    >
+                      {copiedCode === `${code.code}-message` ? (
+                        <span className="text-green-400">✓ Message</span>
+                      ) : (
+                        "Copy Message"
+                      )}
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  {getStatusBadge(code)}
+                  {code.is_active && !isRedeemed && (
+                    <button
+                      onClick={() => onRevoke(code.id, code.code)}
+                      className="text-red-400 hover:text-red-300 text-sm font-medium transition-colors px-2 py-1 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                      aria-label={`Revoke code ${code.code}`}
+                    >
+                      Revoke
+                    </button>
+                  )}
+                  {isRedeemed && (
+                    <button
+                      onClick={() => onRevoke(code.id, code.code)}
+                      className="text-gray-400 hover:text-gray-300 text-sm font-medium transition-colors px-2 py-1 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                      aria-label={`Delete redeemed code ${code.code}`}
+                      title="Remove redeemed code from list"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                {getStatusBadge(code)}
-                {code.is_active && !code.used_by && (
-                  <button
-                    onClick={() => onRevoke(code.id, code.code)}
-                    className="text-red-400 hover:text-red-300 text-sm font-medium transition-colors px-2 py-1 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
-                    aria-label={`Revoke code ${code.code}`}
-                  >
-                    Revoke
-                  </button>
+
+              {/* Details Row */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                {code.used_by && (
+                  <span className="text-blue-300">
+                    Used by{" "}
+                    {code.used_by_email || code.used_by.substring(0, 8) + "..."}
+                  </span>
+                )}
+                {code.intended_email && !code.used_by && (
+                  <span className="text-purple-300">
+                    Sent to {code.intended_email}
+                  </span>
+                )}
+                <span className="text-gray-300">
+                  {format(new Date(code.created_at), "MMM d, yyyy")}
+                </span>
+                {code.expires_at && (
+                  <span className="text-gray-300">
+                    Expires {format(new Date(code.expires_at), "MMM d, yyyy")}
+                  </span>
                 )}
               </div>
             </div>
-
-            {/* Details Row */}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-              {code.used_by_email && (
-                <span className="text-blue-300">
-                  Used by {code.used_by_email}
-                </span>
-              )}
-              {code.created_by_email && (
-                <span className="text-gray-300">
-                  Sent by {code.created_by_email}
-                </span>
-              )}
-              <span className="text-gray-300">
-                {format(new Date(code.created_at), "MMM d, yyyy")}
-              </span>
-              {code.expires_at && (
-                <span className="text-gray-300">
-                  Expires {format(new Date(code.expires_at), "MMM d, yyyy")}
-                </span>
-              )}
-            </div>
-          </div>
-        ))}
+          );
+        })}
 
         {/* Create New Button - shown only when there are existing codes and form is not open */}
         {codes.length > 0 && !showCreateForm && (

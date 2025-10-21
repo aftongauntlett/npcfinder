@@ -178,13 +178,13 @@ const AdminOverview: React.FC = () => {
               </p>
             </div>
             <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10 text-center">
-              <p className="text-gray-300 text-sm mb-2">Connections</p>
+              <p className="text-gray-300 text-sm mb-2">Invite Codes</p>
               <p className="text-2xl font-bold text-white">
-                {stats.totalConnections}
+                {stats.totalInviteCodes}
               </p>
             </div>
             <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10 text-center">
-              <p className="text-gray-300 text-sm mb-2">Avg Friends</p>
+              <p className="text-gray-300 text-sm mb-2">Avg Per User</p>
               <p className="text-2xl font-bold text-white">
                 {stats.avgRatingsPerUser}
               </p>

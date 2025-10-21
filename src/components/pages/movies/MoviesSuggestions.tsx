@@ -174,9 +174,7 @@ const MoviesSuggestions: React.FC = () => {
       >
         <MediaRecommendationsLayout
           mediaType="Movies & TV"
-          mediaIcon={
-            <Film className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500" />
-          }
+          mediaIcon={Film}
           emptyMessage="No recommendations yet"
           emptySubMessage="When friends recommend movies or TV shows, they'll show up here"
           queueLabel="Watching Queue"

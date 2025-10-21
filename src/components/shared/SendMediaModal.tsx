@@ -40,6 +40,9 @@ interface SendMediaModalProps {
   // Recommendation type options (e.g., listen/watch for music, watch/rewatch for movies)
   recommendationTypes: Array<{ value: string; label: string }>;
   defaultRecommendationType: string;
+
+  // Optional: Preselected item (skips search step)
+  preselectedItem?: MediaItem;
 }
 
 export default function SendMediaModal({
@@ -52,6 +55,7 @@ export default function SendMediaModal({
   searchFunction,
   recommendationTypes,
   defaultRecommendationType,
+  preselectedItem,
 }: SendMediaModalProps) {
   const { user } = useAuth();
 
@@ -61,7 +65,9 @@ export default function SendMediaModal({
   const [searching, setSearching] = useState(false);
 
   // Selection state
-  const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
+  const [selectedItem, setSelectedItem] = useState<MediaItem | null>(
+    preselectedItem || null
+  );
   const [selectedFriends, setSelectedFriends] = useState<Set<string>>(
     new Set()
   );
@@ -75,7 +81,9 @@ export default function SendMediaModal({
   const [loadingFriends, setLoadingFriends] = useState(false);
 
   // UI state
-  const [step, setStep] = useState<"search" | "friends" | "details">("search");
+  const [step, setStep] = useState<"search" | "friends" | "details">(
+    preselectedItem ? "friends" : "search"
+  );
   const [sending, setSending] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -135,6 +143,14 @@ export default function SendMediaModal({
       void loadFriends();
     }
   }, [isOpen, loadFriends]);
+
+  // Update selected item and step when modal opens with preselected item
+  useEffect(() => {
+    if (isOpen && preselectedItem) {
+      setSelectedItem(preselectedItem);
+      setStep("friends");
+    }
+  }, [isOpen, preselectedItem]);
 
   // Reset modal state when closed
   useEffect(() => {

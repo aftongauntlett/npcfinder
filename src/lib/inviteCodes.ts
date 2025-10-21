@@ -17,6 +17,7 @@ export interface InviteCode {
   created_at: string;
   used_at: string | null;
   notes: string | null;
+  intended_email: string | null; // Email that is allowed to use this code
   used_by_email?: string | null; // Email of the user who used the code
   created_by_email?: string | null; // Email of the admin who created the code
 }
@@ -52,11 +53,13 @@ export const generateSecureCode = (): string => {
  * Validate an invite code (check if it's valid without consuming it)
  */
 export const validateInviteCode = async (
-  code: string
+  code: string,
+  userEmail?: string
 ): Promise<InviteCodeResult<boolean>> => {
   try {
     const { data, error } = await supabase.rpc("validate_invite_code", {
       code_value: code.toUpperCase().trim(),
+      user_email: userEmail || null,
     });
 
     if (error) throw error;
@@ -66,7 +69,6 @@ export const validateInviteCode = async (
     return { data: false, error: error as Error };
   }
 };
-
 /**
  * Consume an invite code (mark it as used)
  * Call this after successful user registration
@@ -91,17 +93,16 @@ export const consumeInviteCode = async (
 
 /**
  * Create a new invite code (admin only)
+ * Simplified version: always 30 days expiration, max 1 use, requires email
  */
 export const createInviteCode = async (
-  notes?: string,
-  maxUses = 1,
-  expiresInDays?: number
+  intendedEmail: string
 ): Promise<InviteCodeResult<InviteCode>> => {
   try {
     const code = generateSecureCode();
-    const expiresAt = expiresInDays
-      ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toISOString()
-      : null;
+    const expiresAt = new Date(
+      Date.now() + 30 * 24 * 60 * 60 * 1000
+    ).toISOString(); // Always 30 days
 
     const {
       data: { user },
@@ -116,8 +117,9 @@ export const createInviteCode = async (
       .insert({
         code,
         created_by: user.id,
-        notes,
-        max_uses: maxUses,
+        intended_email: intendedEmail.toLowerCase().trim(),
+        notes: intendedEmail, // Store email in notes for easy reference
+        max_uses: 1, // Always 1
         expires_at: expiresAt,
       })
       .select()

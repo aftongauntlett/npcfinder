@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Plus,
   X,
@@ -10,12 +10,15 @@ import {
   Check,
   Grid3x3,
   ChevronDown,
+  Send,
 } from "lucide-react";
 import { MediaItem } from "../shared/SendMediaModal";
 import SearchMovieModal from "../shared/SearchMovieModal";
 import MovieDetailModal from "./MovieDetailModal";
 import Button from "../shared/Button";
-import EmptyState from "../shared/EmptyState";
+import MediaEmptyState from "./MediaEmptyState";
+import SendMediaModal from "../shared/SendMediaModal";
+import { searchMoviesAndTV } from "../../utils/mediaSearchAdapters";
 
 interface WatchListItem {
   id: string;
@@ -44,39 +47,9 @@ const PersonalWatchList: React.FC = () => {
   );
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [showSortMenu, setShowSortMenu] = useState(false);
-
-  // Mock data for now
-  useEffect(() => {
-    const mockWatchList: WatchListItem[] = [
-      {
-        id: "wl-1",
-        external_id: "550",
-        title: "Fight Club",
-        media_type: "movie",
-        poster_url:
-          "https://image.tmdb.org/t/p/w200/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
-        release_date: "1999",
-        description:
-          "A ticking-time-bomb insomniac and a slippery soap salesman channel primal male aggression into a shocking new form of therapy.",
-        watched: false,
-        added_at: new Date().toISOString(),
-      },
-      {
-        id: "wl-2",
-        external_id: "238",
-        title: "The Godfather",
-        media_type: "movie",
-        poster_url:
-          "https://image.tmdb.org/t/p/w200/3bhkrj58Vtu7enYsRolD1fZdja1.jpg",
-        release_date: "1972",
-        description:
-          "Spanning the years 1945 to 1955, a chronicle of the fictional Italian-American Corleone crime family.",
-        watched: true,
-        added_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-    ];
-    setWatchList(mockWatchList);
-  }, []);
+  const [showSendModal, setShowSendModal] = useState(false);
+  const [movieToRecommend, setMovieToRecommend] =
+    useState<WatchListItem | null>(null);
 
   // Add to watch list
   const handleAddToWatchList = (result: MediaItem) => {
@@ -377,14 +350,16 @@ const PersonalWatchList: React.FC = () => {
 
         {/* Right side: View Toggle and Add Button */}
         <div className="flex items-center gap-3">
-          {/* Add Button - Enhanced Primary CTA */}
-          <Button
-            onClick={() => setShowSearchModal(true)}
-            variant="primary"
-            icon={<Plus className="w-4 h-4" />}
-          >
-            Add Movie/Show
-          </Button>
+          {/* Add Button - Enhanced Primary CTA - Only show when watchlist has items */}
+          {watchList.length > 0 && (
+            <Button
+              onClick={() => setShowSearchModal(true)}
+              variant="primary"
+              icon={<Plus className="w-4 h-4" />}
+            >
+              Add Movie/Show
+            </Button>
+          )}
 
           {/* View Mode Toggle */}
           <div className="flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
@@ -424,33 +399,23 @@ const PersonalWatchList: React.FC = () => {
       {/* Watch List Items */}
       {filteredWatchList.length === 0 ? (
         <div className="mt-8">
-          <EmptyState
-            icon={filter === "all" ? Plus : filter === "to-watch" ? Eye : Check}
-            title={
-              filter === "to-watch"
-                ? "No unwatched items"
-                : filter === "watched"
-                ? "No watched items yet"
-                : "Add your first movie or show"
-            }
-            description={
-              filter === "all"
-                ? "Get started by adding to your watch list"
-                : undefined
-            }
-            iconSize="w-12 h-12"
-            iconColor={filter === "all" ? "text-purple-400" : undefined}
-            action={
-              filter === "all"
-                ? {
-                    label: "Add your first movie or show",
-                    onClick: () => setShowSearchModal(true),
-                    variant: "primary",
-                  }
-                : undefined
-            }
-            showButton={true}
-          />
+          {filter === "all" ? (
+            <MediaEmptyState
+              icon={Plus}
+              title="Add your first movie or show"
+              description="Get started by adding to your watch list"
+              onClick={() => setShowSearchModal(true)}
+              ariaLabel="Add your first movie or show"
+            />
+          ) : (
+            <div className="text-center py-12">
+              <div className="text-gray-500 dark:text-gray-400">
+                {filter === "to-watch"
+                  ? "No unwatched items"
+                  : "No watched items yet"}
+              </div>
+            </div>
+          )}
         </div>
       ) : viewMode === "grid" ? (
         // Grid View
@@ -558,6 +523,19 @@ const PersonalWatchList: React.FC = () => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
+                      setMovieToRecommend(item);
+                      setShowSendModal(true);
+                    }}
+                    className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
+                    aria-label="Recommend to friends"
+                    title="Recommend to friends"
+                  >
+                    <Send className="w-5 h-5" />
+                  </button>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
                       removeFromWatchList(item.id);
                     }}
                     className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
@@ -652,6 +630,19 @@ const PersonalWatchList: React.FC = () => {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
+                    setMovieToRecommend(item);
+                    setShowSendModal(true);
+                  }}
+                  className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
+                  aria-label="Recommend to friends"
+                  title="Recommend to friends"
+                >
+                  <Send className="w-5 h-5" />
+                </button>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
                     removeFromWatchList(item.id);
                   }}
                   className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
@@ -671,6 +662,40 @@ const PersonalWatchList: React.FC = () => {
         onClose={() => setShowSearchModal(false)}
         onAdd={handleAddToWatchList}
         existingIds={watchList.map((item) => item.external_id)}
+      />
+
+      {/* Send/Recommend Modal */}
+      <SendMediaModal
+        isOpen={showSendModal}
+        onClose={() => {
+          setShowSendModal(false);
+          setMovieToRecommend(null);
+        }}
+        onSent={() => {
+          setShowSendModal(false);
+          setMovieToRecommend(null);
+        }}
+        mediaType="movies"
+        tableName="movie_recommendations"
+        searchPlaceholder="Search for movies or TV shows..."
+        searchFunction={searchMoviesAndTV}
+        recommendationTypes={[
+          { value: "watch", label: "Watch" },
+          { value: "rewatch", label: "Rewatch" },
+        ]}
+        defaultRecommendationType="watch"
+        preselectedItem={
+          movieToRecommend
+            ? {
+                external_id: movieToRecommend.external_id,
+                title: movieToRecommend.title,
+                media_type: movieToRecommend.media_type,
+                poster_url: movieToRecommend.poster_url,
+                release_date: movieToRecommend.release_date,
+                description: movieToRecommend.description,
+              }
+            : undefined
+        }
       />
 
       {/* Movie Detail Modal */}
