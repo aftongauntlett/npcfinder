@@ -186,3 +186,192 @@ export async function updateRecipientNote(
 
 // Legacy exports for mock compatibility
 export const getUserProfile = USE_MOCK_DATA ? mockService.getUserProfile : null;
+
+// ============================================
+// WATCHLIST OPERATIONS
+// ============================================
+
+export interface WatchlistItem {
+  id: string;
+  user_id: string;
+  external_id: string;
+  media_type: "movie" | "tv";
+  title: string;
+  poster_url: string | null;
+  release_date: string | null;
+  overview: string | null;
+  director: string | null;
+  cast_members: string[] | null;
+  genres: string[] | null;
+  vote_average: number | null;
+  vote_count: number | null;
+  runtime: number | null;
+  watched: boolean;
+  list_order: number | null;
+  notes: string | null;
+  added_at: string;
+  updated_at: string;
+  watched_at: string | null;
+}
+
+export interface AddWatchlistItemData {
+  external_id: string;
+  media_type: "movie" | "tv";
+  title: string;
+  poster_url?: string | null;
+  release_date?: string | null;
+  overview?: string | null;
+  director?: string | null;
+  cast_members?: string[] | null;
+  genres?: string[] | null;
+  vote_average?: number | null;
+  vote_count?: number | null;
+  runtime?: number | null;
+  notes?: string | null;
+}
+
+/**
+ * Get user's watchlist
+ */
+export async function getWatchlist(): Promise<WatchlistItem[]> {
+  const userId = await getCurrentUserId();
+
+  const { data, error } = await supabase
+    .from("user_watchlist")
+    .select("*")
+    .eq("user_id", userId)
+    .order("added_at", { ascending: false });
+
+  if (error) {
+    throw new Error(`Failed to fetch watchlist: ${error.message}`);
+  }
+
+  return data || [];
+}
+
+/**
+ * Add item to watchlist
+ */
+export async function addToWatchlist(
+  itemData: AddWatchlistItemData
+): Promise<WatchlistItem> {
+  const userId = await getCurrentUserId();
+
+  const { data, error } = await supabase
+    .from("user_watchlist")
+    .insert({
+      user_id: userId,
+      ...itemData,
+      watched: false,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    // Handle duplicate error gracefully
+    if (error.code === "23505") {
+      throw new Error("This item is already in your watchlist");
+    }
+    throw new Error(`Failed to add to watchlist: ${error.message}`);
+  }
+
+  return data;
+}
+
+/**
+ * Toggle watched status
+ */
+export async function toggleWatchlistItemWatched(
+  id: string
+): Promise<WatchlistItem> {
+  const userId = await getCurrentUserId();
+
+  // First get current watched status
+  const { data: current, error: fetchError } = await supabase
+    .from("user_watchlist")
+    .select("watched")
+    .eq("id", id)
+    .eq("user_id", userId)
+    .single();
+
+  if (fetchError) {
+    throw new Error(`Failed to fetch item: ${fetchError.message}`);
+  }
+
+  // Toggle the status
+  const { data, error } = await supabase
+    .from("user_watchlist")
+    .update({ watched: !current.watched })
+    .eq("id", id)
+    .eq("user_id", userId)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to update watched status: ${error.message}`);
+  }
+
+  return data;
+}
+
+/**
+ * Update watchlist item notes
+ */
+export async function updateWatchlistNotes(
+  id: string,
+  notes: string
+): Promise<WatchlistItem> {
+  const userId = await getCurrentUserId();
+
+  const { data, error } = await supabase
+    .from("user_watchlist")
+    .update({ notes })
+    .eq("id", id)
+    .eq("user_id", userId)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to update notes: ${error.message}`);
+  }
+
+  return data;
+}
+
+/**
+ * Delete item from watchlist
+ */
+export async function deleteFromWatchlist(id: string): Promise<void> {
+  const userId = await getCurrentUserId();
+
+  const { error } = await supabase
+    .from("user_watchlist")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", userId);
+
+  if (error) {
+    throw new Error(`Failed to delete from watchlist: ${error.message}`);
+  }
+}
+
+/**
+ * Check if item is in watchlist
+ */
+export async function isInWatchlist(external_id: string): Promise<boolean> {
+  const userId = await getCurrentUserId();
+
+  const { data, error } = await supabase
+    .from("user_watchlist")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("external_id", external_id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Error checking watchlist:", error);
+    return false;
+  }
+
+  return !!data;
+}

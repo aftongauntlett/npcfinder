@@ -17,23 +17,12 @@ import {
   fetchDetailedMediaInfo,
   DetailedMediaInfo,
 } from "../../utils/tmdbDetails";
-
-interface WatchListItem {
-  id: string;
-  external_id: string;
-  title: string;
-  media_type: "movie" | "tv";
-  poster_url: string | null;
-  release_date: string | null;
-  description: string | null;
-  watched: boolean;
-  added_at: string;
-}
+import type { WatchlistItem } from "../../services/recommendationsService";
 
 interface MovieDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
-  item: WatchListItem;
+  item: WatchlistItem;
   onToggleWatched: (id: string) => void;
   onRemove: (id: string) => void;
 }
@@ -83,12 +72,12 @@ const MovieDetailModal: React.FC<MovieDetailModalProps> = ({
     : null;
 
   const handleToggleWatched = () => {
-    onToggleWatched(item.id);
+    void onToggleWatched(item.id);
   };
 
   const handleRemove = () => {
     if (window.confirm(`Remove "${item.title}" from your watch list?`)) {
-      onRemove(item.id);
+      void onRemove(item.id);
       onClose();
     }
   };
@@ -261,13 +250,13 @@ const MovieDetailModal: React.FC<MovieDetailModalProps> = ({
             </div>
 
             {/* Overview */}
-            {(details?.overview || item.description) && (
+            {(details?.overview || item.overview) && (
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                   Overview
                 </h3>
                 <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                  {details?.overview || item.description}
+                  {details?.overview || item.overview}
                 </p>
               </div>
             )}

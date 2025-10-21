@@ -19,68 +19,59 @@ import Button from "../shared/Button";
 import MediaEmptyState from "./MediaEmptyState";
 import SendMediaModal from "../shared/SendMediaModal";
 import { searchMoviesAndTV } from "../../utils/mediaSearchAdapters";
-
-interface WatchListItem {
-  id: string;
-  external_id: string;
-  title: string;
-  media_type: "movie" | "tv";
-  poster_url: string | null;
-  release_date: string | null;
-  description: string | null;
-  watched: boolean;
-  added_at: string;
-}
+import {
+  useWatchlist,
+  useAddToWatchlist,
+  useToggleWatchlistWatched,
+  useDeleteFromWatchlist,
+} from "../../hooks/useWatchlistQueries";
+import type { WatchlistItem } from "../../services/recommendationsService";
 
 type FilterType = "all" | "to-watch" | "watched";
 type SortType = "date-added" | "title" | "year" | "rating";
 type ViewMode = "grid" | "list";
 
 const PersonalWatchList: React.FC = () => {
-  const [watchList, setWatchList] = useState<WatchListItem[]>([]);
+  // Fetch watchlist from database
+  const { data: watchList = [] } = useWatchlist();
+  const addToWatchlist = useAddToWatchlist();
+  const toggleWatched = useToggleWatchlistWatched();
+  const deleteFromWatchlist = useDeleteFromWatchlist();
+
   const [filter, setFilter] = useState<FilterType>("all");
   const [sortBy, setSortBy] = useState<SortType>("date-added");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [showSearchModal, setShowSearchModal] = useState(false);
-  const [selectedMovie, setSelectedMovie] = useState<WatchListItem | null>(
+  const [selectedMovie, setSelectedMovie] = useState<WatchlistItem | null>(
     null
   );
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
   const [movieToRecommend, setMovieToRecommend] =
-    useState<WatchListItem | null>(null);
+    useState<WatchlistItem | null>(null);
 
   // Add to watch list
   const handleAddToWatchList = (result: MediaItem) => {
-    const newItem: WatchListItem = {
-      id: `wl-${Date.now()}`,
+    void addToWatchlist.mutateAsync({
       external_id: result.external_id,
       title: result.title,
       media_type: (result.media_type || "movie") as "movie" | "tv",
       poster_url: result.poster_url,
       release_date: result.release_date || null,
-      description: result.description || null,
-      watched: false,
-      added_at: new Date().toISOString(),
-    };
-
-    setWatchList([newItem, ...watchList]);
+      overview: result.description || null,
+    });
     setShowSearchModal(false);
   };
 
   // Toggle watched status
-  const toggleWatched = (id: string) => {
-    setWatchList(
-      watchList.map((item) =>
-        item.id === id ? { ...item, watched: !item.watched } : item
-      )
-    );
+  const handleToggleWatched = (id: string) => {
+    void toggleWatched.mutateAsync(id);
   };
 
   // Remove from watch list
-  const removeFromWatchList = (id: string) => {
-    setWatchList(watchList.filter((item) => item.id !== id));
+  const handleRemoveFromWatchList = (id: string) => {
+    void deleteFromWatchlist.mutateAsync(id);
   };
 
   // Filter and sort watch list
@@ -465,7 +456,7 @@ const PersonalWatchList: React.FC = () => {
                 {/* Hover overlay with gradient */}
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-3 flex items-end">
                   <p className="text-white text-xs line-clamp-2">
-                    {item.description || "Click to view details"}
+                    {item.overview || "Click to view details"}
                   </p>
                 </div>
               </div>
@@ -493,7 +484,7 @@ const PersonalWatchList: React.FC = () => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      toggleWatched(item.id);
+                      void handleToggleWatched(item.id);
                     }}
                     className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
                       item.watched
@@ -536,7 +527,7 @@ const PersonalWatchList: React.FC = () => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      removeFromWatchList(item.id);
+                      void handleRemoveFromWatchList(item.id);
                     }}
                     className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
                     aria-label="Remove from watch list"
@@ -596,9 +587,9 @@ const PersonalWatchList: React.FC = () => {
                     {item.release_date}
                   </p>
                 )}
-                {item.description && (
+                {item.overview && (
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                    {item.description}
+                    {item.overview}
                   </p>
                 )}
               </div>
@@ -608,7 +599,7 @@ const PersonalWatchList: React.FC = () => {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    toggleWatched(item.id);
+                    void handleToggleWatched(item.id);
                   }}
                   className={`p-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
                     item.watched
@@ -643,7 +634,7 @@ const PersonalWatchList: React.FC = () => {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    removeFromWatchList(item.id);
+                    void handleRemoveFromWatchList(item.id);
                   }}
                   className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
                   aria-label="Remove from watch list"
@@ -692,7 +683,7 @@ const PersonalWatchList: React.FC = () => {
                 media_type: movieToRecommend.media_type,
                 poster_url: movieToRecommend.poster_url,
                 release_date: movieToRecommend.release_date,
-                description: movieToRecommend.description,
+                description: movieToRecommend.overview,
               }
             : undefined
         }
@@ -704,8 +695,8 @@ const PersonalWatchList: React.FC = () => {
           isOpen={!!selectedMovie}
           onClose={() => setSelectedMovie(null)}
           item={selectedMovie}
-          onToggleWatched={toggleWatched}
-          onRemove={removeFromWatchList}
+          onToggleWatched={handleToggleWatched}
+          onRemove={handleRemoveFromWatchList}
         />
       )}
     </div>

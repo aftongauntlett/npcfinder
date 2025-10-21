@@ -63,4 +63,13 @@ export const queryKeys = {
     list: () => [...queryKeys.inviteCodes.all, "list"] as const,
     stats: () => [...queryKeys.inviteCodes.all, "stats"] as const,
   },
+
+  // Watchlist
+  watchlist: {
+    all: ["watchlist"] as const,
+    list: () => [...queryKeys.watchlist.all, "list"] as const,
+    item: (id: string) => [...queryKeys.watchlist.all, "item", id] as const,
+    byStatus: (watched: boolean) =>
+      [...queryKeys.watchlist.all, "by-status", watched] as const,
+  },
 };
