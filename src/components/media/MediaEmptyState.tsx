@@ -1,6 +1,13 @@
 import React from "react";
 import type { LucideIcon } from "lucide-react";
 
+interface ActionButton {
+  label: string;
+  onClick: () => void;
+  variant?: "primary" | "secondary";
+  icon?: LucideIcon;
+}
+
 interface MediaEmptyStateProps {
   /**
    * Icon to display (Lucide icon component)
@@ -19,8 +26,15 @@ interface MediaEmptyStateProps {
 
   /**
    * Optional click handler for the card. If provided, card is clickable.
+   * Use this for simple single-action empty states.
    */
   onClick?: () => void;
+
+  /**
+   * Optional action buttons to display instead of making the whole card clickable.
+   * Use this for multiple actions (e.g., "Add Movie" and "Import List")
+   */
+  actions?: ActionButton[];
 
   /**
    * Accessible label for the clickable card
@@ -32,24 +46,36 @@ interface MediaEmptyStateProps {
  * MediaEmptyState Component
  *
  * Unified empty state component for media pages (Movies, TV, Books, Games, Music).
- * Can render as either a clickable card or a static informational display.
+ * Can render as either a clickable card, a card with action buttons, or a static informational display.
  *
  * Design:
  * - Matches the visual style shown in the screenshots
  * - Dark background with subtle transparency
  * - Large icon, title, and description
- * - Optional clickability (pass onClick to make it clickable)
+ * - Optional clickability (pass onClick to make entire card clickable)
+ * - Optional action buttons (pass actions array for multiple buttons)
  * - Hover states with smooth transitions (when clickable)
  *
  * @example
  * ```tsx
- * // Clickable version (for Watch List)
+ * // Single clickable version (for simple cases)
  * <MediaEmptyState
  *   icon={Film}
  *   title="Add your first movie or show"
  *   description="Get started by adding to your watch list"
  *   onClick={() => setShowModal(true)}
  *   ariaLabel="Add your first movie or show"
+ * />
+ *
+ * // Multiple actions version (for complex cases)
+ * <MediaEmptyState
+ *   icon={Film}
+ *   title="Add your first movie or show"
+ *   description="Search for a movie or import a list from Notion"
+ *   actions={[
+ *     { label: "Add Movie", onClick: () => setShowSearchModal(true), variant: "primary", icon: Plus },
+ *     { label: "Import List", onClick: () => setShowImportModal(true), variant: "secondary", icon: Upload }
+ *   ]}
  * />
  *
  * // Static version (for Suggestions)
@@ -65,8 +91,47 @@ const MediaEmptyState: React.FC<MediaEmptyStateProps> = ({
   title,
   description,
   onClick,
+  actions,
   ariaLabel,
 }) => {
+  // If actions are provided, render with action buttons
+  if (actions && actions.length > 0) {
+    return (
+      <div className="w-full bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 dark:border-gray-700 p-12 text-center">
+        <Icon
+          className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500"
+          aria-hidden="true"
+        />
+        <p className="text-white dark:text-white text-lg font-semibold mb-2">
+          {title}
+        </p>
+        <p className="text-gray-400 dark:text-gray-400 text-sm max-w-md mx-auto mb-6">
+          {description}
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center items-center max-w-md mx-auto">
+          {actions.map((action, index) => {
+            const ActionIcon = action.icon;
+            const isPrimary = action.variant === "primary";
+            return (
+              <button
+                key={index}
+                onClick={action.onClick}
+                className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 ${
+                  isPrimary
+                    ? "bg-primary hover:bg-primary-dark text-white focus-visible:ring-primary"
+                    : "bg-gray-700 hover:bg-gray-600 text-white focus-visible:ring-gray-500"
+                }`}
+              >
+                {ActionIcon && <ActionIcon className="w-4 h-4" />}
+                {action.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   // If onClick is provided, render as clickable button
   if (onClick) {
     return (

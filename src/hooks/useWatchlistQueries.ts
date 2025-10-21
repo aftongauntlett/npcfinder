@@ -308,3 +308,59 @@ export function useIsInWatchlist(external_id: string | null) {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }
+
+/**
+ * Batch add items to watchlist
+ * Adds multiple items efficiently with error tracking per item
+ * Returns results for success, duplicate, and error items
+ */
+export function useBatchAddToWatchlist() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (items: AddWatchlistItemData[]) => {
+      const results = {
+        successful: [] as WatchlistItem[],
+        duplicates: [] as AddWatchlistItemData[],
+        errors: [] as { item: AddWatchlistItemData; error: string }[],
+      };
+
+      // Process items sequentially to avoid overwhelming the database
+      for (const item of items) {
+        try {
+          const addedItem = await recommendationsService.addToWatchlist(item);
+          results.successful.push(addedItem);
+        } catch (error) {
+          // Check if it's a duplicate (PostgreSQL unique violation error code)
+          if (error instanceof Error && error.message.includes("23505")) {
+            results.duplicates.push(item);
+          } else {
+            results.errors.push({
+              item,
+              error: error instanceof Error ? error.message : "Unknown error",
+            });
+          }
+        }
+      }
+
+      return results;
+    },
+
+    // No optimistic update for batch - too complex with partial failures
+    // Instead, show progress indicator during mutation
+
+    onSuccess: () => {
+      // Invalidate to refetch full watchlist after batch insert
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.watchlist.list(),
+      });
+    },
+
+    onError: (_error) => {
+      // Even on error, invalidate to ensure UI matches database
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.watchlist.list(),
+      });
+    },
+  });
+}

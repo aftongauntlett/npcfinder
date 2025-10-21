@@ -505,13 +505,12 @@ export default function SendMediaModal({
       {!showSuccess && (
         <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
           <Button
-            variant="secondary"
+            variant={step === "search" ? "danger" : "subtle"}
             onClick={
               step === "search"
                 ? handleClose
                 : () => setStep(step === "details" ? "friends" : "search")
             }
-            className="!border-red-600 !text-red-600 hover:!bg-red-600 hover:!text-white"
           >
             {step === "search" ? "Cancel" : "Back"}
           </Button>

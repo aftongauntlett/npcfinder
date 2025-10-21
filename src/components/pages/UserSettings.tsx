@@ -301,9 +301,8 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
             <div className="flex gap-3 justify-end">
               <Button
                 type="button"
-                variant="secondary"
+                variant="danger"
                 onClick={() => void navigate("/app")}
-                className="!border-red-600 !text-red-600 hover:!bg-red-600 hover:!text-white"
               >
                 Cancel
               </Button>

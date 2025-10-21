@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Trash2, Edit2, User, Calendar } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { SuggestionWithUser } from "../../lib/suggestions";
+import Button from "../shared/Button";
 
 interface SuggestionCardProps {
   suggestion: SuggestionWithUser;
@@ -69,18 +70,22 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({
             aria-label="Edit suggestion description"
           />
           <div className="flex gap-2">
-            <button
+            <Button
               onClick={handleSaveEdit}
-              className="flex-1 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors"
+              variant="primary"
+              size="sm"
+              className="flex-1"
             >
               Save
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleCancelEdit}
-              className="flex-1 px-3 py-1.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium transition-colors"
+              variant="subtle"
+              size="sm"
+              className="flex-1"
             >
               Cancel
-            </button>
+            </Button>
           </div>
         </div>
       ) : (

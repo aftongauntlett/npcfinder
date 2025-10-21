@@ -188,11 +188,7 @@ const SearchMovieModal: React.FC<SearchMovieModalProps> = ({
 
       {/* Footer */}
       <div className="flex gap-3 justify-end p-6 border-t border-gray-200 dark:border-gray-700">
-        <Button
-          onClick={onClose}
-          variant="secondary"
-          className="!border-red-600 !text-red-600 hover:!bg-red-600 hover:!text-white"
-        >
+        <Button onClick={onClose} variant="danger">
           Close
         </Button>
       </div>

@@ -115,7 +115,7 @@ const NewSuggestionForm: React.FC<NewSuggestionFormProps> = ({
           {onCancel && (
             <Button
               type="button"
-              variant="secondary"
+              variant="subtle"
               onClick={onCancel}
               disabled={isSubmitting}
             >

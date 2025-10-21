@@ -261,46 +261,6 @@ export const deleteInviteCode = async (
 };
 
 /**
- * Get invite code statistics (admin dashboard)
- */
-export const getInviteCodeStats = async (): Promise<
-  InviteCodeResult<{
-    total: number;
-    active: number;
-    used: number;
-    expired: number;
-  }>
-> => {
-  try {
-    const { data, error } = await supabase.from("invite_codes").select("*");
-
-    if (error) throw error;
-
-    const codes = data as InviteCode[];
-    const now = new Date();
-
-    const stats = {
-      total: codes.length,
-      active: codes.filter(
-        (c) =>
-          c.is_active &&
-          c.current_uses < c.max_uses &&
-          (!c.expires_at || new Date(c.expires_at) > now)
-      ).length,
-      used: codes.filter((c) => c.current_uses >= c.max_uses).length,
-      expired: codes.filter(
-        (c) => c.expires_at && new Date(c.expires_at) <= now
-      ).length,
-    };
-
-    return { data: stats, error: null };
-  } catch (error) {
-    console.error("Get invite code stats error:", error);
-    return { data: null, error: error as Error };
-  }
-};
-
-/**
  * Batch create invite codes (admin only)
  */
 export const batchCreateInviteCodes = async (

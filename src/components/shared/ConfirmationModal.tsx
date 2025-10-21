@@ -93,24 +93,14 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
         {/* Actions */}
         <div className="flex justify-end gap-3">
-          <Button
-            variant="secondary"
-            onClick={onClose}
-            disabled={isLoading}
-            className="!border-red-600 !text-red-600 hover:!bg-red-600 hover:!text-white"
-          >
+          <Button variant="subtle" onClick={onClose} disabled={isLoading}>
             {cancelText}
           </Button>
           <Button
-            variant="primary"
+            variant={variant === "danger" ? "danger" : "primary"}
             onClick={onConfirm}
             disabled={isLoading}
             loading={isLoading}
-            className={
-              variant === "danger"
-                ? "!bg-red-600 !border-red-600 hover:!bg-red-700"
-                : ""
-            }
           >
             {confirmText}
           </Button>

@@ -238,11 +238,7 @@ const MovieDetailModal: React.FC<MovieDetailModalProps> = ({
                   >
                     Mark as {item.watched ? "Unwatched" : "Watched"}
                   </Button>
-                  <Button
-                    onClick={handleRemove}
-                    variant="secondary"
-                    className="!border-red-600 !text-red-600 hover:!bg-red-600 hover:!text-white"
-                  >
+                  <Button onClick={handleRemove} variant="danger">
                     Remove from List
                   </Button>
                 </div>

@@ -25,11 +25,8 @@ const UserSettings = React.lazy(
   () => import("./components/pages/UserSettings")
 );
 const Suggestions = React.lazy(() => import("./components/pages/Suggestions"));
-const AdminOverview = React.lazy(
-  () => import("./components/pages/admin/AdminOverview")
-);
-const AdminInviteCodes = React.lazy(
-  () => import("./components/pages/admin/AdminInviteCodes")
+const AdminPage = React.lazy(
+  () => import("./components/pages/admin/AdminPage")
 );
 
 // Protected Route wrapper for admin routes
@@ -111,26 +108,14 @@ const AppLayout: React.FC<AppLayoutProps> = ({ user }) => {
               element={<Suggestions currentUser={user} />}
             />
 
-            {/* Admin nested routes */}
-            <Route
-              path="/admin/overview"
-              element={
-                <ProtectedAdminRoute user={user}>
-                  <AdminOverview />
-                </ProtectedAdminRoute>
-              }
-            />
-            <Route
-              path="/admin/invite-codes"
-              element={
-                <ProtectedAdminRoute user={user}>
-                  <AdminInviteCodes />
-                </ProtectedAdminRoute>
-              }
-            />
+            {/* Admin route */}
             <Route
               path="/admin"
-              element={<Navigate to="/app/admin/overview" replace />}
+              element={
+                <ProtectedAdminRoute user={user}>
+                  <AdminPage />
+                </ProtectedAdminRoute>
+              }
             />
 
             {/* Catch all - redirect to app home */}

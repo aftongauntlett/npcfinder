@@ -79,21 +79,6 @@ export function useInviteCodes() {
 }
 
 /**
- * Get invite code statistics
- */
-export function useInviteCodeStats() {
-  return useQuery({
-    queryKey: queryKeys.inviteCodes.stats(),
-    queryFn: async () => {
-      const result = await inviteCodesLib.getInviteCodeStats();
-      if (result.error) throw result.error;
-      return result.data || { total: 0, active: 0, used: 0, expired: 0 };
-    },
-    staleTime: 1000 * 60, // Consider data fresh for 1 minute
-  });
-}
-
-/**
  * Mutation: Create a single invite code
  * Simplified: only requires email, always 30 days, max 1 use
  */
@@ -110,9 +95,6 @@ export function useCreateInviteCode() {
       // Invalidate and refetch invite codes
       void queryClient.invalidateQueries({
         queryKey: queryKeys.inviteCodes.list(),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.inviteCodes.stats(),
       });
     },
   });
@@ -150,9 +132,6 @@ export function useBatchCreateInviteCodes() {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.inviteCodes.list(),
       });
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.inviteCodes.stats(),
-      });
     },
   });
 }
@@ -173,9 +152,6 @@ export function useRevokeInviteCode() {
       // Invalidate and refetch invite codes
       void queryClient.invalidateQueries({
         queryKey: queryKeys.inviteCodes.list(),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.inviteCodes.stats(),
       });
     },
   });

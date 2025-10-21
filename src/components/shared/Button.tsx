@@ -5,8 +5,9 @@ import React from "react";
  * - primary: Solid fill with theme color
  * - secondary: Outlined style with border
  * - subtle: Minimal ghost style with light background
+ * - danger: Pastel red for destructive actions (delete, remove, etc.)
  */
-export type ButtonVariant = "primary" | "secondary" | "subtle";
+export type ButtonVariant = "primary" | "secondary" | "subtle" | "danger";
 
 export type ButtonSize = "sm" | "md" | "lg";
 
@@ -103,6 +104,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         "border-border/50 bg-surface/30 text-text-primary",
         "hover:bg-surface/50 hover:border-border",
         "focus-visible:ring-primary",
+      ],
+      danger: [
+        "border-red-300 dark:border-red-400/50 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400",
+        "hover:bg-red-100 dark:hover:bg-red-950/50 hover:border-red-400 dark:hover:border-red-400/70",
+        "focus-visible:ring-red-500 dark:focus-visible:ring-red-400",
       ],
     };
 

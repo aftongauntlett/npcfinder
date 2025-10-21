@@ -12,8 +12,6 @@ import {
   ChevronRight,
   User as UserIcon,
   LogOut,
-  Activity,
-  UserPlus,
   ListVideo,
   Lightbulb,
 } from "lucide-react";
@@ -71,20 +69,6 @@ const USER_MENU_ITEMS: NavItem[] = [
     icon: ShieldCheck,
     path: "/app/admin",
     adminOnly: true,
-    subItems: [
-      {
-        id: "admin-overview",
-        label: "Overview",
-        icon: Activity,
-        path: "/app/admin/overview",
-      },
-      {
-        id: "admin-invites",
-        label: "Invite Codes",
-        icon: UserPlus,
-        path: "/app/admin/invite-codes",
-      },
-    ],
   },
   {
     id: "settings",
