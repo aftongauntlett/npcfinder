@@ -17,6 +17,9 @@ coverage
 .temp/
 .branches/
 
+# Utility scripts (for local use only)
+check-invite-codes.js
+
 # Ignore docs folder (development notes)
 docs/
 

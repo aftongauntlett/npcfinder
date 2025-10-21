@@ -363,7 +363,8 @@ export default function SendMediaModal({
               {friends.length > 1 && (
                 <button
                   onClick={toggleAllFriends}
-                  className="text-sm text-blue-600 hover:text-blue-700"
+                  className="text-sm font-medium"
+                  style={{ color: "var(--color-primary)" }}
                 >
                   {selectedFriends.size === friends.length
                     ? "Deselect All"
@@ -392,19 +393,14 @@ export default function SendMediaModal({
                     onClick={() => toggleFriend(friend.user_id)}
                     className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
                       selectedFriends.has(friend.user_id)
-                        ? "text-white"
+                        ? "bg-gray-100/50 dark:bg-gray-700/30 border border-gray-200/50 dark:border-gray-600/50"
                         : "hover:bg-gray-100 dark:hover:bg-gray-700"
                     }`}
-                    style={
-                      selectedFriends.has(friend.user_id)
-                        ? { backgroundColor: "var(--color-primary-light)" }
-                        : undefined
-                    }
                   >
                     <div
-                      className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                      className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
                         selectedFriends.has(friend.user_id)
-                          ? "text-white border-white"
+                          ? "border-transparent"
                           : "border-gray-300 dark:border-gray-600"
                       }`}
                       style={
