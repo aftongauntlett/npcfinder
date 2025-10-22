@@ -47,6 +47,7 @@ interface MediaRecommendationCardProps<T extends BaseRecommendation> {
   renderMediaInfo: (rec: T) => React.ReactNode;
   renderMediaArt: (rec: T) => React.ReactNode;
   getCopyText?: (rec: T) => string; // Optional function to customize copy text
+  reviewSummary?: { rating?: number; is_public?: boolean } | null; // Optional review indicator
 }
 
 /**
@@ -65,6 +66,7 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
   renderMediaInfo,
   renderMediaArt,
   getCopyText,
+  reviewSummary,
 }: MediaRecommendationCardProps<T>) {
   const [isAddingComment, setIsAddingComment] = useState(false);
   const [isAddingSenderComment, setIsAddingSenderComment] = useState(false);
@@ -132,6 +134,21 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
         <div className="flex-1 min-w-0">
           {renderMediaInfo(rec)}
 
+          {/* Review Indicator Badge - Only when received and has public review */}
+          {isReceived && reviewSummary?.is_public && (
+            <div className="mt-1">
+              <span
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-medium"
+                title="You've shared a public review for this"
+              >
+                ⭐
+                {reviewSummary.rating
+                  ? ` ${reviewSummary.rating}/5 Reviewed`
+                  : " Reviewed"}
+              </span>
+            </div>
+          )}
+
           {/* Sent Message */}
           {rec.sent_message && (
             <div className="text-xs text-gray-400 dark:text-gray-500 mt-1 italic">
@@ -177,13 +194,25 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
                   icon={ThumbsUp}
                   onClick={() => void onStatusUpdate(rec.id, "hit")}
                   variant={rec.status === "hit" ? "active" : "success"}
-                  title={rec.status === "hit" ? "Hit!" : "Mark as hit"}
+                  title={
+                    rec.status === "hit"
+                      ? "Hit!"
+                      : `Mark as Hit (private feedback to ${
+                          senderName || "sender"
+                        })`
+                  }
                 />
                 <IconButton
                   icon={ThumbsDown}
                   onClick={() => void onStatusUpdate(rec.id, "miss")}
                   variant={rec.status === "miss" ? "active" : "warning"}
-                  title={rec.status === "miss" ? "Miss" : "Mark as miss"}
+                  title={
+                    rec.status === "miss"
+                      ? "Miss"
+                      : `Mark as Miss (private feedback to ${
+                          senderName || "sender"
+                        })`
+                  }
                   className={rec.status === "miss" ? "!bg-orange-600" : ""}
                 />
                 {/* Comment button - adds recipient's note */}
@@ -195,7 +224,11 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
                       setIsAddingComment(true);
                     }}
                     variant={rec.comment ? "active" : "primary"}
-                    title={rec.comment ? "Edit your note" : "Add your note"}
+                    title={
+                      rec.comment
+                        ? "Edit your note"
+                        : `Add private note for ${senderName || "sender"}`
+                    }
                   />
                 )}
                 {/* Delete button */}

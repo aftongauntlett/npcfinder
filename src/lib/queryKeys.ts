@@ -74,4 +74,17 @@ export const queryKeys = {
     byStatus: (watched: boolean) =>
       [...queryKeys.watchlist.all, "by-status", watched] as const,
   },
+
+  // Reviews
+  reviews: {
+    all: ["reviews"] as const,
+    my: (externalId: string, mediaType: string) =>
+      [...queryKeys.reviews.all, "my", externalId, mediaType] as const,
+    friends: (externalId: string, mediaType: string) =>
+      [...queryKeys.reviews.all, "friends", externalId, mediaType] as const,
+    byUser: (userId: string) =>
+      [...queryKeys.reviews.all, "user", userId] as const,
+    byMedia: (externalId: string, mediaType: string) =>
+      [...queryKeys.reviews.all, "media", externalId, mediaType] as const,
+  },
 };

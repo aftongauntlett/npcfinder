@@ -38,6 +38,24 @@ NPC Finder is an invite-only platform where friends share media recommendations 
 - Personal watch list management
 - Send recommendations with watch/rewatch suggestions
 - Track watched status and ratings
+- Rate movies and TV shows (1-5 stars) with written reviews
+- Like/dislike media with simple thumbs up/down
+- Share reviews with friends or keep them private
+- See what friends think about movies you're considering
+- Track when you watched each item
+
+### Reviews & Ratings
+
+- **Dual feedback system**: Give private feedback to friends who recommend items (Hit/Miss, personal notes) AND share public reviews with all friends (ratings, written reviews)
+- Personal reviews with 1-5 star ratings
+- Written reviews (up to 1000 characters)
+- Simple like/dislike system
+- Privacy controls (public to friends or private) - **separate from recommendation feedback**
+- View friends' public reviews for any media
+- Track watched/consumed dates
+- Media-agnostic system (works for movies, music, books, games)
+
+> **Note:** Recommendation feedback (Hit/Miss, personal notes) is private between you and the sender. Public reviews are visible to all friends. These are two separate systems that work together.
 
 ### Social Features
 

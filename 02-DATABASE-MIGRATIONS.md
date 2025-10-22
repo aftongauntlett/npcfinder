@@ -117,7 +117,42 @@ Before running migrations in production:
 4. Run during low-traffic time
 5. Monitor for errors
 
-## Recent Security Migrations (October 2025)
+## Recent Migrations (October 2025)
+
+### 20251022000001_create_media_reviews.sql
+
+**Date**: October 22, 2025  
+**Purpose**: Add media reviews and ratings system  
+**Changes**:
+
+- Creates `media_reviews` table for storing user reviews, ratings, and likes
+- Supports all media types (movies, TV, music, books, games)
+- Includes privacy controls (public/private)
+- Adds RLS policies for friend-based visibility
+- Adds indexes for performance
+- Adds trigger for updated_at timestamp
+
+**Key Features**:
+
+- One review per user per media item (unique constraint)
+- 1-5 star rating system (optional)
+- Like/dislike boolean (optional)
+- Written review text (optional, max 1000 chars)
+- Privacy toggle (public to friends or private)
+- Watched/consumed date tracking
+
+**RLS Policies**:
+
+- Users can view their own reviews
+- Users can view public reviews from friends (via connections table)
+- Users can create/update/delete their own reviews
+
+**Dependencies**:
+
+- Requires `connections` table for friend relationships
+- Uses existing `update_updated_at_column()` trigger function
+
+**Safe to run in production**: Yes - new table, no data migration needed
 
 ### 20251021000011_fix_remaining_search_paths.sql
 
