@@ -5,6 +5,19 @@ let supabaseInstance: SupabaseClient | null = null;
 /**
  * Lazily creates and returns the Supabase client.
  * This prevents initialization errors on pages that don't need Supabase.
+ *
+ * SECURITY NOTE - Database Role Usage:
+ * This client uses VITE_SUPABASE_ANON_KEY, which grants the following roles:
+ * - 'anon' role: For unauthenticated requests
+ * - 'authenticated' role: After successful login (JWT-based)
+ *
+ * The client NEVER uses privileged roles, which are reserved for:
+ * - 'npc_service_role': SECURITY DEFINER functions only (no login capability)
+ * - 'postgres': Database administrators via Supabase Dashboard and migrations
+ *
+ * This separation ensures that even if RLS policies grant access to service roles
+ * (e.g., __is_admin_helper_policy__ grants SELECT to npc_service_role),
+ * client applications cannot exploit it since they only use anon/authenticated roles.
  */
 export const getSupabase = (): SupabaseClient => {
   if (supabaseInstance) {

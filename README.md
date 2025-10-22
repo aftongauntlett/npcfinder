@@ -41,10 +41,12 @@ NPC Finder is an invite-only platform where friends share media recommendations 
 
 ### Social Features
 
-- Friend connections with automatic reciprocal relationships
+- Friend connections with bidirectional relationships
+- Manual connection management (auto-connect disabled for scalability)
 - View recommendations by friend
 - See what friends loved (hits) vs missed (misses)
 - Track sent recommendations and recipient responses
+- **Note**: For small groups, admins can batch-connect all users via SQL
 
 ### Suggestions System
 
@@ -55,7 +57,7 @@ NPC Finder is an invite-only platform where friends share media recommendations 
 
 ### Customization
 
-- 8 preset theme colors
+- Custom theme colors (hex color picker)
 - Dark/light mode with system detection
 - Customizable dashboard card visibility
 - Personal greeting and display name
@@ -223,6 +225,15 @@ See [Privacy Reality Check](07-PRIVACY-REALITY-CHECK.md) for full details.
 - Simple, behavioral tests with Vitest
 - Mock external dependencies
 - Test user interactions, not implementation details
+
+**AI-Assisted Development:**
+
+This project uses a spec-driven development workflow with AI tooling:
+
+- [Traycer.AI](https://traycer.ai/) for planning, context management, and generating detailed specifications
+- GitHub Copilot for code implementation and execution
+
+The AI assists with implementation, but architectural decisions, security patterns, accessibility, and code quality are human-driven. All AI-generated code is reviewed, tested, and refactored to meet project standards. The goal is to leverage AI for efficiency while maintaining high-quality, maintainable code.
 
 ## Quick Start
 

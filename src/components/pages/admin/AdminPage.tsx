@@ -47,11 +47,6 @@ interface User {
 const AdminPage: React.FC = () => {
   const { refreshAdminStatus } = useAdmin();
 
-  // Super admin user ID (protected from admin privilege revocation)
-  const SUPER_ADMIN_ID =
-    import.meta.env.VITE_SUPER_ADMIN_USER_ID ||
-    "adfa92d6-532b-47be-9101-bbfced9f73b4";
-
   // User list pagination and search
   const [userSearch, setUserSearch] = useState<string>("");
   const [userPage, setUserPage] = useState<number>(0);
@@ -358,22 +353,16 @@ const AdminPage: React.FC = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            {user.id === SUPER_ADMIN_ID ? (
-                              <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400">
-                                Super Admin
-                              </span>
-                            ) : (
-                              <button
-                                onClick={() => handleToggleAdminClick(user)}
-                                className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full transition-colors ${
-                                  user.is_admin
-                                    ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50"
-                                    : "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"
-                                }`}
-                              >
-                                {user.is_admin ? "Admin" : "User"}
-                              </button>
-                            )}
+                            <button
+                              onClick={() => handleToggleAdminClick(user)}
+                              className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full transition-colors ${
+                                user.is_admin
+                                  ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50"
+                                  : "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"
+                              }`}
+                            >
+                              {user.is_admin ? "Admin" : "User"}
+                            </button>
                           </td>
                         </tr>
                       ))}

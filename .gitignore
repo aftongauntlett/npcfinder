@@ -23,6 +23,9 @@ check-invite-codes.js
 # Ignore docs folder (development notes)
 docs/
 
+# Copilot notes (AI-generated documentation)
+copilot-notes/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

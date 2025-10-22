@@ -51,15 +51,19 @@ export const generateSecureCode = (): string => {
 
 /**
  * Validate an invite code (check if it's valid without consuming it)
+ *
+ * SECURITY: Email parameter is REQUIRED for proper validation.
+ * If a code has an intended_email, the provided email must match.
+ * This prevents bypassing email-based restrictions.
  */
 export const validateInviteCode = async (
   code: string,
-  userEmail?: string
+  userEmail: string
 ): Promise<InviteCodeResult<boolean>> => {
   try {
     const { data, error } = await supabase.rpc("validate_invite_code", {
       code_value: code.toUpperCase().trim(),
-      user_email: userEmail || null,
+      user_email: userEmail.toLowerCase().trim(),
     });
 
     if (error) throw error;
