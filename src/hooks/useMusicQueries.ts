@@ -1,150 +1,55 @@
 /**
  * TanStack Query hooks for Music page
- * Replaces manual useEffect/useState patterns with declarative queries
+ * Delegates to generic useRecommendations hooks
  */
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import * as recommendationsService from "../services/recommendationsService";
-import { queryKeys } from "../lib/queryKeys";
+import {
+  useFriendsWithRecs,
+  useQuickStats,
+  useRecommendations,
+  useUpdateStatus,
+  useDeleteRec,
+  useUpdateSenderNote as useUpdateSenderNoteGeneric,
+} from "./useRecommendations";
 
 /**
  * Get friends who have sent music recommendations
  */
 export function useFriendsWithMusicRecs() {
-  return useQuery({
-    queryKey: queryKeys.friends.withRecs("song"),
-    queryFn: () => recommendationsService.getFriendsWithRecommendations("song"),
-  });
+  return useFriendsWithRecs("music");
 }
 
 /**
  * Get quick stats for music
  */
 export function useMusicStats() {
-  return useQuery({
-    queryKey: queryKeys.stats.quick("song"),
-    queryFn: () => recommendationsService.getQuickStats("song"),
-  });
+  return useQuickStats("music");
 }
 
 /**
  * Get music recommendations with filters
  */
 export function useMusicRecommendations(view: string, friendId?: string) {
-  return useQuery({
-    queryKey: ["music-recommendations", view, friendId],
-    queryFn: async () => {
-      if (view === "overview") {
-        return [];
-      }
-
-      if (view === "friend" && friendId) {
-        return recommendationsService.getRecommendationsFromFriend(
-          friendId,
-          "song"
-        );
-      }
-
-      if (view === "hits") {
-        return recommendationsService.getRecommendations({
-          direction: "received",
-          status: "hit",
-          mediaType: "song",
-        });
-      }
-
-      if (view === "misses") {
-        return recommendationsService.getRecommendations({
-          direction: "received",
-          status: "miss",
-          mediaType: "song",
-        });
-      }
-
-      if (view === "sent") {
-        return recommendationsService.getRecommendations({
-          direction: "sent",
-          mediaType: "song",
-        });
-      }
-
-      return [];
-    },
-    enabled: view !== "overview", // Don't fetch for overview
-  });
+  return useRecommendations(view, friendId, "music");
 }
 
 /**
  * Update recommendation status mutation
  */
 export function useUpdateRecommendationStatus() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({
-      recId,
-      status,
-      mediaType = "song",
-    }: {
-      recId: string;
-      status: string;
-      mediaType?: "song" | "album";
-    }) =>
-      recommendationsService.updateRecommendationStatus(
-        recId,
-        status as "pending" | "consumed" | "hit" | "miss",
-        mediaType
-      ),
-    onSuccess: () => {
-      // Invalidate all music-related queries so both sender and receiver see updates
-      void queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
-      void queryClient.invalidateQueries({
-        queryKey: ["music-recommendations"],
-      });
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.recommendations.all,
-      });
-    },
-  });
+  return useUpdateStatus("music");
 }
 
 /**
  * Delete recommendation mutation
  */
 export function useDeleteRecommendation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (recId: string) =>
-      recommendationsService.deleteRecommendation(recId),
-    onSuccess: () => {
-      // Invalidate all music-related queries so both sender and receiver see updates
-      void queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
-      void queryClient.invalidateQueries({
-        queryKey: ["music-recommendations"],
-      });
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.recommendations.all,
-      });
-    },
-  });
+  return useDeleteRec("music");
 }
 
 /**
  * Update sender note mutation
  */
 export function useUpdateSenderNote() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ recId, note }: { recId: string; note: string }) =>
-      recommendationsService.updateSenderNote(recId, note),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: ["music-recommendations"],
-      });
-    },
-  });
+  return useUpdateSenderNoteGeneric("music");
 }

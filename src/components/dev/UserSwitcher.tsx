@@ -7,6 +7,7 @@
 import { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { Users, ChevronDown } from "lucide-react";
+import { logger } from "../../lib/logger";
 
 const DEV_TEST_USERS = [
   { id: "user-a-uuid-123", email: "alice@test.com", name: "Alice" },
@@ -28,13 +29,13 @@ export default function UserSwitcher() {
   const handleUserSwitch = (testUser: (typeof DEV_TEST_USERS)[0]) => {
     // This is a MOCK implementation
     // In reality, you'd need to update the AuthContext's user state
-    console.log(`Switching to ${testUser.name}...`);
-    console.warn(
+    logger.debug(`Switching to ${testUser.name}...`);
+    logger.warn(
       "UserSwitcher is a mock component. To make this work, you need to:"
     );
-    console.warn("1. Add a 'setUser' function to AuthContext");
-    console.warn("2. Call setUser here with the test user");
-    console.warn("3. Or use Supabase's auth.updateUser() / setSession()");
+    logger.warn("1. Add a 'setUser' function to AuthContext");
+    logger.warn("2. Call setUser here with the test user");
+    logger.warn("3. Or use Supabase's auth.updateUser() / setSession()");
 
     // Example of what you'd do:
     // setUser({

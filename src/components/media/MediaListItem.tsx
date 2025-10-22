@@ -1,15 +1,6 @@
 import React from "react";
-import { Star, Check, Clock, Book } from "lucide-react";
-
-type MediaStatus =
-  | "watched"
-  | "to-watch"
-  | "played"
-  | "to-play"
-  | "read"
-  | "to-read"
-  | "saved"
-  | "to-listen";
+import { Star, Book } from "lucide-react";
+import { STATUS_MAP, type MediaStatus } from "./mediaStatus";
 
 interface MediaListItemProps {
   id: string | number;
@@ -40,62 +31,7 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
   status,
   onClick,
 }) => {
-  const getStatusIcon = () => {
-    switch (status) {
-      case "watched":
-      case "played":
-      case "read":
-      case "saved":
-        return <Check className="w-4 h-4" />;
-      case "to-watch":
-      case "to-play":
-      case "to-read":
-      case "to-listen":
-        return <Clock className="w-4 h-4" />;
-      default:
-        return null;
-    }
-  };
-
-  const getStatusColor = () => {
-    switch (status) {
-      case "watched":
-      case "played":
-      case "read":
-      case "saved":
-        return "text-green-600 dark:text-green-400";
-      case "to-watch":
-      case "to-play":
-      case "to-read":
-      case "to-listen":
-        return "text-blue-600 dark:text-blue-400";
-      default:
-        return "text-gray-400 dark:text-gray-500";
-    }
-  };
-
-  const getStatusLabel = () => {
-    switch (status) {
-      case "watched":
-        return "Watched";
-      case "to-watch":
-        return "To Watch";
-      case "played":
-        return "Played";
-      case "to-play":
-        return "To Play";
-      case "read":
-        return "Read";
-      case "to-read":
-        return "To Read";
-      case "saved":
-        return "Saved";
-      case "to-listen":
-        return "To Listen";
-      default:
-        return "";
-    }
-  };
+  const statusConfig = status ? STATUS_MAP[status] : null;
 
   return (
     <div
@@ -138,12 +74,12 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
             </div>
 
             {/* Status Badge */}
-            {status && (
+            {statusConfig && (
               <div
-                className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${getStatusColor()}`}
+                className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${statusConfig.colorClass}`}
               >
-                {getStatusIcon()}
-                <span className="hidden sm:inline">{getStatusLabel()}</span>
+                <statusConfig.icon className="w-4 h-4" />
+                <span className="hidden sm:inline">{statusConfig.label}</span>
               </div>
             )}
           </div>

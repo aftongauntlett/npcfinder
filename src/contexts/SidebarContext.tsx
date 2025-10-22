@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 
 interface SidebarContextType {
   isCollapsed: boolean;
+  isMobile: boolean;
   toggleSidebar: () => void;
   setIsCollapsed: (collapsed: boolean) => void;
 }
@@ -34,16 +35,21 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({
   };
 
   const [isCollapsed, setIsCollapsed] = useState(getInitialCollapsed);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" && window.innerWidth < 768
+  );
 
   // Save collapsed state to localStorage
   useEffect(() => {
     localStorage.setItem("sidebar-collapsed", isCollapsed.toString());
   }, [isCollapsed]);
 
-  // Auto-collapse on mobile resize
+  // Track mobile viewport and auto-collapse
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 768 && !isCollapsed) {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile && !isCollapsed) {
         setIsCollapsed(true);
       }
     };
@@ -58,7 +64,7 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({
 
   return (
     <SidebarContext.Provider
-      value={{ isCollapsed, toggleSidebar, setIsCollapsed }}
+      value={{ isCollapsed, isMobile, toggleSidebar, setIsCollapsed }}
     >
       {children}
     </SidebarContext.Provider>

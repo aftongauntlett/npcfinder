@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import type { User } from "@supabase/supabase-js";
 import { Plus, Lightbulb, RefreshCw } from "lucide-react";
 import { useAdmin } from "../../contexts/AdminContext";
+import { logger } from "../../lib/logger";
 import ConfirmationModal from "../shared/ConfirmationModal";
 import {
   getSuggestions,
@@ -52,7 +53,7 @@ const Suggestions: React.FC<SuggestionsProps> = ({ currentUser }) => {
 
     // Subscribe to real-time updates
     const subscription = subscribeSuggestions((payload) => {
-      console.log("Real-time update:", payload);
+      logger.debug("Real-time update:", payload);
       // Reload suggestions when changes occur
       void loadSuggestions();
     });
@@ -69,7 +70,7 @@ const Suggestions: React.FC<SuggestionsProps> = ({ currentUser }) => {
     const { data, error: fetchError } = await getSuggestions();
 
     if (fetchError) {
-      console.error("Error loading suggestions:", fetchError);
+      logger.error("Error loading suggestions:", fetchError);
       setError(isSetupError(fetchError) ? "setup" : "load");
     } else {
       setSuggestions(data || []);
@@ -91,7 +92,7 @@ const Suggestions: React.FC<SuggestionsProps> = ({ currentUser }) => {
     );
 
     if (createError) {
-      console.error("Error creating suggestion:", createError);
+      logger.error("Error creating suggestion:", createError);
       throw createError;
     }
 
@@ -116,7 +117,7 @@ const Suggestions: React.FC<SuggestionsProps> = ({ currentUser }) => {
     );
 
     if (deleteError) {
-      console.error("Error deleting suggestion:", deleteError);
+      logger.error("Error deleting suggestion:", deleteError);
       setError("delete");
     } else {
       await loadSuggestions();
@@ -137,7 +138,7 @@ const Suggestions: React.FC<SuggestionsProps> = ({ currentUser }) => {
     );
 
     if (updateError) {
-      console.error("Error updating suggestion:", updateError);
+      logger.error("Error updating suggestion:", updateError);
       setError("update");
       return;
     }
@@ -155,7 +156,7 @@ const Suggestions: React.FC<SuggestionsProps> = ({ currentUser }) => {
     );
 
     if (updateError) {
-      console.error("Error updating status:", updateError);
+      logger.error("Error updating status:", updateError);
       setError("update");
       return;
     }

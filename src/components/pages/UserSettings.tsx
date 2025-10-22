@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { User as UserIcon, Save } from "lucide-react";
 import { getUserProfile, upsertUserProfile } from "../../lib/profiles";
+import { logger } from "../../lib/logger";
 import Button from "../shared/Button";
 import Input from "../shared/Input";
 import Textarea from "../shared/Textarea";
@@ -63,7 +64,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
 
       // Handle case where table doesn't exist (using mock data)
       if (error && error.code === "PGRST205") {
-        console.log("Using local profile (database table not set up yet)");
+        logger.debug("Using local profile (database table not set up yet)");
         // Use defaults from localStorage
         const savedColor =
           localStorage.getItem("themeColor") || DEFAULT_THEME_COLOR;
@@ -75,7 +76,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
         });
         changeThemeColor(savedColor);
       } else if (error) {
-        console.error("Error loading profile:", error);
+        logger.error("Error loading profile:", error);
         setMessage({ type: "error", text: "Failed to load profile" });
       } else if (data) {
         setProfile({
@@ -91,7 +92,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
         }
       }
     } catch (error) {
-      console.error("Error loading profile:", error);
+      logger.error("Error loading profile:", error);
       // Fall back to local defaults
       const savedColor =
         localStorage.getItem("themeColor") || DEFAULT_THEME_COLOR;
@@ -149,7 +150,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
 
       // Handle case where table doesn't exist (using mock data)
       if (error && error.code === "PGRST205") {
-        console.log("Saving to localStorage (database table not set up yet)");
+        logger.debug("Saving to localStorage (database table not set up yet)");
         // Save theme color to localStorage
         localStorage.setItem("themeColor", profile.theme_color);
         changeThemeColor(profile.theme_color);
@@ -175,7 +176,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
         }, 1000);
       }
     } catch (error) {
-      console.error("Error saving profile:", error);
+      logger.error("Error saving profile:", error);
       // Fall back to localStorage
       localStorage.setItem("themeColor", profile.theme_color);
       changeThemeColor(profile.theme_color);

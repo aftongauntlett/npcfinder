@@ -1,5 +1,6 @@
 import type { PostgrestError } from "@supabase/supabase-js";
 import { mockUsers } from "../data/mockData";
+import { logger } from "./logger";
 
 /**
  * Mock implementation of connections/friends for local development
@@ -23,7 +24,7 @@ interface ConnectionsResult<T> {
 export const getFriends = async (
   currentUserId: string
 ): Promise<ConnectionsResult<Friend[]>> => {
-  console.log("🎭 [MOCK] Getting connections for user:", currentUserId);
+  logger.debug("🎭 [MOCK] Getting connections for user:", currentUserId);
 
   // Return all mock users except the current user
   const friends = mockUsers
@@ -43,7 +44,7 @@ export const areConnected = async (
   userId1: string,
   userId2: string
 ): Promise<ConnectionsResult<boolean>> => {
-  console.log("🎭 [MOCK] Checking connection between:", userId1, userId2);
+  logger.debug("🎭 [MOCK] Checking connection between:", userId1, userId2);
 
   // In mock mode, everyone is connected!
   const isConnected = userId1 !== userId2;

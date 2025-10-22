@@ -1,5 +1,6 @@
 import type { PostgrestError } from "@supabase/supabase-js";
 import type { UserProfile } from "./profiles";
+import { logger } from "./logger";
 
 /**
  * Mock implementation of profile utilities for local development
@@ -28,7 +29,7 @@ const saveProfiles = (profiles: Record<string, UserProfile>) => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles));
   } catch (error) {
-    console.error("Failed to save profiles:", error);
+    logger.error("Failed to save profiles:", error);
   }
 };
 
@@ -38,7 +39,7 @@ const saveProfiles = (profiles: Record<string, UserProfile>) => {
 export const getUserProfile = async (
   userId: string
 ): Promise<ProfileResult<UserProfile>> => {
-  console.log("🎭 [MOCK] Getting user profile for:", userId);
+  logger.debug("🎭 [MOCK] Getting user profile for:", userId);
 
   const profiles = getStoredProfiles();
   const profile = profiles[userId];
@@ -68,7 +69,7 @@ export const upsertUserProfile = async (
   userId: string,
   profileData: Partial<Omit<UserProfile, "user_id">>
 ): Promise<ProfileResult<UserProfile>> => {
-  console.log("🎭 [MOCK] Upserting user profile:", { userId, profileData });
+  logger.debug("🎭 [MOCK] Upserting user profile:", { userId, profileData });
 
   const profiles = getStoredProfiles();
   const existing = profiles[userId];
@@ -98,7 +99,7 @@ export const upsertUserProfile = async (
 export const getAllUserProfiles = async (): Promise<
   ProfileResult<UserProfile[]>
 > => {
-  console.log("🎭 [MOCK] Getting all user profiles");
+  logger.debug("🎭 [MOCK] Getting all user profiles");
 
   const profiles = getStoredProfiles();
   const allProfiles = Object.values(profiles);

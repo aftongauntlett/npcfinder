@@ -591,10 +591,10 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
       <ImportMediaModal
         isOpen={showImportModal}
         onClose={() => setShowImportModal(false)}
-        onSuccess={(count) => {
+        onSuccess={(_count) => {
           setShowImportModal(false);
-          // Optional: show a toast notification
-          console.log(`Successfully imported ${count} movies`);
+          // TODO: Convert to UI toast notification
+          // Successfully imported ${_count} movies
         }}
       />
     </div>

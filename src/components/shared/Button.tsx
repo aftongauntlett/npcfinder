@@ -1,4 +1,5 @@
 import React from "react";
+import { logger } from "../../lib/logger";
 
 /**
  * Button Variants:
@@ -7,7 +8,8 @@ import React from "react";
  * - subtle: Minimal ghost style with light background
  * - danger: Pastel red for destructive actions (delete, remove, etc.)
  */
-export type ButtonVariant = "primary" | "secondary" | "subtle" | "danger";
+
+type ButtonVariant = "primary" | "secondary" | "subtle" | "danger";
 
 export type ButtonSize = "sm" | "md" | "lg";
 
@@ -68,14 +70,14 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     // Accessibility check
     if (isIconOnly && !ariaLabel && !props["aria-labelledby"]) {
-      console.warn(
+      logger.warn(
         "Button: Icon-only buttons require aria-label for accessibility"
       );
     }
 
     // Accessibility check for mobile-hidden text
     if (hideTextOnMobile && !ariaLabel && !props["aria-labelledby"]) {
-      console.warn(
+      logger.warn(
         "Button: Buttons with hideTextOnMobile require aria-label for accessibility"
       );
     }

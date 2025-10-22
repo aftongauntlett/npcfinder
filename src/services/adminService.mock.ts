@@ -10,18 +10,20 @@ import {
   RecentActivity,
 } from "./adminService";
 import { mockUsers } from "../data/mockData";
+import { logger } from "../lib/logger";
 
 /**
  * Generate mock admin statistics
  */
 export const getAdminStats = (): Promise<AdminStats> => {
-  console.log("🎭 [MOCK] Getting admin stats");
+  logger.debug("🎭 [MOCK] Getting admin stats");
 
   return Promise.resolve({
     totalUsers: mockUsers.length,
     totalMediaItems: 150,
     totalRatings: 85,
     totalConnections: 12,
+    totalInviteCodes: 10,
     newUsersThisWeek: 2,
     newUsersThisMonth: 5,
     activeUsers: mockUsers.length - 1,
@@ -37,7 +39,7 @@ export const getUsers = (
   perPage: number,
   searchTerm: string = ""
 ): Promise<{ users: UserProfile[]; totalPages: number }> => {
-  console.log("🎭 [MOCK] Getting users - page:", page, "search:", searchTerm);
+  logger.debug("🎭 [MOCK] Getting users - page:", page, "search:", searchTerm);
 
   // Filter users by search term
   let filteredUsers = mockUsers;
@@ -77,7 +79,7 @@ export const getUsers = (
  * Get mock popular media
  */
 export const getPopularMedia = (): Promise<PopularMedia[]> => {
-  console.log("🎭 [MOCK] Getting popular media");
+  logger.debug("🎭 [MOCK] Getting popular media");
 
   return Promise.resolve([
     {
@@ -157,7 +159,7 @@ export const getPopularMedia = (): Promise<PopularMedia[]> => {
  * Get mock recent activity
  */
 export const getRecentActivity = (): Promise<RecentActivity[]> => {
-  console.log("🎭 [MOCK] Getting recent activity");
+  logger.debug("🎭 [MOCK] Getting recent activity");
 
   const activities: RecentActivity[] = [
     {

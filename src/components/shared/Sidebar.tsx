@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Home,
@@ -17,19 +17,11 @@ import { useAdmin } from "../../contexts/AdminContext";
 import { useSidebar } from "../../contexts/SidebarContext";
 import { useProfileQuery } from "../../hooks/useProfileQuery";
 import ConfirmationModal from "./ConfirmationModal";
+import NavList, { type NavItem } from "./NavList";
 import { signOut } from "../../lib/auth";
 
 interface SidebarProps {
   currentUser: { id: string; email?: string } | null;
-}
-
-interface NavItem {
-  id: string;
-  label: string;
-  icon: React.ElementType;
-  path: string;
-  adminOnly?: boolean;
-  subItems?: NavItem[];
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -66,29 +58,13 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAdmin } = useAdmin();
-  const { isCollapsed, setIsCollapsed } = useSidebar();
+  const { isCollapsed, isMobile, setIsCollapsed } = useSidebar();
   const { data: profile } = useProfileQuery();
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const [showSignOutModal, setShowSignOutModal] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   const displayName = profile?.display_name || currentUser?.email || "User";
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        // No dropdown to close anymore
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const handleLogout = () => {
     setShowSignOutModal(true);
@@ -109,7 +85,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
   const handleNavigation = (path: string) => {
     void navigate(path);
     // Auto-collapse on mobile after navigation
-    if (window.innerWidth < 768) {
+    if (isMobile) {
       setIsCollapsed(true);
     }
     // Focus main content area after navigation for keyboard accessibility
@@ -145,7 +121,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
   return (
     <>
       {/* Overlay for mobile when sidebar is expanded */}
-      {!isCollapsed && window.innerWidth < 768 && (
+      {!isCollapsed && isMobile && (
         <div
           className="fixed inset-0 bg-black/50 z-30 md:hidden"
           onClick={() => setIsCollapsed(true)}
@@ -182,121 +158,14 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
 
         {/* Navigation Items */}
         <nav className="flex-1 overflow-y-auto py-4" role="navigation">
-          <ul className="space-y-1 px-2">
-            {visibleNavItems.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.path);
-              const hasSubItems = item.subItems && item.subItems.length > 0;
-
-              return (
-                <li key={item.id}>
-                  <button
-                    onClick={() => handleNavigation(item.path)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
-                      active
-                        ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light font-medium"
-                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    } ${isCollapsed ? "justify-center" : ""}`}
-                    title={isCollapsed ? item.label : undefined}
-                    aria-label={item.label}
-                    aria-current={active ? "page" : undefined}
-                  >
-                    <Icon
-                      className={`w-5 h-5 flex-shrink-0 ${
-                        active ? "text-primary dark:text-primary-light" : ""
-                      }`}
-                      aria-hidden="true"
-                    />
-                    {!isCollapsed && (
-                      <span className="truncate">{item.label}</span>
-                    )}
-                  </button>
-
-                  {/* Render sub-items if they exist and sidebar is not collapsed and parent is active */}
-                  {!isCollapsed && hasSubItems && active && (
-                    <ul className="mt-1 ml-8 space-y-1">
-                      {item
-                        .subItems!.filter((subItem) =>
-                          subItem.adminOnly ? isAdmin : true
-                        )
-                        .map((subItem) => {
-                          const SubIcon = subItem.icon;
-                          // Check if this sub-item is active (exact path match only)
-                          const subActive =
-                            location.pathname === subItem.path ||
-                            location.pathname === subItem.path.split("?")[0];
-                          const hasNestedSubItems =
-                            subItem.subItems && subItem.subItems.length > 0;
-
-                          return (
-                            <li key={subItem.id}>
-                              <button
-                                onClick={() => handleNavigation(subItem.path)}
-                                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
-                                  subActive
-                                    ? "bg-blue-500/20 text-blue-400 dark:bg-blue-500/30 dark:text-blue-300 font-medium"
-                                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                }`}
-                                aria-label={subItem.label}
-                                aria-current={subActive ? "page" : undefined}
-                              >
-                                <SubIcon
-                                  className="w-4 h-4 flex-shrink-0"
-                                  aria-hidden="true"
-                                />
-                                <span className="truncate">
-                                  {subItem.label}
-                                </span>
-                              </button>
-
-                              {/* Render nested sub-items (3rd level) */}
-                              {hasNestedSubItems && subActive && (
-                                <ul className="mt-1 ml-6 space-y-1">
-                                  {subItem.subItems!.map((nestedSubItem) => {
-                                    const NestedIcon = nestedSubItem.icon;
-                                    const nestedActive =
-                                      location.pathname.startsWith(
-                                        subItem.path.split("?")[0]
-                                      ) &&
-                                      location.search.includes(
-                                        nestedSubItem.path.split("?")[1] || ""
-                                      );
-
-                                    return (
-                                      <li key={nestedSubItem.id}>
-                                        <button
-                                          onClick={() =>
-                                            handleNavigation(nestedSubItem.path)
-                                          }
-                                          className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
-                                            nestedActive
-                                              ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light font-medium"
-                                              : "text-gray-500 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                          }`}
-                                          aria-label={nestedSubItem.label}
-                                        >
-                                          <NestedIcon
-                                            className="w-3 h-3 flex-shrink-0"
-                                            aria-hidden="true"
-                                          />
-                                          <span className="truncate">
-                                            {nestedSubItem.label}
-                                          </span>
-                                        </button>
-                                      </li>
-                                    );
-                                  })}
-                                </ul>
-                              )}
-                            </li>
-                          );
-                        })}
-                    </ul>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+          <NavList
+            items={visibleNavItems}
+            currentPath={location.pathname}
+            isCollapsed={isCollapsed}
+            isAdmin={isAdmin}
+            onNavigate={handleNavigation}
+            isActive={isActive}
+          />
         </nav>
 
         {/* Sidebar Footer - User Section */}
@@ -351,69 +220,16 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
           {/* User Menu Items - Always Visible */}
           {!isCollapsed && (
             <nav className="space-y-1 px-1" aria-label="User menu">
-              {USER_MENU_ITEMS.filter((item) =>
-                item.adminOnly ? isAdmin : true
-              ).map((item) => {
-                const Icon = item.icon;
-                const active = isActive(item.path);
-                const hasSubItems = item.subItems && item.subItems.length > 0;
-
-                return (
-                  <div key={item.id}>
-                    <button
-                      onClick={() => handleNavigation(item.path)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
-                        active
-                          ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light font-medium"
-                          : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      }`}
-                      aria-label={item.label}
-                      aria-current={active ? "page" : undefined}
-                    >
-                      <Icon
-                        className={`w-5 h-5 flex-shrink-0 ${
-                          active ? "text-primary dark:text-primary-light" : ""
-                        }`}
-                        aria-hidden="true"
-                      />
-                      <span className="truncate">{item.label}</span>
-                    </button>
-
-                    {/* Render sub-items if they exist and item is active */}
-                    {hasSubItems && active && (
-                      <div className="mt-1 ml-8 space-y-1">
-                        {item.subItems!.map((subItem) => {
-                          const SubIcon = subItem.icon;
-                          // Check if this specific sub-item is active (exact path match)
-                          const subActive =
-                            location.pathname === subItem.path ||
-                            location.pathname === subItem.path.split("?")[0];
-
-                          return (
-                            <button
-                              key={subItem.id}
-                              onClick={() => handleNavigation(subItem.path)}
-                              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
-                                subActive
-                                  ? "bg-blue-500/20 text-blue-400 dark:bg-blue-500/30 dark:text-blue-300 font-medium"
-                                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-                              }`}
-                              aria-label={subItem.label}
-                              aria-current={subActive ? "page" : undefined}
-                            >
-                              <SubIcon
-                                className="w-4 h-4 flex-shrink-0"
-                                aria-hidden="true"
-                              />
-                              <span className="truncate">{subItem.label}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+              <div className="space-y-1">
+                <NavList
+                  items={USER_MENU_ITEMS}
+                  currentPath={location.pathname}
+                  isCollapsed={false}
+                  isAdmin={isAdmin}
+                  onNavigate={handleNavigation}
+                  isActive={isActive}
+                />
+              </div>
 
               {/* Divider */}
               <div className="my-2 border-t border-gray-200 dark:border-gray-700 w-3/4 mx-auto" />

@@ -17,6 +17,8 @@ export const queryKeys = {
         friendId,
         mediaType,
       ] as const,
+    byMedia: (view: string, friendId: string | undefined, mediaType: string) =>
+      [...queryKeys.recommendations.all, mediaType, view, friendId] as const,
   },
 
   // Friends
