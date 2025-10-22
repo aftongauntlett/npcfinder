@@ -184,6 +184,15 @@ Without your credentials, they cannot access your database. This is standard for
 - JWT-based authentication
 - No tracking or analytics
 
+**Security Features:**
+
+- **Leaked Password Protection**: Passwords are checked against the Have I Been Pwned database to prevent use of compromised credentials
+  - Enable in: Supabase Dashboard → Settings → Authentication → Password Security
+  - Requires: Supabase Pro plan or higher
+  - Recommended: Enable in production environments
+
+See [Security Recommendations](08-SECURITY-RECOMMENDATIONS-REVIEW.md) for complete security audit and hardening details.
+
 **Cloning This Repo:**
 
 - Safe - they use their own database instance
