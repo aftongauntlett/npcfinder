@@ -27,7 +27,8 @@ import {
   useDeleteFromWatchlist,
 } from "../../hooks/useWatchlistQueries";
 import { useViewMode } from "../../hooks/useViewMode";
-import type { WatchlistItem } from "../../services/recommendationsService";
+import type { WatchlistItem } from "../../services/recommendationsService.types";
+import { formatReleaseDate } from "../../utils/dateFormatting";
 
 type FilterType = "all" | "to-watch" | "watched";
 type SortType = "date-added" | "title" | "year" | "rating";
@@ -381,7 +382,7 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
                 <div className="flex items-center gap-2 mb-3">
                   {item.release_date && (
                     <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">
-                      {item.release_date}
+                      {formatReleaseDate(item.release_date)}
                     </span>
                   )}
                   {item.media_type === "tv" && (
@@ -484,7 +485,7 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
                 </h3>
                 {item.release_date && (
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {item.release_date}
+                    {formatReleaseDate(item.release_date)}
                   </p>
                 )}
                 {item.overview && (

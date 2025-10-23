@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Search, Plus, Check, Film, Tv } from "lucide-react";
 import { searchMoviesAndTV } from "../../utils/mediaSearchAdapters";
 import { MediaItem } from "./SendMediaModal";
-import Button from "./Button";
 import Modal from "./Modal";
+import { useTheme } from "../../hooks/useTheme";
+import { formatReleaseDate } from "../../utils/dateFormatting";
 
 interface SearchMovieModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ const SearchMovieModal: React.FC<SearchMovieModalProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<MediaItem[]>([]);
   const [searching, setSearching] = useState(false);
+  const { themeColor } = useTheme();
 
   // Reset state when modal closes
   useEffect(() => {
@@ -123,24 +125,51 @@ const SearchMovieModal: React.FC<SearchMovieModalProps> = ({
               return (
                 <div
                   key={result.external_id}
-                  className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  onClick={() => !alreadyAdded && handleAddClick(result)}
+                  className={`group relative flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg transition-all ${
+                    alreadyAdded
+                      ? "cursor-not-allowed opacity-60"
+                      : "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-md"
+                  }`}
+                  role="button"
+                  tabIndex={alreadyAdded ? -1 : 0}
+                  onKeyDown={(e) => {
+                    if (!alreadyAdded && (e.key === "Enter" || e.key === " ")) {
+                      e.preventDefault();
+                      handleAddClick(result);
+                    }
+                  }}
+                  aria-label={
+                    alreadyAdded
+                      ? `${result.title} - Already added`
+                      : `Add ${result.title} to watchlist`
+                  }
                 >
                   {/* Poster */}
-                  {result.poster_url ? (
-                    <img
-                      src={result.poster_url}
-                      alt={result.title}
-                      className="w-16 h-24 rounded object-cover flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="w-16 h-24 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center flex-shrink-0">
-                      {resultMediaType === "tv" ? (
-                        <Tv className="w-8 h-8 text-gray-400" />
-                      ) : (
-                        <Film className="w-8 h-8 text-gray-400" />
-                      )}
-                    </div>
-                  )}
+                  <div className="relative flex-shrink-0">
+                    {result.poster_url ? (
+                      <img
+                        src={result.poster_url}
+                        alt={result.title}
+                        className="w-16 h-24 rounded object-cover"
+                      />
+                    ) : (
+                      <div className="w-16 h-24 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center">
+                        {resultMediaType === "tv" ? (
+                          <Tv className="w-8 h-8 text-gray-400" />
+                        ) : (
+                          <Film className="w-8 h-8 text-gray-400" />
+                        )}
+                      </div>
+                    )}
+
+                    {/* Media Type Badge */}
+                    {resultMediaType === "tv" && (
+                      <span className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs font-semibold bg-purple-500 text-white rounded shadow-sm">
+                        TV
+                      </span>
+                    )}
+                  </div>
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
@@ -149,34 +178,26 @@ const SearchMovieModal: React.FC<SearchMovieModalProps> = ({
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       {result.subtitle}
-                      {result.release_date && ` • ${result.release_date}`}
+                      {result.release_date &&
+                        ` • ${formatReleaseDate(result.release_date)}`}
                     </p>
-                    {result.description && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                        {result.description}
-                      </p>
-                    )}
                   </div>
 
-                  {/* Add Button */}
-                  <button
-                    onClick={() => handleAddClick(result)}
-                    disabled={alreadyAdded}
-                    className={`p-2 rounded-lg transition-colors ${
-                      alreadyAdded
-                        ? "bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 cursor-not-allowed"
-                        : "bg-green-600 hover:bg-green-700 text-white"
-                    }`}
-                    aria-label={
-                      alreadyAdded ? "Already added" : "Add to watchlist"
-                    }
-                  >
+                  {/* Add Icon - Shows on hover or when already added */}
+                  <div className="flex-shrink-0 flex items-center justify-center w-10 h-10">
                     {alreadyAdded ? (
-                      <Check className="w-5 h-5" />
+                      <Check
+                        className="w-5 h-5 text-gray-600 dark:text-gray-300"
+                        aria-hidden="true"
+                      />
                     ) : (
-                      <Plus className="w-5 h-5" />
+                      <Plus
+                        className="w-5 h-5 opacity-0 group-hover:opacity-100 transition-opacity"
+                        style={{ color: themeColor }}
+                        aria-hidden="true"
+                      />
                     )}
-                  </button>
+                  </div>
                 </div>
               );
             })}
