@@ -20,6 +20,7 @@ import ImportMediaModal from "./ImportMediaModal";
 import Button from "../shared/Button";
 import MediaEmptyState from "./MediaEmptyState";
 import SendMediaModal from "../shared/SendMediaModal";
+import Toast from "../ui/Toast";
 import { searchMoviesAndTV } from "../../utils/mediaSearchAdapters";
 import {
   useWatchlist,
@@ -69,6 +70,9 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [showItemsPerPageMenu, setShowItemsPerPageMenu] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
+  const [lastDeletedItem, setLastDeletedItem] =
+    useState<WatchlistItem | null>(null);
+  const [showUndoToast, setShowUndoToast] = useState(false);
 
   // Add to watch list
   const handleAddToWatchList = (result: MediaItem) => {
@@ -94,7 +98,35 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
 
   // Remove from watch list
   const handleRemoveFromWatchList = async (id: string) => {
+    const itemToDelete = watchList.find((item) => item.id === id);
+    if (!itemToDelete) return;
+
+    // Store the deleted item for undo
+    setLastDeletedItem(itemToDelete);
+    setShowUndoToast(true);
+
+    // Delete the item
     await deleteFromWatchlist.mutateAsync(id);
+  };
+
+  // Undo delete
+  const handleUndoDelete = async () => {
+    if (!lastDeletedItem) return;
+
+    // Re-add the item
+    await addToWatchlist.mutateAsync({
+      external_id: lastDeletedItem.external_id,
+      title: lastDeletedItem.title,
+      media_type: lastDeletedItem.media_type,
+      poster_url: lastDeletedItem.poster_url,
+      release_date: lastDeletedItem.release_date,
+      overview: lastDeletedItem.overview,
+      watched: lastDeletedItem.watched,
+    });
+
+    // Clear the undo state
+    setLastDeletedItem(null);
+    setShowUndoToast(false);
   };
 
   // Filter and sort watch list
@@ -776,6 +808,21 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
           // Successfully imported ${_count} movies
         }}
       />
+
+      {/* Undo Toast */}
+      {showUndoToast && lastDeletedItem && (
+        <Toast
+          message={`Removed "${lastDeletedItem.title}"`}
+          action={{
+            label: "Undo",
+            onClick: () => void handleUndoDelete(),
+          }}
+          onClose={() => {
+            setShowUndoToast(false);
+            setLastDeletedItem(null);
+          }}
+        />
+      )}
     </div>
   );
 };
