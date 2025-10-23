@@ -13,19 +13,7 @@ cd npcfinder
 npm install
 ```
 
-## Option 1: Mock Data (No Database)
-
-```bash
-# Create .env.local
-echo "VITE_USE_MOCK=true" > .env.local
-
-# Start dev server
-npm run dev
-```
-
-Visit http://localhost:5173 - App works with dummy data.
-
-## Option 2: Full Setup with Supabase
+## Database Setup with Supabase
 
 ### 1. Create Supabase Project
 
@@ -49,7 +37,6 @@ Create `.env.local`:
 ```bash
 VITE_SUPABASE_URL=your-project-url
 VITE_SUPABASE_ANON_KEY=your-anon-key
-VITE_USE_MOCK=false
 ```
 
 Find these in: Supabase Dashboard > Settings > API

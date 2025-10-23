@@ -1,18 +1,12 @@
 /**
  * TanStack Query hooks for Admin Panel
- * Manages admin data fetching with smart mock/real data switching
  */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { USE_MOCK_DATA } from "../services/config";
 import * as adminService from "../services/adminService";
-import * as adminServiceMock from "../services/adminService.mock";
 import * as inviteCodesLib from "../lib/inviteCodes";
 import * as adminLib from "../lib/admin";
 import { queryKeys } from "../lib/queryKeys";
-
-// Smart service switcher
-const service = USE_MOCK_DATA ? adminServiceMock : adminService;
 
 /**
  * Get admin dashboard statistics
@@ -20,7 +14,7 @@ const service = USE_MOCK_DATA ? adminServiceMock : adminService;
 export function useAdminStats() {
   return useQuery({
     queryKey: queryKeys.admin.stats(),
-    queryFn: service.getAdminStats,
+    queryFn: adminService.getAdminStats,
     staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
   });
 }
@@ -35,7 +29,7 @@ export function useAdminUsers(
 ) {
   return useQuery({
     queryKey: queryKeys.admin.users(page, searchTerm),
-    queryFn: () => service.getUsers(page, perPage, searchTerm),
+    queryFn: () => adminService.getUsers(page, perPage, searchTerm),
     staleTime: 1000 * 60 * 2, // Consider data fresh for 2 minutes
     placeholderData: (previousData) => previousData, // Keep showing old data while loading new page
   });
@@ -47,7 +41,7 @@ export function useAdminUsers(
 export function usePopularMedia() {
   return useQuery({
     queryKey: queryKeys.admin.popularMedia(),
-    queryFn: service.getPopularMedia,
+    queryFn: adminService.getPopularMedia,
     staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
   });
 }
@@ -58,7 +52,7 @@ export function usePopularMedia() {
 export function useRecentActivity() {
   return useQuery({
     queryKey: queryKeys.admin.recentActivity(),
-    queryFn: service.getRecentActivity,
+    queryFn: adminService.getRecentActivity,
     staleTime: 1000 * 60 * 2, // Consider data fresh for 2 minutes
   });
 }

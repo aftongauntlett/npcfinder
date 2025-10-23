@@ -1,5 +1,4 @@
 import React from "react";
-import { USE_MOCK_DATA } from "../../services/config";
 
 /**
  * Development mode indicator badge
@@ -19,7 +18,7 @@ const DevIndicator: React.FC<DevIndicatorProps> = ({ isAdmin }) => {
   return (
     <div className="fixed bottom-4 right-4 z-40 text-xs text-gray-500 dark:text-gray-600 font-mono pointer-events-none">
       <div className="opacity-50 bg-white/80 dark:bg-gray-800/80 px-2 py-1 rounded backdrop-blur-sm">
-        dev {USE_MOCK_DATA ? "• mock" : "• live"}
+        dev
       </div>
     </div>
   );

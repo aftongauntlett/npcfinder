@@ -1,0 +1,31 @@
+-- Fix missing INSERT privilege for npc_service_role on user_profiles
+--
+-- ISSUE:
+-- Migration 20251021232210 transferred ownership of handle_new_user() function
+-- to npc_service_role, but only granted SELECT, UPDATE on user_profiles.
+-- The handle_new_user() trigger needs INSERT privilege to create profiles.
+--
+-- SYMPTOM:
+-- Users trying to upsert their profile settings get "403 Forbidden" error with:
+-- "permission denied for schema auth" (error code 42501)
+--
+-- ROOT CAUSE:
+-- When upsert encounters a non-existent profile, it performs INSERT which triggers
+-- on_auth_user_created -> handle_new_user() -> tries to INSERT into user_profiles.
+-- Since npc_service_role lacks INSERT privilege, the operation fails.
+--
+-- FIX:
+-- Grant INSERT privilege on user_profiles to npc_service_role
+
+GRANT INSERT ON public.user_profiles TO npc_service_role;
+
+-- Verification (run manually):
+-- SELECT grantee, privilege_type, table_schema, table_name
+-- FROM information_schema.role_table_grants
+-- WHERE grantee = 'npc_service_role' AND table_name = 'user_profiles'
+-- ORDER BY privilege_type;
+--
+-- Expected output should include:
+-- npc_service_role | INSERT | public | user_profiles
+-- npc_service_role | SELECT | public | user_profiles
+-- npc_service_role | UPDATE | public | user_profiles

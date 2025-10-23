@@ -9,7 +9,7 @@ Services handle:
 - Data fetching and transformations
 - Business logic
 - API interactions
-- Mock/real data switching
+- Supabase database operations
 
 Components should focus on:
 
@@ -21,14 +21,11 @@ Components should focus on:
 
 ### `config.ts`
 
-Configuration for toggling between mock and real data:
+Configuration constants:
 
 ```typescript
-export const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK === "true";
 export const IS_DEV = import.meta.env.DEV;
 ```
-
-Set `VITE_USE_MOCK=true` in `.env.local` for development with mock data.
 
 ### `recommendationsService.ts`
 
@@ -61,29 +58,6 @@ const { data: friends } = useQuery({
   queryKey: ["friends", "music"],
   queryFn: () => recommendationsService.getFriendsWithRecommendations("song"),
 });
-```
-
-## Mock vs Real Data
-
-**Mock Data:**
-
-- Uses `src/data/mockData.ts`
-- No database required
-- Fast development
-- Useful for testing
-
-**Real Data:**
-
-- Uses Supabase client
-- Requires database setup
-- Production-ready
-
-**Toggle:**
-
-```bash
-# In .env.local
-VITE_USE_MOCK=true  # Use mock data
-VITE_USE_MOCK=false # Use Supabase
 ```
 
 ## Adding a New Service
@@ -162,12 +136,11 @@ describe("recommendationsService", () => {
 **Testability:**
 
 - Services can be tested without React
-- Mock services easily in component tests
+- Mock Supabase client in tests
 - Integration tests can use real services
 
 **Flexibility:**
 
-- Swap implementations (mock vs real)
 - Add caching layers
 - Change data sources without touching UI
 

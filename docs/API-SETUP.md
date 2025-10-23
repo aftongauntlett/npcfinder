@@ -10,6 +10,7 @@
 2. Go to Settings > API
 3. Request API key (choose "Developer")
 4. Add to `.env.local`:
+
 ```bash
 VITE_TMDB_API_KEY=your-key-here
 ```
@@ -57,31 +58,21 @@ Both APIs have built-in error handling:
 ```typescript
 // TMDB
 if (response.status === 429) {
-  throw new Error('Rate limit reached. Try again later.');
+  throw new Error("Rate limit reached. Try again later.");
 }
 
 // iTunes
 if (response.status === 503) {
-  throw new Error('Service temporarily unavailable.');
+  throw new Error("Service temporarily unavailable.");
 }
 ```
-
-## Testing Without APIs
-
-Use mock data:
-
-```bash
-# In .env.local
-VITE_USE_MOCK=true
-```
-
-App works fully without external API calls.
 
 ## Optional: Spotify Integration
 
 Not currently implemented, but planned for future.
 
 Would require:
+
 - Spotify Developer account
 - OAuth setup
 - User authentication per user
@@ -90,10 +81,10 @@ See: https://developer.spotify.com/documentation/web-api
 
 ## Cost Summary
 
-| API | Cost | Limit |
-|-----|------|-------|
-| TMDB | Free | 3k/day |
-| iTunes | Free | Unlimited* |
+| API      | Cost | Limit                         |
+| -------- | ---- | ----------------------------- |
+| TMDB     | Free | 3k/day                        |
+| iTunes   | Free | Unlimited\*                   |
 | Supabase | Free | 500MB database, 2GB bandwidth |
 
-*No published limits, reasonable use expected
+\*No published limits, reasonable use expected

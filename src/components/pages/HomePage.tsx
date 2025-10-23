@@ -244,7 +244,7 @@ const HomePage: React.FC<HomePageProps> = () => {
 
           {/* Getting Started */}
           {showGettingStarted && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 relative">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 relative mt-6">
               <button
                 onClick={() => {
                   setShowGettingStarted(false);

@@ -3,7 +3,7 @@ import type { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { User as UserIcon, Save } from "lucide-react";
-import { getUserProfile, upsertUserProfile } from "../../lib/profiles";
+import { getUserProfile, updateUserProfile } from "../../lib/profiles";
 import { logger } from "../../lib/logger";
 import Button from "../shared/Button";
 import Input from "../shared/Input";
@@ -72,7 +72,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
     try {
       const { data, error } = await getUserProfile(currentUser.id);
 
-      // Handle case where table doesn't exist (using mock data)
+      // Handle case where profile doesn't exist yet
       if (error && error.code === "PGRST205") {
         logger.debug("Using local profile (database table not set up yet)");
         // Use defaults from localStorage
@@ -171,9 +171,10 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
     setMessage(null);
 
     try {
-      const { error } = await upsertUserProfile(currentUser.id, profile);
+      // Use updateUserProfile instead of upsert since profile should already exist
+      const { error } = await updateUserProfile(currentUser.id, profile);
 
-      // Handle case where table doesn't exist (using mock data)
+      // Handle case where profile doesn't exist yet (fallback to localStorage)
       if (error && error.code === "PGRST205") {
         logger.debug("Saving to localStorage (database table not set up yet)");
         // Save theme color to localStorage

@@ -15,12 +15,14 @@ npm run test:coverage # With coverage report
 ## What to Test
 
 ✅ **Do test:**
+
 - User interactions (clicks, form input)
 - Rendered output (what users see)
 - Error handling
 - Edge cases
 
 ❌ **Don't test:**
+
 - Implementation details (internal state)
 - Third-party libraries
 - CSS/styling
@@ -30,15 +32,15 @@ npm run test:coverage # With coverage report
 Use AAA pattern (Arrange, Act, Assert):
 
 ```typescript
-it('should do something', () => {
+it("should do something", () => {
   // Arrange: Set up test data
-  const input = 'test';
-  
+  const input = "test";
+
   // Act: Perform the action
   const result = myFunction(input);
-  
+
   // Assert: Check the result
-  expect(result).toBe('expected');
+  expect(result).toBe("expected");
 });
 ```
 
@@ -47,40 +49,57 @@ it('should do something', () => {
 Use React Testing Library:
 
 ```typescript
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from "@testing-library/react";
 
-it('should handle click', () => {
+it("should handle click", () => {
   // Arrange
   render(<MyButton />);
-  const button = screen.getByRole('button');
-  
+  const button = screen.getByRole("button");
+
   // Act
   fireEvent.click(button);
-  
+
   // Assert
-  expect(screen.getByText('Clicked!')).toBeInTheDocument();
+  expect(screen.getByText("Clicked!")).toBeInTheDocument();
 });
 ```
 
-## Mocking Data
+## Mocking Supabase
 
-Use mock data, not real database:
+Mock the Supabase client for tests:
 
 ```typescript
-// tests/mocks/mockData.ts
-export const mockUser = {
-  id: '1',
-  email: 'test@example.com',
-  name: 'Test User'
-};
+import { vi } from "vitest";
 
-// In test file
-import { mockUser } from './mocks/mockData';
+// Mock Supabase client
+vi.mock("../lib/supabase", () => ({
+  supabase: {
+    from: vi.fn(),
+    auth: {
+      getUser: vi.fn(),
+      signIn: vi.fn(),
+    },
+  },
+}));
+
+// In test
+import { supabase } from "../lib/supabase";
+
+it("should fetch data", async () => {
+  const mockData = { id: "1", name: "Test" };
+
+  (supabase.from as any).mockReturnValue({
+    select: vi.fn().mockResolvedValue({ data: mockData, error: null }),
+  });
+
+  // Test code that uses supabase
+});
 ```
 
 ## Current Coverage
 
 Run `npm run test:coverage` to see:
+
 - Line coverage
 - Branch coverage
 - Function coverage

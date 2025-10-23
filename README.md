@@ -124,7 +124,7 @@ src/
 ├── hooks/             # Custom React hooks
 ├── lib/               # Core utilities and API clients
 ├── services/          # Business logic layer
-├── data/              # Mock data and constants
+├── data/              # Static data and constants
 └── utils/             # Helper functions
 ```
 
@@ -133,7 +133,6 @@ src/
 - **TanStack Query** for declarative server state management with automatic caching
 - **React.memo** and useCallback for performance optimization
 - **Service layer** separates business logic from UI components
-- **Mock/real data toggle** for development without backend setup
 - **Context providers** for global state (auth, theme, admin)
 - **Custom hooks** encapsulate data fetching and business logic
 
@@ -231,14 +230,8 @@ See [Privacy Reality Check](docs/PRIVACY-REALITY-CHECK.md) for full details.
 **Service Layer:**
 
 - Separates business logic from React components
-- Easy to mock for testing
+- Easy to mock in tests
 - See [services/README.md](src/services/README.md)
-
-**Mock Data:**
-
-- Toggle between mock and real data via environment variable
-- Enables frontend development without backend setup
-- Useful for testing and demos
 
 **Component Organization:**
 
@@ -250,7 +243,7 @@ See [Privacy Reality Check](docs/PRIVACY-REALITY-CHECK.md) for full details.
 **Testing:**
 
 - Simple, behavioral tests with Vitest
-- Mock external dependencies
+- Mock Supabase client for unit tests
 - Test user interactions, not implementation details
 
 **AI-Assisted Development:**
@@ -271,25 +264,15 @@ This is open-source and you can explore the architecture and implementation. The
 **Prerequisites:**
 
 - Node.js 18+
-- Supabase account (for full database features)
+- Supabase account
 
-**Quick Look (Mock Data - No Setup Required):**
+**Setup:**
 
 ```bash
 git clone https://github.com/aftongauntlett/npcfinder.git
 cd npcfinder
 npm install
 
-# Add to .env.local
-echo "VITE_USE_MOCK=true" > .env.local
-
-# Start dev server - uses dummy data, perfect for exploring the UI
-npm run dev
-```
-
-**Full Setup (Database Required):**
-
-```bash
 # Set up environment variables
 cp .env.example .env.local
 # Add your Supabase URL and anon key to .env.local
