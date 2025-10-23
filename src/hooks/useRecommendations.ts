@@ -6,6 +6,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as recommendationsService from "../services/recommendationsService";
 import { queryKeys } from "../lib/queryKeys";
+import { useAuth } from "../contexts/AuthContext";
 
 type MediaTypeKey = "movies-tv" | "song" | "music";
 
@@ -13,6 +14,8 @@ type MediaTypeKey = "movies-tv" | "song" | "music";
  * Generic hook to get friends who have sent recommendations
  */
 export function useFriendsWithRecs(mediaTypeKey: MediaTypeKey) {
+  const { user } = useAuth();
+
   // Map mediaTypeKey to service parameter
   const mediaType =
     mediaTypeKey === "movies-tv"
@@ -23,10 +26,14 @@ export function useFriendsWithRecs(mediaTypeKey: MediaTypeKey) {
 
   return useQuery({
     queryKey: queryKeys.friends.withRecs(mediaTypeKey),
-    queryFn: () =>
-      recommendationsService.getFriendsWithRecommendations(
+    queryFn: () => {
+      if (!user?.id) throw new Error("Not authenticated");
+      return recommendationsService.getFriendsWithRecommendations(
+        user.id,
         mediaType as "song" | "album" | "movie" | "tv" | undefined
-      ),
+      );
+    },
+    enabled: !!user?.id,
   });
 }
 
@@ -34,6 +41,8 @@ export function useFriendsWithRecs(mediaTypeKey: MediaTypeKey) {
  * Generic hook to get quick stats
  */
 export function useQuickStats(mediaTypeKey: MediaTypeKey) {
+  const { user } = useAuth();
+
   // Map mediaTypeKey to service parameter
   const mediaType =
     mediaTypeKey === "movies-tv"
@@ -44,10 +53,14 @@ export function useQuickStats(mediaTypeKey: MediaTypeKey) {
 
   return useQuery({
     queryKey: queryKeys.stats.quick(mediaTypeKey),
-    queryFn: () =>
-      recommendationsService.getQuickStats(
+    queryFn: () => {
+      if (!user?.id) throw new Error("Not authenticated");
+      return recommendationsService.getQuickStats(
+        user.id,
         mediaType as "song" | "album" | "movie" | "tv" | undefined
-      ),
+      );
+    },
+    enabled: !!user?.id,
   });
 }
 
@@ -59,6 +72,8 @@ export function useRecommendations(
   friendId: string | undefined,
   mediaTypeKey: MediaTypeKey
 ) {
+  const { user } = useAuth();
+
   // Map mediaTypeKey to service parameter
   const mediaType =
     mediaTypeKey === "movies-tv"
@@ -70,12 +85,15 @@ export function useRecommendations(
   return useQuery({
     queryKey: queryKeys.recommendations.byMedia(view, friendId, mediaTypeKey),
     queryFn: async () => {
+      if (!user?.id) throw new Error("Not authenticated");
+
       if (view === "overview") {
         return [];
       }
 
       if (view === "friend" && friendId) {
         return recommendationsService.getRecommendationsFromFriend(
+          user.id,
           friendId,
           mediaType as "song" | "album" | "movie" | "tv" | undefined
         );
@@ -83,7 +101,7 @@ export function useRecommendations(
 
       if (view === "queue") {
         // Fetch all pending recommendations (for friend grouping)
-        return recommendationsService.getRecommendations({
+        return recommendationsService.getRecommendations(user.id, {
           direction: "received",
           status: "pending",
           mediaType:
@@ -96,7 +114,7 @@ export function useRecommendations(
       }
 
       if (view === "hits") {
-        return recommendationsService.getRecommendations({
+        return recommendationsService.getRecommendations(user.id, {
           direction: "received",
           status: "hit",
           mediaType:
@@ -109,7 +127,7 @@ export function useRecommendations(
       }
 
       if (view === "misses") {
-        return recommendationsService.getRecommendations({
+        return recommendationsService.getRecommendations(user.id, {
           direction: "received",
           status: "miss",
           mediaType:
@@ -122,7 +140,7 @@ export function useRecommendations(
       }
 
       if (view === "sent") {
-        return recommendationsService.getRecommendations({
+        return recommendationsService.getRecommendations(user.id, {
           direction: "sent",
           mediaType:
             mediaTypeKey === "music"
@@ -135,7 +153,7 @@ export function useRecommendations(
 
       return [];
     },
-    enabled: view !== "overview", // Don't fetch for overview
+    enabled: view !== "overview" && !!user?.id, // Don't fetch for overview or if not authenticated
   });
 }
 
@@ -164,10 +182,16 @@ export function useUpdateStatus(mediaTypeKey: MediaTypeKey) {
           ? "song"
           : (mediaTypeKey as "movie" | "tv" | "song" | "album"));
 
+      // Map media type to table name
+      const tableName =
+        finalMediaType === "movie" || finalMediaType === "tv"
+          ? "movie_recommendations"
+          : "music_recommendations";
+
       return recommendationsService.updateRecommendationStatus(
         recId,
         status as "pending" | "consumed" | "hit" | "miss",
-        finalMediaType
+        tableName
       );
     },
     onSuccess: () => {
@@ -184,12 +208,19 @@ export function useUpdateStatus(mediaTypeKey: MediaTypeKey) {
 /**
  * Generic mutation to delete a recommendation
  */
-export function useDeleteRec(_mediaTypeKey: MediaTypeKey) {
+export function useDeleteRec(mediaTypeKey: MediaTypeKey) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (recId: string) =>
-      recommendationsService.deleteRecommendation(recId),
+    mutationFn: (recId: string) => {
+      // Map media type to table name
+      const tableName =
+        mediaTypeKey === "movies-tv"
+          ? "movie_recommendations"
+          : "music_recommendations";
+
+      return recommendationsService.deleteRecommendation(recId, tableName);
+    },
     onSuccess: () => {
       // Invalidate all related queries
       void queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
@@ -204,12 +235,19 @@ export function useDeleteRec(_mediaTypeKey: MediaTypeKey) {
 /**
  * Generic mutation to update sender's note
  */
-export function useUpdateSenderNote(_mediaTypeKey: MediaTypeKey) {
+export function useUpdateSenderNote(mediaTypeKey: MediaTypeKey) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ recId, note }: { recId: string; note: string }) =>
-      recommendationsService.updateSenderNote(recId, note),
+    mutationFn: ({ recId, note }: { recId: string; note: string }) => {
+      // Map media type to table name
+      const tableName =
+        mediaTypeKey === "movies-tv"
+          ? "movie_recommendations"
+          : "music_recommendations";
+
+      return recommendationsService.updateSenderNote(recId, note, tableName);
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.recommendations.all,
@@ -221,12 +259,19 @@ export function useUpdateSenderNote(_mediaTypeKey: MediaTypeKey) {
 /**
  * Generic mutation to update recipient's note
  */
-export function useUpdateRecipientNote(_mediaTypeKey: MediaTypeKey) {
+export function useUpdateRecipientNote(mediaTypeKey: MediaTypeKey) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ recId, note }: { recId: string; note: string }) =>
-      recommendationsService.updateRecipientNote(recId, note),
+    mutationFn: ({ recId, note }: { recId: string; note: string }) => {
+      // Map media type to table name
+      const tableName =
+        mediaTypeKey === "movies-tv"
+          ? "movie_recommendations"
+          : "music_recommendations";
+
+      return recommendationsService.updateRecipientNote(recId, note, tableName);
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.recommendations.all,
@@ -237,12 +282,18 @@ export function useUpdateRecipientNote(_mediaTypeKey: MediaTypeKey) {
 
 /**
  * Generic mutation to mark all pending recommendations as opened
+ * Note: This function doesn't exist in the service, removing it for now
  */
 export function useMarkRecommendationsAsOpened(_mediaTypeKey: MediaTypeKey) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => recommendationsService.markAllPendingAsOpened(),
+    mutationFn: () => {
+      // TODO: Implement this function in the service if needed
+      return Promise.reject(
+        new Error("markAllPendingAsOpened is not implemented")
+      );
+    },
     onSuccess: () => {
       // Invalidate dashboard stats to update badge count
       void queryClient.invalidateQueries({

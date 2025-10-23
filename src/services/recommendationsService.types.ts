@@ -52,3 +52,43 @@ export interface UserProfile {
   user_id: string;
   display_name: string;
 }
+
+export interface WatchlistItem {
+  id: string;
+  user_id: string;
+  external_id: string;
+  media_type: "movie" | "tv";
+  title: string;
+  poster_url: string | null;
+  release_date: string | null;
+  overview: string | null;
+  director: string | null;
+  cast_members: string[] | null;
+  genres: string[] | null;
+  vote_average: number | null;
+  vote_count: number | null;
+  runtime: number | null;
+  watched: boolean;
+  list_order: number | null;
+  notes: string | null;
+  added_at: string;
+  updated_at: string;
+  watched_at: string | null;
+}
+
+export interface AddWatchlistItemData {
+  external_id: string;
+  media_type: "movie" | "tv";
+  title: string;
+  poster_url?: string | null;
+  release_date?: string | null;
+  overview?: string | null;
+  director?: string | null;
+  cast_members?: string[] | null;
+  genres?: string[] | null;
+  vote_average?: number | null;
+  vote_count?: number | null;
+  runtime?: number | null;
+  watched?: boolean;
+  notes?: string | null;
+}

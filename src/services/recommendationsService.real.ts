@@ -9,6 +9,8 @@ import type {
   FriendStats,
   QuickStats,
   Recommendation,
+  WatchlistItem,
+  AddWatchlistItemData,
 } from "./recommendationsService.types";
 
 // Map of media types to table names (use views that include user names)
@@ -231,4 +233,151 @@ export async function updateRecipientNote(
     console.error("Error updating recipient note:", error);
     throw error;
   }
+}
+
+/**
+ * Get user's watchlist
+ */
+export async function getWatchlist(): Promise<WatchlistItem[]> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Not authenticated");
+
+  const { data, error } = await supabase
+    .from("user_watchlist")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("added_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching watchlist:", error);
+    throw error;
+  }
+
+  return data || [];
+}
+
+/**
+ * Add item to watchlist
+ */
+export async function addToWatchlist(
+  itemData: AddWatchlistItemData
+): Promise<WatchlistItem> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Not authenticated");
+
+  const { data, error } = await supabase
+    .from("user_watchlist")
+    .insert({
+      user_id: user.id,
+      ...itemData,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error adding to watchlist:", error);
+    throw error;
+  }
+
+  return data;
+}
+
+/**
+ * Toggle watched status
+ */
+export async function toggleWatchlistWatched(id: string): Promise<void> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Not authenticated");
+
+  // First get the current item
+  const { data: item, error: fetchError } = await supabase
+    .from("user_watchlist")
+    .select("watched")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .single();
+
+  if (fetchError) {
+    console.error("Error fetching watchlist item:", fetchError);
+    throw fetchError;
+  }
+
+  // Toggle the watched status
+  const { error } = await supabase
+    .from("user_watchlist")
+    .update({
+      watched: !item.watched,
+      watched_at: !item.watched ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) {
+    console.error("Error toggling watched status:", error);
+    throw error;
+  }
+}
+
+/**
+ * Delete item from watchlist
+ */
+export async function deleteFromWatchlist(id: string): Promise<void> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Not authenticated");
+
+  const { error } = await supabase
+    .from("user_watchlist")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) {
+    console.error("Error deleting from watchlist:", error);
+    throw error;
+  }
+}
+
+/**
+ * Update watchlist item
+ */
+export async function updateWatchlistItem(
+  id: string,
+  updates: Partial<AddWatchlistItemData>
+): Promise<WatchlistItem> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Not authenticated");
+
+  const { data, error } = await supabase
+    .from("user_watchlist")
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error updating watchlist item:", error);
+    throw error;
+  }
+
+  return data;
 }
