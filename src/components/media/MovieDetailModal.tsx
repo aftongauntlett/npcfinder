@@ -8,11 +8,15 @@ import { MovieRating } from "./movie/MovieRating";
 import { MovieCrewInfo } from "./movie/MovieCrewInfo";
 import { MovieCastList } from "./movie/MovieCastList";
 import { MovieReviewForm } from "./movie/MovieReviewForm";
+import { SimilarMoviesCarousel } from "./SimilarMoviesCarousel";
 import {
   fetchDetailedMediaInfo,
   DetailedMediaInfo,
+  fetchSimilarMedia,
+  SimilarMediaItem,
 } from "../../utils/tmdbDetails";
-import type { WatchlistItem } from "../../services/recommendationsService";
+import type { WatchlistItem } from "../../services/recommendationsService.types";
+import { useAddToWatchlist, useWatchlist } from "../../hooks/useWatchlistQueries";
 import {
   useMyMediaReview,
   useFriendsMediaReviews,
@@ -36,8 +40,13 @@ export default function MovieDetailModal({
 }: MovieDetailModalProps) {
   const { user } = useAuth();
   const [details, setDetails] = useState<DetailedMediaInfo | null>(null);
+  const [similarMovies, setSimilarMovies] = useState<SimilarMediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Watchlist queries
+  const { data: watchList = [] } = useWatchlist();
+  const addToWatchlist = useAddToWatchlist();
 
   // Review queries
   const { data: myReview } = useMyMediaReview(
@@ -95,7 +104,7 @@ export default function MovieDetailModal({
     }
   }, [reviewText, rating, isPublic, myReview]);
 
-  // Fetch details
+  // Fetch details and similar movies
   useEffect(() => {
     if (!isOpen) return;
 
@@ -103,15 +112,18 @@ export default function MovieDetailModal({
       setLoading(true);
       setError(null);
       try {
-        const detailedInfo = await fetchDetailedMediaInfo(
-          item.external_id,
-          item.media_type
-        );
+        const [detailedInfo, similar] = await Promise.all([
+          fetchDetailedMediaInfo(item.external_id, item.media_type),
+          fetchSimilarMedia(item.external_id, item.media_type, 10),
+        ]);
+
         if (detailedInfo) {
           setDetails(detailedInfo);
         } else {
           setError("Could not load details");
         }
+
+        setSimilarMovies(similar);
       } catch (err) {
         console.error("Error loading movie details:", err);
         setError("Failed to load details");
@@ -153,6 +165,18 @@ export default function MovieDetailModal({
     ) {
       void deleteReview.mutateAsync(myReview.id);
     }
+  };
+
+  const handleAddSimilarToWatchlist = async (movie: SimilarMediaItem) => {
+    await addToWatchlist.mutateAsync({
+      external_id: movie.external_id,
+      title: movie.title,
+      media_type: movie.media_type,
+      poster_url: movie.poster_url,
+      release_date: movie.release_date,
+      overview: movie.overview,
+      watched: false,
+    });
   };
 
   const releaseYear = item.release_date
@@ -309,6 +333,17 @@ export default function MovieDetailModal({
               onSave={() => void handleSaveReview()}
               onDelete={handleDeleteReview}
             />
+
+            {/* Similar Movies Carousel */}
+            {similarMovies.length > 0 && (
+              <SimilarMoviesCarousel
+                movies={similarMovies}
+                onAddToWatchlist={(movie) =>
+                  void handleAddSimilarToWatchlist(movie)
+                }
+                existingIds={watchList.map((item) => item.external_id)}
+              />
+            )}
           </div>
         )}
       </div>

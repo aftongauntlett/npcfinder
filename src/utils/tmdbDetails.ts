@@ -191,3 +191,55 @@ export async function fetchMultipleMediaDetails(
 
   return results;
 }
+
+/**
+ * Fetch similar movies/TV shows
+ */
+export interface SimilarMediaItem {
+  external_id: string;
+  title: string;
+  media_type: "movie" | "tv";
+  poster_url: string | null;
+  release_date: string | null;
+  vote_average: number | null;
+  overview: string | null;
+}
+
+export async function fetchSimilarMedia(
+  externalId: string,
+  mediaType: "movie" | "tv",
+  limit: number = 10
+): Promise<SimilarMediaItem[]> {
+  const apiKey = import.meta.env.VITE_TMDB_API_KEY;
+  if (!apiKey) {
+    console.error("TMDB API key not configured");
+    return [];
+  }
+
+  try {
+    const url = `https://api.themoviedb.org/3/${mediaType}/${externalId}/similar?api_key=${apiKey}&page=1`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`TMDB API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const results = (data.results || []) as TMDBMovieDetails[];
+
+    return results.slice(0, limit).map((item) => ({
+      external_id: String(item.id),
+      title: item.title || item.name || "Unknown Title",
+      media_type: mediaType,
+      poster_url: item.poster_path
+        ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+        : null,
+      release_date: item.release_date || item.first_air_date || null,
+      vote_average: item.vote_average || null,
+      overview: item.overview || null,
+    }));
+  } catch (error) {
+    console.error("Error fetching similar media:", error);
+    return [];
+  }
+}
