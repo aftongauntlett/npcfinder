@@ -19,6 +19,7 @@ import {
   useUpdateSenderNote,
   useUpdateRecipientNote,
 } from "../../../hooks/useMovieQueries";
+import MovieDiscoveryCard from "../../media/MovieDiscoveryCard";
 
 // Extend BaseRecommendation with movie-specific fields
 interface MovieRecommendation extends BaseRecommendation {
@@ -300,20 +301,24 @@ const MoviesSuggestions: React.FC<MoviesSuggestionsProps> = ({
 
   const content = (
     <>
-      <InlineRecommendationsLayout
-        mediaType="Movies & TV"
-        mediaIcon={Film}
-        emptyMessage="No recommendations yet"
-        emptySubMessage="When friends recommend movies or TV shows, they'll show up here"
-        loading={loading}
-        friendsWithRecs={filteredFriendsWithRecs}
-        quickStats={quickStats}
-        hits={hits}
-        misses={misses}
-        sent={sent}
-        friendRecommendations={friendRecommendations}
-        renderRecommendationCard={renderRecommendationCard}
-      />
+      <div className="space-y-6">
+        <InlineRecommendationsLayout
+          mediaType="Movies & TV"
+          mediaIcon={Film}
+          emptyMessage="No recommendations yet"
+          emptySubMessage="When friends recommend movies or TV shows, they'll show up here"
+          loading={loading}
+          friendsWithRecs={filteredFriendsWithRecs}
+          quickStats={quickStats}
+          hits={hits}
+          misses={misses}
+          sent={sent}
+          friendRecommendations={friendRecommendations}
+          renderRecommendationCard={renderRecommendationCard}
+        />
+
+        <MovieDiscoveryCard />
+      </div>
 
       {/* Send Movie/TV Modal */}
       <SendMediaModal

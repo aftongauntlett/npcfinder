@@ -27,10 +27,7 @@ export const SimilarMoviesCarousel: React.FC<SimilarMoviesCarouselProps> = ({
             const isInWatchlist = existingIds.includes(movie.external_id);
 
             return (
-              <div
-                key={movie.external_id}
-                className="flex-shrink-0 w-32 group"
-              >
+              <div key={movie.external_id} className="flex-shrink-0 w-32 group">
                 {/* Poster */}
                 <div className="relative mb-2">
                   {movie.poster_url ? (
@@ -60,7 +57,9 @@ export const SimilarMoviesCarousel: React.FC<SimilarMoviesCarouselProps> = ({
                       isInWatchlist ? "cursor-default" : ""
                     }`}
                     title={
-                      isInWatchlist ? "Already in watchlist" : "Add to watchlist"
+                      isInWatchlist
+                        ? "Already in watchlist"
+                        : "Add to watchlist"
                     }
                   >
                     {isInWatchlist ? (

@@ -243,3 +243,86 @@ export async function fetchSimilarMedia(
     return [];
   }
 }
+
+/**
+ * Fetch trending movies/TV shows
+ */
+export async function fetchTrendingMedia(
+  mediaType: "movie" | "tv" | "all" = "all",
+  timeWindow: "day" | "week" = "week",
+  limit: number = 20
+): Promise<SimilarMediaItem[]> {
+  const apiKey = import.meta.env.VITE_TMDB_API_KEY;
+  if (!apiKey) {
+    console.error("TMDB API key not configured");
+    return [];
+  }
+
+  try {
+    const url = `https://api.themoviedb.org/3/trending/${mediaType}/${timeWindow}?api_key=${apiKey}`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`TMDB API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const results = (data.results || []) as TMDBMovieDetails[];
+
+    return results.slice(0, limit).map((item) => ({
+      external_id: String(item.id),
+      title: item.title || item.name || "Unknown Title",
+      media_type: item.title ? "movie" : "tv",
+      poster_url: item.poster_path
+        ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+        : null,
+      release_date: item.release_date || item.first_air_date || null,
+      vote_average: item.vote_average || null,
+      overview: item.overview || null,
+    }));
+  } catch (error) {
+    console.error("Error fetching trending media:", error);
+    return [];
+  }
+}
+
+/**
+ * Fetch popular movies/TV shows
+ */
+export async function fetchPopularMedia(
+  mediaType: "movie" | "tv" = "movie",
+  limit: number = 20
+): Promise<SimilarMediaItem[]> {
+  const apiKey = import.meta.env.VITE_TMDB_API_KEY;
+  if (!apiKey) {
+    console.error("TMDB API key not configured");
+    return [];
+  }
+
+  try {
+    const url = `https://api.themoviedb.org/3/${mediaType}/popular?api_key=${apiKey}&page=1`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`TMDB API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const results = (data.results || []) as TMDBMovieDetails[];
+
+    return results.slice(0, limit).map((item) => ({
+      external_id: String(item.id),
+      title: item.title || item.name || "Unknown Title",
+      media_type: mediaType,
+      poster_url: item.poster_path
+        ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+        : null,
+      release_date: item.release_date || item.first_air_date || null,
+      vote_average: item.vote_average || null,
+      overview: item.overview || null,
+    }));
+  } catch (error) {
+    console.error("Error fetching popular media:", error);
+    return [];
+  }
+}
