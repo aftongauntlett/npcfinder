@@ -73,7 +73,9 @@ export function MovieReviewForm({
       {/* Accordion Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between p-4 rounded-t-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        className={`w-full flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
+          isExpanded ? "rounded-t-lg" : "rounded-lg"
+        }`}
       >
         <div className="text-left">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">

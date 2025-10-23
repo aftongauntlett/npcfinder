@@ -16,7 +16,10 @@ import {
   SimilarMediaItem,
 } from "../../utils/tmdbDetails";
 import type { WatchlistItem } from "../../services/recommendationsService.types";
-import { useAddToWatchlist, useWatchlist } from "../../hooks/useWatchlistQueries";
+import {
+  useAddToWatchlist,
+  useWatchlist,
+} from "../../hooks/useWatchlistQueries";
 import {
   useMyMediaReview,
   useFriendsMediaReviews,
@@ -217,7 +220,7 @@ export default function MovieDetailModal({
             </Button>
           </div>
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-6">
             {/* Header Section */}
             <div className="flex flex-col sm:flex-row gap-8">
               {/* Poster */}
