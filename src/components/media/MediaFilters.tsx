@@ -62,7 +62,7 @@ const MediaFilters: React.FC<MediaFiltersProps> = ({
                   onClick={() => onFilterChange(filter.id, option.value)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     activeFilters[filter.id] === option.value
-                      ? "bg-primary text-white"
+                      ? "bg-primary-contrast"
                       : "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                   }`}
                   aria-pressed={activeFilters[filter.id] === option.value}

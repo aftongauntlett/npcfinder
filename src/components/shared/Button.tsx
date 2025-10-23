@@ -190,7 +190,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const getThemeStyles = (): React.CSSProperties | undefined => {
       if (variant === "primary" || variant === "secondary") {
         return {
-          color: variant === "primary" ? "white" : "var(--color-primary)",
+          color:
+            variant === "primary"
+              ? "var(--color-text-on-primary)"
+              : "var(--color-primary)",
           borderColor: "var(--color-primary)",
           backgroundColor:
             variant === "primary" ? "var(--color-primary)" : undefined,

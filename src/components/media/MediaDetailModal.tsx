@@ -188,7 +188,7 @@ const MediaDetailModal: React.FC<MediaDetailModalProps> = ({
                         onClick={() => onStatusChange(option.value)}
                         className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                           userStatus === option.value
-                            ? "bg-primary text-white"
+                            ? "bg-primary-contrast"
                             : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                         }`}
                         aria-pressed={userStatus === option.value}

@@ -50,7 +50,7 @@ const DashboardCustomizer: React.FC<DashboardCustomizerProps> = ({
               <div
                 className={`flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${
                   isVisible
-                    ? "bg-primary text-white"
+                    ? "bg-primary-contrast"
                     : "bg-gray-700 dark:bg-gray-700 text-gray-400 dark:text-gray-400"
                 }`}
               >
@@ -91,7 +91,7 @@ const DashboardCustomizer: React.FC<DashboardCustomizerProps> = ({
                 <span
                   className={`inline-block px-2 sm:px-2.5 py-0.5 sm:py-1 text-xs font-medium rounded-full ${
                     isVisible
-                      ? "bg-primary text-white"
+                      ? "bg-primary-contrast"
                       : "bg-gray-700 dark:bg-gray-700 text-gray-300 dark:text-gray-300"
                   }`}
                 >

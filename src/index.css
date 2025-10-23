@@ -67,6 +67,12 @@ textarea::-moz-selection {
   .animate-sparkle {
     animation: sparkle 1.5s ease-in-out;
   }
+
+  /* Primary background with proper contrast text */
+  .bg-primary-contrast {
+    background-color: var(--color-primary);
+    color: var(--color-text-on-primary);
+  }
 }
 
 /* Custom styles for react-colorful to match our dark theme */
