@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Send, Play, Check } from "lucide-react";
+import { Lightbulb, Play, Check } from "lucide-react";
 import MainLayout from "../../layouts/MainLayout";
 import ContentLayout from "../../layouts/ContentLayout";
 import PersonalWatchList from "../../media/PersonalWatchList";
@@ -52,7 +52,7 @@ const MoviesPage: React.FC = () => {
     {
       id: "recommendations" as TabId,
       label: "Recommendations",
-      icon: Send,
+      icon: Lightbulb,
       count: recsCount,
     },
   ];

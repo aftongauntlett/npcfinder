@@ -14,7 +14,6 @@ import ColorThemePicker from "../settings/ColorThemePicker";
 import { cards } from "../../data/dashboardCards";
 import { DEFAULT_THEME_COLOR } from "../../styles/colorThemes";
 import { useTheme } from "../../hooks/useTheme";
-import DashboardCustomizer from "../settings/DashboardCustomizer";
 
 interface UserSettingsProps {
   currentUser: User;
@@ -115,26 +114,6 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
       ...prev,
       [name]: value,
     }));
-    setMessage(null);
-  };
-
-  const handleToggleCard = (cardId: string) => {
-    setProfile((prev) => {
-      const isVisible = prev.visible_cards.includes(cardId);
-      const newVisibleCards = isVisible
-        ? prev.visible_cards.filter((id) => id !== cardId)
-        : [...prev.visible_cards, cardId];
-
-      // Ensure at least one card is visible
-      if (newVisibleCards.length === 0) {
-        return prev;
-      }
-
-      return {
-        ...prev,
-        visible_cards: newVisibleCards,
-      };
-    });
     setMessage(null);
   };
 
@@ -286,14 +265,6 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
                 setProfile((prev) => ({ ...prev, theme_color: color }));
                 setMessage(null);
               }}
-            />
-          </div>
-
-          {/* Dashboard Customization Card */}
-          <div className="bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700/50 dark:border-gray-700/50">
-            <DashboardCustomizer
-              visibleCards={profile.visible_cards}
-              onToggleCard={handleToggleCard}
             />
           </div>
 
