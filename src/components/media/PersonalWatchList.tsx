@@ -70,8 +70,9 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [showItemsPerPageMenu, setShowItemsPerPageMenu] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
-  const [lastDeletedItem, setLastDeletedItem] =
-    useState<WatchlistItem | null>(null);
+  const [lastDeletedItem, setLastDeletedItem] = useState<WatchlistItem | null>(
+    null
+  );
   const [showUndoToast, setShowUndoToast] = useState(false);
 
   // Add to watch list
@@ -432,7 +433,7 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
               tabIndex={0}
               role="button"
               aria-label={`View details for ${item.title}`}
-              className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-200 cursor-pointer group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+              className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 hover:border-primary/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
             >
               {/* Poster */}
               <div className="relative overflow-hidden">
@@ -566,7 +567,7 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
               tabIndex={0}
               role="button"
               aria-label={`View details for ${item.title}`}
-              className="w-full bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all cursor-pointer group flex items-center gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+              className="w-full bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700 hover:border-primary/30 hover:shadow-md transition-all cursor-pointer group flex items-center gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
             >
               {/* Small Poster */}
               <div className="flex-shrink-0">
