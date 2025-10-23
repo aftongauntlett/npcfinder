@@ -184,6 +184,38 @@ export async function updateRecipientNote(
   }
 }
 
+/**
+ * Mark all pending recommendations as opened (for badge dismissal)
+ */
+export async function markAllPendingAsOpened(): Promise<void> {
+  if (USE_MOCK_DATA) {
+    return Promise.resolve();
+  }
+
+  const userId = await getCurrentUserId();
+  const now = new Date().toISOString();
+
+  // Update all pending movie/TV recommendations
+  const { error: movieError } = await supabase
+    .from("movie_recommendations")
+    .update({ opened_at: now })
+    .eq("to_user_id", userId)
+    .eq("status", "pending")
+    .is("opened_at", null);
+
+  if (movieError) {
+    console.error("Error marking movie recommendations as opened:", movieError);
+  }
+
+  // Future: update music_recommendations when table exists
+  // const { error: musicError } = await supabase
+  //   .from("music_recommendations")
+  //   .update({ opened_at: now })
+  //   .eq("to_user_id", userId)
+  //   .eq("status", "pending")
+  //   .is("opened_at", null);
+}
+
 // Legacy exports for mock compatibility
 export const getUserProfile = USE_MOCK_DATA ? mockService.getUserProfile : null;
 
@@ -228,6 +260,7 @@ export interface AddWatchlistItemData {
   vote_count?: number | null;
   runtime?: number | null;
   notes?: string | null;
+  watched?: boolean; // Optional: defaults to false
 }
 
 /**
@@ -257,12 +290,14 @@ export async function addToWatchlist(
 ): Promise<WatchlistItem> {
   const userId = await getCurrentUserId();
 
+  const { watched = false, ...restData } = itemData;
+
   const { data, error } = await supabase
     .from("user_watchlist")
     .insert({
       user_id: userId,
-      ...itemData,
-      watched: false,
+      ...restData,
+      watched,
     })
     .select()
     .single();

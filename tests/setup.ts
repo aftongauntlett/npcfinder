@@ -12,8 +12,8 @@ afterEach(() => {
 
 // Type augmentation for jest-dom matchers
 declare module "vitest" {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-empty-object-type
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   interface Assertion<T = any> extends jest.Matchers<void, T> {}
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-empty-object-type
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   interface AsymmetricMatchersContaining extends jest.Matchers<void, any> {}
 }

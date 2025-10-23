@@ -63,6 +63,9 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
 
   // Add to watch list
   const handleAddToWatchList = (result: MediaItem) => {
+    // If we're on the "watched" tab, mark as watched immediately
+    const shouldMarkAsWatched = filter === "watched";
+
     void addToWatchlist.mutateAsync({
       external_id: result.external_id,
       title: result.title,
@@ -70,18 +73,19 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
       poster_url: result.poster_url,
       release_date: result.release_date || null,
       overview: result.description || null,
+      watched: shouldMarkAsWatched,
     });
     setShowSearchModal(false);
   };
 
   // Toggle watched status
-  const handleToggleWatched = (id: string) => {
-    void toggleWatched.mutateAsync(id);
+  const handleToggleWatched = async (id: string) => {
+    await toggleWatched.mutateAsync(id);
   };
 
   // Remove from watch list
-  const handleRemoveFromWatchList = (id: string) => {
-    void deleteFromWatchlist.mutateAsync(id);
+  const handleRemoveFromWatchList = async (id: string) => {
+    await deleteFromWatchlist.mutateAsync(id);
   };
 
   // Filter and sort watch list
@@ -396,7 +400,7 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
                       setMovieToRecommend(item);
                       setShowSendModal(true);
                     }}
-                    className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
+                    className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
                     aria-label="Recommend to friends"
                     title="Recommend"
                   >
@@ -499,7 +503,7 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
                     setMovieToRecommend(item);
                     setShowSendModal(true);
                   }}
-                  className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
+                  className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
                   aria-label="Recommend to friends"
                   title="Recommend"
                 >
@@ -583,8 +587,8 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
           isOpen={!!selectedMovie}
           onClose={() => setSelectedMovie(null)}
           item={selectedMovie}
-          onToggleWatched={handleToggleWatched}
-          onRemove={handleRemoveFromWatchList}
+          _onToggleWatched={handleToggleWatched}
+          _onRemove={handleRemoveFromWatchList}
         />
       )}
       {/* Import Media Modal */}

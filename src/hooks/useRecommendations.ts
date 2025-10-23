@@ -234,3 +234,24 @@ export function useUpdateRecipientNote(_mediaTypeKey: MediaTypeKey) {
     },
   });
 }
+
+/**
+ * Generic mutation to mark all pending recommendations as opened
+ */
+export function useMarkRecommendationsAsOpened(_mediaTypeKey: MediaTypeKey) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => recommendationsService.markAllPendingAsOpened(),
+    onSuccess: () => {
+      // Invalidate dashboard stats to update badge count
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.dashboard.all,
+      });
+      // Invalidate recommendations to refresh opened_at timestamps
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.recommendations.all,
+      });
+    },
+  });
+}

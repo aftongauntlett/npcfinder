@@ -11,6 +11,9 @@ export interface DetailedMediaInfo {
   release_date: string | null;
   overview: string | null;
   director: string | null;
+  producer: string | null;
+  cinematographer: string | null;
+  writer: string | null;
   cast: string[];
   genres: string[];
   vote_average: number | null;
@@ -67,25 +70,44 @@ export async function fetchDetailedMediaInfo(
 
     // Extract director (for movies) or creator (for TV shows)
     let director: string | null = null;
-    if (mediaType === "movie" && data.credits?.crew) {
-      const directorCredit = data.credits.crew.find(
-        (c) => c.job === "Director"
-      );
-      director = directorCredit?.name || null;
-    } else if (mediaType === "tv" && data.credits?.crew) {
-      // For TV, we might want the creator or showrunner
-      const creator = data.credits.crew.find(
-        (c) => c.job === "Creator" || c.job === "Executive Producer"
-      );
-      director = creator?.name || null;
+    let producer: string | null = null;
+    let cinematographer: string | null = null;
+    let writer: string | null = null;
+
+    if (data.credits?.crew) {
+      if (mediaType === "movie") {
+        director =
+          data.credits.crew.find((c) => c.job === "Director")?.name || null;
+        producer =
+          data.credits.crew.find((c) => c.job === "Producer")?.name || null;
+        cinematographer =
+          data.credits.crew.find((c) => c.job === "Director of Photography")
+            ?.name || null;
+        writer =
+          data.credits.crew.find(
+            (c) => c.job === "Screenplay" || c.job === "Writer"
+          )?.name || null;
+      } else {
+        // For TV shows
+        director =
+          data.credits.crew.find(
+            (c) => c.job === "Creator" || c.job === "Executive Producer"
+          )?.name || null;
+        producer =
+          data.credits.crew.find((c) => c.job === "Producer")?.name || null;
+        cinematographer =
+          data.credits.crew.find((c) => c.job === "Director of Photography")
+            ?.name || null;
+        writer =
+          data.credits.crew.find((c) => c.job === "Writer")?.name || null;
+      }
     }
 
     // Extract genres
     const genres = data.genres?.map((g) => g.name) || [];
 
-    // Extract top cast (first 5 actors)
-    const cast =
-      data.credits?.cast?.slice(0, 5).map((actor) => actor.name) || [];
+    // Extract ALL cast members (not just first 5)
+    const cast = data.credits?.cast?.map((actor) => actor.name) || [];
 
     // Detect prestigious awards based on ratings and popularity
     // Note: TMDB doesn't provide Emmy/Oscar data directly, but we can infer quality
@@ -118,6 +140,9 @@ export async function fetchDetailedMediaInfo(
       release_date: data.release_date || data.first_air_date || null,
       overview: data.overview || null,
       director,
+      producer,
+      cinematographer,
+      writer,
       cast,
       genres,
       vote_average: data.vote_average || null,

@@ -132,7 +132,7 @@ export function MediaRecommendationsLayout<T extends BaseRecommendation>({
 
         <button
           onClick={() => onViewChange("sent")}
-          className="bg-white dark:bg-gray-800 rounded-lg p-6 text-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+          className="bg-white dark:bg-gray-800 rounded-lg p-6 text-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
           aria-label="View recommendations you sent"
         >
           <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">

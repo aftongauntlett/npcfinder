@@ -374,7 +374,7 @@ export default function ImportMediaModal({
                         key={index}
                         className={
                           selectedResults.has(index)
-                            ? "bg-blue-50 dark:bg-blue-900/20"
+                            ? "bg-primary/10 dark:bg-primary/20"
                             : ""
                         }
                       >

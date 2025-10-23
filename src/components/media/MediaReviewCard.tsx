@@ -105,9 +105,9 @@ export function MediaReviewCard({
             {onTogglePrivacy && (
               <button
                 onClick={() => onTogglePrivacy(!review.is_public)}
-                className={`p-1.5 transition-colors rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`p-1.5 transition-colors rounded focus:outline-none focus:ring-2 focus:ring-primary ${
                   review.is_public
-                    ? "text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                    ? "text-primary hover:text-primary-dark"
                     : "text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                 }`}
                 aria-label={
@@ -126,7 +126,7 @@ export function MediaReviewCard({
             {onEdit && (
               <button
                 onClick={onEdit}
-                className="p-1.5 text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="p-1.5 text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary transition-colors rounded focus:outline-none focus:ring-2 focus:ring-primary"
                 aria-label="Edit review"
               >
                 <Edit2 className="w-4 h-4" />
@@ -200,7 +200,7 @@ export function MediaReviewCard({
           {isLongReview && (
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="text-sm text-blue-600 dark:text-blue-400 hover:underline mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+              className="text-sm text-primary hover:underline mt-1 focus:outline-none focus:ring-2 focus:ring-primary rounded"
             >
               {isExpanded ? "Show less" : "Read more"}
             </button>

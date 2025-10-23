@@ -87,4 +87,10 @@ export const queryKeys = {
     byMedia: (externalId: string, mediaType: string) =>
       [...queryKeys.reviews.all, "media", externalId, mediaType] as const,
   },
+
+  // Dashboard
+  dashboard: {
+    all: ["dashboard"] as const,
+    stats: () => [...queryKeys.dashboard.all, "stats"] as const,
+  },
 };

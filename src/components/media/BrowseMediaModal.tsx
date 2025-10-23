@@ -155,13 +155,13 @@ export function BrowseMediaModal({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={getPlaceholder()}
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                  className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors"
                 />
               </div>
               <button
                 type="submit"
                 disabled={loading || !searchQuery.trim()}
-                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium rounded-lg transition-colors disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-6 py-3 bg-primary hover:bg-primary-dark disabled:bg-gray-400 text-white font-medium rounded-lg transition-colors disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {loading ? (
                   <>
@@ -182,7 +182,7 @@ export function BrowseMediaModal({
           <div className="flex-1 overflow-y-auto p-6">
             {loading ? (
               <div className="flex items-center justify-center h-full">
-                <Loader className="animate-spin text-blue-600" size={48} />
+                <Loader className="animate-spin text-primary" size={48} />
               </div>
             ) : searchResults.length > 0 ? (
               mediaType === "music" ? (
@@ -232,19 +232,13 @@ export function BrowseMediaModal({
                       <button
                         onClick={() => void handleAdd(item)}
                         disabled={addingIds.has(item.id)}
-                        className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white text-sm font-medium rounded-full transition-colors disabled:cursor-not-allowed flex items-center gap-2 opacity-0 group-hover:opacity-100"
+                        className="px-3 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white text-sm font-medium rounded-full transition-colors disabled:cursor-not-allowed flex items-center gap-2 opacity-0 group-hover:opacity-100"
                         aria-label={`Add ${item.title} to collection`}
                       >
                         {addingIds.has(item.id) ? (
-                          <>
-                            <Loader className="animate-spin" size={16} />
-                            Adding...
-                          </>
+                          <Loader className="animate-spin" size={16} />
                         ) : (
-                          <>
-                            <Plus size={16} />
-                            Add
-                          </>
+                          <Plus size={20} />
                         )}
                       </button>
                     </div>

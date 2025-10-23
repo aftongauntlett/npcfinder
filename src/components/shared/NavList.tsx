@@ -77,9 +77,9 @@ const NavList: React.FC<NavListProps> = ({
                         <li key={subItem.id}>
                           <button
                             onClick={() => onNavigate(subItem.path)}
-                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
+                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
                               subActive
-                                ? "bg-blue-500/20 text-blue-400 dark:bg-blue-500/30 dark:text-blue-300 font-medium"
+                                ? "bg-primary/20 text-primary font-medium"
                                 : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                             }`}
                             aria-label={subItem.label}

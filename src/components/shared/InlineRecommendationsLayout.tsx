@@ -141,7 +141,7 @@ export function InlineRecommendationsLayout<T extends BaseRecommendation>({
 
         <button
           onClick={() => toggleSection("sent")}
-          className={`bg-white dark:bg-gray-800 rounded-lg p-6 text-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+          className={`bg-white dark:bg-gray-800 rounded-lg p-6 text-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
             expandedSection === "sent"
               ? ""
               : "hover:bg-gray-50 dark:hover:bg-gray-700"

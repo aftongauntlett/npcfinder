@@ -110,7 +110,7 @@ export function MediaReviewForm({
               onClick={() => setRating(rating === star ? null : star)}
               onMouseEnter={() => setHoveredRating(star)}
               onMouseLeave={() => setHoveredRating(null)}
-              className="transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+              className="transition-colors focus:outline-none focus:ring-2 focus:ring-primary rounded"
               aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
             >
               <Star
@@ -143,7 +143,7 @@ export function MediaReviewForm({
           <button
             type="button"
             onClick={() => setLiked(liked === true ? null : true)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-primary ${
               liked === true
                 ? "bg-green-50 dark:bg-green-900/20 border-green-500 dark:border-green-500 text-green-700 dark:text-green-400"
                 : "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-green-500"
@@ -157,7 +157,7 @@ export function MediaReviewForm({
           <button
             type="button"
             onClick={() => setLiked(liked === false ? null : false)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-primary ${
               liked === false
                 ? "bg-red-50 dark:bg-red-900/20 border-red-500 dark:border-red-500 text-red-700 dark:text-red-400"
                 : "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-red-500"
@@ -205,7 +205,7 @@ export function MediaReviewForm({
         <button
           type="button"
           onClick={() => setIsPublic(!isPublic)}
-          className={`flex items-center gap-3 px-4 py-3 rounded-lg border transition-colors w-full focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+          className={`flex items-center gap-3 px-4 py-3 rounded-lg border transition-colors w-full focus:outline-none focus:ring-2 focus:ring-primary ${
             isPublic
               ? "bg-green-50 dark:bg-green-900/20 border-green-500 dark:border-green-500"
               : "bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600"
@@ -277,7 +277,7 @@ export function MediaReviewForm({
           value={watchedAt}
           onChange={(e) => setWatchedAt(e.target.value)}
           max={new Date().toISOString().split("T")[0]}
-          className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
         />
       </div>
 

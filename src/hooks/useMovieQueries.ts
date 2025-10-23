@@ -11,6 +11,7 @@ import {
   useDeleteRec,
   useUpdateSenderNote as useUpdateSenderNoteGeneric,
   useUpdateRecipientNote as useUpdateRecipientNoteGeneric,
+  useMarkRecommendationsAsOpened as useMarkRecommendationsAsOpenedGeneric,
 } from "./useRecommendations";
 
 /**
@@ -62,4 +63,11 @@ export function useUpdateSenderNote() {
  */
 export function useUpdateRecipientNote() {
   return useUpdateRecipientNoteGeneric("movies-tv");
+}
+
+/**
+ * Mark all pending recommendations as opened (for badge dismissal)
+ */
+export function useMarkMovieRecommendationsAsOpened() {
+  return useMarkRecommendationsAsOpenedGeneric("movies-tv");
 }

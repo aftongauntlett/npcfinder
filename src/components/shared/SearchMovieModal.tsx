@@ -159,33 +159,29 @@ const SearchMovieModal: React.FC<SearchMovieModalProps> = ({
                   </div>
 
                   {/* Add Button */}
-                  <Button
+                  <button
                     onClick={() => handleAddClick(result)}
                     disabled={alreadyAdded}
-                    variant={alreadyAdded ? "secondary" : "primary"}
-                    size="sm"
-                    icon={
-                      alreadyAdded ? (
-                        <Check className="w-4 h-4" />
-                      ) : (
-                        <Plus className="w-4 h-4" />
-                      )
+                    className={`p-2 rounded-lg transition-colors ${
+                      alreadyAdded
+                        ? "bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 cursor-not-allowed"
+                        : "bg-green-600 hover:bg-green-700 text-white"
+                    }`}
+                    aria-label={
+                      alreadyAdded ? "Already added" : "Add to watchlist"
                     }
                   >
-                    {alreadyAdded ? "Added" : "Add"}
-                  </Button>
+                    {alreadyAdded ? (
+                      <Check className="w-5 h-5" />
+                    ) : (
+                      <Plus className="w-5 h-5" />
+                    )}
+                  </button>
                 </div>
               );
             })}
           </div>
         )}
-      </div>
-
-      {/* Footer */}
-      <div className="flex gap-3 justify-end p-6 border-t border-gray-200 dark:border-gray-700">
-        <Button onClick={onClose} variant="danger">
-          Close
-        </Button>
       </div>
     </Modal>
   );
