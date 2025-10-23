@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import type { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -14,6 +14,7 @@ import ColorThemePicker from "../settings/ColorThemePicker";
 import { cards } from "../../data/dashboardCards";
 import { DEFAULT_THEME_COLOR } from "../../styles/colorThemes";
 import { useTheme } from "../../hooks/useTheme";
+import { useNavigationBlock } from "../../hooks/useNavigationBlock";
 
 interface UserSettingsProps {
   currentUser: User;
@@ -48,6 +49,16 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [message, setMessage] = useState<Message | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
+  const pendingNavigationRef = useRef<string | null>(null);
+  const initialProfileRef = useRef<ProfileData | null>(null);
+
+  // Warn before closing browser/tab with unsaved changes
+  // Note: This doesn't block sidebar/back button navigation automatically.
+  // For that, we'd need to migrate App.tsx to use createBrowserRouter.
+  // Current approach: warn on close, require manual confirmation for nav buttons.
+  useNavigationBlock({ when: hasUnsavedChanges });
 
   useEffect(() => {
     void loadProfile();
@@ -78,12 +89,14 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
         logger.error("Error loading profile:", error);
         setMessage({ type: "error", text: "Failed to load profile" });
       } else if (data) {
-        setProfile({
+        const loadedProfile = {
           display_name: data.display_name || currentUser.email || "",
           bio: data.bio || "",
           visible_cards: data.visible_cards || allCardIds,
           theme_color: data.theme_color || DEFAULT_THEME_COLOR,
-        });
+        };
+        setProfile(loadedProfile);
+        initialProfileRef.current = loadedProfile;
 
         // Apply theme color immediately
         if (data.theme_color) {
@@ -114,7 +127,40 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
       ...prev,
       [name]: value,
     }));
+    setHasUnsavedChanges(true);
     setMessage(null);
+  };
+
+  const handleThemeColorChange = (color: string) => {
+    setProfile((prev) => ({
+      ...prev,
+      theme_color: color,
+    }));
+    setHasUnsavedChanges(true);
+    setMessage(null);
+  };
+
+  const handleNavigateAway = (path: string) => {
+    if (hasUnsavedChanges) {
+      pendingNavigationRef.current = path;
+      setShowConfirmDialog(true);
+    } else {
+      void navigate(path);
+    }
+  };
+
+  const confirmNavigation = () => {
+    setHasUnsavedChanges(false);
+    setShowConfirmDialog(false);
+    if (pendingNavigationRef.current) {
+      void navigate(pendingNavigationRef.current);
+      pendingNavigationRef.current = null;
+    }
+  };
+
+  const cancelNavigation = () => {
+    setShowConfirmDialog(false);
+    pendingNavigationRef.current = null;
   };
 
   const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -133,6 +179,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
         // Save theme color to localStorage
         localStorage.setItem("themeColor", profile.theme_color);
         changeThemeColor(profile.theme_color);
+        setHasUnsavedChanges(false);
         setMessage({ type: "success", text: "Settings saved locally!" });
         // Navigate back to dashboard after successful save
         setTimeout(() => {
@@ -148,6 +195,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
 
         // Apply theme color immediately after save
         changeThemeColor(profile.theme_color);
+        setHasUnsavedChanges(false);
         setMessage({ type: "success", text: "Profile updated successfully!" });
         // Navigate back to dashboard after successful save
         setTimeout(() => {
@@ -159,6 +207,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
       // Fall back to localStorage
       localStorage.setItem("themeColor", profile.theme_color);
       changeThemeColor(profile.theme_color);
+      setHasUnsavedChanges(false);
       setMessage({ type: "success", text: "Settings saved locally!" });
       setTimeout(() => {
         void navigate("/app");
@@ -191,6 +240,29 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
         title="Profile Settings"
         description="Customize your profile and dashboard preferences"
       >
+        {/* Unsaved Changes Confirmation Dialog */}
+        {showConfirmDialog && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Unsaved Changes
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                You have unsaved changes. Are you sure you want to leave? Your
+                changes will be lost.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <Button variant="secondary" onClick={cancelNavigation}>
+                  Stay on Page
+                </Button>
+                <Button variant="danger" onClick={confirmNavigation}>
+                  Leave Without Saving
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Message */}
         {message && (
           <div
@@ -261,10 +333,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
           <div className="bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700/50 dark:border-gray-700/50">
             <ColorThemePicker
               selectedColor={profile.theme_color}
-              onColorChange={(color) => {
-                setProfile((prev) => ({ ...prev, theme_color: color }));
-                setMessage(null);
-              }}
+              onColorChange={handleThemeColorChange}
             />
           </div>
 
@@ -274,7 +343,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
               <Button
                 type="button"
                 variant="danger"
-                onClick={() => void navigate("/app")}
+                onClick={() => handleNavigateAway("/app")}
               >
                 Cancel
               </Button>

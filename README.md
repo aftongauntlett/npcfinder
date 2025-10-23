@@ -143,22 +143,22 @@ See [services/README.md](src/services/README.md) for service layer documentation
 
 ### Getting Started
 
-- [Quick Start Guide](01-QUICK-START.md)
-- [Database Migrations](02-DATABASE-MIGRATIONS.md)
-- [API Setup](03-API-SETUP.md)
-- [Invite System](04-INVITE-SYSTEM-QUICKSTART.md)
+- [Quick Start Guide](docs/QUICK-START.md)
+- [Database Migrations](docs/DATABASE-MIGRATIONS.md)
+- [API Setup](docs/API-SETUP.md)
+- [Invite System](docs/INVITE-SYSTEM-QUICKSTART.md)
 
 ### Architecture & Testing
 
-- [Testing Strategy](05-TESTING-STRATEGY.md)
-- [Performance Audit](06-PERFORMANCE-AUDIT.md)
+- [Testing Strategy](docs/TESTING-STRATEGY.md)
+- [Performance Audit](docs/PERFORMANCE-AUDIT.md)
 - [Services Layer](src/services/README.md)
 
 ### Privacy & Security
 
-- [Privacy Reality Check](07-PRIVACY-REALITY-CHECK.md)
-- [Security Recommendations](08-SECURITY-RECOMMENDATIONS-REVIEW.md)
-- [Future: E2E Encryption](09-FUTURE-E2E-ENCRYPTION.md)
+- [Privacy Reality Check](docs/PRIVACY-REALITY-CHECK.md)
+- [Security Recommendations](docs/SECURITY-RECOMMENDATIONS-REVIEW.md)
+- [Future: E2E Encryption](docs/FUTURE-E2E-ENCRYPTION.md)
 
 ## Privacy & Security
 
@@ -209,7 +209,7 @@ Without your credentials, they cannot access your database. This is standard for
   - Requires: Supabase Pro plan or higher
   - Recommended: Enable in production environments
 
-See [Security Recommendations](08-SECURITY-RECOMMENDATIONS-REVIEW.md) for complete security audit and hardening details.
+See [Security Recommendations](docs/SECURITY-RECOMMENDATIONS-REVIEW.md) for complete security audit and hardening details.
 
 **Cloning This Repo:**
 
@@ -224,7 +224,7 @@ See [Security Recommendations](08-SECURITY-RECOMMENDATIONS-REVIEW.md) for comple
 - Database admin can access data (on their own instance)
 - Supabase (hosting provider) can access data (on their own instance)
 
-See [Privacy Reality Check](07-PRIVACY-REALITY-CHECK.md) for full details.
+See [Privacy Reality Check](docs/PRIVACY-REALITY-CHECK.md) for full details.
 
 ## Development Patterns
 
@@ -302,7 +302,7 @@ npm test
 ```
 
 **Full Setup Guide:**
-See [Quick Start Guide](01-QUICK-START.md) for complete database setup, migrations, invite codes, and deployment instructions.
+See [Quick Start Guide](docs/QUICK-START.md) for complete database setup, migrations, invite codes, and deployment instructions.
 
 **Note:** Each installation uses its own Supabase instance. When you set up your own, you get a completely separate database—no connection to any other instance.
 

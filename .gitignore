@@ -21,7 +21,7 @@ coverage
 check-invite-codes.js
 
 # Ignore docs folder (development notes)
-docs/
+docs-private/
 
 # Copilot notes (AI-generated documentation)
 copilot-notes/
