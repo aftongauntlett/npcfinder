@@ -146,7 +146,7 @@ const SearchMovieModal: React.FC<SearchMovieModalProps> = ({
                   }
                 >
                   {/* Poster */}
-                  <div className="relative flex-shrink-0">
+                  <div className="flex-shrink-0">
                     {result.poster_url ? (
                       <img
                         src={result.poster_url}
@@ -162,13 +162,6 @@ const SearchMovieModal: React.FC<SearchMovieModalProps> = ({
                         )}
                       </div>
                     )}
-
-                    {/* Media Type Badge */}
-                    {resultMediaType === "tv" && (
-                      <span className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs font-semibold bg-purple-500 text-white rounded shadow-sm">
-                        TV
-                      </span>
-                    )}
                   </div>
 
                   {/* Info */}
@@ -176,11 +169,23 @@ const SearchMovieModal: React.FC<SearchMovieModalProps> = ({
                     <h3 className="font-medium text-gray-900 dark:text-white">
                       {result.title}
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {result.subtitle}
-                      {result.release_date &&
-                        ` • ${formatReleaseDate(result.release_date)}`}
-                    </p>
+                    <div className="flex flex-col gap-1 mt-1">
+                      {result.release_date && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {formatReleaseDate(result.release_date)}
+                        </p>
+                      )}
+                      {/* Media Type Chip */}
+                      <span
+                        className={`inline-flex items-center self-start px-2 py-0.5 text-xs font-medium rounded ${
+                          resultMediaType === "tv"
+                            ? "bg-purple-100/80 dark:bg-purple-500/20 text-purple-800 dark:text-purple-200"
+                            : "bg-blue-100/80 dark:bg-blue-500/20 text-blue-800 dark:text-blue-200"
+                        }`}
+                      >
+                        {resultMediaType === "tv" ? "TV Show" : "Movie"}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Add Icon - Shows on hover or when already added */}
