@@ -32,6 +32,7 @@ import { formatReleaseDate } from "../../utils/dateFormatting";
 
 type FilterType = "all" | "to-watch" | "watched";
 type SortType = "date-added" | "title" | "year" | "rating";
+type MediaTypeFilter = "all" | "movie" | "tv";
 
 interface PersonalWatchListProps {
   initialFilter?: FilterType;
@@ -50,6 +51,8 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
 
   // Filter is controlled by tabs (initialFilter prop), not by dropdown
   const [filter] = useState<FilterType>(initialFilter);
+  const [mediaTypeFilter, setMediaTypeFilter] =
+    useState<MediaTypeFilter>("all");
   const [sortBy, setSortBy] = useState<SortType>("date-added");
   const [viewMode, setViewMode] = useViewMode("grid");
   const [showSearchModal, setShowSearchModal] = useState(false);
@@ -91,12 +94,17 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
 
   // Filter and sort watch list
   const getFilteredAndSortedList = () => {
-    // Filter
+    // Filter by watched status
     let filtered = watchList.filter((item) => {
       if (filter === "to-watch") return !item.watched;
       if (filter === "watched") return item.watched;
       return true;
     });
+
+    // Filter by media type
+    if (mediaTypeFilter !== "all") {
+      filtered = filtered.filter((item) => item.media_type === mediaTypeFilter);
+    }
 
     // Sort
     filtered = [...filtered].sort((a, b) => {
@@ -136,6 +144,44 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Media Type Filter Chips */}
+      {hasItemsForCurrentFilter && (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setMediaTypeFilter("all")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+              mediaTypeFilter === "all"
+                ? "bg-primary text-white"
+                : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+            }`}
+          >
+            All Media
+          </button>
+          <button
+            onClick={() => setMediaTypeFilter("tv")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+              mediaTypeFilter === "tv"
+                ? "bg-purple-500/20 text-purple-700 dark:text-purple-200 ring-2 ring-purple-500/50"
+                : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+            }`}
+          >
+            <Tv className="w-4 h-4" />
+            TV Shows
+          </button>
+          <button
+            onClick={() => setMediaTypeFilter("movie")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+              mediaTypeFilter === "movie"
+                ? "bg-blue-500/20 text-blue-700 dark:text-blue-200 ring-2 ring-blue-500/50"
+                : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+            }`}
+          >
+            <Film className="w-4 h-4" />
+            Movies
+          </button>
+        </div>
+      )}
+
       {/* Header with Sort, View Toggle, Add/Import Buttons - Only show if there are items for current filter */}
       {hasItemsForCurrentFilter && (
         <>
