@@ -1,31 +1,68 @@
-import { Star } from "lucide-react";
-
 interface MovieRatingProps {
-  rating: number;
-  voteCount?: number;
+  rottenTomatoesScore?: string | null;
+  metacriticScore?: string | null;
+  imdbRating?: string | null;
 }
 
-export function MovieRating({ rating, voteCount }: MovieRatingProps) {
+export function MovieRating({
+  rottenTomatoesScore,
+  metacriticScore,
+  imdbRating,
+}: MovieRatingProps) {
+  // If no ratings available, don't render anything
+  if (!rottenTomatoesScore && !metacriticScore && !imdbRating) {
+    return null;
+  }
+
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex items-center gap-1.5">
-        <Star
-          className="w-4 h-4 text-gray-400 dark:text-gray-500"
-          aria-hidden="true"
-        />
-        <span className="text-lg font-semibold text-gray-900 dark:text-white">
-          {rating.toFixed(1)}
-        </span>
-        <span className="text-sm text-gray-500 dark:text-gray-400">/ 10</span>
-        <span className="text-xs text-gray-400 dark:text-gray-500">•</span>
-        <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-          TMDB
-        </span>
-      </div>
-      {voteCount && (
-        <span className="text-xs text-gray-500 dark:text-gray-400">
-          {voteCount.toLocaleString()} votes
-        </span>
+    <div className="flex flex-wrap items-center gap-6">
+      {/* Rotten Tomatoes Score */}
+      {rottenTomatoesScore && (
+        <div className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            Rotten Tomatoes
+          </span>
+          <div className="flex items-baseline gap-1">
+            <span className="text-2xl font-semibold text-gray-900 dark:text-white">
+              {rottenTomatoesScore}
+            </span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">%</span>
+          </div>
+        </div>
+      )}
+
+      {/* Metacritic Score */}
+      {metacriticScore && (
+        <div className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            Metacritic
+          </span>
+          <div className="flex items-baseline gap-1">
+            <span className="text-2xl font-semibold text-gray-900 dark:text-white">
+              {metacriticScore}
+            </span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              /100
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* IMDb Rating */}
+      {imdbRating && (
+        <div className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            IMDb
+          </span>
+          <div className="flex items-baseline gap-1">
+            <span className="text-2xl font-semibold text-gray-900 dark:text-white">
+              {imdbRating}
+            </span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              /10
+            </span>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, Award, DollarSign } from "lucide-react";
 import Modal from "../shared/Modal";
 import Button from "../shared/Button";
 import { MoviePoster } from "./movie/MoviePoster";
@@ -27,6 +27,7 @@ import {
   useDeleteMediaReview,
 } from "../../hooks/useSimpleMediaReviews";
 import { useAuth } from "../../contexts/AuthContext";
+import { getGenreColor } from "../../utils/genreColors";
 
 interface MovieDetailModalProps {
   isOpen: boolean;
@@ -255,7 +256,9 @@ export default function MovieDetailModal({
                       <span
                         key={genre}
                         role="listitem"
-                        className="px-3 py-1.5 text-xs font-medium rounded-full bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-light border border-primary/20 dark:border-primary/30"
+                        className={`px-3 py-1.5 text-xs font-medium rounded-full ${getGenreColor(
+                          genre
+                        )}`}
                       >
                         {genre}
                       </span>
@@ -264,13 +267,11 @@ export default function MovieDetailModal({
                 )}
 
                 {/* Rating */}
-                {details?.vote_average !== null &&
-                  details?.vote_average !== undefined && (
-                    <MovieRating
-                      rating={details.vote_average}
-                      voteCount={details.vote_count ?? undefined}
-                    />
-                  )}
+                <MovieRating
+                  rottenTomatoesScore={details?.rotten_tomatoes_score}
+                  metacriticScore={details?.metacritic_score}
+                  imdbRating={details?.imdb_rating}
+                />
 
                 {/* Crew */}
                 <MovieCrewInfo
@@ -300,25 +301,53 @@ export default function MovieDetailModal({
               <MovieCastList cast={details.cast} />
             )}
 
-            {/* Awards */}
-            {details?.awards && details.awards.length > 0 && (
+            {/* Awards - OMDB Data */}
+            {details?.awards_text && (
               <div>
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">
-                  Recognition
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">
+                  <Award className="w-4 h-4" />
+                  Awards
                 </h3>
-                <div className="flex flex-wrap gap-2" role="list">
-                  {details.awards.map((award, index) => (
-                    <span
-                      key={index}
-                      role="listitem"
-                      className="px-3 py-1.5 text-sm bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg font-medium border border-purple-200 dark:border-purple-800"
-                    >
-                      {award}
-                    </span>
-                  ))}
-                </div>
+                <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+                  {details.awards_text}
+                </p>
               </div>
             )}
+
+            {/* Box Office */}
+            {details?.box_office && (
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">
+                  <DollarSign className="w-4 h-4" />
+                  Box Office
+                </h3>
+                <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {details.box_office}
+                </p>
+              </div>
+            )}
+
+            {/* Recognition Badges (old system - keep as fallback) */}
+            {details?.awards &&
+              details.awards.length > 0 &&
+              !details.awards_text && (
+                <div>
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">
+                    Recognition
+                  </h3>
+                  <div className="flex flex-wrap gap-2" role="list">
+                    {details.awards.map((award, index) => (
+                      <span
+                        key={index}
+                        role="listitem"
+                        className="px-3 py-1.5 text-sm bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg font-medium border border-purple-200 dark:border-purple-800"
+                      >
+                        {award}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
             {/* Review Form */}
             <MovieReviewForm
