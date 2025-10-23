@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   Plus,
   X,
@@ -11,6 +11,8 @@ import {
   ChevronDown,
   Send,
   Upload,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { MediaItem } from "../shared/SendMediaModal";
 import SearchMovieModal from "../shared/SearchMovieModal";
@@ -64,6 +66,10 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
   const [showSendModal, setShowSendModal] = useState(false);
   const [movieToRecommend, setMovieToRecommend] =
     useState<WatchlistItem | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [showItemsPerPageMenu, setShowItemsPerPageMenu] = useState(false);
+  const topRef = useRef<HTMLDivElement>(null);
 
   // Add to watch list
   const handleAddToWatchList = (result: MediaItem) => {
@@ -134,6 +140,18 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
   const toWatchCount = watchList.filter((item) => !item.watched).length;
   const watchedCount = watchList.filter((item) => item.watched).length;
 
+  // Pagination logic
+  const totalItems = filteredWatchList.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedWatchList = filteredWatchList.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, mediaTypeFilter, sortBy, itemsPerPage]);
+
   // Determine if we should show controls based on current filter context
   const hasItemsForCurrentFilter =
     filter === "all"
@@ -143,7 +161,7 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
       : watchedCount > 0;
 
   return (
-    <div className="space-y-6">
+    <div ref={topRef} className="space-y-6">
       {/* Media Type Filter Chips */}
       {hasItemsForCurrentFilter && (
         <div className="flex items-center gap-2">
@@ -370,7 +388,7 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
       ) : viewMode === "grid" ? (
         // Grid View
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {filteredWatchList.map((item) => (
+          {paginatedWatchList.map((item) => (
             <div
               key={item.id}
               onClick={() => setSelectedMovie(item)}
@@ -490,7 +508,7 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
       ) : (
         // List View
         <div className="space-y-2">
-          {filteredWatchList.map((item) => (
+          {paginatedWatchList.map((item) => (
             <div
               key={item.id}
               onClick={() => setSelectedMovie(item)}
@@ -588,6 +606,89 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
           ))}
         </div>
       )}
+
+      {/* Pagination Controls */}
+      {hasItemsForCurrentFilter && totalPages > 1 && (
+        <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+          {/* Items per page with total count */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              Show:
+            </span>
+            <div className="relative">
+              <button
+                onClick={() => setShowItemsPerPageMenu(!showItemsPerPageMenu)}
+                className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <span>{itemsPerPage}</span>
+                <ChevronDown className="w-4 h-4 text-gray-500" />
+              </button>
+
+              {showItemsPerPageMenu && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setShowItemsPerPageMenu(false)}
+                  />
+                  <div className="absolute bottom-full left-0 mb-2 w-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-20 py-1 overflow-hidden">
+                    {[10, 25, 50, 100].map((size) => (
+                      <button
+                        key={size}
+                        onClick={() => {
+                          setItemsPerPage(size);
+                          setShowItemsPerPageMenu(false);
+                        }}
+                        className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
+                          itemsPerPage === size
+                            ? "bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-semibold"
+                            : "text-gray-700 dark:text-gray-300"
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              per page ({totalItems} total)
+            </span>
+          </div>
+
+          {/* Page info and navigation */}
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              Page {currentPage} of {totalPages}
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => {
+                  setCurrentPage((prev) => Math.max(1, prev - 1));
+                  topRef.current?.scrollIntoView({ behavior: "smooth" });
+                }}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                aria-label="Previous page"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => {
+                  setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+                  topRef.current?.scrollIntoView({ behavior: "smooth" });
+                }}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                aria-label="Next page"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Search Modal */}
       <SearchMovieModal
         isOpen={showSearchModal}
