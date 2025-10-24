@@ -10,11 +10,14 @@ import Button from "./Button";
 export interface MediaItem {
   external_id: string;
   title: string;
-  subtitle?: string; // artist for music, director for movies, author for books, developer for games
+  subtitle?: string; // artist for music, director for movies, developer for games
+  authors?: string; // for books (plural to match Google Books API - comma-separated string)
   poster_url: string | null;
   release_date?: string | null;
   description?: string | null;
   media_type?: string; // track/album for music, movie/tv for movies, etc.
+  page_count?: number; // for books
+  isbn?: string; // for books
 }
 
 // Friend interface
@@ -38,8 +41,9 @@ interface SendMediaModalProps {
   searchFunction: (query: string) => Promise<MediaItem[]>;
 
   // Recommendation type options (e.g., listen/watch for music, watch/rewatch for movies)
-  recommendationTypes: Array<{ value: string; label: string }>;
-  defaultRecommendationType: string;
+  // Optional - if not provided, won't show recommendation type selector
+  recommendationTypes?: Array<{ value: string; label: string }>;
+  defaultRecommendationType?: string;
 
   // Optional: Preselected item (skips search step)
   preselectedItem?: MediaItem;
@@ -433,7 +437,8 @@ export default function SendMediaModal({
         {step === "details" && (
           <div className="space-y-4">
             {/* Only show recommendation type selector if there are types AND it's relevant for this media */}
-            {recommendationTypes.length > 0 &&
+            {recommendationTypes &&
+              recommendationTypes.length > 0 &&
               // For movies, only show if it's a TV show
               (mediaType !== "movies" || selectedItem?.media_type === "tv") && (
                 <div>

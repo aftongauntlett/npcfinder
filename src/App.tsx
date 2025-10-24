@@ -18,6 +18,9 @@ const Sidebar = React.lazy(() => import("./components/shared/Sidebar"));
 const MoviesPage = React.lazy(
   () => import("./components/pages/movies/MoviesPage")
 );
+const BooksPage = React.lazy(
+  () => import("./components/pages/books/BooksPage")
+);
 const Music = React.lazy(() => import("./components/pages/Music"));
 const UserSettings = React.lazy(
   () => import("./components/pages/UserSettings")
@@ -90,6 +93,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ user }) => {
 
             {/* Movies & TV - consolidated single route */}
             <Route path="/movies" element={<MoviesPage />} />
+
+            {/* Books - consolidated single route */}
+            <Route path="/books" element={<BooksPage />} />
 
             <Route path="/music" element={<Music />} />
             <Route

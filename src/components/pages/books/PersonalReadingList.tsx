@@ -1,7 +1,6 @@
 import React, { useState, useRef } from "react";
 import {
   Plus,
-  X,
   BookOpen,
   List,
   Check,
@@ -10,7 +9,6 @@ import {
   Upload,
   ChevronLeft,
   ChevronRight,
-  Lightbulb,
 } from "lucide-react";
 import { MediaItem } from "../../shared/SendMediaModal";
 import SearchBookModal from "../../shared/SearchBookModal";
@@ -18,6 +16,7 @@ import BookDetailModal from "./BookDetailModal";
 import ImportBooksModal from "./ImportBooksModal";
 import Button from "../../shared/Button";
 import MediaEmptyState from "../../media/MediaEmptyState";
+import MediaListItem from "../../media/MediaListItem";
 import SendMediaModal from "../../shared/SendMediaModal";
 import Toast from "../../ui/Toast";
 import { searchBooks } from "../../../utils/bookSearchAdapters";
@@ -78,7 +77,7 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
     void addToReadingList.mutateAsync({
       external_id: result.external_id,
       title: result.title,
-      author: result.author || null,
+      authors: result.authors || null,
       thumbnail_url: result.poster_url,
       published_date: result.release_date || null,
       description: result.description || null,
@@ -107,7 +106,7 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
       void addToReadingList.mutateAsync({
         external_id: lastDeletedItem.external_id,
         title: lastDeletedItem.title,
-        author: lastDeletedItem.author,
+        authors: lastDeletedItem.authors,
         thumbnail_url: lastDeletedItem.thumbnail_url,
         published_date: lastDeletedItem.published_date,
         description: lastDeletedItem.description,
@@ -203,71 +202,31 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
   return (
     <div ref={topRef} className="space-y-6">
       {/* Action Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex items-center justify-between gap-4">
+        {/* Left side: Sort and View Toggle */}
         <div className="flex items-center gap-3">
-          <Button
-            onClick={() => setShowSearchModal(true)}
-            variant="primary"
-            className="flex-shrink-0"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Book
-          </Button>
-          <Button
-            onClick={() => setShowImportModal(true)}
-            variant="secondary"
-            className="flex-shrink-0"
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            Import
-          </Button>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* View Toggle */}
-          <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
-            <button
-              onClick={() => setViewMode("grid")}
-              className={`p-2 rounded transition-colors ${
-                viewMode === "grid"
-                  ? "bg-white dark:bg-gray-700 shadow"
-                  : "hover:bg-gray-200 dark:hover:bg-gray-700"
-              }`}
-              aria-label="Grid view"
-            >
-              <Grid3x3 className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={`p-2 rounded transition-colors ${
-                viewMode === "list"
-                  ? "bg-white dark:bg-gray-700 shadow"
-                  : "hover:bg-gray-200 dark:hover:bg-gray-700"
-              }`}
-              aria-label="List view"
-            >
-              <List className="w-4 h-4" />
-            </button>
-          </div>
-
           {/* Sort Dropdown */}
           <div className="relative">
             <button
               onClick={() => setShowSortMenu(!showSortMenu)}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
-              <span className="text-sm">
-                {sortOptions.find((opt) => opt.value === sortBy)?.label}
+              <span className="font-medium">
+                {sortBy === "date-added" && "Sort: Date Added"}
+                {sortBy === "title" && "Sort: Title (A-Z)"}
+                {sortBy === "year" && "Sort: Year"}
+                {sortBy === "rating" && "Sort: Rating"}
               </span>
-              <ChevronDown className="w-4 h-4" />
+              <ChevronDown className="w-4 h-4 text-gray-500" />
             </button>
+
             {showSortMenu && (
               <>
                 <div
                   className="fixed inset-0 z-10"
                   onClick={() => setShowSortMenu(false)}
                 />
-                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-20">
+                <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-20 py-1 overflow-hidden">
                   {sortOptions.map((option) => (
                     <button
                       key={option.value}
@@ -275,12 +234,15 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
                         setSortBy(option.value);
                         setShowSortMenu(false);
                       }}
-                      className={`w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 first:rounded-t-lg last:rounded-b-lg ${
+                      className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
                         sortBy === option.value
-                          ? "text-primary dark:text-primary-light font-medium"
-                          : ""
+                          ? "bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-semibold"
+                          : "text-gray-700 dark:text-gray-300"
                       }`}
                     >
+                      {sortBy === option.value && (
+                        <Check className="w-4 h-4 inline-block mr-2 text-primary" />
+                      )}
                       {option.label}
                     </button>
                   ))}
@@ -288,6 +250,54 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
               </>
             )}
           </div>
+
+          {/* View Mode Toggle */}
+          <div className="flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+            <button
+              onClick={() => setViewMode("grid")}
+              className={`p-2 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+                viewMode === "grid"
+                  ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white"
+                  : "hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
+              }`}
+              title="Grid view"
+              aria-label="Switch to grid view"
+              aria-pressed={viewMode === "grid"}
+            >
+              <Grid3x3 className="w-4 h-4" aria-hidden="true" />
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={`p-2 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+                viewMode === "list"
+                  ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white"
+                  : "hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
+              }`}
+              title="List view"
+              aria-label="Switch to list view"
+              aria-pressed={viewMode === "list"}
+            >
+              <List className="w-4 h-4" aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+
+        {/* Right side: Add and Import Buttons */}
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={() => setShowSearchModal(true)}
+            variant="primary"
+            icon={<Plus className="w-4 h-4" />}
+          >
+            Add
+          </Button>
+          <Button
+            onClick={() => setShowImportModal(true)}
+            variant="secondary"
+            icon={<Upload className="w-4 h-4" />}
+          >
+            Import
+          </Button>
         </div>
       </div>
 
@@ -305,7 +315,7 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
               key={book.id}
               id={book.id}
               title={book.title}
-              author={book.author}
+              author={book.authors}
               thumbnailUrl={book.thumbnail_url}
               year={
                 book.published_date
@@ -321,63 +331,19 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
       ) : (
         <div className="space-y-2">
           {currentBooks.map((book) => (
-            <div
+            <MediaListItem
               key={book.id}
-              className="bg-white dark:bg-gray-800 rounded-lg p-4 hover:shadow-md transition-shadow flex items-center gap-4"
-            >
-              {/* Thumbnail */}
-              {book.thumbnail_url && (
-                <img
-                  src={book.thumbnail_url}
-                  alt={`${book.title} cover`}
-                  className="w-12 h-16 object-cover rounded flex-shrink-0"
-                />
-              )}
-
-              {/* Book Info */}
-              <div className="flex-1 min-w-0">
-                <button
-                  onClick={() => setSelectedBook(book)}
-                  className="text-left hover:text-primary dark:hover:text-primary-light"
-                >
-                  <h3 className="font-medium truncate">{book.title}</h3>
-                  {book.author && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                      {book.author}
-                    </p>
-                  )}
-                </button>
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleToggleRead(book.id)}
-                  className={`p-2 rounded-lg transition-colors ${
-                    book.read
-                      ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400"
-                      : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"
-                  }`}
-                  aria-label={book.read ? "Mark as unread" : "Mark as read"}
-                >
-                  <Check className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleRecommend(book)}
-                  className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
-                  aria-label="Recommend to friend"
-                >
-                  <Lightbulb className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleRemove(book)}
-                  className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
-                  aria-label="Remove from reading list"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+              id={book.id}
+              title={book.title}
+              subtitle={book.authors || undefined}
+              posterUrl={book.thumbnail_url || undefined}
+              description={book.description || undefined}
+              onClick={() => setSelectedBook(book)}
+              isCompleted={book.read}
+              onToggleComplete={(id) => void handleToggleRead(id as string)}
+              onRecommend={book.read ? () => handleRecommend(book) : undefined}
+              onRemove={() => handleRemove(book)}
+            />
           ))}
         </div>
       )}
@@ -489,15 +455,10 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
           tableName="book_recommendations"
           searchPlaceholder="Search for books..."
           searchFunction={searchBooks}
-          recommendationTypes={[
-            { value: "read", label: "Read" },
-            { value: "check-out", label: "Check Out" },
-          ]}
-          defaultRecommendationType="read"
           preselectedItem={{
             external_id: bookToRecommend.external_id,
             title: bookToRecommend.title,
-            author: bookToRecommend.author || undefined,
+            authors: bookToRecommend.authors || undefined,
             poster_url: bookToRecommend.thumbnail_url,
             release_date: bookToRecommend.published_date || undefined,
             description: bookToRecommend.description || undefined,

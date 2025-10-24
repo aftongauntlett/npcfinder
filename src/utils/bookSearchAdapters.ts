@@ -117,7 +117,7 @@ function convertGoogleBookToMediaItem(volume: GoogleBooksVolume): MediaItem {
   return {
     external_id: volume.id,
     title: info.title,
-    author: info.authors?.join(", "),
+    authors: info.authors?.join(", "), // Plural to match API
     poster_url: thumbnailUrl || null,
     release_date: info.publishedDate,
     description: info.description,

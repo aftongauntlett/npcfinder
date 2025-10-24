@@ -110,9 +110,9 @@ const BookDetailModal: React.FC<BookDetailModalProps> = ({
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                 {book.title}
               </h2>
-              {book.author && (
+              {book.authors && (
                 <p className="text-lg text-gray-600 dark:text-gray-400">
-                  by {book.author}
+                  by {book.authors}
                 </p>
               )}
             </div>

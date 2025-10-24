@@ -87,95 +87,111 @@ const SearchBookModal: React.FC<SearchBookModalProps> = ({
       {/* Results */}
       <div className="overflow-y-auto p-6 max-h-[60vh]">
         {searching && (
-          <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
+          <p className="text-center text-gray-500 py-8">Searching...</p>
         )}
 
-        {!searching && searchResults.length === 0 && searchQuery && (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            No books found. Try a different search term.
-          </div>
+        {!searching && searchQuery && searchResults.length === 0 && (
+          <p className="text-center text-gray-500 py-8">
+            No results found. Try a different search.
+          </p>
         )}
 
-        {!searching && searchResults.length === 0 && !searchQuery && (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>Search for books by title, author, or ISBN</p>
-          </div>
+        {!searching && !searchQuery && (
+          <p className="text-center text-gray-500 py-8">
+            Start typing to search for books
+          </p>
         )}
 
-        <div className="space-y-3">
-          {searchResults.map((result) => {
-            const alreadyAdded = isAlreadyAdded(result.external_id);
+        {searchResults.length > 0 && (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+              Found {searchResults.length} results
+            </p>
+            {searchResults.map((result) => {
+              const alreadyAdded = isAlreadyAdded(result.external_id);
 
-            return (
-              <div
-                key={result.external_id}
-                className="flex gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              >
-                {/* Book Cover */}
-                {result.poster_url && (
-                  <img
-                    src={result.poster_url}
-                    alt={`${result.title} cover`}
-                    className="w-16 h-24 object-cover rounded flex-shrink-0"
-                  />
-                )}
-
-                {/* Book Info */}
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-medium text-gray-900 dark:text-white line-clamp-2">
-                    {result.title}
-                  </h4>
-                  {result.author && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      {result.author}
-                    </p>
-                  )}
-                  {result.release_date && (
-                    <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                      {formatReleaseDate(result.release_date)}
-                    </p>
-                  )}
-                  {result.page_count && (
-                    <p className="text-xs text-gray-500 dark:text-gray-500">
-                      {result.page_count} pages
-                    </p>
-                  )}
-                </div>
-
-                {/* Add Button */}
-                <button
-                  onClick={() => handleAddClick(result)}
-                  disabled={alreadyAdded}
-                  className={`flex-shrink-0 px-4 py-2 rounded-lg font-medium transition-colors ${
+              return (
+                <div
+                  key={result.external_id}
+                  onClick={() => !alreadyAdded && handleAddClick(result)}
+                  className={`group relative flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg transition-all ${
                     alreadyAdded
-                      ? "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-500 cursor-not-allowed"
-                      : "bg-primary text-white hover:bg-primary/90"
+                      ? "cursor-not-allowed opacity-60"
+                      : "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-md"
                   }`}
-                  style={
-                    !alreadyAdded
-                      ? ({ backgroundColor: themeColor } as React.CSSProperties)
-                      : undefined
+                  role="button"
+                  tabIndex={alreadyAdded ? -1 : 0}
+                  onKeyDown={(e) => {
+                    if (!alreadyAdded && (e.key === "Enter" || e.key === " ")) {
+                      e.preventDefault();
+                      handleAddClick(result);
+                    }
+                  }}
+                  aria-label={
+                    alreadyAdded
+                      ? `${result.title} - Already added`
+                      : `Add ${result.title} to reading list`
                   }
                 >
-                  {alreadyAdded ? (
-                    <>
-                      <Check className="w-4 h-4 inline mr-1" />
-                      Added
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="w-4 h-4 inline mr-1" />
-                      Add
-                    </>
-                  )}
-                </button>
-              </div>
-            );
-          })}
-        </div>
+                  {/* Book Cover */}
+                  <div className="flex-shrink-0">
+                    {result.poster_url ? (
+                      <img
+                        src={result.poster_url}
+                        alt={result.title}
+                        className="w-16 h-24 rounded object-cover"
+                      />
+                    ) : (
+                      <div className="w-16 h-24 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center">
+                        <BookOpen className="w-8 h-8 text-gray-400" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-gray-900 dark:text-white">
+                      {result.title}
+                    </h3>
+                    <div className="flex flex-col gap-1 mt-1">
+                      {result.authors && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {result.author}
+                        </p>
+                      )}
+                      {result.release_date && (
+                        <p className="text-xs text-gray-500 dark:text-gray-500">
+                          {formatReleaseDate(result.release_date)}
+                        </p>
+                      )}
+                      {result.page_count && (
+                        <p className="text-xs text-gray-500 dark:text-gray-500">
+                          {result.page_count} pages
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Add Icon - Shows on hover or when already added */}
+                  <div className="flex-shrink-0 flex items-center justify-center w-10 h-10">
+                    {alreadyAdded ? (
+                      <Check
+                        className="w-5 h-5 text-gray-600 dark:text-gray-300"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <Plus
+                        className="w-5 h-5 opacity-0 group-hover:opacity-100 transition-opacity"
+                        style={{ color: themeColor }}
+                        aria-hidden="true"
+                      />
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </Modal>
   );
