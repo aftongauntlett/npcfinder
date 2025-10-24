@@ -126,11 +126,11 @@ const HomePage: React.FC<HomePageProps> = () => {
                   Music
                 </p>
               </div>
-              <div className="text-center opacity-50">
-                <p className="text-2xl font-bold text-gray-400 dark:text-gray-600 font-heading">
-                  —
+              <div className="text-center">
+                <p className="text-2xl font-bold text-gray-900 dark:text-white font-heading">
+                  {statsLoading ? "..." : stats?.booksCount || 0}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                   Books
                 </p>
               </div>

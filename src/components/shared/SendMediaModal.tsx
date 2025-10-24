@@ -228,6 +228,25 @@ export default function SendMediaModal({
     try {
       // Create recommendations for each selected friend
       const recommendations = Array.from(selectedFriends).map((friendId) => {
+        // Books table has different column names - no media_type, uses thumbnail_url not poster_url
+        if (mediaType === "books") {
+          return {
+            from_user_id: user.id,
+            to_user_id: friendId,
+            external_id: selectedItem.external_id,
+            title: selectedItem.title,
+            authors: selectedItem.authors || null,
+            thumbnail_url: selectedItem.poster_url || null,
+            published_date: selectedItem.release_date || null,
+            description: selectedItem.description || null,
+            isbn: selectedItem.isbn || null,
+            page_count: selectedItem.page_count || null,
+            status: "pending",
+            recommendation_type: recommendationType || "read",
+            sent_message: message || null,
+          };
+        }
+
         const baseRecommendation = {
           from_user_id: user.id,
           to_user_id: friendId,

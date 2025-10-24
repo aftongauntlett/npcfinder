@@ -4,6 +4,7 @@ import { queryKeys } from "../lib/queryKeys";
 
 interface DashboardStats {
   moviesAndTvCount: number;
+  booksCount: number;
   friendsCount: number;
   pendingRecommendations: number;
 }
@@ -23,6 +24,17 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
   if (watchlistError) {
     console.error("Watchlist error:", watchlistError);
     throw watchlistError;
+  }
+
+  // Get books count from reading_list
+  const { count: booksCount, error: booksError } = await supabase
+    .from("reading_list")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id);
+
+  if (booksError) {
+    console.error("Reading list error:", booksError);
+    throw booksError;
   }
 
   // Get friends count - need to count bidirectional connections
@@ -54,10 +66,24 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
     throw movieRecsError;
   }
 
+  // Get pending book recommendations count (only unopened ones)
+  const { count: bookRecsCount, error: bookRecsError } = await supabase
+    .from("book_recommendations")
+    .select("*", { count: "exact", head: true })
+    .eq("to_user_id", user.id)
+    .eq("status", "pending")
+    .is("opened_at", null);
+
+  if (bookRecsError) {
+    console.error("Book recs error:", bookRecsError);
+    throw bookRecsError;
+  }
+
   return {
     moviesAndTvCount: moviesAndTvCount || 0,
+    booksCount: booksCount || 0,
     friendsCount,
-    pendingRecommendations: movieRecsCount || 0,
+    pendingRecommendations: (movieRecsCount || 0) + (bookRecsCount || 0),
   };
 }
 

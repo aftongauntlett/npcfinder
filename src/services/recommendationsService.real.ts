@@ -166,13 +166,27 @@ export async function getQuickStats(
 export async function updateRecommendationStatus(
   recId: string,
   status: "pending" | "consumed" | "watched" | "hit" | "miss",
-  tableName: "movie_recommendations" | "music_recommendations"
+  tableName:
+    | "movie_recommendations"
+    | "music_recommendations"
+    | "book_recommendations"
 ): Promise<void> {
+  // Books use 'read' status, not 'consumed' or 'watched'
+  const finalStatus =
+    tableName === "book_recommendations" && status === "consumed"
+      ? "read"
+      : status;
+
+  // Books use 'read_at', not 'watched_at'
+  const timestampField =
+    tableName === "book_recommendations" ? "read_at" : "watched_at";
+
   const { error } = await supabase
     .from(tableName)
     .update({
-      status,
-      watched_at: status !== "pending" ? new Date().toISOString() : null,
+      status: finalStatus,
+      [timestampField]:
+        finalStatus !== "pending" ? new Date().toISOString() : null,
     })
     .eq("id", recId);
 
@@ -187,7 +201,10 @@ export async function updateRecommendationStatus(
  */
 export async function deleteRecommendation(
   recId: string,
-  tableName: "movie_recommendations" | "music_recommendations"
+  tableName:
+    | "movie_recommendations"
+    | "music_recommendations"
+    | "book_recommendations"
 ): Promise<void> {
   const { error } = await supabase.from(tableName).delete().eq("id", recId);
 
@@ -203,7 +220,10 @@ export async function deleteRecommendation(
 export async function updateSenderNote(
   recId: string,
   note: string,
-  tableName: "movie_recommendations" | "music_recommendations"
+  tableName:
+    | "movie_recommendations"
+    | "music_recommendations"
+    | "book_recommendations"
 ): Promise<void> {
   const { error } = await supabase
     .from(tableName)
@@ -222,7 +242,10 @@ export async function updateSenderNote(
 export async function updateRecipientNote(
   recId: string,
   note: string,
-  tableName: "movie_recommendations" | "music_recommendations"
+  tableName:
+    | "movie_recommendations"
+    | "music_recommendations"
+    | "book_recommendations"
 ): Promise<void> {
   const { error } = await supabase
     .from(tableName)
@@ -380,4 +403,152 @@ export async function updateWatchlistItem(
   }
 
   return data;
+}
+
+/**
+ * BOOK RECOMMENDATIONS - Separate functions since books don't have media_type
+ */
+
+// Book recommendation interface
+interface BookRecommendation {
+  id: string;
+  from_user_id: string;
+  to_user_id: string;
+  external_id: string;
+  title: string;
+  authors: string | null;
+  thumbnail_url: string | null;
+  published_date: string | null;
+  description: string | null;
+  isbn: string | null;
+  page_count: number | null;
+  recommendation_type: string;
+  status: string;
+  sent_message: string | null;
+  sender_note: string | null;
+  recipient_note: string | null;
+  created_at: string;
+  read_at: string | null;
+  opened_at: string | null;
+  sender_name?: string;
+  recipient_name?: string;
+}
+
+/**
+ * Get book recommendations with filters
+ */
+export async function getBookRecommendations(
+  currentUserId: string,
+  filters: Omit<RecommendationFilters, "mediaType">
+): Promise<BookRecommendation[]> {
+  const { direction, status, fromUserId } = filters;
+
+  let query = supabase.from("book_recommendations_with_users").select("*");
+
+  // Filter by direction
+  if (direction === "received") {
+    query = query.eq("to_user_id", currentUserId);
+  } else if (direction === "sent") {
+    query = query.eq("from_user_id", currentUserId);
+  }
+
+  // Filter by status
+  if (status) {
+    query = query.eq("status", status);
+  }
+
+  // Filter by specific friend
+  if (fromUserId) {
+    query = query.eq("from_user_id", fromUserId);
+  }
+
+  // Order by created date, newest first
+  query = query.order("created_at", { ascending: false });
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("Error fetching book recommendations:", error);
+    return [];
+  }
+
+  return data || [];
+}
+
+/**
+ * Get book recommendations received from a specific friend
+ */
+export async function getBookRecommendationsFromFriend(
+  currentUserId: string,
+  friendId: string
+): Promise<BookRecommendation[]> {
+  return getBookRecommendations(currentUserId, {
+    direction: "received",
+    fromUserId: friendId,
+  });
+}
+
+/**
+ * Get all friends who have sent book recommendations, with stats
+ */
+export async function getFriendsWithBookRecommendations(
+  currentUserId: string
+): Promise<FriendStats[]> {
+  const recs = await getBookRecommendations(currentUserId, {
+    direction: "received",
+  });
+
+  // Group by sender
+  const friendMap = new Map<string, FriendStats>();
+
+  recs.forEach((rec) => {
+    if (!friendMap.has(rec.from_user_id)) {
+      friendMap.set(rec.from_user_id, {
+        user_id: rec.from_user_id,
+        display_name: rec.sender_name || "Unknown",
+        pending_count: 0,
+        total_count: 0,
+        hit_count: 0,
+        miss_count: 0,
+      });
+    }
+
+    const stats = friendMap.get(rec.from_user_id)!;
+    stats.total_count++;
+    if (rec.status === "pending") stats.pending_count++;
+    else if (rec.status === "hit") stats.hit_count++;
+    else if (rec.status === "miss") stats.miss_count++;
+  });
+
+  return Array.from(friendMap.values());
+}
+
+/**
+ * Get quick stats for book recommendations
+ */
+export async function getBookQuickStats(
+  currentUserId: string
+): Promise<QuickStats> {
+  const [pending, hits, misses, sent] = await Promise.all([
+    getBookRecommendations(currentUserId, {
+      direction: "received",
+      status: "pending",
+    }),
+    getBookRecommendations(currentUserId, {
+      direction: "received",
+      status: "hit",
+    }),
+    getBookRecommendations(currentUserId, {
+      direction: "received",
+      status: "miss",
+    }),
+    getBookRecommendations(currentUserId, { direction: "sent" }),
+  ]);
+
+  return {
+    queue: pending.length,
+    hits: hits.length,
+    misses: misses.length,
+    sent: sent.length,
+  };
 }

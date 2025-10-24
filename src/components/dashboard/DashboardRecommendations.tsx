@@ -8,7 +8,7 @@ import {
   useUpdateRecipientNote,
 } from "../../hooks/useMovieQueries";
 import MediaRecommendationCard from "../shared/MediaRecommendationCard";
-import type { Recommendation } from "../../services/recommendationsService";
+import type { Recommendation } from "../../services/recommendationsService.types";
 
 interface FriendWithRecs {
   user_id: string;
@@ -95,7 +95,8 @@ export function DashboardRecommendations() {
       if (!recsByFriend.has(friendId)) {
         recsByFriend.set(friendId, []);
       }
-      recsByFriend.get(friendId)!.push(rec);
+      // Type assertion: this component only handles movie/TV recommendations
+      recsByFriend.get(friendId)!.push(rec as Recommendation);
     });
 
     const grouped: FriendWithRecs[] = [];
