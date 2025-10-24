@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 
 /**
  * DesktopOnlyGuard
@@ -7,10 +8,16 @@ import { useEffect, useState } from "react";
  * Allows the app to work on laptops, small laptops, and Surface Pro devices.
  *
  * Minimum supported: 768px (works on 14" laptops, Surface Pro, iPad landscape)
+ *
+ * Exemptions: Landing page (/) allows all screen sizes
  */
 export function DesktopOnlyGuard({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
   const [isDesktop, setIsDesktop] = useState(true);
   const [screenWidth, setScreenWidth] = useState(0);
+
+  // Landing page is exempt from desktop-only requirement
+  const isLandingPage = location.pathname === "/";
 
   useEffect(() => {
     const checkSize = () => {
@@ -23,6 +30,11 @@ export function DesktopOnlyGuard({ children }: { children: React.ReactNode }) {
     window.addEventListener("resize", checkSize);
     return () => window.removeEventListener("resize", checkSize);
   }, []);
+
+  // Skip desktop check for landing page
+  if (isLandingPage || isDesktop) {
+    return <>{children}</>;
+  }
 
   if (!isDesktop) {
     return (
