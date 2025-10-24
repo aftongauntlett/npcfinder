@@ -6,21 +6,25 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as recommendationsService from "../services/recommendationsService";
 import { queryKeys } from "../lib/queryKeys";
+import { useAuth } from "../contexts/AuthContext";
 import type {
   WatchlistItem,
   AddWatchlistItemData,
-} from "../services/recommendationsService";
+} from "../services/recommendationsService.types";
 
 /**
  * Get user's watchlist
  * Automatically refetches on window focus and manages cache
  */
 export function useWatchlist() {
+  const { user } = useAuth();
+
   return useQuery({
-    queryKey: queryKeys.watchlist.list(),
+    queryKey: queryKeys.watchlist.list(user?.id),
     queryFn: () => recommendationsService.getWatchlist(),
     staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
     gcTime: 1000 * 60 * 30, // Keep in cache for 30 minutes (formerly cacheTime)
+    enabled: !!user, // Only fetch if user is authenticated
   });
 }
 
@@ -29,6 +33,7 @@ export function useWatchlist() {
  * Uses optimistic updates with rollback on error
  */
 export function useAddToWatchlist() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -39,12 +44,12 @@ export function useAddToWatchlist() {
     onMutate: async (newItem) => {
       // Cancel any outgoing refetches to avoid overwriting optimistic update
       await queryClient.cancelQueries({
-        queryKey: queryKeys.watchlist.list(),
+        queryKey: queryKeys.watchlist.list(user?.id),
       });
 
       // Snapshot the previous value
       const previousWatchlist = queryClient.getQueryData<WatchlistItem[]>(
-        queryKeys.watchlist.list()
+        queryKeys.watchlist.list(user?.id)
       );
 
       // Optimistically update with temporary ID
@@ -72,10 +77,10 @@ export function useAddToWatchlist() {
           watched_at: null,
         };
 
-        queryClient.setQueryData<WatchlistItem[]>(queryKeys.watchlist.list(), [
-          optimisticItem,
-          ...previousWatchlist,
-        ]);
+        queryClient.setQueryData<WatchlistItem[]>(
+          queryKeys.watchlist.list(user?.id),
+          [optimisticItem, ...previousWatchlist]
+        );
       }
 
       // Return context object with the snapshot
@@ -86,7 +91,7 @@ export function useAddToWatchlist() {
     onError: (_err, _newItem, context) => {
       if (context?.previousWatchlist) {
         queryClient.setQueryData(
-          queryKeys.watchlist.list(),
+          queryKeys.watchlist.list(user?.id),
           context.previousWatchlist
         );
       }
@@ -95,7 +100,7 @@ export function useAddToWatchlist() {
     // On success: replace optimistic item with real data
     onSuccess: (data) => {
       queryClient.setQueryData<WatchlistItem[]>(
-        queryKeys.watchlist.list(),
+        queryKeys.watchlist.list(user?.id),
         (old) => {
           if (!old) return [data];
           // Replace temporary item with real data from server
@@ -107,7 +112,7 @@ export function useAddToWatchlist() {
     // Always refetch after error or success to ensure sync
     onSettled: () => {
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.watchlist.list(),
+        queryKey: queryKeys.watchlist.list(user?.id),
       });
     },
   });
@@ -118,26 +123,27 @@ export function useAddToWatchlist() {
  * Uses optimistic updates with rollback on error
  */
 export function useToggleWatchlistWatched() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (id: string) =>
-      recommendationsService.toggleWatchlistItemWatched(id),
+      recommendationsService.toggleWatchlistWatched(id),
 
     // Optimistic update: Toggle watched status immediately
     onMutate: async (id) => {
       await queryClient.cancelQueries({
-        queryKey: queryKeys.watchlist.list(),
+        queryKey: queryKeys.watchlist.list(user?.id),
       });
 
       const previousWatchlist = queryClient.getQueryData<WatchlistItem[]>(
-        queryKeys.watchlist.list()
+        queryKeys.watchlist.list(user?.id)
       );
 
       // Optimistically update watched status
       if (previousWatchlist) {
         queryClient.setQueryData<WatchlistItem[]>(
-          queryKeys.watchlist.list(),
+          queryKeys.watchlist.list(user?.id),
           previousWatchlist.map((item) =>
             item.id === id
               ? {
@@ -156,26 +162,22 @@ export function useToggleWatchlistWatched() {
     onError: (_err, _id, context) => {
       if (context?.previousWatchlist) {
         queryClient.setQueryData(
-          queryKeys.watchlist.list(),
+          queryKeys.watchlist.list(user?.id),
           context.previousWatchlist
         );
       }
     },
 
-    onSuccess: (data) => {
-      // Update with real data from server
-      queryClient.setQueryData<WatchlistItem[]>(
-        queryKeys.watchlist.list(),
-        (old) => {
-          if (!old) return [data];
-          return old.map((item) => (item.id === data.id ? data : item));
-        }
-      );
+    onSuccess: () => {
+      // Invalidate to refetch with updated data
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.watchlist.list(user?.id),
+      });
     },
 
     onSettled: () => {
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.watchlist.list(),
+        queryKey: queryKeys.watchlist.list(user?.id),
       });
     },
   });
@@ -185,24 +187,25 @@ export function useToggleWatchlistWatched() {
  * Update watchlist item notes
  */
 export function useUpdateWatchlistNotes() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({ id, notes }: { id: string; notes: string }) =>
-      recommendationsService.updateWatchlistNotes(id, notes),
+      recommendationsService.updateWatchlistItem(id, { notes }),
 
     onMutate: async ({ id, notes }) => {
       await queryClient.cancelQueries({
-        queryKey: queryKeys.watchlist.list(),
+        queryKey: queryKeys.watchlist.list(user?.id),
       });
 
       const previousWatchlist = queryClient.getQueryData<WatchlistItem[]>(
-        queryKeys.watchlist.list()
+        queryKeys.watchlist.list(user?.id)
       );
 
       if (previousWatchlist) {
         queryClient.setQueryData<WatchlistItem[]>(
-          queryKeys.watchlist.list(),
+          queryKeys.watchlist.list(user?.id),
           previousWatchlist.map((item) =>
             item.id === id ? { ...item, notes } : item
           )
@@ -215,7 +218,7 @@ export function useUpdateWatchlistNotes() {
     onError: (_err, _variables, context) => {
       if (context?.previousWatchlist) {
         queryClient.setQueryData(
-          queryKeys.watchlist.list(),
+          queryKeys.watchlist.list(user?.id),
           context.previousWatchlist
         );
       }
@@ -223,7 +226,7 @@ export function useUpdateWatchlistNotes() {
 
     onSuccess: (data) => {
       queryClient.setQueryData<WatchlistItem[]>(
-        queryKeys.watchlist.list(),
+        queryKeys.watchlist.list(user?.id),
         (old) => {
           if (!old) return [data];
           return old.map((item) => (item.id === data.id ? data : item));
@@ -238,6 +241,7 @@ export function useUpdateWatchlistNotes() {
  * Uses optimistic updates with rollback on error
  */
 export function useDeleteFromWatchlist() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -246,17 +250,17 @@ export function useDeleteFromWatchlist() {
     // Optimistic update: Remove item immediately from UI
     onMutate: async (id) => {
       await queryClient.cancelQueries({
-        queryKey: queryKeys.watchlist.list(),
+        queryKey: queryKeys.watchlist.list(user?.id),
       });
 
       const previousWatchlist = queryClient.getQueryData<WatchlistItem[]>(
-        queryKeys.watchlist.list()
+        queryKeys.watchlist.list(user?.id)
       );
 
       // Optimistically remove the item
       if (previousWatchlist) {
         queryClient.setQueryData<WatchlistItem[]>(
-          queryKeys.watchlist.list(),
+          queryKeys.watchlist.list(user?.id),
           previousWatchlist.filter((item) => item.id !== id)
         );
       }
@@ -268,7 +272,7 @@ export function useDeleteFromWatchlist() {
     onError: (_err, _id, context) => {
       if (context?.previousWatchlist) {
         queryClient.setQueryData(
-          queryKeys.watchlist.list(),
+          queryKeys.watchlist.list(user?.id),
           context.previousWatchlist
         );
       }
@@ -277,7 +281,7 @@ export function useDeleteFromWatchlist() {
     // On success: ensure the item is removed (should already be gone from optimistic update)
     onSuccess: (_, id) => {
       queryClient.setQueryData<WatchlistItem[]>(
-        queryKeys.watchlist.list(),
+        queryKeys.watchlist.list(user?.id),
         (old) => {
           if (!old) return [];
           return old.filter((item) => item.id !== id);
@@ -288,7 +292,7 @@ export function useDeleteFromWatchlist() {
     // Always refetch after error or success to ensure database is source of truth
     onSettled: () => {
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.watchlist.list(),
+        queryKey: queryKeys.watchlist.list(user?.id),
       });
     },
   });
@@ -300,9 +304,11 @@ export function useDeleteFromWatchlist() {
 export function useIsInWatchlist(external_id: string | null) {
   return useQuery({
     queryKey: [...queryKeys.watchlist.all, "check", external_id],
-    queryFn: () => {
+    queryFn: async () => {
       if (!external_id) return false;
-      return recommendationsService.isInWatchlist(external_id);
+      // Check if item exists in watchlist
+      const watchlist = await recommendationsService.getWatchlist();
+      return watchlist.some((item) => item.external_id === external_id);
     },
     enabled: !!external_id, // Only run query if external_id exists
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -315,6 +321,7 @@ export function useIsInWatchlist(external_id: string | null) {
  * Returns results for success, duplicate, and error items
  */
 export function useBatchAddToWatchlist() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -352,14 +359,14 @@ export function useBatchAddToWatchlist() {
     onSuccess: () => {
       // Invalidate to refetch full watchlist after batch insert
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.watchlist.list(),
+        queryKey: queryKeys.watchlist.list(user?.id),
       });
     },
 
     onError: (_error) => {
       // Even on error, invalidate to ensure UI matches database
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.watchlist.list(),
+        queryKey: queryKeys.watchlist.list(user?.id),
       });
     },
   });

@@ -69,10 +69,11 @@ export const queryKeys = {
   // Watchlist
   watchlist: {
     all: ["watchlist"] as const,
-    list: () => [...queryKeys.watchlist.all, "list"] as const,
+    list: (userId?: string) =>
+      [...queryKeys.watchlist.all, "list", userId] as const,
     item: (id: string) => [...queryKeys.watchlist.all, "item", id] as const,
-    byStatus: (watched: boolean) =>
-      [...queryKeys.watchlist.all, "by-status", watched] as const,
+    byStatus: (watched: boolean, userId?: string) =>
+      [...queryKeys.watchlist.all, "by-status", watched, userId] as const,
   },
 
   // Reviews
