@@ -418,8 +418,8 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
           </div>
         </div>
       ) : viewMode === "grid" ? (
-        // Grid View
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        // Grid View - Netflix/Disney+ Style
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
           {paginatedWatchList.map((item) => (
             <div
               key={item.id}
@@ -433,119 +433,110 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
               tabIndex={0}
               role="button"
               aria-label={`View details for ${item.title}`}
-              className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 hover:border-primary/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+              className="group relative cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 rounded-lg overflow-hidden"
             >
-              {/* Poster */}
-              <div className="relative overflow-hidden">
+              {/* Poster Image */}
+              <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-gray-200 dark:bg-gray-700">
                 {item.poster_url ? (
                   <img
                     src={item.poster_url}
                     alt={item.title}
-                    className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                   />
                 ) : (
-                  <div className="w-full h-64 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
                     {item.media_type === "tv" ? (
-                      <Tv className="w-16 h-16 text-gray-400 dark:text-gray-500" />
+                      <Tv className="w-12 h-12 text-gray-400 dark:text-gray-500" />
                     ) : (
-                      <Film className="w-16 h-16 text-gray-400 dark:text-gray-500" />
+                      <Film className="w-12 h-12 text-gray-400 dark:text-gray-500" />
                     )}
                   </div>
                 )}
 
-                {/* Watched overlay with better styling */}
+                {/* Watched Badge - Always Visible */}
                 {item.watched && (
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-center justify-center">
-                    <div className="bg-green-500 rounded-full p-3 shadow-lg">
-                      <Check className="w-8 h-8 text-white" />
-                    </div>
+                  <div className="absolute top-2 right-2 bg-green-500 rounded-full p-1.5 shadow-lg">
+                    <Check className="w-4 h-4 text-white" />
                   </div>
                 )}
 
-                {/* Hover overlay with gradient */}
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-3 flex items-end">
-                  <p className="text-white text-xs line-clamp-2">
-                    {item.overview || "Click to view details"}
-                  </p>
-                </div>
-              </div>
+                {/* Hover Overlay - Full info */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
+                  {/* Title */}
+                  <h3 className="text-white font-semibold text-sm mb-1 line-clamp-2">
+                    {item.title}
+                  </h3>
 
-              {/* Content */}
-              <div className="p-4">
-                <h3 className="font-semibold text-base text-gray-900 dark:text-white mb-1 line-clamp-2 group-hover:text-primary transition-colors leading-tight">
-                  {item.title}
-                </h3>
-                <div className="flex items-center gap-2 mb-3">
-                  {item.release_date && (
-                    <span className="text-xs text-gray-600 dark:text-gray-400 group-hover:text-gray-800 dark:group-hover:text-gray-200 font-medium transition-colors">
-                      {formatReleaseDate(item.release_date)}
-                    </span>
-                  )}
-                  {item.media_type === "tv" && (
-                    <span className="px-2 py-0.5 text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full">
-                      TV
-                    </span>
-                  )}
-                </div>
+                  {/* Metadata */}
+                  <div className="flex items-center gap-2 mb-2 text-xs text-gray-200">
+                    {item.release_date && (
+                      <span>{formatReleaseDate(item.release_date)}</span>
+                    )}
+                    {item.media_type === "tv" && (
+                      <>
+                        <span>•</span>
+                        <span className="font-medium">TV</span>
+                      </>
+                    )}
+                  </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
-                  {/* For watched items: Delete (left) + Recommend (right) */}
-                  {item.watched ? (
-                    <>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void handleRemoveFromWatchList(item.id);
-                        }}
-                        className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
-                        aria-label="Remove from list"
-                        title="Remove"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setMovieToRecommend(item);
-                          setShowSendModal(true);
-                        }}
-                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 hover:bg-teal-100 dark:hover:bg-teal-900/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
-                        aria-label="Recommend to friends"
-                        title="Recommend"
-                      >
-                        <Lightbulb className="w-5 h-5" />
-                        <span className="hidden sm:inline">Recommend</span>
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      {/* For unwatched items: Delete (left) + Mark Watched (right) */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void handleRemoveFromWatchList(item.id);
-                        }}
-                        className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
-                        aria-label="Remove from list"
-                        title="Remove"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void handleToggleWatched(item.id);
-                        }}
-                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
-                        aria-label="Mark as watched"
-                        title="Watched"
-                      >
-                        <Check className="w-5 h-5" />
-                        <span className="hidden sm:inline">Watched</span>
-                      </button>
-                    </>
-                  )}
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-1.5">
+                    {item.watched ? (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void handleRemoveFromWatchList(item.id);
+                          }}
+                          className="p-1.5 rounded btn-danger transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                          aria-label="Remove from list"
+                          title="Remove"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setMovieToRecommend(item);
+                            setShowSendModal(true);
+                          }}
+                          className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded btn-recommend text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                          aria-label="Recommend to friends"
+                          title="Recommend"
+                        >
+                          <Lightbulb className="w-3.5 h-3.5" />
+                          <span>Recommend</span>
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void handleRemoveFromWatchList(item.id);
+                          }}
+                          className="p-1.5 rounded btn-danger transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                          aria-label="Remove from list"
+                          title="Remove"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void handleToggleWatched(item.id);
+                          }}
+                          className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded btn-success text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                          aria-label="Mark as watched"
+                          title="Mark Watched"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Watched</span>
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -615,7 +606,7 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
                         e.stopPropagation();
                         void handleRemoveFromWatchList(item.id);
                       }}
-                      className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
+                      className="p-2 text-danger hover:bg-danger-light dark:hover:bg-red-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
                       aria-label="Remove from list"
                       title="Remove"
                     >
@@ -627,7 +618,7 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
                         setMovieToRecommend(item);
                         setShowSendModal(true);
                       }}
-                      className="p-2 text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
+                      className="p-2 text-success hover:bg-success-light dark:hover:bg-green-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
                       aria-label="Recommend to friends"
                       title="Recommend"
                     >
@@ -642,7 +633,7 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
                         e.stopPropagation();
                         void handleRemoveFromWatchList(item.id);
                       }}
-                      className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
+                      className="p-2 text-danger hover:bg-danger-light dark:hover:bg-red-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
                       aria-label="Remove from list"
                       title="Remove"
                     >
@@ -653,7 +644,7 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
                         e.stopPropagation();
                         void handleToggleWatched(item.id);
                       }}
-                      className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
+                      className="p-2 text-success hover:bg-success-light dark:hover:bg-green-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
                       aria-label="Mark as watched"
                       title="Watched"
                     >

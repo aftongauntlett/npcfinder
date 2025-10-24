@@ -1,7 +1,73 @@
 /**
- * Fetch detailed movie/TV information from TMDB API
- * Includes: director, genres, ratings, runtime, awards
+ * Fetch detailed movie/TV information from TMDB API + OMDB API
+ * Includes: director, genres, ratings, runtime, awards, RT scores, Metacritic, Box Office
  */
+
+interface OMDBResponse {
+  Title: string;
+  Year: string;
+  Rated: string;
+  Released: string;
+  Runtime: string;
+  Genre: string;
+  Director: string;
+  Writer: string;
+  Actors: string;
+  Plot: string;
+  Language: string;
+  Country: string;
+  Awards: string;
+  Poster: string;
+  Ratings: Array<{
+    Source: string;
+    Value: string;
+  }>;
+  Metascore: string;
+  imdbRating: string;
+  imdbVotes: string;
+  imdbID: string;
+  Type: string;
+  DVD: string;
+  BoxOffice: string;
+  Production: string;
+  Website: string;
+  Response: string;
+}
+
+/**
+ * Fetch OMDB data (Rotten Tomatoes, Metacritic, Awards, Box Office)
+ */
+async function fetchOMDBData(
+  imdbId: string
+): Promise<Partial<OMDBResponse> | null> {
+  const apiKey = import.meta.env.VITE_OMDB_API_KEY;
+  if (!apiKey) {
+    console.warn("OMDB API key not configured");
+    return null;
+  }
+
+  try {
+    const url = `https://www.omdbapi.com/?i=${imdbId}&apikey=${apiKey}`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      console.error(`OMDB API error: ${response.status}`);
+      return null;
+    }
+
+    const data: OMDBResponse = await response.json();
+
+    if (data.Response === "False") {
+      console.warn(`OMDB: No data found for ${imdbId}`);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error fetching OMDB data:", error);
+    return null;
+  }
+}
 
 export interface DetailedMediaInfo {
   external_id: string;
@@ -20,6 +86,14 @@ export interface DetailedMediaInfo {
   vote_count: number | null;
   runtime: number | null;
   awards: string[];
+  // OMDB enriched data
+  imdb_rating: string | null;
+  rotten_tomatoes_score: string | null;
+  rotten_tomatoes_audience: string | null;
+  metacritic_score: string | null;
+  awards_text: string | null;
+  box_office: string | null;
+  imdb_id: string | null;
 }
 
 interface TMDBMovieDetails {
@@ -58,15 +132,17 @@ export async function fetchDetailedMediaInfo(
   }
 
   try {
-    // Fetch detailed information including credits
-    const detailsUrl = `https://api.themoviedb.org/3/${mediaType}/${externalId}?api_key=${apiKey}&append_to_response=credits`;
+    // Fetch detailed information including credits and external_ids (for IMDb ID)
+    const detailsUrl = `https://api.themoviedb.org/3/${mediaType}/${externalId}?api_key=${apiKey}&append_to_response=credits,external_ids`;
     const response = await fetch(detailsUrl);
 
     if (!response.ok) {
       throw new Error(`TMDB API error: ${response.status}`);
     }
 
-    const data: TMDBMovieDetails = await response.json();
+    const data: TMDBMovieDetails & {
+      external_ids?: { imdb_id?: string };
+    } = await response.json();
 
     // Extract director (for movies) or creator (for TV shows)
     let director: string | null = null;
@@ -130,6 +206,43 @@ export async function fetchDetailedMediaInfo(
       awards.push("Fan Favorite");
     }
 
+    // Fetch OMDB data if IMDb ID is available
+    const imdbId = data.external_ids?.imdb_id;
+    let omdbData: Partial<OMDBResponse> | null = null;
+
+    if (imdbId) {
+      omdbData = await fetchOMDBData(imdbId);
+    }
+
+    // Extract ratings from OMDB
+    let rottenTomatoesScore: string | null = null;
+    const rottenTomatoesAudience: string | null = null;
+    let metacriticScore: string | null = null;
+
+    if (omdbData?.Ratings) {
+      const rtRating = omdbData.Ratings.find((r) =>
+        r.Source.includes("Rotten Tomatoes")
+      );
+      if (rtRating) {
+        // RT sometimes has format "95%" or "Fresh 95%"
+        const match = rtRating.Value.match(/(\d+)%/);
+        if (match) {
+          rottenTomatoesScore = match[1];
+        }
+      }
+
+      const metacriticRating = omdbData.Ratings.find((r) =>
+        r.Source.includes("Metacritic")
+      );
+      if (metacriticRating) {
+        // Metacritic format is "85/100"
+        const match = metacriticRating.Value.match(/(\d+)/);
+        if (match) {
+          metacriticScore = match[1];
+        }
+      }
+    }
+
     return {
       external_id: String(data.id),
       title: data.title || data.name || "Unknown Title",
@@ -149,6 +262,14 @@ export async function fetchDetailedMediaInfo(
       vote_count: data.vote_count || null,
       runtime: data.runtime || null,
       awards,
+      // OMDB enriched data
+      imdb_rating: omdbData?.imdbRating || null,
+      rotten_tomatoes_score: rottenTomatoesScore,
+      rotten_tomatoes_audience: rottenTomatoesAudience,
+      metacritic_score: metacriticScore,
+      awards_text: omdbData?.Awards || null,
+      box_office: omdbData?.BoxOffice || null,
+      imdb_id: imdbId || null,
     };
   } catch (error) {
     console.error("Error fetching detailed media info:", error);

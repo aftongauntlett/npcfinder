@@ -10,6 +10,22 @@
   --color-primary-pale: #f3e8ff;
   --color-primary-ring: #9333ea;
   --color-text-on-primary: #ffffff;
+
+  /* Action Button Colors - Pastel shades for softer UI */
+  --color-success: #10b981; /* Emerald-500 - for positive actions (save, add, watched, send) */
+  --color-success-hover: #059669; /* Emerald-600 */
+  --color-success-light: #d1fae5; /* Emerald-100 */
+  --color-success-dark: #065f46; /* Emerald-800 */
+
+  --color-recommend: #939abe; /* Custom periwinkle blue - for recommend actions */
+  --color-recommend-hover: #7a82a8; /* Darker shade */
+  --color-recommend-light: #d9dded; /* Lighter shade */
+  --color-recommend-dark: #5a6180; /* Darkest shade */
+
+  --color-danger: #ef4444; /* Red-500 - for destructive actions (delete, remove, cancel) */
+  --color-danger-hover: #dc2626; /* Red-600 */
+  --color-danger-light: #fee2e2; /* Red-100 */
+  --color-danger-dark: #991b1b; /* Red-800 */
 }
 
 /* Text selection highlighting */
@@ -72,6 +88,77 @@ textarea::-moz-selection {
   .bg-primary-contrast {
     background-color: var(--color-primary);
     color: var(--color-text-on-primary);
+  }
+
+  /* Action Button Utility Classes */
+
+  /* Success actions (Save, Add, Watched, Send) */
+  .btn-success {
+    background-color: var(--color-success);
+    color: white;
+  }
+  .btn-success:hover {
+    background-color: var(--color-success-hover);
+  }
+  .btn-success-light {
+    background-color: var(--color-success-light);
+    color: var(--color-success-dark);
+  }
+  .btn-success-light:hover {
+    background-color: var(--color-success);
+    color: white;
+  }
+  .text-success {
+    color: var(--color-success);
+  }
+  .text-success-dark {
+    color: var(--color-success-dark);
+  }
+
+  /* Recommend actions */
+  .btn-recommend {
+    background-color: var(--color-recommend);
+    color: white;
+  }
+  .btn-recommend:hover {
+    background-color: var(--color-recommend-hover);
+  }
+  .btn-recommend-light {
+    background-color: var(--color-recommend-light);
+    color: var(--color-recommend-dark);
+  }
+  .btn-recommend-light:hover {
+    background-color: var(--color-recommend);
+    color: white;
+  }
+  .text-recommend {
+    color: var(--color-recommend);
+  }
+  .text-recommend-dark {
+    color: var(--color-recommend-dark);
+  }
+
+  /* Danger actions (Delete, Remove, Cancel) */
+  .btn-danger {
+    background-color: var(--color-danger);
+    color: white;
+  }
+  .btn-danger:hover {
+    background-color: var(--color-danger-hover);
+  }
+  .btn-danger-light {
+    background-color: var(--color-danger-light);
+    color: var(--color-danger-dark);
+  }
+  .btn-danger-light:hover {
+    background-color: var(--color-danger);
+    color: white;
+  }
+  .text-danger {
+    color: var(--color-danger);
+  }
+  .text-danger-dark {
+    color: var(--color-danger-dark);
   }
 }
 
