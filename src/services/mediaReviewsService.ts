@@ -1,4 +1,11 @@
 import { supabase } from "../lib/supabase";
+import { logger } from "../lib/logger";
+import {
+  CreateReviewSchema,
+  UpdateReviewSchema,
+  ReviewIdSchema,
+} from "./reviewsService.validation";
+import { z } from "zod";
 
 export interface MediaReview {
   id: string;
@@ -38,31 +45,49 @@ export interface UpdateMediaReviewData {
   watched_at?: string | null;
 }
 
+// Simple validation schemas for this service's specific needs
+const MediaQuerySchema = z.object({
+  externalId: z.string().min(1, "External ID is required"),
+  mediaType: z.enum(["movie", "tv", "song", "album", "book"]),
+});
+
 /**
  * Get current user's review for a specific media item
  */
 export async function getMyMediaReview(
   externalId: string,
   mediaType: string
-): Promise<{ data: MediaReview | null; error: Error | null }> {
+): Promise<MediaReview | null> {
   try {
+    // Validate inputs
+    const validated = MediaQuerySchema.parse({ externalId, mediaType });
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) throw new Error("Not authenticated");
+    if (!user) {
+      throw new Error("User must be authenticated to fetch their review");
+    }
 
     const { data, error } = await supabase
       .from("media_reviews")
       .select("*")
       .eq("user_id", user.id)
-      .eq("external_id", externalId)
-      .eq("media_type", mediaType)
+      .eq("external_id", validated.externalId)
+      .eq("media_type", validated.mediaType)
       .maybeSingle();
 
-    if (error) throw error;
-    return { data, error: null };
+    if (error) {
+      throw new Error(
+        `Failed to fetch review for ${mediaType} ${externalId}: ${error.message}`,
+        { cause: error }
+      );
+    }
+
+    return data;
   } catch (error) {
-    return { data: null, error: error as Error };
+    logger.error("Error fetching user's media review:", error);
+    throw error;
   }
 }
 
@@ -72,8 +97,11 @@ export async function getMyMediaReview(
 export async function getFriendsMediaReviews(
   externalId: string,
   mediaType: string
-): Promise<{ data: MediaReview[]; error: Error | null }> {
+): Promise<MediaReview[]> {
   try {
+    // Validate inputs
+    const validated = MediaQuerySchema.parse({ externalId, mediaType });
+
     // Get current user to filter out their own review
     const {
       data: { user },
@@ -82,13 +110,18 @@ export async function getFriendsMediaReviews(
     const { data, error } = await supabase
       .from("media_reviews")
       .select("*")
-      .eq("external_id", externalId)
-      .eq("media_type", mediaType)
+      .eq("external_id", validated.externalId)
+      .eq("media_type", validated.mediaType)
       .eq("is_public", true)
       .neq("user_id", user?.id || "")
       .order("created_at", { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      throw new Error(
+        `Failed to fetch friends' reviews for ${mediaType} ${externalId}: ${error.message}`,
+        { cause: error }
+      );
+    }
 
     // Fetch display names separately
     if (data && data.length > 0) {
@@ -98,7 +131,12 @@ export async function getFriendsMediaReviews(
         .select("user_id, display_name")
         .in("user_id", userIds);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        throw new Error(
+          `Failed to fetch user profiles for reviews: ${profileError.message}`,
+          { cause: profileError }
+        );
+      }
 
       // Map display names to reviews
       const profileMap = new Map(
@@ -110,12 +148,14 @@ export async function getFriendsMediaReviews(
         display_name: profileMap.get(review.user_id) || "Unknown User",
       })) as MediaReview[];
 
-      return { data: reviews, error: null };
+      return reviews;
     }
 
-    return { data: [], error: null };
+    return [];
   } catch (error) {
-    return { data: [], error: error as Error };
+    logger.error("Error fetching friends' media reviews:", error);
+    // Return empty array on error for non-critical data
+    return [];
   }
 }
 
@@ -124,31 +164,40 @@ export async function getFriendsMediaReviews(
  */
 export async function upsertMediaReview(
   reviewData: CreateMediaReviewData
-): Promise<{ data: MediaReview | null; error: Error | null }> {
+): Promise<MediaReview> {
   try {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) throw new Error("Not authenticated");
+    if (!user) {
+      throw new Error("User must be authenticated to create/update a review");
+    }
+
+    // Validate review data
+    const validated = CreateReviewSchema.parse({
+      user_id: user.id,
+      ...reviewData,
+    });
 
     const { data, error } = await supabase
       .from("media_reviews")
-      .upsert(
-        {
-          user_id: user.id,
-          ...reviewData,
-        },
-        {
-          onConflict: "user_id,external_id,media_type",
-        }
-      )
+      .upsert(validated, {
+        onConflict: "user_id,external_id,media_type",
+      })
       .select()
       .single();
 
-    if (error) throw error;
-    return { data, error: null };
+    if (error) {
+      throw new Error(
+        `Failed to save review for ${reviewData.title}: ${error.message}`,
+        { cause: error }
+      );
+    }
+
+    return data;
   } catch (error) {
-    return { data: null, error: error as Error };
+    logger.error("Error upserting media review:", error);
+    throw error;
   }
 }
 
@@ -158,37 +207,52 @@ export async function upsertMediaReview(
 export async function updateMediaReview(
   reviewId: string,
   updates: UpdateMediaReviewData
-): Promise<{ data: MediaReview | null; error: Error | null }> {
+): Promise<MediaReview> {
   try {
+    // Validate inputs
+    const validatedId = ReviewIdSchema.parse(reviewId);
+    const validatedUpdates = UpdateReviewSchema.parse(updates);
+
     const { data, error } = await supabase
       .from("media_reviews")
-      .update(updates)
-      .eq("id", reviewId)
+      .update(validatedUpdates)
+      .eq("id", validatedId)
       .select()
       .single();
 
-    if (error) throw error;
-    return { data, error: null };
+    if (error) {
+      throw new Error(`Failed to update review ${reviewId}: ${error.message}`, {
+        cause: error,
+      });
+    }
+
+    return data;
   } catch (error) {
-    return { data: null, error: error as Error };
+    logger.error("Error updating media review:", error);
+    throw error;
   }
 }
 
 /**
  * Delete user's review
  */
-export async function deleteMediaReview(
-  reviewId: string
-): Promise<{ error: Error | null }> {
+export async function deleteMediaReview(reviewId: string): Promise<void> {
   try {
+    // Validate review ID
+    const validatedId = ReviewIdSchema.parse(reviewId);
+
     const { error } = await supabase
       .from("media_reviews")
       .delete()
-      .eq("id", reviewId);
+      .eq("id", validatedId);
 
-    if (error) throw error;
-    return { error: null };
+    if (error) {
+      throw new Error(`Failed to delete review ${reviewId}: ${error.message}`, {
+        cause: error,
+      });
+    }
   } catch (error) {
-    return { error: error as Error };
+    logger.error("Error deleting media review:", error);
+    throw error;
   }
 }

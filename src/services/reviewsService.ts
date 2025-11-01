@@ -11,6 +11,12 @@ import type {
   CreateReviewData,
   UpdateReviewData,
 } from "./reviewsService.types";
+import {
+  CreateReviewSchema,
+  UpdateReviewSchema,
+  ReviewQuerySchema,
+  ReviewIdSchema,
+} from "./reviewsService.validation";
 
 /**
  * Get the current user's review for a specific media item
@@ -21,12 +27,19 @@ export async function getMyReview(
   mediaType: string
 ): Promise<MediaReview | null> {
   try {
+    // Validate inputs
+    const validated = ReviewQuerySchema.parse({
+      userId,
+      externalId,
+      mediaType,
+    });
+
     const { data, error } = await supabase
       .from("media_reviews")
       .select("*")
-      .eq("user_id", userId)
-      .eq("external_id", externalId)
-      .eq("media_type", mediaType)
+      .eq("user_id", validated.userId)
+      .eq("external_id", validated.externalId)
+      .eq("media_type", validated.mediaType)
       .single();
 
     if (error) {
@@ -34,7 +47,9 @@ export async function getMyReview(
         // No rows returned - user hasn't reviewed this item yet
         return null;
       }
-      throw error;
+      throw new Error(
+        `Failed to fetch review for user ${userId}, media ${externalId}: ${error.message}`
+      );
     }
 
     return data;
@@ -53,18 +68,27 @@ export async function getFriendsReviews(
   mediaType: string
 ): Promise<MediaReviewWithUser[]> {
   try {
+    // Validate inputs
+    const validated = ReviewQuerySchema.parse({
+      userId,
+      externalId,
+      mediaType,
+    });
+
     // First, query reviews for the media item
     const { data: reviews, error: reviewsError } = await supabase
       .from("media_reviews")
       .select("*")
-      .eq("external_id", externalId)
-      .eq("media_type", mediaType)
+      .eq("external_id", validated.externalId)
+      .eq("media_type", validated.mediaType)
       .eq("is_public", true)
-      .neq("user_id", userId)
+      .neq("user_id", validated.userId)
       .order("created_at", { ascending: false });
 
     if (reviewsError) {
-      throw reviewsError;
+      throw new Error(
+        `Failed to fetch friends' reviews for media ${externalId}: ${reviewsError.message}`
+      );
     }
 
     if (!reviews || reviews.length === 0) {
@@ -81,7 +105,9 @@ export async function getFriendsReviews(
       .in("user_id", userIds);
 
     if (profilesError) {
-      throw profilesError;
+      throw new Error(
+        `Failed to fetch user profiles for reviews: ${profilesError.message}`
+      );
     }
 
     // Build a map from user_id to display_name
@@ -110,18 +136,25 @@ export async function createReview(
   data: CreateReviewData
 ): Promise<MediaReview> {
   try {
+    // Validate input data
+    const validated = CreateReviewSchema.parse(data);
+
     const { data: review, error } = await supabase
       .from("media_reviews")
-      .insert([data])
+      .insert([validated])
       .select()
       .single();
 
     if (error) {
       // Handle unique constraint violation gracefully
       if (error.code === "23505") {
-        throw new Error("You have already reviewed this item");
+        throw new Error(
+          `Review already exists for ${data.title} (${data.media_type})`
+        );
       }
-      throw error;
+      throw new Error(
+        `Failed to create review for ${data.title}: ${error.message}`
+      );
     }
 
     return review;
@@ -139,15 +172,19 @@ export async function updateReview(
   data: UpdateReviewData
 ): Promise<MediaReview> {
   try {
+    // Validate inputs
+    const validatedId = ReviewIdSchema.parse(reviewId);
+    const validatedData = UpdateReviewSchema.parse(data);
+
     const { data: review, error } = await supabase
       .from("media_reviews")
-      .update(data)
-      .eq("id", reviewId)
+      .update(validatedData)
+      .eq("id", validatedId)
       .select()
       .single();
 
     if (error) {
-      throw error;
+      throw new Error(`Failed to update review ${reviewId}: ${error.message}`);
     }
 
     return review;
@@ -162,13 +199,16 @@ export async function updateReview(
  */
 export async function deleteReview(reviewId: string): Promise<void> {
   try {
+    // Validate review ID
+    const validatedId = ReviewIdSchema.parse(reviewId);
+
     const { error } = await supabase
       .from("media_reviews")
       .delete()
-      .eq("id", reviewId);
+      .eq("id", validatedId);
 
     if (error) {
-      throw error;
+      throw new Error(`Failed to delete review ${reviewId}: ${error.message}`);
     }
   } catch (error) {
     logger.error("Error deleting review:", error);
@@ -184,15 +224,20 @@ export async function toggleReviewPrivacy(
   isPublic: boolean
 ): Promise<MediaReview> {
   try {
+    // Validate review ID
+    const validatedId = ReviewIdSchema.parse(reviewId);
+
     const { data: review, error } = await supabase
       .from("media_reviews")
       .update({ is_public: isPublic })
-      .eq("id", reviewId)
+      .eq("id", validatedId)
       .select()
       .single();
 
     if (error) {
-      throw error;
+      throw new Error(
+        `Failed to toggle privacy for review ${reviewId}: ${error.message}`
+      );
     }
 
     return review;

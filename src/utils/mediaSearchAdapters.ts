@@ -1,4 +1,5 @@
 import { MediaItem } from "../components/shared/SendMediaModal";
+import { tmdbLimiter, itunesLimiter } from "./rateLimiter";
 
 // iTunes API response types
 interface iTunesResult {
@@ -36,11 +37,12 @@ interface TMDBResponse {
  * Search iTunes API and convert results to generic MediaItem format
  */
 export async function searchMusic(query: string): Promise<MediaItem[]> {
-  const response = await fetch(
-    `https://itunes.apple.com/search?term=${encodeURIComponent(
-      query
-    )}&limit=25&media=music`
-  );
+  const url = `https://itunes.apple.com/search?term=${encodeURIComponent(
+    query
+  )}&limit=25&media=music`;
+
+  // Use rate limiter for iTunes requests
+  const response = await itunesLimiter.add(() => fetch(url));
   const data: iTunesResponse = await response.json();
 
   return data.results.map((item) => ({
@@ -63,11 +65,12 @@ export async function searchMoviesAndTV(query: string): Promise<MediaItem[]> {
     return [];
   }
 
-  const response = await fetch(
-    `https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&query=${encodeURIComponent(
-      query
-    )}&include_adult=false`
-  );
+  const url = `https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&query=${encodeURIComponent(
+    query
+  )}&include_adult=false`;
+
+  // Use rate limiter for TMDB requests
+  const response = await tmdbLimiter.add(() => fetch(url));
   const data: TMDBResponse = await response.json();
 
   return data.results

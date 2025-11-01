@@ -3,6 +3,8 @@
  * Includes: director, genres, ratings, runtime, awards, RT scores, Metacritic, Box Office
  */
 
+import { tmdbLimiter, omdbLimiter } from "./rateLimiter";
+
 interface OMDBResponse {
   Title: string;
   Year: string;
@@ -48,7 +50,9 @@ async function fetchOMDBData(
 
   try {
     const url = `https://www.omdbapi.com/?i=${imdbId}&apikey=${apiKey}`;
-    const response = await fetch(url);
+
+    // Use rate limiter for OMDB requests
+    const response = await omdbLimiter.add(() => fetch(url));
 
     if (!response.ok) {
       console.error(`OMDB API error: ${response.status}`);
@@ -134,7 +138,9 @@ export async function fetchDetailedMediaInfo(
   try {
     // Fetch detailed information including credits and external_ids (for IMDb ID)
     const detailsUrl = `https://api.themoviedb.org/3/${mediaType}/${externalId}?api_key=${apiKey}&append_to_response=credits,external_ids`;
-    const response = await fetch(detailsUrl);
+
+    // Use rate limiter for TMDB requests
+    const response = await tmdbLimiter.add(() => fetch(detailsUrl));
 
     if (!response.ok) {
       throw new Error(`TMDB API error: ${response.status}`);
@@ -339,7 +345,9 @@ export async function fetchSimilarMedia(
 
   try {
     const url = `https://api.themoviedb.org/3/${mediaType}/${externalId}/similar?api_key=${apiKey}&page=1`;
-    const response = await fetch(url);
+
+    // Use rate limiter for TMDB requests
+    const response = await tmdbLimiter.add(() => fetch(url));
 
     if (!response.ok) {
       throw new Error(`TMDB API error: ${response.status}`);
@@ -381,7 +389,9 @@ export async function fetchTrendingMedia(
 
   try {
     const url = `https://api.themoviedb.org/3/trending/${mediaType}/${timeWindow}?api_key=${apiKey}`;
-    const response = await fetch(url);
+
+    // Use rate limiter for TMDB requests
+    const response = await tmdbLimiter.add(() => fetch(url));
 
     if (!response.ok) {
       throw new Error(`TMDB API error: ${response.status}`);
@@ -422,7 +432,9 @@ export async function fetchPopularMedia(
 
   try {
     const url = `https://api.themoviedb.org/3/${mediaType}/popular?api_key=${apiKey}&page=1`;
-    const response = await fetch(url);
+
+    // Use rate limiter for TMDB requests
+    const response = await tmdbLimiter.add(() => fetch(url));
 
     if (!response.ok) {
       throw new Error(`TMDB API error: ${response.status}`);
