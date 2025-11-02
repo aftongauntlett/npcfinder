@@ -28,7 +28,7 @@ class RateLimiter {
    */
   async add<T>(fn: () => Promise<T>): Promise<T> {
     return new Promise<T>((resolve, reject) => {
-      this.queue.push({ fn, resolve, reject });
+      this.queue.push({ fn, resolve, reject } as QueueItem<unknown>);
       if (!this.processing) {
         void this.processQueue();
       }
