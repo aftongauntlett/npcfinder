@@ -29,5 +29,15 @@
     }
   },
   "include": ["src", "tests"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    ".vscode",
+    "coverage",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "tests/**/*"
+  ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
