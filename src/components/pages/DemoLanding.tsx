@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import {
   Film,
@@ -11,7 +11,7 @@ import {
   ExternalLink,
   Lock,
   Code,
-  ChevronDown,
+  HelpCircle,
 } from "lucide-react";
 import StarryBackground from "../shared/StarryBackground";
 
@@ -20,20 +20,6 @@ import StarryBackground from "../shared/StarryBackground";
  * Explains the project without granting access
  */
 const DemoLanding: React.FC = () => {
-  const [openAccordions, setOpenAccordions] = useState<Set<string>>(new Set());
-
-  const toggleAccordion = (id: string) => {
-    setOpenAccordions((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  };
-
   const features = [
     {
       icon: Film,
@@ -86,7 +72,7 @@ const DemoLanding: React.FC = () => {
       <header className="relative z-10 border-b border-white/10 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-start justify-between">
           <div className="flex items-center gap-2 sm:gap-3">
-            <Film className="w-7 h-7 sm:w-8 sm:h-8 text-purple-400" />
+            <HelpCircle className="w-8 h-8 sm:w-9 sm:h-9 text-purple-400 stroke-[2.5]" />
             <h1 className="text-xl sm:text-2xl font-bold">NPC Finder</h1>
             <span className="px-2 py-0.5 sm:py-1 text-xs font-semibold bg-orange-500/20 text-orange-300 border border-orange-500/50 rounded-full whitespace-nowrap">
               IN DEVELOPMENT
@@ -289,15 +275,15 @@ const DemoLanding: React.FC = () => {
               </p>
             </div>
 
-            {/* Fitness Tracker */}
+            {/* Task Tracker */}
             <div className="bg-gradient-to-br from-blue-900/15 to-indigo-900/20 backdrop-blur-sm rounded-xl p-6 border border-blue-400/20 hover:border-blue-400/60 hover:from-blue-900/25 hover:to-indigo-900/30 transition-all duration-500 ease-out group">
               <h4 className="text-lg font-semibold mb-2 text-blue-300 group-hover:text-blue-200 flex items-center gap-2 transition-colors duration-500 ease-out">
                 <TrendingUp className="w-5 h-5 transition-transform duration-500 ease-out group-hover:scale-110" />
-                Fitness Tracker
+                Task Tracker
               </h4>
               <p className="text-gray-400 group-hover:text-gray-200 text-sm transition-colors duration-500 ease-out">
-                Track workouts, set goals, and share fitness achievements with
-                friends.
+                Flexible tracking system for fitness routines, job applications,
+                daily diaries, and any personal goals you want to monitor.
               </p>
             </div>
 
@@ -325,141 +311,22 @@ const DemoLanding: React.FC = () => {
               </p>
             </div>
 
-            {/* Books & Games */}
-            <div className="bg-gradient-to-br from-purple-900/15 to-blue-900/20 backdrop-blur-sm rounded-xl p-6 border border-purple-400/20 hover:border-purple-400/60 hover:from-purple-900/25 hover:to-blue-900/30 transition-all duration-500 ease-out group">
-              <h4 className="text-lg font-semibold mb-2 text-purple-300 group-hover:text-purple-200 flex items-center gap-2 transition-colors duration-500 ease-out">
-                <Film className="w-5 h-5 transition-transform duration-500 ease-out group-hover:scale-110" />
-                Books & Games
-              </h4>
-              <p className="text-gray-400 group-hover:text-gray-200 text-sm transition-colors duration-500 ease-out">
-                Expand beyond movies and music to track books, video games, and
-                more media.
-              </p>
-            </div>
-
-            {/* Job Tracker */}
-            <div className="bg-gradient-to-br from-blue-900/15 to-violet-900/20 backdrop-blur-sm rounded-xl p-6 border border-blue-400/20 hover:border-blue-400/60 hover:from-blue-900/25 hover:to-violet-900/30 transition-all duration-500 ease-out group">
-              <h4 className="text-lg font-semibold mb-2 text-blue-300 group-hover:text-blue-200 flex items-center gap-2 transition-colors duration-500 ease-out">
-                <Database className="w-5 h-5 transition-transform duration-500 ease-out group-hover:scale-110" />
-                Job Tracker
-              </h4>
-              <p className="text-gray-400 group-hover:text-gray-200 text-sm transition-colors duration-500 ease-out">
-                Manage job applications, track interview progress, and organize
-                your career journey.
-              </p>
-            </div>
-
-            {/* The Big Dream: Stardew Valley Game */}
+            {/* The Big Dream: Social Game */}
             <div className="md:col-span-2 bg-gradient-to-br from-cyan-900/15 via-teal-900/20 to-blue-900/20 backdrop-blur-sm rounded-xl p-8 border border-cyan-400/30 hover:border-cyan-400/70 hover:from-cyan-900/25 hover:via-teal-900/30 hover:to-blue-900/30 transition-all duration-500 ease-out group">
               <h4 className="text-xl font-bold mb-3 text-cyan-300 group-hover:text-cyan-200 flex items-center gap-2 transition-colors duration-500 ease-out">
                 <Zap className="w-6 h-6 transition-transform duration-500 ease-out group-hover:scale-110" />
-                The Big Dream: In-Browser Social Farm Game
+                The Big Dream: In-Browser Social Game
               </h4>
               <p className="text-gray-300 group-hover:text-gray-100 mb-3 transition-colors duration-500 ease-out">
-                Long-term vision: A Stardew Valley-inspired online game built
-                right into the dashboard. Every user gets their own home and
-                farm to tend, decorate, and customize. Visit your friends'
-                farms, trade items, and build a cozy virtual community together.
+                A cozy social game built right into the dashboard, designed to
+                encourage healthy habits and positive vibes. Have pets, tend to
+                gardens, decorate your house, and visit your friends. Every user
+                gets their own space to personalize and share.
               </p>
               <p className="text-sm text-gray-400 italic">
-                Think: Animal Crossing meets Stardew Valley, seamlessly
-                integrated into your friend network.
+                A relaxing social experience, seamlessly integrated into your
+                friend network.
               </p>
-            </div>
-          </div>
-        </section>
-
-        {/* About This App */}
-        <section className="max-w-4xl mx-auto px-6 py-16">
-          <h3 className="text-3xl font-bold text-center mb-8">
-            About This App
-          </h3>
-          <div className="space-y-4">
-            {/* Purpose Accordion */}
-            <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden hover:border-blue-400/50 hover:bg-white/10 transition-all duration-500 ease-out">
-              <button
-                onClick={() => toggleAccordion("purpose")}
-                className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-white/[0.08] transition-colors duration-500 ease-out group focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-inset"
-                aria-expanded={openAccordions.has("purpose")}
-                aria-controls="purpose-content"
-              >
-                <span className="text-lg font-semibold text-white group-hover:text-blue-100 transition-colors duration-500 ease-out">
-                  Purpose
-                </span>
-                <ChevronDown
-                  className={`w-5 h-5 text-blue-400 transition-all duration-500 ease-out group-hover:text-blue-300 ${
-                    openAccordions.has("purpose") ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-              {openAccordions.has("purpose") && (
-                <div
-                  id="purpose-content"
-                  className="px-6 py-5 text-gray-300 leading-relaxed border-t border-white/5"
-                >
-                  This application was built to solve a real problem — keeping
-                  track of media recommendations among a close friend group.
-                  It's designed to be private, secure, and intuitive.
-                </div>
-              )}
-            </div>
-
-            {/* Why Invite-Only Accordion */}
-            <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden hover:border-green-400/50 hover:bg-white/10 transition-all duration-500 ease-out">
-              <button
-                onClick={() => toggleAccordion("invite-only")}
-                className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-white/[0.08] transition-colors duration-500 ease-out group focus:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-inset"
-                aria-expanded={openAccordions.has("invite-only")}
-                aria-controls="invite-only-content"
-              >
-                <span className="text-lg font-semibold text-white group-hover:text-green-100 transition-colors duration-500 ease-out">
-                  Why Invite-Only?
-                </span>
-                <ChevronDown
-                  className={`w-5 h-5 text-green-400 transition-all duration-500 ease-out group-hover:text-green-300 ${
-                    openAccordions.has("invite-only") ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-              {openAccordions.has("invite-only") && (
-                <div
-                  id="invite-only-content"
-                  className="px-6 py-5 text-gray-300 leading-relaxed border-t border-white/5"
-                >
-                  This app is intentionally not public. It serves my friends and
-                  me, and the invite system ensures only trusted users have
-                  access. Security and privacy are paramount.
-                </div>
-              )}
-            </div>
-
-            {/* Open Source Accordion */}
-            <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden hover:border-cyan-400/50 hover:bg-white/10 transition-all duration-500 ease-out">
-              <button
-                onClick={() => toggleAccordion("open-source")}
-                className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-white/[0.08] transition-colors duration-500 ease-out group focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-inset"
-                aria-expanded={openAccordions.has("open-source")}
-                aria-controls="open-source-content"
-              >
-                <span className="text-lg font-semibold text-white group-hover:text-cyan-100 transition-colors duration-500 ease-out">
-                  Open Source
-                </span>
-                <ChevronDown
-                  className={`w-5 h-5 text-cyan-400 transition-all duration-500 ease-out group-hover:text-cyan-300 ${
-                    openAccordions.has("open-source") ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-              {openAccordions.has("open-source") && (
-                <div
-                  id="open-source-content"
-                  className="px-6 py-5 text-gray-300 leading-relaxed border-t border-white/5"
-                >
-                  The source code is available on GitHub for those interested in
-                  the technical implementation. Feel free to explore the
-                  architecture and see how it's built.
-                </div>
-              )}
             </div>
           </div>
         </section>
