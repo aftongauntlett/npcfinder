@@ -3,6 +3,8 @@
  * Provides trending, popular, and similar book recommendations
  */
 
+import { googleBooksLimiter } from "./rateLimiter";
+
 export interface BookItem {
   external_id: string;
   title: string;
@@ -67,43 +69,47 @@ function convertToBookItem(volume: GoogleBooksVolume): BookItem {
  * Fetch trending books (bestsellers, popular fiction)
  */
 export async function fetchTrendingBooks(): Promise<BookItem[]> {
-  try {
-    const response = await fetch(
-      `${BASE_URL}?q=subject:fiction&orderBy=newest&maxResults=20&key=${GOOGLE_BOOKS_API_KEY}`
-    );
+  return googleBooksLimiter.add(async () => {
+    try {
+      const response = await fetch(
+        `${BASE_URL}?q=subject:fiction&orderBy=newest&maxResults=20&key=${GOOGLE_BOOKS_API_KEY}`
+      );
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch trending books");
+      if (!response.ok) {
+        throw new Error("Failed to fetch trending books");
+      }
+
+      const data = (await response.json()) as { items?: GoogleBooksVolume[] };
+      return (data.items || []).map(convertToBookItem);
+    } catch (error) {
+      console.error("Error fetching trending books:", error);
+      return [];
     }
-
-    const data = (await response.json()) as { items?: GoogleBooksVolume[] };
-    return (data.items || []).map(convertToBookItem);
-  } catch (error) {
-    console.error("Error fetching trending books:", error);
-    return [];
-  }
+  });
 }
 
 /**
  * Fetch popular books (highly rated, general interest)
  */
 export async function fetchPopularBooks(): Promise<BookItem[]> {
-  try {
-    // Search for bestsellers and popular titles
-    const response = await fetch(
-      `${BASE_URL}?q=bestseller&orderBy=relevance&maxResults=20&key=${GOOGLE_BOOKS_API_KEY}`
-    );
+  return googleBooksLimiter.add(async () => {
+    try {
+      // Search for bestsellers and popular titles
+      const response = await fetch(
+        `${BASE_URL}?q=bestseller&orderBy=relevance&maxResults=20&key=${GOOGLE_BOOKS_API_KEY}`
+      );
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch popular books");
+      if (!response.ok) {
+        throw new Error("Failed to fetch popular books");
+      }
+
+      const data = (await response.json()) as { items?: GoogleBooksVolume[] };
+      return (data.items || []).map(convertToBookItem);
+    } catch (error) {
+      console.error("Error fetching popular books:", error);
+      return [];
     }
-
-    const data = (await response.json()) as { items?: GoogleBooksVolume[] };
-    return (data.items || []).map(convertToBookItem);
-  } catch (error) {
-    console.error("Error fetching popular books:", error);
-    return [];
-  }
+  });
 }
 
 /**
@@ -113,27 +119,29 @@ export async function fetchPopularBooks(): Promise<BookItem[]> {
 export async function fetchSimilarBooks(
   bookTitle: string
 ): Promise<BookItem[]> {
-  try {
-    // Search for books with similar subjects or by the same author
-    const response = await fetch(
-      `${BASE_URL}?q=intitle:${encodeURIComponent(
-        bookTitle
-      )}&orderBy=relevance&maxResults=20&key=${GOOGLE_BOOKS_API_KEY}`
-    );
+  return googleBooksLimiter.add(async () => {
+    try {
+      // Search for books with similar subjects or by the same author
+      const response = await fetch(
+        `${BASE_URL}?q=intitle:${encodeURIComponent(
+          bookTitle
+        )}&orderBy=relevance&maxResults=20&key=${GOOGLE_BOOKS_API_KEY}`
+      );
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch similar books");
+      if (!response.ok) {
+        throw new Error("Failed to fetch similar books");
+      }
+
+      const data = (await response.json()) as { items?: GoogleBooksVolume[] };
+      const books = (data.items || []).map(convertToBookItem);
+
+      // Filter out the exact book we're basing recommendations on
+      return books.filter(
+        (book: BookItem) => book.title.toLowerCase() !== bookTitle.toLowerCase()
+      );
+    } catch (error) {
+      console.error("Error fetching similar books:", error);
+      return [];
     }
-
-    const data = (await response.json()) as { items?: GoogleBooksVolume[] };
-    const books = (data.items || []).map(convertToBookItem);
-
-    // Filter out the exact book we're basing recommendations on
-    return books.filter(
-      (book: BookItem) => book.title.toLowerCase() !== bookTitle.toLowerCase()
-    );
-  } catch (error) {
-    console.error("Error fetching similar books:", error);
-    return [];
-  }
+  });
 }

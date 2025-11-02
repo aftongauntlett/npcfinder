@@ -92,3 +92,6 @@ export const omdbLimiter = new RateLimiter(2);
 
 // iTunes has no documented rate limit, but we'll be reasonable
 export const itunesLimiter = new RateLimiter(5);
+
+// Google Books API allows 1000 requests per day, ~1 per second is safe
+export const googleBooksLimiter = new RateLimiter(1);
