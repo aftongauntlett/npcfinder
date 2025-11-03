@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import type { User } from "@supabase/supabase-js";
 import DashboardHeader from "../dashboard/DashboardHeader";
 import Footer from "../shared/Footer";
@@ -11,6 +11,8 @@ import { UserPlus, TrendingUpDown, Clock, Lightbulb, X } from "lucide-react";
 import { DashboardRecommendations } from "../dashboard/DashboardRecommendations";
 import { useMarkMovieRecommendationsAsOpened } from "../../hooks/useMovieQueries";
 import { FriendSearchModal } from "../shared/FriendSearchModal";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "../../lib/queryKeys";
 
 interface HomePageProps {
   user: User;
@@ -25,6 +27,8 @@ const HomePage: React.FC<HomePageProps> = () => {
   const [showGettingStarted, setShowGettingStarted] = useState(() => {
     return localStorage.getItem("hideGettingStarted") !== "true";
   });
+
+  const queryClient = useQueryClient();
 
   // Fetch user profile with TanStack Query (automatic caching, shared with Navigation)
   const { data: profile, isLoading } = useProfileQuery();
@@ -48,6 +52,17 @@ const HomePage: React.FC<HomePageProps> = () => {
       markAsOpened.mutate();
     }
   };
+
+  // Refetch recommendations when the recommendations tab becomes active
+  useEffect(() => {
+    if (activeTab === "recommendations") {
+      // Invalidate all recommendation queries to force a fresh fetch
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.recommendations.all,
+      });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
+    }
+  }, [activeTab, queryClient]);
 
   // Apply theme color when profile loads
   const themeColorApplied = React.useRef(false);

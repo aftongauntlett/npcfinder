@@ -335,17 +335,31 @@ export function useUpdateRecipientNote(mediaTypeKey: MediaTypeKey) {
 
 /**
  * Generic mutation to mark all pending recommendations as opened
- * Note: This function doesn't exist in the service, removing it for now
  */
-export function useMarkRecommendationsAsOpened(_mediaTypeKey: MediaTypeKey) {
+export function useMarkRecommendationsAsOpened(mediaTypeKey: MediaTypeKey) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
     mutationFn: () => {
-      // TODO: Implement this function in the service if needed
-      return Promise.reject(
-        new Error("markAllPendingAsOpened is not implemented")
-      );
+      if (!user?.id) throw new Error("Not authenticated");
+
+      // Map media type to table name
+      let tableName:
+        | "movie_recommendations"
+        | "music_recommendations"
+        | "book_recommendations";
+      if (mediaTypeKey === "movies-tv") {
+        tableName = "movie_recommendations";
+      } else if (mediaTypeKey === "music" || mediaTypeKey === "song") {
+        tableName = "music_recommendations";
+      } else if (mediaTypeKey === "books") {
+        tableName = "book_recommendations";
+      } else {
+        tableName = "movie_recommendations"; // fallback
+      }
+
+      return recommendationsService.markAllPendingAsOpened(user.id, tableName);
     },
     onSuccess: () => {
       // Invalidate dashboard stats to update badge count

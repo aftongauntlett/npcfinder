@@ -259,6 +259,31 @@ export async function updateRecipientNote(
 }
 
 /**
+ * Mark all pending recommendations as opened (for badge dismissal)
+ */
+export async function markAllPendingAsOpened(
+  currentUserId: string,
+  tableName:
+    | "movie_recommendations"
+    | "music_recommendations"
+    | "book_recommendations"
+): Promise<void> {
+  const now = new Date().toISOString();
+
+  const { error } = await supabase
+    .from(tableName)
+    .update({ opened_at: now })
+    .eq("to_user_id", currentUserId)
+    .eq("status", "pending")
+    .is("opened_at", null);
+
+  if (error) {
+    console.error(`Error marking ${tableName} as opened:`, error);
+    throw error;
+  }
+}
+
+/**
  * Get user's watchlist
  */
 export async function getWatchlist(): Promise<WatchlistItem[]> {

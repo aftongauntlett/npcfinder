@@ -4,11 +4,11 @@ import {
   ThumbsDown,
   MessageSquare,
   Trash2,
-  Copy,
   Undo2,
+  Edit3,
 } from "lucide-react";
 import ConfirmationModal from "./ConfirmationModal";
-import IconButton from "./IconButton";
+import ActionButton from "./ActionButton";
 
 interface BaseRecommendation {
   id: string;
@@ -46,7 +46,6 @@ interface MediaRecommendationCardProps<T extends BaseRecommendation> {
   ) => Promise<void>; // For updating sender's own comment
   renderMediaInfo: (rec: T) => React.ReactNode;
   renderMediaArt: (rec: T) => React.ReactNode;
-  getCopyText?: (rec: T) => string; // Optional function to customize copy text
   reviewSummary?: { rating?: number; is_public?: boolean } | null; // Optional review indicator
 }
 
@@ -65,7 +64,6 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
   onUpdateSenderComment,
   renderMediaInfo,
   renderMediaArt,
-  getCopyText,
   reviewSummary,
 }: MediaRecommendationCardProps<T>) {
   const [isAddingComment, setIsAddingComment] = useState(false);
@@ -76,7 +74,6 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
   );
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [copiedTitle, setCopiedTitle] = useState(false);
 
   const handleSaveComment = async () => {
     await onStatusUpdate(rec.id, rec.status, commentText);
@@ -104,17 +101,6 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
     } catch (error) {
       console.error("Error deleting:", error);
       setIsDeleting(false);
-    }
-  };
-
-  const handleCopyTitle = async () => {
-    try {
-      const textToCopy = getCopyText ? getCopyText(rec) : rec.title;
-      await navigator.clipboard.writeText(textToCopy);
-      setCopiedTitle(true);
-      setTimeout(() => setCopiedTitle(false), 2000);
-    } catch (error) {
-      console.error("Failed to copy:", error);
     }
   };
 
@@ -180,20 +166,13 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
         <div className="flex items-center gap-3">
           {isReceived ? (
             <>
-              {/* Copy Title Button - Only on received items */}
-              <IconButton
-                icon={Copy}
-                onClick={() => void handleCopyTitle()}
-                variant={copiedTitle ? "success" : "default"}
-                title={copiedTitle ? "Copied!" : "Copy title"}
-              />
-
               {/* Hit/Miss/Comment buttons for received */}
               <div className="flex items-center gap-2">
-                <IconButton
+                <ActionButton
                   icon={ThumbsUp}
                   onClick={() => void onStatusUpdate(rec.id, "hit")}
-                  variant={rec.status === "hit" ? "active" : "success"}
+                  variant="success"
+                  isActive={rec.status === "hit"}
                   title={
                     rec.status === "hit"
                       ? "Hit!"
@@ -202,10 +181,11 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
                         })`
                   }
                 />
-                <IconButton
+                <ActionButton
                   icon={ThumbsDown}
                   onClick={() => void onStatusUpdate(rec.id, "miss")}
-                  variant={rec.status === "miss" ? "active" : "warning"}
+                  variant="danger"
+                  isActive={rec.status === "miss"}
                   title={
                     rec.status === "miss"
                       ? "Miss"
@@ -213,17 +193,17 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
                           senderName || "sender"
                         })`
                   }
-                  className={rec.status === "miss" ? "!bg-orange-600" : ""}
                 />
                 {/* Comment button - adds recipient's note */}
                 {!isAddingComment && (
-                  <IconButton
-                    icon={MessageSquare}
+                  <ActionButton
+                    icon={rec.comment ? Edit3 : MessageSquare}
                     onClick={() => {
                       setCommentText(rec.comment || "");
                       setIsAddingComment(true);
                     }}
-                    variant={rec.comment ? "active" : "primary"}
+                    variant="comment"
+                    isActive={!!rec.comment}
                     title={
                       rec.comment
                         ? "Edit your note"
@@ -232,7 +212,7 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
                   />
                 )}
                 {/* Delete button */}
-                <IconButton
+                <ActionButton
                   icon={Trash2}
                   onClick={handleUnsend}
                   variant="danger"
@@ -249,7 +229,7 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
                   {rec.status === "hit" && (
                     <span
                       className="p-2 rounded-lg text-white flex items-center"
-                      style={{ backgroundColor: "var(--color-primary)" }}
+                      style={{ backgroundColor: "rgb(70 200 117)" }}
                       title="Hit"
                     >
                       <ThumbsUp className="w-4 h-4" />
@@ -257,7 +237,8 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
                   )}
                   {rec.status === "miss" && (
                     <span
-                      className="p-2 rounded-lg bg-orange-600 text-white flex items-center"
+                      className="p-2 rounded-lg text-white flex items-center"
+                      style={{ backgroundColor: "rgb(218 113 113)" }}
                       title="Miss"
                     >
                       <ThumbsDown className="w-4 h-4" />
@@ -279,13 +260,14 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
 
               {/* Comment button - adds sender's note */}
               {!isAddingSenderComment && onUpdateSenderComment && (
-                <IconButton
-                  icon={MessageSquare}
+                <ActionButton
+                  icon={rec.sender_comment ? Edit3 : MessageSquare}
                   onClick={() => {
                     setSenderCommentText(rec.sender_comment || "");
                     setIsAddingSenderComment(true);
                   }}
-                  variant={rec.sender_comment ? "active" : "primary"}
+                  variant="comment"
+                  isActive={!!rec.sender_comment}
                   title={
                     rec.sender_comment ? "Edit your note" : "Add your note"
                   }
@@ -295,17 +277,16 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
               {/* Action button - Undo for unsent, Delete for opened/rated */}
               {rec.status === "pending" && !rec.opened_at ? (
                 // Unsend (undo) - not yet opened
-                <IconButton
+                <ActionButton
                   icon={Undo2}
                   onClick={handleUnsend}
-                  variant="warning"
+                  variant="default"
                   disabled={isDeleting}
                   title="Unsend (recipient hasn't seen it yet)"
-                  className="hover:!bg-yellow-600"
                 />
               ) : (
                 // Delete - opened or rated
-                <IconButton
+                <ActionButton
                   icon={Trash2}
                   onClick={handleUnsend}
                   variant="danger"

@@ -60,25 +60,38 @@ const Music: React.FC = () => {
 
   // Transform raw recommendations to component format with useMemo
   const recommendations: MusicRecommendation[] = useMemo(() => {
-    return rawRecommendations.map((rec) => ({
-      ...rec,
-      sent_message: rec.sent_message || null,
-      comment: rec.recipient_note || null,
-      sender_comment: rec.sender_note || null,
-      sender_note: rec.sender_note || null,
-      recipient_note: rec.recipient_note || null,
-      sent_at: rec.created_at,
-      artist: rec.artist || null,
-      album: rec.album || null,
-      year: rec.year || null,
-      poster_url: rec.poster_url || null,
-      consumed_at: rec.watched_at || null,
-      opened_at: rec.opened_at || null,
-      status:
-        rec.status === "consumed" || rec.status === "watched"
-          ? "listened"
-          : rec.status,
-    }));
+    return rawRecommendations.map((rec) => {
+      // Type assertion since we know these are music recommendations from useMusicRecommendations
+      const musicRec = rec as unknown as {
+        artist?: string;
+        album?: string;
+        year?: number;
+        poster_url?: string;
+        watched_at?: string;
+        listened_at?: string;
+        media_type?: "song" | "album";
+      };
+      return {
+        ...rec,
+        sent_message: rec.sent_message || null,
+        comment: rec.recipient_note || null,
+        sender_comment: rec.sender_note || null,
+        sender_note: rec.sender_note || null,
+        recipient_note: rec.recipient_note || null,
+        sent_at: rec.created_at,
+        artist: musicRec.artist || null,
+        album: musicRec.album || null,
+        year: musicRec.year || null,
+        poster_url: musicRec.poster_url || null,
+        consumed_at: musicRec.watched_at || musicRec.listened_at || null,
+        opened_at: rec.opened_at || null,
+        media_type: musicRec.media_type || ("song" as "song" | "album"),
+        status:
+          rec.status === "consumed" || rec.status === "watched"
+            ? "listened"
+            : rec.status,
+      } as MusicRecommendation;
+    });
   }, [rawRecommendations]);
 
   const loading = friendsLoading || recsLoading;
@@ -127,10 +140,6 @@ const Music: React.FC = () => {
         onStatusUpdate={updateRecommendationStatus}
         onDelete={deleteRecommendation}
         onUpdateSenderComment={updateSenderComment}
-        getCopyText={(r) => {
-          const musicRec = r as unknown as MusicRecommendation;
-          return `${musicRec.title} - ${musicRec.artist}`;
-        }}
         renderMediaArt={(r) => {
           const musicRec = r as unknown as MusicRecommendation;
           return musicRec.poster_url ? (

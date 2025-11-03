@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
-import { Search, Send, Check } from "lucide-react";
+import { Search, Send, Check, Eye, RotateCcw } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
 import { getFriends } from "../../lib/connections";
 import Modal from "./Modal";
 import Button from "./Button";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "../../lib/queryKeys";
 
 // Generic media item interface
 export interface MediaItem {
@@ -62,6 +64,7 @@ export default function SendMediaModal({
   preselectedItem,
 }: SendMediaModalProps) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -297,6 +300,15 @@ export default function SendMediaModal({
       setSending(false);
       setShowSuccess(true);
 
+      // Invalidate recommendation queries to refresh lists
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.recommendations.all,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.dashboard.stats(),
+      });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+
       // Wait a moment before closing
       setTimeout(() => {
         setShowSuccess(false);
@@ -455,37 +467,46 @@ export default function SendMediaModal({
         {/* Details Step */}
         {step === "details" && (
           <div className="space-y-4">
-            {/* Only show recommendation type selector if there are types AND it's relevant for this media */}
-            {recommendationTypes &&
-              recommendationTypes.length > 0 &&
-              // For movies, only show if it's a TV show
-              (mediaType !== "movies" || selectedItem?.media_type === "tv") && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Recommendation Type
-                  </label>
-                  <div className="flex gap-2">
-                    {recommendationTypes.map((type) => (
+            {/* Only show recommendation type selector if there are types */}
+            {recommendationTypes && recommendationTypes.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  Recommendation Type
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  {recommendationTypes.map((type) => {
+                    const isSelected = recommendationType === type.value;
+                    // Choose icon based on type
+                    const Icon =
+                      type.value === "rewatch" || type.value === "relisten"
+                        ? RotateCcw
+                        : Eye;
+
+                    return (
                       <button
                         key={type.value}
                         onClick={() => setRecommendationType(type.value)}
-                        className={`flex-1 py-2 px-4 rounded-lg transition-colors ${
-                          recommendationType === type.value
-                            ? "text-white"
-                            : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600"
+                        className={`relative flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all ${
+                          isSelected
+                            ? "text-white shadow-lg scale-[1.02]"
+                            : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                         }`}
                         style={
-                          recommendationType === type.value
-                            ? { backgroundColor: "var(--color-primary)" }
+                          isSelected
+                            ? {
+                                backgroundColor: "var(--color-primary)",
+                              }
                             : undefined
                         }
                       >
-                        {type.label}
+                        <Icon className="w-5 h-5" />
+                        <span>{type.label}</span>
                       </button>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
-              )}
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

@@ -274,12 +274,6 @@ export function DashboardRecommendations() {
                             </>
                           );
                         }}
-                        getCopyText={(r) => {
-                          const typed = r as CardRecommendation;
-                          return `${typed.title}${
-                            typed.year ? ` (${typed.year})` : ""
-                          }`;
-                        }}
                       />
                     </div>
                   );
