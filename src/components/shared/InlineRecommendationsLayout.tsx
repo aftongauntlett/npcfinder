@@ -55,6 +55,11 @@ interface InlineRecommendationsLayoutProps<T extends BaseRecommendation> {
     isReceived: boolean,
     index?: number
   ) => React.ReactNode;
+  renderGroupedSentCard?: (
+    mediaItem: T,
+    recipients: Array<{ name: string; recId: string; status: string }>,
+    index: number
+  ) => React.ReactNode;
 }
 
 type SectionType = "hits" | "misses" | "sent" | null;
@@ -68,21 +73,45 @@ export function InlineRecommendationsLayout<T extends BaseRecommendation>({
   quickStats,
   friendsWithRecs,
   renderRecommendationCard,
+  renderGroupedSentCard,
   hits,
   misses,
   sent,
   friendRecommendations,
 }: InlineRecommendationsLayoutProps<T>) {
   const [expandedSection, setExpandedSection] = useState<SectionType>(null);
-  const [expandedFriend, setExpandedFriend] = useState<string | null>(null);
+  const [expandedFriends, setExpandedFriends] = useState<Set<string>>(
+    new Set()
+  );
 
   const toggleSection = (section: SectionType) => {
     setExpandedSection(expandedSection === section ? null : section);
   };
 
   const toggleFriend = (friendId: string) => {
-    setExpandedFriend(expandedFriend === friendId ? null : friendId);
+    setExpandedFriends((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(friendId)) {
+        newSet.delete(friendId);
+      } else {
+        newSet.add(friendId);
+      }
+      return newSet;
+    });
   };
+
+  // Group sent items by external_id (same media item)
+  const groupedSentItems = React.useMemo(() => {
+    const groups = new Map<string, T[]>();
+    sent.forEach((rec) => {
+      const key = rec.external_id;
+      if (!groups.has(key)) {
+        groups.set(key, []);
+      }
+      groups.get(key)!.push(rec);
+    });
+    return Array.from(groups.values());
+  }, [sent]);
 
   return (
     <div className="space-y-6">
@@ -240,9 +269,16 @@ export function InlineRecommendationsLayout<T extends BaseRecommendation>({
             </p>
           ) : (
             <div className="space-y-1">
-              {sent.map((rec, index) =>
-                renderRecommendationCard(rec, false, index)
-              )}
+              {renderGroupedSentCard
+                ? // Use grouped rendering if available
+                  groupedSentItems.map((group, index) => {
+                    // Use first item as the representative
+                    return renderGroupedSentCard(group[0], [], index);
+                  })
+                : // Fallback to original rendering
+                  sent.map((rec, index) =>
+                    renderRecommendationCard(rec, false, index)
+                  )}
             </div>
           )}
         </div>
@@ -279,7 +315,7 @@ export function InlineRecommendationsLayout<T extends BaseRecommendation>({
                 <button
                   onClick={() => toggleFriend(friend.user_id)}
                   className="w-full p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
-                  aria-expanded={expandedFriend === friend.user_id}
+                  aria-expanded={expandedFriends.has(friend.user_id)}
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
@@ -311,14 +347,14 @@ export function InlineRecommendationsLayout<T extends BaseRecommendation>({
                       </div>
                     </div>
                   </div>
-                  {expandedFriend === friend.user_id ? (
+                  {expandedFriends.has(friend.user_id) ? (
                     <ChevronDown className="w-5 h-5 text-gray-400" />
                   ) : (
                     <ChevronRight className="w-5 h-5 text-gray-400" />
                   )}
                 </button>
 
-                {expandedFriend === friend.user_id && (
+                {expandedFriends.has(friend.user_id) && (
                   <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 p-4">
                     {(() => {
                       const friendRecs =

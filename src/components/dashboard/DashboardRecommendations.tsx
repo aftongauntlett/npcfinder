@@ -1,5 +1,11 @@
 import { useState, useMemo } from "react";
-import { ChevronDown, ChevronRight, User, Film, TvIcon } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  User,
+  Clapperboard,
+  TvIcon,
+} from "lucide-react";
 import {
   useMovieRecommendations,
   useFriendsWithMovieRecs,
@@ -65,7 +71,9 @@ function mapToCardRec(rec: Recommendation): CardRecommendation {
  * Reusable for movies, music, books, games (accepts mediaType)
  */
 export function DashboardRecommendations() {
-  const [expandedFriend, setExpandedFriend] = useState<string | null>(null);
+  const [expandedFriends, setExpandedFriends] = useState<Set<string>>(
+    new Set()
+  );
   const updateStatusMutation = useUpdateMovieRecommendationStatus();
   const deleteRecMutation = useDeleteMovieRecommendation();
   const updateRecipientNoteMutation = useUpdateRecipientNote();
@@ -115,7 +123,15 @@ export function DashboardRecommendations() {
   }, [recommendations, userNameMap]);
 
   const toggleFriend = (friendId: string) => {
-    setExpandedFriend(expandedFriend === friendId ? null : friendId);
+    setExpandedFriends((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(friendId)) {
+        newSet.delete(friendId);
+      } else {
+        newSet.add(friendId);
+      }
+      return newSet;
+    });
   };
 
   const updateRecommendationStatus = async (
@@ -183,7 +199,7 @@ export function DashboardRecommendations() {
           <button
             onClick={() => toggleFriend(friend.user_id)}
             className="w-full p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
-            aria-expanded={expandedFriend === friend.user_id}
+            aria-expanded={expandedFriends.has(friend.user_id)}
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
@@ -201,19 +217,20 @@ export function DashboardRecommendations() {
                 </div>
               </div>
             </div>
-            {expandedFriend === friend.user_id ? (
+            {expandedFriends.has(friend.user_id) ? (
               <ChevronDown className="w-5 h-5 text-gray-400" />
             ) : (
               <ChevronRight className="w-5 h-5 text-gray-400" />
             )}
           </button>
 
-          {expandedFriend === friend.user_id && (
+          {expandedFriends.has(friend.user_id) && (
             <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 p-4">
               <div className="space-y-1">
                 {friend.recommendations.map((rec, index) => {
                   const cardRec = mapToCardRec(rec);
-                  const MediaIcon = cardRec.media_type === "tv" ? TvIcon : Film;
+                  const MediaIcon =
+                    cardRec.media_type === "tv" ? TvIcon : Clapperboard;
                   const senderName =
                     userNameMap.get(rec.from_user_id) || "Unknown User";
                   const isNew = !rec.opened_at; // Show "NEW" badge if never opened
@@ -257,9 +274,17 @@ export function DashboardRecommendations() {
                                 <h3 className="font-semibold text-gray-900 dark:text-white">
                                   {typed.title}
                                 </h3>
-                                <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded">
-                                  {typed.media_type === "tv" ? "TV" : "Movie"}
-                                </span>
+                                {typed.media_type === "tv" ? (
+                                  <span className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 px-2 py-0.5 rounded whitespace-nowrap">
+                                    <TvIcon className="w-3 h-3" />
+                                    TV
+                                  </span>
+                                ) : (
+                                  <span className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 rounded whitespace-nowrap">
+                                    <Clapperboard className="w-3 h-3" />
+                                    Movie
+                                  </span>
+                                )}
                               </div>
                               {typed.year && (
                                 <p className="text-sm text-gray-600 dark:text-gray-400">

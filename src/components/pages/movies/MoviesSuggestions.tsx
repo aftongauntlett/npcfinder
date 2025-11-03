@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from "react";
-import { Film, Tv as TvIcon } from "lucide-react";
+import { Clapperboard, Tv as TvIcon } from "lucide-react";
 import SendMediaModal from "../../shared/SendMediaModal";
 import { searchMoviesAndTV } from "../../../utils/mediaSearchAdapters";
 import MediaRecommendationCard from "../../shared/MediaRecommendationCard";
+import GroupedSentMediaCard from "../../shared/GroupedSentMediaCard";
 import {
   InlineRecommendationsLayout,
   BaseRecommendation,
@@ -163,7 +164,7 @@ const MoviesSuggestions: React.FC<MoviesSuggestionsProps> = ({
     isReceived: boolean,
     index = 0
   ) => {
-    const MediaIcon = rec.media_type === "tv" ? TvIcon : Film;
+    const MediaIcon = rec.media_type === "tv" ? TvIcon : Clapperboard;
 
     // Get the appropriate user name based on direction
     const senderName = isReceived
@@ -202,10 +203,87 @@ const MoviesSuggestions: React.FC<MoviesSuggestionsProps> = ({
                 <div className="font-medium text-gray-900 dark:text-white truncate">
                   {movieRec.title}
                 </div>
-                {movieRec.media_type === "tv" && (
+                {movieRec.media_type === "tv" ? (
                   <span className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 px-2 py-0.5 rounded whitespace-nowrap">
                     <TvIcon className="w-3 h-3" />
                     TV
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 rounded whitespace-nowrap">
+                    <Clapperboard className="w-3 h-3" />
+                    Movie
+                  </span>
+                )}
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                {movieRec.release_date}
+              </div>
+              {movieRec.overview && (
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                  {movieRec.overview}
+                </div>
+              )}
+            </>
+          );
+        }}
+      />
+    );
+  };
+
+  const renderGroupedSentCard = (
+    mediaItem: MovieRecommendation,
+    _recipients: Array<{ name: string; recId: string; status: string }>,
+    index: number
+  ) => {
+    const MediaIcon = mediaItem.media_type === "tv" ? TvIcon : Clapperboard;
+
+    // Find all sent items with the same external_id to get all recipients
+    const allRecipients = sent
+      .filter((rec) => rec.external_id === mediaItem.external_id)
+      .map((rec) => ({
+        name: userNameMap.get(rec.to_user_id) || "Unknown User",
+        recId: rec.id,
+        status: rec.status,
+      }));
+
+    return (
+      <GroupedSentMediaCard
+        key={`grouped-${mediaItem.external_id}`}
+        mediaItem={mediaItem}
+        recipients={allRecipients}
+        index={index}
+        onDelete={deleteRecommendation}
+        renderMediaArt={(item) => {
+          const movieRec = item;
+          return movieRec.poster_url ? (
+            <img
+              src={movieRec.poster_url}
+              alt={movieRec.title}
+              className="w-12 h-16 rounded object-cover"
+            />
+          ) : (
+            <div className="w-12 h-16 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
+              <MediaIcon className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+            </div>
+          );
+        }}
+        renderMediaInfo={(item) => {
+          const movieRec = item;
+          return (
+            <>
+              <div className="flex items-center gap-2">
+                <div className="font-medium text-gray-900 dark:text-white truncate">
+                  {movieRec.title}
+                </div>
+                {movieRec.media_type === "tv" ? (
+                  <span className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 px-2 py-0.5 rounded whitespace-nowrap">
+                    <TvIcon className="w-3 h-3" />
+                    TV
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 rounded whitespace-nowrap">
+                    <Clapperboard className="w-3 h-3" />
+                    Movie
                   </span>
                 )}
               </div>
@@ -304,7 +382,7 @@ const MoviesSuggestions: React.FC<MoviesSuggestionsProps> = ({
       <div className="space-y-6">
         <InlineRecommendationsLayout
           mediaType="Movies & TV"
-          mediaIcon={Film}
+          mediaIcon={Clapperboard}
           emptyMessage="No recommendations yet"
           emptySubMessage="When friends recommend movies or TV shows, they'll show up here"
           loading={loading}
@@ -315,6 +393,7 @@ const MoviesSuggestions: React.FC<MoviesSuggestionsProps> = ({
           sent={sent}
           friendRecommendations={friendRecommendations}
           renderRecommendationCard={renderRecommendationCard}
+          renderGroupedSentCard={renderGroupedSentCard}
         />
 
         <MovieDiscoveryCard />

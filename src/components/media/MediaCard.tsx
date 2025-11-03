@@ -29,7 +29,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
     <SparkleEffect intensity="low">
       <article
         onClick={() => onClick(id)}
-        className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-200 cursor-pointer group hover:scale-105"
+        className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-200 cursor-pointer group hover:scale-105 hover:bg-gray-100 dark:hover:bg-gray-900"
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {

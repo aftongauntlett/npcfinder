@@ -1,5 +1,14 @@
 import React from "react";
-import { Star, Book, X, Check, Lightbulb, Undo2 } from "lucide-react";
+import {
+  Star,
+  Book,
+  X,
+  Check,
+  Lightbulb,
+  Undo2,
+  Clapperboard,
+  Tv,
+} from "lucide-react";
 import { STATUS_MAP, type MediaStatus } from "./mediaStatus";
 
 interface MediaListItemProps {
@@ -13,6 +22,7 @@ interface MediaListItemProps {
   audienceRating?: number;
   status?: MediaStatus;
   onClick: (id: string | number) => void;
+  mediaType?: "movie" | "tv"; // Add media type
 
   // Action buttons (optional)
   isCompleted?: boolean; // For watched/read status
@@ -43,6 +53,7 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
   onRecommend,
   onRemove,
   description,
+  mediaType,
 }) => {
   const statusConfig = status ? STATUS_MAP[status] : null;
   const hasActions = onToggleComplete || onRecommend || onRemove;
@@ -50,7 +61,7 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
   return (
     <div
       onClick={() => onClick(id)}
-      className="bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 p-4"
+      className="bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-900 p-4"
     >
       <div className="flex gap-4 items-start">
         {/* Poster/Icon */}
@@ -72,9 +83,27 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 dark:text-white truncate">
-                {title}
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-gray-900 dark:text-white truncate">
+                  {title}
+                </h3>
+                {/* Movie/TV Badge */}
+                {mediaType && (
+                  <>
+                    {mediaType === "tv" ? (
+                      <span className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 px-2 py-0.5 rounded whitespace-nowrap flex-shrink-0">
+                        <Tv className="w-3 h-3" />
+                        TV
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 rounded whitespace-nowrap flex-shrink-0">
+                        <Clapperboard className="w-3 h-3" />
+                        Movie
+                      </span>
+                    )}
+                  </>
+                )}
+              </div>
               {subtitle && (
                 <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
                   {subtitle}

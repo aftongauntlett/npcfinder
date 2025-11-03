@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Lightbulb,
+  Clapperboard,
 } from "lucide-react";
 import { MediaItem } from "../shared/SendMediaModal";
 import SearchMovieModal from "../shared/SearchMovieModal";
@@ -445,21 +446,27 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
 
                 {/* Hover Overlay - Full info */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
-                  {/* Title */}
-                  <h3 className="text-white font-semibold text-sm mb-1 line-clamp-2">
-                    {item.title}
-                  </h3>
+                  {/* Title and Media Type Badge */}
+                  <div className="flex items-start gap-2 mb-1">
+                    <h3 className="text-white font-semibold text-sm line-clamp-2 flex-1">
+                      {item.title}
+                    </h3>
+                    {item.media_type === "tv" ? (
+                      <span className="flex items-center gap-1 text-xs text-purple-200 bg-purple-600/80 px-1.5 py-0.5 rounded whitespace-nowrap flex-shrink-0">
+                        <Tv className="w-3 h-3" />
+                        TV
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 text-xs text-blue-200 bg-blue-600/80 px-1.5 py-0.5 rounded whitespace-nowrap flex-shrink-0">
+                        <Clapperboard className="w-3 h-3" />
+                      </span>
+                    )}
+                  </div>
 
                   {/* Metadata */}
                   <div className="flex items-center gap-2 mb-2 text-xs text-gray-200">
                     {item.release_date && (
                       <span>{formatReleaseDate(item.release_date)}</span>
-                    )}
-                    {item.media_type === "tv" && (
-                      <>
-                        <span>•</span>
-                        <span className="font-medium">TV</span>
-                      </>
                     )}
                   </div>
 
@@ -540,6 +547,7 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
               }
               posterUrl={item.poster_url || undefined}
               description={item.overview || undefined}
+              mediaType={item.media_type}
               onClick={() => setSelectedMovie(item)}
               isCompleted={item.watched}
               onToggleComplete={(id) => void handleToggleWatched(id as string)}

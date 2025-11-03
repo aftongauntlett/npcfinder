@@ -3,6 +3,7 @@ import { BookOpen } from "lucide-react";
 import SendMediaModal from "../../shared/SendMediaModal";
 import { searchBooks } from "../../../utils/bookSearchAdapters";
 import MediaRecommendationCard from "../../shared/MediaRecommendationCard";
+import GroupedSentMediaCard from "../../shared/GroupedSentMediaCard";
 import {
   InlineRecommendationsLayout,
   BaseRecommendation,
@@ -223,6 +224,70 @@ const BooksSuggestions: React.FC<BooksSuggestionsProps> = ({
     );
   };
 
+  const renderGroupedSentCard = (
+    mediaItem: BookRecommendation,
+    _recipients: Array<{ name: string; recId: string; status: string }>,
+    index: number
+  ) => {
+    // Find all sent items with the same external_id to get all recipients
+    const allRecipients = sent
+      .filter((rec) => rec.external_id === mediaItem.external_id)
+      .map((rec) => ({
+        name: userNameMap.get(rec.to_user_id) || "Unknown User",
+        recId: rec.id,
+        status: rec.status,
+      }));
+
+    return (
+      <GroupedSentMediaCard
+        key={`grouped-${mediaItem.external_id}`}
+        mediaItem={mediaItem}
+        recipients={allRecipients}
+        index={index}
+        onDelete={deleteRecommendation}
+        renderMediaArt={(item) => {
+          const bookRec = item;
+          return bookRec.thumbnail_url ? (
+            <img
+              src={bookRec.thumbnail_url}
+              alt={bookRec.title}
+              className="w-12 h-16 rounded object-cover"
+            />
+          ) : (
+            <div className="w-12 h-16 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
+              <BookOpen className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+            </div>
+          );
+        }}
+        renderMediaInfo={(item) => {
+          const bookRec = item;
+          return (
+            <>
+              <div className="font-medium text-gray-900 dark:text-white truncate">
+                {bookRec.title}
+              </div>
+              {bookRec.authors && (
+                <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                  {bookRec.authors}
+                </div>
+              )}
+              {bookRec.published_date && (
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  {bookRec.published_date}
+                </div>
+              )}
+              {bookRec.description && (
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                  {bookRec.description}
+                </div>
+              )}
+            </>
+          );
+        }}
+      />
+    );
+  };
+
   // Transform data for inline layout
   const hits: BookRecommendation[] = (hitsData || []).map((rec: any) => ({
     ...rec,
@@ -320,6 +385,7 @@ const BooksSuggestions: React.FC<BooksSuggestionsProps> = ({
           sent={sent}
           friendRecommendations={friendRecommendations}
           renderRecommendationCard={renderRecommendationCard}
+          renderGroupedSentCard={renderGroupedSentCard}
         />
 
         <BookDiscoveryCard />

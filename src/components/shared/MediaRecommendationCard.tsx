@@ -33,7 +33,7 @@ interface MediaRecommendationCardProps<T extends BaseRecommendation> {
   rec: T;
   index: number;
   isReceived: boolean;
-  senderName?: string; // Display name of the person who sent the recommendation
+  senderName?: string; // Display name - sender for received recs, recipient for sent recs
   onStatusUpdate: (
     recId: string,
     status: string,
@@ -119,6 +119,13 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
         {/* Media Info (title, artist/director/author, year, badges, etc.) */}
         <div className="flex-1 min-w-0">
           {renderMediaInfo(rec)}
+
+          {/* Recipient Name - Only when sent */}
+          {!isReceived && senderName && (
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Sent to: <span className="font-medium">{senderName}</span>
+            </div>
+          )}
 
           {/* Review Indicator Badge - Only when received and has public review */}
           {isReceived && reviewSummary?.is_public && (
