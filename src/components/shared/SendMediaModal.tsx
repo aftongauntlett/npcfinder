@@ -33,6 +33,7 @@ export interface MediaItem {
   media_type?: string; // track/album for music, movie/tv for movies, etc.
   page_count?: number; // for books
   isbn?: string; // for books
+  categories?: string; // for books - comma-separated categories from Google Books API
 }
 
 // Friend interface

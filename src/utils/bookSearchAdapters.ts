@@ -123,6 +123,7 @@ function convertGoogleBookToMediaItem(volume: GoogleBooksVolume): MediaItem {
     description: info.description,
     isbn,
     page_count: info.pageCount,
+    categories: info.categories?.join(", "), // Store as comma-separated string
     media_type: "book",
   };
 }

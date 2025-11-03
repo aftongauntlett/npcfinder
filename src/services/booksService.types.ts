@@ -14,6 +14,7 @@ export interface ReadingListItem {
   description: string | null;
   isbn: string | null;
   page_count: number | null;
+  categories: string | null; // Comma-separated categories from Google Books API
   read: boolean;
   personal_rating: number | null;
   personal_notes: string | null;

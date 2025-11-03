@@ -54,6 +54,7 @@ export function useAddToReadingList() {
       description: string | null;
       isbn: string | null;
       page_count: number | null;
+      categories: string | null;
       read: boolean;
     }) => {
       const {
@@ -222,12 +223,13 @@ export function useBatchAddToReadingList() {
                 user_id: user.id,
                 external_id: book.external_id,
                 title: book.title,
-                authors: book.authorss || null,
+                authors: book.authors || null,
                 thumbnail_url: book.poster_url,
                 published_date: book.release_date,
                 description: book.description || null,
                 isbn: book.isbn || null,
                 page_count: book.page_count || null,
+                categories: book.categories || null,
                 read: false,
               },
             ])

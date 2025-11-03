@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import { Lightbulb, Play, Check } from "lucide-react";
 import MainLayout from "../../layouts/MainLayout";
 import ContentLayout from "../../layouts/ContentLayout";
-import PersonalWatchList from "../../media/PersonalWatchList";
 import MoviesSuggestions from "./MoviesSuggestions";
 import { useWatchlist } from "../../../hooks/useWatchlistQueries";
 import { useMovieStats } from "../../../hooks/useMovieQueries";
+import PersonalWatchList from "../../media/PersonalWatchList";
 
 type TabId = "watching" | "watched" | "recommendations";
 

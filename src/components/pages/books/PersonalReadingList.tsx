@@ -1,11 +1,7 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo, useCallback } from "react";
 import {
   Plus,
   BookOpen,
-  List,
-  Check,
-  Grid3x3,
-  ChevronDown,
   Upload,
   ChevronLeft,
   ChevronRight,
@@ -17,8 +13,11 @@ import ImportBooksModal from "./ImportBooksModal";
 import Button from "../../shared/Button";
 import MediaEmptyState from "../../media/MediaEmptyState";
 import MediaListItem from "../../media/MediaListItem";
+import MediaTypeFilters, { FilterOption } from "../../media/MediaTypeFilters";
+import SortDropdown, { SortOption } from "../../media/SortDropdown";
 import SendMediaModal from "../../shared/SendMediaModal";
 import Toast from "../../ui/Toast";
+import { useMediaFiltering } from "../../../hooks/useMediaFiltering";
 import { searchBooks } from "../../../utils/bookSearchAdapters";
 import {
   useReadingList,
@@ -26,52 +25,266 @@ import {
   useToggleReadingListRead,
   useDeleteFromReadingList,
 } from "../../../hooks/useReadingListQueries";
-import { useViewMode } from "../../../hooks/useViewMode";
 import type { ReadingListItem } from "../../../services/booksService.types";
-import BookCard from "./BookCard";
 
 type FilterType = "all" | "to-read" | "read";
 type SortType = "date-added" | "title" | "year" | "rating";
+type CategoryFilter =
+  | "all"
+  | "fiction"
+  | "nonfiction"
+  | "fantasy"
+  | "romance"
+  | "mystery"
+  | "biography"
+  | "history"
+  | "science";
 
 interface PersonalReadingListProps {
   initialFilter?: FilterType;
   embedded?: boolean;
 }
 
+// Category filter configuration
+const CATEGORY_FILTERS: FilterOption[] = [
+  { id: "all", label: "All Books" },
+  {
+    id: "fiction",
+    label: "Fiction",
+    colorClass:
+      "bg-blue-500/20 text-blue-700 dark:text-blue-200 ring-2 ring-blue-500/50",
+  },
+  {
+    id: "nonfiction",
+    label: "Non-Fiction",
+    colorClass:
+      "bg-indigo-500/20 text-indigo-700 dark:text-indigo-200 ring-2 ring-indigo-500/50",
+  },
+  {
+    id: "fantasy",
+    label: "Fantasy",
+    colorClass:
+      "bg-purple-500/20 text-purple-700 dark:text-purple-200 ring-2 ring-purple-500/50",
+  },
+  {
+    id: "romance",
+    label: "Romance",
+    colorClass:
+      "bg-pink-500/20 text-pink-700 dark:text-pink-200 ring-2 ring-pink-500/50",
+  },
+  {
+    id: "mystery",
+    label: "Mystery",
+    colorClass:
+      "bg-amber-500/20 text-amber-700 dark:text-amber-200 ring-2 ring-amber-500/50",
+  },
+  {
+    id: "biography",
+    label: "Biography",
+    colorClass:
+      "bg-teal-500/20 text-teal-700 dark:text-teal-200 ring-2 ring-teal-500/50",
+  },
+  {
+    id: "history",
+    label: "History",
+    colorClass:
+      "bg-orange-500/20 text-orange-700 dark:text-orange-200 ring-2 ring-orange-500/50",
+  },
+  {
+    id: "science",
+    label: "Science",
+    colorClass:
+      "bg-green-500/20 text-green-700 dark:text-green-200 ring-2 ring-green-500/50",
+  },
+];
+
+// Sort options
+const SORT_OPTIONS: SortOption[] = [
+  { id: "date-added", label: "Recently Added" },
+  { id: "title", label: "Title" },
+  { id: "year", label: "Publication Year" },
+  { id: "rating", label: "Your Rating" },
+];
+
 const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
   initialFilter = "all",
   embedded: _embedded = false,
 }) => {
-  // Fetch reading list from database
+  // Data fetching
   const { data: readingList = [] } = useReadingList();
   const addToReadingList = useAddToReadingList();
   const toggleRead = useToggleReadingListRead();
   const deleteFromReadingList = useDeleteFromReadingList();
 
-  // Filter is controlled by tabs (initialFilter prop), not by dropdown
+  // Filter state (controlled by tabs via prop)
   const [filter] = useState<FilterType>(initialFilter);
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("all");
   const [sortBy, setSortBy] = useState<SortType>("date-added");
-  const [viewMode, setViewMode] = useViewMode("grid");
+
+  // Modal state
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showSendModal, setShowSendModal] = useState(false);
   const [selectedBook, setSelectedBook] = useState<ReadingListItem | null>(
     null
   );
-  const [showSortMenu, setShowSortMenu] = useState(false);
-  const [showSendModal, setShowSendModal] = useState(false);
   const [bookToRecommend, setBookToRecommend] =
     useState<ReadingListItem | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(25);
-  const [showItemsPerPageMenu, setShowItemsPerPageMenu] = useState(false);
-  const topRef = useRef<HTMLDivElement>(null);
+
+  // Undo state
   const [lastDeletedItem, setLastDeletedItem] =
     useState<ReadingListItem | null>(null);
   const [showUndoToast, setShowUndoToast] = useState(false);
 
-  // Add to reading list
+  // Ref for scroll-to-top
+  const topRef = useRef<HTMLDivElement>(null);
+
+  // Determine which categories have books (for filtering available categories)
+  const availableCategories = useMemo(() => {
+    const categories = new Set<CategoryFilter>(["all"]);
+
+    readingList.forEach((book) => {
+      if (book.categories) {
+        const cats = book.categories.toLowerCase();
+
+        if (cats.includes("fiction") && !cats.includes("non-fiction")) {
+          categories.add("fiction");
+        }
+        if (cats.includes("non-fiction") || cats.includes("nonfiction")) {
+          categories.add("nonfiction");
+        }
+        if (cats.includes("fantasy")) categories.add("fantasy");
+        if (cats.includes("romance")) categories.add("romance");
+        if (
+          cats.includes("mystery") ||
+          cats.includes("thriller") ||
+          cats.includes("crime")
+        ) {
+          categories.add("mystery");
+        }
+        if (cats.includes("biography") || cats.includes("memoir")) {
+          categories.add("biography");
+        }
+        if (cats.includes("history")) categories.add("history");
+        if (cats.includes("science") || cats.includes("technology")) {
+          categories.add("science");
+        }
+      }
+    });
+
+    return categories;
+  }, [readingList]);
+
+  // Category matching helper
+  const bookMatchesCategory = (
+    book: ReadingListItem,
+    category: CategoryFilter
+  ): boolean => {
+    if (category === "all") return true;
+    if (!book.categories) return false;
+
+    const cats = book.categories.toLowerCase();
+
+    switch (category) {
+      case "fiction":
+        return cats.includes("fiction") && !cats.includes("non-fiction");
+      case "nonfiction":
+        return cats.includes("non-fiction") || cats.includes("nonfiction");
+      case "fantasy":
+        return cats.includes("fantasy");
+      case "romance":
+        return cats.includes("romance");
+      case "mystery":
+        return (
+          cats.includes("mystery") ||
+          cats.includes("thriller") ||
+          cats.includes("crime")
+        );
+      case "biography":
+        return cats.includes("biography") || cats.includes("memoir");
+      case "history":
+        return cats.includes("history");
+      case "science":
+        return cats.includes("science") || cats.includes("technology");
+      default:
+        return true;
+    }
+  };
+
+  // Filter function
+  const filterFn = useCallback(
+    (book: ReadingListItem) => {
+      // Filter by read status
+      if (filter === "to-read" && book.read) return false;
+      if (filter === "read" && !book.read) return false;
+
+      // Filter by category
+      return bookMatchesCategory(book, categoryFilter);
+    },
+    [filter, categoryFilter]
+  );
+
+  // Sort function
+  const sortFn = useCallback(
+    (a: ReadingListItem, b: ReadingListItem) => {
+      switch (sortBy) {
+        case "date-added":
+          return (
+            new Date(b.created_at || "").getTime() -
+            new Date(a.created_at || "").getTime()
+          );
+        case "title":
+          return a.title.localeCompare(b.title);
+        case "year":
+          return (
+            (b.published_date ? new Date(b.published_date).getFullYear() : 0) -
+            (a.published_date ? new Date(a.published_date).getFullYear() : 0)
+          );
+        case "rating":
+          return (b.personal_rating || 0) - (a.personal_rating || 0);
+        default:
+          return 0;
+      }
+    },
+    [sortBy]
+  );
+
+  // Use the filtering hook
+  const {
+    items: paginatedItems,
+    totalItems,
+    currentPage,
+    totalPages,
+    setCurrentPage,
+    hasNextPage,
+    hasPrevPage,
+    itemsPerPage,
+    setItemsPerPage,
+  } = useMediaFiltering({
+    items: readingList,
+    filterFn,
+    sortFn,
+  });
+
+  // Calculate counts for empty state logic
+  const toReadCount = useMemo(
+    () => readingList.filter((book) => !book.read).length,
+    [readingList]
+  );
+  const readCount = useMemo(
+    () => readingList.filter((book) => book.read).length,
+    [readingList]
+  );
+
+  const hasItemsForCurrentFilter =
+    filter === "all"
+      ? readingList.length > 0
+      : filter === "to-read"
+      ? toReadCount > 0
+      : readCount > 0;
+
+  // Event handlers
   const handleAddToReadingList = (result: MediaItem) => {
-    // If we're on the "read" tab, mark as read immediately
     const shouldMarkAsRead = filter === "read";
 
     void addToReadingList.mutateAsync({
@@ -83,24 +296,25 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
       description: result.description || null,
       isbn: result.isbn || null,
       page_count: result.page_count || null,
+      categories: result.categories || null,
       read: shouldMarkAsRead,
     });
     setShowSearchModal(false);
   };
 
-  // Toggle read status
-  const handleToggleRead = (id: string) => {
-    void toggleRead.mutateAsync(id);
+  const handleToggleRead = (id: string | number) => {
+    void toggleRead.mutateAsync(String(id));
   };
 
-  // Remove from reading list with undo
-  const handleRemove = (book: ReadingListItem) => {
+  const handleRemove = (id: string | number) => {
+    const book = readingList.find((b) => b.id === String(id));
+    if (!book) return;
+
     setLastDeletedItem(book);
-    void deleteFromReadingList.mutateAsync(book.id);
     setShowUndoToast(true);
+    void deleteFromReadingList.mutateAsync(book.id);
   };
 
-  // Undo deletion
   const handleUndo = () => {
     if (lastDeletedItem) {
       void addToReadingList.mutateAsync({
@@ -112,6 +326,7 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
         description: lastDeletedItem.description,
         isbn: lastDeletedItem.isbn,
         page_count: lastDeletedItem.page_count,
+        categories: lastDeletedItem.categories,
         read: lastDeletedItem.read,
       });
       setLastDeletedItem(null);
@@ -119,66 +334,10 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
     setShowUndoToast(false);
   };
 
-  // Filter books based on filter
-  const filteredBooks = readingList.filter((book: ReadingListItem) => {
-    if (filter === "to-read") return !book.read;
-    if (filter === "read") return book.read;
-    return true; // "all"
-  });
-
-  // Sort books
-  const sortedBooks = [...filteredBooks].sort((a, b) => {
-    switch (sortBy) {
-      case "date-added":
-        return (
-          new Date(b.created_at || "").getTime() -
-          new Date(a.created_at || "").getTime()
-        );
-      case "title":
-        return a.title.localeCompare(b.title);
-      case "year":
-        return (
-          (b.published_date ? new Date(b.published_date).getFullYear() : 0) -
-          (a.published_date ? new Date(a.published_date).getFullYear() : 0)
-        );
-      case "rating":
-        return (b.personal_rating || 0) - (a.personal_rating || 0);
-      default:
-        return 0;
-    }
-  });
-
-  // Pagination
-  const totalPages = Math.ceil(sortedBooks.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentBooks = sortedBooks.slice(startIndex, endIndex);
-
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
-    topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    topRef.current?.scrollIntoView({ behavior: "smooth" });
   };
-
-  const handleItemsPerPageChange = (count: number) => {
-    setItemsPerPage(count);
-    setCurrentPage(1); // Reset to first page
-    setShowItemsPerPageMenu(false);
-  };
-
-  // Recommend book to friend
-  const handleRecommend = (book: ReadingListItem) => {
-    setBookToRecommend(book);
-    setShowSendModal(true);
-  };
-
-  const sortOptions = [
-    { value: "date-added" as SortType, label: "Recently Added" },
-    { value: "title" as SortType, label: "Title" },
-    { value: "year" as SortType, label: "Publication Year" },
-    { value: "rating" as SortType, label: "Your Rating" },
-  ];
-
-  const itemsPerPageOptions = [10, 25, 50, 100];
 
   // Empty state props
   const emptyStateProps =
@@ -199,218 +358,174 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
           message: "Add your first book to get started tracking your reading.",
         };
 
+  // Filter available category options
+  const availableCategoryFilters = CATEGORY_FILTERS.filter((filter) =>
+    availableCategories.has(filter.id as CategoryFilter)
+  );
+
   return (
     <div ref={topRef} className="space-y-6">
-      {/* Action Bar */}
-      <div className="flex items-center justify-between gap-4">
-        {/* Left side: Sort and View Toggle */}
-        <div className="flex items-center gap-3">
-          {/* Sort Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowSortMenu(!showSortMenu)}
-              className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            >
-              <span className="font-medium">
-                {sortBy === "date-added" && "Sort: Date Added"}
-                {sortBy === "title" && "Sort: Title (A-Z)"}
-                {sortBy === "year" && "Sort: Year"}
-                {sortBy === "rating" && "Sort: Rating"}
-              </span>
-              <ChevronDown className="w-4 h-4 text-gray-500" />
-            </button>
+      {/* Controls Row: Filters + Sort + Actions */}
+      {hasItemsForCurrentFilter && (
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          {/* Left: Category Filter Chips */}
+          <MediaTypeFilters
+            filters={availableCategoryFilters}
+            activeFilter={categoryFilter}
+            onFilterChange={(filterId) =>
+              setCategoryFilter(filterId as CategoryFilter)
+            }
+          />
 
-            {showSortMenu && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setShowSortMenu(false)}
-                />
-                <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-20 py-1 overflow-hidden">
-                  {sortOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => {
-                        setSortBy(option.value);
-                        setShowSortMenu(false);
-                      }}
-                      className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
-                        sortBy === option.value
-                          ? "bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-semibold"
-                          : "text-gray-700 dark:text-gray-300"
-                      }`}
-                    >
-                      {sortBy === option.value && (
-                        <Check className="w-4 h-4 inline-block mr-2 text-primary" />
-                      )}
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* View Mode Toggle */}
-          <div className="flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-            <button
-              onClick={() => setViewMode("grid")}
-              className={`p-2 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
-                viewMode === "grid"
-                  ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white"
-                  : "hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
-              }`}
-              title="Grid view"
-              aria-label="Switch to grid view"
-              aria-pressed={viewMode === "grid"}
-            >
-              <Grid3x3 className="w-4 h-4" aria-hidden="true" />
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={`p-2 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
-                viewMode === "list"
-                  ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white"
-                  : "hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
-              }`}
-              title="List view"
-              aria-label="Switch to list view"
-              aria-pressed={viewMode === "list"}
-            >
-              <List className="w-4 h-4" aria-hidden="true" />
-            </button>
-          </div>
-        </div>
-
-        {/* Right side: Add and Import Buttons */}
-        <div className="flex items-center gap-3">
-          <Button
-            onClick={() => setShowSearchModal(true)}
-            variant="primary"
-            icon={<Plus className="w-4 h-4" />}
-          >
-            Add
-          </Button>
-          <Button
-            onClick={() => setShowImportModal(true)}
-            variant="secondary"
-            icon={<Upload className="w-4 h-4" />}
-          >
-            Import
-          </Button>
-        </div>
-      </div>
-
-      {/* Books Display */}
-      {currentBooks.length === 0 ? (
-        <MediaEmptyState
-          icon={BookOpen}
-          description={emptyStateProps.message}
-          title={emptyStateProps.title}
-        />
-      ) : viewMode === "grid" ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {currentBooks.map((book) => (
-            <BookCard
-              key={book.id}
-              id={book.id}
-              title={book.title}
-              author={book.authors}
-              thumbnailUrl={book.thumbnail_url}
-              year={
-                book.published_date
-                  ? new Date(book.published_date).getFullYear().toString()
-                  : undefined
-              }
-              personalRating={book.personal_rating}
-              status={book.read ? "read" : "reading"}
-              onClick={() => setSelectedBook(book)}
+          {/* Right: Sort + Action Buttons */}
+          <div className="flex items-center gap-3">
+            <SortDropdown
+              options={SORT_OPTIONS}
+              activeSort={sortBy}
+              onSortChange={(sortId) => setSortBy(sortId as SortType)}
             />
-          ))}
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {currentBooks.map((book) => (
-            <MediaListItem
-              key={book.id}
-              id={book.id}
-              title={book.title}
-              subtitle={book.authors || undefined}
-              posterUrl={book.thumbnail_url || undefined}
-              description={book.description || undefined}
-              onClick={() => setSelectedBook(book)}
-              isCompleted={book.read}
-              onToggleComplete={(id) => void handleToggleRead(id as string)}
-              onRecommend={book.read ? () => handleRecommend(book) : undefined}
-              onRemove={() => handleRemove(book)}
-            />
-          ))}
+
+            <Button
+              onClick={() => setShowSearchModal(true)}
+              variant="primary"
+              icon={<Plus className="w-4 h-4" />}
+            >
+              Add
+            </Button>
+
+            <Button
+              onClick={() => setShowImportModal(true)}
+              variant="secondary"
+              icon={<Upload className="w-4 h-4" />}
+            >
+              Import
+            </Button>
+          </div>
         </div>
       )}
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              Showing {startIndex + 1}-{Math.min(endIndex, sortedBooks.length)}{" "}
-              of {sortedBooks.length}
-            </span>
-            <div className="relative">
-              <button
-                onClick={() => setShowItemsPerPageMenu(!showItemsPerPageMenu)}
-                className="flex items-center gap-1 px-2 py-1 text-sm bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-              >
-                <span>{itemsPerPage} per page</span>
-                <ChevronDown className="w-3 h-3" />
-              </button>
-              {showItemsPerPageMenu && (
-                <>
+      {/* Content: List or Empty State */}
+      {!hasItemsForCurrentFilter ? (
+        <MediaEmptyState
+          icon={BookOpen}
+          title={emptyStateProps.title}
+          description={emptyStateProps.message}
+        />
+      ) : totalItems === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-gray-500 dark:text-gray-400">
+            No books found in{" "}
+            {categoryFilter === "all" ? "any" : categoryFilter} category
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* List View */}
+          <div className="space-y-4">
+            {paginatedItems.map((book) => (
+              <MediaListItem
+                key={book.id}
+                id={book.id}
+                title={book.title}
+                subtitle={book.authors || undefined}
+                posterUrl={book.thumbnail_url || undefined}
+                year={
+                  book.published_date
+                    ? new Date(book.published_date).getFullYear()
+                    : undefined
+                }
+                description={book.description || undefined}
+                personalRating={book.personal_rating || undefined}
+                category={book.categories || undefined}
+                isCompleted={book.read}
+                onToggleComplete={handleToggleRead}
+                onRemove={handleRemove}
+                onClick={() => setSelectedBook(book)}
+                onRecommend={() => {
+                  setBookToRecommend(book);
+                  setShowSendModal(true);
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+              {/* Items per page */}
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <button
+                    onClick={() => {
+                      const menu = document.getElementById(
+                        "items-per-page-menu-books"
+                      );
+                      if (menu) {
+                        menu.style.display =
+                          menu.style.display === "block" ? "none" : "block";
+                      }
+                    }}
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  >
+                    {itemsPerPage}
+                  </button>
                   <div
-                    className="fixed inset-0 z-10"
-                    onClick={() => setShowItemsPerPageMenu(false)}
-                  />
-                  <div className="absolute bottom-full mb-1 left-0 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-20">
-                    {itemsPerPageOptions.map((count) => (
+                    id="items-per-page-menu-books"
+                    style={{ display: "none" }}
+                    className="absolute bottom-full left-0 mb-2 w-24 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-20 py-1"
+                  >
+                    {[10, 25, 50, 100].map((size) => (
                       <button
-                        key={count}
-                        onClick={() => handleItemsPerPageChange(count)}
-                        className={`w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 first:rounded-t-lg last:rounded-b-lg ${
-                          itemsPerPage === count
-                            ? "text-primary dark:text-primary-light font-medium"
-                            : ""
+                        key={size}
+                        onClick={() => {
+                          setItemsPerPage(size);
+                          document.getElementById(
+                            "items-per-page-menu-books"
+                          )!.style.display = "none";
+                        }}
+                        className={`w-full px-3 py-2 text-sm text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${
+                          itemsPerPage === size
+                            ? "bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-semibold"
+                            : "text-gray-700 dark:text-gray-300"
                         }`}
                       >
-                        {count}
+                        {size}
                       </button>
                     ))}
                   </div>
-                </>
-              )}
+                </div>
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  per page ({totalItems} total)
+                </span>
+              </div>
+
+              {/* Page navigation */}
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={!hasPrevPage}
+                    className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    aria-label="Previous page"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={!hasNextPage}
+                    className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    aria-label="Next page"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-              aria-label="Previous page"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-              aria-label="Next page"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+          )}
+        </>
       )}
 
       {/* Modals */}
@@ -418,12 +533,42 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
         <SearchBookModal
           onClose={() => setShowSearchModal(false)}
           onSelect={handleAddToReadingList}
+          existingIds={readingList.map((book) => book.external_id)}
         />
       )}
 
-      {showImportModal && (
-        <ImportBooksModal onClose={() => setShowImportModal(false)} />
-      )}
+      <SendMediaModal
+        isOpen={showSendModal}
+        onClose={() => {
+          setShowSendModal(false);
+          setBookToRecommend(null);
+        }}
+        onSent={() => {
+          setShowSendModal(false);
+          setBookToRecommend(null);
+        }}
+        mediaType="books"
+        tableName="book_recommendations"
+        searchPlaceholder="Search for books..."
+        searchFunction={searchBooks}
+        recommendationTypes={[
+          { value: "read", label: "Read" },
+          { value: "reread", label: "Re-read" },
+        ]}
+        defaultRecommendationType="read"
+        preselectedItem={
+          bookToRecommend
+            ? {
+                external_id: bookToRecommend.external_id,
+                title: bookToRecommend.title,
+                authors: bookToRecommend.authors || undefined,
+                poster_url: bookToRecommend.thumbnail_url,
+                release_date: bookToRecommend.published_date,
+                description: bookToRecommend.description,
+              }
+            : undefined
+        }
+      />
 
       {selectedBook && (
         <BookDetailModal
@@ -431,56 +576,31 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
           onClose={() => setSelectedBook(null)}
           onToggleRead={() => handleToggleRead(selectedBook.id)}
           onRemove={() => {
-            handleRemove(selectedBook);
+            handleRemove(selectedBook.id);
             setSelectedBook(null);
           }}
           onRecommend={() => {
-            handleRecommend(selectedBook);
+            setBookToRecommend(selectedBook);
+            setShowSendModal(true);
           }}
         />
       )}
 
-      {showSendModal && bookToRecommend && (
-        <SendMediaModal
-          isOpen={true}
-          onClose={() => {
-            setShowSendModal(false);
-            setBookToRecommend(null);
-          }}
-          onSent={() => {
-            setShowSendModal(false);
-            setBookToRecommend(null);
-          }}
-          mediaType="books"
-          tableName="book_recommendations"
-          searchPlaceholder="Search for books..."
-          searchFunction={searchBooks}
-          recommendationTypes={[
-            { value: "read", label: "Read" },
-            { value: "listen", label: "Listen" },
-          ]}
-          defaultRecommendationType="read"
-          preselectedItem={{
-            external_id: bookToRecommend.external_id,
-            title: bookToRecommend.title,
-            authors: bookToRecommend.authors || undefined,
-            poster_url: bookToRecommend.thumbnail_url,
-            release_date: bookToRecommend.published_date || undefined,
-            description: bookToRecommend.description || undefined,
-            isbn: bookToRecommend.isbn || undefined,
-            page_count: bookToRecommend.page_count || undefined,
-          }}
-        />
+      {showImportModal && (
+        <ImportBooksModal onClose={() => setShowImportModal(false)} />
       )}
 
       {/* Undo Toast */}
-      {showUndoToast && (
+      {showUndoToast && lastDeletedItem && (
         <Toast
-          message="Book removed from reading list"
-          onClose={() => setShowUndoToast(false)}
+          message={`Removed "${lastDeletedItem.title}"`}
           action={{
             label: "Undo",
             onClick: handleUndo,
+          }}
+          onClose={() => {
+            setShowUndoToast(false);
+            setLastDeletedItem(null);
           }}
         />
       )}

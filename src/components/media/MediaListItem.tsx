@@ -23,6 +23,7 @@ interface MediaListItemProps {
   status?: MediaStatus;
   onClick: (id: string | number) => void;
   mediaType?: "movie" | "tv"; // Add media type
+  category?: string; // For books - display primary category
 
   // Action buttons (optional)
   isCompleted?: boolean; // For watched/read status
@@ -54,6 +55,7 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
   onRemove,
   description,
   mediaType,
+  category,
 }) => {
   const statusConfig = status ? STATUS_MAP[status] : null;
   const hasActions = onToggleComplete || onRecommend || onRemove;
@@ -102,6 +104,13 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
                       </span>
                     )}
                   </>
+                )}
+                {/* Category Badge for Books */}
+                {category && (
+                  <span className="flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/30 px-2 py-0.5 rounded whitespace-nowrap flex-shrink-0">
+                    <Book className="w-3 h-3" />
+                    {category}
+                  </span>
                 )}
               </div>
               {subtitle && (
