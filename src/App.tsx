@@ -21,7 +21,9 @@ const MoviesPage = React.lazy(
 const BooksPage = React.lazy(
   () => import("./components/pages/books/BooksPage")
 );
-const Music = React.lazy(() => import("./components/pages/Music"));
+const MusicPage = React.lazy(
+  () => import("./components/pages/music/MusicPage")
+);
 const UserSettings = React.lazy(
   () => import("./components/pages/UserSettings")
 );
@@ -97,7 +99,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ user }) => {
             {/* Books - consolidated single route */}
             <Route path="/books" element={<BooksPage />} />
 
-            <Route path="/music" element={<Music />} />
+            {/* Music - consolidated single route */}
+            <Route path="/music" element={<MusicPage />} />
             <Route
               path="/settings"
               element={<UserSettings currentUser={user} />}

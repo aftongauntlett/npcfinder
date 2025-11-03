@@ -1,5 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
-import { Search, Send, Check, Eye, RotateCcw } from "lucide-react";
+import {
+  Search,
+  Send,
+  Check,
+  Eye,
+  RotateCcw,
+  Headphones,
+  Video,
+  BookOpen,
+  AudioLines,
+  Gamepad2,
+} from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
 import { getFriends } from "../../lib/connections";
@@ -14,6 +25,8 @@ export interface MediaItem {
   title: string;
   subtitle?: string; // artist for music, director for movies, developer for games
   authors?: string; // for books (plural to match Google Books API - comma-separated string)
+  artist?: string; // for music - primary artist
+  album?: string; // for music - album name
   poster_url: string | null;
   release_date?: string | null;
   description?: string | null;
@@ -470,37 +483,118 @@ export default function SendMediaModal({
             {/* Only show recommendation type selector if there are types */}
             {recommendationTypes && recommendationTypes.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                <label className="block text-sm font-medium text-gray-400 dark:text-gray-400 mb-6 uppercase tracking-wider">
                   Recommendation Type
                 </label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                   {recommendationTypes.map((type) => {
                     const isSelected = recommendationType === type.value;
-                    // Choose icon based on type
-                    const Icon =
-                      type.value === "rewatch" || type.value === "relisten"
-                        ? RotateCcw
-                        : Eye;
 
+                    // Choose icon and glow color based on media type and recommendation type
+                    let Icon = Eye;
+                    let glowColor = "rgba(59, 130, 246, 0.4)"; // blue
+                    let ringColor = "rgb(59, 130, 246)";
+
+                    // Music icons
+                    if (mediaType === "music") {
+                      if (type.value === "listen") {
+                        Icon = Headphones;
+                        glowColor = "rgba(59, 130, 246, 0.4)"; // blue
+                        ringColor = "rgb(59, 130, 246)";
+                      } else if (type.value === "watch") {
+                        Icon = Video;
+                        glowColor = "rgba(99, 102, 241, 0.4)"; // indigo
+                        ringColor = "rgb(99, 102, 241)";
+                      }
+                    }
+                    // Movie/TV icons
+                    else if (mediaType === "movies") {
+                      if (type.value === "watch") {
+                        Icon = Eye;
+                        glowColor = "rgba(59, 130, 246, 0.4)"; // blue
+                        ringColor = "rgb(59, 130, 246)";
+                      } else if (type.value === "rewatch") {
+                        Icon = RotateCcw;
+                        glowColor = "rgba(99, 102, 241, 0.4)"; // indigo
+                        ringColor = "rgb(99, 102, 241)";
+                      }
+                    }
+                    // Book icons
+                    else if (mediaType === "books") {
+                      if (type.value === "read") {
+                        Icon = BookOpen;
+                        glowColor = "rgba(59, 130, 246, 0.4)"; // blue
+                        ringColor = "rgb(59, 130, 246)";
+                      } else if (type.value === "listen") {
+                        Icon = Headphones;
+                        glowColor = "rgba(99, 102, 241, 0.4)"; // indigo
+                        ringColor = "rgb(99, 102, 241)";
+                      }
+                    }
+                    // Game icons
+                    else if (mediaType === "games") {
+                      if (type.value === "play") {
+                        Icon = Gamepad2;
+                        glowColor = "rgba(59, 130, 246, 0.4)"; // blue
+                        ringColor = "rgb(59, 130, 246)";
+                      } else if (type.value === "replay") {
+                        Icon = RotateCcw;
+                        glowColor = "rgba(99, 102, 241, 0.4)"; // indigo
+                        ringColor = "rgb(99, 102, 241)";
+                      }
+                    }
                     return (
                       <button
                         key={type.value}
                         onClick={() => setRecommendationType(type.value)}
-                        className={`relative flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all ${
+                        className={`group relative flex flex-col items-center justify-center gap-4 py-8 px-6 rounded-2xl transition-all duration-300 ${
                           isSelected
-                            ? "text-white shadow-lg scale-[1.02]"
-                            : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                            ? "bg-gray-800/60 dark:bg-gray-800/60 scale-[1.02]"
+                            : "bg-gray-900/40 dark:bg-gray-900/40 hover:bg-gray-800/40 dark:hover:bg-gray-800/40"
                         }`}
-                        style={
-                          isSelected
-                            ? {
-                                backgroundColor: "var(--color-primary)",
-                              }
-                            : undefined
-                        }
+                        style={{
+                          border: isSelected
+                            ? `1px solid ${ringColor}`
+                            : "1px solid rgba(55, 65, 81, 0.3)",
+                          boxShadow: isSelected
+                            ? `0 0 40px ${glowColor}, 0 0 20px ${glowColor}, inset 0 0 20px ${glowColor}`
+                            : "none",
+                        }}
                       >
-                        <Icon className="w-5 h-5" />
-                        <span>{type.label}</span>
+                        {/* Icon with glow effect */}
+                        <div
+                          className={`relative transition-all duration-300 ${
+                            isSelected ? "scale-110" : ""
+                          }`}
+                          style={{
+                            filter: isSelected
+                              ? `drop-shadow(0 0 20px ${glowColor}) drop-shadow(0 0 10px ${glowColor})`
+                              : "none",
+                          }}
+                        >
+                          <Icon
+                            className={`w-12 h-12 transition-colors duration-300 ${
+                              isSelected
+                                ? "text-white"
+                                : "text-gray-500 group-hover:text-gray-400"
+                            }`}
+                            strokeWidth={1.5}
+                            style={{
+                              color: isSelected ? ringColor : undefined,
+                            }}
+                          />
+                        </div>
+
+                        {/* Label */}
+                        <span
+                          className={`text-sm font-medium tracking-wide transition-all duration-300 ${
+                            isSelected
+                              ? "text-white"
+                              : "text-gray-400 group-hover:text-gray-300"
+                          }`}
+                        >
+                          {type.label}
+                        </span>
                       </button>
                     );
                   })}
@@ -508,16 +602,16 @@ export default function SendMediaModal({
               </div>
             )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="pt-6">
+              <label className="block text-sm font-medium text-gray-400 dark:text-gray-400 mb-4 uppercase tracking-wider">
                 Message (Optional)
               </label>
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Add a note about why you're recommending this..."
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
-                rows={3}
+                className="w-full px-4 py-4 border border-gray-700/50 dark:border-gray-700/50 rounded-xl bg-gray-900/40 dark:bg-gray-900/40 text-gray-300 dark:text-gray-300 placeholder:text-gray-500 dark:placeholder:text-gray-500 resize-none focus:outline-none focus:border-gray-600 dark:focus:border-gray-600 focus:bg-gray-800/50 dark:focus:bg-gray-800/50 transition-all"
+                rows={4}
               />
             </div>
           </div>

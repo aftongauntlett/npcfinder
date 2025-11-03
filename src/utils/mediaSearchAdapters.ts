@@ -45,14 +45,28 @@ export async function searchMusic(query: string): Promise<MediaItem[]> {
   const response = await itunesLimiter.add(() => fetch(url));
   const data: iTunesResponse = await response.json();
 
-  return data.results.map((item) => ({
-    external_id: String(item.trackId || item.collectionId),
-    title: item.trackName || item.collectionName || "Unknown Title",
-    subtitle: item.artistName,
-    poster_url: item.artworkUrl100 || null,
-    release_date: item.releaseDate || null,
-    media_type: item.wrapperType,
-  }));
+  return data.results.map((item) => {
+    // Map iTunes wrapperType to our media_type
+    // iTunes returns: "track", "collection", "artist"
+    // We want: "song", "album", "playlist"
+    let mediaType: "song" | "album" | "playlist" = "song";
+    if (item.wrapperType === "collection") {
+      mediaType = "album";
+    } else if (item.wrapperType === "track") {
+      mediaType = "song";
+    }
+
+    return {
+      external_id: String(item.trackId || item.collectionId),
+      title: item.trackName || item.collectionName || "Unknown Title",
+      subtitle: item.artistName,
+      artist: item.artistName,
+      album: item.collectionName,
+      poster_url: item.artworkUrl100 || null,
+      release_date: item.releaseDate || null,
+      media_type: mediaType,
+    };
+  });
 }
 
 /**

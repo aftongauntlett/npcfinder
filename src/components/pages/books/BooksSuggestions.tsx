@@ -404,7 +404,7 @@ const BooksSuggestions: React.FC<BooksSuggestionsProps> = ({
         searchFunction={searchBooks}
         recommendationTypes={[
           { value: "read", label: "Read" },
-          { value: "reread", label: "Re-read" },
+          { value: "listen", label: "Listen" },
         ]}
         defaultRecommendationType="read"
       />
