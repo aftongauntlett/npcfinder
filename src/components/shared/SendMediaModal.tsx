@@ -8,7 +8,6 @@ import {
   Headphones,
   Video,
   BookOpen,
-  AudioLines,
   Gamepad2,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
@@ -100,6 +99,9 @@ export default function SendMediaModal({
   // Friends state
   const [friends, setFriends] = useState<Friend[]>([]);
   const [loadingFriends, setLoadingFriends] = useState(false);
+  const [friendsWithExistingRec, setFriendsWithExistingRec] = useState<
+    Set<string>
+  >(new Set());
 
   // UI state
   const [step, setStep] = useState<"search" | "friends" | "details">(
@@ -107,6 +109,34 @@ export default function SendMediaModal({
   );
   const [sending, setSending] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+
+  // Check for existing recommendations when item is selected
+  const checkExistingRecommendations = useCallback(
+    async (item: MediaItem) => {
+      if (!user) return;
+
+      try {
+        // Query the recommendations table to find which friends already received this item
+        const { data, error } = await supabase
+          .from(tableName)
+          .select("to_user_id")
+          .eq("from_user_id", user.id)
+          .eq("external_id", item.external_id);
+
+        if (error) {
+          console.error("Error checking existing recommendations:", error);
+          return;
+        }
+
+        // Create set of friend IDs who already received this item
+        const existingRecipients = new Set(data.map((rec) => rec.to_user_id));
+        setFriendsWithExistingRec(existingRecipients);
+      } catch (error) {
+        console.error("Error checking existing recommendations:", error);
+      }
+    },
+    [user, tableName]
+  );
 
   // Load friends
   const loadFriends = useCallback(async () => {
@@ -169,9 +199,10 @@ export default function SendMediaModal({
   useEffect(() => {
     if (isOpen && preselectedItem) {
       setSelectedItem(preselectedItem);
+      void checkExistingRecommendations(preselectedItem);
       setStep("friends");
     }
-  }, [isOpen, preselectedItem]);
+  }, [isOpen, preselectedItem, checkExistingRecommendations]);
 
   // Reset modal state when closed
   useEffect(() => {
@@ -180,6 +211,7 @@ export default function SendMediaModal({
       setSearchResults([]);
       setSelectedItem(null);
       setSelectedFriends(new Set());
+      setFriendsWithExistingRec(new Set());
       setRecommendationType(defaultRecommendationType);
       setMessage("");
       setStep("search");
@@ -211,6 +243,7 @@ export default function SendMediaModal({
 
   const handleItemSelect = (item: MediaItem) => {
     setSelectedItem(item);
+    void checkExistingRecommendations(item);
     setStep("friends");
   };
 
@@ -225,10 +258,19 @@ export default function SendMediaModal({
   };
 
   const toggleAllFriends = () => {
-    if (selectedFriends.size === friends.length) {
+    // Filter out friends who already received this recommendation
+    const availableFriends = friends.filter(
+      (f) => !friendsWithExistingRec.has(f.user_id)
+    );
+    const availableFriendIds = availableFriends.map((f) => f.user_id);
+
+    if (
+      selectedFriends.size === availableFriends.length &&
+      availableFriends.length > 0
+    ) {
       setSelectedFriends(new Set());
     } else {
-      setSelectedFriends(new Set(friends.map((f) => f.user_id)));
+      setSelectedFriends(new Set(availableFriendIds));
     }
   };
 
@@ -436,43 +478,64 @@ export default function SendMediaModal({
 
             {friends.length > 0 && (
               <div className="space-y-2">
-                {friends.map((friend) => (
-                  <button
-                    key={friend.user_id}
-                    onClick={() => toggleFriend(friend.user_id)}
-                    className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                      selectedFriends.has(friend.user_id)
-                        ? "bg-gray-100/50 dark:bg-gray-700/30 border border-gray-200/50 dark:border-gray-600/50"
-                        : "hover:bg-gray-100 dark:hover:bg-gray-700"
-                    }`}
-                  >
-                    <div
-                      className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                        selectedFriends.has(friend.user_id)
-                          ? "border-transparent"
-                          : "border-gray-300 dark:border-gray-600"
+                {friends.map((friend) => {
+                  const alreadyRecommended = friendsWithExistingRec.has(
+                    friend.user_id
+                  );
+                  const isSelected = selectedFriends.has(friend.user_id);
+
+                  return (
+                    <button
+                      key={friend.user_id}
+                      onClick={() =>
+                        !alreadyRecommended && toggleFriend(friend.user_id)
+                      }
+                      disabled={alreadyRecommended}
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                        alreadyRecommended
+                          ? "opacity-40 cursor-not-allowed bg-gray-50 dark:bg-gray-800/50"
+                          : isSelected
+                          ? "bg-gray-100/50 dark:bg-gray-700/30 border border-gray-200/50 dark:border-gray-600/50"
+                          : "hover:bg-gray-100 dark:hover:bg-gray-700"
                       }`}
-                      style={
-                        selectedFriends.has(friend.user_id)
-                          ? { backgroundColor: "var(--color-primary)" }
-                          : undefined
-                      }
                     >
-                      {selectedFriends.has(friend.user_id) && (
-                        <Check className="w-4 h-4 text-white" />
+                      <div
+                        className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                          alreadyRecommended
+                            ? "border-gray-300 dark:border-gray-600"
+                            : isSelected
+                            ? "border-transparent"
+                            : "border-gray-300 dark:border-gray-600"
+                        }`}
+                        style={
+                          isSelected && !alreadyRecommended
+                            ? { backgroundColor: "var(--color-primary)" }
+                            : undefined
+                        }
+                      >
+                        {isSelected && !alreadyRecommended && (
+                          <Check className="w-4 h-4 text-white" />
+                        )}
+                      </div>
+                      <span
+                        className={
+                          alreadyRecommended
+                            ? "text-gray-400 dark:text-gray-600"
+                            : isSelected
+                            ? "text-white"
+                            : "text-gray-900 dark:text-white"
+                        }
+                      >
+                        {friend.display_name}
+                      </span>
+                      {alreadyRecommended && (
+                        <span className="ml-auto text-xs text-gray-400 dark:text-gray-600">
+                          Already recommended
+                        </span>
                       )}
-                    </div>
-                    <span
-                      className={
-                        selectedFriends.has(friend.user_id)
-                          ? "text-white"
-                          : "text-gray-900 dark:text-white"
-                      }
-                    >
-                      {friend.display_name}
-                    </span>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -640,17 +703,6 @@ export default function SendMediaModal({
       {/* Footer */}
       {!showSuccess && (
         <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
-          <Button
-            variant={step === "search" ? "danger" : "subtle"}
-            onClick={
-              step === "search"
-                ? handleClose
-                : () => setStep(step === "details" ? "friends" : "search")
-            }
-          >
-            {step === "search" ? "Cancel" : "Back"}
-          </Button>
-
           {step === "friends" && (
             <Button
               variant="primary"
