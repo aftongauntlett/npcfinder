@@ -7,3 +7,4 @@ Before finishing:
 - Tests: added/updated; suite passes.
 - Lint/format/typecheck: pass.
 - Docs/comments: add one-liners for non-obvious decisions.
+- Do no create .md files summarizing our changes.

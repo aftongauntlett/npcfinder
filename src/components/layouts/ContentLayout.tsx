@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Menu,
@@ -51,8 +51,19 @@ const ContentLayout: React.FC<ContentLayoutProps> = ({
   const { isAdmin } = useAdmin();
   const { data: profile } = useProfileQuery();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   const displayName = profile?.display_name || "User";
+
+  // Track scroll position for header background
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 0);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const navItems = [
     { label: "Dashboard", icon: Home, path: "/app" },
@@ -82,7 +93,7 @@ const ContentLayout: React.FC<ContentLayoutProps> = ({
       className="min-h-screen focus:outline-none"
     >
       {/* Mobile Header - Only visible on mobile */}
-      <header className="md:hidden sticky top-0 z-40 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <header className="md:hidden sticky top-0 z-40">
         <div className="flex items-center justify-between px-4 py-3">
           <button
             onClick={() => setShowMobileMenu(!showMobileMenu)}
@@ -95,7 +106,7 @@ const ContentLayout: React.FC<ContentLayoutProps> = ({
               <Menu className="w-6 h-6 text-gray-900 dark:text-white" />
             )}
           </button>
-          <h1 className="text-lg font-bold text-gray-900 dark:text-white truncate">
+          <h1 className="text-lg font-bold text-gray-900 dark:text-white truncate font-heading">
             {title}
           </h1>
           <div className="w-10" /> {/* Spacer for center alignment */}
@@ -159,15 +170,19 @@ const ContentLayout: React.FC<ContentLayoutProps> = ({
       </header>
 
       {/* Page Header - Desktop styling */}
-      <header className="border-b border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm sticky top-0 z-30 hidden md:block">
-        <div className="container mx-auto px-6 py-4">
+      <header
+        className={`sticky top-0 z-30 hidden md:block transition-colors duration-200 ${
+          isScrolled ? "bg-background/80 backdrop-blur-sm" : ""
+        }`}
+      >
+        <div className="container mx-auto px-6 pt-12">
           {/* Title and Description */}
-          <div className="mb-4">
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2">
+          <div className="mb-6">
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2 font-heading">
               {title}
             </h1>
             {description && (
-              <p className="text-gray-600 dark:text-gray-300">{description}</p>
+              <p className="text-gray-600 dark:text-gray-400">{description}</p>
             )}
           </div>
 
@@ -207,7 +222,7 @@ const ContentLayout: React.FC<ContentLayoutProps> = ({
       </header>
 
       {/* Page Content */}
-      <div className="container mx-auto px-6 py-8" role="main">
+      <div className="container mx-auto px-6" role="main">
         {children}
       </div>
     </main>
