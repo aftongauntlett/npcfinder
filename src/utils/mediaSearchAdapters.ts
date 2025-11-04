@@ -10,6 +10,7 @@ interface iTunesResult {
   artistName?: string;
   artworkUrl100?: string;
   releaseDate?: string;
+  primaryGenreName?: string;
   wrapperType: string;
 }
 
@@ -65,6 +66,7 @@ export async function searchMusic(query: string): Promise<MediaItem[]> {
       poster_url: item.artworkUrl100 || null,
       release_date: item.releaseDate || null,
       media_type: mediaType,
+      genre: item.primaryGenreName || null,
     };
   });
 }
@@ -111,11 +113,81 @@ export function searchBooks(query: string): Promise<MediaItem[]> {
   return Promise.resolve([]);
 }
 
+// RAWG API response types
+interface RAWGPlatform {
+  platform: {
+    id: number;
+    name: string;
+    slug: string;
+  };
+}
+
+interface RAWGGenre {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+interface RAWGResult {
+  id: number;
+  slug: string;
+  name: string;
+  released?: string;
+  background_image?: string;
+  platforms?: RAWGPlatform[];
+  genres?: RAWGGenre[];
+  rating?: number;
+  metacritic?: number;
+  playtime?: number;
+}
+
+interface RAWGResponse {
+  results: RAWGResult[];
+}
+
 /**
- * Placeholder search function for Games (to be implemented with IGDB API or similar)
+ * Search RAWG API and convert results to generic MediaItem format
  */
-export function searchGames(query: string): Promise<MediaItem[]> {
-  // TODO: Implement with IGDB API or similar
-  console.warn("Games search not yet implemented:", query);
-  return Promise.resolve([]);
+export async function searchGames(query: string): Promise<MediaItem[]> {
+  const apiKey = import.meta.env.VITE_RAWG_API_KEY;
+  if (!apiKey) {
+    console.error("RAWG API key not configured");
+    return [];
+  }
+
+  const url = `https://api.rawg.io/api/games?key=${apiKey}&search=${encodeURIComponent(
+    query
+  )}&page_size=25`;
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`RAWG API error: ${response.status}`);
+    }
+
+    const data: RAWGResponse = await response.json();
+
+    return data.results.map((game) => ({
+      external_id: String(game.id),
+      title: game.name || "Unknown Game",
+      subtitle: game.platforms
+        ?.map((p) => p.platform.name)
+        .slice(0, 3)
+        .join(", "),
+      poster_url: game.background_image || null,
+      release_date: game.released || null,
+      description: game.genres?.map((g) => g.name).join(", ") || null,
+      media_type: "game",
+      // Additional game-specific fields for SendMediaModal
+      slug: game.slug,
+      platforms: game.platforms?.map((p) => p.platform.name).join(", "),
+      genres: game.genres?.map((g) => g.name).join(", "),
+      rating: game.rating,
+      metacritic: game.metacritic,
+      playtime: game.playtime,
+    }));
+  } catch (error) {
+    console.error("Failed to search games:", error);
+    return [];
+  }
 }

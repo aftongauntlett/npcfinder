@@ -33,6 +33,14 @@ export interface MediaItem {
   page_count?: number; // for books
   isbn?: string; // for books
   categories?: string; // for books - comma-separated categories from Google Books API
+  genre?: string | null; // for music - primary genre from iTunes API
+  // Game-specific fields (from RAWG API)
+  slug?: string; // URL-friendly game identifier
+  platforms?: string; // Comma-separated platform names
+  genres?: string; // Comma-separated genre names (for games)
+  rating?: number; // RAWG rating (0.00-5.00)
+  metacritic?: number; // Metacritic score (0-100)
+  playtime?: number; // Average playtime in hours
 }
 
 // Friend interface
@@ -306,6 +314,27 @@ export default function SendMediaModal({
           };
         }
 
+        // Games table has different column names - no media_type, uses game-specific fields
+        if (mediaType === "games") {
+          return {
+            from_user_id: user.id,
+            to_user_id: friendId,
+            external_id: selectedItem.external_id,
+            slug: selectedItem.slug || "",
+            name: selectedItem.title,
+            released: selectedItem.release_date || null,
+            background_image: selectedItem.poster_url || null,
+            platforms: selectedItem.platforms || null,
+            genres: selectedItem.genres || null,
+            rating: selectedItem.rating || null,
+            metacritic: selectedItem.metacritic || null,
+            playtime: selectedItem.playtime || null,
+            status: "pending",
+            recommendation_type: recommendationType || "play",
+            sent_message: message || null,
+          };
+        }
+
         const baseRecommendation = {
           from_user_id: user.id,
           to_user_id: friendId,
@@ -529,7 +558,7 @@ export default function SendMediaModal({
                         {friend.display_name}
                       </span>
                       {alreadyRecommended && (
-                        <span className="ml-auto text-xs text-gray-400 dark:text-gray-600">
+                        <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
                           Already recommended
                         </span>
                       )}

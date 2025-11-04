@@ -10,6 +10,7 @@ import {
   Tv,
 } from "lucide-react";
 import { STATUS_MAP, type MediaStatus } from "./mediaStatus";
+import { getGenreColor, parseGenres } from "../../utils/genreColors";
 
 interface MediaListItemProps {
   id: string | number;
@@ -24,6 +25,7 @@ interface MediaListItemProps {
   onClick: (id: string | number) => void;
   mediaType?: "movie" | "tv"; // Add media type
   category?: string; // For books - display primary category
+  genres?: string; // Comma-separated genre string
 
   // Action buttons (optional)
   isCompleted?: boolean; // For watched/read status
@@ -56,9 +58,20 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
   description,
   mediaType,
   category,
+  genres,
 }) => {
   const statusConfig = status ? STATUS_MAP[status] : null;
   const hasActions = onToggleComplete || onRecommend || onRemove;
+  const genreList = parseGenres(genres, 2);
+
+  // Calculate remaining genres count for "+X more" chip
+  const totalGenres = genres
+    ? genres
+        .split(",")
+        .map((g) => g.trim())
+        .filter((g) => g.length > 0).length
+    : 0;
+  const remainingGenres = totalGenres - genreList.length;
 
   return (
     <div
@@ -110,6 +123,24 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
                   <span className="flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/30 px-2 py-0.5 rounded whitespace-nowrap flex-shrink-0">
                     <Book className="w-3 h-3" />
                     {category}
+                  </span>
+                )}
+                {/* Genre Chips */}
+                {genreList.length > 0 &&
+                  genreList.map((genre) => (
+                    <span
+                      key={genre}
+                      className={`text-xs px-2 py-0.5 rounded whitespace-nowrap flex-shrink-0 ${getGenreColor(
+                        genre
+                      )}`}
+                    >
+                      {genre}
+                    </span>
+                  ))}
+                {/* +X more chip */}
+                {remainingGenres > 0 && (
+                  <span className="text-xs px-2 py-0.5 rounded whitespace-nowrap flex-shrink-0 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
+                    +{remainingGenres} more
                   </span>
                 )}
               </div>

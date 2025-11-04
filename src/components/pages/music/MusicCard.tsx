@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Star, Music } from "lucide-react";
 import SparkleEffect from "../../effects/SparkleEffect";
+import { getGenreColor } from "../../../utils/genreColors";
 
 interface MusicCardProps {
   id: string;
@@ -10,6 +11,7 @@ interface MusicCardProps {
   year?: string | number;
   personalRating?: number;
   listened?: boolean;
+  genre?: string | null;
   onClick: (id: string) => void;
 }
 
@@ -26,6 +28,7 @@ const MusicCard: React.FC<MusicCardProps> = ({
   year,
   personalRating,
   listened,
+  genre,
   onClick,
 }) => {
   const [imgError, setImgError] = useState(false);
@@ -90,6 +93,17 @@ const MusicCard: React.FC<MusicCardProps> = ({
           <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
             {artist}
           </p>
+          {genre && (
+            <div className="mt-2">
+              <span
+                className={`text-xs px-2 py-0.5 rounded ${getGenreColor(
+                  genre
+                )}`}
+              >
+                {genre}
+              </span>
+            </div>
+          )}
         </div>
       </article>
     </SparkleEffect>

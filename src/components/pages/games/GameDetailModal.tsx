@@ -1,49 +1,49 @@
 import React, { useState } from "react";
-import { X, Star, BookOpen, Calendar, FileText, Hash } from "lucide-react";
+import { X, Star, Gamepad2, Calendar, DollarSign, Award } from "lucide-react";
 import Modal from "../../shared/Modal";
 import Button from "../../shared/Button";
-import type { ReadingListItem } from "../../../services/booksService.types";
-import {
-  useUpdateBookRating,
-  useUpdateBookNotes,
-} from "../../../hooks/useReadingListQueries";
+import { getGenreColor } from "../../../utils/genreColors";
+import type { GameLibraryItem } from "../../../hooks/useGameLibraryQueries";
+import { useUpdateGameRating } from "../../../hooks/useGameLibraryQueries";
 
-interface BookDetailModalProps {
-  book: ReadingListItem;
+interface GameDetailModalProps {
+  game: GameLibraryItem;
   onClose: () => void;
-  onToggleRead: () => void;
+  onTogglePlayed: () => void;
   onRemove: () => void;
   onRecommend: () => void;
 }
 
-const BookDetailModal: React.FC<BookDetailModalProps> = ({
-  book,
+const GameDetailModal: React.FC<GameDetailModalProps> = ({
+  game,
   onClose,
-  onToggleRead,
+  onTogglePlayed,
   onRemove,
   onRecommend,
 }) => {
-  const [rating, setRating] = useState(book.personal_rating || 0);
-  const [notes, setNotes] = useState(book.personal_notes || "");
+  const [rating, setRating] = useState(game.personal_rating || 0);
   const [hoveredStar, setHoveredStar] = useState(0);
 
-  const updateRating = useUpdateBookRating();
-  const updateNotes = useUpdateBookNotes();
+  const updateRating = useUpdateGameRating();
 
   const handleRatingClick = (newRating: number) => {
     setRating(newRating);
-    void updateRating.mutateAsync({ bookId: book.id, rating: newRating });
+    void updateRating.mutateAsync({ gameId: game.id, rating: newRating });
   };
 
-  const handleNotesBlur = () => {
-    if (notes !== book.personal_notes) {
-      void updateNotes.mutateAsync({ bookId: book.id, notes: notes || null });
-    }
-  };
-
-  const displayYear = book.published_date
-    ? new Date(book.published_date).getFullYear()
+  const releaseYear = game.released
+    ? new Date(game.released).getFullYear()
     : null;
+
+  // Parse genres from comma-separated string
+  const genreList = game.genres
+    ? game.genres.split(",").map((g: string) => g.trim())
+    : [];
+
+  // Parse platforms from comma-separated string
+  const platformList = game.platforms
+    ? game.platforms.split(",").map((p: string) => p.trim())
+    : [];
 
   return (
     <Modal
@@ -67,17 +67,17 @@ const BookDetailModal: React.FC<BookDetailModalProps> = ({
         <div className="space-y-6">
           {/* Header Section */}
           <div className="flex flex-col sm:flex-row gap-8">
-            {/* Book Cover */}
+            {/* Game Cover */}
             <div className="flex-shrink-0">
-              {book.thumbnail_url ? (
+              {game.background_image ? (
                 <img
-                  src={book.thumbnail_url}
-                  alt={`${book.title} cover`}
+                  src={game.background_image}
+                  alt={`${game.name} cover`}
                   className="w-full sm:w-56 h-auto rounded-lg shadow-xl transition-transform duration-300 hover:scale-105"
                 />
               ) : (
                 <div className="w-full sm:w-56 h-80 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center shadow-xl">
-                  <BookOpen className="w-16 h-16 text-gray-400 dark:text-gray-500" />
+                  <Gamepad2 className="w-16 h-16 text-gray-400 dark:text-gray-500" />
                 </div>
               )}
             </div>
@@ -89,48 +89,79 @@ const BookDetailModal: React.FC<BookDetailModalProps> = ({
             <div className="flex-1 min-w-0 space-y-4">
               <div>
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-3">
-                  {book.title}
+                  {game.name}
                 </h2>
-                {book.authors && (
-                  <p className="text-lg text-gray-600 dark:text-gray-400 mb-3">
-                    by {book.authors}
-                  </p>
-                )}
 
                 {/* Metadata */}
-                <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
-                  {displayYear && (
+                <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  {releaseYear && (
                     <div className="flex items-center gap-1.5">
                       <Calendar className="w-4 h-4" />
-                      <span>{displayYear}</span>
+                      <span>{releaseYear}</span>
                     </div>
                   )}
-                  {book.page_count && (
+                  {game.playtime && (
                     <div className="flex items-center gap-1.5">
-                      <FileText className="w-4 h-4" />
-                      <span>{book.page_count} pages</span>
+                      <Award className="w-4 h-4" />
+                      <span>{game.playtime}h avg playtime</span>
                     </div>
                   )}
-                  {book.isbn && (
+                  {game.metacritic && (
                     <div className="flex items-center gap-1.5">
-                      <Hash className="w-4 h-4" />
-                      <span>{book.isbn}</span>
+                      <DollarSign className="w-4 h-4" />
+                      <span>Metacritic: {game.metacritic}</span>
                     </div>
                   )}
                 </div>
+
+                {/* Genres */}
+                {genreList.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4" role="list">
+                    {genreList.map((genre: string) => (
+                      <span
+                        key={genre}
+                        role="listitem"
+                        className={`px-3 py-1.5 text-xs font-medium rounded-full ${getGenreColor(
+                          genre.toLowerCase()
+                        )}`}
+                      >
+                        {genre}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Platforms */}
+                {platformList.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Platforms
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {platformList.map((platform: string) => (
+                        <span
+                          key={platform}
+                          className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded"
+                        >
+                          {platform}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Status Badge */}
               <div>
-                {book.read ? (
+                {game.played ? (
                   <span className="inline-flex items-center px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-sm font-medium">
-                    <FileText className="w-4 h-4 mr-1.5" />
-                    Read
+                    <Award className="w-4 h-4 mr-1.5" />
+                    Played
                   </span>
                 ) : (
                   <span className="inline-flex items-center px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full text-sm font-medium">
-                    <BookOpen className="w-4 h-4 mr-1.5" />
-                    Reading
+                    <Gamepad2 className="w-4 h-4 mr-1.5" />
+                    Playing
                   </span>
                 )}
               </div>
@@ -162,14 +193,26 @@ const BookDetailModal: React.FC<BookDetailModalProps> = ({
                 </div>
               </div>
 
+              {/* RAWG Rating */}
+              {game.rating && (
+                <div>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    RAWG Rating:{" "}
+                  </span>
+                  <span className="text-sm font-semibold text-purple-600 dark:text-purple-400">
+                    {game.rating.toFixed(1)}/5
+                  </span>
+                </div>
+              )}
+
               {/* Action Buttons */}
               <div className="flex flex-wrap gap-3 pt-2">
                 <Button
-                  onClick={onToggleRead}
-                  variant={book.read ? "secondary" : "primary"}
+                  onClick={onTogglePlayed}
+                  variant={game.played ? "secondary" : "primary"}
                   size="sm"
                 >
-                  {book.read ? "Mark as Unread" : "Mark as Read"}
+                  {game.played ? "Mark as Playing" : "Mark as Played"}
                 </Button>
                 <Button onClick={onRecommend} variant="secondary" size="sm">
                   Recommend
@@ -181,38 +224,11 @@ const BookDetailModal: React.FC<BookDetailModalProps> = ({
             </div>
           </div>
 
-          {/* Description */}
-          {book.description && (
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-                Description
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                {book.description}
-              </p>
-            </div>
-          )}
-
-          {/* Personal Notes */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Your Notes
-            </label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              onBlur={handleNotesBlur}
-              placeholder="Add your thoughts, favorite quotes, or notes..."
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
-              rows={4}
-            />
-          </div>
-
-          {/* TODO: Add BookReviewForm accordion here */}
+          {/* TODO: Add GameReviewForm accordion here */}
         </div>
       </div>
     </Modal>
   );
 };
 
-export default BookDetailModal;
+export default GameDetailModal;

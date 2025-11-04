@@ -77,6 +77,7 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
       release_date: result.release_date || null,
       album_cover_url: result.poster_url,
       preview_url: null, // iTunes search doesn't provide preview URLs in basic search
+      genre: result.genre || null,
       listened: shouldMarkAsListened,
     });
     setShowSearchModal(false);
@@ -105,6 +106,7 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
         media_type: lastDeletedItem.media_type,
         release_date: lastDeletedItem.release_date,
         album_cover_url: lastDeletedItem.album_cover_url,
+        genre: lastDeletedItem.genre,
         listened: lastDeletedItem.listened,
       });
       setLastDeletedItem(null);
@@ -197,99 +199,101 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
 
   return (
     <div ref={topRef} className="space-y-6">
-      {/* Action Bar */}
-      <div className="flex items-center justify-between gap-4">
-        {/* Left side: Sort and View Toggle */}
-        <div className="flex items-center gap-3">
-          {/* Sort Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowSortMenu(!showSortMenu)}
-              className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            >
-              <span className="font-medium">
-                {sortBy === "date-added" && "Sort: Date Added"}
-                {sortBy === "title" && "Sort: Title (A-Z)"}
-                {sortBy === "artist" && "Sort: Artist"}
-                {sortBy === "year" && "Sort: Year"}
-                {sortBy === "rating" && "Sort: Rating"}
-              </span>
-              <ChevronDown className="w-4 h-4 text-gray-500" />
-            </button>
+      {/* Action Bar - Only show when there's data */}
+      {sortedMusic.length > 0 && (
+        <div className="flex items-center justify-between gap-4">
+          {/* Left side: Sort and View Toggle */}
+          <div className="flex items-center gap-3">
+            {/* Sort Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowSortMenu(!showSortMenu)}
+                className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <span className="font-medium">
+                  {sortBy === "date-added" && "Sort: Date Added"}
+                  {sortBy === "title" && "Sort: Title (A-Z)"}
+                  {sortBy === "artist" && "Sort: Artist"}
+                  {sortBy === "year" && "Sort: Year"}
+                  {sortBy === "rating" && "Sort: Rating"}
+                </span>
+                <ChevronDown className="w-4 h-4 text-gray-500" />
+              </button>
 
-            {showSortMenu && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setShowSortMenu(false)}
-                />
-                <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-20 py-1 overflow-hidden">
-                  {sortOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => {
-                        setSortBy(option.value);
-                        setShowSortMenu(false);
-                      }}
-                      className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
-                        sortBy === option.value
-                          ? "bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-semibold"
-                          : "text-gray-700 dark:text-gray-300"
-                      }`}
-                    >
-                      {sortBy === option.value && (
-                        <Check className="w-4 h-4 inline-block mr-2 text-primary" />
-                      )}
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
+              {showSortMenu && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setShowSortMenu(false)}
+                  />
+                  <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-20 py-1 overflow-hidden">
+                    {sortOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => {
+                          setSortBy(option.value);
+                          setShowSortMenu(false);
+                        }}
+                        className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
+                          sortBy === option.value
+                            ? "bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-semibold"
+                            : "text-gray-700 dark:text-gray-300"
+                        }`}
+                      >
+                        {sortBy === option.value && (
+                          <Check className="w-4 h-4 inline-block mr-2 text-primary" />
+                        )}
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* View Mode Toggle */}
+            <div className="flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setViewMode("grid")}
+                className={`p-2 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+                  viewMode === "grid"
+                    ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white"
+                    : "hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
+                }`}
+                title="Grid view"
+                aria-label="Switch to grid view"
+                aria-pressed={viewMode === "grid"}
+              >
+                <Grid3x3 className="w-4 h-4" aria-hidden="true" />
+              </button>
+              <button
+                onClick={() => setViewMode("list")}
+                className={`p-2 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+                  viewMode === "list"
+                    ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white"
+                    : "hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
+                }`}
+                title="List view"
+                aria-label="Switch to list view"
+                aria-pressed={viewMode === "list"}
+              >
+                <List className="w-4 h-4" aria-hidden="true" />
+              </button>
+            </div>
           </div>
 
-          {/* View Mode Toggle */}
-          <div className="flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-            <button
-              onClick={() => setViewMode("grid")}
-              className={`p-2 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
-                viewMode === "grid"
-                  ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white"
-                  : "hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
-              }`}
-              title="Grid view"
-              aria-label="Switch to grid view"
-              aria-pressed={viewMode === "grid"}
+          {/* Right side: Add Button */}
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={() => setShowSearchModal(true)}
+              variant="primary"
+              icon={<Plus className="w-4 h-4" />}
             >
-              <Grid3x3 className="w-4 h-4" aria-hidden="true" />
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={`p-2 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
-                viewMode === "list"
-                  ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white"
-                  : "hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
-              }`}
-              title="List view"
-              aria-label="Switch to list view"
-              aria-pressed={viewMode === "list"}
-            >
-              <List className="w-4 h-4" aria-hidden="true" />
-            </button>
+              Add
+            </Button>
           </div>
         </div>
-
-        {/* Right side: Add Button */}
-        <div className="flex items-center gap-3">
-          <Button
-            onClick={() => setShowSearchModal(true)}
-            variant="primary"
-            icon={<Plus className="w-4 h-4" />}
-          >
-            Add
-          </Button>
-        </div>
-      </div>
+      )}
 
       {/* Results Count */}
       {sortedMusic.length > 0 && (
@@ -324,6 +328,7 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
               }
               personalRating={music.personal_rating || undefined}
               listened={music.listened}
+              genre={music.genre}
               onClick={() => handleRecommend(music)}
             />
           ))}
@@ -345,6 +350,7 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
               personalRating={music.personal_rating || undefined}
               status={music.listened ? "watched" : "to-watch"}
               isCompleted={music.listened}
+              genres={music.genre || undefined}
               onClick={() => handleRecommend(music)}
               onToggleComplete={() => handleToggleListened(music.id)}
               onRemove={() => handleRemove(music)}

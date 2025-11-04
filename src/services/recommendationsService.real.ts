@@ -17,8 +17,8 @@ import type {
 const TABLE_MAP = {
   movie: "movie_recommendations_with_users",
   tv: "movie_recommendations_with_users",
-  song: "music_recommendations",
-  album: "music_recommendations",
+  song: "music_recommendations_with_users",
+  album: "music_recommendations_with_users",
 } as const;
 
 /**
@@ -165,21 +165,35 @@ export async function getQuickStats(
  */
 export async function updateRecommendationStatus(
   recId: string,
-  status: "pending" | "consumed" | "watched" | "hit" | "miss",
+  status:
+    | "pending"
+    | "consumed"
+    | "watched"
+    | "read"
+    | "played"
+    | "hit"
+    | "miss",
   tableName:
     | "movie_recommendations"
     | "music_recommendations"
     | "book_recommendations"
+    | "game_recommendations"
 ): Promise<void> {
-  // Books use 'read' status, not 'consumed' or 'watched'
-  const finalStatus =
-    tableName === "book_recommendations" && status === "consumed"
-      ? "read"
-      : status;
+  // Books use 'read' status, Games use 'played' status
+  let finalStatus = status;
+  if (tableName === "book_recommendations" && status === "consumed") {
+    finalStatus = "read";
+  } else if (tableName === "game_recommendations" && status === "consumed") {
+    finalStatus = "played";
+  }
 
-  // Books use 'read_at', not 'watched_at'
+  // Books use 'read_at', Games use 'played_at', others use 'watched_at'
   const timestampField =
-    tableName === "book_recommendations" ? "read_at" : "watched_at";
+    tableName === "book_recommendations"
+      ? "read_at"
+      : tableName === "game_recommendations"
+      ? "played_at"
+      : "watched_at";
 
   const { error } = await supabase
     .from(tableName)
@@ -205,6 +219,7 @@ export async function deleteRecommendation(
     | "movie_recommendations"
     | "music_recommendations"
     | "book_recommendations"
+    | "game_recommendations"
 ): Promise<void> {
   const { error } = await supabase.from(tableName).delete().eq("id", recId);
 
@@ -224,6 +239,7 @@ export async function updateSenderNote(
     | "movie_recommendations"
     | "music_recommendations"
     | "book_recommendations"
+    | "game_recommendations"
 ): Promise<void> {
   const { error } = await supabase
     .from(tableName)
@@ -246,6 +262,7 @@ export async function updateRecipientNote(
     | "movie_recommendations"
     | "music_recommendations"
     | "book_recommendations"
+    | "game_recommendations"
 ): Promise<void> {
   const { error } = await supabase
     .from(tableName)
@@ -267,6 +284,7 @@ export async function markAllPendingAsOpened(
     | "movie_recommendations"
     | "music_recommendations"
     | "book_recommendations"
+    | "game_recommendations"
 ): Promise<void> {
   const now = new Date().toISOString();
 
@@ -568,6 +586,162 @@ export async function getBookQuickStats(
       status: "miss",
     }),
     getBookRecommendations(currentUserId, { direction: "sent" }),
+  ]);
+
+  return {
+    queue: pending.length,
+    hits: hits.length,
+    misses: misses.length,
+    sent: sent.length,
+  };
+}
+
+/**
+ * Game recommendation interface with user names from joins
+ */
+interface GameRecommendation {
+  id: string;
+  from_user_id: string;
+  to_user_id: string;
+  external_id: string;
+  slug: string;
+  name: string;
+  released: string | null;
+  background_image: string | null;
+  platforms: string | null;
+  genres: string | null;
+  rating: number | null;
+  metacritic: number | null;
+  playtime: number | null;
+  recommendation_type: string;
+  status: string;
+  sent_message: string | null;
+  sender_note: string | null;
+  recipient_note: string | null;
+  created_at: string;
+  played_at: string | null;
+  opened_at: string | null;
+  sender?: { display_name: string };
+  recipient?: { display_name: string };
+}
+
+/**
+ * Game recommendation with computed user names
+ */
+interface GameRecommendationWithNames
+  extends Omit<GameRecommendation, "sender" | "recipient"> {
+  sender_name: string;
+  recipient_name: string;
+}
+
+/**
+ * Get game recommendations with filters
+ */
+export async function getGameRecommendations(
+  currentUserId: string,
+  options: {
+    direction?: "sent" | "received";
+    status?: "pending" | "played" | "hit" | "miss";
+  } = {}
+): Promise<GameRecommendationWithNames[]> {
+  let query = supabase
+    .from("game_recommendations_with_users")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  // Apply direction filter
+  if (options.direction === "sent") {
+    query = query.eq("from_user_id", currentUserId);
+  } else if (options.direction === "received") {
+    query = query.eq("to_user_id", currentUserId);
+  }
+
+  // Apply status filter
+  if (options.status) {
+    query = query.eq("status", options.status);
+  }
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+
+  return (data as GameRecommendationWithNames[]) || [];
+}
+
+/**
+ * Get game recommendations from a specific friend
+ */
+export async function getGameRecommendationsFromFriend(
+  currentUserId: string,
+  friendId: string
+): Promise<GameRecommendationWithNames[]> {
+  const { data, error } = await supabase
+    .from("game_recommendations_with_users")
+    .select("*")
+    .eq("to_user_id", currentUserId)
+    .eq("from_user_id", friendId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+
+  return (data as GameRecommendationWithNames[]) || [];
+}
+
+/**
+ * Get all friends who have sent game recommendations, with stats
+ */
+export async function getFriendsWithGameRecommendations(
+  currentUserId: string
+): Promise<FriendStats[]> {
+  const recs = await getGameRecommendations(currentUserId, {
+    direction: "received",
+  });
+
+  // Group by sender
+  const friendMap = new Map<string, FriendStats>();
+
+  recs.forEach((rec) => {
+    if (!friendMap.has(rec.from_user_id)) {
+      friendMap.set(rec.from_user_id, {
+        user_id: rec.from_user_id,
+        display_name: rec.sender_name || "Unknown",
+        pending_count: 0,
+        total_count: 0,
+        hit_count: 0,
+        miss_count: 0,
+      });
+    }
+
+    const stats = friendMap.get(rec.from_user_id)!;
+    stats.total_count++;
+    if (rec.status === "pending") stats.pending_count++;
+    else if (rec.status === "hit") stats.hit_count++;
+    else if (rec.status === "miss") stats.miss_count++;
+  });
+
+  return Array.from(friendMap.values());
+}
+
+/**
+ * Get quick stats for game recommendations
+ */
+export async function getGameQuickStats(
+  currentUserId: string
+): Promise<QuickStats> {
+  const [pending, hits, misses, sent] = await Promise.all([
+    getGameRecommendations(currentUserId, {
+      direction: "received",
+      status: "pending",
+    }),
+    getGameRecommendations(currentUserId, {
+      direction: "received",
+      status: "hit",
+    }),
+    getGameRecommendations(currentUserId, {
+      direction: "received",
+      status: "miss",
+    }),
+    getGameRecommendations(currentUserId, { direction: "sent" }),
   ]);
 
   return {

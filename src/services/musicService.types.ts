@@ -15,6 +15,7 @@ export interface MusicLibraryItem {
   release_date: string | null; // Text format (YYYY-MM-DD or YYYY)
   album_cover_url: string | null; // Album artwork
   preview_url: string | null; // Preview audio URL
+  genre: string | null; // Primary genre from iTunes API
   listened: boolean; // false = listening, true = listened
   personal_rating: number | null; // 1-5 stars
   personal_notes: string | null; // User's thoughts
@@ -32,6 +33,7 @@ export interface AddToLibraryParams {
   release_date: string | null;
   album_cover_url: string | null;
   preview_url?: string | null;
+  genre?: string | null;
   listened?: boolean;
 }
 

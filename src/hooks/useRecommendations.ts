@@ -8,7 +8,7 @@ import * as recommendationsService from "../services/recommendationsService";
 import { queryKeys } from "../lib/queryKeys";
 import { useAuth } from "../contexts/AuthContext";
 
-type MediaTypeKey = "movies-tv" | "song" | "music" | "books";
+type MediaTypeKey = "movies-tv" | "song" | "music" | "books" | "games";
 
 /**
  * Generic hook to get friends who have sent recommendations
@@ -21,9 +21,15 @@ export function useFriendsWithRecs(mediaTypeKey: MediaTypeKey) {
     queryFn: () => {
       if (!user?.id) throw new Error("Not authenticated");
 
-      // Books use separate functions
+      // Books and Games use separate functions
       if (mediaTypeKey === "books") {
         return recommendationsService.getFriendsWithBookRecommendations(
+          user.id
+        );
+      }
+
+      if (mediaTypeKey === "games") {
+        return recommendationsService.getFriendsWithGameRecommendations(
           user.id
         );
       }
@@ -56,9 +62,13 @@ export function useQuickStats(mediaTypeKey: MediaTypeKey) {
     queryFn: () => {
       if (!user?.id) throw new Error("Not authenticated");
 
-      // Books use separate functions
+      // Books and Games use separate functions
       if (mediaTypeKey === "books") {
         return recommendationsService.getBookQuickStats(user.id);
+      }
+
+      if (mediaTypeKey === "games") {
+        return recommendationsService.getGameQuickStats(user.id);
       }
 
       // Map mediaTypeKey to service parameter for movies/music
@@ -125,6 +135,40 @@ export function useRecommendations(
         }
         if (view === "sent") {
           return recommendationsService.getBookRecommendations(user.id, {
+            direction: "sent",
+          });
+        }
+        return [];
+      }
+
+      // Games use separate service functions
+      if (mediaTypeKey === "games") {
+        if (view === "friend" && friendId) {
+          return recommendationsService.getGameRecommendationsFromFriend(
+            user.id,
+            friendId
+          );
+        }
+        if (view === "queue") {
+          return recommendationsService.getGameRecommendations(user.id, {
+            direction: "received",
+            status: "pending",
+          });
+        }
+        if (view === "hits") {
+          return recommendationsService.getGameRecommendations(user.id, {
+            direction: "received",
+            status: "hit",
+          });
+        }
+        if (view === "misses") {
+          return recommendationsService.getGameRecommendations(user.id, {
+            direction: "received",
+            status: "miss",
+          });
+        }
+        if (view === "sent") {
+          return recommendationsService.getGameRecommendations(user.id, {
             direction: "sent",
           });
         }
@@ -203,13 +247,16 @@ export function useUpdateStatus(mediaTypeKey: MediaTypeKey) {
       let tableName:
         | "movie_recommendations"
         | "music_recommendations"
-        | "book_recommendations";
+        | "book_recommendations"
+        | "game_recommendations";
       if (mediaTypeKey === "movies-tv") {
         tableName = "movie_recommendations";
       } else if (mediaTypeKey === "music" || mediaTypeKey === "song") {
         tableName = "music_recommendations";
       } else if (mediaTypeKey === "books") {
         tableName = "book_recommendations";
+      } else if (mediaTypeKey === "games") {
+        tableName = "game_recommendations";
       } else {
         tableName = "movie_recommendations"; // fallback
       }

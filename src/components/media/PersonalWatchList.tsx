@@ -15,6 +15,7 @@ import Button from "../shared/Button";
 import SendMediaModal from "../shared/SendMediaModal";
 import Toast from "../ui/Toast";
 import MediaListItem from "./MediaListItem";
+import MediaEmptyState from "./MediaEmptyState";
 import MediaTypeFilters, { FilterOption } from "./MediaTypeFilters";
 import SortDropdown, { SortOption } from "./SortDropdown";
 import { useMediaFiltering } from "../../hooks/useMediaFiltering";
@@ -281,17 +282,13 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
       {/* Content: List or Empty State */}
       {!hasItemsForCurrentFilter ? (
         // Empty state when no items for current filter
-        <div className="flex flex-col items-center justify-center py-16 px-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-800/30">
-          <div className="w-16 h-16 mb-4 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-            <Film className="w-8 h-8 text-gray-400 dark:text-gray-500" />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            Your watchlist is empty
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 text-center max-w-md">
-            Start building your watchlist by searching for movies below.
-          </p>
-        </div>
+        <MediaEmptyState
+          icon={Film}
+          title="Your watchlist is empty"
+          description="Start building your watchlist by searching for movies and TV shows below."
+          onClick={() => setShowSearchModal(true)}
+          ariaLabel="Add movies or TV shows to your watchlist"
+        />
       ) : totalItems === 0 ? (
         // Message when filter has no results
         <div className="text-center py-12">

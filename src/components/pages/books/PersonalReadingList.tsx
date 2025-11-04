@@ -13,8 +13,7 @@ import ImportBooksModal from "./ImportBooksModal";
 import Button from "../../shared/Button";
 import MediaEmptyState from "../../media/MediaEmptyState";
 import MediaListItem from "../../media/MediaListItem";
-import MediaTypeFilters, { FilterOption } from "../../media/MediaTypeFilters";
-import SortDropdown, { SortOption } from "../../media/SortDropdown";
+import FilterSortMenu, { FilterSortSection } from "../../shared/FilterSortMenu";
 import SendMediaModal from "../../shared/SendMediaModal";
 import Toast from "../../ui/Toast";
 import { useMediaFiltering } from "../../../hooks/useMediaFiltering";
@@ -29,82 +28,11 @@ import type { ReadingListItem } from "../../../services/booksService.types";
 
 type FilterType = "all" | "to-read" | "read";
 type SortType = "date-added" | "title" | "year" | "rating";
-type CategoryFilter =
-  | "all"
-  | "fiction"
-  | "nonfiction"
-  | "fantasy"
-  | "romance"
-  | "mystery"
-  | "biography"
-  | "history"
-  | "science";
 
 interface PersonalReadingListProps {
   initialFilter?: FilterType;
   embedded?: boolean;
 }
-
-// Category filter configuration
-const CATEGORY_FILTERS: FilterOption[] = [
-  { id: "all", label: "All Books" },
-  {
-    id: "fiction",
-    label: "Fiction",
-    colorClass:
-      "bg-blue-500/20 text-blue-700 dark:text-blue-200 ring-2 ring-blue-500/50",
-  },
-  {
-    id: "nonfiction",
-    label: "Non-Fiction",
-    colorClass:
-      "bg-indigo-500/20 text-indigo-700 dark:text-indigo-200 ring-2 ring-indigo-500/50",
-  },
-  {
-    id: "fantasy",
-    label: "Fantasy",
-    colorClass:
-      "bg-purple-500/20 text-purple-700 dark:text-purple-200 ring-2 ring-purple-500/50",
-  },
-  {
-    id: "romance",
-    label: "Romance",
-    colorClass:
-      "bg-pink-500/20 text-pink-700 dark:text-pink-200 ring-2 ring-pink-500/50",
-  },
-  {
-    id: "mystery",
-    label: "Mystery",
-    colorClass:
-      "bg-amber-500/20 text-amber-700 dark:text-amber-200 ring-2 ring-amber-500/50",
-  },
-  {
-    id: "biography",
-    label: "Biography",
-    colorClass:
-      "bg-teal-500/20 text-teal-700 dark:text-teal-200 ring-2 ring-teal-500/50",
-  },
-  {
-    id: "history",
-    label: "History",
-    colorClass:
-      "bg-orange-500/20 text-orange-700 dark:text-orange-200 ring-2 ring-orange-500/50",
-  },
-  {
-    id: "science",
-    label: "Science",
-    colorClass:
-      "bg-green-500/20 text-green-700 dark:text-green-200 ring-2 ring-green-500/50",
-  },
-];
-
-// Sort options
-const SORT_OPTIONS: SortOption[] = [
-  { id: "date-added", label: "Recently Added" },
-  { id: "title", label: "Title" },
-  { id: "year", label: "Publication Year" },
-  { id: "rating", label: "Your Rating" },
-];
 
 const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
   initialFilter = "all",
@@ -118,7 +46,7 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
 
   // Filter state (controlled by tabs via prop)
   const [filter] = useState<FilterType>(initialFilter);
-  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("all");
+  const [categoryFilters, setCategoryFilters] = useState<string[]>(["all"]);
   const [sortBy, setSortBy] = useState<SortType>("date-added");
 
   // Modal state
@@ -139,89 +67,87 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
   // Ref for scroll-to-top
   const topRef = useRef<HTMLDivElement>(null);
 
-  // Determine which categories have books (for filtering available categories)
+  // First, filter by read status to get the current view
+  const filteredByStatus = useMemo(() => {
+    if (filter === "to-read") return readingList.filter((b) => !b.read);
+    if (filter === "read") return readingList.filter((b) => b.read);
+    return readingList;
+  }, [readingList, filter]);
+
+  // Extract unique categories from the currently filtered books (by read status)
   const availableCategories = useMemo(() => {
-    const categories = new Set<CategoryFilter>(["all"]);
-
-    readingList.forEach((book) => {
+    const categorySet = new Set<string>();
+    filteredByStatus.forEach((book) => {
       if (book.categories) {
-        const cats = book.categories.toLowerCase();
-
-        if (cats.includes("fiction") && !cats.includes("non-fiction")) {
-          categories.add("fiction");
-        }
-        if (cats.includes("non-fiction") || cats.includes("nonfiction")) {
-          categories.add("nonfiction");
-        }
-        if (cats.includes("fantasy")) categories.add("fantasy");
-        if (cats.includes("romance")) categories.add("romance");
-        if (
-          cats.includes("mystery") ||
-          cats.includes("thriller") ||
-          cats.includes("crime")
-        ) {
-          categories.add("mystery");
-        }
-        if (cats.includes("biography") || cats.includes("memoir")) {
-          categories.add("biography");
-        }
-        if (cats.includes("history")) categories.add("history");
-        if (cats.includes("science") || cats.includes("technology")) {
-          categories.add("science");
-        }
+        // Split by comma, slash, and/or ampersand, and trim whitespace
+        book.categories.split(/[,/&]/).forEach((category) => {
+          const trimmedCategory = category.trim().toLowerCase();
+          if (trimmedCategory) categorySet.add(trimmedCategory);
+        });
       }
     });
+    return categorySet;
+  }, [filteredByStatus]);
 
-    return categories;
-  }, [readingList]);
+  // Create filter & sort sections for FilterSortMenu
+  const filterSortSections = useMemo((): FilterSortSection[] => {
+    // Sort categories alphabetically
+    const sortedCategories = Array.from(availableCategories).sort();
 
-  // Category matching helper
-  const bookMatchesCategory = (
-    book: ReadingListItem,
-    category: CategoryFilter
-  ): boolean => {
-    if (category === "all") return true;
-    if (!book.categories) return false;
+    const categoryOptions = [
+      { id: "all", label: "All Categories" },
+      ...sortedCategories.map((category) => ({
+        id: category,
+        label: category.charAt(0).toUpperCase() + category.slice(1),
+      })),
+    ];
 
-    const cats = book.categories.toLowerCase();
+    return [
+      {
+        id: "category",
+        title: "Category",
+        multiSelect: true,
+        options: categoryOptions,
+      },
+      {
+        id: "sort",
+        title: "Sort By",
+        options: [
+          { id: "date-added", label: "Recently Added" },
+          { id: "title", label: "Title" },
+          { id: "year", label: "Publication Year" },
+          { id: "rating", label: "Your Rating" },
+        ],
+      },
+    ];
+  }, [availableCategories]);
 
-    switch (category) {
-      case "fiction":
-        return cats.includes("fiction") && !cats.includes("non-fiction");
-      case "nonfiction":
-        return cats.includes("non-fiction") || cats.includes("nonfiction");
-      case "fantasy":
-        return cats.includes("fantasy");
-      case "romance":
-        return cats.includes("romance");
-      case "mystery":
-        return (
-          cats.includes("mystery") ||
-          cats.includes("thriller") ||
-          cats.includes("crime")
-        );
-      case "biography":
-        return cats.includes("biography") || cats.includes("memoir");
-      case "history":
-        return cats.includes("history");
-      case "science":
-        return cats.includes("science") || cats.includes("technology");
-      default:
-        return true;
-    }
-  };
-
-  // Filter function
+  // Define filter function (now includes category filter)
   const filterFn = useCallback(
     (book: ReadingListItem) => {
       // Filter by read status
       if (filter === "to-read" && book.read) return false;
       if (filter === "read" && !book.read) return false;
 
-      // Filter by category
-      return bookMatchesCategory(book, categoryFilter);
+      // Filter by categories (multiple selection support)
+      if (categoryFilters.length === 0 || categoryFilters.includes("all")) {
+        return true;
+      }
+
+      // Book matches if it matches ANY of the selected categories
+      if (book.categories) {
+        const bookCategories = book.categories
+          .toLowerCase()
+          .split(/[,/&]/)
+          .map((c) => c.trim());
+        return categoryFilters.some((selectedCategory) =>
+          bookCategories.includes(selectedCategory)
+        );
+      }
+
+      return false;
     },
-    [filter, categoryFilter]
+    [filter, categoryFilters]
   );
 
   // Sort function
@@ -358,48 +284,76 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
           message: "Add your first book to get started tracking your reading.",
         };
 
-  // Filter available category options
-  const availableCategoryFilters = CATEGORY_FILTERS.filter((filter) =>
-    availableCategories.has(filter.id as CategoryFilter)
-  );
-
   return (
     <div ref={topRef} className="space-y-6">
-      {/* Controls Row: Filters + Sort + Actions */}
+      {/* Controls Row: Filter/Sort + Actions */}
       {hasItemsForCurrentFilter && (
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          {/* Left: Category Filter Chips */}
-          <MediaTypeFilters
-            filters={availableCategoryFilters}
-            activeFilter={categoryFilter}
-            onFilterChange={(filterId) =>
-              setCategoryFilter(filterId as CategoryFilter)
-            }
-          />
+        <div className="space-y-3 mb-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            {/* Left: Combined Filter & Sort Menu with Filter Chips */}
+            <div className="flex items-center gap-2">
+              <FilterSortMenu
+                sections={filterSortSections}
+                activeFilters={{
+                  category: categoryFilters,
+                  sort: sortBy,
+                }}
+                onFilterChange={(sectionId, value) => {
+                  if (sectionId === "category") {
+                    // Handle category multi-select
+                    const categories = Array.isArray(value) ? value : [value];
+                    setCategoryFilters(categories);
+                  } else if (sectionId === "sort") {
+                    setSortBy(value as SortType);
+                  }
+                }}
+              />
 
-          {/* Right: Sort + Action Buttons */}
-          <div className="flex items-center gap-3">
-            <SortDropdown
-              options={SORT_OPTIONS}
-              activeSort={sortBy}
-              onSortChange={(sortId) => setSortBy(sortId as SortType)}
-            />
+              {/* Active Filter Chips */}
+              {!categoryFilters.includes("all") &&
+                categoryFilters.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {categoryFilters.map((category) => (
+                      <button
+                        key={category}
+                        onClick={() => {
+                          const newFilters = categoryFilters.filter(
+                            (c) => c !== category
+                          );
+                          setCategoryFilters(
+                            newFilters.length > 0 ? newFilters : ["all"]
+                          );
+                        }}
+                        className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
+                      >
+                        {category.charAt(0).toUpperCase() + category.slice(1)}
+                        <span className="text-purple-600 dark:text-purple-400">
+                          ×
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+            </div>
 
-            <Button
-              onClick={() => setShowSearchModal(true)}
-              variant="primary"
-              icon={<Plus className="w-4 h-4" />}
-            >
-              Add
-            </Button>
+            {/* Right: Action Buttons */}
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={() => setShowSearchModal(true)}
+                variant="primary"
+                icon={<Plus className="w-4 h-4" />}
+              >
+                Add
+              </Button>
 
-            <Button
-              onClick={() => setShowImportModal(true)}
-              variant="secondary"
-              icon={<Upload className="w-4 h-4" />}
-            >
-              Import
-            </Button>
+              <Button
+                onClick={() => setShowImportModal(true)}
+                variant="secondary"
+                icon={<Upload className="w-4 h-4" />}
+              >
+                Import
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -410,12 +364,19 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
           icon={BookOpen}
           title={emptyStateProps.title}
           description={emptyStateProps.message}
+          onClick={() => setShowSearchModal(true)}
+          ariaLabel="Add books to your reading list"
         />
       ) : totalItems === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-500 dark:text-gray-400">
-            No books found in{" "}
-            {categoryFilter === "all" ? "any" : categoryFilter} category
+            No books found in selected{" "}
+            {categoryFilters.length === 1 && categoryFilters[0] !== "all"
+              ? categoryFilters[0]
+              : ""}{" "}
+            {categoryFilters.length > 1
+              ? `categories (${categoryFilters.join(", ")})`
+              : "categories"}
           </p>
         </div>
       ) : (
