@@ -1,0 +1,5 @@
+- Ask clarifying questions before edits if any requirement is uncertain or risky.
+- Explain key tradeoffs briefly, not essays.
+- Do not introduce new dependencies without asking.
+- Keep code consistent with existing patterns unless refactoring is intentional.
+- Prefer explicit, readable code over cleverness.

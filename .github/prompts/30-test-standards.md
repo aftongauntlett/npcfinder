@@ -1,0 +1,4 @@
+- Vitest + Testing Library for unit/integration; Playwright for a few high-value E2Es.
+- Write tests for: new logic, bug fixes, fragile codepaths, core reducers/hooks, and accessibility-critical flows.
+- Mock Supabase client/services; don’t hit the network.
+- Aim for meaningful assertions, not snapshots by default.
