@@ -18,8 +18,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       {/* Main content area with responsive sidebar spacing */}
       {/* Mobile: no sidebar (full width), Desktop: sidebar padding */}
       <div
-        className={`transition-all duration-300 md:${
-          isCollapsed ? "pl-16" : "pl-64"
+        className={`transition-all duration-300 ${
+          isCollapsed ? "md:pl-16" : "md:pl-[224px]"
         }`}
       >
         {children}

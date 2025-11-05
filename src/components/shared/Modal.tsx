@@ -83,7 +83,7 @@ const Modal: React.FC<ModalProps> = ({
   return (
     <div
       className={`fixed inset-0 z-50 overflow-y-auto transition-all duration-300 ${
-        isCollapsed ? "pl-16" : "pl-16 md:pl-64"
+        isCollapsed ? "pl-16" : "pl-16 md:pl-[224px]"
       }`}
     >
       {/* Backdrop */}

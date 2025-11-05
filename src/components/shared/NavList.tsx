@@ -1,4 +1,5 @@
 import React from "react";
+import { BTN_PAD_DEFAULT } from "../../styles/ui";
 
 export interface NavItem {
   id: string;
@@ -39,7 +40,7 @@ const NavList: React.FC<NavListProps> = ({
             <li key={item.id}>
               <button
                 onClick={() => onNavigate(item.path)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
+                className={`w-full flex items-center gap-3 ${BTN_PAD_DEFAULT} rounded-lg transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
                   active
                     ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light font-medium"
                     : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"

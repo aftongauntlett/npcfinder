@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
-  Home,
   Film,
   Music,
   BookOpen,
@@ -10,22 +9,23 @@ import {
   ShieldCheck,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   User as UserIcon,
-  LogOut,
 } from "lucide-react";
 import { useAdmin } from "../../contexts/AdminContext";
 import { useSidebar } from "../../contexts/SidebarContext";
 import { useProfileQuery } from "../../hooks/useProfileQuery";
 import ConfirmationModal from "./ConfirmationModal";
 import NavList, { type NavItem } from "./NavList";
+import UserMenuDropdown from "./UserMenuDropdown";
 import { signOut } from "../../lib/auth";
+import { BTN_PAD_DEFAULT } from "../../styles/ui";
 
 interface SidebarProps {
   currentUser: { id: string; email?: string } | null;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { id: "dashboard", label: "Dashboard", icon: Home, path: "/app" },
   {
     id: "movies",
     label: "Movies & TV",
@@ -63,11 +63,18 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
 
   const [showSignOutModal, setShowSignOutModal] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   const displayName = profile?.display_name || currentUser?.email || "User";
 
   const handleLogout = () => {
     setShowSignOutModal(true);
+  };
+
+  const handleUserMenuSignOut = () => {
+    setIsUserMenuOpen(false);
+    handleLogout();
   };
 
   const confirmSignOut = async () => {
@@ -82,7 +89,50 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
     }
   };
 
+  // Close user menu on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    if (isUserMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isUserMenuOpen]);
+
+  // Close user menu on Escape key
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    if (isUserMenuOpen) {
+      document.addEventListener("keydown", handleEscape);
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isUserMenuOpen]);
+
+  // Close user menu when sidebar collapse state changes
+  useEffect(() => {
+    setIsUserMenuOpen(false);
+  }, [isCollapsed]);
+
   const handleNavigation = (path: string) => {
+    setIsUserMenuOpen(false); // Close dropdown on navigation
     void navigate(path);
     // Auto-collapse on mobile after navigation
     if (isMobile) {
@@ -132,7 +182,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
       {/* Sidebar - Hidden on mobile, visible on desktop */}
       <aside
         className={`hidden md:fixed left-0 top-0 h-screen bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out z-40 md:flex flex-col overflow-hidden ${
-          isCollapsed ? "w-16" : "w-64"
+          isCollapsed ? "w-16" : "w-[224px]"
         }`}
         aria-label="Main sidebar navigation"
       >
@@ -140,20 +190,103 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
         <div className="h-16 flex items-center px-4 border-b border-gray-200 dark:border-gray-700">
           {isCollapsed ? (
             <button
-              onClick={() => void navigate("/app")}
+              onClick={() => handleNavigation("/app")}
               className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
               aria-label="Go to dashboard"
             >
-              <Home className="w-5 h-5 text-primary" aria-hidden="true" />
+              <img
+                src="/quest-marker.svg"
+                alt="NPC Finder logo"
+                className="w-6 h-6"
+              />
             </button>
           ) : (
             <button
-              onClick={() => void navigate("/app")}
-              className="text-xl font-bold text-gray-900 dark:text-white hover:text-primary dark:hover:text-primary-light transition-colors font-heading whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 rounded"
+              onClick={() => handleNavigation("/app")}
+              className="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-white hover:text-primary dark:hover:text-primary-light transition-colors font-heading whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 rounded"
             >
-              NPC Finder
+              <img
+                src="/quest-marker.svg"
+                alt=""
+                className="w-6 h-6 flex-shrink-0"
+              />
+              <span>NPC Finder</span>
             </button>
           )}
+        </div>
+
+        {/* User Section with Dropdown */}
+        <div
+          ref={userMenuRef}
+          className="relative border-b border-gray-200 dark:border-gray-700 p-2"
+        >
+          {/* User Button */}
+          <button
+            onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+            className={`w-full flex items-center gap-3 px-2 py-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
+              isCollapsed ? "justify-center" : ""
+            }`}
+            aria-expanded={isUserMenuOpen}
+            aria-haspopup="true"
+            aria-label={isCollapsed ? "User menu" : undefined}
+            title={isCollapsed ? "User menu" : undefined}
+          >
+            {isCollapsed ? (
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                {isAdmin ? (
+                  <ShieldCheck
+                    className="w-5 h-5 text-primary"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <UserIcon
+                    className="w-5 h-5 text-primary"
+                    aria-hidden="true"
+                  />
+                )}
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    {isAdmin ? (
+                      <ShieldCheck
+                        className="w-5 h-5 text-primary"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <UserIcon
+                        className="w-5 h-5 text-primary"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-base font-bold text-gray-900 dark:text-white truncate font-heading">
+                      {displayName}
+                    </p>
+                  </div>
+                </div>
+                <ChevronDown
+                  className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform flex-shrink-0 ${
+                    isUserMenuOpen ? "rotate-180" : ""
+                  }`}
+                  aria-hidden="true"
+                />
+              </>
+            )}
+          </button>
+
+          {/* User Menu Dropdown */}
+          <UserMenuDropdown
+            isOpen={isUserMenuOpen}
+            isCollapsed={isCollapsed}
+            displayName={displayName}
+            items={USER_MENU_ITEMS}
+            isAdmin={isAdmin}
+            onNavigate={handleNavigation}
+            onSignOut={handleUserMenuSignOut}
+          />
         </div>
 
         {/* Navigation Items */}
@@ -168,104 +301,25 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
           />
         </nav>
 
-        {/* Sidebar Footer - User Section */}
-        <div className="border-t border-gray-200 dark:border-gray-700 p-2 space-y-2">
-          {/* User Header - Static Display */}
-          <div
-            className={`flex items-center gap-3 px-2 py-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg ${
-              isCollapsed ? "justify-center" : ""
-            }`}
+        {/* Sidebar Footer - Collapse Toggle */}
+        <div className="border-t border-gray-200 dark:border-gray-700 p-2">
+          <button
+            onClick={toggleCollapse}
+            className={`w-full flex items-center justify-center gap-3 ${BTN_PAD_DEFAULT} rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800`}
+            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {isCollapsed ? (
-              <div
-                className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center"
-                aria-label="User profile"
-              >
-                {isAdmin ? (
-                  <ShieldCheck
-                    className="w-5 h-5 text-primary"
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <UserIcon
-                    className="w-5 h-5 text-primary"
-                    aria-hidden="true"
-                  />
-                )}
-              </div>
+              <ChevronRight className="w-5 h-5" aria-hidden="true" />
             ) : (
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                  {isAdmin ? (
-                    <ShieldCheck
-                      className="w-5 h-5 text-primary"
-                      aria-hidden="true"
-                    />
-                  ) : (
-                    <UserIcon
-                      className="w-5 h-5 text-primary"
-                      aria-hidden="true"
-                    />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-base font-bold text-gray-900 dark:text-white truncate font-heading">
-                    {displayName}
-                  </p>
-                </div>
-              </div>
+              <>
+                <ChevronLeft className="w-5 h-5" aria-hidden="true" />
+                <span className="text-sm font-medium whitespace-nowrap">
+                  Collapse
+                </span>
+              </>
             )}
-          </div>
-
-          {/* User Menu Items - Always Visible */}
-          {!isCollapsed && (
-            <nav className="space-y-1 px-1" aria-label="User menu">
-              <div className="space-y-1">
-                <NavList
-                  items={USER_MENU_ITEMS}
-                  currentPath={location.pathname}
-                  isCollapsed={false}
-                  isAdmin={isAdmin}
-                  onNavigate={handleNavigation}
-                  isActive={isActive}
-                />
-              </div>
-
-              {/* Divider */}
-              <div className="my-2 border-t border-gray-200 dark:border-gray-700 w-3/4 mx-auto" />
-
-              {/* Sign Out */}
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
-                aria-label="Sign Out"
-              >
-                <LogOut className="w-4 h-4" aria-hidden="true" />
-                <span className="whitespace-nowrap">Sign Out</span>
-              </button>
-            </nav>
-          )}
-
-          {/* Collapse Toggle */}
-          <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-            <button
-              onClick={toggleCollapse}
-              className="w-full flex items-center justify-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
-              aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-              title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            >
-              {isCollapsed ? (
-                <ChevronRight className="w-5 h-5" aria-hidden="true" />
-              ) : (
-                <>
-                  <ChevronLeft className="w-5 h-5" aria-hidden="true" />
-                  <span className="text-sm font-medium whitespace-nowrap">
-                    Collapse
-                  </span>
-                </>
-              )}
-            </button>
-          </div>
+          </button>
         </div>
       </aside>
 
