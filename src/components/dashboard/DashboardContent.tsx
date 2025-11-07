@@ -26,86 +26,18 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({
   showFriendSearch,
   setShowFriendSearch,
   activeTab,
-  stats,
-  statsLoading,
+  stats: _stats,
+  statsLoading: _statsLoading,
   showGettingStarted,
   setShowGettingStarted,
 }) => {
   return (
     <>
-      {/* Quick Actions - Find Friends */}
-      <div className="mb-8">
-        <button
-          onClick={() => setShowFriendSearch(true)}
-          className="w-full bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm hover:shadow-md transition-all text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
-        >
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-pink-500/10 rounded-lg group-hover:bg-pink-500/20 transition-colors">
-              <UserPlus className="w-6 h-6 text-pink-500" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 dark:text-white font-heading text-lg">
-                Find Friends
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Search for users and connect with friends
-              </p>
-            </div>
-          </div>
-        </button>
-      </div>
-
       {/* Friend Search Modal */}
       <FriendSearchModal
         isOpen={showFriendSearch}
         onClose={() => setShowFriendSearch(false)}
       />
-
-      {/* Stats Bar */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-8 shadow-sm">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-gray-900 dark:text-white font-heading">
-              {statsLoading ? "..." : stats?.moviesAndTvCount || 0}
-            </p>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-              Movies & TV
-            </p>
-          </div>
-          <div className="text-center opacity-50">
-            <p className="text-2xl font-bold text-gray-400 dark:text-gray-600 font-heading">
-              —
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-              Music
-            </p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-gray-900 dark:text-white font-heading">
-              {statsLoading ? "..." : stats?.booksCount || 0}
-            </p>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-              Books
-            </p>
-          </div>
-          <div className="text-center opacity-50">
-            <p className="text-2xl font-bold text-gray-400 dark:text-gray-600 font-heading">
-              —
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-              Games
-            </p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-gray-900 dark:text-white font-heading">
-              {statsLoading ? "..." : stats?.friendsCount || 0}
-            </p>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-              Connections
-            </p>
-          </div>
-        </div>
-      </div>
 
       {/* Tab Panels */}
       <div role="tabpanel" id={`${activeTab}-panel`}>
