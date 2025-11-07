@@ -3,15 +3,23 @@ import { logger } from "../../lib/logger";
 
 /**
  * Button Variants:
- * - primary: Solid fill with theme color
- * - secondary: Outlined style with border
+ * - primary: Solid fill with theme color and glassmorphism effects
+ * - secondary: Outlined style with glass effect, fills on hover
  * - subtle: Minimal ghost style with light background
  * - danger: Pastel red for destructive actions (delete, remove, etc.)
+ * - action: Prominent glass button for high-frequency actions (Add, Create, etc.)
+ * - gradient: DEPRECATED - Use 'action' instead
  */
 
-type ButtonVariant = "primary" | "secondary" | "subtle" | "danger";
+type ButtonVariant =
+  | "primary"
+  | "secondary"
+  | "subtle"
+  | "danger"
+  | "action"
+  | "gradient";
 
-export type ButtonSize = "sm" | "md" | "lg";
+export type ButtonSize = "sm" | "md" | "lg" | "icon";
 
 export type IconPosition = "left" | "right";
 
@@ -67,6 +75,18 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ) => {
     const isDisabled = disabled || loading;
     const isIconOnly = !children && !!icon;
+    const isIconSize = size === "icon";
+    const shouldUseIconStyling = isIconOnly || isIconSize;
+
+    // Handle deprecated gradient variant
+    const effectiveVariant = variant === "gradient" ? "action" : variant;
+
+    // Deprecation warning for gradient variant
+    if (variant === "gradient" && process.env.NODE_ENV === "development") {
+      logger.warn(
+        'Button: variant="gradient" is deprecated. Use variant="action" instead.'
+      );
+    }
 
     // Accessibility check
     if (isIconOnly && !ariaLabel && !props["aria-labelledby"]) {
@@ -88,10 +108,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       "inline-flex items-center justify-center",
       hideTextOnMobile ? "gap-0 sm:gap-2" : "gap-2", // No gap on mobile when text is hidden
       "font-medium",
-      // Border - squared corners per requirements
-      "rounded border-2",
-      // Smooth transitions - no scale
-      "transition-colors duration-200",
+      // Border and corners - conditional for action variant
+      effectiveVariant === "action"
+        ? "rounded-lg border-0"
+        : "rounded border-2",
+      // Smooth transitions
+      "transition-all duration-300 ease-out",
       // Focus state - visible ring for accessibility
       "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
       // Disabled state
@@ -100,37 +122,59 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       fullWidth && "w-full",
     ];
 
-    // Variant styles
+    // Variant styles with glassmorphism effects
     const variantStyles: Record<ButtonVariant, string[]> = {
       primary: [
-        "border-current bg-current text-white",
-        "hover:opacity-90",
+        "border-current bg-current text-white shadow-sm",
+        "glass-button hover-sheen",
+        "hover:opacity-90 hover:shadow-md hover:[backdrop-filter:blur(10px)_saturate(130%)]",
         "focus-visible:ring-current",
       ],
       secondary: [
-        "border-current bg-transparent text-current",
-        "hover:bg-current/10",
+        "border-current bg-transparent text-current shadow-sm",
+        "glass-button",
+        "hover:shadow-md",
+        "hover:[background:color-mix(in_srgb,var(--color-primary)_15%,transparent)]",
+        "hover:[backdrop-filter:blur(8px)_saturate(120%)]",
         "focus-visible:ring-current",
       ],
       subtle: [
-        "border-border/50 bg-surface/30 text-text-primary",
-        "hover:bg-surface/50 hover:border-border",
+        "border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 text-gray-800 dark:text-gray-200",
+        "hover:bg-white/70 dark:hover:bg-gray-800/70 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-sm",
         "focus-visible:ring-primary",
       ],
       danger: [
         "border-red-300 dark:border-red-400/50 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400",
-        "hover:bg-red-100 dark:hover:bg-red-950/50 hover:border-red-400 dark:hover:border-red-400/70",
+        "hover:bg-red-100 dark:hover:bg-red-950/50 hover:border-red-400 dark:hover:border-red-400/70 hover:shadow-sm",
         "focus-visible:ring-red-500 dark:focus-visible:ring-red-400",
+      ],
+      action: [
+        "border-2 border-primary/30 bg-transparent text-primary shadow-md",
+        "glass-button hover-sheen hover-glow",
+        "hover:border-primary/50 hover:shadow-lg",
+        "hover:[background:color-mix(in_srgb,var(--color-primary)_20%,transparent)]",
+        "hover:[backdrop-filter:blur(12px)_saturate(130%)]",
+        "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+      ],
+      gradient: [
+        // Deprecated - maps to action
+        "border-2 border-primary/30 bg-transparent text-primary shadow-md",
+        "glass-button hover-sheen hover-glow",
+        "hover:border-primary/50 hover:shadow-lg",
+        "hover:[background:color-mix(in_srgb,var(--color-primary)_20%,transparent)]",
+        "hover:[backdrop-filter:blur(12px)_saturate(130%)]",
+        "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
       ],
     };
 
     // Size styles - with responsive padding for hideTextOnMobile
     const getSizeStyles = (): string => {
-      if (isIconOnly) {
+      if (shouldUseIconStyling) {
         const iconOnlySizes: Record<ButtonSize, string> = {
           sm: "p-1.5",
           md: "p-2",
           lg: "p-3",
+          icon: "p-2", // Square icon button
         };
         return iconOnlySizes[size];
       }
@@ -141,6 +185,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           sm: "p-1.5 sm:px-3 sm:py-1.5 text-sm",
           md: "p-2 sm:px-4 sm:py-2 text-sm",
           lg: "p-3 sm:px-6 sm:py-3 text-base",
+          icon: "p-2", // Icon size doesn't change
         };
         return responsiveSizes[size];
       }
@@ -150,6 +195,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         sm: "px-3 py-1.5 text-sm",
         md: "px-4 py-2 text-sm",
         lg: "px-6 py-3 text-base",
+        icon: "p-2", // Fallback
       };
       return normalSizes[size];
     };
@@ -159,6 +205,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       sm: "w-4 h-4",
       md: "w-4 h-4",
       lg: "w-5 h-5",
+      icon: "w-4 h-4",
     };
 
     // Loading spinner
@@ -186,18 +233,27 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       </svg>
     );
 
-    // Theme color inline styles for primary/secondary
+    // Theme color inline styles for primary/secondary/action
     const getThemeStyles = (): React.CSSProperties | undefined => {
-      if (variant === "primary" || variant === "secondary") {
+      if (effectiveVariant === "primary" || effectiveVariant === "secondary") {
         return {
           color:
-            variant === "primary"
+            effectiveVariant === "primary"
               ? "var(--color-text-on-primary)"
               : "var(--color-primary)",
           borderColor: "var(--color-primary)",
           backgroundColor:
-            variant === "primary" ? "var(--color-primary)" : undefined,
-        };
+            effectiveVariant === "primary" ? "var(--color-primary)" : undefined,
+          ["--hover-text-color" as string]: "var(--color-text-on-primary)",
+        } as React.CSSProperties;
+      }
+      if (effectiveVariant === "action") {
+        return {
+          borderColor: "var(--color-primary)",
+          color: "var(--color-primary)",
+          ["--hover-bg" as string]: "var(--color-primary)",
+          ["--hover-text" as string]: "var(--color-text-on-primary)",
+        } as React.CSSProperties;
       }
       return undefined;
     };
