@@ -1,4 +1,5 @@
 import React from "react";
+import { motion } from "framer-motion";
 import { Palette, Save } from "lucide-react";
 import { HexColorPicker } from "react-colorful";
 import { getContrastColor } from "../../styles/colorThemes";
@@ -17,7 +18,12 @@ const ColorThemePicker: React.FC<ColorThemePickerProps> = ({
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold text-white dark:text-white mb-2 flex items-center gap-2">
-          <Palette className="w-5 h-5 text-primary" />
+          <motion.div
+            whileHover={{ rotate: -5 }}
+            transition={{ type: "spring", stiffness: 400, damping: 20 }}
+          >
+            <Palette className="w-5 h-5 text-primary group-hover:text-purple-500 transition-colors duration-300" />
+          </motion.div>
           Theme Color
         </h3>
         <p className="text-sm text-gray-400 dark:text-gray-400">
@@ -53,7 +59,7 @@ const ColorThemePicker: React.FC<ColorThemePickerProps> = ({
                   onColorChange(value);
                 }
               }}
-              className="w-full px-4 py-2 bg-gray-900/50 border border-gray-700 rounded-lg text-white font-mono focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full px-4 py-2 bg-gray-900/50 border border-gray-700 rounded-lg text-white font-mono focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
               placeholder="#000000"
               maxLength={7}
             />

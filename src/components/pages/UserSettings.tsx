@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import type { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
+import { motion } from "framer-motion";
 import { User as UserIcon, Save } from "lucide-react";
 import { getUserProfile, updateUserProfile } from "../../lib/profiles";
 import { logger } from "../../lib/logger";
@@ -286,9 +287,19 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
           className="space-y-6"
         >
           {/* Profile Information Card */}
-          <div className="bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700/50 dark:border-gray-700/50">
+          <motion.div
+            className="group bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700/50 dark:border-gray-700/50 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-300"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
             <h2 className="text-xl font-bold text-white dark:text-white mb-4 font-heading flex items-center gap-2">
-              <UserIcon className="w-5 h-5 text-primary" />
+              <motion.div
+                whileHover={{ scale: 1.1, rotate: 5 }}
+                transition={{ type: "spring", stiffness: 400, damping: 20 }}
+              >
+                <UserIcon className="w-5 h-5 text-primary group-hover:text-blue-500 transition-colors duration-300" />
+              </motion.div>
               Profile Information
             </h2>
             <div className="space-y-4">
@@ -328,18 +339,28 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
                 resize="none"
               />
             </div>
-          </div>
+          </motion.div>
 
           {/* Theme Color Card */}
-          <div className="bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700/50 dark:border-gray-700/50">
+          <motion.div
+            className="group bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700/50 dark:border-gray-700/50 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+          >
             <ColorThemePicker
               selectedColor={profile.theme_color}
               onColorChange={handleThemeColorChange}
             />
-          </div>
+          </motion.div>
 
           {/* Action Buttons Card */}
-          <div className="bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700/50 dark:border-gray-700/50">
+          <motion.div
+            className="bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700/50 dark:border-gray-700/50"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+          >
             <div className="flex gap-3 justify-end">
               <Button
                 type="button"
@@ -358,7 +379,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
                 {isSaving ? "Saving..." : "Save Changes"}
               </Button>
             </div>
-          </div>
+          </motion.div>
         </form>
       </ContentLayout>
     </MainLayout>
