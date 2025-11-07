@@ -1,5 +1,6 @@
 import React from "react";
 import type { LucideIcon } from "lucide-react";
+import Button from "../shared/Button";
 
 interface ActionButton {
   label: string;
@@ -109,24 +110,18 @@ const MediaEmptyState: React.FC<MediaEmptyStateProps> = ({
           {description}
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center items-center max-w-md mx-auto">
-          {actions.map((action, index) => {
-            const ActionIcon = action.icon;
-            const isPrimary = action.variant === "primary";
-            return (
-              <button
-                key={index}
-                onClick={action.onClick}
-                className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 ${
-                  isPrimary
-                    ? "bg-primary hover:bg-primary-dark text-white focus-visible:ring-primary"
-                    : "bg-gray-700 hover:bg-gray-600 text-white focus-visible:ring-gray-500"
-                }`}
-              >
-                {ActionIcon && <ActionIcon className="w-4 h-4" />}
-                {action.label}
-              </button>
-            );
-          })}
+          {actions.map((action, index) => (
+            <Button
+              key={index}
+              onClick={action.onClick}
+              variant={action.variant === "primary" ? "primary" : "secondary"}
+              icon={
+                action.icon ? <action.icon className="w-4 h-4" /> : undefined
+              }
+            >
+              {action.label}
+            </Button>
+          ))}
         </div>
       </div>
     );
@@ -135,9 +130,11 @@ const MediaEmptyState: React.FC<MediaEmptyStateProps> = ({
   // If onClick is provided, render as clickable button
   if (onClick) {
     return (
-      <button
+      <Button
         onClick={onClick}
-        className="w-full bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 dark:border-gray-700 hover:border-purple-500/50 dark:hover:border-purple-500/50 p-12 text-center transition-all hover:bg-gray-800/70 dark:hover:bg-gray-800/70 group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 dark:focus-visible:ring-offset-gray-900"
+        variant="subtle"
+        fullWidth
+        className="bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm border border-gray-700 dark:border-gray-700 hover:border-purple-500/50 dark:hover:border-purple-500/50 p-12 text-center hover:bg-gray-800/70 dark:hover:bg-gray-800/70 group focus-visible:ring-offset-gray-900 dark:focus-visible:ring-offset-gray-900"
         aria-label={ariaLabel || title}
       >
         <Icon
@@ -150,7 +147,7 @@ const MediaEmptyState: React.FC<MediaEmptyStateProps> = ({
         <p className="text-gray-400 dark:text-gray-400 text-sm max-w-md mx-auto">
           {description}
         </p>
-      </button>
+      </Button>
     );
   }
 

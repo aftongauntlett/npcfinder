@@ -45,33 +45,27 @@ export const SimilarBooksCarousel: React.FC<SimilarBooksCarouselProps> = ({
                   )}
 
                   {/* Add button overlay */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (!isInReadingList) {
-                        onAddToReadingList(book);
-                      }
-                    }}
-                    disabled={isInReadingList}
-                    className={`absolute inset-0 bg-black/60 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${
-                      isInReadingList ? "cursor-default" : ""
-                    }`}
-                    title={
-                      isInReadingList
-                        ? "Already in reading list"
-                        : "Add to reading list"
-                    }
-                  >
-                    {isInReadingList ? (
+                  {isInReadingList ? (
+                    <div className="absolute inset-0 bg-black/60 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <span className="text-white text-xs font-medium px-3 py-1.5 bg-gray-700 rounded-full">
                         In List
                       </span>
-                    ) : (
-                      <div className="bg-primary hover:bg-primary/90 text-white rounded-full p-2 transition-colors">
-                        <Plus className="w-5 h-5" />
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAddToReadingList(book);
+                      }}
+                      className="absolute inset-0 bg-black/60 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+                      aria-label={`Add ${book.title} to reading list`}
+                    >
+                      <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
+                        <Plus className="w-6 h-6 text-white" />
                       </div>
-                    )}
-                  </button>
+                    </button>
+                  )}
                 </div>
 
                 {/* Title and author */}

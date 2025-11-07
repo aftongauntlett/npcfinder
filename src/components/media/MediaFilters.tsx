@@ -1,5 +1,6 @@
 import React from "react";
 import { ChevronDown } from "lucide-react";
+import Button from "../shared/Button";
 
 type FilterType = "select" | "buttons";
 
@@ -57,18 +58,19 @@ const MediaFilters: React.FC<MediaFiltersProps> = ({
               aria-label={filter.label}
             >
               {filter.options.map((option) => (
-                <button
+                <Button
                   key={option.value}
                   onClick={() => onFilterChange(filter.id, option.value)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  variant={
                     activeFilters[filter.id] === option.value
-                      ? "bg-primary-contrast"
-                      : "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                  }`}
+                      ? "primary"
+                      : "subtle"
+                  }
+                  size="sm"
                   aria-pressed={activeFilters[filter.id] === option.value}
                 >
                   {option.label}
-                </button>
+                </Button>
               ))}
             </div>
           ) : null}

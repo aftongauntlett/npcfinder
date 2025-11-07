@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { X, Search, UserPlus, Users, Check } from "lucide-react";
 import { useUserSearch, useCreateConnection } from "../../hooks/useUserSearch";
+import Button from "./Button";
 
 interface FriendSearchModalProps {
   isOpen: boolean;
@@ -131,13 +132,13 @@ export function FriendSearchModal({ isOpen, onClose }: FriendSearchModalProps) {
               Find Friends
             </h2>
           </div>
-          <button
+          <Button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            variant="subtle"
+            size="icon"
+            icon={<X className="w-5 h-5" />}
             aria-label="Close modal"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          />
         </div>
 
         {/* Search Input */}
@@ -207,15 +208,17 @@ export function FriendSearchModal({ isOpen, onClose }: FriendSearchModalProps) {
                       <span>Connected</span>
                     </div>
                   ) : (
-                    <button
+                    <Button
                       onClick={() => void handleConnect(user.user_id)}
                       disabled={createConnection.isPending}
-                      className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      variant="subtle"
+                      size="sm"
+                      icon={<UserPlus className="w-4 h-4" />}
+                      className="bg-green-600 hover:bg-green-700 text-white"
                       aria-label={`Connect with ${user.display_name}`}
                     >
-                      <UserPlus className="w-4 h-4" />
-                      <span>Connect</span>
-                    </button>
+                      Connect
+                    </Button>
                   )}
                 </div>
               ))}
@@ -226,25 +229,27 @@ export function FriendSearchModal({ isOpen, onClose }: FriendSearchModalProps) {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700">
-            <button
+            <Button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              variant="secondary"
+              size="sm"
             >
               Previous
-            </button>
+            </Button>
 
             <span className="text-sm text-gray-600 dark:text-gray-400">
               Page {currentPage} of {totalPages}
             </span>
 
-            <button
+            <Button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              variant="secondary"
+              size="sm"
             >
               Next
-            </button>
+            </Button>
           </div>
         )}
       </div>

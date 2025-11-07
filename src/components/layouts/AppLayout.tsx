@@ -7,6 +7,7 @@ interface Tab {
   label: string;
   icon?: React.ElementType;
   badge?: number;
+  panelId?: string; // Optional explicit panel ID for aria-controls
 }
 
 interface AppLayoutProps {
@@ -37,6 +38,32 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   onTabChange,
   children,
 }) => {
+  // Handle keyboard navigation for tabs (left/right arrow keys)
+  const handleTabKeyDown = (
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    currentIndex: number
+  ) => {
+    if (!tabs || tabs.length === 0) return;
+
+    let newIndex = currentIndex;
+
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      newIndex = currentIndex > 0 ? currentIndex - 1 : tabs.length - 1;
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      newIndex = currentIndex < tabs.length - 1 ? currentIndex + 1 : 0;
+    } else {
+      return;
+    }
+
+    // Focus the new tab and trigger change
+    const newTab = tabs[newIndex];
+    onTabChange?.(newTab.id);
+
+    // Focus will be handled by React re-render with updated tabIndex
+  };
+
   return (
     <MainLayout>
       <main
@@ -66,23 +93,30 @@ const AppLayout: React.FC<AppLayoutProps> = ({
                 role="tablist"
                 aria-label={`${title} sections`}
               >
-                {tabs.map((tab) => {
+                {tabs.map((tab, index) => {
                   const Icon = tab.icon;
                   const isActive = activeTab === tab.id;
+                  // Default to first tab if no activeTab provided
+                  const isFirstAndNoActive = !activeTab && index === 0;
+                  const shouldBeFocusable = isActive || isFirstAndNoActive;
+                  // Use explicit panelId if provided, otherwise default to ${tab.id}-panel
+                  const panelId = tab.panelId || `${tab.id}-panel`;
 
                   return (
                     <button
                       key={tab.id}
+                      type="button"
                       onClick={() => onTabChange?.(tab.id)}
-                      className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors border-b-2 whitespace-nowrap ${
+                      onKeyDown={(e) => handleTabKeyDown(e, index)}
+                      className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors border-b-2 whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
                         isActive
                           ? "text-primary dark:text-primary-light border-primary dark:border-primary-light"
                           : "text-gray-600 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-gray-600"
                       }`}
                       role="tab"
-                      aria-selected={isActive}
-                      aria-controls={`${tab.id}-panel`}
-                      tabIndex={isActive ? 0 : -1}
+                      aria-selected={isActive || isFirstAndNoActive}
+                      aria-controls={panelId}
+                      tabIndex={shouldBeFocusable ? 0 : -1}
                     >
                       {Icon && <Icon className="w-5 h-5" aria-hidden="true" />}
                       <span>{tab.label}</span>

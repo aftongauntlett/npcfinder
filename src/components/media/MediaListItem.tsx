@@ -1,16 +1,8 @@
 import React from "react";
-import {
-  Star,
-  Book,
-  X,
-  Check,
-  Lightbulb,
-  Undo2,
-  Clapperboard,
-  Tv,
-} from "lucide-react";
+import { Star, Book, X, Check, Lightbulb, Undo2 } from "lucide-react";
 import { STATUS_MAP, type MediaStatus } from "./mediaStatus";
 import { getGenreColor, parseGenres } from "../../utils/genreColors";
+import Button from "../shared/Button";
 
 interface MediaListItemProps {
   id: string | number;
@@ -73,6 +65,15 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
     : 0;
   const remainingGenres = totalGenres - genreList.length;
 
+  // Get remaining genre names for tooltip
+  const remainingGenreList = genres
+    ? genres
+        .split(",")
+        .map((g) => g.trim())
+        .filter((g) => g.length > 0)
+        .slice(genreList.length)
+    : [];
+
   return (
     <div
       onClick={() => onClick(id)}
@@ -106,13 +107,11 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
                 {mediaType && (
                   <>
                     {mediaType === "tv" ? (
-                      <span className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 px-2 py-0.5 rounded whitespace-nowrap flex-shrink-0">
-                        <Tv className="w-3 h-3" />
+                      <span className="text-xs text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 px-2 py-0.5 rounded whitespace-nowrap flex-shrink-0">
                         TV
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 rounded whitespace-nowrap flex-shrink-0">
-                        <Clapperboard className="w-3 h-3" />
+                      <span className="text-xs text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 rounded whitespace-nowrap flex-shrink-0">
                         Movie
                       </span>
                     )}
@@ -120,8 +119,11 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
                 )}
                 {/* Category Badge for Books */}
                 {category && (
-                  <span className="flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/30 px-2 py-0.5 rounded whitespace-nowrap flex-shrink-0">
-                    <Book className="w-3 h-3" />
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded whitespace-nowrap flex-shrink-0 ${getGenreColor(
+                      category
+                    )}`}
+                  >
                     {category}
                   </span>
                 )}
@@ -139,7 +141,10 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
                   ))}
                 {/* +X more chip */}
                 {remainingGenres > 0 && (
-                  <span className="text-xs px-2 py-0.5 rounded whitespace-nowrap flex-shrink-0 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
+                  <span
+                    className="text-xs px-2 py-0.5 rounded whitespace-nowrap flex-shrink-0 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 cursor-help"
+                    title={remainingGenreList.join(", ")}
+                  >
                     +{remainingGenres} more
                   </span>
                 )}
@@ -222,58 +227,62 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
               <>
                 {/* Completed items: Delete (left) + Put Back (middle) + Recommend (right) */}
                 {onRemove && (
-                  <button
+                  <Button
                     onClick={() => onRemove(id)}
-                    className="p-2 text-danger hover:bg-danger-light dark:hover:bg-red-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                    variant="subtle"
+                    size="icon"
+                    icon={<X className="w-5 h-5" />}
+                    className="text-danger hover:bg-danger-light dark:hover:bg-red-900/20"
                     aria-label="Remove from list"
                     title="Remove"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
+                  />
                 )}
                 {onToggleComplete && (
-                  <button
+                  <Button
                     onClick={() => onToggleComplete(id)}
-                    className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500"
+                    variant="subtle"
+                    size="icon"
+                    icon={<Undo2 className="w-5 h-5" />}
                     aria-label="Mark as incomplete"
                     title="Put Back"
-                  >
-                    <Undo2 className="w-5 h-5" />
-                  </button>
+                  />
                 )}
                 {onRecommend && (
-                  <button
+                  <Button
                     onClick={() => onRecommend(id)}
-                    className="p-2 text-success hover:bg-success-light dark:hover:bg-green-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
+                    variant="subtle"
+                    size="icon"
+                    icon={<Lightbulb className="w-5 h-5" />}
+                    className="text-success hover:bg-success-light dark:hover:bg-green-900/20"
                     aria-label="Recommend to friends"
                     title="Recommend"
-                  >
-                    <Lightbulb className="w-5 h-5" />
-                  </button>
+                  />
                 )}
               </>
             ) : (
               <>
                 {/* Incomplete items: Delete (left) + Mark Complete (right) */}
                 {onRemove && (
-                  <button
+                  <Button
                     onClick={() => onRemove(id)}
-                    className="p-2 text-danger hover:bg-danger-light dark:hover:bg-red-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                    variant="subtle"
+                    size="icon"
+                    icon={<X className="w-5 h-5" />}
+                    className="text-danger hover:bg-danger-light dark:hover:bg-red-900/20"
                     aria-label="Remove from list"
                     title="Remove"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
+                  />
                 )}
                 {onToggleComplete && (
-                  <button
+                  <Button
                     onClick={() => onToggleComplete(id)}
-                    className="p-2 text-success hover:bg-success-light dark:hover:bg-green-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
+                    variant="subtle"
+                    size="icon"
+                    icon={<Check className="w-5 h-5" />}
+                    className="text-success hover:bg-success-light dark:hover:bg-green-900/20"
                     aria-label="Mark as complete"
                     title="Complete"
-                  >
-                    <Check className="w-5 h-5" />
-                  </button>
+                  />
                 )}
               </>
             )}

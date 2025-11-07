@@ -1,5 +1,6 @@
 import React from "react";
 import { LucideIcon } from "lucide-react";
+import Button from "../shared/Button";
 
 export interface FilterOption {
   id: string;
@@ -26,19 +27,18 @@ const MediaTypeFilters: React.FC<MediaTypeFiltersProps> = ({
         const Icon = filter.icon;
 
         return (
-          <button
+          <Button
             key={filter.id}
             onClick={() => onFilterChange(filter.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-              isActive
-                ? filter.colorClass ||
-                  "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white ring-2 ring-gray-400 dark:ring-gray-600"
-                : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-            }`}
+            variant={isActive ? "primary" : "subtle"}
+            size="sm"
+            icon={Icon ? <Icon className="w-4 h-4" /> : undefined}
+            className={
+              isActive && filter.colorClass ? filter.colorClass : undefined
+            }
           >
-            {Icon && <Icon className="w-4 h-4" />}
             {filter.label}
-          </button>
+          </Button>
         );
       })}
     </div>

@@ -117,10 +117,10 @@ const FilterSortMenu: React.FC<FilterSortMenuProps> = ({
 
   return (
     <div ref={menuRef} className="relative">
-      {/* Trigger Button - Icon Only */}
+      {/* Trigger Button - Icon + Text */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 ${
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 ${
           isOpen
             ? "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
             : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
@@ -128,6 +128,7 @@ const FilterSortMenu: React.FC<FilterSortMenuProps> = ({
         aria-label="Filter and sort"
       >
         <SlidersHorizontal className="w-4 h-4" />
+        <span>Filters &amp; Sort</span>
       </button>
 
       {/* Dropdown Menu */}

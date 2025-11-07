@@ -54,13 +54,14 @@ const GameDetailModal: React.FC<GameDetailModalProps> = ({
       closeOnBackdropClick={true}
     >
       {/* Close Button */}
-      <button
+      <Button
         onClick={onClose}
-        className="absolute top-4 right-4 p-2 rounded-lg bg-gray-100/90 dark:bg-gray-700/90 backdrop-blur-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        variant="subtle"
+        size="icon"
+        icon={<X className="w-5 h-5" />}
+        className="absolute top-4 right-4 glass-button backdrop-blur-sm z-10"
         aria-label="Close modal"
-      >
-        <X className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-      </button>
+      />
 
       {/* Content */}
       <div className="p-6 sm:p-8 max-h-[85vh] overflow-y-auto">
@@ -173,22 +174,24 @@ const GameDetailModal: React.FC<GameDetailModalProps> = ({
                 </label>
                 <div className="flex gap-1">
                   {[1, 2, 3, 4, 5].map((star) => (
-                    <button
+                    <Button
                       key={star}
                       onClick={() => handleRatingClick(star)}
                       onMouseEnter={() => setHoveredStar(star)}
                       onMouseLeave={() => setHoveredStar(0)}
-                      className="focus:outline-none transition-transform hover:scale-110"
+                      variant="subtle"
+                      size="icon"
+                      icon={
+                        <Star
+                          className={`w-7 h-7 transition-colors ${
+                            star <= (hoveredStar || rating)
+                              ? "text-yellow-500 fill-yellow-500"
+                              : "text-gray-300 dark:text-gray-600"
+                          }`}
+                        />
+                      }
                       aria-label={`Rate ${star} stars`}
-                    >
-                      <Star
-                        className={`w-7 h-7 transition-colors ${
-                          star <= (hoveredStar || rating)
-                            ? "text-yellow-500 fill-yellow-500"
-                            : "text-gray-300 dark:text-gray-600"
-                        }`}
-                      />
-                    </button>
+                    />
                   ))}
                 </div>
               </div>

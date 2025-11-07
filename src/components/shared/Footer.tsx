@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Lightbulb } from "lucide-react";
+import Button from "./Button";
 
 const Footer: React.FC = () => {
   const navigate = useNavigate();
@@ -27,14 +28,16 @@ const Footer: React.FC = () => {
             className="flex items-center gap-4"
             aria-label="Footer navigation"
           >
-            <button
+            <Button
               onClick={() => void navigate("/app/suggestions")}
-              className="inline-flex items-center gap-1.5 font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
+              variant="subtle"
+              size="sm"
+              icon={<Lightbulb className="w-4 h-4" aria-hidden="true" />}
+              className="inline-flex items-center gap-1.5 font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300"
               aria-label="Submit a suggestion"
             >
-              <Lightbulb className="w-4 h-4" aria-hidden="true" />
               Suggestions
-            </button>
+            </Button>
 
             <a
               href="https://github.com/aftongauntlett"

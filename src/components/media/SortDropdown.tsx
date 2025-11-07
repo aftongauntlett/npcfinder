@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
+import Button from "../shared/Button";
 
 export interface SortOption {
   id: string;
@@ -22,13 +23,17 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
 
   return (
     <div className="relative">
-      <button
+      <Button
         onClick={() => setShowMenu(!showMenu)}
-        className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        variant="secondary"
+        size="sm"
+        icon={<ChevronDown className="w-4 h-4" />}
+        iconPosition="right"
+        aria-expanded={showMenu}
+        aria-haspopup="true"
       >
-        <span className="font-medium">{activeOption?.label || "Sort"}</span>
-        <ChevronDown className="w-4 h-4 text-gray-500" />
-      </button>
+        {activeOption?.label || "Sort"}
+      </Button>
 
       {showMenu && (
         <>
@@ -41,23 +46,26 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
               const isActive = activeSort === option.id;
 
               return (
-                <button
+                <Button
                   key={option.id}
                   onClick={() => {
                     onSortChange(option.id);
                     setShowMenu(false);
                   }}
-                  className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
-                    isActive
-                      ? "bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-semibold"
-                      : "text-gray-700 dark:text-gray-300"
+                  variant="subtle"
+                  size="sm"
+                  fullWidth
+                  icon={
+                    isActive ? (
+                      <Check className="w-4 h-4 text-primary" />
+                    ) : undefined
+                  }
+                  className={`justify-start rounded-none ${
+                    isActive ? "font-semibold" : ""
                   }`}
                 >
-                  {isActive && (
-                    <Check className="w-4 h-4 inline-block mr-2 text-primary" />
-                  )}
                   {option.label}
-                </button>
+                </Button>
               );
             })}
           </div>

@@ -20,6 +20,7 @@ import NavList, { type NavItem } from "./NavList";
 import UserMenuDropdown from "./UserMenuDropdown";
 import { signOut } from "../../lib/auth";
 import { BTN_PAD_DEFAULT } from "../../styles/ui";
+import Button from "./Button";
 
 interface SidebarProps {
   currentUser: { id: string; email?: string } | null;
@@ -190,6 +191,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
         <div className="h-16 flex items-center px-4 border-b border-gray-200 dark:border-gray-700">
           {isCollapsed ? (
             <button
+              type="button"
               onClick={() => handleNavigation("/app")}
               className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
               aria-label="Go to dashboard"
@@ -202,8 +204,9 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
             </button>
           ) : (
             <button
+              type="button"
               onClick={() => handleNavigation("/app")}
-              className="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-white hover:text-primary dark:hover:text-primary-light transition-colors font-heading whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 rounded"
+              className="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-white hover:text-primary dark:hover:text-primary-light transition-colors font-heading whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
             >
               <img
                 src="/quest-marker.svg"
@@ -222,8 +225,9 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
         >
           {/* User Button */}
           <button
+            type="button"
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-            className={`w-full flex items-center gap-3 px-2 py-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
+            className={`w-full flex items-center gap-3 px-2 py-3 rounded-lg transition-all duration-200 bg-gray-50 dark:bg-gray-700/30 hover:bg-gray-100 dark:hover:bg-gray-700/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
               isCollapsed ? "justify-center" : ""
             }`}
             aria-expanded={isUserMenuOpen}
@@ -303,23 +307,27 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
 
         {/* Sidebar Footer - Collapse Toggle */}
         <div className="border-t border-gray-200 dark:border-gray-700 p-2">
-          <button
+          <Button
             onClick={toggleCollapse}
-            className={`w-full flex items-center justify-center gap-3 ${BTN_PAD_DEFAULT} rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800`}
+            variant="subtle"
+            fullWidth
+            icon={
+              isCollapsed ? (
+                <ChevronRight className="w-5 h-5" aria-hidden="true" />
+              ) : (
+                <ChevronLeft className="w-5 h-5" aria-hidden="true" />
+              )
+            }
+            className={BTN_PAD_DEFAULT}
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            {isCollapsed ? (
-              <ChevronRight className="w-5 h-5" aria-hidden="true" />
-            ) : (
-              <>
-                <ChevronLeft className="w-5 h-5" aria-hidden="true" />
-                <span className="text-sm font-medium whitespace-nowrap">
-                  Collapse
-                </span>
-              </>
+            {!isCollapsed && (
+              <span className="text-sm font-medium whitespace-nowrap">
+                Collapse
+              </span>
             )}
-          </button>
+          </Button>
         </div>
       </aside>
 

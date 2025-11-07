@@ -3,6 +3,7 @@ import { UserPlus, X } from "lucide-react";
 import { useDashboardStats } from "../../hooks/useDashboardStats";
 import { DashboardRecommendations } from "./DashboardRecommendations";
 import { FriendSearchModal } from "../shared/FriendSearchModal";
+import Button from "../shared/Button";
 
 interface DashboardContentProps {
   showFriendSearch: boolean;
@@ -36,7 +37,7 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({
       <div className="mb-8">
         <button
           onClick={() => setShowFriendSearch(true)}
-          className="w-full bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm hover:shadow-md transition-all hover:scale-[1.02] text-left group"
+          className="w-full bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm hover:shadow-md transition-all text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
         >
           <div className="flex items-center gap-4">
             <div className="p-3 bg-pink-500/10 rounded-lg group-hover:bg-pink-500/20 transition-colors">
@@ -132,16 +133,17 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({
       {/* Getting Started */}
       {showGettingStarted && (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 relative mt-6">
-          <button
+          <Button
             onClick={() => {
               setShowGettingStarted(false);
               localStorage.setItem("hideGettingStarted", "true");
             }}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 p-1"
+            variant="subtle"
+            size="icon"
+            icon={<X className="w-5 h-5" />}
+            className="absolute top-4 right-4"
             aria-label="Dismiss getting started"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          />
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 pr-8 font-heading">
             Getting Started
           </h2>

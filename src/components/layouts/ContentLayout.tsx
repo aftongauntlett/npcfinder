@@ -16,6 +16,7 @@ import {
 import { useAdmin } from "../../contexts/AdminContext";
 import { useProfileQuery } from "../../hooks/useProfileQuery";
 import { signOut } from "../../lib/auth";
+import Button from "../shared/Button";
 
 interface Tab {
   id: string;
@@ -95,17 +96,19 @@ const ContentLayout: React.FC<ContentLayoutProps> = ({
       {/* Mobile Header - Only visible on mobile */}
       <header className="md:hidden sticky top-0 z-40">
         <div className="flex items-center justify-between px-4 py-3">
-          <button
+          <Button
             onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            variant="subtle"
+            size="icon"
+            icon={
+              showMobileMenu ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )
+            }
             aria-label="Toggle menu"
-          >
-            {showMobileMenu ? (
-              <X className="w-6 h-6 text-gray-900 dark:text-white" />
-            ) : (
-              <Menu className="w-6 h-6 text-gray-900 dark:text-white" />
-            )}
-          </button>
+          />
           <h1 className="text-lg font-bold text-gray-900 dark:text-white truncate font-heading">
             {title}
           </h1>
@@ -140,29 +143,29 @@ const ContentLayout: React.FC<ContentLayoutProps> = ({
                       location.pathname.startsWith(item.path));
 
                   return (
-                    <button
+                    <Button
                       key={item.path}
                       onClick={() => handleNavClick(item.path)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 transition-colors ${
-                        isActive
-                          ? "bg-primary/10 text-primary"
-                          : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      }`}
+                      variant={isActive ? "primary" : "subtle"}
+                      fullWidth
+                      icon={<Icon className="w-5 h-5" />}
+                      className="justify-start px-4 py-3"
                     >
-                      <Icon className="w-5 h-5" />
                       <span className="font-medium">{item.label}</span>
-                    </button>
+                    </Button>
                   );
                 })}
 
                 {/* Sign Out */}
-                <button
+                <Button
                   onClick={handleSignOut}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                  variant="subtle"
+                  fullWidth
+                  icon={<LogOut className="w-5 h-5" />}
+                  className="justify-start px-4 py-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                 >
-                  <LogOut className="w-5 h-5" />
                   <span className="font-medium">Sign Out</span>
-                </button>
+                </Button>
               </nav>
             </div>
           </>
@@ -198,22 +201,27 @@ const ContentLayout: React.FC<ContentLayoutProps> = ({
                 const isActive = activeTab === tab.id;
 
                 return (
-                  <button
+                  <Button
                     key={tab.id}
                     onClick={() => onTabChange?.(tab.id)}
-                    className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors border-b-2 ${
+                    variant={isActive ? "primary" : "subtle"}
+                    icon={
+                      Icon ? (
+                        <Icon className="w-5 h-5" aria-hidden="true" />
+                      ) : undefined
+                    }
+                    className={`px-4 py-3 font-medium border-b-2 rounded-none ${
                       isActive
-                        ? "text-primary dark:text-primary-light border-primary dark:border-primary-light"
-                        : "text-gray-600 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-gray-600"
+                        ? "border-primary dark:border-primary-light"
+                        : "border-transparent hover:border-gray-300 dark:hover:border-gray-600"
                     }`}
                     role="tab"
                     aria-selected={isActive}
                     aria-controls={`${tab.id}-panel`}
                     tabIndex={isActive ? 0 : -1}
                   >
-                    {Icon && <Icon className="w-5 h-5" aria-hidden="true" />}
                     <span>{tab.label}</span>
-                  </button>
+                  </Button>
                 );
               })}
             </nav>

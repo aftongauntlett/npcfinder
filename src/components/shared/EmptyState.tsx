@@ -137,13 +137,15 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   // If action exists but no description, render as a clickable card
   if (isClickable) {
     return (
-      <button
+      <Button
         onClick={action.onClick}
-        className="w-full bg-white/5 dark:bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 dark:border-white/10 hover:border-purple-500/50 p-8 text-center transition-all hover:bg-white/8 dark:hover:bg-white/8 group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 dark:focus-visible:ring-offset-gray-900"
+        variant="subtle"
+        fullWidth
+        className="bg-white/5 dark:bg-white/5 backdrop-blur-sm border border-white/10 dark:border-white/10 hover:border-purple-500/50 p-8 text-center hover:bg-white/8 dark:hover:bg-white/8 group focus-visible:ring-offset-gray-900 dark:focus-visible:ring-offset-gray-900"
         aria-label={title}
       >
         {content}
-      </button>
+      </Button>
     );
   }
 

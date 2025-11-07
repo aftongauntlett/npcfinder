@@ -2,6 +2,7 @@ import React from "react";
 import { Palette, Save } from "lucide-react";
 import { HexColorPicker } from "react-colorful";
 import { getContrastColor } from "../../styles/colorThemes";
+import Button from "../shared/Button";
 
 interface ColorThemePickerProps {
   selectedColor: string; // Hex color
@@ -84,28 +85,30 @@ const ColorThemePicker: React.FC<ColorThemePickerProps> = ({
             </label>
             <div className="flex flex-wrap gap-3 items-center">
               {/* Primary Button Example - with preview styles */}
-              <button
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded border-2 transition-colors"
+              <Button
+                variant="primary"
+                icon={<Save className="w-4 h-4" />}
+                size="sm"
                 style={{
                   backgroundColor: selectedColor,
                   borderColor: selectedColor,
                   color: getContrastColor(selectedColor),
                 }}
               >
-                <Save className="w-4 h-4" />
                 Primary Button
-              </button>
+              </Button>
 
               {/* Secondary Button Example - with preview styles */}
-              <button
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded border-2 bg-transparent transition-colors"
+              <Button
+                variant="secondary"
+                size="sm"
                 style={{
                   borderColor: selectedColor,
                   color: selectedColor,
                 }}
               >
                 Secondary Button
-              </button>
+              </Button>
             </div>
           </div>
         </div>

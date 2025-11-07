@@ -136,6 +136,7 @@ const BookDiscoveryCard: React.FC = () => {
         description: book.description,
         isbn: book.isbn,
         page_count: book.page_count,
+        categories: book.categories,
         read: false,
       });
 
@@ -202,24 +203,25 @@ const BookDiscoveryCard: React.FC = () => {
             return (
               <div
                 key={section.id}
-                className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden"
+                className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm"
               >
                 <button
+                  type="button"
                   onClick={() => void toggleSection(section.id)}
-                  className="w-full p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+                  className="w-full p-4 flex items-center justify-between gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
                   aria-expanded={isExpanded}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center"
+                      className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
                       style={{
                         backgroundColor: `${themeColor}20`,
                       }}
                     >
                       <Icon className="w-5 h-5" style={{ color: themeColor }} />
                     </div>
-                    <div className="text-left">
-                      <div className="font-medium text-gray-900 dark:text-white">
+                    <div className="text-left min-w-0 flex-1">
+                      <div className="font-medium text-gray-900 dark:text-white truncate">
                         {section.label}
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">
@@ -228,9 +230,9 @@ const BookDiscoveryCard: React.FC = () => {
                     </div>
                   </div>
                   {isExpanded ? (
-                    <ChevronUp className="w-5 h-5 text-gray-400" />
+                    <ChevronUp className="w-5 h-5 text-gray-400 flex-shrink-0" />
                   ) : (
-                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                    <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
                   )}
                 </button>
 

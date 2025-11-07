@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import ConfirmationModal from "./ConfirmationModal";
 import ActionButton from "./ActionButton";
+import Button from "./Button";
 
 interface BaseRecommendation {
   id: string;
@@ -331,19 +332,20 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
               autoFocus
             />
             <div className="flex justify-end gap-2">
-              <button
+              <Button
                 onClick={() => setIsAddingComment(false)}
-                className="px-4 py-2 text-sm bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors whitespace-nowrap"
+                variant="subtle"
+                size="sm"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => void handleSaveComment()}
-                className="px-4 py-2 text-sm text-white rounded-lg hover:opacity-90 transition-opacity whitespace-nowrap"
-                style={{ backgroundColor: "var(--color-primary)" }}
+                variant="primary"
+                size="sm"
               >
                 Save
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -372,19 +374,20 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
               autoFocus
             />
             <div className="flex justify-end gap-2">
-              <button
+              <Button
                 onClick={() => setIsAddingSenderComment(false)}
-                className="px-4 py-2 text-sm bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors whitespace-nowrap"
+                variant="subtle"
+                size="sm"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => void handleSaveSenderComment()}
-                className="px-4 py-2 text-sm text-white rounded-lg hover:opacity-90 transition-opacity whitespace-nowrap"
-                style={{ backgroundColor: "var(--color-primary)" }}
+                variant="primary"
+                size="sm"
               >
                 Save
-              </button>
+              </Button>
             </div>
           </div>
         </div>

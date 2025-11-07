@@ -6,13 +6,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import type { ReadingListItem } from "../services/booksService.types";
-import type { MediaItem } from "../components/shared/SendMediaModal";
-
-interface BatchAddResult {
-  successful: ReadingListItem[];
-  duplicates: string[];
-  errors: { title: string; error: string }[];
-}
 
 /**
  * Fetch user's reading list
@@ -62,9 +55,15 @@ export function useAddToReadingList() {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // Sanitize categories field: trim whitespace
+      const sanitizedBook = {
+        ...book,
+        categories: book.categories?.trim() || null,
+      };
+
       const { data, error } = await supabase
         .from("reading_list")
-        .insert([{ ...book, user_id: user.id }])
+        .insert([{ ...sanitizedBook, user_id: user.id }])
         .select()
         .single();
 
@@ -176,80 +175,6 @@ export function useUpdateBookNotes() {
         .eq("id", bookId);
 
       if (error) throw error;
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["reading-list"] });
-    },
-  });
-}
-
-/**
- * Batch add books to reading list
- */
-export function useBatchAddToReadingList() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (books: MediaItem[]): Promise<BatchAddResult> => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      const successful: ReadingListItem[] = [];
-      const duplicates: string[] = [];
-      const errors: { title: string; error: string }[] = [];
-
-      for (const book of books) {
-        try {
-          // Check if already exists
-          const { data: existing } = await supabase
-            .from("reading_list")
-            .select("id")
-            .eq("user_id", user.id)
-            .eq("external_id", book.external_id)
-            .maybeSingle();
-
-          if (existing) {
-            duplicates.push(book.title);
-            continue;
-          }
-
-          // Insert new book
-          const { data, error } = await supabase
-            .from("reading_list")
-            .insert([
-              {
-                user_id: user.id,
-                external_id: book.external_id,
-                title: book.title,
-                authors: book.authors || null,
-                thumbnail_url: book.poster_url,
-                published_date: book.release_date,
-                description: book.description || null,
-                isbn: book.isbn || null,
-                page_count: book.page_count || null,
-                categories: book.categories || null,
-                read: false,
-              },
-            ])
-            .select()
-            .single();
-
-          if (error) {
-            errors.push({ title: book.title, error: error.message });
-          } else if (data) {
-            successful.push(data);
-          }
-        } catch (err) {
-          errors.push({
-            title: book.title,
-            error: err instanceof Error ? err.message : "Unknown error",
-          });
-        }
-      }
-
-      return { successful, duplicates, errors };
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["reading-list"] });

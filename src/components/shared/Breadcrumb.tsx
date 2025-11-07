@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ChevronRight, Home } from "lucide-react";
 import { cards } from "../../data/dashboardCards";
+import Button from "./Button";
 
 const Breadcrumb: React.FC = () => {
   const navigate = useNavigate();
@@ -25,14 +26,15 @@ const Breadcrumb: React.FC = () => {
       className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-4"
       aria-label="Breadcrumb"
     >
-      <button
+      <Button
         onClick={() => void navigate("/app")}
-        className="flex items-center gap-1 hover:text-primary transition-colors"
+        variant="subtle"
+        icon={<Home size={16} />}
+        className="text-sm"
         aria-label="Navigate to dashboard"
       >
-        <Home size={16} />
-        <span>Dashboard</span>
-      </button>
+        Dashboard
+      </Button>
       <ChevronRight size={16} className="text-gray-400 dark:text-gray-600" />
       <span className="text-gray-900 dark:text-white font-medium">
         {pageName}

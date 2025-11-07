@@ -14,6 +14,7 @@ export interface BookItem {
   description: string | null;
   isbn: string | null;
   page_count: number | null;
+  categories: string | null;
 }
 
 const GOOGLE_BOOKS_API_KEY = import.meta.env.VITE_GOOGLE_BOOKS_API_KEY || "";
@@ -27,6 +28,7 @@ interface GoogleBooksVolume {
     publishedDate?: string;
     description?: string;
     pageCount?: number;
+    categories?: string[];
     imageLinks?: {
       thumbnail?: string;
       smallThumbnail?: string;
@@ -53,6 +55,14 @@ function convertToBookItem(volume: GoogleBooksVolume): BookItem {
     (id) => id.type === "ISBN_10"
   )?.identifier;
 
+  // Normalize categories: trim whitespace around each category, lowercase for consistency
+  const normalizedCategories = volumeInfo.categories
+    ? volumeInfo.categories
+        .map((cat) => cat.trim().toLowerCase())
+        .filter((cat) => cat.length > 0)
+        .join(", ")
+    : null;
+
   return {
     external_id: volume.id,
     title: volumeInfo.title || "Unknown Title",
@@ -62,6 +72,7 @@ function convertToBookItem(volume: GoogleBooksVolume): BookItem {
     description: volumeInfo.description || null,
     isbn: isbn13 || isbn10 || null,
     page_count: volumeInfo.pageCount || null,
+    categories: normalizedCategories,
   };
 }
 

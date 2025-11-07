@@ -104,32 +104,36 @@ export function MediaReviewForm({
         </label>
         <div className="flex items-center gap-1">
           {[1, 2, 3, 4, 5].map((star) => (
-            <button
+            <Button
               key={star}
               type="button"
+              variant="subtle"
+              size="icon"
               onClick={() => setRating(rating === star ? null : star)}
               onMouseEnter={() => setHoveredRating(star)}
               onMouseLeave={() => setHoveredRating(null)}
-              className="transition-colors focus:outline-none focus:ring-2 focus:ring-primary rounded"
+              icon={
+                <Star
+                  className={`w-8 h-8 transition-colors ${
+                    star <= displayRating
+                      ? "fill-yellow-400 text-yellow-400"
+                      : "text-gray-300 dark:text-gray-600"
+                  }`}
+                />
+              }
               aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
-            >
-              <Star
-                className={`w-8 h-8 transition-colors ${
-                  star <= displayRating
-                    ? "fill-yellow-400 text-yellow-400"
-                    : "text-gray-300 dark:text-gray-600"
-                }`}
-              />
-            </button>
+            />
           ))}
           {rating && (
-            <button
+            <Button
               type="button"
+              variant="subtle"
+              size="sm"
               onClick={() => setRating(null)}
-              className="ml-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+              className="ml-2"
             >
               Clear
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -140,42 +144,46 @@ export function MediaReviewForm({
           Quick Reaction
         </label>
         <div className="flex items-center gap-2">
-          <button
+          <Button
             type="button"
+            variant="subtle"
             onClick={() => setLiked(liked === true ? null : true)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-primary ${
+            icon={<ThumbsUp className="w-4 h-4" />}
+            className={`${
               liked === true
                 ? "bg-green-50 dark:bg-green-900/20 border-green-500 dark:border-green-500 text-green-700 dark:text-green-400"
-                : "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-green-500"
+                : "hover:border-green-500"
             }`}
             aria-label="Like"
             aria-pressed={liked === true}
           >
-            <ThumbsUp className="w-4 h-4" />
             <span className="text-sm font-medium">Like</span>
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="subtle"
             onClick={() => setLiked(liked === false ? null : false)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-primary ${
+            icon={<ThumbsDown className="w-4 h-4" />}
+            className={`${
               liked === false
                 ? "bg-red-50 dark:bg-red-900/20 border-red-500 dark:border-red-500 text-red-700 dark:text-red-400"
-                : "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-red-500"
+                : "hover:border-red-500"
             }`}
             aria-label="Dislike"
             aria-pressed={liked === false}
           >
-            <ThumbsDown className="w-4 h-4" />
             <span className="text-sm font-medium">Dislike</span>
-          </button>
+          </Button>
           {liked !== null && (
-            <button
+            <Button
               type="button"
+              variant="subtle"
+              size="sm"
               onClick={() => setLiked(null)}
-              className="ml-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+              className="ml-2"
             >
               Clear
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -202,45 +210,49 @@ export function MediaReviewForm({
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Share with friends?
         </label>
-        <button
+        <Button
           type="button"
+          variant="subtle"
           onClick={() => setIsPublic(!isPublic)}
-          className={`flex items-center gap-3 px-4 py-3 rounded-lg border transition-colors w-full focus:outline-none focus:ring-2 focus:ring-primary ${
+          className={`px-4 py-3 w-full justify-start ${
             isPublic
               ? "bg-green-50 dark:bg-green-900/20 border-green-500 dark:border-green-500"
-              : "bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+              : "bg-gray-50 dark:bg-gray-700"
           }`}
+          role="switch"
+          aria-checked={isPublic}
           aria-label={`Privacy: ${isPublic ? "Public" : "Private"}`}
-          aria-pressed={isPublic}
         >
-          {isPublic ? (
-            <>
-              <span className="text-xl" role="img" aria-label="Public">
-                🌐
-              </span>
-              <div className="flex-1 text-left">
-                <div className="text-sm font-medium text-gray-900 dark:text-white">
-                  ✅ Your review will be visible to all friends
+          <div className="flex items-center gap-3 w-full">
+            {isPublic ? (
+              <>
+                <span className="text-xl" role="img" aria-label="Public">
+                  🌐
+                </span>
+                <div className="flex-1 text-left">
+                  <div className="text-sm font-medium text-gray-900 dark:text-white">
+                    ✅ Your review will be visible to all friends
+                  </div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                    They can see this when they view {title}
+                  </div>
                 </div>
-                <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                  They can see this when they view {title}
+              </>
+            ) : (
+              <>
+                <Lock className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                <div className="flex-1 text-left">
+                  <div className="text-sm font-medium text-gray-900 dark:text-white">
+                    🔒 Your review is private - only you can see it
+                  </div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                    Keep it personal
+                  </div>
                 </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <Lock className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              <div className="flex-1 text-left">
-                <div className="text-sm font-medium text-gray-900 dark:text-white">
-                  🔒 Your review is private - only you can see it
-                </div>
-                <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                  Keep it personal
-                </div>
-              </div>
-            </>
-          )}
-        </button>
+              </>
+            )}
+          </div>
+        </Button>
 
         {/* Info box about distinction from recommendation feedback */}
         <div className="mt-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">

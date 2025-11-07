@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Search, X } from "lucide-react";
+import Button from "../shared/Button";
 
 interface MediaSearchBarProps {
   onSearch: (query: string) => void;
@@ -38,14 +39,15 @@ const MediaSearchBar: React.FC<MediaSearchBarProps> = ({
           aria-label="Search media"
         />
         {query && (
-          <button
+          <Button
             type="button"
             onClick={handleClear}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            variant="subtle"
+            size="icon"
+            icon={<X className="w-5 h-5" />}
+            className="absolute right-3 top-1/2 -translate-y-1/2"
             aria-label="Clear search"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          />
         )}
       </div>
     </form>

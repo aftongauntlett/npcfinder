@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { X } from "lucide-react";
 import FocusTrap from "focus-trap-react";
 import { useSidebar } from "../../contexts/SidebarContext";
+import Button from "./Button";
 
 interface ModalProps {
   isOpen: boolean;
@@ -122,13 +123,13 @@ const Modal: React.FC<ModalProps> = ({
                   </h2>
                 )}
                 {showCloseButton && (
-                  <button
+                  <Button
                     onClick={onClose}
-                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 p-1"
+                    variant="subtle"
+                    size="icon"
+                    icon={<X className="w-5 h-5" />}
                     aria-label="Close modal"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
+                  />
                 )}
               </div>
             )}

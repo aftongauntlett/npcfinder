@@ -95,13 +95,14 @@ const MediaDetailModal: React.FC<MediaDetailModalProps> = ({
           onClick={(e) => e.stopPropagation()}
         >
           {/* Close Button */}
-          <button
+          <Button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors z-10"
+            variant="subtle"
+            size="icon"
+            icon={<X className="w-5 h-5" />}
+            className="absolute top-4 right-4 glass-button backdrop-blur-sm z-10"
             aria-label="Close modal"
-          >
-            <X className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-          </button>
+          />
 
           {/* Content */}
           <div className="p-6 sm:p-8">
@@ -183,18 +184,17 @@ const MediaDetailModal: React.FC<MediaDetailModalProps> = ({
                     aria-labelledby="status-label"
                   >
                     {STATUS_OPTIONS.map((option) => (
-                      <button
+                      <Button
                         key={option.value}
                         onClick={() => onStatusChange(option.value)}
-                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                          userStatus === option.value
-                            ? "bg-primary-contrast"
-                            : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-                        }`}
+                        variant={
+                          userStatus === option.value ? "primary" : "subtle"
+                        }
+                        size="sm"
                         aria-pressed={userStatus === option.value}
                       >
                         {option.label}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </div>
@@ -214,23 +214,24 @@ const MediaDetailModal: React.FC<MediaDetailModalProps> = ({
                       aria-labelledby="rating-label"
                     >
                       {[1, 2, 3, 4, 5].map((star) => (
-                        <button
+                        <Button
                           key={star}
                           onMouseEnter={() => setHoveredRating(star)}
                           onMouseLeave={() => setHoveredRating(0)}
                           onClick={() => setLocalRating(star)}
-                          className="p-1 transition-transform hover:scale-110"
+                          variant="subtle"
+                          size="icon"
+                          icon={
+                            <Star
+                              className={`w-6 h-6 ${
+                                star <= (hoveredRating || localRating)
+                                  ? "fill-yellow-400 text-yellow-400"
+                                  : "text-gray-300 dark:text-gray-600"
+                              }`}
+                            />
+                          }
                           aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
-                        >
-                          <Star
-                            className={`w-6 h-6 ${
-                              star <= (hoveredRating || localRating)
-                                ? "fill-yellow-400 text-yellow-400"
-                                : "text-gray-300 dark:text-gray-600"
-                            }`}
-                            aria-hidden="true"
-                          />
-                        </button>
+                        />
                       ))}
                     </div>
                     {localRating !== userRating && (

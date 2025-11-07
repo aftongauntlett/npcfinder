@@ -15,7 +15,7 @@ export function getGenreColor(genre: string): string {
     drama:
       "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
     thriller:
-      "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+      "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200",
     mystery:
       "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
     fantasy:
@@ -28,7 +28,7 @@ export function getGenreColor(genre: string): string {
 
     // Music genres
     pop: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
-    rock: "bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300",
+    rock: "bg-stone-100 text-stone-700 dark:bg-stone-700 dark:text-stone-200",
     jazz: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
     classical:
       "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
@@ -40,7 +40,7 @@ export function getGenreColor(genre: string): string {
     country:
       "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300",
     blues: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
-    metal: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+    metal: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200",
     indie: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300",
     alternative:
       "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
@@ -75,7 +75,7 @@ export function getGenreColor(genre: string): string {
     sandbox:
       "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300",
     stealth:
-      "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+      "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200",
     arcade: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300",
     casual: "bg-lime-100 text-lime-700 dark:bg-lime-900/30 dark:text-lime-300",
     card: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
@@ -100,8 +100,8 @@ export function getGenreColor(genre: string): string {
       "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300",
     animation:
       "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-300",
-    crime: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
-    war: "bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300",
+    crime: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200",
+    war: "bg-stone-100 text-stone-700 dark:bg-stone-700 dark:text-stone-200",
     western:
       "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
     family:
@@ -109,10 +109,12 @@ export function getGenreColor(genre: string): string {
     music: "bg-lime-100 text-lime-700 dark:bg-lime-900/30 dark:text-lime-300",
 
     // TV-specific
-    "tv movie": "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
+    "tv movie": "bg-zinc-100 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200",
+    "war & politics":
+      "bg-stone-100 text-stone-700 dark:bg-stone-700 dark:text-stone-200",
 
     // Default
-    default: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+    default: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200",
   };
 
   const normalizedGenre = genre.toLowerCase().trim();

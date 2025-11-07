@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Users as UsersIcon, ChevronDown, ChevronUp } from "lucide-react";
+import Button from "../../shared/Button";
 
 interface MovieCastListProps {
   cast: string[];
@@ -34,22 +35,21 @@ export function MovieCastList({
         ))}
       </div>
       {cast.length > initialDisplayCount && (
-        <button
+        <Button
           onClick={() => setShowAll(!showAll)}
-          className="mt-3 text-sm text-primary hover:underline flex items-center gap-1"
-        >
-          {showAll ? (
-            <>
+          variant="subtle"
+          size="sm"
+          icon={
+            showAll ? (
               <ChevronUp className="w-4 h-4" />
-              Show less
-            </>
-          ) : (
-            <>
+            ) : (
               <ChevronDown className="w-4 h-4" />
-              See all {cast.length} actors
-            </>
-          )}
-        </button>
+            )
+          }
+          className="mt-3"
+        >
+          {showAll ? "Show less" : `See all ${cast.length} actors`}
+        </Button>
       )}
     </div>
   );

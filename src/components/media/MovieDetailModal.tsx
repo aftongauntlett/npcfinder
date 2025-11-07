@@ -196,13 +196,14 @@ export default function MovieDetailModal({
       closeOnBackdropClick={true}
     >
       {/* Close Button */}
-      <button
+      <Button
         onClick={onClose}
-        className="absolute top-4 right-4 p-2 rounded-lg bg-gray-100/90 dark:bg-gray-700/90 backdrop-blur-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        variant="subtle"
+        size="icon"
+        icon={<X className="w-5 h-5" />}
+        className="absolute top-4 right-4 glass-button backdrop-blur-sm z-10"
         aria-label="Close modal"
-      >
-        <X className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-      </button>
+      />
 
       {/* Content */}
       <div className="p-6 sm:p-8 max-h-[85vh] overflow-y-auto">

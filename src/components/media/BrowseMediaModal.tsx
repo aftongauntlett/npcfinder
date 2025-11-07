@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { X, Search, Plus, Loader } from "lucide-react";
 import FocusTrap from "focus-trap-react";
 import MediaCard from "./MediaCard";
+import Button from "../shared/Button";
 
 interface BrowseMediaModalProps {
   isOpen: boolean;
@@ -133,13 +134,13 @@ export function BrowseMediaModal({
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
               {getTitle()}
             </h2>
-            <button
+            <Button
               onClick={onClose}
-              className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              variant="subtle"
+              size="icon"
+              icon={<X size={24} />}
               aria-label="Close modal"
-            >
-              <X size={24} />
-            </button>
+            />
           </div>
 
           {/* Search Bar */}
@@ -158,23 +159,21 @@ export function BrowseMediaModal({
                   className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors"
                 />
               </div>
-              <button
+              <Button
                 type="submit"
                 disabled={loading || !searchQuery.trim()}
-                className="px-6 py-3 bg-primary hover:bg-primary-dark disabled:bg-gray-400 text-white font-medium rounded-lg transition-colors disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                {loading ? (
-                  <>
+                variant="primary"
+                size="md"
+                icon={
+                  loading ? (
                     <Loader className="animate-spin" size={20} />
-                    Searching...
-                  </>
-                ) : (
-                  <>
+                  ) : (
                     <Search size={20} />
-                    Search
-                  </>
-                )}
-              </button>
+                  )
+                }
+              >
+                {loading ? "Searching..." : "Search"}
+              </Button>
             </form>
           </div>
 
@@ -229,18 +228,21 @@ export function BrowseMediaModal({
                       )}
 
                       {/* Add Button */}
-                      <button
+                      <Button
                         onClick={() => void handleAdd(item)}
                         disabled={addingIds.has(item.id)}
-                        className="px-3 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white text-sm font-medium rounded-full transition-colors disabled:cursor-not-allowed flex items-center gap-2 opacity-0 group-hover:opacity-100"
+                        variant="subtle"
+                        size="icon"
+                        icon={
+                          addingIds.has(item.id) ? (
+                            <Loader className="animate-spin" size={16} />
+                          ) : (
+                            <Plus size={20} />
+                          )
+                        }
+                        className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white opacity-0 group-hover:opacity-100"
                         aria-label={`Add ${item.title} to collection`}
-                      >
-                        {addingIds.has(item.id) ? (
-                          <Loader className="animate-spin" size={16} />
-                        ) : (
-                          <Plus size={20} />
-                        )}
-                      </button>
+                      />
                     </div>
                   ))}
                 </div>
@@ -256,18 +258,21 @@ export function BrowseMediaModal({
                         posterUrl={item.poster}
                         onClick={() => {}} // Disable click in browse mode
                       />
-                      <button
+                      <Button
                         onClick={() => void handleAdd(item)}
                         disabled={addingIds.has(item.id)}
-                        className="absolute top-2 left-2 p-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all disabled:cursor-not-allowed flex items-center gap-1"
+                        variant="subtle"
+                        size="icon"
+                        icon={
+                          addingIds.has(item.id) ? (
+                            <Loader className="animate-spin" size={16} />
+                          ) : (
+                            <Plus size={16} />
+                          )
+                        }
+                        className="absolute top-2 left-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white shadow-lg opacity-0 group-hover:opacity-100"
                         aria-label={`Add ${item.title} to collection`}
-                      >
-                        {addingIds.has(item.id) ? (
-                          <Loader className="animate-spin" size={16} />
-                        ) : (
-                          <Plus size={16} />
-                        )}
-                      </button>
+                      />
                     </div>
                   ))}
                 </div>

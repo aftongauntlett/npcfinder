@@ -39,6 +39,7 @@ const NavList: React.FC<NavListProps> = ({
           return (
             <li key={item.id}>
               <button
+                type="button"
                 onClick={() => onNavigate(item.path)}
                 className={`w-full flex items-center gap-3 ${BTN_PAD_DEFAULT} rounded-lg transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
                   active
@@ -77,6 +78,7 @@ const NavList: React.FC<NavListProps> = ({
                       return (
                         <li key={subItem.id}>
                           <button
+                            type="button"
                             onClick={() => onNavigate(subItem.path)}
                             className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
                               subActive
@@ -111,6 +113,7 @@ const NavList: React.FC<NavListProps> = ({
                                 return (
                                   <li key={nestedSubItem.id}>
                                     <button
+                                      type="button"
                                       onClick={() =>
                                         onNavigate(nestedSubItem.path)
                                       }

@@ -45,8 +45,9 @@ const UserMenuDropdown: React.FC<UserMenuDropdownProps> = ({
           return (
             <button
               key={item.id}
+              type="button"
               onClick={() => onNavigate(item.path)}
-              className={`w-full flex items-center gap-3 ${DROPDOWN_ITEM_PAD} text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors focus:outline-none focus-visible:bg-gray-50 dark:focus-visible:bg-gray-700/50`}
+              className={`w-full flex items-center gap-3 ${DROPDOWN_ITEM_PAD} text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset`}
             >
               <Icon className="w-4 h-4" aria-hidden="true" />
               <span>{item.label}</span>
@@ -59,8 +60,9 @@ const UserMenuDropdown: React.FC<UserMenuDropdownProps> = ({
 
         {/* Sign Out */}
         <button
+          type="button"
           onClick={onSignOut}
-          className={`w-full flex items-center gap-3 ${DROPDOWN_ITEM_PAD} text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus-visible:bg-red-50 dark:focus-visible:bg-red-900/20`}
+          className={`w-full flex items-center gap-3 ${DROPDOWN_ITEM_PAD} text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset`}
         >
           <LogOut className="w-4 h-4" aria-hidden="true" />
           <span>Sign Out</span>
@@ -85,8 +87,9 @@ const UserMenuDropdown: React.FC<UserMenuDropdownProps> = ({
         return (
           <button
             key={item.id}
+            type="button"
             onClick={() => onNavigate(item.path)}
-            className={`w-full flex items-center gap-3 ${DROPDOWN_ITEM_PAD} text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors focus:outline-none focus-visible:bg-gray-50 dark:focus-visible:bg-gray-700/50`}
+            className={`w-full flex items-center gap-3 ${DROPDOWN_ITEM_PAD} text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset`}
           >
             <Icon className="w-4 h-4" aria-hidden="true" />
             <span>{item.label}</span>
@@ -99,8 +102,9 @@ const UserMenuDropdown: React.FC<UserMenuDropdownProps> = ({
 
       {/* Sign Out */}
       <button
+        type="button"
         onClick={onSignOut}
-        className={`w-full flex items-center gap-3 ${DROPDOWN_ITEM_PAD} text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus-visible:bg-red-50 dark:focus-visible:bg-red-900/20`}
+        className={`w-full flex items-center gap-3 ${DROPDOWN_ITEM_PAD} text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset`}
       >
         <LogOut className="w-4 h-4" aria-hidden="true" />
         <span>Sign Out</span>

@@ -8,6 +8,7 @@ import { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { Users, ChevronDown } from "lucide-react";
 import { logger } from "../../lib/logger";
+import Button from "../shared/Button";
 
 const DEV_TEST_USERS = [
   { id: "user-a-uuid-123", email: "alice@test.com", name: "Alice" },
@@ -51,16 +52,18 @@ export default function UserSwitcher() {
     <div className="fixed bottom-20 left-4 z-50">
       <div className="relative">
         {/* Trigger Button */}
-        <button
+        <Button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2 px-3 py-2 text-xs bg-gray-800 text-gray-300 rounded-lg shadow-lg hover:bg-gray-700 transition-colors border border-gray-700"
+          variant="subtle"
+          size="sm"
+          icon={<Users className="w-3 h-3" />}
+          className="flex items-center gap-2 text-xs bg-gray-800 text-gray-300 shadow-lg hover:bg-gray-700 border border-gray-700"
         >
-          <Users className="w-3 h-3" />
           <span className="font-medium">
             {currentDevUser?.name || "Unknown User"}
           </span>
           <ChevronDown className="w-3 h-3" />
-        </button>
+        </Button>
 
         {/* Dropdown Menu */}
         {isOpen && (
@@ -80,21 +83,25 @@ export default function UserSwitcher() {
               </div>
 
               {DEV_TEST_USERS.map((testUser) => (
-                <button
+                <Button
                   key={testUser.id}
                   onClick={() => handleUserSwitch(testUser)}
-                  className={`
-                    w-full px-3 py-2 text-left text-sm hover:bg-gray-700 transition-colors
-                    ${
-                      testUser.id === user?.id
-                        ? "bg-gray-700 text-white"
-                        : "text-gray-300"
-                    }
-                  `}
+                  variant="subtle"
+                  size="sm"
+                  fullWidth
+                  className={`justify-start text-left ${
+                    testUser.id === user?.id
+                      ? "bg-gray-700 text-white"
+                      : "text-gray-300"
+                  }`}
                 >
-                  <div className="font-medium">{testUser.name}</div>
-                  <div className="text-xs text-gray-500">{testUser.email}</div>
-                </button>
+                  <div>
+                    <div className="font-medium">{testUser.name}</div>
+                    <div className="text-xs text-gray-500">
+                      {testUser.email}
+                    </div>
+                  </div>
+                </Button>
               ))}
 
               <div className="px-3 py-2 border-t border-gray-700">

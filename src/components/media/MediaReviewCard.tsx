@@ -9,6 +9,7 @@ import {
   Trash2,
 } from "lucide-react";
 import type { MediaReviewWithUser } from "../../services/reviewsService.types";
+import Button from "../shared/Button";
 
 interface MediaReviewCardProps {
   review: MediaReviewWithUser;
@@ -103,43 +104,45 @@ export function MediaReviewCard({
         {isOwnReview && (onTogglePrivacy || onEdit || onDelete) && (
           <div className="flex items-center gap-2 ml-2">
             {onTogglePrivacy && (
-              <button
+              <Button
                 onClick={() => onTogglePrivacy(!review.is_public)}
-                className={`p-1.5 transition-colors rounded focus:outline-none focus:ring-2 focus:ring-primary ${
-                  review.is_public
-                    ? "text-primary hover:text-primary-dark"
-                    : "text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                }`}
+                variant="subtle"
+                size="icon"
+                icon={
+                  review.is_public ? (
+                    <Unlock className="w-4 h-4" />
+                  ) : (
+                    <Lock className="w-4 h-4" />
+                  )
+                }
+                className={
+                  review.is_public ? "text-primary hover:text-primary-dark" : ""
+                }
                 aria-label={
                   review.is_public
                     ? "Make review private"
                     : "Make review public"
                 }
-              >
-                {review.is_public ? (
-                  <Unlock className="w-4 h-4" />
-                ) : (
-                  <Lock className="w-4 h-4" />
-                )}
-              </button>
+              />
             )}
             {onEdit && (
-              <button
+              <Button
                 onClick={onEdit}
-                className="p-1.5 text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary transition-colors rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                variant="subtle"
+                size="icon"
+                icon={<Edit2 className="w-4 h-4" />}
                 aria-label="Edit review"
-              >
-                <Edit2 className="w-4 h-4" />
-              </button>
+              />
             )}
             {onDelete && (
-              <button
+              <Button
                 onClick={onDelete}
-                className="p-1.5 text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition-colors rounded focus:outline-none focus:ring-2 focus:ring-red-500"
+                variant="subtle"
+                size="icon"
+                icon={<Trash2 className="w-4 h-4" />}
+                className="text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
                 aria-label="Delete review"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+              />
             )}
           </div>
         )}
@@ -198,12 +201,14 @@ export function MediaReviewCard({
             {review.review_text}
           </p>
           {isLongReview && (
-            <button
+            <Button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="text-sm text-primary hover:underline mt-1 focus:outline-none focus:ring-2 focus:ring-primary rounded"
+              variant="subtle"
+              size="sm"
+              className="text-sm mt-1"
             >
               {isExpanded ? "Show less" : "Read more"}
-            </button>
+            </Button>
           )}
         </div>
       )}

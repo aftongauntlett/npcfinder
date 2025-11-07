@@ -14,6 +14,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import StarryBackground from "../shared/StarryBackground";
+import Button from "../shared/Button";
 
 /**
  * Public demo landing page for portfolio showcase
@@ -84,10 +85,14 @@ const DemoLanding: React.FC = () => {
               className="focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CCCCFF] focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded-lg"
               aria-label="Login"
             >
-              <button className="flex items-center gap-2 text-sm px-3 sm:px-4 py-2 rounded border-2 border-[#CCCCFF]/50 bg-transparent text-white hover:bg-[#CCCCFF]/20 hover:border-[#CCCCFF] transition-all duration-200 whitespace-nowrap">
-                <Lock className="w-4 h-4" />
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<Lock className="w-4 h-4" />}
+                className="border-[#CCCCFF]/50 bg-transparent text-white hover:bg-[#CCCCFF]/20 hover:border-[#CCCCFF]"
+              >
                 <span className="hidden sm:inline">Login</span>
-              </button>
+              </Button>
             </Link>
           </div>
         </div>
@@ -128,10 +133,16 @@ const DemoLanding: React.FC = () => {
               rel="noopener noreferrer"
               className="group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CCCCFF] focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded-lg"
             >
-              <button className="flex items-center gap-3 text-lg px-8 py-4 rounded-lg border-2 border-[#CCCCFF]/50 bg-transparent text-white hover:bg-[#CCCCFF]/20 hover:border-[#CCCCFF] transition-all duration-500 ease-out whitespace-nowrap">
-                <Github className="w-6 h-6 transition-transform duration-500 ease-out group-hover:rotate-12" />
+              <Button
+                variant="secondary"
+                size="lg"
+                icon={
+                  <Github className="w-6 h-6 transition-transform duration-500 ease-out group-hover:rotate-12" />
+                }
+                className="border-[#CCCCFF]/50 bg-transparent text-white hover:bg-[#CCCCFF]/20 hover:border-[#CCCCFF]"
+              >
                 View Source Code
-              </button>
+              </Button>
             </a>
           </div>
           <div className="flex items-center justify-center gap-4 text-sm text-gray-400">
@@ -348,10 +359,14 @@ const DemoLanding: React.FC = () => {
               rel="noopener noreferrer"
               className="group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CCCCFF] focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded-lg"
             >
-              <button className="flex items-center gap-2 px-6 py-3 rounded-lg border-2 border-[#CCCCFF] bg-[#CCCCFF] text-gray-900 font-medium hover:bg-[#BBBBEE] hover:border-[#BBBBEE] transition-all duration-200 whitespace-nowrap">
-                <ExternalLink className="w-4 h-4" />
+              <Button
+                variant="primary"
+                size="md"
+                icon={<ExternalLink className="w-4 h-4" />}
+                className="border-[#CCCCFF] bg-[#CCCCFF] text-gray-900 hover:bg-[#BBBBEE] hover:border-[#BBBBEE]"
+              >
                 View Portfolio
-              </button>
+              </Button>
             </a>
             <a
               href="https://github.com/aftongauntlett/npcfinder"
@@ -359,10 +374,14 @@ const DemoLanding: React.FC = () => {
               rel="noopener noreferrer"
               className="group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CCCCFF] focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded-lg"
             >
-              <button className="flex items-center gap-2 px-6 py-3 rounded-lg border-2 border-[#CCCCFF]/50 bg-transparent text-white hover:bg-[#CCCCFF]/20 hover:border-[#CCCCFF] transition-all duration-200 whitespace-nowrap">
-                <Github className="w-4 h-4" />
+              <Button
+                variant="secondary"
+                size="md"
+                icon={<Github className="w-4 h-4" />}
+                className="border-[#CCCCFF]/50 bg-transparent text-white hover:bg-[#CCCCFF]/20 hover:border-[#CCCCFF]"
+              >
                 View Source Code
-              </button>
+              </Button>
             </a>
           </div>
         </section>

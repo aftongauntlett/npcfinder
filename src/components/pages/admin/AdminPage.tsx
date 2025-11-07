@@ -353,16 +353,19 @@ const AdminPage: React.FC = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <button
+                            <Button
                               onClick={() => handleToggleAdminClick(user)}
-                              className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full transition-colors ${
+                              variant={user.is_admin ? "primary" : "subtle"}
+                              size="sm"
+                              aria-pressed={user.is_admin}
+                              className={
                                 user.is_admin
-                                  ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50"
-                                  : "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"
-                              }`}
+                                  ? "bg-green-600 hover:bg-green-700 border-green-600"
+                                  : ""
+                              }
                             >
                               {user.is_admin ? "Admin" : "User"}
-                            </button>
+                            </Button>
                           </td>
                         </tr>
                       ))}
@@ -377,24 +380,26 @@ const AdminPage: React.FC = () => {
                       Page {userPage + 1} of {totalUserPages}
                     </p>
                     <div className="flex gap-2">
-                      <button
+                      <Button
                         onClick={() => setUserPage((p) => Math.max(0, p - 1))}
                         disabled={userPage === 0}
-                        className="p-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <ChevronLeft className="w-5 h-5" />
-                      </button>
-                      <button
+                        variant="subtle"
+                        size="icon"
+                        icon={<ChevronLeft className="w-5 h-5" />}
+                        aria-label="Previous page"
+                      />
+                      <Button
                         onClick={() =>
                           setUserPage((p) =>
                             Math.min(totalUserPages - 1, p + 1)
                           )
                         }
                         disabled={userPage >= totalUserPages - 1}
-                        className="p-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <ChevronRight className="w-5 h-5" />
-                      </button>
+                        variant="subtle"
+                        size="icon"
+                        icon={<ChevronRight className="w-5 h-5" />}
+                        aria-label="Next page"
+                      />
                     </div>
                   </div>
                 )}
@@ -536,28 +541,31 @@ const AdminPage: React.FC = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex gap-2 justify-end">
-                            <button
+                            <Button
                               onClick={() => void copyCodeOnly(code.code)}
-                              className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary"
+                              variant="subtle"
+                              size="sm"
                             >
                               {copiedCode === code.code ? "Copied!" : "Copy"}
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                               onClick={() =>
                                 void copyCodeWithMessage(code.code)
                               }
-                              className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary"
+                              variant="subtle"
+                              size="sm"
                             >
                               Copy Msg
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                               onClick={() =>
                                 handleRevokeCode(code.id, code.code)
                               }
-                              className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                              variant="danger"
+                              size="sm"
                             >
                               Delete
-                            </button>
+                            </Button>
                           </div>
                         </td>
                       </tr>

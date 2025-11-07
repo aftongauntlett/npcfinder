@@ -212,7 +212,7 @@ const AuthPage: React.FC = () => {
 
           {/* Toggle Login/Signup */}
           <div className="mt-6 text-center">
-            <button
+            <Button
               type="button"
               onClick={() => {
                 setIsLogin(!isLogin);
@@ -220,13 +220,14 @@ const AuthPage: React.FC = () => {
                 setMessage("");
                 setInviteCode("");
               }}
-              className="text-sm text-primary hover:text-primary-dark transition-colors"
+              variant="subtle"
+              size="sm"
               disabled={loading}
             >
               {isLogin
                 ? "Have an invite code? Create account"
                 : "Already have an account? Sign in"}
-            </button>
+            </Button>
           </div>
         </div>
 

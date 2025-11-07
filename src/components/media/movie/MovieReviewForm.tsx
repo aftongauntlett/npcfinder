@@ -71,9 +71,19 @@ export function MovieReviewForm({
   return (
     <div className="pt-6">
       {/* Accordion Header */}
-      <button
+      <Button
         onClick={() => setIsExpanded(!isExpanded)}
-        className={`w-full flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
+        variant="subtle"
+        fullWidth
+        icon={
+          isExpanded ? (
+            <ChevronUp className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          )
+        }
+        iconPosition="right"
+        className={`p-4 border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 justify-start ${
           isExpanded ? "rounded-t-lg" : "rounded-lg"
         }`}
       >
@@ -87,12 +97,7 @@ export function MovieReviewForm({
               : "Add your personal thoughts (optional)"}
           </p>
         </div>
-        {isExpanded ? (
-          <ChevronUp className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-        ) : (
-          <ChevronDown className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-        )}
-      </button>
+      </Button>
 
       {/* Accordion Content */}
       {isExpanded && (
@@ -104,20 +109,22 @@ export function MovieReviewForm({
             </label>
             <div className="flex gap-1.5">
               {[1, 2, 3, 4, 5].map((star) => (
-                <button
+                <Button
                   key={star}
                   onClick={() => onRatingChange(rating === star ? null : star)}
-                  className="p-0.5 hover:scale-110 transition-transform"
+                  variant="subtle"
+                  size="icon"
+                  icon={
+                    <Star
+                      className={`w-6 h-6 transition-colors ${
+                        rating && rating >= star
+                          ? "fill-primary text-primary"
+                          : "fill-none text-gray-300 dark:text-gray-600"
+                      }`}
+                    />
+                  }
                   aria-label={`Rate ${star} stars`}
-                >
-                  <Star
-                    className={`w-6 h-6 transition-colors ${
-                      rating && rating >= star
-                        ? "fill-primary text-primary"
-                        : "fill-none text-gray-300 dark:text-gray-600"
-                    }`}
-                  />
-                </button>
+                />
               ))}
             </div>
             {rating && (
@@ -164,9 +171,11 @@ export function MovieReviewForm({
               <span className="text-xs text-gray-500 dark:text-gray-400">
                 {isPublic ? "Public" : "Private"}
               </span>
-              <button
+              <Button
                 onClick={() => onPublicChange(!isPublic)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                variant="subtle"
+                size="icon"
+                className={`relative h-6 w-11 rounded-full p-0 ${
                   isPublic ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"
                 }`}
                 role="switch"
@@ -178,7 +187,7 @@ export function MovieReviewForm({
                     isPublic ? "translate-x-6" : "translate-x-1"
                   }`}
                 />
-              </button>
+              </Button>
             </div>
 
             {/* Buttons */}
