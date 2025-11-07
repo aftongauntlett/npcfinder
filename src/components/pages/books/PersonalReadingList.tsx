@@ -1,21 +1,15 @@
 import React, { useState, useRef, useMemo, useCallback } from "react";
-import {
-  Plus,
-  BookOpen,
-  Upload,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { MediaItem } from "../../shared/SendMediaModal";
 import SearchBookModal from "../../shared/SearchBookModal";
 import BookDetailModal from "./BookDetailModal";
-import ImportBooksModal from "./ImportBooksModal";
-import Button from "../../shared/Button";
 import MediaEmptyState from "../../media/MediaEmptyState";
 import MediaListItem from "../../media/MediaListItem";
-import FilterSortMenu, { FilterSortSection } from "../../shared/FilterSortMenu";
+import { FilterSortSection } from "../../shared/FilterSortMenu";
 import SendMediaModal from "../../shared/SendMediaModal";
 import Toast from "../../ui/Toast";
+import Button from "../../shared/Button";
+import { MediaPageToolbar } from "../../shared/MediaPageToolbar";
 import { useMediaFiltering } from "../../../hooks/useMediaFiltering";
 import { searchBooks } from "../../../utils/bookSearchAdapters";
 import {
@@ -49,9 +43,11 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
   const [categoryFilters, setCategoryFilters] = useState<string[]>(["all"]);
   const [sortBy, setSortBy] = useState<SortType>("date-added");
 
+  // Pagination state
+  const [showItemsPerPageMenu, setShowItemsPerPageMenu] = useState(false);
+
   // Modal state
   const [showSearchModal, setShowSearchModal] = useState(false);
-  const [showImportModal, setShowImportModal] = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
   const [selectedBook, setSelectedBook] = useState<ReadingListItem | null>(
     null
@@ -289,72 +285,50 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
       {/* Controls Row: Filter/Sort + Actions */}
       {hasItemsForCurrentFilter && (
         <div className="space-y-3 mb-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            {/* Left: Combined Filter & Sort Menu with Filter Chips */}
-            <div className="flex items-center gap-2">
-              <FilterSortMenu
-                sections={filterSortSections}
-                activeFilters={{
-                  category: categoryFilters,
-                  sort: sortBy,
-                }}
-                onFilterChange={(sectionId, value) => {
-                  if (sectionId === "category") {
-                    // Handle category multi-select
-                    const categories = Array.isArray(value) ? value : [value];
-                    setCategoryFilters(categories);
-                  } else if (sectionId === "sort") {
-                    setSortBy(value as SortType);
-                  }
-                }}
-              />
+          <MediaPageToolbar
+            filterConfig={{
+              type: "menu",
+              sections: filterSortSections,
+              activeFilters: {
+                category: categoryFilters,
+                sort: sortBy,
+              },
+              onFilterChange: (sectionId, value) => {
+                if (sectionId === "category") {
+                  const categories = Array.isArray(value) ? value : [value];
+                  setCategoryFilters(categories);
+                } else if (sectionId === "sort") {
+                  setSortBy(value as SortType);
+                }
+              },
+            }}
+            onAddClick={() => setShowSearchModal(true)}
+          />
 
-              {/* Active Filter Chips */}
-              {!categoryFilters.includes("all") &&
-                categoryFilters.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {categoryFilters.map((category) => (
-                      <button
-                        key={category}
-                        onClick={() => {
-                          const newFilters = categoryFilters.filter(
-                            (c) => c !== category
-                          );
-                          setCategoryFilters(
-                            newFilters.length > 0 ? newFilters : ["all"]
-                          );
-                        }}
-                        className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
-                      >
-                        {category.charAt(0).toUpperCase() + category.slice(1)}
-                        <span className="text-purple-600 dark:text-purple-400">
-                          ×
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
+          {/* Active Filter Chips */}
+          {!categoryFilters.includes("all") && categoryFilters.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {categoryFilters.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => {
+                    const newFilters = categoryFilters.filter(
+                      (c) => c !== category
+                    );
+                    setCategoryFilters(
+                      newFilters.length > 0 ? newFilters : ["all"]
+                    );
+                  }}
+                  className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
+                >
+                  {category.charAt(0).toUpperCase() + category.slice(1)}
+                  <span className="text-purple-600 dark:text-purple-400">
+                    ×
+                  </span>
+                </button>
+              ))}
             </div>
-
-            {/* Right: Action Buttons */}
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={() => setShowSearchModal(true)}
-                variant="primary"
-                icon={<Plus className="w-4 h-4" />}
-              >
-                Add
-              </Button>
-
-              <Button
-                onClick={() => setShowImportModal(true)}
-                variant="secondary"
-                icon={<Upload className="w-4 h-4" />}
-              >
-                Import
-              </Button>
-            </div>
-          </div>
+          )}
         </div>
       )}
 
@@ -416,44 +390,39 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
               {/* Items per page */}
               <div className="flex items-center gap-4">
                 <div className="relative">
-                  <button
-                    onClick={() => {
-                      const menu = document.getElementById(
-                        "items-per-page-menu-books"
-                      );
-                      if (menu) {
-                        menu.style.display =
-                          menu.style.display === "block" ? "none" : "block";
-                      }
-                    }}
-                    className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  <Button
+                    onClick={() =>
+                      setShowItemsPerPageMenu(!showItemsPerPageMenu)
+                    }
+                    variant="secondary"
+                    size="sm"
+                    aria-expanded={showItemsPerPageMenu}
                   >
                     {itemsPerPage}
-                  </button>
-                  <div
-                    id="items-per-page-menu-books"
-                    style={{ display: "none" }}
-                    className="absolute bottom-full left-0 mb-2 w-24 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-20 py-1"
-                  >
-                    {[10, 25, 50, 100].map((size) => (
-                      <button
-                        key={size}
-                        onClick={() => {
-                          setItemsPerPage(size);
-                          document.getElementById(
-                            "items-per-page-menu-books"
-                          )!.style.display = "none";
-                        }}
-                        className={`w-full px-3 py-2 text-sm text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${
-                          itemsPerPage === size
-                            ? "bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-semibold"
-                            : "text-gray-700 dark:text-gray-300"
-                        }`}
-                      >
-                        {size}
-                      </button>
-                    ))}
-                  </div>
+                  </Button>
+                  {showItemsPerPageMenu && (
+                    <div className="absolute bottom-full left-0 mb-2 w-24 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-20 py-1">
+                      {[10, 25, 50, 100].map((size) => (
+                        <Button
+                          key={size}
+                          onClick={() => {
+                            setItemsPerPage(size);
+                            setShowItemsPerPageMenu(false);
+                          }}
+                          variant="subtle"
+                          size="sm"
+                          fullWidth
+                          className={`justify-start px-3 py-2 ${
+                            itemsPerPage === size
+                              ? "bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-semibold"
+                              : ""
+                          }`}
+                        >
+                          {size}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <span className="text-sm text-gray-600 dark:text-gray-400">
                   per page ({totalItems} total)
@@ -466,22 +435,22 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
                   Page {currentPage} of {totalPages}
                 </span>
                 <div className="flex items-center gap-1">
-                  <button
+                  <Button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={!hasPrevPage}
-                    className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    variant="subtle"
+                    size="icon"
+                    icon={<ChevronLeft className="w-4 h-4" />}
                     aria-label="Previous page"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-                  <button
+                  />
+                  <Button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={!hasNextPage}
-                    className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    variant="subtle"
+                    size="icon"
+                    icon={<ChevronRight className="w-4 h-4" />}
                     aria-label="Next page"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
+                  />
                 </div>
               </div>
             </div>
@@ -545,10 +514,6 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
             setShowSendModal(true);
           }}
         />
-      )}
-
-      {showImportModal && (
-        <ImportBooksModal onClose={() => setShowImportModal(false)} />
       )}
 
       {/* Undo Toast */}

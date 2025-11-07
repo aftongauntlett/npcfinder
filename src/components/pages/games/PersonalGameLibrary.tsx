@@ -1,9 +1,10 @@
 import React, { useState, useCallback, useMemo } from "react";
-import { Gamepad2, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { Gamepad2, ChevronLeft, ChevronRight } from "lucide-react";
 import Button from "../../shared/Button";
 import MediaEmptyState from "../../media/MediaEmptyState";
 import MediaListItem from "../../media/MediaListItem";
-import FilterSortMenu, { FilterSortSection } from "../../shared/FilterSortMenu";
+import { FilterSortSection } from "../../shared/FilterSortMenu";
+import { MediaPageToolbar } from "../../shared/MediaPageToolbar";
 import SendMediaModal from "../../shared/SendMediaModal";
 import SearchGameModal from "../../shared/SearchGameModal";
 import GameDetailModal from "./GameDetailModal";
@@ -263,17 +264,6 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
   if (gameLibrary.length === 0) {
     return (
       <>
-        {/* Controls - Show Add button even when empty */}
-        <div className="flex justify-end mb-6">
-          <Button
-            onClick={() => setShowSearchModal(true)}
-            variant="primary"
-            icon={<Plus className="w-4 h-4" />}
-          >
-            Add
-          </Button>
-        </div>
-
         <div className="mt-6">
           <MediaEmptyState
             icon={Gamepad2}
@@ -312,63 +302,48 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
       {/* Controls - Only show when there are items to display */}
       {paginatedItems.length > 0 && (
         <div className="space-y-3 mb-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            {/* Left: Combined Filter & Sort Menu */}
-            <div className="flex items-center gap-2">
-              <FilterSortMenu
-                sections={filterSortSections}
-                activeFilters={{
-                  genre: genreFilters,
-                  sort: activeSort,
-                }}
-                onFilterChange={(sectionId, value) => {
-                  if (sectionId === "genre") {
-                    // Handle genre multi-select
-                    const genres = Array.isArray(value) ? value : [value];
-                    setGenreFilters(genres);
-                  } else if (sectionId === "sort") {
-                    setActiveSort(value as SortType);
-                  }
-                }}
-              />
+          <MediaPageToolbar
+            filterConfig={{
+              type: "menu",
+              sections: filterSortSections,
+              activeFilters: {
+                genre: genreFilters,
+                sort: activeSort,
+              },
+              onFilterChange: (sectionId, value) => {
+                if (sectionId === "genre") {
+                  const genres = Array.isArray(value) ? value : [value];
+                  setGenreFilters(genres);
+                } else if (sectionId === "sort") {
+                  setActiveSort(value as SortType);
+                }
+              },
+            }}
+            onAddClick={() => setShowSearchModal(true)}
+          />
 
-              {/* Active Filter Chips */}
-              {!genreFilters.includes("all") && genreFilters.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {genreFilters.map((genre) => (
-                    <button
-                      key={genre}
-                      onClick={() => {
-                        const newFilters = genreFilters.filter(
-                          (g) => g !== genre
-                        );
-                        setGenreFilters(
-                          newFilters.length > 0 ? newFilters : ["all"]
-                        );
-                      }}
-                      className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
-                    >
-                      {genre.charAt(0).toUpperCase() + genre.slice(1)}
-                      <span className="text-purple-600 dark:text-purple-400">
-                        ×
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
+          {/* Active Filter Chips */}
+          {!genreFilters.includes("all") && genreFilters.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {genreFilters.map((genre) => (
+                <button
+                  key={genre}
+                  onClick={() => {
+                    const newFilters = genreFilters.filter((g) => g !== genre);
+                    setGenreFilters(
+                      newFilters.length > 0 ? newFilters : ["all"]
+                    );
+                  }}
+                  className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
+                >
+                  {genre.charAt(0).toUpperCase() + genre.slice(1)}
+                  <span className="text-purple-600 dark:text-purple-400">
+                    ×
+                  </span>
+                </button>
+              ))}
             </div>
-
-            {/* Right: Action Button */}
-            <div className="flex items-center gap-3 ml-auto">
-              <Button
-                onClick={() => setShowSearchModal(true)}
-                variant="primary"
-                icon={<Plus className="w-4 h-4" />}
-              >
-                Add
-              </Button>
-            </div>
-          </div>
+          )}
         </div>
       )}
 

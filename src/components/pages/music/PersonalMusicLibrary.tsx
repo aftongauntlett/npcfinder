@@ -1,9 +1,6 @@
 import React, { useState, useRef } from "react";
 import {
-  Plus,
-  List,
   Check,
-  Grid3x3,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -11,11 +8,12 @@ import {
 } from "lucide-react";
 import { MediaItem } from "../../shared/SendMediaModal";
 import SearchMusicModal from "../../shared/SearchMusicModal";
-import Button from "../../shared/Button";
 import MediaEmptyState from "../../media/MediaEmptyState";
 import MediaListItem from "../../media/MediaListItem";
 import SendMediaModal from "../../shared/SendMediaModal";
 import Toast from "../../ui/Toast";
+import Button from "../../shared/Button";
+import { MediaPageToolbar } from "../../shared/MediaPageToolbar";
 import { searchMusic } from "../../../utils/mediaSearchAdapters";
 import {
   useMusicLibrary,
@@ -23,9 +21,7 @@ import {
   useToggleListened,
   useDeleteFromLibrary,
 } from "../../../hooks/useMusicLibraryQueries";
-import { useViewMode } from "../../../hooks/useViewMode";
 import type { MusicLibraryItem } from "../../../services/musicService.types";
-import MusicCard from "./MusicCard";
 
 type FilterType = "all" | "listening" | "listened";
 type SortType = "date-added" | "title" | "artist" | "year" | "rating";
@@ -48,9 +44,7 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
   // Filter is controlled by tabs (initialFilter prop), not by dropdown
   const [filter] = useState<FilterType>(initialFilter);
   const [sortBy, setSortBy] = useState<SortType>("date-added");
-  const [viewMode, setViewMode] = useViewMode("grid");
   const [showSearchModal, setShowSearchModal] = useState(false);
-  const [showSortMenu, setShowSortMenu] = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
   const [musicToRecommend, setMusicToRecommend] =
     useState<MusicLibraryItem | null>(null);
@@ -169,11 +163,11 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
   };
 
   const sortOptions = [
-    { value: "date-added" as SortType, label: "Recently Added" },
-    { value: "title" as SortType, label: "Title" },
-    { value: "artist" as SortType, label: "Artist" },
-    { value: "year" as SortType, label: "Release Year" },
-    { value: "rating" as SortType, label: "Your Rating" },
+    { id: "date-added" as SortType, label: "Recently Added" },
+    { id: "title" as SortType, label: "Title" },
+    { id: "artist" as SortType, label: "Artist" },
+    { id: "year" as SortType, label: "Release Year" },
+    { id: "rating" as SortType, label: "Your Rating" },
   ];
 
   const itemsPerPageOptions = [10, 25, 50, 100];
@@ -201,98 +195,27 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
     <div ref={topRef} className="space-y-6">
       {/* Action Bar - Only show when there's data */}
       {sortedMusic.length > 0 && (
-        <div className="flex items-center justify-between gap-4">
-          {/* Left side: Sort and View Toggle */}
-          <div className="flex items-center gap-3">
-            {/* Sort Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setShowSortMenu(!showSortMenu)}
-                className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                <span className="font-medium">
-                  {sortBy === "date-added" && "Sort: Date Added"}
-                  {sortBy === "title" && "Sort: Title (A-Z)"}
-                  {sortBy === "artist" && "Sort: Artist"}
-                  {sortBy === "year" && "Sort: Year"}
-                  {sortBy === "rating" && "Sort: Rating"}
-                </span>
-                <ChevronDown className="w-4 h-4 text-gray-500" />
-              </button>
-
-              {showSortMenu && (
-                <>
-                  <div
-                    className="fixed inset-0 z-10"
-                    onClick={() => setShowSortMenu(false)}
-                  />
-                  <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-20 py-1 overflow-hidden">
-                    {sortOptions.map((option) => (
-                      <button
-                        key={option.value}
-                        onClick={() => {
-                          setSortBy(option.value);
-                          setShowSortMenu(false);
-                        }}
-                        className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
-                          sortBy === option.value
-                            ? "bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-semibold"
-                            : "text-gray-700 dark:text-gray-300"
-                        }`}
-                      >
-                        {sortBy === option.value && (
-                          <Check className="w-4 h-4 inline-block mr-2 text-primary" />
-                        )}
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* View Mode Toggle */}
-            <div className="flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`p-2 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
-                  viewMode === "grid"
-                    ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white"
-                    : "hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
-                }`}
-                title="Grid view"
-                aria-label="Switch to grid view"
-                aria-pressed={viewMode === "grid"}
-              >
-                <Grid3x3 className="w-4 h-4" aria-hidden="true" />
-              </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={`p-2 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
-                  viewMode === "list"
-                    ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white"
-                    : "hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
-                }`}
-                title="List view"
-                aria-label="Switch to list view"
-                aria-pressed={viewMode === "list"}
-              >
-                <List className="w-4 h-4" aria-hidden="true" />
-              </button>
-            </div>
-          </div>
-
-          {/* Right side: Add Button */}
-          <div className="flex items-center gap-3">
-            <Button
-              onClick={() => setShowSearchModal(true)}
-              variant="primary"
-              icon={<Plus className="w-4 h-4" />}
-            >
-              Add
-            </Button>
-          </div>
-        </div>
+        <MediaPageToolbar
+          filterConfig={{
+            type: "menu",
+            sections: [
+              {
+                id: "sort",
+                title: "Sort By",
+                options: sortOptions,
+              },
+            ],
+            activeFilters: {
+              sort: sortBy,
+            },
+            onFilterChange: (sectionId, filterId) => {
+              if (sectionId === "sort") {
+                setSortBy(filterId as SortType);
+              }
+            },
+          }}
+          onAddClick={() => setShowSearchModal(true)}
+        />
       )}
 
       {/* Results Count */}
@@ -303,7 +226,7 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
         </p>
       )}
 
-      {/* Grid/List View */}
+      {/* List View */}
       {currentMusic.length === 0 ? (
         <MediaEmptyState
           icon={Music}
@@ -312,27 +235,6 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
           onClick={() => setShowSearchModal(true)}
           ariaLabel="Search Music"
         />
-      ) : viewMode === "grid" ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-          {currentMusic.map((music) => (
-            <MusicCard
-              key={music.id}
-              id={music.id}
-              title={music.title}
-              artist={music.artist}
-              albumCoverUrl={music.album_cover_url || undefined}
-              year={
-                music.release_date
-                  ? new Date(music.release_date).getFullYear()
-                  : undefined
-              }
-              personalRating={music.personal_rating || undefined}
-              listened={music.listened}
-              genre={music.genre}
-              onClick={() => handleRecommend(music)}
-            />
-          ))}
-        </div>
       ) : (
         <div className="space-y-2">
           {currentMusic.map((music) => (
@@ -365,13 +267,16 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
         <div className="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
           {/* Items per page selector */}
           <div className="relative">
-            <button
+            <Button
               onClick={() => setShowItemsPerPageMenu(!showItemsPerPageMenu)}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              variant="secondary"
+              size="sm"
+              icon={<ChevronDown className="w-4 h-4" />}
+              iconPosition="right"
+              aria-expanded={showItemsPerPageMenu}
             >
               <span>Show {itemsPerPage} items</span>
-              <ChevronDown className="w-4 h-4" />
-            </button>
+            </Button>
 
             {showItemsPerPageMenu && (
               <>
@@ -381,20 +286,23 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
                 />
                 <div className="absolute bottom-full left-0 mb-2 w-32 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-20 py-1 overflow-hidden">
                   {itemsPerPageOptions.map((count) => (
-                    <button
+                    <Button
                       key={count}
                       onClick={() => handleItemsPerPageChange(count)}
-                      className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${
+                      variant="subtle"
+                      size="sm"
+                      fullWidth
+                      className={`justify-start px-4 py-2 ${
                         itemsPerPage === count
                           ? "bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-semibold"
-                          : "text-gray-700 dark:text-gray-300"
+                          : ""
                       }`}
                     >
                       {itemsPerPage === count && (
                         <Check className="w-4 h-4 inline-block mr-2 text-primary" />
                       )}
                       {count} items
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </>
@@ -403,27 +311,27 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
 
           {/* Page navigation */}
           <div className="flex items-center gap-2">
-            <button
+            <Button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              variant="subtle"
+              size="icon"
+              icon={<ChevronLeft className="w-5 h-5" />}
               aria-label="Previous page"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
+            />
 
             <span className="text-sm text-gray-700 dark:text-gray-300 px-3">
               Page {currentPage} of {totalPages}
             </span>
 
-            <button
+            <Button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              variant="subtle"
+              size="icon"
+              icon={<ChevronRight className="w-5 h-5" />}
               aria-label="Next page"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
+            />
           </div>
         </div>
       )}

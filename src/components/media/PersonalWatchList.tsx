@@ -1,23 +1,15 @@
 import React, { useState, useRef, useMemo, useCallback } from "react";
-import {
-  Plus,
-  Film,
-  Tv,
-  Upload,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { Film, ChevronLeft, ChevronRight } from "lucide-react";
 import { MediaItem } from "../shared/SendMediaModal";
 import SearchMovieModal from "../shared/SearchMovieModal";
 import MovieDetailModal from "./MovieDetailModal";
-import ImportMediaModal from "./ImportMediaModal";
-import Button from "../shared/Button";
 import SendMediaModal from "../shared/SendMediaModal";
 import Toast from "../ui/Toast";
+import Button from "../shared/Button";
 import MediaListItem from "./MediaListItem";
 import MediaEmptyState from "./MediaEmptyState";
-import MediaTypeFilters, { FilterOption } from "./MediaTypeFilters";
-import SortDropdown, { SortOption } from "./SortDropdown";
+import { SortOption } from "../shared/types";
+import { MediaPageToolbar } from "../shared/MediaPageToolbar";
 import { useMediaFiltering } from "../../hooks/useMediaFiltering";
 import { searchMoviesAndTV } from "../../utils/mediaSearchAdapters";
 import {
@@ -36,25 +28,6 @@ interface PersonalWatchListProps {
   initialFilter?: FilterType;
   embedded?: boolean;
 }
-
-// Filter options for media type
-const MEDIA_TYPE_FILTERS: FilterOption[] = [
-  { id: "all", label: "All Media" },
-  {
-    id: "tv",
-    label: "TV Shows",
-    icon: Tv,
-    colorClass:
-      "bg-purple-500/20 text-purple-700 dark:text-purple-200 ring-2 ring-purple-500/50",
-  },
-  {
-    id: "movie",
-    label: "Movies",
-    icon: Film,
-    colorClass:
-      "bg-blue-500/20 text-blue-700 dark:text-blue-200 ring-2 ring-blue-500/50",
-  },
-];
 
 // Sort options
 const SORT_OPTIONS: SortOption[] = [
@@ -80,9 +53,11 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
     useState<MediaTypeFilter>("all");
   const [sortBy, setSortBy] = useState<SortType>("date-added");
 
+  // Pagination state
+  const [showItemsPerPageMenu, setShowItemsPerPageMenu] = useState(false);
+
   // Modal state
   const [showSearchModal, setShowSearchModal] = useState(false);
-  const [showImportModal, setShowImportModal] = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState<WatchlistItem | null>(
     null
@@ -242,41 +217,42 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
     <div ref={topRef} className="space-y-6">
       {/* Controls Row: Filters + Sort + Actions */}
       {hasItemsForCurrentFilter && (
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          {/* Left: Media Type Filter Chips */}
-          <MediaTypeFilters
-            filters={MEDIA_TYPE_FILTERS}
-            activeFilter={mediaTypeFilter}
-            onFilterChange={(filterId) =>
-              setMediaTypeFilter(filterId as MediaTypeFilter)
-            }
-          />
-
-          {/* Right: Sort + Action Buttons */}
-          <div className="flex items-center gap-3">
-            <SortDropdown
-              options={SORT_OPTIONS}
-              activeSort={sortBy}
-              onSortChange={(sortId) => setSortBy(sortId as SortType)}
-            />
-
-            <Button
-              onClick={() => setShowSearchModal(true)}
-              variant="primary"
-              icon={<Plus className="w-4 h-4" />}
-            >
-              Add
-            </Button>
-
-            <Button
-              onClick={() => setShowImportModal(true)}
-              variant="secondary"
-              icon={<Upload className="w-4 h-4" />}
-            >
-              Import
-            </Button>
-          </div>
-        </div>
+        <MediaPageToolbar
+          filterConfig={{
+            type: "menu",
+            sections: [
+              {
+                id: "mediaType",
+                title: "Media Type",
+                options: [
+                  { id: "all", label: "All Media" },
+                  { id: "movie", label: "Movies" },
+                  { id: "tv", label: "TV Shows" },
+                ],
+              },
+              {
+                id: "sort",
+                title: "Sort By",
+                options: SORT_OPTIONS.map((opt) => ({
+                  id: opt.id,
+                  label: opt.label.replace("Sort: ", ""),
+                })),
+              },
+            ],
+            activeFilters: {
+              mediaType: mediaTypeFilter,
+              sort: sortBy,
+            },
+            onFilterChange: (sectionId, filterId) => {
+              if (sectionId === "mediaType") {
+                setMediaTypeFilter(filterId as MediaTypeFilter);
+              } else if (sectionId === "sort") {
+                setSortBy(filterId as SortType);
+              }
+            },
+          }}
+          onAddClick={() => setShowSearchModal(true)}
+        />
       )}
 
       {/* Content: List or Empty State */}
@@ -311,6 +287,7 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
                 year={item.release_date?.split("-")[0]}
                 description={item.overview || undefined}
                 mediaType={item.media_type}
+                genres={item.genres?.join(", ") || undefined}
                 isCompleted={item.watched}
                 onToggleComplete={handleToggleWatched}
                 onRemove={handleRemoveFromWatchList}
@@ -329,44 +306,39 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
               {/* Items per page */}
               <div className="flex items-center gap-4">
                 <div className="relative">
-                  <button
-                    onClick={() => {
-                      const menu = document.getElementById(
-                        "items-per-page-menu"
-                      );
-                      if (menu) {
-                        menu.style.display =
-                          menu.style.display === "block" ? "none" : "block";
-                      }
-                    }}
-                    className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  <Button
+                    onClick={() =>
+                      setShowItemsPerPageMenu(!showItemsPerPageMenu)
+                    }
+                    variant="secondary"
+                    size="sm"
+                    aria-expanded={showItemsPerPageMenu}
                   >
                     {itemsPerPage}
-                  </button>
-                  <div
-                    id="items-per-page-menu"
-                    style={{ display: "none" }}
-                    className="absolute bottom-full left-0 mb-2 w-24 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-20 py-1"
-                  >
-                    {[10, 25, 50, 100].map((size) => (
-                      <button
-                        key={size}
-                        onClick={() => {
-                          setItemsPerPage(size);
-                          document.getElementById(
-                            "items-per-page-menu"
-                          )!.style.display = "none";
-                        }}
-                        className={`w-full px-3 py-2 text-sm text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${
-                          itemsPerPage === size
-                            ? "bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-semibold"
-                            : "text-gray-700 dark:text-gray-300"
-                        }`}
-                      >
-                        {size}
-                      </button>
-                    ))}
-                  </div>
+                  </Button>
+                  {showItemsPerPageMenu && (
+                    <div className="absolute bottom-full left-0 mb-2 w-24 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-20 py-1">
+                      {[10, 25, 50, 100].map((size) => (
+                        <Button
+                          key={size}
+                          onClick={() => {
+                            setItemsPerPage(size);
+                            setShowItemsPerPageMenu(false);
+                          }}
+                          variant="subtle"
+                          size="sm"
+                          fullWidth
+                          className={`justify-start px-3 py-2 ${
+                            itemsPerPage === size
+                              ? "bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-semibold"
+                              : ""
+                          }`}
+                        >
+                          {size}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <span className="text-sm text-gray-600 dark:text-gray-400">
                   per page ({totalItems} total)
@@ -379,22 +351,22 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
                   Page {currentPage} of {totalPages}
                 </span>
                 <div className="flex items-center gap-1">
-                  <button
+                  <Button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={!hasPrevPage}
-                    className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    variant="subtle"
+                    size="icon"
+                    icon={<ChevronLeft className="w-4 h-4" />}
                     aria-label="Previous page"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-                  <button
+                  />
+                  <Button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={!hasNextPage}
-                    className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    variant="subtle"
+                    size="icon"
+                    icon={<ChevronRight className="w-4 h-4" />}
                     aria-label="Next page"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
+                  />
                 </div>
               </div>
             </div>
@@ -452,14 +424,6 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
           _onRemove={handleRemoveFromWatchListAsync}
         />
       )}
-
-      <ImportMediaModal
-        isOpen={showImportModal}
-        onClose={() => setShowImportModal(false)}
-        onSuccess={(_count) => {
-          setShowImportModal(false);
-        }}
-      />
 
       {/* Undo Toast */}
       {showUndoToast && lastDeletedItem && (
