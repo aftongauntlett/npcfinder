@@ -1,5 +1,7 @@
 import React from "react";
 import { LucideIcon } from "lucide-react";
+import Button from "./Button";
+import { logger } from "../../lib/logger";
 
 interface IconButtonProps {
   icon: LucideIcon;
@@ -11,16 +13,17 @@ interface IconButtonProps {
 }
 
 /**
- * Reusable IconButton Component
- * Consistent styling across all card actions
+ * @deprecated IconButton is deprecated. Use <Button size="icon" icon={...} /> directly instead.
  *
- * Variants:
- * - default: Gray background, gray-600 hover
- * - success: Gray background, green-600 hover (Hit/Like)
- * - warning: Gray background, orange-600 hover (Miss/Thumbs Down)
- * - danger: Gray background, red-600 hover (Delete/Trash)
- * - primary: Gray background, theme color hover (Comment)
- * - active: Theme color background, white text (Active state)
+ * This component now wraps the modern Button component for backwards compatibility.
+ *
+ * Migration guide:
+ * - variant="default" → <Button variant="subtle" size="icon" />
+ * - variant="success" → <Button variant="subtle" size="icon" /> (custom hover via onMouseEnter)
+ * - variant="warning" → <Button variant="subtle" size="icon" /> (custom hover via onMouseEnter)
+ * - variant="danger" → <Button variant="danger" size="icon" />
+ * - variant="primary" → <Button variant="primary" size="icon" />
+ * - variant="active" → <Button variant="primary" size="icon" />
  */
 const IconButton: React.FC<IconButtonProps> = ({
   icon: Icon,
@@ -30,77 +33,82 @@ const IconButton: React.FC<IconButtonProps> = ({
   disabled = false,
   className = "",
 }) => {
-  const baseStyles =
-    "p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800";
+  // Log deprecation warning in development
+  if (process.env.NODE_ENV === "development") {
+    logger.warn(
+      'IconButton is deprecated. Use <Button size="icon" icon={...} /> instead.'
+    );
 
-  const variantStyles = {
-    default:
-      "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 focus-visible:ring-gray-400",
-    success:
-      "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 focus-visible:ring-green-500",
-    warning:
-      "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 focus-visible:ring-orange-500",
-    danger:
-      "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 focus-visible:ring-red-500",
-    primary:
-      "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 focus-visible:ring-primary",
-    active: "text-white focus-visible:ring-primary", // Will use inline style for backgroundColor
-  };
+    // Warn if title is missing for accessibility
+    if (!title && !disabled) {
+      logger.warn(
+        'IconButton: "title" prop is required for accessibility. Provide a descriptive label for icon-only controls.'
+      );
+    }
+  }
 
-  const handleClick = () => {
-    if (!disabled) {
-      onClick();
+  // Map old variants to new Button variants
+  const getButtonVariant = ():
+    | "primary"
+    | "secondary"
+    | "subtle"
+    | "danger"
+    | "action" => {
+    switch (variant) {
+      case "danger":
+        return "danger";
+      case "primary":
+      case "active":
+        return "primary";
+      case "default":
+      case "success":
+      case "warning":
+      default:
+        return "subtle";
     }
   };
 
+  // Handle custom hover colors for success/warning variants
   const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (disabled) return;
-    if (variant === "primary") {
-      e.currentTarget.style.backgroundColor = "var(--color-primary)";
-    } else if (variant === "success") {
+    if (variant === "success") {
       e.currentTarget.style.backgroundColor = "rgb(22 163 74)"; // green-600
       e.currentTarget.style.color = "white";
     } else if (variant === "warning") {
       e.currentTarget.style.backgroundColor = "rgb(234 88 12)"; // orange-600
-      e.currentTarget.style.color = "white";
-    } else if (variant === "danger") {
-      e.currentTarget.style.backgroundColor = "rgb(220 38 38)"; // red-600
       e.currentTarget.style.color = "white";
     }
   };
 
   const handleMouseLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (disabled) return;
-    if (variant === "primary") {
-      e.currentTarget.style.backgroundColor = "";
-    } else if (
-      variant === "success" ||
-      variant === "warning" ||
-      variant === "danger"
-    ) {
+    if (variant === "success" || variant === "warning") {
       e.currentTarget.style.backgroundColor = "";
       e.currentTarget.style.color = "";
     }
   };
 
-  // For active state, use inline style for background color
-  const inlineStyle =
-    variant === "active"
-      ? { backgroundColor: "var(--color-primary)" }
-      : undefined;
-
   return (
-    <button
-      onClick={handleClick}
+    <Button
+      onClick={onClick}
       disabled={disabled}
-      className={`${baseStyles} ${variantStyles[variant]} ${className}`}
-      style={inlineStyle}
+      variant={getButtonVariant()}
+      size="icon"
+      icon={<Icon className="w-4 h-4" />}
       title={title}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      <Icon className="w-4 h-4" />
-    </button>
+      aria-label={title}
+      className={className}
+      onMouseEnter={
+        variant === "success" || variant === "warning"
+          ? handleMouseEnter
+          : undefined
+      }
+      onMouseLeave={
+        variant === "success" || variant === "warning"
+          ? handleMouseLeave
+          : undefined
+      }
+    />
   );
 };
 
