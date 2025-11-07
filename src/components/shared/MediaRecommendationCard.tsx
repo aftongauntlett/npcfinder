@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { motion } from "framer-motion";
 import {
   ThumbsUp,
   ThumbsDown,
@@ -106,7 +107,13 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+    <motion.div
+      className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200/50 dark:border-gray-700/30 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: index * 0.05 }}
+      whileHover={{ y: -2 }}
+    >
       {/* Main Row: Index, Art, Info, Actions */}
       <div className="flex items-center gap-3">
         {/* Index Number */}
@@ -421,7 +428,7 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
         }
         variant="danger"
       />
-    </div>
+    </motion.div>
   );
 }
 

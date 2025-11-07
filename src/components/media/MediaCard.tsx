@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { motion } from "framer-motion";
 import { Star, Eye } from "lucide-react";
 import SparkleEffect from "../effects/SparkleEffect";
 import { STATUS_MAP, type MediaStatus } from "./mediaStatus";
@@ -27,9 +28,9 @@ const MediaCard: React.FC<MediaCardProps> = ({
 
   return (
     <SparkleEffect intensity="low">
-      <article
+      <motion.article
         onClick={() => onClick(id)}
-        className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-200 cursor-pointer group hover:scale-105 hover:bg-gray-100 dark:hover:bg-gray-900"
+        className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200/50 dark:border-gray-700/30 hover:border-primary/30 shadow-md hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 cursor-pointer group"
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {
@@ -39,6 +40,9 @@ const MediaCard: React.FC<MediaCardProps> = ({
           }
         }}
         aria-label={`View details for ${title}`}
+        whileHover={{ y: -4 }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ type: "spring", stiffness: 400, damping: 30 }}
       >
         {/* Poster Image - Taller aspect ratio for grid */}
         <div className="relative aspect-[2/3] bg-gray-200 dark:bg-gray-700">
@@ -90,7 +94,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
             {title}
           </h3>
         </div>
-      </article>
+      </motion.article>
     </SparkleEffect>
   );
 };

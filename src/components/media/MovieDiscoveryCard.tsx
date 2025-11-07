@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { motion } from "framer-motion";
 import { ChevronDown, ChevronUp, TrendingUp, Star, Film } from "lucide-react";
 import { SimilarMoviesCarousel } from "./SimilarMoviesCarousel";
 import { useWatchlist } from "../../hooks/useWatchlistQueries";
@@ -205,15 +206,20 @@ const MovieDiscoveryCard: React.FC = () => {
             const isLoading = loadingSections.has(section.id);
 
             return (
-              <div
+              <motion.div
                 key={section.id}
-                className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm"
+                className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200/50 dark:border-gray-700/30 hover:border-primary/30 shadow-sm hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                whileHover={{ y: -2 }}
               >
-                <button
+                <motion.button
                   type="button"
                   onClick={() => void toggleSection(section.id)}
-                  className="w-full p-4 flex items-center justify-between gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+                  className="w-full p-4 flex items-center justify-between gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
                   aria-expanded={isExpanded}
+                  whileTap={{ scale: 0.99 }}
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div
@@ -238,7 +244,7 @@ const MovieDiscoveryCard: React.FC = () => {
                   ) : (
                     <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
                   )}
-                </button>
+                </motion.button>
 
                 {isExpanded && (
                   <div className="border-t border-gray-200 dark:border-gray-700 p-4">
@@ -261,7 +267,7 @@ const MovieDiscoveryCard: React.FC = () => {
                     )}
                   </div>
                 )}
-              </div>
+              </motion.div>
             );
           })}
         </div>

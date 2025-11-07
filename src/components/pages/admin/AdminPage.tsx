@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from "react";
+import { motion } from "framer-motion";
 import {
   Users,
   Star,
@@ -239,34 +240,54 @@ const AdminPage: React.FC = () => {
           {/* Stats Overview */}
           {stats && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <StatCard
-                icon={Users}
-                label="Total Users"
-                value={stats.totalUsers}
-                iconColor="text-blue-400"
-                valueColor="text-white dark:text-white"
-              />
-              <StatCard
-                icon={Star}
-                label="New This Week"
-                value={stats.newUsersThisWeek}
-                iconColor="text-yellow-400"
-                valueColor="text-yellow-400"
-              />
-              <StatCard
-                icon={Activity}
-                label="Total Ratings"
-                value={stats.totalRatings}
-                iconColor="text-green-400"
-                valueColor="text-green-400"
-              />
-              <StatCard
-                icon={ShieldCheck}
-                label="Invite Codes"
-                value={stats.totalInviteCodes}
-                iconColor="text-purple-400"
-                valueColor="text-purple-400"
-              />
+              <motion.div
+                whileHover={{ y: -2 }}
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              >
+                <StatCard
+                  icon={Users}
+                  label="Total Users"
+                  value={stats.totalUsers}
+                  iconColor="text-blue-400"
+                  valueColor="text-white dark:text-white"
+                />
+              </motion.div>
+              <motion.div
+                whileHover={{ y: -2 }}
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              >
+                <StatCard
+                  icon={Star}
+                  label="New This Week"
+                  value={stats.newUsersThisWeek}
+                  iconColor="text-yellow-400"
+                  valueColor="text-yellow-400"
+                />
+              </motion.div>
+              <motion.div
+                whileHover={{ y: -2 }}
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              >
+                <StatCard
+                  icon={Activity}
+                  label="Total Ratings"
+                  value={stats.totalRatings}
+                  iconColor="text-green-400"
+                  valueColor="text-green-400"
+                />
+              </motion.div>
+              <motion.div
+                whileHover={{ y: -2 }}
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              >
+                <StatCard
+                  icon={ShieldCheck}
+                  label="Invite Codes"
+                  value={stats.totalInviteCodes}
+                  iconColor="text-purple-400"
+                  valueColor="text-purple-400"
+                />
+              </motion.div>
             </div>
           )}
 
@@ -324,17 +345,28 @@ const AdminPage: React.FC = () => {
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                       {users.map((user) => (
-                        <tr
+                        <motion.tr
                           key={user.id}
-                          className="hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                          className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.2 }}
                         >
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
-                              <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-primary to-primary-dark rounded-full flex items-center justify-center">
+                              <motion.div
+                                className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-primary to-primary-dark rounded-full flex items-center justify-center"
+                                whileHover={{ rotate: 5 }}
+                                transition={{
+                                  type: "spring",
+                                  stiffness: 400,
+                                  damping: 20,
+                                }}
+                              >
                                 <span className="text-sm font-medium text-white">
                                   {user.display_name.charAt(0).toUpperCase()}
                                 </span>
-                              </div>
+                              </motion.div>
                               <div className="ml-4">
                                 <div className="text-sm font-medium text-gray-900 dark:text-white">
                                   {user.display_name}
@@ -353,21 +385,31 @@ const AdminPage: React.FC = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <Button
-                              onClick={() => handleToggleAdminClick(user)}
-                              variant={user.is_admin ? "primary" : "subtle"}
-                              size="sm"
-                              aria-pressed={user.is_admin}
-                              className={
-                                user.is_admin
-                                  ? "bg-green-600 hover:bg-green-700 border-green-600"
-                                  : ""
-                              }
+                            <motion.div
+                              whileHover={{ y: -1 }}
+                              whileTap={{ scale: 0.98 }}
+                              transition={{
+                                type: "spring",
+                                stiffness: 400,
+                                damping: 30,
+                              }}
                             >
-                              {user.is_admin ? "Admin" : "User"}
-                            </Button>
+                              <Button
+                                onClick={() => handleToggleAdminClick(user)}
+                                variant={user.is_admin ? "primary" : "subtle"}
+                                size="sm"
+                                aria-pressed={user.is_admin}
+                                className={
+                                  user.is_admin
+                                    ? "bg-green-600 hover:bg-green-700 border-green-600"
+                                    : ""
+                                }
+                              >
+                                {user.is_admin ? "Admin" : "User"}
+                              </Button>
+                            </motion.div>
                           </td>
-                        </tr>
+                        </motion.tr>
                       ))}
                     </tbody>
                   </table>
@@ -512,13 +554,16 @@ const AdminPage: React.FC = () => {
                   </thead>
                   <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {codes.map((code) => (
-                      <tr
+                      <motion.tr
                         key={code.id}
-                        className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 ${
+                        className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200 ${
                           newlyCreatedCodes.has(code.code)
                             ? "bg-green-50 dark:bg-green-900/20"
                             : ""
                         }`}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.2 }}
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <code className="text-sm font-mono text-gray-900 dark:text-white">
@@ -541,34 +586,64 @@ const AdminPage: React.FC = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex gap-2 justify-end">
-                            <Button
-                              onClick={() => void copyCodeOnly(code.code)}
-                              variant="subtle"
-                              size="sm"
+                            <motion.div
+                              whileHover={{ y: -1 }}
+                              whileTap={{ scale: 0.98 }}
+                              transition={{
+                                type: "spring",
+                                stiffness: 400,
+                                damping: 30,
+                              }}
                             >
-                              {copiedCode === code.code ? "Copied!" : "Copy"}
-                            </Button>
-                            <Button
-                              onClick={() =>
-                                void copyCodeWithMessage(code.code)
-                              }
-                              variant="subtle"
-                              size="sm"
+                              <Button
+                                onClick={() => void copyCodeOnly(code.code)}
+                                variant="subtle"
+                                size="sm"
+                              >
+                                {copiedCode === code.code ? "Copied!" : "Copy"}
+                              </Button>
+                            </motion.div>
+                            <motion.div
+                              whileHover={{ y: -1 }}
+                              whileTap={{ scale: 0.98 }}
+                              transition={{
+                                type: "spring",
+                                stiffness: 400,
+                                damping: 30,
+                              }}
                             >
-                              Copy Msg
-                            </Button>
-                            <Button
-                              onClick={() =>
-                                handleRevokeCode(code.id, code.code)
-                              }
-                              variant="danger"
-                              size="sm"
+                              <Button
+                                onClick={() =>
+                                  void copyCodeWithMessage(code.code)
+                                }
+                                variant="subtle"
+                                size="sm"
+                              >
+                                Copy Msg
+                              </Button>
+                            </motion.div>
+                            <motion.div
+                              whileHover={{ y: -1 }}
+                              whileTap={{ scale: 0.98 }}
+                              transition={{
+                                type: "spring",
+                                stiffness: 400,
+                                damping: 30,
+                              }}
                             >
-                              Delete
-                            </Button>
+                              <Button
+                                onClick={() =>
+                                  handleRevokeCode(code.id, code.code)
+                                }
+                                variant="danger"
+                                size="sm"
+                              >
+                                Delete
+                              </Button>
+                            </motion.div>
                           </div>
                         </td>
-                      </tr>
+                      </motion.tr>
                     ))}
                   </tbody>
                 </table>

@@ -94,7 +94,7 @@ const ContentLayout: React.FC<ContentLayoutProps> = ({
       className="min-h-screen focus:outline-none"
     >
       {/* Mobile Header - Only visible on mobile */}
-      <header className="md:hidden sticky top-0 z-40">
+      <header className="md:hidden z-40">
         <div className="flex items-center justify-between px-4 py-3">
           <Button
             onClick={() => setShowMobileMenu(!showMobileMenu)}
@@ -174,7 +174,7 @@ const ContentLayout: React.FC<ContentLayoutProps> = ({
 
       {/* Page Header - Desktop styling */}
       <header
-        className={`sticky top-0 z-30 hidden md:block transition-colors duration-200 ${
+        className={`z-30 hidden md:block transition-colors duration-200 ${
           isScrolled ? "bg-background/80 backdrop-blur-sm" : ""
         }`}
       >
