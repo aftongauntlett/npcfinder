@@ -5,7 +5,6 @@ Model Selection:
 - Use GPT-5-Codex for complex coding tasks, refactors, Supabase logic, and multi-file work.
 - Use Claude Sonnet 4.5 for brainstorming, UX thinking, content wording, or architectural questions.
 - Use Grok Code Fast 1 for small UI components, scaffolds, or low-risk utility code.
-- When in Auto mode, restrict choices to only these enabled models.
 
 Read the prompt files in .github/prompts/. Obey them in this order:
 
