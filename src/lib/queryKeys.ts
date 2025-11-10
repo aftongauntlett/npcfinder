@@ -3,6 +3,16 @@
  * Centralized query key factory for consistent caching
  */
 
+// Type-safe media type union
+type MediaType = "movies-tv" | "music" | "song" | "books" | "games";
+type RecommendationView =
+  | "overview"
+  | "queue"
+  | "hits"
+  | "misses"
+  | "sent"
+  | "friend";
+
 export const queryKeys = {
   // Recommendations
   recommendations: {
@@ -10,28 +20,31 @@ export const queryKeys = {
     lists: () => [...queryKeys.recommendations.all, "list"] as const,
     list: (filters: Record<string, unknown>) =>
       [...queryKeys.recommendations.lists(), filters] as const,
-    fromFriend: (friendId: string, mediaType?: string) =>
+    fromFriend: (friendId: string, mediaType?: MediaType) =>
       [
         ...queryKeys.recommendations.all,
         "friend",
         friendId,
         mediaType,
       ] as const,
-    byMedia: (view: string, friendId: string | undefined, mediaType: string) =>
-      [...queryKeys.recommendations.all, mediaType, view, friendId] as const,
+    byMedia: (
+      view: RecommendationView,
+      friendId: string | undefined,
+      mediaType: MediaType
+    ) => [...queryKeys.recommendations.all, mediaType, view, friendId] as const,
   },
 
   // Friends
   friends: {
     all: ["friends"] as const,
-    withRecs: (mediaType?: string) =>
+    withRecs: (mediaType?: MediaType) =>
       [...queryKeys.friends.all, "with-recs", mediaType] as const,
   },
 
   // Stats
   stats: {
     all: ["stats"] as const,
-    quick: (mediaType?: string) =>
+    quick: (mediaType?: MediaType) =>
       [...queryKeys.stats.all, "quick", mediaType] as const,
   },
 

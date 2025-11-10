@@ -9,6 +9,13 @@ import { queryKeys } from "../lib/queryKeys";
 import { useAuth } from "../contexts/AuthContext";
 
 type MediaTypeKey = "movies-tv" | "song" | "music" | "books" | "games";
+type RecommendationView =
+  | "overview"
+  | "queue"
+  | "hits"
+  | "misses"
+  | "sent"
+  | "friend";
 
 /**
  * Generic hook to get friends who have sent recommendations
@@ -92,7 +99,7 @@ export function useQuickStats(mediaTypeKey: MediaTypeKey) {
  * Generic hook to get recommendations with filters
  */
 export function useRecommendations(
-  view: string,
+  view: RecommendationView,
   friendId: string | undefined,
   mediaTypeKey: MediaTypeKey
 ) {
@@ -268,11 +275,19 @@ export function useUpdateStatus(mediaTypeKey: MediaTypeKey) {
       );
     },
     onSuccess: () => {
-      // Invalidate all related queries
-      void queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+      // Invalidate specific queries for this media type
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.recommendations.all,
+        queryKey: queryKeys.friends.withRecs(mediaTypeKey),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.stats.quick(mediaTypeKey),
+      });
+      // Invalidate only recommendation queries for this media type
+      void queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey;
+          return key[0] === "recommendations" && key.includes(mediaTypeKey);
+        },
       });
     },
   });
@@ -304,11 +319,19 @@ export function useDeleteRec(mediaTypeKey: MediaTypeKey) {
       return recommendationsService.deleteRecommendation(recId, tableName);
     },
     onSuccess: () => {
-      // Invalidate all related queries
-      void queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
+      // Invalidate specific queries for this media type
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.recommendations.all,
+        queryKey: queryKeys.friends.withRecs(mediaTypeKey),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.stats.quick(mediaTypeKey),
+      });
+      // Invalidate only recommendation queries for this media type
+      void queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey;
+          return key[0] === "recommendations" && key.includes(mediaTypeKey);
+        },
       });
     },
   });
@@ -340,8 +363,12 @@ export function useUpdateSenderNote(mediaTypeKey: MediaTypeKey) {
       return recommendationsService.updateSenderNote(recId, note, tableName);
     },
     onSuccess: () => {
+      // Invalidate only recommendation queries for this media type
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.recommendations.all,
+        predicate: (query) => {
+          const key = query.queryKey;
+          return key[0] === "recommendations" && key.includes(mediaTypeKey);
+        },
       });
     },
   });
@@ -373,8 +400,12 @@ export function useUpdateRecipientNote(mediaTypeKey: MediaTypeKey) {
       return recommendationsService.updateRecipientNote(recId, note, tableName);
     },
     onSuccess: () => {
+      // Invalidate only recommendation queries for this media type
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.recommendations.all,
+        predicate: (query) => {
+          const key = query.queryKey;
+          return key[0] === "recommendations" && key.includes(mediaTypeKey);
+        },
       });
     },
   });
@@ -413,9 +444,12 @@ export function useMarkRecommendationsAsOpened(mediaTypeKey: MediaTypeKey) {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.dashboard.all,
       });
-      // Invalidate recommendations to refresh opened_at timestamps
+      // Invalidate only recommendation queries for this media type
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.recommendations.all,
+        predicate: (query) => {
+          const key = query.queryKey;
+          return key[0] === "recommendations" && key.includes(mediaTypeKey);
+        },
       });
     },
   });

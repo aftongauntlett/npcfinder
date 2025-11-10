@@ -66,6 +66,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const focusTimeoutRef = useRef<number | null>(null);
 
   const displayName = profile?.display_name || currentUser?.email || "User";
 
@@ -141,13 +142,22 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
     }
     // Focus main content area after navigation for keyboard accessibility
     // Small delay to ensure DOM is updated after route change
-    setTimeout(() => {
+    focusTimeoutRef.current = window.setTimeout(() => {
       const mainContent = document.getElementById("main-content");
       if (mainContent) {
         mainContent.focus();
       }
     }, 100);
   };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (focusTimeoutRef.current !== null) {
+        clearTimeout(focusTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const toggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
