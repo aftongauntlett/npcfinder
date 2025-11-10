@@ -15,25 +15,47 @@ import { supabase } from "./supabase";
  */
 export async function exportUserData(userId: string) {
   try {
-    // Fetch all user data
-    const [watchlist, archive, movieRecs, connections, userProfile] =
-      await Promise.all([
-        supabase.from("user_watchlist").select("*").eq("user_id", userId),
-        supabase.from("user_watched_archive").select("*").eq("user_id", userId),
-        supabase
-          .from("movie_recommendations")
-          .select("*")
-          .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`),
-        supabase
-          .from("connections")
-          .select("*")
-          .or(`user_id.eq.${userId},friend_id.eq.${userId}`),
-        supabase
-          .from("user_profiles")
-          .select("*")
-          .eq("user_id", userId)
-          .single(),
-      ]);
+    // Fetch all user data (use views for recommendations to include display names)
+    const [
+      watchlist,
+      archive,
+      movieRecs,
+      musicRecs,
+      bookRecs,
+      gameRecs,
+      connections,
+      userProfile,
+    ] = await Promise.all([
+      supabase.from("user_watchlist").select("*").eq("user_id", userId),
+      supabase.from("user_watched_archive").select("*").eq("user_id", userId),
+      supabase
+        .from("movie_recommendations_with_users")
+        .select("*")
+        .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`),
+      supabase
+        .from("music_recommendations_with_users")
+        .select("*")
+        .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`),
+      supabase
+        .from("book_recommendations_with_users")
+        .select("*")
+        .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`),
+      supabase
+        .from("game_recommendations_with_users")
+        .select("*")
+        .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`),
+      supabase
+        .from("connections")
+        .select(
+          `
+            *,
+            user_profile:user_profiles!connections_user_id_fkey(display_name),
+            friend_profile:user_profiles!connections_friend_id_fkey(display_name)
+          `
+        )
+        .or(`user_id.eq.${userId},friend_id.eq.${userId}`),
+      supabase.from("user_profiles").select("*").eq("user_id", userId).single(),
+    ]);
 
     // Get user auth info (email only, not password)
     const {
@@ -51,11 +73,22 @@ export async function exportUserData(userId: string) {
       watchlist: watchlist.data,
       watched_archive: archive.data,
       movie_recommendations: movieRecs.data,
+      music_recommendations: musicRecs.data,
+      book_recommendations: bookRecs.data,
+      game_recommendations: gameRecs.data,
       connections: connections.data,
       metadata: {
         total_watchlist_items: watchlist.data?.length || 0,
         total_watched_items: archive.data?.length || 0,
-        total_recommendations: movieRecs.data?.length || 0,
+        total_movie_recommendations: movieRecs.data?.length || 0,
+        total_music_recommendations: musicRecs.data?.length || 0,
+        total_book_recommendations: bookRecs.data?.length || 0,
+        total_game_recommendations: gameRecs.data?.length || 0,
+        total_recommendations:
+          (movieRecs.data?.length || 0) +
+          (musicRecs.data?.length || 0) +
+          (bookRecs.data?.length || 0) +
+          (gameRecs.data?.length || 0),
         total_connections: connections.data?.length || 0,
       },
     };

@@ -100,23 +100,14 @@ export async function getFriendsWithRecommendations(
     mediaType,
   });
 
-  // Group by sender
+  // Group by sender (sender_name comes from the *_with_users view)
   const friendMap = new Map<string, FriendStats>();
 
-  for (const rec of recs) {
-    const friendId = rec.from_user_id;
-
-    if (!friendMap.has(friendId)) {
-      // Fetch friend's profile
-      const { data: profile } = await supabase
-        .from("user_profiles")
-        .select("display_name")
-        .eq("user_id", friendId)
-        .single();
-
-      friendMap.set(friendId, {
-        user_id: friendId,
-        display_name: profile?.display_name || "Unknown User",
+  recs.forEach((rec) => {
+    if (!friendMap.has(rec.from_user_id)) {
+      friendMap.set(rec.from_user_id, {
+        user_id: rec.from_user_id,
+        display_name: rec.sender_name || "Unknown User",
         pending_count: 0,
         total_count: 0,
         hit_count: 0,
@@ -124,13 +115,13 @@ export async function getFriendsWithRecommendations(
       });
     }
 
-    const stats = friendMap.get(friendId)!;
+    const stats = friendMap.get(rec.from_user_id)!;
     stats.total_count++;
 
     if (rec.status === "pending") stats.pending_count++;
     if (rec.status === "hit") stats.hit_count++;
     if (rec.status === "miss") stats.miss_count++;
-  }
+  });
 
   return Array.from(friendMap.values());
 }
