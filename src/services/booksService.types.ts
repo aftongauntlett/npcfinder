@@ -41,4 +41,7 @@ export interface BookRecommendation {
   read_at: string | null; // Timestamp when marked as read
   created_at: string;
   updated_at: string;
+  // Fields from book_recommendations_with_users view
+  sender_name?: string;
+  recipient_name?: string;
 }

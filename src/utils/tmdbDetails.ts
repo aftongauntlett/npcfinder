@@ -93,7 +93,6 @@ export interface DetailedMediaInfo {
   // OMDB enriched data
   imdb_rating: string | null;
   rotten_tomatoes_score: string | null;
-  rotten_tomatoes_audience: string | null;
   metacritic_score: string | null;
   awards_text: string | null;
   box_office: string | null;
@@ -222,7 +221,6 @@ export async function fetchDetailedMediaInfo(
 
     // Extract ratings from OMDB
     let rottenTomatoesScore: string | null = null;
-    const rottenTomatoesAudience: string | null = null;
     let metacriticScore: string | null = null;
 
     if (omdbData?.Ratings) {
@@ -271,7 +269,6 @@ export async function fetchDetailedMediaInfo(
       // OMDB enriched data
       imdb_rating: omdbData?.imdbRating || null,
       rotten_tomatoes_score: rottenTomatoesScore,
-      rotten_tomatoes_audience: rottenTomatoesAudience,
       metacritic_score: metacriticScore,
       awards_text: omdbData?.Awards || null,
       box_office: omdbData?.BoxOffice || null,

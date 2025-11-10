@@ -46,6 +46,9 @@ export interface Recommendation {
   created_at: string;
   watched_at?: string;
   opened_at?: string;
+  // Fields from *_with_users views
+  sender_name?: string;
+  recipient_name?: string;
 }
 
 export interface UserProfile {

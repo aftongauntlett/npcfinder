@@ -122,7 +122,6 @@ export const createInviteCode = async (
         code,
         created_by: user.id,
         intended_email: intendedEmail.toLowerCase().trim(),
-        notes: intendedEmail, // Store email in notes for easy reference
         max_uses: 1, // Always 1
         expires_at: expiresAt,
       })
