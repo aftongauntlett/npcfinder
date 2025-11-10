@@ -38,15 +38,6 @@ const Footer: React.FC = () => {
             >
               Suggestions
             </Button>
-
-            <a
-              href="https://github.com/aftongauntlett"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-            >
-              GitHub
-            </a>
           </nav>
         </div>
       </div>

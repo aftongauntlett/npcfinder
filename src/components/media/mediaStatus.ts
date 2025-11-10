@@ -8,7 +8,6 @@ export type MediaStatus =
   | "to-play"
   | "read"
   | "to-read"
-  | "saved"
   | "to-listen";
 
 interface StatusConfig {
@@ -26,7 +25,7 @@ export const STATUS_MAP: Record<MediaStatus, StatusConfig> = {
     badgeColorClass: "bg-green-500",
   },
   "to-watch": {
-    label: "To Watch",
+    label: "Watching",
     icon: Clock,
     colorClass: "text-blue-600 dark:text-blue-400",
     badgeColorClass: "bg-blue-500",
@@ -38,7 +37,7 @@ export const STATUS_MAP: Record<MediaStatus, StatusConfig> = {
     badgeColorClass: "bg-green-500",
   },
   "to-play": {
-    label: "To Play",
+    label: "Playing",
     icon: Clock,
     colorClass: "text-blue-600 dark:text-blue-400",
     badgeColorClass: "bg-blue-500",
@@ -50,19 +49,13 @@ export const STATUS_MAP: Record<MediaStatus, StatusConfig> = {
     badgeColorClass: "bg-green-500",
   },
   "to-read": {
-    label: "To Read",
+    label: "Reading",
     icon: Clock,
     colorClass: "text-blue-600 dark:text-blue-400",
     badgeColorClass: "bg-blue-500",
   },
-  saved: {
-    label: "Saved",
-    icon: Check,
-    colorClass: "text-green-600 dark:text-green-400",
-    badgeColorClass: "bg-green-500",
-  },
   "to-listen": {
-    label: "To Listen",
+    label: "Listening",
     icon: Clock,
     colorClass: "text-blue-600 dark:text-blue-400",
     badgeColorClass: "bg-blue-500",

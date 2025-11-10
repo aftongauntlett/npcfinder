@@ -1,13 +1,11 @@
 import React from "react";
-import { UserPlus, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useDashboardStats } from "../../hooks/useDashboardStats";
 import { DashboardRecommendations } from "./DashboardRecommendations";
-import { FriendSearchModal } from "../shared/FriendSearchModal";
+import { UserSearch } from "../shared/UserSearch";
 import Button from "../shared/Button";
 
 interface DashboardContentProps {
-  showFriendSearch: boolean;
-  setShowFriendSearch: (show: boolean) => void;
   activeTab: string;
   handleTabChange: (tabId: string) => void;
   stats: ReturnType<typeof useDashboardStats>["data"];
@@ -23,8 +21,6 @@ interface DashboardContentProps {
  * Handles stats, tabs, and activity feeds
  */
 export const DashboardContent: React.FC<DashboardContentProps> = ({
-  showFriendSearch,
-  setShowFriendSearch,
   activeTab,
   stats: _stats,
   statsLoading: _statsLoading,
@@ -33,31 +29,52 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({
 }) => {
   return (
     <>
-      {/* Friend Search Modal */}
-      <FriendSearchModal
-        isOpen={showFriendSearch}
-        onClose={() => setShowFriendSearch(false)}
-      />
-
       {/* Tab Panels */}
       <div role="tabpanel" id={`${activeTab}-panel`}>
-        {activeTab === "recent" && (
+        {activeTab === "dashboard" && (
           <div className="bg-white dark:bg-gray-800 rounded-lg p-12 shadow-sm">
             <p className="text-gray-600 dark:text-gray-400 text-center">
-              No recent activity yet. Start by connecting with friends and
-              sharing recommendations!
+              Your dashboard stats are shown above. More widgets coming soon!
             </p>
+          </div>
+        )}
+
+        {activeTab === "friends" && (
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+              Find Friends
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Search for friends to connect with and share recommendations!
+            </p>
+            <UserSearch />
           </div>
         )}
 
         {activeTab === "recommendations" && <DashboardRecommendations />}
 
         {activeTab === "trending" && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-12 shadow-sm">
-            <p className="text-gray-600 dark:text-gray-400 text-center">
-              Trending content will appear here. Check back later to see what's
-              popular with your friends!
-            </p>
+          <div className="space-y-6">
+            {/* Recent Activity */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-12 shadow-sm">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                Recent Activity
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 text-center">
+                No recent activity yet. Start by connecting with friends and
+                sharing recommendations!
+              </p>
+            </div>
+
+            {/* Trending Content */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-12 shadow-sm">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                Trending Content
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 text-center">
+                Check back later to see what's popular with your friends!
+              </p>
+            </div>
           </div>
         )}
       </div>

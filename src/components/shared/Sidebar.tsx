@@ -306,7 +306,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
         </nav>
 
         {/* Sidebar Footer - Collapse Toggle */}
-        <div className="border-t border-gray-200 dark:border-gray-700 p-2">
+        <div className="p-2">
           <Button
             onClick={toggleCollapse}
             variant="subtle"

@@ -1,10 +1,8 @@
 import React from "react";
-import WeatherWidget from "../shared/WeatherWidget";
 
 interface SimpleLayoutProps {
   children: React.ReactNode;
   className?: string;
-  showWeather?: boolean;
 }
 
 /**
@@ -14,7 +12,6 @@ interface SimpleLayoutProps {
 const SimpleLayout: React.FC<SimpleLayoutProps> = ({
   children,
   className = "",
-  showWeather = true,
 }) => {
   return (
     <main
@@ -23,11 +20,6 @@ const SimpleLayout: React.FC<SimpleLayoutProps> = ({
       className={`min-h-screen flex flex-col focus:outline-none ${className}`}
       role="main"
     >
-      {showWeather && (
-        <div className="fixed top-4 right-6 z-50">
-          <WeatherWidget />
-        </div>
-      )}
       <div className="container mx-auto px-6 py-12 flex-1 flex flex-col">
         {children}
       </div>
