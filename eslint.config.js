@@ -40,7 +40,11 @@ export default defineConfig([
       globals: globals.browser,
       parser: tseslint.parser,
       parserOptions: {
-        project: ["./tsconfig.json", "./tsconfig.node.json"],
+        project: [
+          "./tsconfig.json",
+          "./tsconfig.node.json",
+          "./tsconfig.test.json",
+        ],
         tsconfigRootDir: import.meta.dirname,
       },
     },

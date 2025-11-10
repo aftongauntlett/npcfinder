@@ -3,3 +3,4 @@
 - Do not introduce new dependencies without asking.
 - Keep code consistent with existing patterns unless refactoring is intentional.
 - Prefer explicit, readable code over cleverness.
+- Choose the model appropriate to the task (Codex for complex code, Claude for reasoning, Grok for small tasks); do not escalate to a higher-tier model unless needed.
