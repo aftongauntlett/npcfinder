@@ -13,6 +13,18 @@ import {
   useUpdateRecipientNote as useUpdateRecipientNoteGeneric,
   useMarkRecommendationsAsOpened as useMarkRecommendationsAsOpenedGeneric,
 } from "./useRecommendations";
+import type { Recommendation } from "../services/recommendationsService.types";
+
+// Movie/TV-specific recommendation type (extends base Recommendation from service)
+export type MovieRecommendation = Recommendation & {
+  media_type: "movie" | "tv";
+  overview?: string;
+  year?: number;
+  poster_url: string | null;
+  // Additional fields added by component transformation
+  sent_at?: string;
+  consumed_at?: string | null;
+};
 
 /**
  * Get friends who have sent movie/TV recommendations
@@ -33,8 +45,11 @@ export function useMovieStats() {
 /**
  * Get movie/TV recommendations with filters
  */
-export function useMovieRecommendations(view: string, friendId?: string) {
-  return useRecommendations(view, friendId, "movies-tv");
+export function useMovieRecommendations(
+  view: "overview" | "queue" | "friend" | "hits" | "misses" | "sent",
+  friendId?: string
+) {
+  return useRecommendations<MovieRecommendation>(view, friendId, "movies-tv");
 }
 
 /**

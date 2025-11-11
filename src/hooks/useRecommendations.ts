@@ -4,18 +4,48 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+// Re-export wrapper allows swapping with mock for tests
 import * as recommendationsService from "../services/recommendationsService";
 import { queryKeys } from "../lib/queryKeys";
 import { useAuth } from "../contexts/AuthContext";
+import type { Recommendation } from "../services/recommendationsService.types";
 
-type MediaTypeKey = "movies-tv" | "song" | "music" | "books" | "games";
-type RecommendationView =
+type MediaTypeKey = "movies-tv" | "music" | "books" | "games";
+export type RecommendationView =
   | "overview"
   | "queue"
   | "hits"
   | "misses"
   | "sent"
   | "friend";
+
+/**
+ * Helper to map media type key to table name
+ */
+function tableFor(
+  mediaTypeKey: MediaTypeKey
+):
+  | "movie_recommendations"
+  | "music_recommendations"
+  | "book_recommendations"
+  | "game_recommendations" {
+  if (mediaTypeKey === "movies-tv") {
+    return "movie_recommendations";
+  } else if (mediaTypeKey === "music") {
+    return "music_recommendations";
+  } else if (mediaTypeKey === "books") {
+    return "book_recommendations";
+  } else if (mediaTypeKey === "games") {
+    return "game_recommendations";
+  } else {
+    return "movie_recommendations"; // fallback
+  }
+}
+
+/**
+ * Helper to cast service response to typed array
+ */
+const asArray = <U>(p: Promise<unknown>) => p.then((res) => res as U[]);
 
 /**
  * Generic hook to get friends who have sent recommendations
@@ -42,12 +72,8 @@ export function useFriendsWithRecs(mediaTypeKey: MediaTypeKey) {
       }
 
       // Map mediaTypeKey to service parameter for movies/music
-      const mediaType =
-        mediaTypeKey === "movies-tv"
-          ? undefined
-          : mediaTypeKey === "music"
-          ? "song"
-          : undefined;
+      // undefined includes all types: movies-tv gets both movie & tv, music gets both song & album
+      const mediaType = undefined;
 
       return recommendationsService.getFriendsWithRecommendations(
         user.id,
@@ -79,12 +105,8 @@ export function useQuickStats(mediaTypeKey: MediaTypeKey) {
       }
 
       // Map mediaTypeKey to service parameter for movies/music
-      const mediaType =
-        mediaTypeKey === "movies-tv"
-          ? undefined
-          : mediaTypeKey === "music"
-          ? "song"
-          : undefined;
+      // undefined includes all types: movies-tv gets both movie & tv, music gets both song & album
+      const mediaType = undefined;
 
       return recommendationsService.getQuickStats(
         user.id,
@@ -97,8 +119,9 @@ export function useQuickStats(mediaTypeKey: MediaTypeKey) {
 
 /**
  * Generic hook to get recommendations with filters
+ * @template T - Recommendation type (e.g., MusicRecommendation, MovieRecommendation)
  */
-export function useRecommendations(
+export function useRecommendations<T = Recommendation>(
   view: RecommendationView,
   friendId: string | undefined,
   mediaTypeKey: MediaTypeKey
@@ -111,125 +134,171 @@ export function useRecommendations(
       if (!user?.id) throw new Error("Not authenticated");
 
       if (view === "overview") {
-        return [];
+        return [] as T[];
       }
 
       // Books use separate service functions
       if (mediaTypeKey === "books") {
         if (view === "friend" && friendId) {
-          return recommendationsService.getBookRecommendationsFromFriend(
-            user.id,
-            friendId
+          return asArray<T>(
+            recommendationsService.getBookRecommendationsFromFriend(
+              user.id,
+              friendId
+            )
           );
         }
         if (view === "queue") {
-          return recommendationsService.getBookRecommendations(user.id, {
-            direction: "received",
-            status: "pending",
-          });
+          return asArray<T>(
+            recommendationsService.getBookRecommendations(user.id, {
+              direction: "received",
+              status: "pending",
+            })
+          );
         }
         if (view === "hits") {
-          return recommendationsService.getBookRecommendations(user.id, {
-            direction: "received",
-            status: "hit",
-          });
+          return asArray<T>(
+            recommendationsService.getBookRecommendations(user.id, {
+              direction: "received",
+              status: "hit",
+            })
+          );
         }
         if (view === "misses") {
-          return recommendationsService.getBookRecommendations(user.id, {
-            direction: "received",
-            status: "miss",
-          });
+          return asArray<T>(
+            recommendationsService.getBookRecommendations(user.id, {
+              direction: "received",
+              status: "miss",
+            })
+          );
         }
         if (view === "sent") {
-          return recommendationsService.getBookRecommendations(user.id, {
-            direction: "sent",
-          });
+          return asArray<T>(
+            recommendationsService.getBookRecommendations(user.id, {
+              direction: "sent",
+            })
+          );
         }
-        return [];
+        return [] as T[];
       }
 
       // Games use separate service functions
       if (mediaTypeKey === "games") {
         if (view === "friend" && friendId) {
-          return recommendationsService.getGameRecommendationsFromFriend(
-            user.id,
-            friendId
+          return asArray<T>(
+            recommendationsService.getGameRecommendationsFromFriend(
+              user.id,
+              friendId
+            )
           );
         }
         if (view === "queue") {
-          return recommendationsService.getGameRecommendations(user.id, {
-            direction: "received",
-            status: "pending",
-          });
+          return asArray<T>(
+            recommendationsService.getGameRecommendations(user.id, {
+              direction: "received",
+              status: "pending",
+            })
+          );
         }
         if (view === "hits") {
-          return recommendationsService.getGameRecommendations(user.id, {
-            direction: "received",
-            status: "hit",
-          });
+          return asArray<T>(
+            recommendationsService.getGameRecommendations(user.id, {
+              direction: "received",
+              status: "hit",
+            })
+          );
         }
         if (view === "misses") {
-          return recommendationsService.getGameRecommendations(user.id, {
-            direction: "received",
-            status: "miss",
-          });
+          return asArray<T>(
+            recommendationsService.getGameRecommendations(user.id, {
+              direction: "received",
+              status: "miss",
+            })
+          );
         }
         if (view === "sent") {
-          return recommendationsService.getGameRecommendations(user.id, {
-            direction: "sent",
-          });
+          return asArray<T>(
+            recommendationsService.getGameRecommendations(user.id, {
+              direction: "sent",
+            })
+          );
         }
-        return [];
+        return [] as T[];
       }
 
       // Movies/Music use the original service functions
-      const mediaType =
-        mediaTypeKey === "movies-tv"
-          ? undefined
-          : mediaTypeKey === "music"
-          ? "song"
-          : undefined;
+      // undefined includes all types: movies-tv gets both movie & tv, music gets both song & album
+      const mediaType = undefined;
 
       if (view === "friend" && friendId) {
-        return recommendationsService.getRecommendationsFromFriend(
-          user.id,
-          friendId,
-          mediaType as "song" | "album" | "movie" | "tv" | undefined
+        return asArray<T>(
+          recommendationsService.getRecommendationsFromFriend(
+            user.id,
+            friendId,
+            mediaType as "song" | "album" | "movie" | "tv" | undefined
+          )
         );
       }
 
       if (view === "queue") {
-        return recommendationsService.getRecommendations(user.id, {
-          direction: "received",
-          status: "pending",
-          mediaType: mediaType as "song" | "album" | "movie" | "tv" | undefined,
-        });
+        return asArray<T>(
+          recommendationsService.getRecommendations(user.id, {
+            direction: "received",
+            status: "pending",
+            mediaType: mediaType as
+              | "song"
+              | "album"
+              | "movie"
+              | "tv"
+              | undefined,
+          })
+        );
       }
 
       if (view === "hits") {
-        return recommendationsService.getRecommendations(user.id, {
-          direction: "received",
-          status: "hit",
-          mediaType: mediaType as "song" | "album" | "movie" | "tv" | undefined,
-        });
+        return asArray<T>(
+          recommendationsService.getRecommendations(user.id, {
+            direction: "received",
+            status: "hit",
+            mediaType: mediaType as
+              | "song"
+              | "album"
+              | "movie"
+              | "tv"
+              | undefined,
+          })
+        );
       }
 
       if (view === "misses") {
-        return recommendationsService.getRecommendations(user.id, {
-          direction: "received",
-          status: "miss",
-          mediaType: mediaType as "song" | "album" | "movie" | "tv" | undefined,
-        });
+        return asArray<T>(
+          recommendationsService.getRecommendations(user.id, {
+            direction: "received",
+            status: "miss",
+            mediaType: mediaType as
+              | "song"
+              | "album"
+              | "movie"
+              | "tv"
+              | undefined,
+          })
+        );
       }
 
       if (view === "sent") {
-        return recommendationsService.getRecommendations(user.id, {
-          direction: "sent",
-          mediaType: mediaType as "song" | "album" | "movie" | "tv" | undefined,
-        });
+        return asArray<T>(
+          recommendationsService.getRecommendations(user.id, {
+            direction: "sent",
+            mediaType: mediaType as
+              | "song"
+              | "album"
+              | "movie"
+              | "tv"
+              | undefined,
+          })
+        );
       }
 
-      return [];
+      return [] as T[];
     },
     enabled: view !== "overview" && !!user?.id, // Don't fetch for overview or if not authenticated
   });
@@ -250,28 +319,10 @@ export function useUpdateStatus(mediaTypeKey: MediaTypeKey) {
       status: string;
       mediaType?: "movie" | "tv" | "song" | "album";
     }) => {
-      // Map media type to table name
-      let tableName:
-        | "movie_recommendations"
-        | "music_recommendations"
-        | "book_recommendations"
-        | "game_recommendations";
-      if (mediaTypeKey === "movies-tv") {
-        tableName = "movie_recommendations";
-      } else if (mediaTypeKey === "music" || mediaTypeKey === "song") {
-        tableName = "music_recommendations";
-      } else if (mediaTypeKey === "books") {
-        tableName = "book_recommendations";
-      } else if (mediaTypeKey === "games") {
-        tableName = "game_recommendations";
-      } else {
-        tableName = "movie_recommendations"; // fallback
-      }
-
       return recommendationsService.updateRecommendationStatus(
         recId,
         status as "pending" | "consumed" | "hit" | "miss",
-        tableName
+        tableFor(mediaTypeKey)
       );
     },
     onSuccess: () => {
@@ -301,22 +352,10 @@ export function useDeleteRec(mediaTypeKey: MediaTypeKey) {
 
   return useMutation({
     mutationFn: (recId: string) => {
-      // Map media type to table name
-      let tableName:
-        | "movie_recommendations"
-        | "music_recommendations"
-        | "book_recommendations";
-      if (mediaTypeKey === "movies-tv") {
-        tableName = "movie_recommendations";
-      } else if (mediaTypeKey === "music" || mediaTypeKey === "song") {
-        tableName = "music_recommendations";
-      } else if (mediaTypeKey === "books") {
-        tableName = "book_recommendations";
-      } else {
-        tableName = "movie_recommendations"; // fallback
-      }
-
-      return recommendationsService.deleteRecommendation(recId, tableName);
+      return recommendationsService.deleteRecommendation(
+        recId,
+        tableFor(mediaTypeKey)
+      );
     },
     onSuccess: () => {
       // Invalidate specific queries for this media type
@@ -345,22 +384,11 @@ export function useUpdateSenderNote(mediaTypeKey: MediaTypeKey) {
 
   return useMutation({
     mutationFn: ({ recId, note }: { recId: string; note: string }) => {
-      // Map media type to table name
-      let tableName:
-        | "movie_recommendations"
-        | "music_recommendations"
-        | "book_recommendations";
-      if (mediaTypeKey === "movies-tv") {
-        tableName = "movie_recommendations";
-      } else if (mediaTypeKey === "music" || mediaTypeKey === "song") {
-        tableName = "music_recommendations";
-      } else if (mediaTypeKey === "books") {
-        tableName = "book_recommendations";
-      } else {
-        tableName = "movie_recommendations"; // fallback
-      }
-
-      return recommendationsService.updateSenderNote(recId, note, tableName);
+      return recommendationsService.updateSenderNote(
+        recId,
+        note,
+        tableFor(mediaTypeKey)
+      );
     },
     onSuccess: () => {
       // Invalidate only recommendation queries for this media type
@@ -382,22 +410,11 @@ export function useUpdateRecipientNote(mediaTypeKey: MediaTypeKey) {
 
   return useMutation({
     mutationFn: ({ recId, note }: { recId: string; note: string }) => {
-      // Map media type to table name
-      let tableName:
-        | "movie_recommendations"
-        | "music_recommendations"
-        | "book_recommendations";
-      if (mediaTypeKey === "movies-tv") {
-        tableName = "movie_recommendations";
-      } else if (mediaTypeKey === "music" || mediaTypeKey === "song") {
-        tableName = "music_recommendations";
-      } else if (mediaTypeKey === "books") {
-        tableName = "book_recommendations";
-      } else {
-        tableName = "movie_recommendations"; // fallback
-      }
-
-      return recommendationsService.updateRecipientNote(recId, note, tableName);
+      return recommendationsService.updateRecipientNote(
+        recId,
+        note,
+        tableFor(mediaTypeKey)
+      );
     },
     onSuccess: () => {
       // Invalidate only recommendation queries for this media type
@@ -422,22 +439,10 @@ export function useMarkRecommendationsAsOpened(mediaTypeKey: MediaTypeKey) {
     mutationFn: () => {
       if (!user?.id) throw new Error("Not authenticated");
 
-      // Map media type to table name
-      let tableName:
-        | "movie_recommendations"
-        | "music_recommendations"
-        | "book_recommendations";
-      if (mediaTypeKey === "movies-tv") {
-        tableName = "movie_recommendations";
-      } else if (mediaTypeKey === "music" || mediaTypeKey === "song") {
-        tableName = "music_recommendations";
-      } else if (mediaTypeKey === "books") {
-        tableName = "book_recommendations";
-      } else {
-        tableName = "movie_recommendations"; // fallback
-      }
-
-      return recommendationsService.markAllPendingAsOpened(user.id, tableName);
+      return recommendationsService.markAllPendingAsOpened(
+        user.id,
+        tableFor(mediaTypeKey)
+      );
     },
     onSuccess: () => {
       // Invalidate dashboard stats to update badge count

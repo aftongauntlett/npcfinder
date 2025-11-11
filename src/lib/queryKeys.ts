@@ -1,10 +1,10 @@
-/**
- * TanStack Query Keys
- * Centralized query key factory for consistent caching
- */
+// TanStack Query Keys
+// Centralized query key factory for consistent caching
 
-// Type-safe media type union
-type MediaType = "movies-tv" | "music" | "song" | "books" | "games";
+// UI-level media type groupings (used for routing/tabs and cache keys)
+// Note: These differ from DB media_type values (movie/tv/song/album/book/game)
+// to support grouped views like "movies-tv" and "music"
+type MediaType = "movies-tv" | "music" | "books" | "games";
 type RecommendationView =
   | "overview"
   | "queue"

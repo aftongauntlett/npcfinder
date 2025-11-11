@@ -14,6 +14,42 @@ import {
   useMarkRecommendationsAsOpened as useMarkRecommendationsAsOpenedGeneric,
 } from "./useRecommendations";
 
+// Game-specific recommendation type
+// Note: Games use separate schema, not part of base Recommendation type
+export interface GameRecommendation {
+  id: string;
+  from_user_id: string;
+  to_user_id: string;
+  external_id: string;
+  title: string;
+  poster_url: string | null;
+  recommendation_type: string;
+  status: string;
+  sent_message?: string;
+  sender_note?: string;
+  recipient_note?: string;
+  created_at: string;
+  watched_at?: string;
+  opened_at?: string;
+  sender_name?: string;
+  recipient_name?: string;
+  // Game-specific fields
+  name?: string;
+  slug?: string;
+  platforms?: string;
+  genres?: string;
+  released?: string;
+  background_image?: string;
+  rating?: number;
+  metacritic?: number;
+  playtime?: number;
+  played_at?: string;
+  sent_at?: string;
+  consumed_at?: string | null;
+  comment?: string | null;
+  sender_comment?: string | null;
+}
+
 /**
  * Get friends who have sent game recommendations
  */
@@ -31,8 +67,11 @@ export function useGameStats() {
 /**
  * Get game recommendations with filters
  */
-export function useGameRecommendations(view: string, friendId?: string) {
-  return useRecommendations(view, friendId, "games");
+export function useGameRecommendations(
+  view: "overview" | "queue" | "friend" | "hits" | "misses" | "sent",
+  friendId?: string
+) {
+  return useRecommendations<GameRecommendation>(view, friendId, "games");
 }
 
 /**

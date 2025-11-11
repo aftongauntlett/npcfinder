@@ -1,7 +1,5 @@
-/**
- * TanStack Query hooks for Music page
- * Delegates to generic useRecommendations hooks
- */
+// TanStack Query hooks for Music page
+// Delegates to generic useRecommendations hooks
 
 import {
   useFriendsWithRecs,
@@ -11,10 +9,21 @@ import {
   useDeleteRec,
   useUpdateSenderNote as useUpdateSenderNoteGeneric,
 } from "./useRecommendations";
+import type { Recommendation } from "../services/recommendationsService.types";
 
-/**
- * Get friends who have sent music recommendations
- */
+// Music-specific recommendation type (extends base Recommendation from service)
+// Note: Components may transform this further to match their BaseRecommendation interface
+export type MusicRecommendation = Recommendation & {
+  media_type: "song" | "album";
+  artist: string;
+  album?: string;
+  year?: number;
+  poster_url: string | null;
+  // Additional fields added by component transformation
+  sent_at?: string;
+  consumed_at?: string | null;
+};
+
 export function useFriendsWithMusicRecs() {
   return useFriendsWithRecs("music");
 }
@@ -26,11 +35,12 @@ export function useMusicStats() {
   return useQuickStats("music");
 }
 
-/**
- * Get music recommendations with filters
- */
-export function useMusicRecommendations(view: string, friendId?: string) {
-  return useRecommendations(view, friendId, "music");
+// Get music recommendations with filters
+export function useMusicRecommendations(
+  view: "overview" | "queue" | "friend" | "hits" | "misses" | "sent",
+  friendId?: string
+) {
+  return useRecommendations<MusicRecommendation>(view, friendId, "music");
 }
 
 /**

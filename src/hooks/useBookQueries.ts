@@ -12,6 +12,7 @@ import {
   useUpdateSenderNote as useUpdateSenderNoteGeneric,
   useUpdateRecipientNote as useUpdateRecipientNoteGeneric,
   useMarkRecommendationsAsOpened as useMarkRecommendationsAsOpenedGeneric,
+  type RecommendationView,
 } from "./useRecommendations";
 
 /**
@@ -31,7 +32,10 @@ export function useBookStats() {
 /**
  * Get book recommendations with filters
  */
-export function useBookRecommendations(view: string, friendId?: string) {
+export function useBookRecommendations(
+  view: RecommendationView,
+  friendId?: string
+) {
   return useRecommendations(view, friendId, "books");
 }
 
