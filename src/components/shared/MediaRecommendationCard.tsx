@@ -9,27 +9,8 @@ import {
   Edit3,
 } from "lucide-react";
 import ConfirmationModal from "./ConfirmationModal";
-import ActionButton from "./ActionButton";
 import Button from "./Button";
-
-interface BaseRecommendation {
-  id: string;
-  title: string;
-  status:
-    | "pending"
-    | "listened"
-    | "watched"
-    | "read"
-    | "played"
-    | "hit"
-    | "miss";
-  sent_message: string | null;
-  comment: string | null;
-  sender_comment: string | null; // Sender's own note on what they sent
-  opened_at?: string | null;
-  from_user_id: string;
-  to_user_id: string;
-}
+import type { BaseRecommendation } from "./types";
 
 interface MediaRecommendationCardProps<T extends BaseRecommendation> {
   rec: T;
@@ -183,11 +164,18 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
             <>
               {/* Hit/Miss/Comment buttons for received */}
               <div className="flex items-center gap-2">
-                <ActionButton
-                  icon={ThumbsUp}
+                <Button
+                  size="icon"
+                  variant={rec.status === "hit" ? "primary" : "subtle"}
+                  icon={<ThumbsUp />}
                   onClick={() => void onStatusUpdate(rec.id, "hit")}
-                  variant="success"
-                  isActive={rec.status === "hit"}
+                  aria-label={
+                    rec.status === "hit"
+                      ? "Hit!"
+                      : `Mark as Hit (private feedback to ${
+                          senderName || "sender"
+                        })`
+                  }
                   title={
                     rec.status === "hit"
                       ? "Hit!"
@@ -195,12 +183,24 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
                           senderName || "sender"
                         })`
                   }
+                  className={
+                    rec.status === "hit"
+                      ? ""
+                      : "hover:bg-green-100 hover:text-green-600 dark:hover:bg-green-900/30 dark:hover:text-green-400"
+                  }
                 />
-                <ActionButton
-                  icon={ThumbsDown}
+                <Button
+                  size="icon"
+                  variant={rec.status === "miss" ? "danger" : "subtle"}
+                  icon={<ThumbsDown />}
                   onClick={() => void onStatusUpdate(rec.id, "miss")}
-                  variant="danger"
-                  isActive={rec.status === "miss"}
+                  aria-label={
+                    rec.status === "miss"
+                      ? "Miss"
+                      : `Mark as Miss (private feedback to ${
+                          senderName || "sender"
+                        })`
+                  }
                   title={
                     rec.status === "miss"
                       ? "Miss"
@@ -211,14 +211,19 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
                 />
                 {/* Comment button - adds recipient's note */}
                 {!isAddingComment && (
-                  <ActionButton
-                    icon={rec.comment ? Edit3 : MessageSquare}
+                  <Button
+                    size="icon"
+                    variant={rec.comment ? "primary" : "subtle"}
+                    icon={rec.comment ? <Edit3 /> : <MessageSquare />}
                     onClick={() => {
                       setCommentText(rec.comment || "");
                       setIsAddingComment(true);
                     }}
-                    variant="comment"
-                    isActive={!!rec.comment}
+                    aria-label={
+                      rec.comment
+                        ? "Edit your note"
+                        : `Add private note for ${senderName || "sender"}`
+                    }
                     title={
                       rec.comment
                         ? "Edit your note"
@@ -227,10 +232,12 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
                   />
                 )}
                 {/* Delete button */}
-                <ActionButton
-                  icon={Trash2}
-                  onClick={handleUnsend}
+                <Button
+                  size="icon"
                   variant="danger"
+                  icon={<Trash2 />}
+                  onClick={handleUnsend}
+                  aria-label="Delete"
                   title="Delete"
                 />
               </div>
@@ -275,14 +282,17 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
 
               {/* Comment button - adds sender's note */}
               {!isAddingSenderComment && onUpdateSenderComment && (
-                <ActionButton
-                  icon={rec.sender_comment ? Edit3 : MessageSquare}
+                <Button
+                  size="icon"
+                  variant={rec.sender_comment ? "primary" : "subtle"}
+                  icon={rec.sender_comment ? <Edit3 /> : <MessageSquare />}
                   onClick={() => {
                     setSenderCommentText(rec.sender_comment || "");
                     setIsAddingSenderComment(true);
                   }}
-                  variant="comment"
-                  isActive={!!rec.sender_comment}
+                  aria-label={
+                    rec.sender_comment ? "Edit your note" : "Add your note"
+                  }
                   title={
                     rec.sender_comment ? "Edit your note" : "Add your note"
                   }
@@ -292,20 +302,26 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
               {/* Action button - Undo for unsent, Delete for opened/rated */}
               {rec.status === "pending" && !rec.opened_at ? (
                 // Unsend (undo) - not yet opened
-                <ActionButton
-                  icon={Undo2}
+                <Button
+                  size="icon"
+                  variant="subtle"
+                  icon={<Undo2 />}
                   onClick={handleUnsend}
-                  variant="default"
                   disabled={isDeleting}
+                  aria-label="Unsend (recipient hasn't seen it yet)"
                   title="Unsend (recipient hasn't seen it yet)"
                 />
               ) : (
                 // Delete - opened or rated
-                <ActionButton
-                  icon={Trash2}
-                  onClick={handleUnsend}
+                <Button
+                  size="icon"
                   variant="danger"
+                  icon={<Trash2 />}
+                  onClick={handleUnsend}
                   disabled={isDeleting}
+                  aria-label={
+                    rec.opened_at ? "Delete (recipient has seen it)" : "Delete"
+                  }
                   title={
                     rec.opened_at ? "Delete (recipient has seen it)" : "Delete"
                   }
@@ -432,4 +448,6 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
   );
 }
 
-export default React.memo(MediaRecommendationCard);
+export default MediaRecommendationCard as <T extends BaseRecommendation>(
+  props: MediaRecommendationCardProps<T>
+) => React.JSX.Element;

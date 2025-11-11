@@ -4,10 +4,8 @@ import SendMediaModal from "../../shared/SendMediaModal";
 import { searchBooks } from "../../../utils/bookSearchAdapters";
 import MediaRecommendationCard from "../../shared/MediaRecommendationCard";
 import GroupedSentMediaCard from "../../shared/GroupedSentMediaCard";
-import {
-  InlineRecommendationsLayout,
-  BaseRecommendation,
-} from "../../shared/InlineRecommendationsLayout";
+import { InlineRecommendationsLayout } from "../../shared/InlineRecommendationsLayout";
+import type { BaseRecommendation } from "../../shared/types";
 import ContentLayout from "../../layouts/ContentLayout";
 import MainLayout from "../../layouts/MainLayout";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -76,28 +74,28 @@ const BooksSuggestions: React.FC<BooksSuggestionsProps> = ({
     });
 
     // Add names from hits data (sender_name)
-    hitsData.forEach((rec: any) => {
+    hitsData.forEach((rec) => {
       if (rec.sender_name && rec.from_user_id) {
         map.set(rec.from_user_id, rec.sender_name);
       }
     });
 
     // Add names from misses data (sender_name)
-    missesData.forEach((rec: any) => {
+    missesData.forEach((rec) => {
       if (rec.sender_name && rec.from_user_id) {
         map.set(rec.from_user_id, rec.sender_name);
       }
     });
 
     // Add names from pending data (sender_name)
-    pendingData.forEach((rec: any) => {
+    pendingData.forEach((rec) => {
       if (rec.sender_name && rec.from_user_id) {
         map.set(rec.from_user_id, rec.sender_name);
       }
     });
 
     // Add recipients from sent data (recipient_name)
-    sentData.forEach((rec: any) => {
+    sentData.forEach((rec) => {
       if (rec.recipient_name && rec.to_user_id) {
         map.set(rec.to_user_id, rec.recipient_name);
       }
@@ -182,7 +180,7 @@ const BooksSuggestions: React.FC<BooksSuggestionsProps> = ({
         onDelete={deleteRecommendation}
         onUpdateSenderComment={updateSenderComment}
         renderMediaArt={(r) => {
-          const bookRec = r as unknown as BookRecommendation;
+          const bookRec = r;
           return bookRec.thumbnail_url ? (
             <img
               src={bookRec.thumbnail_url}
@@ -196,7 +194,7 @@ const BooksSuggestions: React.FC<BooksSuggestionsProps> = ({
           );
         }}
         renderMediaInfo={(r) => {
-          const bookRec = r as unknown as BookRecommendation;
+          const bookRec = r;
           return (
             <>
               <div className="font-medium text-gray-900 dark:text-white truncate">
@@ -226,7 +224,6 @@ const BooksSuggestions: React.FC<BooksSuggestionsProps> = ({
 
   const renderGroupedSentCard = (
     mediaItem: BookRecommendation,
-    _recipients: Array<{ name: string; recId: string; status: string }>,
     index: number
   ) => {
     // Find all sent items with the same external_id to get all recipients
@@ -289,76 +286,84 @@ const BooksSuggestions: React.FC<BooksSuggestionsProps> = ({
   };
 
   // Transform data for inline layout
-  const hits: BookRecommendation[] = (hitsData || []).map((rec: any) => ({
+  const hits: BookRecommendation[] = (hitsData || []).map((rec) => ({
     ...rec,
-    sent_message: rec.sent_message || null,
-    comment: rec.recipient_note || null,
-    sender_comment: rec.sender_note || null,
+    sent_message: rec.sent_message ?? null,
+    comment: rec.recipient_note ?? null,
+    sender_comment: rec.sender_note ?? null,
     sent_at: rec.created_at,
-    thumbnail_url: rec.thumbnail_url || null,
-    read_at: rec.read_at || null,
-    description: rec.description || null,
-    published_date: rec.published_date || null,
-    author: rec.authors || null,
-    isbn: rec.isbn || null,
-    page_count: rec.page_count || null,
+    thumbnail_url: rec.poster_url ?? null,
+    read_at: rec.watched_at ?? null,
+    consumed_at: rec.watched_at ?? null,
+    description: rec.overview ?? null,
+    published_date: rec.release_date ?? null,
+    authors: rec.artist ?? null,
+    isbn: null, // Not in base Recommendation
+    page_count: null, // Not in base Recommendation
+    poster_url: rec.poster_url ?? null,
     status: "hit" as const,
   }));
 
-  const misses: BookRecommendation[] = (missesData || []).map((rec: any) => ({
+  const misses: BookRecommendation[] = (missesData || []).map((rec) => ({
     ...rec,
-    sent_message: rec.sent_message || null,
-    comment: rec.recipient_note || null,
-    sender_comment: rec.sender_note || null,
+    sent_message: rec.sent_message ?? null,
+    comment: rec.recipient_note ?? null,
+    sender_comment: rec.sender_note ?? null,
     sent_at: rec.created_at,
-    thumbnail_url: rec.thumbnail_url || null,
-    read_at: rec.read_at || null,
-    description: rec.description || null,
-    published_date: rec.published_date || null,
-    author: rec.authors || null,
-    isbn: rec.isbn || null,
-    page_count: rec.page_count || null,
+    thumbnail_url: rec.poster_url ?? null,
+    read_at: rec.watched_at ?? null,
+    consumed_at: rec.watched_at ?? null,
+    description: rec.overview ?? null,
+    published_date: rec.release_date ?? null,
+    authors: rec.artist ?? null,
+    isbn: null,
+    page_count: null,
+    poster_url: rec.poster_url ?? null,
     status: "miss" as const,
   }));
 
-  const sent: BookRecommendation[] = (sentData || []).map((rec: any) => ({
+  const sent: BookRecommendation[] = (sentData || []).map((rec) => ({
     ...rec,
-    sent_message: rec.sent_message || null,
-    comment: rec.recipient_note || null,
-    sender_comment: rec.sender_note || null,
+    sent_message: rec.sent_message ?? null,
+    comment: rec.recipient_note ?? null,
+    sender_comment: rec.sender_note ?? null,
     sent_at: rec.created_at,
-    thumbnail_url: rec.thumbnail_url || null,
-    read_at: rec.read_at || null,
-    description: rec.description || null,
-    published_date: rec.published_date || null,
-    author: rec.authors || null,
-    isbn: rec.isbn || null,
-    page_count: rec.page_count || null,
+    thumbnail_url: rec.poster_url ?? null,
+    read_at: rec.watched_at ?? null,
+    consumed_at: rec.watched_at ?? null,
+    description: rec.overview ?? null,
+    published_date: rec.release_date ?? null,
+    authors: rec.artist ?? null,
+    isbn: null,
+    page_count: null,
+    poster_url: rec.poster_url ?? null,
     status:
-      rec.status === "consumed" || rec.status === "read" ? "read" : rec.status,
+      rec.status === "consumed" || rec.status === "watched"
+        ? "read"
+        : rec.status,
   }));
 
   // Build friend recommendations map from pending data
   const friendRecommendations = new Map<string, BookRecommendation[]>();
 
   // Transform pending data
-  const pendingRecs: BookRecommendation[] = (pendingData || []).map(
-    (rec: any) => ({
-      ...rec,
-      sent_message: rec.sent_message || null,
-      comment: rec.recipient_note || null,
-      sender_comment: rec.sender_note || null,
-      sent_at: rec.created_at,
-      thumbnail_url: rec.thumbnail_url || null,
-      read_at: rec.read_at || null,
-      description: rec.description || null,
-      published_date: rec.published_date || null,
-      author: rec.authors || null,
-      isbn: rec.isbn || null,
-      page_count: rec.page_count || null,
-      status: "pending" as const,
-    })
-  );
+  const pendingRecs: BookRecommendation[] = (pendingData || []).map((rec) => ({
+    ...rec,
+    sent_message: rec.sent_message ?? null,
+    comment: rec.recipient_note ?? null,
+    sender_comment: rec.sender_note ?? null,
+    sent_at: rec.created_at,
+    thumbnail_url: rec.poster_url ?? null,
+    read_at: rec.watched_at ?? null,
+    consumed_at: rec.watched_at ?? null,
+    description: rec.overview ?? null,
+    published_date: rec.release_date ?? null,
+    authors: rec.artist ?? null,
+    isbn: null,
+    page_count: null,
+    poster_url: rec.poster_url ?? null,
+    status: "pending" as const,
+  }));
 
   // Group by sender
   pendingRecs.forEach((rec) => {

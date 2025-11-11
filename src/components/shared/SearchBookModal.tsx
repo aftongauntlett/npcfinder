@@ -156,7 +156,7 @@ const SearchBookModal: React.FC<SearchBookModalProps> = ({
                     <div className="flex flex-col gap-1 mt-1">
                       {result.authors && (
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {result.author}
+                          {result.authors}
                         </p>
                       )}
                       {result.release_date && (

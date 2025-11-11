@@ -4,10 +4,8 @@ import SendMediaModal from "../../shared/SendMediaModal";
 import { searchMoviesAndTV } from "../../../utils/mediaSearchAdapters";
 import MediaRecommendationCard from "../../shared/MediaRecommendationCard";
 import GroupedSentMediaCard from "../../shared/GroupedSentMediaCard";
-import {
-  InlineRecommendationsLayout,
-  BaseRecommendation,
-} from "../../shared/InlineRecommendationsLayout";
+import { InlineRecommendationsLayout } from "../../shared/InlineRecommendationsLayout";
+import type { BaseRecommendation } from "../../shared/types";
 import ContentLayout from "../../layouts/ContentLayout";
 import MainLayout from "../../layouts/MainLayout";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -74,28 +72,28 @@ const MoviesSuggestions: React.FC<MoviesSuggestionsProps> = ({
     });
 
     // Add names from hits data (sender_name)
-    hitsData.forEach((rec: any) => {
+    hitsData.forEach((rec) => {
       if (rec.sender_name && rec.from_user_id) {
         map.set(rec.from_user_id, rec.sender_name);
       }
     });
 
     // Add names from misses data (sender_name)
-    missesData.forEach((rec: any) => {
+    missesData.forEach((rec) => {
       if (rec.sender_name && rec.from_user_id) {
         map.set(rec.from_user_id, rec.sender_name);
       }
     });
 
     // Add names from pending data (sender_name)
-    pendingData.forEach((rec: any) => {
+    pendingData.forEach((rec) => {
       if (rec.sender_name && rec.from_user_id) {
         map.set(rec.from_user_id, rec.sender_name);
       }
     });
 
     // Add recipients from sent data (recipient_name)
-    sentData.forEach((rec: any) => {
+    sentData.forEach((rec) => {
       if (rec.recipient_name && rec.to_user_id) {
         map.set(rec.to_user_id, rec.recipient_name);
       }
@@ -181,12 +179,11 @@ const MoviesSuggestions: React.FC<MoviesSuggestionsProps> = ({
         onStatusUpdate={updateRecommendationStatus}
         onDelete={deleteRecommendation}
         onUpdateSenderComment={updateSenderComment}
-        renderMediaArt={(r) => {
-          const movieRec = r as unknown as MovieRecommendation;
-          return movieRec.poster_url ? (
+        renderMediaArt={(r: MovieRecommendation) => {
+          return r.poster_url ? (
             <img
-              src={movieRec.poster_url}
-              alt={movieRec.title}
+              src={r.poster_url}
+              alt={r.title}
               className="w-12 h-16 rounded object-cover"
             />
           ) : (
@@ -195,15 +192,14 @@ const MoviesSuggestions: React.FC<MoviesSuggestionsProps> = ({
             </div>
           );
         }}
-        renderMediaInfo={(r) => {
-          const movieRec = r as unknown as MovieRecommendation;
+        renderMediaInfo={(r: MovieRecommendation) => {
           return (
             <>
               <div className="flex items-center gap-2">
                 <div className="font-medium text-gray-900 dark:text-white truncate">
-                  {movieRec.title}
+                  {r.title}
                 </div>
-                {movieRec.media_type === "tv" ? (
+                {r.media_type === "tv" ? (
                   <span className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 px-2 py-0.5 rounded whitespace-nowrap">
                     <TvIcon className="w-3 h-3" />
                     TV
@@ -216,11 +212,11 @@ const MoviesSuggestions: React.FC<MoviesSuggestionsProps> = ({
                 )}
               </div>
               <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                {movieRec.release_date}
+                {r.release_date}
               </div>
-              {movieRec.overview && (
+              {r.overview && (
                 <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                  {movieRec.overview}
+                  {r.overview}
                 </div>
               )}
             </>
@@ -232,7 +228,6 @@ const MoviesSuggestions: React.FC<MoviesSuggestionsProps> = ({
 
   const renderGroupedSentCard = (
     mediaItem: MovieRecommendation,
-    _recipients: Array<{ name: string; recId: string; status: string }>,
     index: number
   ) => {
     const MediaIcon = mediaItem.media_type === "tv" ? TvIcon : Clapperboard;
@@ -303,45 +298,48 @@ const MoviesSuggestions: React.FC<MoviesSuggestionsProps> = ({
   };
 
   // Transform data for inline layout
-  const hits: MovieRecommendation[] = (hitsData || []).map((rec: any) => ({
+  const hits: MovieRecommendation[] = (hitsData || []).map((rec) => ({
     ...rec,
-    sent_message: rec.sent_message || null,
-    comment: rec.recipient_note || null,
-    sender_comment: rec.sender_note || null,
+    sent_message: rec.sent_message ?? null,
+    comment: rec.recipient_note ?? null,
+    sender_comment: rec.sender_note ?? null,
     sent_at: rec.created_at,
-    poster_url: rec.poster_url || null,
-    watched_at: rec.watched_at || null,
-    overview: rec.overview || null,
+    poster_url: rec.poster_url ?? null,
+    watched_at: rec.watched_at ?? null,
+    consumed_at: rec.watched_at ?? null,
+    overview: rec.overview ?? null,
     release_date: rec.year ? `${rec.year}` : null,
-    media_type: rec.media_type as "movie" | "tv",
+    media_type: rec.media_type,
     status: "hit" as const,
   }));
 
-  const misses: MovieRecommendation[] = (missesData || []).map((rec: any) => ({
+  const misses: MovieRecommendation[] = (missesData || []).map((rec) => ({
     ...rec,
-    sent_message: rec.sent_message || null,
-    comment: rec.recipient_note || null,
-    sender_comment: rec.sender_note || null,
+    sent_message: rec.sent_message ?? null,
+    comment: rec.recipient_note ?? null,
+    sender_comment: rec.sender_note ?? null,
     sent_at: rec.created_at,
-    poster_url: rec.poster_url || null,
-    watched_at: rec.watched_at || null,
-    overview: rec.overview || null,
+    poster_url: rec.poster_url ?? null,
+    watched_at: rec.watched_at ?? null,
+    consumed_at: rec.watched_at ?? null,
+    overview: rec.overview ?? null,
     release_date: rec.year ? `${rec.year}` : null,
-    media_type: rec.media_type as "movie" | "tv",
+    media_type: rec.media_type,
     status: "miss" as const,
   }));
 
-  const sent: MovieRecommendation[] = (sentData || []).map((rec: any) => ({
+  const sent: MovieRecommendation[] = (sentData || []).map((rec) => ({
     ...rec,
-    sent_message: rec.sent_message || null,
-    comment: rec.recipient_note || null,
-    sender_comment: rec.sender_note || null,
+    sent_message: rec.sent_message ?? null,
+    comment: rec.recipient_note ?? null,
+    sender_comment: rec.sender_note ?? null,
     sent_at: rec.created_at,
-    poster_url: rec.poster_url || null,
-    watched_at: rec.watched_at || null,
-    overview: rec.overview || null,
+    poster_url: rec.poster_url ?? null,
+    watched_at: rec.watched_at ?? null,
+    consumed_at: rec.watched_at ?? null,
+    overview: rec.overview ?? null,
     release_date: rec.year ? `${rec.year}` : null,
-    media_type: rec.media_type as "movie" | "tv",
+    media_type: rec.media_type,
     status:
       rec.status === "consumed" || rec.status === "watched"
         ? "watched"
@@ -352,21 +350,20 @@ const MoviesSuggestions: React.FC<MoviesSuggestionsProps> = ({
   const friendRecommendations = new Map<string, MovieRecommendation[]>();
 
   // Transform pending data
-  const pendingRecs: MovieRecommendation[] = (pendingData || []).map(
-    (rec: any) => ({
-      ...rec,
-      sent_message: rec.sent_message || null,
-      comment: rec.recipient_note || null,
-      sender_comment: rec.sender_note || null,
-      sent_at: rec.created_at,
-      poster_url: rec.poster_url || null,
-      watched_at: rec.watched_at || null,
-      overview: rec.overview || null,
-      release_date: rec.year ? `${rec.year}` : null,
-      media_type: rec.media_type as "movie" | "tv",
-      status: "pending" as const,
-    })
-  );
+  const pendingRecs: MovieRecommendation[] = (pendingData || []).map((rec) => ({
+    ...rec,
+    sent_message: rec.sent_message ?? null,
+    comment: rec.recipient_note ?? null,
+    sender_comment: rec.sender_note ?? null,
+    sent_at: rec.created_at,
+    poster_url: rec.poster_url ?? null,
+    watched_at: rec.watched_at ?? null,
+    consumed_at: rec.watched_at ?? null,
+    overview: rec.overview ?? null,
+    release_date: rec.year ? `${rec.year}` : null,
+    media_type: rec.media_type,
+    status: "pending" as const,
+  }));
 
   // Group by sender
   pendingRecs.forEach((rec) => {

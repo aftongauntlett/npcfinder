@@ -1,12 +1,10 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Music as MusicIcon, Headphones, Video } from "lucide-react";
 import SendMediaModal from "../shared/SendMediaModal";
 import { searchMusic } from "../../utils/mediaSearchAdapters";
 import MediaRecommendationCard from "../shared/MediaRecommendationCard";
-import {
-  MediaRecommendationsLayout,
-  BaseRecommendation,
-} from "../shared/MediaRecommendationsLayout";
+import { MediaRecommendationsLayout } from "../shared/MediaRecommendationsLayout";
+import type { BaseRecommendation } from "../shared/types";
 import {
   useFriendsWithMusicRecs,
   useMusicStats,
@@ -16,28 +14,19 @@ import {
   useUpdateSenderNote,
 } from "../../hooks/useMusicQueries";
 
-// Extend BaseRecommendation with music-specific fields
+// Music-specific recommendation type extending base
 interface MusicRecommendation extends BaseRecommendation {
-  artist: string | null;
-  album?: string | null;
-  media_type: string;
-  year: number | null;
+  artist: string;
+  album?: string;
+  year?: number;
+  media_type: "song" | "album";
   recommendation_type: "listen" | "watch" | "rewatch" | "relisten" | "study";
-  poster_url: string | null;
-  // Override with music-specific status types
   status: "pending" | "listened" | "hit" | "miss";
-  consumed_at?: string | null; // Music-specific timestamp field
-  opened_at: string | null; // When recipient first viewed this recommendation
-  sender_note: string | null; // Sender's own note about this recommendation
-  recipient_note: string | null; // Recipient's note
-  sender_comment: string | null; // Required by MediaRecommendationCard
+  sender_comment: string | null;
 }
 
-/**
- * Music Recommendations Dashboard
- * Calm, friend-based music sharing - discover new music through trusted recommendations
- */
-const Music: React.FC = () => {
+// Calm, friend-based music sharing - discover new music through trusted recommendations
+const Music = () => {
   // Local UI state (must be declared before using in hooks)
   const [selectedView, setSelectedView] = useState<
     "overview" | "friend" | "hits" | "misses" | "sent"
@@ -58,39 +47,27 @@ const Music: React.FC = () => {
   const deleteRecMutation = useDeleteRecommendation();
   const updateSenderNoteMutation = useUpdateSenderNote();
 
-  // Transform raw recommendations to component format with useMemo
+  // Transform raw recommendations to music-specific format
   const recommendations: MusicRecommendation[] = useMemo(() => {
     return rawRecommendations.map((rec) => {
-      // Type assertion since we know these are music recommendations from useMusicRecommendations
-      const musicRec = rec as unknown as {
-        artist?: string;
-        album?: string;
-        year?: number;
-        poster_url?: string;
-        watched_at?: string;
-        listened_at?: string;
-        media_type?: "song" | "album";
-      };
       return {
         ...rec,
         sent_message: rec.sent_message || null,
         comment: rec.recipient_note || null,
         sender_comment: rec.sender_note || null,
-        sender_note: rec.sender_note || null,
-        recipient_note: rec.recipient_note || null,
         sent_at: rec.created_at,
-        artist: musicRec.artist || null,
-        album: musicRec.album || null,
-        year: musicRec.year || null,
-        poster_url: musicRec.poster_url || null,
-        consumed_at: musicRec.watched_at || musicRec.listened_at || null,
+        artist: rec.artist || "",
+        album: rec.album,
+        year: rec.year,
+        poster_url: rec.poster_url || null,
+        consumed_at: rec.watched_at || null,
         opened_at: rec.opened_at || null,
-        media_type: musicRec.media_type || ("song" as "song" | "album"),
+        media_type: rec.media_type || "song",
         status:
           rec.status === "consumed" || rec.status === "watched"
-            ? "listened"
+            ? ("listened" as const)
             : rec.status,
-      } as MusicRecommendation;
+      };
     });
   }, [rawRecommendations]);
 
@@ -124,7 +101,6 @@ const Music: React.FC = () => {
     await updateSenderNoteMutation.mutateAsync({ recId, note: senderComment });
   };
 
-  // Render a music recommendation card
   const renderRecommendationCard = (
     rec: MusicRecommendation,
     isReceived: boolean
@@ -140,12 +116,11 @@ const Music: React.FC = () => {
         onStatusUpdate={updateRecommendationStatus}
         onDelete={deleteRecommendation}
         onUpdateSenderComment={updateSenderComment}
-        renderMediaArt={(r) => {
-          const musicRec = r as unknown as MusicRecommendation;
-          return musicRec.poster_url ? (
+        renderMediaArt={(r: MusicRecommendation) => {
+          return r.poster_url ? (
             <img
-              src={musicRec.poster_url}
-              alt={musicRec.title}
+              src={r.poster_url}
+              alt={r.title}
               className="w-12 h-12 rounded object-cover"
             />
           ) : (
@@ -154,21 +129,20 @@ const Music: React.FC = () => {
             </div>
           );
         }}
-        renderMediaInfo={(r) => {
-          const musicRec = r as unknown as MusicRecommendation;
+        renderMediaInfo={(r: MusicRecommendation) => {
           return (
             <>
               <div className="flex items-center gap-2">
                 <div className="font-medium text-gray-900 dark:text-white truncate">
-                  {musicRec.title}
+                  {r.title}
                 </div>
-                {musicRec.recommendation_type === "watch" && (
+                {r.recommendation_type === "watch" && (
                   <span className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 px-2 py-0.5 rounded whitespace-nowrap">
                     <Video className="w-3 h-3" />
                     Watch
                   </span>
                 )}
-                {musicRec.recommendation_type === "listen" && (
+                {r.recommendation_type === "listen" && (
                   <span className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 rounded whitespace-nowrap">
                     <Headphones className="w-3 h-3" />
                     Listen
@@ -176,9 +150,9 @@ const Music: React.FC = () => {
                 )}
               </div>
               <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                {musicRec.artist}
-                {musicRec.album && ` • ${musicRec.album}`}
-                {musicRec.year && ` • ${musicRec.year}`}
+                {r.artist}
+                {r.album && ` • ${r.album}`}
+                {r.year && ` • ${r.year}`}
               </div>
             </>
           );

@@ -4,10 +4,8 @@ import SendMediaModal from "../../shared/SendMediaModal";
 import { searchMusic } from "../../../utils/mediaSearchAdapters";
 import MediaRecommendationCard from "../../shared/MediaRecommendationCard";
 import GroupedSentMediaCard from "../../shared/GroupedSentMediaCard";
-import {
-  InlineRecommendationsLayout,
-  BaseRecommendation,
-} from "../../shared/InlineRecommendationsLayout";
+import { InlineRecommendationsLayout } from "../../shared/InlineRecommendationsLayout";
+import type { BaseRecommendation } from "../../shared/types";
 import ContentLayout from "../../layouts/ContentLayout";
 import MainLayout from "../../layouts/MainLayout";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -80,14 +78,14 @@ const MusicSuggestions: React.FC<MusicSuggestionsProps> = ({
     });
 
     // Add names from all rec data
-    [...hitsData, ...missesData, ...pendingData].forEach((rec: any) => {
+    [...hitsData, ...missesData, ...pendingData].forEach((rec) => {
       if (rec.sender_name && rec.from_user_id) {
         map.set(rec.from_user_id, rec.sender_name);
       }
     });
 
     // Add recipients from sent data
-    sentData.forEach((rec: any) => {
+    sentData.forEach((rec) => {
       if (rec.recipient_name && rec.to_user_id) {
         map.set(rec.to_user_id, rec.recipient_name);
       }
@@ -141,80 +139,87 @@ const MusicSuggestions: React.FC<MusicSuggestionsProps> = ({
     }
   };
 
-  // Transform data to MusicRecommendation format
-  const hits: MusicRecommendation[] = (hitsData || []).map((rec: any) => ({
+  // Transform data to MusicRecommendation format (add UI-required fields)
+  const hits: MusicRecommendation[] = (hitsData || []).map((rec) => ({
     ...rec,
-    sent_message: rec.sent_message || null,
-    comment: rec.recipient_note || null,
-    sender_comment: rec.sender_note || null,
-    sender_note: rec.sender_note || null,
-    recipient_note: rec.recipient_note || null,
+    sent_message: rec.sent_message ?? null,
+    comment: rec.recipient_note ?? null,
+    sender_comment: rec.sender_note ?? null,
+    sender_note: rec.sender_note ?? null,
+    recipient_note: rec.recipient_note ?? null,
     sent_at: rec.created_at,
-    artist: rec.artist || null,
-    album: rec.album || null,
+    artist: rec.artist ?? null,
+    album: rec.album ?? null,
     media_type: rec.media_type || "song",
-    release_date: rec.release_date || null,
-    preview_url: rec.preview_url || null,
-    consumed_at: rec.consumed_at || null,
-    status: rec.status === "consumed" ? "listened" : rec.status,
+    release_date: rec.release_date ?? null,
+    preview_url: null, // Not provided by service
+    consumed_at: rec.watched_at ?? null,
+    status:
+      rec.status === "consumed" || rec.status === "watched"
+        ? "listened"
+        : rec.status,
   }));
 
-  const misses: MusicRecommendation[] = (missesData || []).map((rec: any) => ({
+  const misses: MusicRecommendation[] = (missesData || []).map((rec) => ({
     ...rec,
-    sent_message: rec.sent_message || null,
-    comment: rec.recipient_note || null,
-    sender_comment: rec.sender_note || null,
-    sender_note: rec.sender_note || null,
-    recipient_note: rec.recipient_note || null,
+    sent_message: rec.sent_message ?? null,
+    comment: rec.recipient_note ?? null,
+    sender_comment: rec.sender_note ?? null,
+    sender_note: rec.sender_note ?? null,
+    recipient_note: rec.recipient_note ?? null,
     sent_at: rec.created_at,
-    artist: rec.artist || null,
-    album: rec.album || null,
+    artist: rec.artist ?? null,
+    album: rec.album ?? null,
     media_type: rec.media_type || "song",
-    release_date: rec.release_date || null,
-    preview_url: rec.preview_url || null,
-    consumed_at: rec.consumed_at || null,
-    status: rec.status === "consumed" ? "listened" : rec.status,
+    release_date: rec.release_date ?? null,
+    preview_url: null,
+    consumed_at: rec.watched_at ?? null,
+    status:
+      rec.status === "consumed" || rec.status === "watched"
+        ? "listened"
+        : rec.status,
   }));
 
-  const sent: MusicRecommendation[] = (sentData || []).map((rec: any) => ({
+  const sent: MusicRecommendation[] = (sentData || []).map((rec) => ({
     ...rec,
-    sent_message: rec.sent_message || null,
-    comment: rec.recipient_note || null,
-    sender_comment: rec.sender_note || null,
-    sender_note: rec.sender_note || null,
-    recipient_note: rec.recipient_note || null,
+    sent_message: rec.sent_message ?? null,
+    comment: rec.recipient_note ?? null,
+    sender_comment: rec.sender_note ?? null,
+    sender_note: rec.sender_note ?? null,
+    recipient_note: rec.recipient_note ?? null,
     sent_at: rec.created_at,
-    artist: rec.artist || null,
-    album: rec.album || null,
+    artist: rec.artist ?? null,
+    album: rec.album ?? null,
     media_type: rec.media_type || "song",
-    release_date: rec.release_date || null,
-    preview_url: rec.preview_url || null,
-    consumed_at: rec.consumed_at || null,
-    status: rec.status === "consumed" ? "listened" : rec.status,
+    release_date: rec.release_date ?? null,
+    preview_url: null,
+    consumed_at: rec.watched_at ?? null,
+    status:
+      rec.status === "consumed" || rec.status === "watched"
+        ? "listened"
+        : rec.status,
   }));
 
   // Build friend recommendations map from pending data
   const friendRecommendations = new Map<string, MusicRecommendation[]>();
 
   // Transform pending data
-  const pendingRecs: MusicRecommendation[] = (pendingData || []).map(
-    (rec: any) => ({
-      ...rec,
-      sent_message: rec.sent_message || null,
-      comment: rec.recipient_note || null,
-      sender_comment: rec.sender_note || null,
-      sender_note: rec.sender_note || null,
-      recipient_note: rec.recipient_note || null,
-      sent_at: rec.created_at,
-      artist: rec.artist || null,
-      album: rec.album || null,
-      media_type: rec.media_type || "song",
-      release_date: rec.release_date || null,
-      preview_url: rec.preview_url || null,
-      consumed_at: rec.consumed_at || null,
-      status: "pending" as const,
-    })
-  );
+  const pendingRecs: MusicRecommendation[] = (pendingData || []).map((rec) => ({
+    ...rec,
+    sent_message: rec.sent_message ?? null,
+    comment: rec.recipient_note ?? null,
+    sender_comment: rec.sender_note ?? null,
+    sender_note: rec.sender_note ?? null,
+    recipient_note: rec.recipient_note ?? null,
+    sent_at: rec.created_at,
+    artist: rec.artist ?? null,
+    album: rec.album ?? null,
+    media_type: rec.media_type || "song",
+    release_date: rec.release_date ?? null,
+    preview_url: null,
+    consumed_at: rec.watched_at ?? null,
+    status: "pending" as const,
+  }));
 
   // Group by sender
   pendingRecs.forEach((rec) => {
@@ -242,12 +247,11 @@ const MusicSuggestions: React.FC<MusicSuggestionsProps> = ({
         onStatusUpdate={updateRecommendationStatus}
         onDelete={deleteRecommendation}
         onUpdateSenderComment={updateSenderComment}
-        renderMediaArt={(r) => {
-          const musicRec = r as unknown as MusicRecommendation;
-          return musicRec.poster_url ? (
+        renderMediaArt={(r: MusicRecommendation) => {
+          return r.poster_url ? (
             <img
-              src={musicRec.poster_url}
-              alt={musicRec.title}
+              src={r.poster_url}
+              alt={r.title}
               className="w-12 h-12 rounded object-cover"
             />
           ) : (
@@ -256,26 +260,25 @@ const MusicSuggestions: React.FC<MusicSuggestionsProps> = ({
             </div>
           );
         }}
-        renderMediaInfo={(r) => {
-          const musicRec = r as unknown as MusicRecommendation;
+        renderMediaInfo={(r: MusicRecommendation) => {
           return (
             <>
               <div className="font-medium text-gray-900 dark:text-white truncate">
-                {musicRec.title}
+                {r.title}
               </div>
-              {musicRec.artist && (
+              {r.artist && (
                 <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                  {musicRec.artist}
+                  {r.artist}
                 </div>
               )}
-              {musicRec.album && (
+              {r.album && (
                 <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                  {musicRec.album}
+                  {r.album}
                 </div>
               )}
-              {musicRec.release_date && (
+              {r.release_date && (
                 <div className="text-xs text-gray-500 dark:text-gray-400">
-                  {new Date(musicRec.release_date).getFullYear()}
+                  {new Date(r.release_date).getFullYear()}
                 </div>
               )}
             </>
@@ -287,7 +290,6 @@ const MusicSuggestions: React.FC<MusicSuggestionsProps> = ({
 
   const renderGroupedSentCard = (
     mediaItem: MusicRecommendation,
-    _recipients: Array<{ name: string; recId: string; status: string }>,
     index: number
   ) => {
     // Find all sent items with the same external_id to get all recipients
