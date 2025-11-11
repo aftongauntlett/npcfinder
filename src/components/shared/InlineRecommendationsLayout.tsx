@@ -7,29 +7,7 @@ import {
   User,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-
-export interface BaseRecommendation {
-  id: string;
-  from_user_id: string;
-  to_user_id: string;
-  external_id: string;
-  title: string;
-  status: string;
-  sent_message: string | null;
-  comment: string | null;
-  sent_at: string;
-  consumed_at?: string | null;
-  poster_url?: string | null;
-}
-
-export interface FriendSummary {
-  user_id: string;
-  display_name: string;
-  pending_count: number;
-  total_count: number;
-  hit_count: number;
-  miss_count: number;
-}
+import type { BaseRecommendation, FriendSummary } from "./";
 
 interface QuickStats {
   hits: number;
@@ -55,11 +33,7 @@ interface InlineRecommendationsLayoutProps<T extends BaseRecommendation> {
     isReceived: boolean,
     index?: number
   ) => React.ReactNode;
-  renderGroupedSentCard?: (
-    mediaItem: T,
-    recipients: Array<{ name: string; recId: string; status: string }>,
-    index: number
-  ) => React.ReactNode;
+  renderGroupedSentCard?: (mediaItem: T, index: number) => React.ReactNode;
 }
 
 type SectionType = "hits" | "misses" | "sent" | null;
@@ -273,7 +247,7 @@ export function InlineRecommendationsLayout<T extends BaseRecommendation>({
                 ? // Use grouped rendering if available
                   groupedSentItems.map((group, index) => {
                     // Use first item as the representative
-                    return renderGroupedSentCard(group[0], [], index);
+                    return renderGroupedSentCard(group[0], index);
                   })
                 : // Fallback to original rendering
                   sent.map((rec, index) =>

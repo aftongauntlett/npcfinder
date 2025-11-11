@@ -2,31 +2,7 @@ import React from "react";
 import { User, ThumbsUp, ThumbsDown, ArrowLeft } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import MediaEmptyState from "../media/MediaEmptyState";
-
-// Generic recommendation interface that all media types must conform to
-export interface BaseRecommendation {
-  id: string;
-  from_user_id: string;
-  to_user_id: string;
-  external_id: string;
-  title: string;
-  status: string; // Flexible status field - each media type can have specific values
-  sent_message: string | null;
-  comment: string | null;
-  sent_at: string;
-  consumed_at?: string | null; // Optional - maps to listened_at/watched_at/read_at/played_at
-  poster_url?: string | null;
-  // Media-specific fields can be added by extending interfaces
-}
-
-export interface FriendSummary {
-  user_id: string;
-  display_name: string;
-  pending_count: number;
-  total_count: number;
-  hit_count: number;
-  miss_count: number;
-}
+import type { BaseRecommendation, FriendSummary } from "./";
 
 interface QuickStats {
   hits: number;
