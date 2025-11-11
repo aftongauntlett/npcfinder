@@ -1,9 +1,6 @@
 import { supabase } from "./supabase";
 
-/**
- * Invite Code Management Library
- * Secure invite-only registration system
- */
+// Invite Code Management - Secure invite-only registration system
 
 export interface InviteCode {
   id: string;
@@ -27,10 +24,7 @@ interface InviteCodeResult<T> {
   error: Error | null;
 }
 
-/**
- * Generate a cryptographically secure invite code
- * Format: XXX-XXX-XXX-XXX (no ambiguous characters)
- */
+// Generate cryptographically secure invite code (XXX-XXX-XXX-XXX format, no ambiguous chars)
 export const generateSecureCode = (): string => {
   const characters = "ABCDEFGHJKMNPQRTUVWXY23456789"; // No ambiguous chars (0, O, 1, I, L, S, Z)
   const segments = 4;
@@ -49,13 +43,8 @@ export const generateSecureCode = (): string => {
   return code.join("-");
 };
 
-/**
- * Validate an invite code (check if it's valid without consuming it)
- *
- * SECURITY: Email parameter is REQUIRED for proper validation.
- * If a code has an intended_email, the provided email must match.
- * This prevents bypassing email-based restrictions.
- */
+// Validate invite code without consuming it
+// SECURITY: Email parameter required - if code has intended_email, provided email must match
 export const validateInviteCode = async (
   code: string,
   userEmail: string
@@ -73,10 +62,8 @@ export const validateInviteCode = async (
     return { data: false, error: error as Error };
   }
 };
-/**
- * Consume an invite code (mark it as used)
- * Call this after successful user registration
- */
+
+// Consume invite code after successful user registration
 export const consumeInviteCode = async (
   code: string,
   userId: string
@@ -95,10 +82,7 @@ export const consumeInviteCode = async (
   }
 };
 
-/**
- * Create a new invite code (admin only)
- * Simplified version: always 30 days expiration, max 1 use, requires email
- */
+// Create new invite code (admin only) - always 30 days expiration, max 1 use, requires email
 export const createInviteCode = async (
   intendedEmail: string
 ): Promise<InviteCodeResult<InviteCode>> => {
@@ -136,9 +120,7 @@ export const createInviteCode = async (
   }
 };
 
-/**
- * Get all invite codes (admin only)
- */
+// Get all active invite codes (admin only)
 export const getAllInviteCodes = async (): Promise<
   InviteCodeResult<InviteCode[]>
 > => {
@@ -243,29 +225,7 @@ export const revokeInviteCode = async (
   }
 };
 
-/**
- * Delete an invite code (admin only - use revoke instead when possible)
- */
-export const deleteInviteCode = async (
-  codeId: string
-): Promise<InviteCodeResult<boolean>> => {
-  try {
-    const { error } = await supabase
-      .from("invite_codes")
-      .delete()
-      .eq("id", codeId);
-
-    if (error) throw error;
-    return { data: true, error: null };
-  } catch (error) {
-    console.error("Delete invite code error:", error);
-    return { data: false, error: error as Error };
-  }
-};
-
-/**
- * Batch create invite codes (admin only)
- */
+// Batch create invite codes (admin only)
 export const batchCreateInviteCodes = async (
   count: number,
   notes?: string,

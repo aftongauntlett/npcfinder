@@ -1,7 +1,5 @@
-/**
- * Real Recommendations Service - Supabase Implementation
- * Queries movie_recommendations and music_recommendations tables
- */
+// Recommendations Service - Supabase Implementation
+// Queries movie_recommendations and music_recommendations tables
 
 import { supabase } from "../lib/supabase";
 import type {
@@ -13,7 +11,7 @@ import type {
   AddWatchlistItemData,
 } from "./recommendationsService.types";
 
-// Map of media types to table names (use views that include user names)
+// Media type to table view mapping (views include user names)
 const TABLE_MAP = {
   movie: "movie_recommendations_with_users",
   tv: "movie_recommendations_with_users",
@@ -21,9 +19,6 @@ const TABLE_MAP = {
   album: "music_recommendations_with_users",
 } as const;
 
-/**
- * Get recommendations with filters
- */
 export async function getRecommendations(
   currentUserId: string,
   filters: RecommendationFilters
@@ -73,9 +68,6 @@ export async function getRecommendations(
   return data || [];
 }
 
-/**
- * Get recommendations received from a specific friend
- */
 export async function getRecommendationsFromFriend(
   currentUserId: string,
   friendId: string,
@@ -88,9 +80,6 @@ export async function getRecommendationsFromFriend(
   });
 }
 
-/**
- * Get all friends who have sent recommendations, with stats
- */
 export async function getFriendsWithRecommendations(
   currentUserId: string,
   mediaType?: "song" | "album" | "movie" | "tv"

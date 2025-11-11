@@ -1,19 +1,11 @@
 import { supabase } from "./supabase";
 
-/**
- * Admin utilities
- * Primary admin checks should use AdminContext (useAdmin hook)
- * These functions are for direct database operations
- */
+// Admin utilities
+// SECURITY: AdminContext gates routes, RLS enforces DB-level protection
+// These functions perform direct database operations
 
-/**
- * Toggle admin status for a user (admin only)
- * Updates the is_admin field in user_profiles table
- *
- * SECURITY: This function relies on RLS policies to enforce admin-only access.
- * The database will reject attempts by non-admins to modify is_admin.
- * Additional frontend check for better UX.
- */
+// Toggle admin status for a user (admin only)
+// Frontend check provides better UX; RLS rejects unauthorized updates
 export const toggleUserAdminStatus = async (
   userId: string,
   makeAdmin: boolean

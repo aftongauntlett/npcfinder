@@ -1,6 +1,5 @@
-/**
- * Recommendations Service - Real Supabase implementation
- */
+// Recommendations Service - abstraction layer for potential environment swapping
+// Extension point: Replace .real import with mock implementation for testing if needed
+// Currently re-exports production Supabase implementation
 
-// Re-export everything from the real service
 export * from "./recommendationsService.real";

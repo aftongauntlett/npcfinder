@@ -1,18 +1,9 @@
-/**
- * Admin Service - Real Supabase Implementation
- * Handles admin-related data fetching and operations
- *
- * SECURITY NOTE: All functions in this service should only be called by authenticated
- * admin users. The AdminContext (useAdmin hook) should gate access to admin routes.
- * RLS policies provide additional backend protection.
- */
+// Admin Service - Supabase Implementation
+// SECURITY: AdminContext gates route access, RLS enforces backend protection
 
 import { supabase } from "../lib/supabase";
 
-/**
- * Verify the current user has admin privileges
- * Used as a security check before performing admin operations
- */
+// Verify current user has admin privileges before admin operations
 const verifyAdminAccess = async (): Promise<boolean> => {
   try {
     const {
@@ -83,12 +74,8 @@ export interface RecentActivity {
   to_user_id?: string;
 }
 
-/**
- * Fetch admin statistics
- * SECURITY: Requires admin privileges
- */
+// Fetch admin statistics (requires admin privileges)
 export const getAdminStats = async (): Promise<AdminStats> => {
-  // Verify admin access
   const hasAccess = await verifyAdminAccess();
   if (!hasAccess) {
     throw new Error("Unauthorized: Admin privileges required");
@@ -99,7 +86,6 @@ export const getAdminStats = async (): Promise<AdminStats> => {
   const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  // Count invite codes (admin-specific metric)
   const { count: inviteCodesCount } = await supabase
     .from("invite_codes")
     .select("*", { count: "exact", head: true });

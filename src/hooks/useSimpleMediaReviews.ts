@@ -21,11 +21,7 @@ import {
 export function useMyMediaReview(externalId: string, mediaType: string) {
   return useQuery({
     queryKey: ["myMediaReview", externalId, mediaType],
-    queryFn: async () => {
-      const { data, error } = await getMyMediaReview(externalId, mediaType);
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => getMyMediaReview(externalId, mediaType),
     enabled: !!externalId && !!mediaType,
     staleTime: 30000, // 30 seconds
   });
@@ -37,14 +33,7 @@ export function useMyMediaReview(externalId: string, mediaType: string) {
 export function useFriendsMediaReviews(externalId: string, mediaType: string) {
   return useQuery({
     queryKey: ["friendsMediaReviews", externalId, mediaType],
-    queryFn: async () => {
-      const { data, error } = await getFriendsMediaReviews(
-        externalId,
-        mediaType
-      );
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => getFriendsMediaReviews(externalId, mediaType),
     enabled: !!externalId && !!mediaType,
     staleTime: 60000, // 1 minute
   });
@@ -58,11 +47,8 @@ export function useUpsertMediaReview() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (reviewData: CreateMediaReviewData) => {
-      const { data, error } = await upsertMediaReview(reviewData);
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: (reviewData: CreateMediaReviewData) =>
+      upsertMediaReview(reviewData),
     onSuccess: (_, variables) => {
       // Invalidate my review query
       void queryClient.invalidateQueries({
@@ -91,17 +77,13 @@ export function useUpdateMediaReview(externalId: string, mediaType: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       reviewId,
       updates,
     }: {
       reviewId: string;
       updates: UpdateMediaReviewData;
-    }) => {
-      const { data, error } = await updateMediaReview(reviewId, updates);
-      if (error) throw error;
-      return data;
-    },
+    }) => updateMediaReview(reviewId, updates),
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: ["myMediaReview", externalId, mediaType],
@@ -120,10 +102,7 @@ export function useDeleteMediaReview(externalId: string, mediaType: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (reviewId: string) => {
-      const { error } = await deleteMediaReview(reviewId);
-      if (error) throw error;
-    },
+    mutationFn: (reviewId: string) => deleteMediaReview(reviewId),
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: ["myMediaReview", externalId, mediaType],
