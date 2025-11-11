@@ -4,10 +4,8 @@ import SendMediaModal from "../../shared/SendMediaModal";
 import { searchGames } from "../../../utils/mediaSearchAdapters";
 import MediaRecommendationCard from "../../shared/MediaRecommendationCard";
 import GroupedSentMediaCard from "../../shared/GroupedSentMediaCard";
-import {
-  InlineRecommendationsLayout,
-  BaseRecommendation,
-} from "../../shared/InlineRecommendationsLayout";
+import { InlineRecommendationsLayout } from "../../shared/InlineRecommendationsLayout";
+import type { BaseRecommendation } from "../../shared/types";
 import ContentLayout from "../../layouts/ContentLayout";
 import MainLayout from "../../layouts/MainLayout";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -18,6 +16,7 @@ import {
   useUpdateGameRecommendationStatus,
   useDeleteGameRecommendation,
   useUpdateSenderNote,
+  useUpdateRecipientNote,
 } from "../../../hooks/useGameQueries";
 
 // Extend BaseRecommendation with game-specific fields
@@ -77,14 +76,14 @@ const GamesSuggestions: React.FC<GamesSuggestionsProps> = ({
     });
 
     // Add names from all rec data
-    [...hitsData, ...missesData, ...pendingData].forEach((rec: any) => {
+    [...hitsData, ...missesData, ...pendingData].forEach((rec) => {
       if (rec.sender_name && rec.from_user_id) {
         map.set(rec.from_user_id, rec.sender_name);
       }
     });
 
     // Add recipients from sent data
-    sentData.forEach((rec: any) => {
+    sentData.forEach((rec) => {
       if (rec.recipient_name && rec.to_user_id) {
         map.set(rec.to_user_id, rec.recipient_name);
       }
@@ -103,17 +102,26 @@ const GamesSuggestions: React.FC<GamesSuggestionsProps> = ({
   const updateStatusMutation = useUpdateGameRecommendationStatus();
   const deleteRecMutation = useDeleteGameRecommendation();
   const updateSenderNoteMutation = useUpdateSenderNote();
+  const updateRecipientNoteMutation = useUpdateRecipientNote();
 
   const updateRecommendationStatus = async (
     recId: string,
     status: string,
-    _comment?: string
+    comment?: string
   ) => {
     try {
       await updateStatusMutation.mutateAsync({
         recId,
         status,
       });
+
+      // If comment is provided and not whitespace-only, update recipient's note
+      if (typeof comment === "string" && comment.trim().length > 0) {
+        await updateRecipientNoteMutation.mutateAsync({
+          recId,
+          note: comment,
+        });
+      }
     } catch (error) {
       console.error("Error updating recommendation:", error);
     }
@@ -138,56 +146,107 @@ const GamesSuggestions: React.FC<GamesSuggestionsProps> = ({
     }
   };
 
+  // Type guard to ensure name exists
+  function hasName<T extends { name?: string }>(
+    r: T
+  ): r is T & { name: string } {
+    return !!r.name;
+  }
+
   // Transform data to GameRecommendation format
-  const hits: GameRecommendation[] = (hitsData || []).map((rec: any) => ({
+  const hits = (hitsData || []).filter(hasName).map((rec) => ({
     ...rec,
-    sent_message: rec.sent_message || null,
-    comment: rec.recipient_note || null,
-    sender_comment: rec.sender_note || null,
-    sender_note: rec.sender_note || null,
-    recipient_note: rec.recipient_note || null,
+    name: rec.name,
+    slug: rec.slug ?? null,
+    platforms: rec.platforms ?? null,
+    genres: rec.genres ?? null,
+    released: rec.released ?? null,
+    background_image: rec.background_image ?? null,
+    rating: rec.rating ?? null,
+    metacritic: rec.metacritic ?? null,
+    playtime: rec.playtime ?? null,
+    played_at: rec.played_at ?? null,
+    sent_message: rec.sent_message ?? null,
+    comment: rec.recipient_note ?? null,
+    sender_comment: rec.sender_note ?? null,
+    sender_note: rec.sender_note ?? null,
+    recipient_note: rec.recipient_note ?? null,
     sent_at: rec.created_at,
-    status: rec.status === "consumed" ? "played" : rec.status,
+    status: (rec.status === "consumed"
+      ? "played"
+      : rec.status) as GameRecommendation["status"],
   }));
 
-  const misses: GameRecommendation[] = (missesData || []).map((rec: any) => ({
+  const misses = (missesData || []).filter(hasName).map((rec) => ({
     ...rec,
-    sent_message: rec.sent_message || null,
-    comment: rec.recipient_note || null,
-    sender_comment: rec.sender_note || null,
-    sender_note: rec.sender_note || null,
-    recipient_note: rec.recipient_note || null,
+    name: rec.name,
+    slug: rec.slug ?? null,
+    platforms: rec.platforms ?? null,
+    genres: rec.genres ?? null,
+    released: rec.released ?? null,
+    background_image: rec.background_image ?? null,
+    rating: rec.rating ?? null,
+    metacritic: rec.metacritic ?? null,
+    playtime: rec.playtime ?? null,
+    played_at: rec.played_at ?? null,
+    sent_message: rec.sent_message ?? null,
+    comment: rec.recipient_note ?? null,
+    sender_comment: rec.sender_note ?? null,
+    sender_note: rec.sender_note ?? null,
+    recipient_note: rec.recipient_note ?? null,
     sent_at: rec.created_at,
-    status: rec.status === "consumed" ? "played" : rec.status,
+    status: (rec.status === "consumed"
+      ? "played"
+      : rec.status) as GameRecommendation["status"],
   }));
 
-  const sent: GameRecommendation[] = (sentData || []).map((rec: any) => ({
+  const sent = (sentData || []).filter(hasName).map((rec) => ({
     ...rec,
-    sent_message: rec.sent_message || null,
-    comment: rec.recipient_note || null,
-    sender_comment: rec.sender_note || null,
-    sender_note: rec.sender_note || null,
-    recipient_note: rec.recipient_note || null,
+    name: rec.name,
+    slug: rec.slug ?? null,
+    platforms: rec.platforms ?? null,
+    genres: rec.genres ?? null,
+    released: rec.released ?? null,
+    background_image: rec.background_image ?? null,
+    rating: rec.rating ?? null,
+    metacritic: rec.metacritic ?? null,
+    playtime: rec.playtime ?? null,
+    played_at: rec.played_at ?? null,
+    sent_message: rec.sent_message ?? null,
+    comment: rec.recipient_note ?? null,
+    sender_comment: rec.sender_note ?? null,
+    sender_note: rec.sender_note ?? null,
+    recipient_note: rec.recipient_note ?? null,
     sent_at: rec.created_at,
-    status: rec.status === "consumed" ? "played" : rec.status,
+    status: (rec.status === "consumed"
+      ? "played"
+      : rec.status) as GameRecommendation["status"],
   }));
 
   // Build friend recommendations map from pending data
   const friendRecommendations = new Map<string, GameRecommendation[]>();
 
   // Transform pending data
-  const pendingRecs: GameRecommendation[] = (pendingData || []).map(
-    (rec: any) => ({
-      ...rec,
-      sent_message: rec.sent_message || null,
-      comment: rec.recipient_note || null,
-      sender_comment: rec.sender_note || null,
-      sender_note: rec.sender_note || null,
-      recipient_note: rec.recipient_note || null,
-      sent_at: rec.created_at,
-      status: "pending" as const,
-    })
-  );
+  const pendingRecs = (pendingData || []).filter(hasName).map((rec) => ({
+    ...rec,
+    name: rec.name,
+    slug: rec.slug ?? null,
+    platforms: rec.platforms ?? null,
+    genres: rec.genres ?? null,
+    released: rec.released ?? null,
+    background_image: rec.background_image ?? null,
+    rating: rec.rating ?? null,
+    metacritic: rec.metacritic ?? null,
+    playtime: rec.playtime ?? null,
+    played_at: rec.played_at ?? null,
+    sent_message: rec.sent_message ?? null,
+    comment: rec.recipient_note ?? null,
+    sender_comment: rec.sender_note ?? null,
+    sender_note: rec.sender_note ?? null,
+    recipient_note: rec.recipient_note ?? null,
+    sent_at: rec.created_at,
+    status: "pending" as const,
+  }));
 
   // Group by sender
   pendingRecs.forEach((rec) => {
@@ -199,29 +258,27 @@ const GamesSuggestions: React.FC<GamesSuggestionsProps> = ({
   });
 
   const renderRecommendationCard = (
-    rec: BaseRecommendation,
+    rec: GameRecommendation,
     isReceived: boolean,
     index = 0
   ) => {
-    const gameRec = rec as unknown as GameRecommendation;
-    const senderName = userNameMap.get(gameRec.from_user_id) || "Unknown";
+    const senderName = userNameMap.get(rec.from_user_id) || "Unknown";
 
     return (
       <MediaRecommendationCard
-        key={gameRec.id}
-        rec={gameRec}
+        key={rec.id}
+        rec={rec}
         index={index}
         isReceived={isReceived}
         senderName={senderName}
         onStatusUpdate={updateRecommendationStatus}
         onDelete={deleteRecommendation}
         onUpdateSenderComment={updateSenderComment}
-        renderMediaArt={(r) => {
-          const rec = r as unknown as GameRecommendation;
-          return rec.background_image ? (
+        renderMediaArt={(r: GameRecommendation) => {
+          return r.background_image ? (
             <img
-              src={rec.background_image}
-              alt={rec.title}
+              src={r.background_image}
+              alt={r.title}
               className="w-full h-full object-cover"
             />
           ) : (
@@ -230,19 +287,18 @@ const GamesSuggestions: React.FC<GamesSuggestionsProps> = ({
             </div>
           );
         }}
-        renderMediaInfo={(r) => {
-          const rec = r as unknown as GameRecommendation;
+        renderMediaInfo={(r: GameRecommendation) => {
           return (
             <>
               <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                {rec.platforms || "Game"}
+                {r.platforms || "Game"}
               </div>
               <h3 className="font-semibold text-gray-900 dark:text-white mb-1 line-clamp-2">
-                {rec.title}
+                {r.title}
               </h3>
-              {rec.released && (
+              {r.released && (
                 <div className="text-sm text-gray-600 dark:text-gray-400">
-                  {new Date(rec.released).getFullYear()}
+                  {new Date(r.released).getFullYear()}
                 </div>
               )}
             </>
@@ -253,15 +309,12 @@ const GamesSuggestions: React.FC<GamesSuggestionsProps> = ({
   };
 
   const renderGroupedSentCard = (
-    mediaItem: BaseRecommendation,
-    _recipients: Array<{ name: string; recId: string; status: string }>,
+    mediaItem: GameRecommendation,
     index: number
   ) => {
-    const gameItem = mediaItem as unknown as GameRecommendation;
-
     // Find all sent items with the same external_id to get all recipients
     const allRecipients = sent
-      .filter((rec) => rec.external_id === gameItem.external_id)
+      .filter((rec) => rec.external_id === mediaItem.external_id)
       .map((rec) => ({
         name: userNameMap.get(rec.to_user_id) || "Unknown User",
         recId: rec.id,
@@ -270,17 +323,16 @@ const GamesSuggestions: React.FC<GamesSuggestionsProps> = ({
 
     return (
       <GroupedSentMediaCard
-        key={`grouped-${gameItem.external_id}`}
-        mediaItem={gameItem}
+        key={`grouped-${mediaItem.external_id}`}
+        mediaItem={mediaItem}
         recipients={allRecipients}
         index={index}
         onDelete={deleteRecommendation}
         renderMediaArt={(item) => {
-          const gameRec = item as unknown as GameRecommendation;
-          return gameRec.background_image ? (
+          return item.background_image ? (
             <img
-              src={gameRec.background_image}
-              alt={gameRec.title}
+              src={item.background_image}
+              alt={item.title}
               className="w-20 h-20 rounded object-cover"
             />
           ) : (
@@ -290,18 +342,17 @@ const GamesSuggestions: React.FC<GamesSuggestionsProps> = ({
           );
         }}
         renderMediaInfo={(item) => {
-          const gameRec = item as unknown as GameRecommendation;
           return (
             <>
               <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                {gameRec.platforms || "Game"}
+                {item.platforms || "Game"}
               </div>
               <h3 className="font-semibold text-gray-900 dark:text-white mb-1 line-clamp-2">
-                {gameRec.title}
+                {item.title}
               </h3>
-              {gameRec.released && (
+              {item.released && (
                 <div className="text-sm text-gray-600 dark:text-gray-400">
-                  {new Date(gameRec.released).getFullYear()}
+                  {new Date(item.released).getFullYear()}
                 </div>
               )}
             </>
