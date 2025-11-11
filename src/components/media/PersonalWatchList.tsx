@@ -1,13 +1,13 @@
 import React, { useState, useRef, useMemo, useCallback } from "react";
-import { Film, ChevronLeft, ChevronRight } from "lucide-react";
+import { Film } from "lucide-react";
 import { MediaItem } from "../shared/SendMediaModal";
 import SearchMovieModal from "../shared/SearchMovieModal";
 import MovieDetailModal from "./MovieDetailModal";
 import SendMediaModal from "../shared/SendMediaModal";
 import Toast from "../ui/Toast";
-import Button from "../shared/Button";
 import MediaListItem from "./MediaListItem";
 import MediaEmptyState from "./MediaEmptyState";
+import WatchlistPagination from "./WatchlistPagination";
 import { SortOption } from "../shared/types";
 import { MediaPageToolbar } from "../shared/MediaPageToolbar";
 import { useMediaFiltering } from "../../hooks/useMediaFiltering";
@@ -169,10 +169,6 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
     void toggleWatched.mutateAsync(String(id));
   };
 
-  const handleToggleWatchedAsync = async (id: string) => {
-    await toggleWatched.mutateAsync(id);
-  };
-
   const handleRemoveFromWatchList = (id: string | number) => {
     const itemToDelete = watchList.find((item) => item.id === id);
     if (!itemToDelete) return;
@@ -180,15 +176,6 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
     setLastDeletedItem(itemToDelete);
     setShowUndoToast(true);
     void deleteFromWatchlist.mutateAsync(String(id));
-  };
-
-  const handleRemoveFromWatchListAsync = async (id: string) => {
-    const itemToDelete = watchList.find((item) => item.id === id);
-    if (!itemToDelete) return;
-
-    setLastDeletedItem(itemToDelete);
-    setShowUndoToast(true);
-    await deleteFromWatchlist.mutateAsync(id);
   };
 
   const handleUndoDelete = async () => {
@@ -301,76 +288,18 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
           </div>
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-              {/* Items per page */}
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <Button
-                    onClick={() =>
-                      setShowItemsPerPageMenu(!showItemsPerPageMenu)
-                    }
-                    variant="secondary"
-                    size="sm"
-                    aria-expanded={showItemsPerPageMenu}
-                  >
-                    {itemsPerPage}
-                  </Button>
-                  {showItemsPerPageMenu && (
-                    <div className="absolute bottom-full left-0 mb-2 w-24 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-20 py-1">
-                      {[10, 25, 50, 100].map((size) => (
-                        <Button
-                          key={size}
-                          onClick={() => {
-                            setItemsPerPage(size);
-                            setShowItemsPerPageMenu(false);
-                          }}
-                          variant="subtle"
-                          size="sm"
-                          fullWidth
-                          className={`justify-start px-3 py-2 ${
-                            itemsPerPage === size
-                              ? "bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-semibold"
-                              : ""
-                          }`}
-                        >
-                          {size}
-                        </Button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  per page ({totalItems} total)
-                </span>
-              </div>
-
-              {/* Page navigation */}
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <div className="flex items-center gap-1">
-                  <Button
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={!hasPrevPage}
-                    variant="subtle"
-                    size="icon"
-                    icon={<ChevronLeft className="w-4 h-4" />}
-                    aria-label="Previous page"
-                  />
-                  <Button
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={!hasNextPage}
-                    variant="subtle"
-                    size="icon"
-                    icon={<ChevronRight className="w-4 h-4" />}
-                    aria-label="Next page"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+          <WatchlistPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            hasNextPage={hasNextPage}
+            hasPrevPage={hasPrevPage}
+            showItemsPerPageMenu={showItemsPerPageMenu}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={setItemsPerPage}
+            onToggleMenu={() => setShowItemsPerPageMenu(!showItemsPerPageMenu)}
+          />
         </>
       )}
 
@@ -420,8 +349,6 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
           isOpen={!!selectedMovie}
           onClose={() => setSelectedMovie(null)}
           item={selectedMovie}
-          _onToggleWatched={handleToggleWatchedAsync}
-          _onRemove={handleRemoveFromWatchListAsync}
         />
       )}
 

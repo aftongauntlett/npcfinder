@@ -1,5 +1,4 @@
-import React from "react";
-import { Check, Clock } from "lucide-react";
+import { Check, Clock, type LucideIcon } from "lucide-react";
 
 export type MediaStatus =
   | "watched"
@@ -12,7 +11,7 @@ export type MediaStatus =
 
 interface StatusConfig {
   label: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
   colorClass: string;
   badgeColorClass?: string;
 }

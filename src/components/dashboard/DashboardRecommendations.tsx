@@ -25,6 +25,9 @@ interface FriendWithRecs {
 // Map service Recommendation to card's expected format
 interface CardRecommendation {
   id: string;
+  from_user_id: string;
+  to_user_id: string;
+  external_id: string;
   title: string;
   status:
     | "pending"
@@ -37,9 +40,8 @@ interface CardRecommendation {
   sent_message: string | null;
   comment: string | null; // Maps to recipient_note
   sender_comment: string | null; // Maps to sender_note
+  sent_at: string;
   opened_at?: string | null;
-  from_user_id: string;
-  to_user_id: string;
   // Extended properties for render functions
   media_type: "song" | "album" | "movie" | "tv";
   poster_url?: string;
@@ -50,14 +52,16 @@ interface CardRecommendation {
 function mapToCardRec(rec: Recommendation): CardRecommendation {
   return {
     id: rec.id,
+    from_user_id: rec.from_user_id,
+    to_user_id: rec.to_user_id,
+    external_id: rec.external_id,
     title: rec.title,
     status: rec.status as CardRecommendation["status"],
     sent_message: rec.sent_message || null,
     comment: rec.recipient_note || null,
     sender_comment: rec.sender_note || null,
+    sent_at: rec.created_at, // Map created_at to sent_at
     opened_at: rec.opened_at,
-    from_user_id: rec.from_user_id,
-    to_user_id: rec.to_user_id,
     media_type: rec.media_type,
     poster_url: rec.poster_url,
     year: rec.year,
@@ -254,7 +258,7 @@ export function DashboardRecommendations() {
                         onStatusUpdate={updateRecommendationStatus}
                         onDelete={deleteRecommendation}
                         renderMediaArt={(r) => {
-                          const typed = r as CardRecommendation;
+                          const typed = r;
                           return typed.poster_url ? (
                             <img
                               src={typed.poster_url}
@@ -268,7 +272,7 @@ export function DashboardRecommendations() {
                           );
                         }}
                         renderMediaInfo={(r) => {
-                          const typed = r as CardRecommendation;
+                          const typed = r;
                           return (
                             <>
                               <div className="flex items-center gap-2">

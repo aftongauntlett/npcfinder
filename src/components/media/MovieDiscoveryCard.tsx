@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { motion } from "framer-motion";
-import { ChevronDown, ChevronUp, TrendingUp, Star, Film } from "lucide-react";
-import { SimilarMoviesCarousel } from "./SimilarMoviesCarousel";
+import { TrendingUp, Star, Film } from "lucide-react";
+import DiscoverySection from "./DiscoverySection";
 import { useWatchlist } from "../../hooks/useWatchlistQueries";
 import { useAddToWatchlist } from "../../hooks/useWatchlistQueries";
 import { useTheme } from "../../hooks/useTheme";
@@ -21,15 +20,8 @@ interface WatchlistAnalysis {
   } | null;
 }
 
-/**
- * MovieDiscoveryCard
- *
- * Matches the "From Friends" card styling but provides TMDB-based discovery:
- * - Trending This Week (collapsible)
- * - Popular Right Now (collapsible)
- * - Because You Watched (personalized, collapsible)
- * - From Directors You Like (personalized, collapsible)
- */
+// TMDB-based discovery card: trending, popular, and personalized recommendations
+// Matches "From Friends" card styling with collapsible sections
 const MovieDiscoveryCard: React.FC = () => {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set()
@@ -200,76 +192,22 @@ const MovieDiscoveryCard: React.FC = () => {
         </div>
 
         <div className="space-y-3">
-          {enabledSections.map((section) => {
-            const Icon = section.icon;
-            const isExpanded = expandedSections.has(section.id);
-            const isLoading = loadingSections.has(section.id);
-
-            return (
-              <motion.div
-                key={section.id}
-                className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200/50 dark:border-gray-700/30 hover:border-primary/30 shadow-sm hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                whileHover={{ y: -2 }}
-              >
-                <motion.button
-                  type="button"
-                  onClick={() => void toggleSection(section.id)}
-                  className="w-full p-4 flex items-center justify-between gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
-                  aria-expanded={isExpanded}
-                  whileTap={{ scale: 0.99 }}
-                >
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                      style={{
-                        backgroundColor: `${themeColor}20`,
-                      }}
-                    >
-                      <Icon className="w-5 h-5" style={{ color: themeColor }} />
-                    </div>
-                    <div className="text-left min-w-0 flex-1">
-                      <div className="font-medium text-gray-900 dark:text-white truncate">
-                        {section.label}
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        {section.count} movies
-                      </div>
-                    </div>
-                  </div>
-                  {isExpanded ? (
-                    <ChevronUp className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                  )}
-                </motion.button>
-
-                {isExpanded && (
-                  <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-                    {isLoading ? (
-                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                        Loading...
-                      </div>
-                    ) : section.data.length > 0 ? (
-                      <SimilarMoviesCarousel
-                        movies={section.data}
-                        onAddToWatchlist={(movie) =>
-                          void handleAddToWatchlist(movie)
-                        }
-                        existingIds={existingIds}
-                      />
-                    ) : (
-                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                        No recommendations available
-                      </div>
-                    )}
-                  </div>
-                )}
-              </motion.div>
-            );
-          })}
+          {enabledSections.map((section) => (
+            <DiscoverySection
+              key={section.id}
+              id={section.id}
+              label={section.label}
+              icon={section.icon}
+              count={section.count}
+              data={section.data}
+              isExpanded={expandedSections.has(section.id)}
+              isLoading={loadingSections.has(section.id)}
+              themeColor={themeColor}
+              existingIds={existingIds}
+              onToggle={() => void toggleSection(section.id)}
+              onAddToWatchlist={(movie) => void handleAddToWatchlist(movie)}
+            />
+          ))}
         </div>
       </div>
 

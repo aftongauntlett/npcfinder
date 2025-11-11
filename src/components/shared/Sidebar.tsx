@@ -163,22 +163,6 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
     setIsCollapsed(!isCollapsed);
   };
 
-  // Filter nav items based on admin status
-  const visibleNavItems = NAV_ITEMS.filter((item) => {
-    if (item.adminOnly) {
-      return isAdmin && currentUser;
-    }
-    return true;
-  });
-
-  // Determine active item based on current path
-  const isActive = (itemPath: string) => {
-    if (itemPath === "/app") {
-      return location.pathname === "/app";
-    }
-    return location.pathname.startsWith(itemPath);
-  };
-
   return (
     <>
       {/* Overlay for mobile when sidebar is expanded */}
@@ -306,12 +290,11 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
         {/* Navigation Items */}
         <nav className="flex-1 overflow-y-auto py-4" role="navigation">
           <NavList
-            items={visibleNavItems}
+            items={NAV_ITEMS}
             currentPath={location.pathname}
             isCollapsed={isCollapsed}
             isAdmin={isAdmin}
             onNavigate={handleNavigation}
-            isActive={isActive}
           />
         </nav>
 

@@ -16,7 +16,6 @@ interface NavListProps {
   isCollapsed: boolean;
   isAdmin: boolean;
   onNavigate: (path: string) => void;
-  isActive: (path: string) => boolean;
 }
 
 const NavList: React.FC<NavListProps> = ({
@@ -25,8 +24,15 @@ const NavList: React.FC<NavListProps> = ({
   isCollapsed,
   isAdmin,
   onNavigate,
-  isActive,
 }) => {
+  // Determine if a path is active based on current location
+  const isActive = (itemPath: string) => {
+    if (itemPath === "/app") {
+      return currentPath === "/app";
+    }
+    return currentPath.startsWith(itemPath);
+  };
+
   return (
     <ul className="space-y-1 px-2">
       {items

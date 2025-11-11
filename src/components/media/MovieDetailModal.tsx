@@ -33,8 +33,6 @@ interface MovieDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   item: WatchlistItem;
-  _onToggleWatched: (id: string) => Promise<void>;
-  _onRemove: (id: string) => Promise<void>;
 }
 
 export default function MovieDetailModal({
