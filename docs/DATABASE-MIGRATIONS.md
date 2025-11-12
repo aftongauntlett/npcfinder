@@ -83,9 +83,17 @@ Main tables:
 - `user_profiles` - User accounts and settings
 - `connections` - Friend relationships
 - `invite_codes` - Invitation system
+- `invite_code_audit_log` - Invite usage tracking
 - `music_recommendations` - Music sharing
 - `movie_recommendations` - Movie/TV sharing
-- `suggestions` - Group suggestions
+- `book_recommendations` - Book sharing
+- `game_recommendations` - Game sharing
+- `user_watchlist` - Movies/TV watchlist
+- `reading_list` - Books reading list
+- `music_library` - Music library
+- `game_library` - Games library
+- `media_reviews` - Reviews and ratings for all media types
+- `app_config` - Application configuration
 
 ## Rollback
 
@@ -117,7 +125,7 @@ Before running migrations in production:
 4. Run during low-traffic time
 5. Monitor for errors
 
-## Recent Migrations (October 2025)
+## Recent Migrations (October-November 2025)
 
 ### 20251022000001_create_media_reviews.sql
 

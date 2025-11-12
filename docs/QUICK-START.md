@@ -1,4 +1,4 @@
-# Quick Start
+# Advanced Self-Hosting (Optional)
 
 ## Prerequisites
 
@@ -30,6 +30,8 @@ In Supabase dashboard:
 3. Run each migration in order
 4. Enable Row Level Security on all tables
 
+See [DATABASE-MIGRATIONS.md](DATABASE-MIGRATIONS.md) for detailed migration management.
+
 ### 3. Configure Environment
 
 Create `.env.local`:
@@ -40,6 +42,8 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
 Find these in: Supabase Dashboard > Settings > API
+
+See [API-SETUP.md](API-SETUP.md) for complete API key setup (TMDB, Google Books, OMDB, iTunes).
 
 ### 4. Run Application
 
@@ -66,7 +70,7 @@ WHERE email = 'your-email@example.com';
 3. Create invite codes (requires email, 30-day expiration)
 4. Share codes with intended recipients
 
-**Note**: Each invite code is tied to a specific email address and expires after 30 days.
+See [INVITE-SYSTEM-QUICKSTART.md](INVITE-SYSTEM-QUICKSTART.md) for complete invite system documentation.
 
 ## External APIs (Optional)
 
@@ -79,9 +83,31 @@ WHERE email = 'your-email@example.com';
 VITE_TMDB_API_KEY=your-key
 ```
 
+### Google Books (Books)
+
+1. Get free API key: https://console.cloud.google.com/apis/credentials
+2. Add to `.env.local`:
+
+```bash
+VITE_GOOGLE_BOOKS_API_KEY=your-key
+```
+
+### OMDB (Movie Ratings - Optional)
+
+1. Get free API key: http://www.omdbapi.com/apikey.aspx
+2. Add to `.env.local`:
+
+```bash
+VITE_OMDB_API_KEY=your-key
+```
+
+**Note:** Optional—enriches movie details with Rotten Tomatoes, Metacritic, awards.
+
 ### iTunes (Music)
 
 No setup needed - iTunes Search API is public and free.
+
+See [API-SETUP.md](API-SETUP.md) for detailed API configuration.
 
 ## Common Issues
 
@@ -132,6 +158,6 @@ npm run lint         # Check code quality
 
 ## Next Steps
 
-- See [Database Migrations](DATABASE_MIGRATIONS.md) for schema updates
-- See [Testing Strategy](TESTING_STRATEGY.md) for adding tests
-- See [API Setup](API_SETUP.md) for API key details
+- See [Database Migrations](DATABASE-MIGRATIONS.md) for schema updates
+- See [Testing Strategy](TESTING-STRATEGY.md) for adding tests
+- See [API Setup](API-SETUP.md) for API key details

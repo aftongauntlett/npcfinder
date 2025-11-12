@@ -1,5 +1,7 @@
 # Security Recommendations Review
 
+**Note:** This document covers security tooling and Supabase dashboard features. Some items (like HIBP) are hosting provider features, not application code.
+
 ## What We Implemented
 
 ### 1. npm audit ✅
@@ -111,20 +113,21 @@ On October 21, 2025, we reviewed all issues flagged by Supabase's Security and P
 
 **What security_barrier Does**: Prevents query optimization from pushing predicates down in ways that could leak information through side effects (e.g., error messages from functions in WHERE clauses). Important for views joining sensitive data from multiple tables.
 
-#### 3. Leaked Password Protection ⚠️ MANUAL ACTION REQUIRED
+#### 3. Leaked Password Protection (Supabase Dashboard Feature)
 
-**Issue**: Supabase's leaked password protection is currently disabled.
+**Issue**: Supabase's leaked password protection is a dashboard setting, not implemented in application code.
 
-**What It Is**: Checks user passwords against the Have I Been Pwned database to prevent use of compromised credentials.
+**What It Is**: A Supabase Pro plan feature that checks passwords against Have I Been Pwned database during signup/password change.
 
-**How to Enable**:
+**How to Enable**: This is configured in Supabase Dashboard, not in application code:
 
-1. Go to Supabase Dashboard → Settings → Authentication → Password Security
-2. Toggle on "Leaked password protection"
+1. Upgrade to Supabase Pro plan
+2. Go to Dashboard → Settings → Authentication → Password Security
+3. Toggle on "Leaked password protection"
 
 **Requirements**: Supabase Pro plan or higher
 
-**Recommendation**: Enable in production environments for enhanced security.
+**Recommendation**: Optional enhancement for production. This is a hosting provider feature, not part of the application codebase.
 
 ### Informational Warnings (No Action Needed)
 

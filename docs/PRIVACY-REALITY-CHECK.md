@@ -20,8 +20,9 @@
 ### This Is Normal
 
 Same privacy model as:
+
 - Netflix
-- Spotify  
+- Spotify
 - IMDb
 - Most web apps
 
@@ -31,20 +32,10 @@ Same privacy model as:
 - WhatsApp (end-to-end encrypted messages)
 - ProtonMail (zero-knowledge encryption)
 
-## Future Plans
-
-Planning to add end-to-end encryption for sensitive data:
-- Personal notes
-- Private recommendations
-- Health/fitness data
-
-This will make it so admin cannot read that data even with database access.
-
-See [FUTURE_E2E_ENCRYPTION.md](FUTURE_E2E_ENCRYPTION.md) for technical details.
-
 ## What This Means For You
 
 **If you're comfortable with:**
+
 - Admin seeing your movie ratings
 - Hosting provider (Supabase) having access
 - Standard web app security
@@ -52,8 +43,8 @@ See [FUTURE_E2E_ENCRYPTION.md](FUTURE_E2E_ENCRYPTION.md) for technical details.
 **Then this app is fine for you.**
 
 **If you need Signal-level privacy:**
-- Wait for E2E encryption feature
-- Or use a different app designed for that
+
+- Use a different app designed for that use case
 
 ## Legal & Trust
 
@@ -66,6 +57,4 @@ But technically, I can access the database. That's just how web apps work withou
 
 ## Questions?
 
-Ask in the friend group or check:
-- [Open Source Security FAQ](OPEN_SOURCE_SECURITY_FAQ.md)
-- [Invite System](INVITE_SYSTEM_QUICKSTART.md)
+Ask in the friend group or check the [Invite System](INVITE-SYSTEM-QUICKSTART.md) documentation.
