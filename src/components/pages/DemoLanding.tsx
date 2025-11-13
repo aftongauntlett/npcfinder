@@ -10,16 +10,16 @@ import StarryBackground from "../shared/StarryBackground";
 import LandingButton from "../landing/LandingButton";
 import HeroConstellation from "../effects/HeroConstellation";
 import { FeatureBlock } from "../landing/demo/FeatureBlock";
-import { ArchitectureCard } from "../landing/demo/ArchitectureCard";
-import { FutureFeatureCard } from "../landing/demo/FutureFeatureCard";
+import TechDetailStrip from "../landing/demo/TechDetailStrip";
 import AudienceCard from "../landing/demo/AudienceCard";
 import AvailabilityPoint from "../landing/demo/AvailabilityPoint";
+import ModernCard from "../landing/demo/ModernCard";
 import IdentityBadge from "../landing/demo/IdentityBadge";
 import Accordion from "../landing/demo/Accordion";
 import { landingFeatures } from "../../data/landingFeatures";
 import { landingArchitecture } from "../../data/landingArchitecture";
 import {
-  landingFutureFeatures,
+  landingFutureCategories,
   futureDisclaimer,
 } from "../../data/landingFuture";
 import { landingAvailability } from "../../data/landingAvailability";
@@ -57,7 +57,7 @@ const DemoLanding: React.FC = () => {
       {/* Main Content */}
       <main className="relative z-10">
         {/* Hero Section */}
-        <section className="max-w-7xl mx-auto px-6 py-16 lg:py-24 relative">
+        <section className="max-w-7xl mx-auto px-6 py-12 sm:py-16 lg:py-28 relative">
           {/* Constellation Background - Full Width */}
           <div className="hidden lg:block absolute inset-0 overflow-hidden">
             <div className="absolute -right-32 top-1/2 -translate-y-1/2 pointer-events-auto">
@@ -73,16 +73,16 @@ const DemoLanding: React.FC = () => {
 
           {/* Text Content - Overlaid */}
           <div className="relative z-10 max-w-2xl pointer-events-auto">
-            <h2 className="text-[2.25rem] sm:text-[2.75rem] lg:text-[3.25rem] font-bold mb-4 leading-[1.12] tracking-tight">
+            <h2 className="text-[2rem] sm:text-[2.5rem] lg:text-[2.9rem] font-bold mb-4 leading-[1.12] tracking-tight">
               Your Private Life Hub
               <br />
-              <span className="block mt-1.5 text-[1.75rem] sm:text-[2.15rem] lg:text-[2.65rem] leading-[1.15] bg-gradient-to-r from-[#FF8E53] via-[#FFB088] to-[#FFC9A5] bg-clip-text text-transparent">
+              <span className="block mt-1.5 text-[1.6rem] sm:text-[1.95rem] lg:text-[2.4rem] leading-[1.15] bg-gradient-to-r from-[#FF8E53] via-[#FFB088] to-[#FFC9A5] bg-clip-text text-transparent">
                 Organized, Connected, and Fully Yours
               </span>
             </h2>
 
             {/* Identity Badges */}
-            <div className="flex flex-wrap gap-2.5 mb-7">
+            <div className="flex flex-wrap gap-3 mb-6 sm:mb-7">
               {landingIdentity.badges.map((badge, index) => (
                 <IdentityBadge
                   key={index}
@@ -93,7 +93,7 @@ const DemoLanding: React.FC = () => {
               ))}
             </div>
 
-            <p className="text-base sm:text-lg text-neutral-300 mb-10 max-w-xl leading-relaxed font-light">
+            <p className="text-base sm:text-lg text-neutral-300 mb-8 sm:mb-10 max-w-xl leading-relaxed font-light">
               A modular dashboard for your daily life. Track media, manage
               tasks, organize recipes, and share with your trusted friends.
               Private, customizable, and built for small groups who value
@@ -110,7 +110,7 @@ const DemoLanding: React.FC = () => {
               </LandingButton>
               <LandingButton
                 onClick={() => {
-                  const section = document.getElementById("what-is-npc-finder");
+                  const section = document.getElementById("features");
                   section?.scrollIntoView({
                     behavior: "smooth",
                     block: "start",
@@ -125,53 +125,8 @@ const DemoLanding: React.FC = () => {
           </div>
         </section>
 
-        {/* What Is NPC Finder Today Section */}
-        <section
-          id="what-is-npc-finder"
-          className="max-w-5xl mx-auto px-6 py-20"
-        >
-          <div className="text-center mb-12">
-            <h3 className="text-4xl font-bold mb-3 tracking-tight">
-              {landingIdentity.title}
-            </h3>
-            <p className="text-xl text-[#FFB088]/80 mb-6 font-normal">
-              {landingIdentity.tagline}
-            </p>
-            <p className="text-lg text-gray-300 leading-relaxed max-w-3xl mx-auto mb-8">
-              {landingIdentity.description}
-            </p>
-          </div>
-
-          {/* Key Points */}
-          <div className="bg-slate-800/40 border border-white/10 rounded-2xl p-8">
-            <ul className="space-y-4">
-              {landingIdentity.keyPoints.map((point, index) => (
-                <li
-                  key={index}
-                  className="flex items-center gap-3 text-gray-300"
-                >
-                  <span
-                    className="font-bold flex-shrink-0"
-                    style={{
-                      color:
-                        index % 3 === 0
-                          ? "#5DCCCC"
-                          : index % 3 === 1
-                          ? "#A78BDD"
-                          : "#FFB088",
-                    }}
-                  >
-                    -
-                  </span>
-                  <span>{point}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-
         {/* Features Section */}
-        <section id="features" className="max-w-7xl mx-auto px-6 py-20">
+        <section id="features" className="max-w-7xl mx-auto px-6 py-28">
           <div className="mb-16">
             <h3 className="text-4xl font-bold mb-3 tracking-tight">
               What You Can Do Today
@@ -197,7 +152,7 @@ const DemoLanding: React.FC = () => {
         </section>
 
         {/* Why Privacy Matters Section */}
-        <section className="max-w-7xl mx-auto px-6 py-20">
+        <section className="max-w-7xl mx-auto px-6 py-24">
           <div className="mb-12">
             <h3 className="text-4xl font-bold mb-3 tracking-tight">
               {landingPrivacy.title}
@@ -220,7 +175,7 @@ const DemoLanding: React.FC = () => {
             ))}
           </div>
 
-          {/* Disclaimer Box - Toned Down */}
+          {/* Disclaimer Box - Privacy Reality Check */}
           <div className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-8">
             <p className="text-gray-400 leading-relaxed mb-4">
               <strong className="text-gray-300">What's NOT private:</strong>{" "}
@@ -245,7 +200,7 @@ const DemoLanding: React.FC = () => {
         {/* Technical Details */}
         <section
           id="technical-details"
-          className="max-w-7xl mx-auto px-6 py-16"
+          className="max-w-7xl mx-auto px-6 py-24"
         >
           <div className="mb-12">
             <h3 className="text-4xl font-bold mb-3 tracking-tight">
@@ -282,10 +237,10 @@ const DemoLanding: React.FC = () => {
             </div>
           </div>
 
-          {/* Architecture Cards */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Architecture Strips - Hover to Expand */}
+          <div className="space-y-4">
             {landingArchitecture.map((arch) => (
-              <ArchitectureCard
+              <TechDetailStrip
                 key={arch.title}
                 icon={arch.icon}
                 iconColor={arch.iconColor}
@@ -297,40 +252,65 @@ const DemoLanding: React.FC = () => {
         </section>
 
         {/* What's Next */}
-        <section id="roadmap" className="max-w-7xl mx-auto px-6 py-16">
+        <section id="roadmap" className="max-w-7xl mx-auto px-6 py-24">
           <div className="mb-12">
-            <h3 className="text-4xl font-bold mb-3 tracking-tight">
+            <h3 className="text-4xl font-bold mb-6 tracking-tight">
               Roadmap: Future Vision
             </h3>
 
-            {/* Prominent Disclaimer */}
-            <div className="bg-blue-500/10 border border-blue-400/30 rounded-xl p-4 mb-6">
-              <p className="text-blue-300 text-sm leading-relaxed">
-                <strong>Note:</strong> {futureDisclaimer}
+            {/* Refined Disclaimer */}
+            <div className="relative bg-gradient-to-r from-cyan-500/5 to-transparent border-l-2 border-cyan-400/50 pl-6 pr-4 py-4 rounded-r-lg">
+              <p className="text-gray-300 text-sm leading-relaxed">
+                <span className="text-cyan-300 font-medium">Note:</span>{" "}
+                {futureDisclaimer}
               </p>
             </div>
-
-            <p className="text-gray-400 max-w-2xl">
-              Ideas being explored as the project evolves - none of these exist
-              yet.
-            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {landingFutureFeatures.map((feature) => (
-              <FutureFeatureCard
-                key={feature.title}
-                title={feature.title}
-                badge={feature.badge}
-                badgeColor={feature.badgeColor}
-                description={feature.description}
-              />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            {landingFutureCategories.map((category) => (
+              <div key={category.category} className="group/column">
+                <h4 className="text-xl font-semibold mb-2 text-white transition-all duration-300 ease-out group-hover/column:scale-105 origin-left cursor-default">
+                  {category.category}
+                </h4>
+                <div
+                  className="h-0.5 w-16 group-hover/column:w-32 mb-6 bg-gradient-to-r from-current to-transparent transition-all duration-500 ease-out"
+                  style={{ color: category.color }}
+                />
+                <div className="space-y-6 transition-colors duration-300 ease-out group-hover/column:text-gray-200">
+                  {category.features.map((feature) => (
+                    <div
+                      key={feature.title}
+                      className="group/item"
+                      onMouseEnter={(e) => {
+                        const title = e.currentTarget.querySelector("h5");
+                        if (title instanceof HTMLElement) {
+                          title.style.color = category.color;
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        const title = e.currentTarget.querySelector("h5");
+                        if (title instanceof HTMLElement) {
+                          title.style.color = "";
+                        }
+                      }}
+                    >
+                      <h5 className="text-base font-medium text-gray-200 mb-2 transition-colors duration-300 ease-out">
+                        {feature.title}
+                      </h5>
+                      <p className="text-sm text-gray-400 leading-relaxed group-hover/column:text-gray-300 transition-colors duration-300 ease-out">
+                        {feature.description}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </section>
 
         {/* Access & Availability Section */}
-        <section id="availability" className="max-w-7xl mx-auto px-6 py-20">
+        <section id="availability" className="max-w-7xl mx-auto px-6 py-28">
           <div className="mb-12">
             <h3 className="text-4xl font-bold mb-3 tracking-tight">
               {landingAvailability.title}
@@ -340,32 +320,60 @@ const DemoLanding: React.FC = () => {
             </p>
           </div>
 
-          {/* Availability Points - Text Only with Hover */}
+          {/* Availability Points - Modern 2025 hover effects */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {landingAvailability.points.map((point, index) => (
-              <div
+              <ModernCard
                 key={index}
-                className="bg-slate-800/40 border-l-4 rounded-lg p-6 hover:bg-slate-800/60 transition-all duration-300"
-                style={{ borderLeftColor: point.iconColor }}
-              >
-                <h5 className="text-lg font-semibold text-white mb-3">
-                  {point.title}
-                </h5>
-                <p className="text-gray-400 text-sm leading-relaxed">
-                  {point.description}
-                </p>
-              </div>
+                iconColor={point.iconColor}
+                title={point.title}
+                description={point.description}
+              />
             ))}
           </div>
 
-          {/* Demo Note */}
-          <div className="bg-slate-800/40 border border-white/10 rounded-xl p-6 mb-12 text-center">
-            <p className="text-gray-400">{landingAvailability.demoNote}</p>
+          {/* Demo Video Coming Soon - Distinct callout style */}
+          <div className="relative bg-gradient-to-br from-slate-800/30 via-slate-800/20 to-transparent border border-[#FFB088]/20 rounded-xl p-8 mb-12 text-center">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-14 h-14 flex items-center justify-center rounded-full bg-[#FFB088]/10 border border-[#FFB088]/30">
+                <svg
+                  className="w-7 h-7 text-[#FFB088]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold text-white mb-2">
+                  Demo Video Coming Soon
+                </h4>
+                <p className="text-gray-400 text-sm max-w-md mx-auto">
+                  {landingAvailability.demoNote}
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Documentation Accordions */}
           <div className="space-y-4">
-            <Accordion title="Invite System Guide" defaultOpen={false}>
+            <Accordion
+              title="Invite System Guide"
+              defaultOpen={false}
+              index={0}
+            >
               <p className="mb-3">
                 Learn how invite codes work and how to generate them for your
                 friend group.
@@ -386,7 +394,11 @@ const DemoLanding: React.FC = () => {
               </a>
             </Accordion>
 
-            <Accordion title="Privacy Reality Check" defaultOpen={false}>
+            <Accordion
+              title="Privacy Reality Check"
+              defaultOpen={false}
+              index={1}
+            >
               <p className="mb-3">
                 Understand what privacy means in this app (and what it doesn't).
               </p>
@@ -407,7 +419,7 @@ const DemoLanding: React.FC = () => {
               </a>
             </Accordion>
 
-            <Accordion title="Quick Start Guide" defaultOpen={false}>
+            <Accordion title="Quick Start Guide" defaultOpen={false} index={2}>
               <p className="mb-3">Set up your own instance from scratch.</p>
               <p className="mb-3">
                 Want to run NPC Finder for your own friend group? This guide
@@ -429,7 +441,7 @@ const DemoLanding: React.FC = () => {
         </section>
 
         {/* Who This Page Is For Section */}
-        <section className="max-w-7xl mx-auto px-6 py-20">
+        <section className="max-w-7xl mx-auto px-6 py-24">
           <div className="mb-12 text-center">
             <h3 className="text-4xl font-bold mb-3 tracking-tight">
               {landingAudiences.sectionTitle}
@@ -454,7 +466,7 @@ const DemoLanding: React.FC = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="max-w-4xl mx-auto px-6 py-20 text-center">
+        <section className="max-w-4xl mx-auto px-6 py-28 text-center">
           <h3 className="text-4xl font-bold mb-4 tracking-tight">
             For Developers & Recruiters
           </h3>

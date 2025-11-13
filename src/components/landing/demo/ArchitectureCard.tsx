@@ -19,9 +19,17 @@ export const ArchitectureCard: React.FC<ArchitectureCardProps> = ({
 }) => {
   return (
     <div
-      className="group space-y-4 bg-slate-800/40 border-l-4 rounded-lg p-8 hover:bg-slate-800/60 transition-all duration-300"
+      className="group space-y-4 bg-slate-800/40 border border-white/10 border-l-4 rounded-lg p-8 hover:bg-slate-800/60 hover:scale-[1.02] hover:shadow-xl transform-gpu"
       style={{
         borderLeftColor: iconColor,
+        transition:
+          "background-color 0.4s ease-out, transform 0.4s ease-out, box-shadow 0.4s ease-out, border-left-color 0.4s ease-out",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = `0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), -4px 0 12px -2px ${iconColor}40`;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = "";
       }}
     >
       <h4 className="text-xl font-semibold mb-6">{title}</h4>
