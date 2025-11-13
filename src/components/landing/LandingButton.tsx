@@ -1,9 +1,8 @@
-import { motion } from "framer-motion";
 import { FC, ReactNode } from "react";
 
 interface LandingButtonProps {
   children: ReactNode;
-  variant?: "primary" | "secondary" | "ghost";
+  variant?: "primary" | "secondary" | "tertiary" | "ghost";
   href?: string;
   onClick?: () => void;
   icon?: ReactNode;
@@ -19,18 +18,22 @@ const LandingButton: FC<LandingButtonProps> = ({
   className = "",
 }) => {
   const baseStyles =
-    "inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium relative overflow-hidden group transition-all duration-500 ease-out";
+    "inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium relative overflow-hidden transition-all duration-300 ease-out";
 
   const variants = {
     primary: `
-      bg-gradient-to-r from-[#FF6B6B] to-[#FFB088] 
+      bg-[#FFB088]/90
       text-slate-900
-      shadow-lg shadow-[#FFB088]/20
-      hover:shadow-2xl hover:shadow-[#FFB088]/30
-      hover:scale-[1.02]
+      shadow-md shadow-[#FFB088]/15
+      hover:shadow-lg hover:shadow-[#FFB088]/20
+      hover:bg-[#FFB088]
       active:scale-95
-      border-2 border-[#FFB088]/30
-      hover:border-[#FFB088]/50
+      font-semibold
+      border border-white/20
+      backdrop-blur-md
+      before:absolute before:inset-0 before:rounded-lg
+      before:bg-gradient-to-br before:from-white/30 before:via-white/10 before:to-transparent
+      before:opacity-60
     `,
     secondary: `
       bg-transparent 
@@ -39,43 +42,43 @@ const LandingButton: FC<LandingButtonProps> = ({
       backdrop-blur-sm
       hover:border-[#FFB088]/70
       hover:bg-[#FFB088]/10
-      hover:scale-[1.02]
+      active:scale-95
+    `,
+    tertiary: `
+      bg-slate-800/60
+      border-2 border-white/10
+      text-gray-200
+      backdrop-blur-sm
+      hover:border-white/20
+      hover:bg-slate-800/80
       active:scale-95
     `,
     ghost: `
       bg-transparent
       text-gray-300
+      border border-slate-700/40
       hover:text-[#FFB088]
       hover:bg-white/5
+      hover:border-[#FFB088]/30
     `,
   };
 
-  const Component = motion[href ? "a" : "button"];
+  const Component = href ? "a" : "button";
+
+  // Only open external links in new tab
+  const isExternalLink =
+    href?.startsWith("http://") || href?.startsWith("https://");
 
   return (
     <Component
       href={href}
       onClick={onClick}
-      className={`${baseStyles} ${variants[variant]} ${className}`}
-      whileHover={{
-        y: -2,
-      }}
-      whileTap={{
-        scale: 0.98,
-      }}
-      transition={{
-        duration: 0.2,
-        ease: "easeOut",
-      }}
+      {...(isExternalLink && { target: "_blank", rel: "noopener noreferrer" })}
+      className={`${baseStyles} ${variants[variant]} ${className} group`}
     >
-      {/* Gradient shimmer effect on hover */}
+      {/* Shimmer effect for primary button */}
       {variant === "primary" && (
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent"
-          initial={{ x: "-100%" }}
-          whileHover={{ x: "100%" }}
-          transition={{ duration: 0.8, ease: "easeInOut" }}
-        />
+        <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out rounded-lg" />
       )}
 
       {/* Content */}
