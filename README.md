@@ -4,11 +4,11 @@
 [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/aftongauntlett/npcfinder)](https://github.com/aftongauntlett/npcfinder/commits/main)
 [![License](https://img.shields.io/badge/License-MIT-blue)](https://opensource.org/licenses/MIT)
 
-A friend-focused media platform for sharing what you're watching, reading, listening to, and playing. No algorithms. No ads. No strangers. Just recommendations from people you trust.
+A private, invite-only life-management hub for small, trusted friend groups. No algorithms. No public profiles. No strangers. A modular platform where you control your data.
 
-Built with React 19, TypeScript, and Supabase. Features full media search (TMDB, iTunes, Google Books, RAWG), personal libraries, reviews, and an invite-only authentication system with Row-Level Security.
+Built with React 19, TypeScript, and Supabase. Currently featuring full media tracking (TMDB, iTunes, Google Books, RAWG) with personal libraries, reviews, and recommendations. Expanding into multi-purpose modules for tasks, recipes, fitness, planning, and more - all with the same privacy-first approach and Row-Level Security.
 
-> **Status**: In active development. Invite-only access.
+> **Status**: In active development. Private, invite-only tool for small groups (not a public social platform). Media tracking fully functional, additional modules in planning.
 
 ## Links
 
@@ -52,9 +52,19 @@ Built with React 19, TypeScript, and Supabase. Features full media search (TMDB,
 
 ## Motivation
 
-Most recommendation apps push algorithmic feeds or public reviews. NPC Finder is friend-focused. Share what you're watching, reading, listening to, and playing with people you trust. No algorithms. No strangers. Just recommendations from friends.
+Share media recommendations with friends, not algorithms. NPC Finder is invite-only, designed for small groups (5-50 people) who trust each other.
 
-Each installation runs its own isolated database - ideal for small friend groups or private deployments.
+Currently focused on media tracking (movies, TV, music, books, games), expanding into a modular life dashboard for tasks, recipes, fitness, and planning. Each installation runs its own isolated database.
+
+## Who Should Use This
+
+- **Small friend groups** who want a private space to share media recommendations
+- **Developers** learning React + Supabase or wanting to self-host a media tracker
+- **People tired of algorithmic feeds** who want recommendations from real friends
+
+## Platform Vision
+
+Evolving into a modular life dashboard beyond media - recipes, tasks, fitness, diaries, collaborative planning. Future consideration: Discord-style networks for custom permissions. All modules maintain invite-only access, RLS, and isolated databases.
 
 ## Features
 
@@ -165,34 +175,28 @@ npm run db:migration:new # Create new database migration
 
 ## Privacy & Security
 
-**Database Isolation:**
-
-Each installation uses its own Supabase project. When you clone this repo, you create your own database instance with your own credentials. No connection between installations.
-
 **Access Control:**
 
-- Invite-only signups
-- Admin-generated invite codes (email-specific, 30-day expiration)
+- Invite-only signups with admin-generated codes (email-specific, 30-day expiration)
 - Row-Level Security (RLS) in PostgreSQL
 - JWT-based authentication
-- Users can only access their own data and friends' shared content
+
+**Database Isolation:**
+Each installation uses its own Supabase project with unique credentials. No connection between installations.
 
 **What's NOT Private:**
-
-- Not end-to-end encrypted (standard web app security model)
-- Database admin can access data on their own instance
-- Supabase (hosting provider) can access data
+Not end-to-end encrypted. Database admin and Supabase can access data. Standard web app security model (like Netflix, Spotify).
 
 See [docs/PRIVACY-REALITY-CHECK.md](docs/PRIVACY-REALITY-CHECK.md) for full details.
 
 ## Roadmap
 
-- Suggestions board with voting
-- Trackers and to-do lists
-- Personalized profiles (MySpace/AOL-style)
-- Virtual home customization and friend visits
-- End-to-end encryption
-- Friend requests system
+**Note:** Aspirational features under consideration. Not currently available and may change.
+
+**Productivity:** Suggestions board with voting, trackers and to-do lists  
+**Social:** Friend requests, personalized profiles (MySpace/AOL-style)  
+**Experience:** Virtual home customization, friend visits  
+**Privacy:** End-to-end encryption
 
 ## Documentation
 
