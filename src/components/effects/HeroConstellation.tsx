@@ -19,6 +19,9 @@ interface Node {
   pulseSpeed: number;
   displacementX: number;
   displacementY: number;
+  maxConnectionDistance: number; // Variable connection range for each node
+  twinklePhase: number; // For slow opacity breathing
+  twinkleSpeed: number; // Individual twinkle timing
 }
 
 interface NodePosition {
@@ -103,6 +106,7 @@ export default function HeroConstellation({
       if (!canvasRectRef.current) return;
 
       const rect = canvasRectRef.current;
+      // Use CSS pixels (not device pixels) for accurate positioning
       const localX = e.clientX - rect.left;
       const localY = e.clientY - rect.top;
 
@@ -171,7 +175,13 @@ export default function HeroConstellation({
           const dy = nodeA.baseY - nodeB.baseY;
           const distance = Math.sqrt(dx * dx + dy * dy);
 
-          if (distance < 140) {
+          // Use variable connection distance for each node
+          const maxDist = Math.min(
+            nodeA.maxConnectionDistance,
+            nodeB.maxConnectionDistance
+          );
+
+          if (distance < maxDist) {
             // Use design token colors (Comment 3)
             if (i % 3 === 0) {
               ctx.strokeStyle = "rgba(255, 184, 136, 0.2)";
@@ -264,14 +274,30 @@ export default function HeroConstellation({
     const nodes: Node[] = [];
     const centerX = width / 2;
     const centerY = height / 2;
+    const minDistance = 50; // Minimum distance between nodes to prevent clustering
 
     for (let i = 0; i < safeNodeCount; i++) {
-      // More even distribution across canvas (less clustering in center)
-      const angle = Math.random() * Math.PI * 2;
-      // Use linear distribution instead of squared for better spread
-      const distance = Math.random() * (Math.min(width, height) / 2) * 0.85;
-      const x = centerX + Math.cos(angle) * distance;
-      const y = centerY + Math.sin(angle) * distance;
+      let x: number, y: number;
+      let attempts = 0;
+      const maxAttempts = 50;
+
+      // Keep trying until we find a position far enough from other nodes
+      do {
+        // More even distribution across canvas (less clustering in center)
+        const angle = Math.random() * Math.PI * 2;
+        // Use linear distribution instead of squared for better spread
+        const distance = Math.random() * (Math.min(width, height) / 2) * 0.85;
+        x = centerX + Math.cos(angle) * distance;
+        y = centerY + Math.sin(angle) * distance;
+        attempts++;
+      } while (
+        attempts < maxAttempts &&
+        nodes.some((node) => {
+          const dx = node.baseX - x;
+          const dy = node.baseY - y;
+          return Math.sqrt(dx * dx + dy * dy) < minDistance;
+        })
+      );
 
       nodes.push({
         x,
@@ -283,6 +309,9 @@ export default function HeroConstellation({
         pulseSpeed: 0.001 + Math.random() * 0.002, // 0.001-0.003
         displacementX: 0,
         displacementY: 0,
+        maxConnectionDistance: 120 + Math.random() * 120, // 120-240px for varied line lengths
+        twinklePhase: Math.random() * Math.PI * 2, // Random starting phase
+        twinkleSpeed: 0.0003 + Math.random() * 0.0005, // Very slow: 0.0003-0.0008
       });
     }
 
@@ -293,9 +322,6 @@ export default function HeroConstellation({
       renderStatic(ctx, width, height);
       return;
     }
-
-    // Cache design token colors outside animation loop (Comment 4)
-    const colors = getDesignTokenColors();
 
     // Animation loop (Comment 5: use const)
     const startTime = performance.now();
@@ -330,7 +356,7 @@ export default function HeroConstellation({
       // Get current smooth mouse position for displacement
       const currentMouseX = smoothMouseX.get();
       const currentMouseY = smoothMouseY.get();
-      const displacementRadius = 150; // Increased radius for wider burst effect
+      const displacementRadius = 120; // Tighter radius for more precise control
 
       // Compute current positions snapshot (Comment 4: update before drawing connections)
       const positions: NodePosition[] = [];
@@ -353,7 +379,7 @@ export default function HeroConstellation({
           if (distance < displacementRadius && distance > 0) {
             // Stronger burst effect with exponential falloff
             const normalizedDist = distance / displacementRadius;
-            const force = (1 - normalizedDist) * (1 - normalizedDist) * 50; // Quadratic falloff, 50px max
+            const force = (1 - normalizedDist) * (1 - normalizedDist) * 40; // Reduced from 50 to 40
             const angle = Math.atan2(dy, dx);
 
             node.displacementX = Math.cos(angle) * force;
@@ -407,9 +433,17 @@ export default function HeroConstellation({
           const dy = posA.y - posB.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
 
-          if (distance < 140) {
+          // Use variable connection distance for each node
+          const nodeA = nodes[i];
+          const nodeB = nodes[j];
+          const maxDist = Math.min(
+            nodeA.maxConnectionDistance,
+            nodeB.maxConnectionDistance
+          );
+
+          if (distance < maxDist) {
             // Increased threshold for longer, more visible lines
-            const opacity = (1 - distance / 140) * 0.15;
+            const opacity = (1 - distance / maxDist) * 0.15;
 
             // Alternate between white and orange tint using design tokens (Comment 3)
             if (i % 3 === 0) {
@@ -431,6 +465,13 @@ export default function HeroConstellation({
       // Draw nodes using computed positions (Comment 4)
       for (let i = 0; i < nodes.length; i++) {
         const pos = positions[i];
+        const node = nodes[i];
+
+        // Calculate twinkle opacity (slow breathing effect) - subtle, stays mostly visible
+        const twinkle = Math.sin(
+          elapsed * node.twinkleSpeed * animationSpeed + node.twinklePhase
+        );
+        const twinkleOpacity = 0.75 + twinkle * 0.25; // Range: 0.5 to 1.0 (mostly visible, occasional subtle dim)
 
         // Create radial gradient for glow effect
         const gradient = ctx.createRadialGradient(
@@ -442,20 +483,31 @@ export default function HeroConstellation({
           pos.radius * 3
         );
 
-        // Alternate between white and orange nodes using design tokens (Comment 3)
-        if (i % 2 === 0) {
-          gradient.addColorStop(0, colors.whiteBase.replace("0.48", "0.8"));
-          gradient.addColorStop(0.5, colors.whiteBase.replace("0.48", "0.4"));
+        // Pre-calculate opacity values to avoid string operations in loop
+        const opacity0 = 0.8 * twinkleOpacity;
+        const opacity1 = 0.4 * twinkleOpacity;
+        const opacity2 = 0.6 * twinkleOpacity;
+        const opacity3 = 0.3 * twinkleOpacity;
+
+        // Use design token colors with purple accent nodes (Comment 3)
+        if (i % 7 === 0) {
+          // Purple nodes - sparse accent
+          gradient.addColorStop(0, `rgba(167, 139, 221, ${opacity0})`);
+          gradient.addColorStop(0.5, `rgba(167, 139, 221, ${opacity1})`);
+          ctx.shadowColor = `rgba(167, 139, 221, ${opacity3})`;
+        } else if (i % 2 === 0) {
+          gradient.addColorStop(0, `rgba(255, 255, 255, ${opacity0})`);
+          gradient.addColorStop(0.5, `rgba(255, 255, 255, ${opacity1})`);
+          ctx.shadowColor = `rgba(255, 255, 255, ${0.18 * twinkleOpacity})`;
         } else {
-          gradient.addColorStop(0, colors.orangeBase);
-          gradient.addColorStop(0.5, colors.orangeBase.replace("0.6", "0.3"));
+          gradient.addColorStop(0, `rgba(255, 184, 136, ${opacity2})`);
+          gradient.addColorStop(0.5, `rgba(255, 184, 136, ${opacity3})`);
+          ctx.shadowColor = `rgba(255, 142, 83, ${0.4 * twinkleOpacity})`;
         }
         gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
 
         // Apply shadow blur for additional glow using design tokens (Comment 3)
         ctx.shadowBlur = 6;
-        ctx.shadowColor =
-          i % 2 === 0 ? colors.whiteShadow : colors.orangeShadow;
 
         ctx.fillStyle = gradient;
         ctx.beginPath();
