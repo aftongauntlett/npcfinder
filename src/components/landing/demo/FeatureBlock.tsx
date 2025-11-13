@@ -50,15 +50,6 @@ export const FeatureBlock: React.FC<FeatureBlockProps> = ({
         {/* Content column */}
         <div className="flex-1 max-w-3xl">
           <div className="flex items-center gap-4 mb-5">
-            <div
-              className="w-12 h-12 rounded-xl flex items-center justify-center border flex-shrink-0"
-              style={{
-                background: `linear-gradient(to bottom right, rgba(${rgbString}, 0.2), rgba(${rgbString}, 0.05))`,
-                borderColor: `rgba(${rgbString}, 0.2)`,
-              }}
-            >
-              <Icon className="w-6 h-6" style={{ color: iconColor }} />
-            </div>
             <h4
               className="text-2xl font-semibold transition-colors duration-300"
               style={{
@@ -76,7 +67,7 @@ export const FeatureBlock: React.FC<FeatureBlockProps> = ({
               }}
             />
           </div>
-          <div className="space-y-3 pl-16">
+          <div className="space-y-3">
             {items.map((item, index) => (
               <div
                 key={index}
@@ -86,7 +77,7 @@ export const FeatureBlock: React.FC<FeatureBlockProps> = ({
                   className="mt-1 flex-shrink-0"
                   style={{ color: iconColor }}
                 >
-                  —
+                  -
                 </span>
                 <p className="text-gray-300 leading-relaxed group-hover/item:text-white transition-colors duration-200">
                   {item}
