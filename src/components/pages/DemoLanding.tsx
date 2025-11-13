@@ -1,6 +1,11 @@
 import React from "react";
-import { motion } from "framer-motion";
-import { Github, ExternalLink, Lock, HelpCircle, Shield } from "lucide-react";
+import {
+  GithubLogo,
+  ArrowSquareOut,
+  Lock,
+  Question,
+  ShieldCheck,
+} from "@phosphor-icons/react";
 import StarryBackground from "../shared/StarryBackground";
 import LandingButton from "../landing/LandingButton";
 import HeroConstellation from "../effects/HeroConstellation";
@@ -35,13 +40,13 @@ const DemoLanding: React.FC = () => {
       <header className="relative z-10 border-b border-white/5 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <HelpCircle className="w-9 h-9 text-[#FFB088] stroke-[2.5]" />
+            <Question className="w-9 h-9 text-[#FFB088]" weight="duotone" />
             <h1 className="text-2xl font-bold tracking-tight">NPC Finder</h1>
           </div>
           <LandingButton
             href="/app"
             variant="secondary"
-            icon={<Lock className="w-4 h-4" />}
+            icon={<Lock className="w-4 h-4" weight="duotone" />}
             className="text-sm"
           >
             <span className="hidden sm:inline">Login</span>
@@ -84,7 +89,6 @@ const DemoLanding: React.FC = () => {
                   label={badge.label}
                   icon={badge.icon}
                   color={badge.color}
-                  isPhosphor={badge.isPhosphor}
                 />
               ))}
             </div>
@@ -100,7 +104,7 @@ const DemoLanding: React.FC = () => {
               <LandingButton
                 href="https://github.com/aftongauntlett/npcfinder"
                 variant="primary"
-                icon={<Github className="w-5 h-5" />}
+                icon={<GithubLogo className="w-5 h-5" weight="duotone" />}
               >
                 View Source
               </LandingButton>
@@ -113,7 +117,7 @@ const DemoLanding: React.FC = () => {
                   });
                 }}
                 variant="ghost"
-                icon={<HelpCircle className="w-4 h-4" />}
+                icon={<Question className="w-4 h-4" weight="duotone" />}
               >
                 Learn More
               </LandingButton>
@@ -142,12 +146,8 @@ const DemoLanding: React.FC = () => {
           <div className="bg-slate-800/40 border border-white/10 rounded-2xl p-8">
             <ul className="space-y-4">
               {landingIdentity.keyPoints.map((point, index) => (
-                <motion.li
+                <li
                   key={index}
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
                   className="flex items-center gap-3 text-gray-300"
                 >
                   <span
@@ -164,7 +164,7 @@ const DemoLanding: React.FC = () => {
                     -
                   </span>
                   <span>{point}</span>
-                </motion.li>
+                </li>
               ))}
             </ul>
           </div>
@@ -216,20 +216,12 @@ const DemoLanding: React.FC = () => {
                 iconColor={point.iconColor}
                 title={point.title}
                 description={point.description}
-                isHeroicon={point.isHeroicon}
-                isRadix={point.isRadix}
               />
             ))}
           </div>
 
           {/* Disclaimer Box - Toned Down */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-8"
-          >
+          <div className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-8">
             <p className="text-gray-400 leading-relaxed mb-4">
               <strong className="text-gray-300">What's NOT private:</strong>{" "}
               This is not end-to-end encrypted like Signal or WhatsApp. The
@@ -247,7 +239,7 @@ const DemoLanding: React.FC = () => {
                 {landingPrivacy.privacyDocsLink.label}
               </LandingButton>
             </div>
-          </motion.div>
+          </div>
         </section>
 
         {/* Technical Details */}
@@ -280,16 +272,12 @@ const DemoLanding: React.FC = () => {
                 "TanStack Query",
                 "Vitest",
               ].map((tech) => (
-                <motion.span
+                <span
                   key={tech}
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true, margin: "-100px" }}
-                  transition={{ duration: 0.6, ease: "easeOut" }}
                   className="px-4 py-2.5 bg-slate-800/60 border border-white/10 rounded-lg text-sm font-medium text-gray-300 hover:bg-slate-700/60 hover:border-white/20 hover:text-white transition-all duration-200 text-center"
                 >
                   {tech}
-                </motion.span>
+                </span>
               ))}
             </div>
           </div>
@@ -355,12 +343,8 @@ const DemoLanding: React.FC = () => {
           {/* Availability Points - Text Only with Hover */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {landingAvailability.points.map((point, index) => (
-              <motion.div
+              <div
                 key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
                 className="bg-slate-800/40 border-l-4 rounded-lg p-6 hover:bg-slate-800/60 transition-all duration-300"
                 style={{ borderLeftColor: point.iconColor }}
               >
@@ -370,20 +354,14 @@ const DemoLanding: React.FC = () => {
                 <p className="text-gray-400 text-sm leading-relaxed">
                   {point.description}
                 </p>
-              </motion.div>
+              </div>
             ))}
           </div>
 
           {/* Demo Note */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="bg-slate-800/40 border border-white/10 rounded-xl p-6 mb-12 text-center"
-          >
+          <div className="bg-slate-800/40 border border-white/10 rounded-xl p-6 mb-12 text-center">
             <p className="text-gray-400">{landingAvailability.demoNote}</p>
-          </motion.div>
+          </div>
 
           {/* Documentation Accordions */}
           <div className="space-y-4">
@@ -490,7 +468,7 @@ const DemoLanding: React.FC = () => {
             <LandingButton
               href="https://github.com/aftongauntlett/npcfinder"
               variant="tertiary"
-              icon={<Github className="w-4 h-4" />}
+              icon={<GithubLogo className="w-4 h-4" weight="duotone" />}
             >
               View Source Code
             </LandingButton>
@@ -503,7 +481,7 @@ const DemoLanding: React.FC = () => {
             <LandingButton
               href="https://aftongauntlett.com"
               variant="secondary"
-              icon={<ExternalLink className="w-4 h-4" />}
+              icon={<ArrowSquareOut className="w-4 h-4" weight="duotone" />}
             >
               View Portfolio
             </LandingButton>
@@ -518,7 +496,10 @@ const DemoLanding: React.FC = () => {
             <p>© 2025 NPC Finder • Built by Afton Gauntlett</p>
             <div className="flex items-center gap-6">
               <span className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-purple-400" />
+                <ShieldCheck
+                  className="w-4 h-4 text-purple-400"
+                  weight="duotone"
+                />
                 Private within your friend group
               </span>
             </div>

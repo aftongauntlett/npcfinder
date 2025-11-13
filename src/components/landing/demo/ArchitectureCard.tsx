@@ -1,9 +1,8 @@
 import React from "react";
-import { motion } from "framer-motion";
-import type { LucideIcon } from "lucide-react";
+import type { Icon } from "@phosphor-icons/react";
 
 interface ArchitectureCardProps {
-  icon: LucideIcon;
+  icon: Icon;
   iconColor: string;
   title: string;
   items: string[];
@@ -19,11 +18,7 @@ export const ArchitectureCard: React.FC<ArchitectureCardProps> = ({
   items,
 }) => {
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      viewport={{ once: true, margin: "-100px" }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
+    <div
       className="group space-y-4 bg-slate-800/40 border-l-4 rounded-lg p-8 hover:bg-slate-800/60 transition-all duration-300"
       style={{
         borderLeftColor: iconColor,
@@ -43,6 +38,6 @@ export const ArchitectureCard: React.FC<ArchitectureCardProps> = ({
           </li>
         ))}
       </ul>
-    </motion.div>
+    </div>
   );
 };

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown } from "lucide-react";
+import { CaretDown } from "@phosphor-icons/react";
 
 interface AccordionProps {
   title: string;
@@ -26,7 +26,7 @@ export default function Accordion({
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.3 }}
         >
-          <ChevronDown className="w-5 h-5 text-gray-400" />
+          <CaretDown className="w-5 h-5 text-gray-400" weight="bold" />
         </motion.div>
       </button>
 

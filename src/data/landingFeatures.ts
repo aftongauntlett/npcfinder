@@ -1,8 +1,13 @@
-import { Film, Shield, Users, Palette } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import {
+  FilmStrip,
+  ShieldCheck,
+  UsersThree,
+  PaintBrush,
+  type Icon,
+} from "@phosphor-icons/react";
 
 interface FeatureData {
-  icon: LucideIcon;
+  icon: Icon;
   iconColor: string;
   title: string;
   items: string[];
@@ -10,8 +15,8 @@ interface FeatureData {
 
 export const landingFeatures: FeatureData[] = [
   {
-    icon: Film,
-    iconColor: "#ff6b35", // vibrant orange-red
+    icon: FilmStrip,
+    iconColor: "#ff6b35", // vibrant orange-red (peach accent)
     title: "Media Tracking & Recommendations",
     items: [
       "Build personal libraries for movies, TV, music, books, and games",
@@ -20,7 +25,7 @@ export const landingFeatures: FeatureData[] = [
     ],
   },
   {
-    icon: Shield,
+    icon: ShieldCheck,
     iconColor: "#a855f7", // vibrant purple (purple-500)
     title: "Privacy-First",
     items: [
@@ -30,7 +35,7 @@ export const landingFeatures: FeatureData[] = [
     ],
   },
   {
-    icon: Users,
+    icon: UsersThree,
     iconColor: "#14b8a6", // vibrant teal (teal-500)
     title: "Small Group Sharing",
     items: [
@@ -40,7 +45,7 @@ export const landingFeatures: FeatureData[] = [
     ],
   },
   {
-    icon: Palette,
+    icon: PaintBrush,
     iconColor: "#f59e0b", // amber-500
     title: "Customization & Personalization",
     items: [

@@ -1,8 +1,7 @@
-import type { LucideIcon } from "lucide-react";
-import { Key, Lock } from "lucide-react";
+import { Key, Lock, type Icon } from "@phosphor-icons/react";
 
 export interface AvailabilityPoint {
-  icon: LucideIcon;
+  icon: Icon;
   iconColor: string;
   title: string;
   description: string;

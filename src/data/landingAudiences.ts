@@ -1,8 +1,13 @@
-import type { LucideIcon } from "lucide-react";
-import { Briefcase, Code, Eye, UserCheck } from "lucide-react";
+import {
+  Briefcase,
+  Code,
+  Eye,
+  UserCheck,
+  type Icon,
+} from "@phosphor-icons/react";
 
 export interface AudienceItem {
-  icon: LucideIcon;
+  icon: Icon;
   iconColor: string;
   title: string;
   description: string;

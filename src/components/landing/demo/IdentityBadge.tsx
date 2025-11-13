@@ -1,37 +1,25 @@
-import { motion } from "framer-motion";
-import type { LucideIcon } from "lucide-react";
-import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
+import type { Icon } from "@phosphor-icons/react";
 
 interface IdentityBadgeProps {
   label: string;
-  icon: LucideIcon | PhosphorIcon;
+  icon: Icon;
   color: string;
-  isPhosphor?: boolean;
 }
 
 export default function IdentityBadge({
   label,
   icon: Icon,
   color,
-  isPhosphor: _isPhosphor = false,
 }: IdentityBadgeProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      whileInView={{ opacity: 1, scale: 1 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.4 }}
-      whileHover={{
-        scale: 1.05,
-        transition: { duration: 0.2, ease: "easeOut" },
-      }}
-      className="inline-flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-sm"
+    <div
+      className="inline-flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-sm hover:scale-105 transition-all duration-200"
       style={{
         backgroundColor: `${color}08`,
         border: `1.5px solid ${color}20`,
         boxShadow: `0 2px 8px ${color}08`,
         transition:
-          "border-color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease",
+          "border-color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease-out",
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = `${color}40`;
@@ -46,8 +34,8 @@ export default function IdentityBadge({
     >
       <Icon
         className="w-4 h-4"
-        style={{ color, opacity: 0.9, strokeWidth: 2 }}
-        weight="bold"
+        style={{ color, opacity: 0.9 }}
+        weight="duotone"
       />
       <span
         className="text-sm font-medium tracking-wide"
@@ -55,6 +43,6 @@ export default function IdentityBadge({
       >
         {label}
       </span>
-    </motion.div>
+    </div>
   );
 }

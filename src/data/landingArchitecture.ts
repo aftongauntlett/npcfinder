@@ -1,8 +1,12 @@
-import { Database, Shield, Zap } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import {
+  Database,
+  ShieldCheck,
+  Lightning,
+  type Icon,
+} from "@phosphor-icons/react";
 
 interface ArchitectureData {
-  icon: LucideIcon;
+  icon: Icon;
   iconColor: string;
   title: string;
   items: string[];
@@ -21,7 +25,7 @@ export const landingArchitecture: ArchitectureData[] = [
     ],
   },
   {
-    icon: Shield,
+    icon: ShieldCheck,
     iconColor: "#4ade80", // green-400
     title: "Security Features",
     items: [
@@ -32,7 +36,7 @@ export const landingArchitecture: ArchitectureData[] = [
     ],
   },
   {
-    icon: Zap,
+    icon: Lightning,
     iconColor: "#facc15", // yellow-400
     title: "Performance",
     items: [

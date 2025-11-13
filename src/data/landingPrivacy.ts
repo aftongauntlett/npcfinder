@@ -1,18 +1,16 @@
-import type { LucideIcon } from "lucide-react";
-import { ShieldCheckIcon, UserMinusIcon } from "@heroicons/react/24/outline";
-import { EyeNoneIcon, StackIcon } from "@radix-ui/react-icons";
-import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
+import {
+  ShieldCheck,
+  UserMinus,
+  EyeSlash,
+  Stack,
+  type Icon,
+} from "@phosphor-icons/react";
 
 export interface PrivacyPoint {
-  icon:
-    | LucideIcon
-    | PhosphorIcon
-    | React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  icon: Icon;
   iconColor: string;
   title: string;
   description: string;
-  isHeroicon?: boolean;
-  isRadix?: boolean;
 }
 
 export interface PrivacyData {
@@ -32,36 +30,32 @@ export const landingPrivacy: PrivacyData = {
     "NPC Finder is built with privacy as a core principle, but it's important to understand what that means - and what it doesn't mean.",
   points: [
     {
-      icon: ShieldCheckIcon,
+      icon: ShieldCheck,
       iconColor: "#10b981",
       title: "Protected from Other Users",
       description:
         "PostgreSQL Row-Level Security ensures other users cannot access your private data - only you and connected friends.",
-      isHeroicon: true,
     },
     {
-      icon: UserMinusIcon,
+      icon: UserMinus,
       iconColor: "#f59e0b",
       title: "Invite-Only Access",
       description:
         "No public signup means no strangers. Only people with admin-generated invite codes can join.",
-      isHeroicon: true,
     },
     {
-      icon: EyeNoneIcon as React.ComponentType<React.SVGProps<SVGSVGElement>>,
+      icon: EyeSlash,
       iconColor: "#8b5cf6",
       title: "No Tracking or Analytics",
       description:
         "No third-party tracking, no analytics scripts, no data mining. Your activity stays within the app.",
-      isRadix: true,
     },
     {
-      icon: StackIcon as React.ComponentType<React.SVGProps<SVGSVGElement>>,
+      icon: Stack,
       iconColor: "#3b82f6",
       title: "Database Isolation",
       description:
         "Each installation uses its own Supabase project. When you clone this repo, you create a completely separate database.",
-      isRadix: true,
     },
   ],
   disclaimer:

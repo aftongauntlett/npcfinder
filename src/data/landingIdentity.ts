@@ -1,12 +1,9 @@
-import type { LucideIcon } from "lucide-react";
-import { LockKey, TrendDown, Database } from "@phosphor-icons/react";
-import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
+import { LockKey, TrendDown, Database, type Icon } from "@phosphor-icons/react";
 
 export interface IdentityBadge {
   label: string;
-  icon: LucideIcon | PhosphorIcon;
+  icon: Icon;
   color: string;
-  isPhosphor?: boolean;
 }
 
 export interface IdentityData {
@@ -38,19 +35,16 @@ export const landingIdentity: IdentityData = {
       label: "Invite-Only",
       icon: LockKey,
       color: "#5DCCCC", // Teal - matches app primary color
-      isPhosphor: true,
     },
     {
       label: "No Algorithms",
       icon: TrendDown,
       color: "#A78BDD", // Soft purple - complements teal
-      isPhosphor: true,
     },
     {
       label: "Self-Hosted",
       icon: Database,
       color: "#8E9DAD", // Dusty blue-gray - neutral complement
-      isPhosphor: true,
     },
   ],
 };

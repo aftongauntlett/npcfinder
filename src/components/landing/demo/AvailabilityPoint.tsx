@@ -1,17 +1,10 @@
-import { motion } from "framer-motion";
-import type { LucideIcon } from "lucide-react";
-import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
+import type { Icon } from "@phosphor-icons/react";
 
 interface AvailabilityPointProps {
-  icon:
-    | LucideIcon
-    | PhosphorIcon
-    | React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  icon: Icon;
   iconColor: string;
   title: string;
   description: string;
-  isHeroicon?: boolean;
-  isRadix?: boolean;
 }
 
 export default function AvailabilityPoint({
@@ -19,23 +12,9 @@ export default function AvailabilityPoint({
   iconColor,
   title,
   description,
-  isHeroicon: _isHeroicon = false,
-  isRadix = false,
 }: AvailabilityPointProps) {
-  // Radix icons are 15x15 by default, Heroicons/Lucide are 24x24
-  const iconSize = isRadix ? "w-6 h-6" : "w-6 h-6";
-  const iconStyle = isRadix
-    ? { color: iconColor, width: "24px", height: "24px" }
-    : { color: iconColor };
-
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
-      className="group bg-slate-800/40 border border-white/10 rounded-xl p-6 hover:bg-slate-800/60 hover:border-white/20 transition-all duration-300"
-    >
+    <div className="group bg-slate-800/40 border border-white/10 rounded-xl p-6 hover:bg-slate-800/60 hover:border-white/20 transition-all duration-300">
       {/* Horizontal Layout for Desktop, Vertical for Mobile */}
       <div className="flex flex-col sm:flex-row gap-4 items-start">
         {/* Icon Container */}
@@ -46,7 +25,11 @@ export default function AvailabilityPoint({
             border: `1px solid ${iconColor}30`,
           }}
         >
-          <Icon className={iconSize} style={iconStyle} />
+          <Icon
+            className="w-6 h-6"
+            style={{ color: iconColor }}
+            weight="duotone"
+          />
         </div>
 
         {/* Content */}
@@ -55,6 +38,6 @@ export default function AvailabilityPoint({
           <p className="text-gray-400 text-sm leading-relaxed">{description}</p>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

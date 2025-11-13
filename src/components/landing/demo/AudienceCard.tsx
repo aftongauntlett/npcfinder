@@ -1,8 +1,7 @@
-import { motion } from "framer-motion";
-import type { LucideIcon } from "lucide-react";
+import type { Icon } from "@phosphor-icons/react";
 
 interface AudienceCardProps {
-  icon: LucideIcon;
+  icon: Icon;
   iconColor: string;
   title: string;
   description: string;
@@ -14,11 +13,7 @@ export default function AudienceCard({
   description,
 }: AudienceCardProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
+    <div
       className="group relative bg-slate-800/40 border-l-4 border-t border-r border-b border-white/10 rounded-xl p-8 hover:bg-slate-800/60 transition-all duration-300"
       style={{
         borderLeftColor: iconColor,
@@ -35,6 +30,6 @@ export default function AudienceCard({
         <h4 className="text-xl font-semibold text-white mb-3">{title}</h4>
         <p className="text-gray-300 leading-relaxed">{description}</p>
       </div>
-    </motion.div>
+    </div>
   );
 }

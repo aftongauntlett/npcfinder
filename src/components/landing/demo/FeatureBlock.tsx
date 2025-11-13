@@ -1,9 +1,8 @@
 import React, { useState } from "react";
-import { motion } from "framer-motion";
-import type { LucideIcon } from "lucide-react";
+import type { Icon } from "@phosphor-icons/react";
 
 interface FeatureBlockProps {
-  icon: LucideIcon;
+  icon: Icon;
   iconColor: string;
   title: string;
   items: string[];
@@ -37,11 +36,7 @@ export const FeatureBlock: React.FC<FeatureBlockProps> = ({
   const rgbString = `${rgb.r}, ${rgb.g}, ${rgb.b}`;
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      viewport={{ once: true, margin: "-100px" }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
+    <div
       className="group relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -106,12 +101,12 @@ export const FeatureBlock: React.FC<FeatureBlockProps> = ({
                 color: isHovered ? iconColor : `rgba(${rgbString}, 0.4)`,
                 transform: isHovered ? "rotate(3deg)" : "rotate(0deg)",
               }}
-              strokeWidth={1.5}
+              weight="duotone"
               size={64}
             />
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
