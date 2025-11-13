@@ -22,18 +22,16 @@ const LandingButton: FC<LandingButtonProps> = ({
 
   const variants = {
     primary: `
-      bg-[#FFB088]/90
-      text-slate-900
-      shadow-md shadow-[#FFB088]/15
-      hover:shadow-lg hover:shadow-[#FFB088]/20
-      hover:bg-[#FFB088]
+      bg-transparent
+      border-2 border-[#FFB088]/50
+      text-[#FFB088]
+      backdrop-blur-sm
+      hover:border-[#FFB088]
+      hover:bg-[#FFB088]/5
+      hover:shadow-[0_0_20px_-5px_rgba(255,176,136,0.5)]
       active:scale-95
       font-semibold
-      border border-white/20
-      backdrop-blur-md
-      before:absolute before:inset-0 before:rounded-lg
-      before:bg-gradient-to-br before:from-white/30 before:via-white/10 before:to-transparent
-      before:opacity-60
+      transition-all duration-400 ease-out
     `,
     secondary: `
       bg-transparent 
@@ -76,11 +74,6 @@ const LandingButton: FC<LandingButtonProps> = ({
       {...(isExternalLink && { target: "_blank", rel: "noopener noreferrer" })}
       className={`${baseStyles} ${variants[variant]} ${className} group`}
     >
-      {/* Shimmer effect for primary button */}
-      {variant === "primary" && (
-        <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out rounded-lg" />
-      )}
-
       {/* Content */}
       <span className="relative z-10 flex items-center gap-2">
         {icon && <span className="text-lg">{icon}</span>}
