@@ -33,7 +33,7 @@ export default function IdentityBadge({
       }}
     >
       <Icon
-        className="w-4 h-4"
+        className="w-3.5 h-3.5"
         style={{ color, opacity: 0.9 }}
         weight="duotone"
       />
