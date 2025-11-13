@@ -11,19 +11,12 @@ interface FutureFeatureData {
   isBigDream?: boolean;
 }
 
+export const futureDisclaimer =
+  "These features are under consideration for future development. None of them are currently available. Plans may change based on user feedback, technical feasibility, and project priorities.";
+
 export const landingFutureFeatures: FutureFeatureData[] = [
   {
-    title: "End-to-End Encryption",
-    badge: "ENCRYPTION",
-    badgeColor: {
-      bg: "#FF6B6B10", // rgba equivalent
-      text: "#FF8E53",
-      border: "#FF6B6B20",
-    },
-    description: "Private messaging and journaling with full E2E encryption.",
-  },
-  {
-    title: "Task Tracker",
+    title: "Productivity Tools",
     badge: "PRODUCTIVITY",
     badgeColor: {
       bg: "rgba(6, 182, 212, 0.1)", // cyan-500/10
@@ -31,18 +24,7 @@ export const landingFutureFeatures: FutureFeatureData[] = [
       border: "rgba(34, 211, 238, 0.2)", // cyan-400/20
     },
     description:
-      "Flexible tracking for fitness routines, job applications, or personal goals.",
-  },
-  {
-    title: "Interactive To-Do Lists",
-    badge: "COLLABORATION",
-    badgeColor: {
-      bg: "rgba(20, 184, 166, 0.1)", // teal-500/10
-      text: "#5eead4", // teal-300
-      border: "rgba(45, 212, 191, 0.2)", // teal-400/20
-    },
-    description:
-      "Task management with drag-and-drop, priorities, and shared lists.",
+      "Task management with drag-and-drop, priorities, and shared lists. Track fitness routines, job applications, or personal goals - all integrated into the dashboard.",
   },
   {
     title: "Custom Profiles",
@@ -53,21 +35,39 @@ export const landingFutureFeatures: FutureFeatureData[] = [
       border: "#FFB08820",
     },
     description:
-      "Customizable profiles with personality, inspired by the old days of MySpace.",
+      "Customizable profiles inspired by MySpace - custom backgrounds, music players, and personal expression. Not professional networking.",
+  },
+  {
+    title: "Discord-Style Networks",
+    badge: "SCALABILITY",
+    badgeColor: {
+      bg: "rgba(20, 184, 166, 0.1)", // teal-500/10
+      text: "#5eead4", // teal-300
+      border: "rgba(45, 212, 191, 0.2)", // teal-400/20
+    },
+    description:
+      "Optional user-created networks where groups manage their own spaces, permissions, and membership - scaling beyond small friend groups while maintaining privacy controls.",
+  },
+  {
+    title: "End-to-End Encryption",
+    badge: "ENCRYPTION",
+    badgeColor: {
+      bg: "#FF6B6B10", // rgba equivalent
+      text: "#FF8E53",
+      border: "#FF6B6B20",
+    },
+    description:
+      "Private messaging and journaling with full E2E encryption like Signal. Requires significant architectural changes - long-term goal.",
+  },
+  {
+    title: "In-Browser Social Game",
+    badge: "THE BIG DREAM",
+    badgeColor: {
+      bg: "rgba(20, 184, 166, 0.1)", // teal-500/10
+      text: "#5eead4", // teal-300
+      border: "rgba(45, 212, 191, 0.2)", // teal-400/20
+    },
+    description:
+      "A cozy social game built into the dashboard. Keep pets, tend gardens, decorate your house, and visit friends. Think Animal Crossing meets productivity tracking.",
   },
 ];
-
-export const landingBigDream: FutureFeatureData = {
-  title: "In-Browser Social Game",
-  badge: "THE BIG DREAM",
-  badgeColor: {
-    bg: "", // uses gradient
-    text: "#5eead4", // teal-300
-    border: "rgba(45, 212, 191, 0.2)", // teal-400/20
-  },
-  description:
-    "A cozy social game built into the dashboard. Keep pets, tend to gardens, decorate your house, and visit your friends. Something designed to encourage healthy habits without pressure.",
-  descriptionExtra:
-    "A relaxing space that fits naturally into your friend network.",
-  isBigDream: true,
-};

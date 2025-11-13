@@ -1,4 +1,4 @@
-import { Film, Shield, Users, TrendingUp } from "lucide-react";
+import { Film, Shield, Users, Palette } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface FeatureData {
@@ -14,9 +14,9 @@ export const landingFeatures: FeatureData[] = [
     iconColor: "#ff6b35", // vibrant orange-red
     title: "Media Tracking & Recommendations",
     items: [
-      "Keep personal libraries for movies, TV shows, music, books, and games",
-      "Rate what you watch and read, then share recommendations with friends",
-      "See what friends loved or hated and mark suggestions as hits or misses",
+      "Build personal libraries for movies, TV, music, books, and games",
+      "Rate and review what you consume, then send recommendations to friends with personal notes",
+      "Mark recommendations as hits, misses, or queued",
     ],
   },
   {
@@ -24,29 +24,29 @@ export const landingFeatures: FeatureData[] = [
     iconColor: "#a855f7", // vibrant purple (purple-500)
     title: "Privacy-First",
     items: [
-      "Invite-only access means only people you trust can join",
-      "Row-Level Security protects your data at the database level",
-      "Your library and recommendations stay between you and your friend group",
+      "Invite-only access controlled by admins - no public signup, no strangers",
+      "Row-Level Security (RLS) ensures your data is protected at the database level",
+      "Your libraries and recommendations stay within your trusted friend group",
     ],
   },
   {
     icon: Users,
     iconColor: "#14b8a6", // vibrant teal (teal-500)
-    title: "Friend Network",
+    title: "Small Group Sharing",
     items: [
-      "Connect with your real friends and see their media libraries",
-      "View their ratings and recommendations side by side",
-      "Find out what resonates with the people who know you best",
+      "Connect with friends through manual, opt-in connections",
+      "See what your connected friends are watching, reading, and playing",
+      "Get recommendations from people who know your taste - not algorithms",
     ],
   },
   {
-    icon: TrendingUp,
-    iconColor: "#22c55e", // vibrant green (green-500)
-    title: "Suggestions & Voting",
+    icon: Palette,
+    iconColor: "#f59e0b", // amber-500
+    title: "Customization & Personalization",
     items: [
-      "Create suggestions for anything—where to eat, what to watch, weekend activities",
-      "Friends can upvote or downvote to make group decisions easy",
-      "Democratic voting keeps everyone's voice heard",
+      "Choose custom theme colors to personalize your dashboard",
+      "Customize which dashboard cards you see and hide unused features",
+      "Set your display name and personal greeting",
     ],
   },
 ];
