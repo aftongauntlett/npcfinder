@@ -23,9 +23,9 @@ export const landingIdentity: IdentityData = {
   title: "What Is NPC Finder Today",
   tagline:
     "A private, modular life dashboard for small, trusted friend groups.",
-  description:
-    "A privacy-first platform starting with media tracking, expanding into tasks, recipes, fitness, and more. Built for small groups (5-50 people) who want control without algorithms or strangers.",
+  description: "",
   keyPoints: [
+    "Built for small groups (5-50 people) who want control without algorithms or strangers",
     "Modular design: media tracking live, multi-purpose tools coming",
     "Each installation isolated - your data in your own database",
     "Not a social network - a private tool for existing friend groups",

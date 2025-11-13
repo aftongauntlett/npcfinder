@@ -2,7 +2,7 @@ import {
   FilmStrip,
   ShieldCheck,
   UsersThree,
-  PaintBrush,
+  Sliders,
   type Icon,
 } from "@phosphor-icons/react";
 
@@ -45,7 +45,7 @@ export const landingFeatures: FeatureData[] = [
     ],
   },
   {
-    icon: PaintBrush,
+    icon: Sliders,
     iconColor: "#f59e0b", // amber-500
     title: "Customization & Personalization",
     items: [
