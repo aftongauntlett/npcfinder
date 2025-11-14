@@ -41,9 +41,8 @@ export default function Accordion({
   const hoverColors = [LANDING_TEAL, LANDING_PURPLE, LANDING_PEACH];
   const hoverColor = iconColor || hoverColors[index % 3];
 
-  const titleSlug = slugify(title);
-  const headerId = `${idPrefix}-${titleSlug}-header-${index}`;
-  const panelId = `${idPrefix}-${titleSlug}-panel-${index}`;
+  const headerId = `${idPrefix}-header-${index}`;
+  const panelId = `${idPrefix}-panel-${index}`;
 
   return (
     <div className="bg-slate-800/40 border border-white/10 rounded-xl overflow-hidden">
