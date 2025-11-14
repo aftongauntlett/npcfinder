@@ -5,9 +5,11 @@ import {
   ArrowSquareOut,
   Lock,
   Question,
-  ShieldCheck,
   LinkedinLogo,
   ArrowUp,
+  ProhibitInset,
+  EyeSlash,
+  UsersFour,
 } from "@phosphor-icons/react";
 import StarryBackground from "../shared/StarryBackground";
 import LandingButton from "../landing/LandingButton";
@@ -113,16 +115,13 @@ const DemoLanding: React.FC = () => {
               </span>
             </h2>
 
-            <p className="text-base sm:text-lg text-neutral-300 mb-2 max-w-xl leading-relaxed font-light">
+            <p className="text-base sm:text-lg text-neutral-300 mb-8 max-w-xl leading-relaxed font-light">
               An{" "}
               <strong className="text-white">open-source, self-hosted</strong>{" "}
               modular dashboard for your daily life. Track media, manage tasks,
               organize recipes, and share with your trusted friends. Clone it,
               run it with your own friend group, and customize it however you
               want.
-            </p>
-            <p className="text-sm text-gray-400 mb-8 sm:mb-10 max-w-xl">
-              Privacy without ads, tracking, or engagement manipulation.
             </p>
 
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -505,21 +504,22 @@ const DemoLanding: React.FC = () => {
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
         >
-          <h3 className="text-4xl font-bold mb-4 tracking-tight">
+          <h3 className="text-4xl font-bold mb-6 tracking-tight">
             Open Source Portfolio Project
           </h3>
-          <p className="text-xl text-gray-400 mb-2">
+          <p className="text-lg text-gray-300 mb-8 max-w-2xl mx-auto">
             This is a code portfolio and self-hosting guide—not a service you
-            sign up for.
+            sign up for. Clone the repo, run your own instance, and customize it
+            for your friend group.
           </p>
-          <p className="text-sm text-gray-500 mb-1">
-            Clone the repo, run your own instance, and customize it for your
-            friend group.
-          </p>
-          <p className="text-sm text-yellow-400/80 mb-10">
-            ⚠️ In active development—recommend waiting for v1.0 milestone before
-            deploying to production
-          </p>
+
+          {/* Development Warning Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 mb-10 rounded-full border border-yellow-500/30 bg-yellow-500/10">
+            <span className="text-yellow-400 text-lg">⚠️</span>
+            <span className="text-sm text-yellow-200">
+              In active development - recommend waiting for v1.0 milestone
+            </span>
+          </div>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <LandingButton
               href="https://github.com/aftongauntlett/npcfinder"
