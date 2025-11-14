@@ -150,13 +150,14 @@ const DemoLanding: React.FC = () => {
 
           {/* Modern feature list with accent borders */}
           <div className="space-y-16">
-            {landingFeatures.map((feature) => (
+            {landingFeatures.map((feature, index) => (
               <FeatureBlock
                 key={feature.title}
                 icon={feature.icon}
                 iconColor={feature.iconColor}
                 title={feature.title}
                 items={feature.items}
+                index={index}
               />
             ))}
           </div>

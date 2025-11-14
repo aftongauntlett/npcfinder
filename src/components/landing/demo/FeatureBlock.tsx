@@ -8,6 +8,7 @@ interface FeatureBlockProps {
   iconColor: string;
   title: string;
   items: string[];
+  index?: number;
 }
 
 /**
@@ -19,6 +20,7 @@ export const FeatureBlock: React.FC<FeatureBlockProps> = ({
   iconColor,
   title,
   items,
+  index,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -33,19 +35,22 @@ export const FeatureBlock: React.FC<FeatureBlockProps> = ({
     typeof window !== "undefined" &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+  // Generate unique ID using index when available, fallback to title-based slug
+  const featureId = index !== undefined ? `feature-${index}` : `feature-${title.replace(/\s+/g, "-").toLowerCase()}`;
+
   return (
     <article
       className="group relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      aria-labelledby={`feature-${title.replace(/\s+/g, "-").toLowerCase()}`}
+      aria-labelledby={featureId}
     >
       <div className="flex items-start gap-16">
         {/* Content column */}
         <div className="flex-1">
           <div className="flex items-center gap-4 mb-5">
             <h4
-              id={`feature-${title.replace(/\s+/g, "-").toLowerCase()}`}
+              id={featureId}
               className="text-2xl font-semibold transition-colors duration-300"
               style={{
                 color: isHovered ? iconColor : "white",
