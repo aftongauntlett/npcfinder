@@ -47,7 +47,7 @@ export const landingFeatures: FeatureData[] = [
     items: [
       "Connect with friends through manual, opt-in connections",
       "See what your connected friends are watching, reading, and playing",
-      "Get recommendations from people who know your taste - not algorithms",
+      "Get recommendations from people who know your taste - not ad-driven feeds",
     ],
   },
   {

@@ -4,7 +4,7 @@
 [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/aftongauntlett/npcfinder)](https://github.com/aftongauntlett/npcfinder/commits/main)
 [![License](https://img.shields.io/badge/License-MIT-blue)](https://opensource.org/licenses/MIT)
 
-A private, invite-only life-management hub for small, trusted friend groups. No algorithms. No public profiles. No strangers. A modular platform where you control your data.
+A private, invite-only life-management hub for small, trusted friend groups. No ads. No tracking. No public profiles. No strangers. A modular platform where you control your data.
 
 Built with React 19, TypeScript, and Supabase. Currently featuring full media tracking (TMDB, iTunes, Google Books, RAWG) with personal libraries, reviews, and recommendations. Expanding into multi-purpose modules for tasks, recipes, fitness, planning, and more - all with the same privacy-first approach and Row-Level Security.
 
@@ -52,7 +52,7 @@ Built with React 19, TypeScript, and Supabase. Currently featuring full media tr
 
 ## Motivation
 
-Share media recommendations with friends, not algorithms. NPC Finder is invite-only, designed for small groups (5-50 people) who trust each other.
+Share media recommendations with friends, not advertisers. NPC Finder is invite-only, designed for small groups (5-50 people) who trust each other.
 
 Currently focused on media tracking (movies, TV, music, books, games), expanding into a modular life dashboard for tasks, recipes, fitness, and planning. Each installation runs its own isolated database.
 
@@ -60,7 +60,7 @@ Currently focused on media tracking (movies, TV, music, books, games), expanding
 
 - **Small friend groups** who want a private space to share media recommendations
 - **Developers** learning React + Supabase or wanting to self-host a media tracker
-- **People tired of algorithmic feeds** who want recommendations from real friends
+- **People tired of ad-driven feeds** who want recommendations from real friends
 
 ## Platform Vision
 

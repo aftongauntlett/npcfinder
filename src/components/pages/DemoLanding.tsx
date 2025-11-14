@@ -122,7 +122,7 @@ const DemoLanding: React.FC = () => {
               want.
             </p>
             <p className="text-sm text-gray-400 mb-8 sm:mb-10 max-w-xl">
-              Built for developers who value privacy over algorithms.
+              Privacy without ads, tracking, or engagement manipulation.
             </p>
 
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">

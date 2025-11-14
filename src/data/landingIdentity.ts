@@ -26,7 +26,7 @@ export const landingIdentity: IdentityData = {
     "A private, modular life dashboard for small, trusted friend groups.",
   description: "",
   keyPoints: [
-    "Built for small groups (5-50 people) who want control without algorithms or strangers",
+    "Built for small groups (5-50 people) who want control without ads or tracking",
     "Modular design: media tracking live, multi-purpose tools coming",
     "Each installation isolated - your data in your own database",
     "Not a social network - a private tool for existing friend groups",
@@ -38,7 +38,7 @@ export const landingIdentity: IdentityData = {
       color: LANDING_TEAL,
     },
     {
-      label: "No Algorithms",
+      label: "No Tracking",
       icon: TrendDown,
       color: LANDING_PURPLE,
     },
