@@ -39,23 +39,18 @@ interface NodePosition {
 
 // Helper to get design token colors
 function getDesignTokenColors() {
-  const styles = getComputedStyle(document.documentElement);
+  const whiteBase = withOpacity("#FFFFFF", 0.65); // Moderate opacity for accessibility
+  const whiteShadow = withOpacity("#FFFFFF", 0.35); // Softer shadow
 
-  // Fallback colors matching StarryBackground.tsx soft white aesthetic
-  const primaryColor =
-    styles.getPropertyValue("--color-primary").trim() || "#9333ea";
-  const whiteBase = withOpacity("#FFFFFF", 0.85); // Even brighter white
-  const whiteShadow = withOpacity("#FFFFFF", 0.45); // Brighter shadow
-
-  // Brand colors from centralized theme (with higher opacity for brightness)
-  const peachBase = withOpacity(LANDING_PEACH, 0.85); // 85% opacity
-  const peachShadow = withOpacity(LANDING_PEACH, 0.5); // 50% opacity
-  const tealBase = withOpacity(LANDING_TEAL, 0.85); // 85% opacity
-  const tealShadow = withOpacity(LANDING_TEAL, 0.5); // 50% opacity
-  const purpleBase = withOpacity(LANDING_PURPLE, 0.85); // 85% opacity
-  const purpleShadow = withOpacity(LANDING_PURPLE, 0.5); // 50% opacity
-  const blueBase = withOpacity(LANDING_BLUE, 0.85); // 85% opacity
-  const blueShadow = withOpacity(LANDING_BLUE, 0.5); // 50% opacity
+  // Brand colors from centralized theme (moderate opacity to prevent glare)
+  const peachBase = withOpacity(LANDING_PEACH, 0.65); // 65% opacity
+  const peachShadow = withOpacity(LANDING_PEACH, 0.4); // 40% opacity
+  const tealBase = withOpacity(LANDING_TEAL, 0.65); // 65% opacity
+  const tealShadow = withOpacity(LANDING_TEAL, 0.4); // 40% opacity
+  const purpleBase = withOpacity(LANDING_PURPLE, 0.65); // 65% opacity
+  const purpleShadow = withOpacity(LANDING_PURPLE, 0.4); // 40% opacity
+  const blueBase = withOpacity(LANDING_BLUE, 0.65); // 65% opacity
+  const blueShadow = withOpacity(LANDING_BLUE, 0.4); // 40% opacity
 
   return {
     whiteBase,
@@ -203,15 +198,15 @@ export default function HeroConstellation({
             // Use brighter lines with varied colors
             const lineColorIndex = (i + j) % 10;
             if (lineColorIndex < 6) {
-              ctx.strokeStyle = withOpacity("#FFFFFF", 0.25); // Brighter white lines
+              ctx.strokeStyle = withOpacity("#FFFFFF", 0.18); // Softer white lines
             } else if (lineColorIndex === 6) {
-              ctx.strokeStyle = withOpacity(LANDING_PEACH, 0.25); // Peach lines
+              ctx.strokeStyle = withOpacity(LANDING_PEACH, 0.18); // Peach lines
             } else if (lineColorIndex === 7) {
-              ctx.strokeStyle = withOpacity(LANDING_TEAL, 0.25); // Teal lines
+              ctx.strokeStyle = withOpacity(LANDING_TEAL, 0.18); // Teal lines
             } else if (lineColorIndex === 8) {
-              ctx.strokeStyle = withOpacity(LANDING_PURPLE, 0.25); // Purple lines
+              ctx.strokeStyle = withOpacity(LANDING_PURPLE, 0.18); // Purple lines
             } else {
-              ctx.strokeStyle = withOpacity(LANDING_BLUE, 0.25); // Blue lines
+              ctx.strokeStyle = withOpacity(LANDING_BLUE, 0.18); // Blue lines
             }
 
             ctx.beginPath();
@@ -244,8 +239,8 @@ export default function HeroConstellation({
         if (colorIndex < 5) {
           // 50% white nodes
           shadowColor = colors.whiteShadow;
-          gradient.addColorStop(0, withOpacity("#FFFFFF", 0.9));
-          gradient.addColorStop(0.5, withOpacity("#FFFFFF", 0.5));
+          gradient.addColorStop(0, withOpacity("#FFFFFF", 0.7));
+          gradient.addColorStop(0.5, withOpacity("#FFFFFF", 0.4));
         } else if (colorIndex === 5) {
           // Peach nodes
           shadowColor = colors.peachShadow;
@@ -489,8 +484,8 @@ export default function HeroConstellation({
           );
 
           if (distance < maxDist) {
-            // Brighter, more visible lines
-            const opacity = (1 - distance / maxDist) * 0.25; // Increased from 0.15
+            // Moderate opacity to prevent glare
+            const opacity = (1 - distance / maxDist) * 0.18; // Reduced from 0.25
 
             // Alternate between colors with more variety
             const lineColorIndex = (i + j) % 10;
@@ -552,7 +547,7 @@ export default function HeroConstellation({
         } else if (i % 2 === 0) {
           gradient.addColorStop(0, withOpacity("#FFFFFF", opacity0));
           gradient.addColorStop(0.5, withOpacity("#FFFFFF", opacity1));
-          ctx.shadowColor = withOpacity("#FFFFFF", 0.18 * twinkleOpacity);
+          ctx.shadowColor = withOpacity("#FFFFFF", 0.12 * twinkleOpacity);
         } else {
           gradient.addColorStop(0, withOpacity(LANDING_PEACH, opacity2));
           gradient.addColorStop(0.5, withOpacity(LANDING_PEACH, opacity3));
