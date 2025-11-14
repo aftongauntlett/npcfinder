@@ -20,7 +20,7 @@ export const landingFutureCategories: FutureCategory[] = [
     color: LANDING_PURPLE,
     features: [
       {
-        title: "Productivity Tools",
+        title: "Personal Trackers",
         description:
           "Task management with drag-and-drop, priorities, and shared lists. Track fitness routines, job applications, or personal goals - all integrated into the dashboard.",
       },

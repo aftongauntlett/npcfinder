@@ -6,6 +6,8 @@ import {
   Lock,
   Question,
   ShieldCheck,
+  LinkedinLogo,
+  ArrowUp,
 } from "@phosphor-icons/react";
 import StarryBackground from "../shared/StarryBackground";
 import LandingButton from "../landing/LandingButton";
@@ -119,11 +121,10 @@ const DemoLanding: React.FC = () => {
                 View Source
               </LandingButton>
               <LandingButton
-                href="https://aftongauntlett.com"
+                href="#availability"
                 variant="ghost"
-                icon={<ArrowSquareOut className="w-4 h-4" weight="duotone" />}
               >
-                View Portfolio
+                Get Started
               </LandingButton>
             </div>
           </div>
@@ -259,36 +260,14 @@ const DemoLanding: React.FC = () => {
               <Accordion
                 key={arch.title}
                 title={arch.title}
-                defaultOpen={false}
+                defaultOpen={index === 0}
                 index={index}
                 idPrefix="tech"
-              >
-                <div className="flex items-start gap-4 mb-4">
-                  <div
-                    className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg"
-                    style={{ backgroundColor: `${arch.iconColor}20` }}
-                  >
-                    <arch.icon
-                      className="w-6 h-6"
-                      style={{ color: arch.iconColor }}
-                      weight="duotone"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <ul className="space-y-2">
-                      {arch.items.map((item, idx) => (
-                        <li key={idx} className="flex items-start gap-2">
-                          <span
-                            className="inline-block w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0"
-                            style={{ backgroundColor: arch.iconColor }}
-                          />
-                          <span className="text-gray-300">{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </Accordion>
+                icon={arch.icon}
+                iconColor={arch.iconColor}
+                items={arch.items}
+                itemColors={arch.itemColors}
+              />
             ))}
           </div>
         </motion.section>
@@ -442,7 +421,7 @@ const DemoLanding: React.FC = () => {
           <div className="space-y-4">
             <Accordion
               title="Invite System Guide"
-              defaultOpen={false}
+              defaultOpen={true}
               index={0}
               idPrefix="availability"
             >
@@ -480,10 +459,11 @@ const DemoLanding: React.FC = () => {
                 administrators can access their platforms.
               </p>
               <p className="mb-3">
-                This app is not designed for end-to-end encrypted communication
-                like Signal or WhatsApp. If you need that level of privacy for
-                sensitive communications, use a platform specifically built for
-                that purpose.
+                End-to-end encryption for private messaging and journaling (like
+                Signal) is on the future roadmap, but it requires significant
+                architectural changes. For now, if you need that level of
+                privacy for sensitive communications, use a platform
+                specifically built for that purpose.
               </p>
               <a
                 href="https://github.com/aftongauntlett/npcfinder/blob/main/docs/PRIVACY-REALITY-CHECK.md"
@@ -554,13 +534,6 @@ const DemoLanding: React.FC = () => {
             >
               Read Documentation
             </LandingButton>
-            <LandingButton
-              href="https://aftongauntlett.com"
-              variant="secondary"
-              icon={<ArrowSquareOut className="w-4 h-4" weight="duotone" />}
-            >
-              View Portfolio
-            </LandingButton>
           </div>
         </motion.section>
       </main>
@@ -573,15 +546,44 @@ const DemoLanding: React.FC = () => {
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-500">
             <p>© 2025 NPC Finder • Built by Afton Gauntlett</p>
-            <div className="flex items-center gap-6">
-              <span className="flex items-center gap-2">
-                <ShieldCheck
-                  className="w-4 h-4"
-                  style={{ color: LANDING_PURPLE }}
-                  weight="duotone"
-                />
-                Private within your friend group
-              </span>
+            <div className="flex items-center gap-4">
+              <a
+                href="https://github.com/aftongauntlett/npcfinder"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 hover:text-gray-300 transition-colors"
+                aria-label="View source on GitHub"
+              >
+                <GithubLogo className="w-4 h-4" weight="duotone" />
+                <span className="hidden sm:inline">GitHub</span>
+              </a>
+              <a
+                href="https://www.linkedin.com/in/aftongauntlett/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 hover:text-gray-300 transition-colors"
+                aria-label="Connect on LinkedIn"
+              >
+                <LinkedinLogo className="w-4 h-4" weight="duotone" />
+                <span className="hidden sm:inline">LinkedIn</span>
+              </a>
+              <a
+                href="https://aftongauntlett.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 hover:text-gray-300 transition-colors"
+                aria-label="View portfolio"
+              >
+                <ArrowSquareOut className="w-4 h-4" weight="duotone" />
+                <span className="hidden sm:inline">View Portfolio</span>
+              </a>
+              <button
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                className="flex items-center gap-1.5 hover:text-gray-300 transition-colors"
+                aria-label="Scroll to top"
+              >
+                <ArrowUp className="w-4 h-4" weight="duotone" />
+              </button>
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CaretDown, type Icon } from "@phosphor-icons/react";
 import {
@@ -9,12 +9,14 @@ import {
 
 interface AccordionProps {
   title: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   defaultOpen?: boolean;
   index?: number;
   icon?: Icon;
   iconColor?: string;
   idPrefix?: string;
+  items?: string[]; // If provided, render as bullet list instead of children
+  itemColors?: string[]; // Colors for each bullet (optional, falls back to iconColor)
 }
 
 export default function Accordion({
@@ -25,13 +27,17 @@ export default function Accordion({
   icon: Icon,
   iconColor,
   idPrefix = "accordion",
+  items,
+  itemColors,
 }: AccordionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [isHovered, setIsHovered] = useState(false);
 
-  // Brand colors for hover effect
-  const hoverColors = [LANDING_TEAL, LANDING_PURPLE, LANDING_PEACH];
-  const hoverColor = iconColor || hoverColors[index % 3];
+  // Brand colors for hover effect - memoize to prevent recalculation
+  const hoverColor = useMemo(
+    () => iconColor || [LANDING_TEAL, LANDING_PURPLE, LANDING_PEACH][index % 3],
+    [iconColor, index]
+  );
 
   const headerId = `${idPrefix}-header-${index}`;
   const panelId = `${idPrefix}-panel-${index}`;
@@ -77,7 +83,8 @@ export default function Accordion({
         </div>
         <motion.div
           animate={{ rotate: isOpen ? 180 : 0 }}
-          transition={{ duration: 0.3 }}
+          transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+          style={{ willChange: "transform" }}
           aria-hidden="true"
         >
           <CaretDown className="w-5 h-5 text-gray-400" weight="bold" />
@@ -90,14 +97,36 @@ export default function Accordion({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
+            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
             className="overflow-hidden"
             id={panelId}
             role="region"
             aria-labelledby={headerId}
+            style={{ willChange: "height, opacity" }}
           >
             <div className="px-5 pb-5 pt-4 text-gray-300 text-sm leading-relaxed border-t border-white/5">
-              {children}
+              {items ? (
+                <ul className="space-y-3">
+                  {items.map((item, idx) => (
+                    <li key={idx} className="flex items-start gap-3">
+                      <span
+                        className="mt-1 flex-shrink-0"
+                        style={{
+                          color: itemColors?.[idx] || hoverColor,
+                        }}
+                        aria-hidden="true"
+                      >
+                        -
+                      </span>
+                      <span className="text-gray-300 leading-relaxed">
+                        {item}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                children
+              )}
             </div>
           </motion.div>
         )}

@@ -4,13 +4,19 @@ import {
   Lightning,
   type Icon,
 } from "@phosphor-icons/react";
-import { LANDING_TEAL, LANDING_PURPLE, LANDING_PEACH } from "./landingTheme";
+import {
+  LANDING_TEAL,
+  LANDING_PURPLE,
+  LANDING_PEACH,
+  LANDING_BLUE,
+} from "./landingTheme";
 
 interface ArchitectureData {
   icon: Icon;
   iconColor: string;
   title: string;
   items: string[];
+  itemColors: string[]; // Color for each bullet point
 }
 
 export const landingArchitecture: ArchitectureData[] = [
@@ -24,6 +30,7 @@ export const landingArchitecture: ArchitectureData[] = [
       "Optimized indexes & queries",
       "Real-time subscriptions",
     ],
+    itemColors: [LANDING_TEAL, LANDING_PURPLE, LANDING_PEACH, LANDING_BLUE],
   },
   {
     icon: ShieldCheck,
@@ -35,6 +42,7 @@ export const landingArchitecture: ArchitectureData[] = [
       "Admin role-based access",
       "Database-level RLS policies",
     ],
+    itemColors: [LANDING_TEAL, LANDING_PURPLE, LANDING_PEACH, LANDING_BLUE],
   },
   {
     icon: Lightning,
@@ -46,5 +54,6 @@ export const landingArchitecture: ArchitectureData[] = [
       "Optimistic UI updates",
       "Production build optimization",
     ],
+    itemColors: [LANDING_TEAL, LANDING_PURPLE, LANDING_PEACH, LANDING_BLUE],
   },
 ];
