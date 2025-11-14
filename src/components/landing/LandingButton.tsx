@@ -1,5 +1,14 @@
 import { FC, ReactNode, useState } from "react";
-import { LANDING_TEAL, LANDING_PEACH } from "../../data/landingTheme";
+import {
+  LANDING_TEAL,
+  LANDING_PEACH,
+  LANDING_TEAL_50,
+  LANDING_TEAL_10,
+  LANDING_PEACH_70,
+  LANDING_PEACH_30,
+  LANDING_PEACH_10,
+  withOpacity,
+} from "../../data/landingTheme";
 
 interface LandingButtonProps {
   children: ReactNode;
@@ -29,19 +38,19 @@ const LandingButton: FC<LandingButtonProps> = ({
         return {
           borderWidth: "2px",
           borderStyle: "solid",
-          borderColor: isHovered ? LANDING_TEAL : `${LANDING_TEAL}80`,
+          borderColor: isHovered ? LANDING_TEAL : LANDING_TEAL_50,
           color: LANDING_TEAL,
-          backgroundColor: isHovered ? `${LANDING_TEAL}0D` : "transparent",
-          boxShadow: isHovered ? `0 0 20px -5px ${LANDING_TEAL}80` : "none",
+          backgroundColor: isHovered ? LANDING_TEAL_10 : "transparent",
+          boxShadow: isHovered ? `0 0 20px -5px ${LANDING_TEAL_50}` : "none",
           transition: "all 400ms ease-out",
         };
       case "secondary":
         return {
           borderWidth: "2px",
           borderStyle: "solid",
-          borderColor: isHovered ? `${LANDING_PEACH}B3` : `${LANDING_PEACH}66`,
+          borderColor: isHovered ? LANDING_PEACH_70 : withOpacity(LANDING_PEACH, 0.4),
           color: LANDING_PEACH,
-          backgroundColor: isHovered ? `${LANDING_PEACH}1A` : "transparent",
+          backgroundColor: isHovered ? LANDING_PEACH_10 : "transparent",
           transition: "all 300ms ease-out",
         };
       case "tertiary":
@@ -65,7 +74,7 @@ const LandingButton: FC<LandingButtonProps> = ({
             ? "rgba(255, 255, 255, 0.05)"
             : "transparent",
           borderColor: isHovered
-            ? `${LANDING_PEACH}4D`
+            ? LANDING_PEACH_30
             : "rgba(51, 65, 85, 0.4)",
           color: isHovered ? LANDING_PEACH : "#d1d5db",
           transition: "all 300ms ease-out",
