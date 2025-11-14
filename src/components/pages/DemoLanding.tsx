@@ -6,6 +6,7 @@ import {
   Lock,
   Question,
   ShieldCheck,
+  ArrowDown,
 } from "@phosphor-icons/react";
 import StarryBackground from "../shared/StarryBackground";
 import LandingButton from "../landing/LandingButton";
@@ -119,11 +120,14 @@ const DemoLanding: React.FC = () => {
                 View Source
               </LandingButton>
               <LandingButton
-                href="https://aftongauntlett.com"
+                onClick={() => {
+                  const featuresSection = document.getElementById("features");
+                  featuresSection?.scrollIntoView({ behavior: "smooth" });
+                }}
                 variant="ghost"
-                icon={<ArrowSquareOut className="w-4 h-4" weight="duotone" />}
+                icon={<ArrowDown className="w-4 h-4" weight="duotone" />}
               >
-                View Portfolio
+                Learn More
               </LandingButton>
             </div>
           </div>
