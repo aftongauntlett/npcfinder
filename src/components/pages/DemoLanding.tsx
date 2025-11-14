@@ -119,6 +119,19 @@ const DemoLanding: React.FC = () => {
                 View Source
               </LandingButton>
               <LandingButton
+                onClick={() => {
+                  const section = document.getElementById("features");
+                  section?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+                }}
+                variant="secondary"
+                icon={<Question className="w-4 h-4" weight="duotone" />}
+              >
+                Learn More
+              </LandingButton>
+              <LandingButton
                 href="https://aftongauntlett.com"
                 variant="ghost"
                 icon={<ArrowSquareOut className="w-4 h-4" weight="duotone" />}
