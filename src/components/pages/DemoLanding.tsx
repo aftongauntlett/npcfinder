@@ -6,6 +6,7 @@ import {
   Lock,
   Question,
   ShieldCheck,
+  CaretDown,
 } from "@phosphor-icons/react";
 import StarryBackground from "../shared/StarryBackground";
 import LandingButton from "../landing/LandingButton";
@@ -34,6 +35,13 @@ import { landingPrivacy } from "../../data/landingPrivacy";
  * Modern design with clean layouts and custom typography
  */
 const DemoLanding: React.FC = () => {
+  const scrollToFeatures = () => {
+    const featuresSection = document.getElementById("features");
+    if (featuresSection) {
+      featuresSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
       {/* Skip Navigation */}
@@ -112,8 +120,15 @@ const DemoLanding: React.FC = () => {
 
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <LandingButton
-                href="https://github.com/aftongauntlett/npcfinder"
+                onClick={scrollToFeatures}
                 variant="primary"
+                icon={<CaretDown className="w-5 h-5" weight="duotone" />}
+              >
+                Learn More
+              </LandingButton>
+              <LandingButton
+                href="https://github.com/aftongauntlett/npcfinder"
+                variant="secondary"
                 icon={<GithubLogo className="w-5 h-5" weight="duotone" />}
               >
                 View Source
