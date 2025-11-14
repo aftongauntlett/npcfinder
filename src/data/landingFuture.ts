@@ -1,11 +1,11 @@
 import { LANDING_PURPLE, LANDING_PEACH, LANDING_TEAL } from "./landingTheme";
 
-interface FutureFeature {
+export interface FutureFeature {
   title: string;
   description: string;
 }
 
-interface FutureCategory {
+export interface FutureCategory {
   category: string;
   color: string;
   features: FutureFeature[];

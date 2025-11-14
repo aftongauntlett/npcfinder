@@ -65,7 +65,7 @@ export const landingPrivacy: PrivacyData = {
     },
   ],
   disclaimer:
-    "**What's NOT private:** This is not end-to-end encrypted like Signal or WhatsApp. The database admin (whoever runs the Supabase instance) can technically access the data. This is the same privacy model as Netflix, Spotify, or most web apps. If you need Signal-level privacy, this app isn't designed for that use case. See the Privacy Reality Check documentation for full details.",
+    "Important: The database admin can technically access data. This is the same privacy model as Netflix or Spotify. See the Privacy Reality Check for full details.",
   privacyDocsLink: {
     label: "Read the Privacy Reality Check",
     href: "https://github.com/aftongauntlett/npcfinder/blob/main/docs/PRIVACY-REALITY-CHECK.md",

@@ -67,8 +67,6 @@ export default function TechDetailStrip({
           type="button"
           className="flex items-center gap-4 mb-4 w-full text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 focus-visible:ring-white rounded"
           onClick={() => setIsExpanded(!isExpanded)}
-          onMouseEnter={() => setIsExpanded(true)}
-          onMouseLeave={() => setIsExpanded(false)}
           aria-expanded={isExpanded}
           aria-controls={panelId}
           id={headerId}

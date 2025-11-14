@@ -14,7 +14,16 @@ interface AccordionProps {
   index?: number;
   icon?: Icon;
   iconColor?: string;
+  idPrefix?: string;
 }
+
+// Helper function to create URL-safe slugs from titles
+const slugify = (text: string): string => {
+  return text
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "");
+};
 
 export default function Accordion({
   title,
@@ -23,6 +32,7 @@ export default function Accordion({
   index = 0,
   icon: Icon,
   iconColor,
+  idPrefix = "accordion",
 }: AccordionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [isHovered, setIsHovered] = useState(false);
@@ -31,8 +41,9 @@ export default function Accordion({
   const hoverColors = [LANDING_TEAL, LANDING_PURPLE, LANDING_PEACH];
   const hoverColor = iconColor || hoverColors[index % 3];
 
-  const headerId = `accordion-header-${index}`;
-  const panelId = `accordion-panel-${index}`;
+  const titleSlug = slugify(title);
+  const headerId = `${idPrefix}-${titleSlug}-header-${index}`;
+  const panelId = `${idPrefix}-${titleSlug}-panel-${index}`;
 
   return (
     <div className="bg-slate-800/40 border border-white/10 rounded-xl overflow-hidden">

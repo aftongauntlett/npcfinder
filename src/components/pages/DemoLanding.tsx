@@ -11,9 +11,7 @@ import StarryBackground from "../shared/StarryBackground";
 import LandingButton from "../landing/LandingButton";
 import HeroConstellation from "../effects/HeroConstellation";
 import { FeatureBlock } from "../landing/demo/FeatureBlock";
-import TechDetailStrip from "../landing/demo/TechDetailStrip";
 import ModernCard from "../landing/demo/ModernCard";
-import IdentityBadge from "../landing/demo/IdentityBadge";
 import Accordion from "../landing/demo/Accordion";
 import {
   LANDING_PEACH,
@@ -25,9 +23,10 @@ import { landingArchitecture } from "../../data/landingArchitecture";
 import {
   landingFutureCategories,
   futureDisclaimer,
+  type FutureCategory,
+  type FutureFeature,
 } from "../../data/landingFuture";
 import { landingAvailability } from "../../data/landingAvailability";
-import { landingAudiences } from "../../data/landingAudiences";
 import { landingPrivacy } from "../../data/landingPrivacy";
 
 /**
@@ -165,7 +164,7 @@ const DemoLanding: React.FC = () => {
 
         {/* Why Privacy Matters Section */}
         <motion.section
-          className="max-w-7xl mx-auto px-6 py-24"
+          className="max-w-7xl mx-auto px-6 py-32"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
@@ -196,13 +195,8 @@ const DemoLanding: React.FC = () => {
           {/* Disclaimer Box - Privacy Reality Check */}
           <div className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-8">
             <p className="text-gray-400 leading-relaxed mb-4">
-              <strong className="text-gray-300">What's NOT private:</strong>{" "}
-              This is not end-to-end encrypted like Signal or WhatsApp. The
-              database admin (whoever runs the Supabase instance) can
-              technically access the data. This is the same privacy model as
-              Netflix, Spotify, or most web apps. If you need Signal-level
-              privacy, this app isn't designed for that use case. See the
-              Privacy Reality Check documentation for full details.
+              <strong className="text-gray-300">Important:</strong>{" "}
+              {landingPrivacy.disclaimer}
             </p>
             <div className="flex justify-center">
               <LandingButton
@@ -218,7 +212,7 @@ const DemoLanding: React.FC = () => {
         {/* Technical Details */}
         <motion.section
           id="technical-details"
-          className="max-w-7xl mx-auto px-6 py-24"
+          className="max-w-7xl mx-auto px-6 py-32"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
@@ -259,16 +253,42 @@ const DemoLanding: React.FC = () => {
             </div>
           </div>
 
-          {/* Architecture Strips - Hover to Expand */}
+          {/* Architecture Details - Click to Expand */}
           <div className="space-y-4">
-            {landingArchitecture.map((arch) => (
-              <TechDetailStrip
+            {landingArchitecture.map((arch, index) => (
+              <Accordion
                 key={arch.title}
-                icon={arch.icon}
-                iconColor={arch.iconColor}
                 title={arch.title}
-                items={arch.items}
-              />
+                defaultOpen={false}
+                index={index}
+                idPrefix="tech"
+              >
+                <div className="flex items-start gap-4 mb-4">
+                  <div
+                    className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg"
+                    style={{ backgroundColor: `${arch.iconColor}20` }}
+                  >
+                    <arch.icon
+                      className="w-6 h-6"
+                      style={{ color: arch.iconColor }}
+                      weight="duotone"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <ul className="space-y-2">
+                      {arch.items.map((item, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <span
+                            className="inline-block w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0"
+                            style={{ backgroundColor: arch.iconColor }}
+                          />
+                          <span className="text-gray-300">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </Accordion>
             ))}
           </div>
         </motion.section>
@@ -305,8 +325,12 @@ const DemoLanding: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            {landingFutureCategories.map((category) => (
-              <div key={category.category} className="group/column">
+            {(landingFutureCategories).map((category) => (
+              <div
+                key={category.category}
+                className="group/column"
+                style={{ "--cat-color": category.color } as React.CSSProperties}
+              >
                 <h4 className="text-xl font-semibold mb-2 text-white transition-all duration-300 ease-out group-hover/column:scale-105 origin-left cursor-default">
                   {category.category}
                 </h4>
@@ -315,24 +339,9 @@ const DemoLanding: React.FC = () => {
                   style={{ color: category.color }}
                 />
                 <div className="space-y-6 transition-colors duration-300 ease-out group-hover/column:text-gray-200">
-                  {category.features.map((feature) => (
-                    <div
-                      key={feature.title}
-                      className="group/item"
-                      onMouseEnter={(e) => {
-                        const title = e.currentTarget.querySelector("h5");
-                        if (title instanceof HTMLElement) {
-                          title.style.color = category.color;
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        const title = e.currentTarget.querySelector("h5");
-                        if (title instanceof HTMLElement) {
-                          title.style.color = "";
-                        }
-                      }}
-                    >
-                      <h5 className="text-base font-medium text-gray-200 mb-2 transition-colors duration-300 ease-out">
+                  {(category.features).map((feature) => (
+                    <div key={feature.title} className="group/item">
+                      <h5 className="text-base font-medium text-gray-200 mb-2 transition-colors duration-300 ease-out group-hover/item:[color:var(--cat-color)]">
                         {feature.title}
                       </h5>
                       <p className="text-sm text-gray-400 leading-relaxed group-hover/column:text-gray-300 transition-colors duration-300 ease-out">
@@ -435,6 +444,7 @@ const DemoLanding: React.FC = () => {
               title="Invite System Guide"
               defaultOpen={false}
               index={0}
+              idPrefix="availability"
             >
               <p className="mb-3">
                 Learn how invite codes work and how to generate them for your
@@ -461,16 +471,19 @@ const DemoLanding: React.FC = () => {
               title="Privacy Reality Check"
               defaultOpen={false}
               index={1}
+              idPrefix="availability"
             >
               <p className="mb-3">
-                Understand what privacy means in this app (and what it doesn't).
+                NPC Finder uses Row-Level Security to protect your data from
+                other users. However, the database administrator has technical
+                access to the underlying data, similar to how Netflix or Spotify
+                administrators can access their platforms.
               </p>
               <p className="mb-3">
-                NPC Finder uses Row-Level Security to protect your data from
-                other users, but it's not end-to-end encrypted like Signal. The
-                database admin (whoever runs the Supabase instance) can
-                technically access the data. This is the same privacy model as
-                Netflix, Spotify, or most web apps.
+                This app is not designed for end-to-end encrypted communication
+                like Signal or WhatsApp. If you need that level of privacy for
+                sensitive communications, use a platform specifically built for
+                that purpose.
               </p>
               <a
                 href="https://github.com/aftongauntlett/npcfinder/blob/main/docs/PRIVACY-REALITY-CHECK.md"
@@ -483,7 +496,12 @@ const DemoLanding: React.FC = () => {
               </a>
             </Accordion>
 
-            <Accordion title="Quick Start Guide" defaultOpen={false} index={2}>
+            <Accordion
+              title="Quick Start Guide"
+              defaultOpen={false}
+              index={2}
+              idPrefix="availability"
+            >
               <p className="mb-3">Set up your own instance from scratch.</p>
               <p className="mb-3">
                 Want to run NPC Finder for your own friend group? This guide
@@ -502,37 +520,6 @@ const DemoLanding: React.FC = () => {
                 View setup instructions →
               </a>
             </Accordion>
-          </div>
-        </motion.section>
-
-        {/* Who This Page Is For Section */}
-        <motion.section
-          className="max-w-7xl mx-auto px-6 py-24"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-        >
-          <div className="mb-12 text-center">
-            <h3 className="text-4xl font-bold mb-3 tracking-tight">
-              {landingAudiences.sectionTitle}
-            </h3>
-            <p className="text-gray-400 max-w-2xl mx-auto">
-              {landingAudiences.sectionDescription}
-            </p>
-          </div>
-
-          {/* Audience Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {landingAudiences.audiences.map((audience, index) => (
-              <ModernCard
-                key={index}
-                icon={audience.icon}
-                iconColor={audience.iconColor}
-                title={audience.title}
-                description={audience.description}
-              />
-            ))}
           </div>
         </motion.section>
 
