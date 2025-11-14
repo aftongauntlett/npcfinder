@@ -62,13 +62,17 @@ export const LANDING_SLATE_600 = "#475569";
 
 /**
  * Convert hex color to RGB values
- * @param hex - Hex color string (e.g., '#FFB088')
+ * @param hex - Hex color string (e.g., '#FFB088' or '#FFF')
  * @returns Object with r, g, b values (0-255)
  */
 export function hexToRgb(
   hex: string
 ): { r: number; g: number; b: number } | null {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+  const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+  const normalized = hex.replace(shorthandRegex, (_, r, g, b) => r + r + g + g + b + b);
+  
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(normalized);
   return result
     ? {
         r: parseInt(result[1], 16),
