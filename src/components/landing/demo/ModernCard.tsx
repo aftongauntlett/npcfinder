@@ -1,6 +1,7 @@
 import { useState, type ReactNode, type ElementType } from "react";
 import { motion } from "framer-motion";
 import type { Icon } from "@phosphor-icons/react";
+import { withOpacity } from "../../../data/landingTheme";
 
 interface ModernCardProps {
   iconColor: string;
@@ -79,8 +80,8 @@ export default function ModernCard({
             <div
               className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg border transition-all duration-300 ease-out"
               style={{
-                backgroundColor: `${iconColor}15`,
-                borderColor: `${iconColor}30`,
+                backgroundColor: withOpacity(iconColor, 0.08),
+                borderColor: withOpacity(iconColor, 0.19),
               }}
             >
               <motion.div

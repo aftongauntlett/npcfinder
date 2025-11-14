@@ -17,6 +17,7 @@ import {
   LANDING_PEACH,
   LANDING_TEAL,
   LANDING_PURPLE,
+  withOpacity,
 } from "../../data/landingTheme";
 import { landingFeatures } from "../../data/landingFeatures";
 import { landingArchitecture } from "../../data/landingArchitecture";
@@ -311,8 +312,8 @@ const DemoLanding: React.FC = () => {
             <div
               className="relative pl-6 pr-4 py-4 rounded-r-lg"
               style={{
-                background: `linear-gradient(to right, ${LANDING_TEAL}0D, transparent)`,
-                borderLeft: `2px solid ${LANDING_TEAL}80`,
+                background: `linear-gradient(to right, ${withOpacity(LANDING_TEAL, 0.05)}, transparent)`,
+                borderLeft: `2px solid ${withOpacity(LANDING_TEAL, 0.5)}`,
               }}
             >
               <p className="text-gray-300 text-sm leading-relaxed">
@@ -392,17 +393,17 @@ const DemoLanding: React.FC = () => {
             style={{
               borderWidth: "1px",
               borderStyle: "solid",
-              borderColor: `${LANDING_PEACH}20`,
+              borderColor: withOpacity(LANDING_PEACH, 0.125),
             }}
           >
             <div className="flex flex-col items-center gap-3">
               <div
                 className="w-14 h-14 flex items-center justify-center rounded-full"
                 style={{
-                  backgroundColor: `${LANDING_PEACH}10`,
+                  backgroundColor: withOpacity(LANDING_PEACH, 0.063),
                   borderWidth: "1px",
                   borderStyle: "solid",
-                  borderColor: `${LANDING_PEACH}30`,
+                  borderColor: withOpacity(LANDING_PEACH, 0.19),
                 }}
               >
                 <svg
