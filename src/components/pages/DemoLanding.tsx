@@ -92,6 +92,14 @@ const DemoLanding: React.FC = () => {
 
           {/* Text Content - Overlaid */}
           <div className="relative z-10 max-w-2xl pointer-events-auto">
+            {/* In Development Badge */}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-4 rounded-full border border-yellow-500/30 bg-yellow-500/10">
+              <span className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
+              <span className="text-xs font-medium text-yellow-200">
+                In Active Development
+              </span>
+            </div>
+
             <h2 className="text-[2rem] sm:text-[2.5rem] lg:text-[2.9rem] font-bold mb-6 leading-[1.12] tracking-tight">
               Your Private Life Hub
               <br />
@@ -105,11 +113,16 @@ const DemoLanding: React.FC = () => {
               </span>
             </h2>
 
-            <p className="text-base sm:text-lg text-neutral-300 mb-8 sm:mb-10 max-w-xl leading-relaxed font-light">
-              A modular dashboard for your daily life. Track media, manage
-              tasks, organize recipes, and share with your trusted friends.
-              Private, customizable, and built for small groups who value
-              privacy over algorithms.
+            <p className="text-base sm:text-lg text-neutral-300 mb-2 max-w-xl leading-relaxed font-light">
+              An{" "}
+              <strong className="text-white">open-source, self-hosted</strong>{" "}
+              modular dashboard for your daily life. Track media, manage tasks,
+              organize recipes, and share with your trusted friends. Clone it,
+              run it with your own friend group, and customize it however you
+              want.
+            </p>
+            <p className="text-sm text-gray-400 mb-8 sm:mb-10 max-w-xl">
+              Built for developers who value privacy over algorithms.
             </p>
 
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -120,10 +133,7 @@ const DemoLanding: React.FC = () => {
               >
                 View Source
               </LandingButton>
-              <LandingButton
-                href="#availability"
-                variant="ghost"
-              >
+              <LandingButton href="#availability" variant="ghost">
                 Get Started
               </LandingButton>
             </div>
@@ -181,7 +191,7 @@ const DemoLanding: React.FC = () => {
           </div>
 
           {/* Privacy Points */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {landingPrivacy.points.map((point, index) => (
               <ModernCard
                 key={index}
@@ -191,22 +201,6 @@ const DemoLanding: React.FC = () => {
                 description={point.description}
               />
             ))}
-          </div>
-
-          {/* Disclaimer Box - Privacy Reality Check */}
-          <div className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-8">
-            <p className="text-gray-400 leading-relaxed mb-4">
-              <strong className="text-gray-300">Important:</strong>{" "}
-              {landingPrivacy.disclaimer}
-            </p>
-            <div className="flex justify-center">
-              <LandingButton
-                href={landingPrivacy.privacyDocsLink.href}
-                variant="secondary"
-              >
-                {landingPrivacy.privacyDocsLink.label}
-              </LandingButton>
-            </div>
           </div>
         </motion.section>
 
@@ -512,13 +506,19 @@ const DemoLanding: React.FC = () => {
           transition={{ duration: 0.5, ease: "easeOut" }}
         >
           <h3 className="text-4xl font-bold mb-4 tracking-tight">
-            For Developers & Recruiters
+            Open Source Portfolio Project
           </h3>
           <p className="text-xl text-gray-400 mb-2">
-            This is a portfolio project and self-hosting guide.
+            This is a code portfolio and self-hosting guide—not a service you
+            sign up for.
           </p>
-          <p className="text-sm text-gray-500 mb-10">
-            Core features work, but I'm still building and refactoring.
+          <p className="text-sm text-gray-500 mb-1">
+            Clone the repo, run your own instance, and customize it for your
+            friend group.
+          </p>
+          <p className="text-sm text-yellow-400/80 mb-10">
+            ⚠️ In active development—recommend waiting for v1.0 milestone before
+            deploying to production
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <LandingButton
@@ -578,7 +578,7 @@ const DemoLanding: React.FC = () => {
                 <span className="hidden sm:inline">View Portfolio</span>
               </a>
               <button
-                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
                 className="flex items-center gap-1.5 hover:text-gray-300 transition-colors"
                 aria-label="Scroll to top"
               >

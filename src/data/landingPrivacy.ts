@@ -23,11 +23,6 @@ export interface PrivacyData {
   title: string;
   description: string;
   points: PrivacyPoint[];
-  disclaimer: string;
-  privacyDocsLink: {
-    label: string;
-    href: string;
-  };
 }
 
 export const landingPrivacy: PrivacyData = {
@@ -64,10 +59,4 @@ export const landingPrivacy: PrivacyData = {
         "Each installation uses its own Supabase project. When you clone this repo, you create a completely separate database.",
     },
   ],
-  disclaimer:
-    "Important: This app is not end-to-end encrypted like Signal. The database admin can technically access data. This is the same privacy model as Netflix or Spotify. See the Privacy Reality Check for full details.",
-  privacyDocsLink: {
-    label: "Read the Privacy Reality Check",
-    href: "https://github.com/aftongauntlett/npcfinder/blob/main/docs/PRIVACY-REALITY-CHECK.md",
-  },
 };

@@ -93,7 +93,11 @@ const LandingButton: FC<LandingButtonProps> = ({
     >
       {/* Content */}
       <span className="relative z-10 flex items-center gap-2">
-        {icon && <span className="text-lg">{icon}</span>}
+        {icon && (
+          <span className="text-lg group-hover:animate-wiggle inline-block">
+            {icon}
+          </span>
+        )}
         {children}
       </span>
     </Component>

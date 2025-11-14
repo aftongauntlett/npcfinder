@@ -69,6 +69,16 @@ export default {
         DEFAULT: "200ms",
         slow: "300ms",
       },
+      keyframes: {
+        wiggle: {
+          "0%, 100%": { transform: "rotate(0deg)" },
+          "25%": { transform: "rotate(-5deg)" },
+          "75%": { transform: "rotate(5deg)" },
+        },
+      },
+      animation: {
+        wiggle: "wiggle 0.3s ease-in-out",
+      },
     },
   },
   plugins: [],
