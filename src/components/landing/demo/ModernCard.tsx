@@ -31,8 +31,6 @@ export default function ModernCard({
 
   return (
     <Component
-      role={as === "div" ? "region" : undefined}
-      aria-labelledby={`card-${title.replace(/\s+/g, "-").toLowerCase()}`}
     >
       <motion.div
         className={`relative bg-slate-800/40 border border-white/10 rounded-lg overflow-hidden transform-gpu ${
