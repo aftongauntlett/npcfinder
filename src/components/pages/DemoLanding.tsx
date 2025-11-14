@@ -548,17 +548,17 @@ const DemoLanding: React.FC = () => {
             <p>© 2025 NPC Finder • Built by Afton Gauntlett</p>
             <div className="flex items-center gap-4">
               <a
-                href="https://github.com/aftongauntlett/npcfinder"
+                href="https://github.com/aftongauntlett"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 hover:text-gray-300 transition-colors"
-                aria-label="View source on GitHub"
+                aria-label="View GitHub profile"
               >
                 <GithubLogo className="w-4 h-4" weight="duotone" />
                 <span className="hidden sm:inline">GitHub</span>
               </a>
               <a
-                href="https://www.linkedin.com/in/aftongauntlett/"
+                href="https://www.linkedin.com/in/afton-gauntlett/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 hover:text-gray-300 transition-colors"
