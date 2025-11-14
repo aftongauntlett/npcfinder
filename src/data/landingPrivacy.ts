@@ -65,7 +65,7 @@ export const landingPrivacy: PrivacyData = {
     },
   ],
   disclaimer:
-    "Important: The database admin can technically access data. This is the same privacy model as Netflix or Spotify. See the Privacy Reality Check for full details.",
+    "Important: This app is not end-to-end encrypted like Signal. The database admin can technically access data. This is the same privacy model as Netflix or Spotify. See the Privacy Reality Check for full details.",
   privacyDocsLink: {
     label: "Read the Privacy Reality Check",
     href: "https://github.com/aftongauntlett/npcfinder/blob/main/docs/PRIVACY-REALITY-CHECK.md",
