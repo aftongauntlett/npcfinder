@@ -132,7 +132,7 @@ const DemoLanding: React.FC = () => {
         {/* Features Section */}
         <motion.section
           id="features"
-          className="max-w-7xl mx-auto px-6 py-28"
+          className="max-w-7xl mx-auto px-6 py-32"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
@@ -296,7 +296,7 @@ const DemoLanding: React.FC = () => {
         {/* What's Next */}
         <motion.section
           id="roadmap"
-          className="max-w-7xl mx-auto px-6 py-24"
+          className="max-w-7xl mx-auto px-6 py-32"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
@@ -325,7 +325,7 @@ const DemoLanding: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            {landingFutureCategories.map((category) => (
+            {landingFutureCategories.map((category: FutureCategory) => (
               <div
                 key={category.category}
                 className="group/column"
@@ -339,7 +339,7 @@ const DemoLanding: React.FC = () => {
                   style={{ color: category.color }}
                 />
                 <div className="space-y-6 transition-colors duration-300 ease-out group-hover/column:text-gray-200">
-                  {category.features.map((feature) => (
+                  {category.features.map((feature: FutureFeature) => (
                     <div key={feature.title} className="group/item">
                       <h5 className="text-base font-medium text-gray-200 mb-2 transition-colors duration-300 ease-out group-hover/item:[color:var(--cat-color)]">
                         {feature.title}
@@ -358,7 +358,7 @@ const DemoLanding: React.FC = () => {
         {/* Access & Availability Section */}
         <motion.section
           id="availability"
-          className="max-w-7xl mx-auto px-6 py-28"
+          className="max-w-7xl mx-auto px-6 py-32"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
@@ -525,7 +525,7 @@ const DemoLanding: React.FC = () => {
 
         {/* CTA Section */}
         <motion.section
-          className="max-w-4xl mx-auto px-6 py-28 text-center"
+          className="max-w-4xl mx-auto px-6 py-32 text-center"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
