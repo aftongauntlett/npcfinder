@@ -325,7 +325,7 @@ const DemoLanding: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            {(landingFutureCategories).map((category) => (
+            {landingFutureCategories.map((category) => (
               <div
                 key={category.category}
                 className="group/column"
@@ -339,7 +339,7 @@ const DemoLanding: React.FC = () => {
                   style={{ color: category.color }}
                 />
                 <div className="space-y-6 transition-colors duration-300 ease-out group-hover/column:text-gray-200">
-                  {(category.features).map((feature) => (
+                  {category.features.map((feature) => (
                     <div key={feature.title} className="group/item">
                       <h5 className="text-base font-medium text-gray-200 mb-2 transition-colors duration-300 ease-out group-hover/item:[color:var(--cat-color)]">
                         {feature.title}

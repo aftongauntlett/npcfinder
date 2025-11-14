@@ -5,7 +5,6 @@ import {
   LANDING_TEAL,
   LANDING_PURPLE,
   LANDING_BLUE,
-  LANDING_WHITE_90,
   withOpacity,
 } from "../../data/landingTheme";
 
