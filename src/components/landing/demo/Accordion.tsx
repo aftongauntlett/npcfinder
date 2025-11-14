@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CaretDown, type Icon } from "@phosphor-icons/react";
+import {
+  LANDING_TEAL,
+  LANDING_PURPLE,
+  LANDING_PEACH,
+} from "../../../data/landingTheme";
 
 interface AccordionProps {
   title: string;
@@ -22,8 +27,8 @@ export default function Accordion({
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [isHovered, setIsHovered] = useState(false);
 
-  // Alternating colors: teal, purple, orange
-  const hoverColors = ["#5DCCCC", "#A78BDD", "#FFB088"];
+  // Brand colors for hover effect
+  const hoverColors = [LANDING_TEAL, LANDING_PURPLE, LANDING_PEACH];
   const hoverColor = iconColor || hoverColors[index % 3];
 
   const headerId = `accordion-header-${index}`;
@@ -35,7 +40,7 @@ export default function Accordion({
         onClick={() => setIsOpen(!isOpen)}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className="w-full flex items-center justify-between p-5 text-left hover:bg-slate-800/60 transition-colors duration-200"
+        className="w-full flex items-center justify-between p-5 text-left hover:bg-slate-800/60 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 focus-visible:ring-white/50"
         aria-expanded={isOpen}
         aria-controls={panelId}
         id={headerId}

@@ -1,4 +1,5 @@
 import React from "react";
+import { motion } from "framer-motion";
 import {
   GithubLogo,
   ArrowSquareOut,
@@ -11,11 +12,14 @@ import LandingButton from "../landing/LandingButton";
 import HeroConstellation from "../effects/HeroConstellation";
 import { FeatureBlock } from "../landing/demo/FeatureBlock";
 import TechDetailStrip from "../landing/demo/TechDetailStrip";
-import AudienceCard from "../landing/demo/AudienceCard";
-import AvailabilityPoint from "../landing/demo/AvailabilityPoint";
 import ModernCard from "../landing/demo/ModernCard";
 import IdentityBadge from "../landing/demo/IdentityBadge";
 import Accordion from "../landing/demo/Accordion";
+import {
+  LANDING_PEACH,
+  LANDING_TEAL,
+  LANDING_PURPLE,
+} from "../../data/landingTheme";
 import { landingFeatures } from "../../data/landingFeatures";
 import { landingArchitecture } from "../../data/landingArchitecture";
 import {
@@ -25,7 +29,6 @@ import {
 import { landingAvailability } from "../../data/landingAvailability";
 import { landingAudiences } from "../../data/landingAudiences";
 import { landingPrivacy } from "../../data/landingPrivacy";
-import { landingIdentity } from "../../data/landingIdentity";
 
 /**
  * Public demo landing page for portfolio showcase
@@ -34,18 +37,33 @@ import { landingIdentity } from "../../data/landingIdentity";
 const DemoLanding: React.FC = () => {
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
+      {/* Skip Navigation */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-slate-800 focus:text-white focus:rounded focus:outline-none focus:ring-2 focus:ring-white"
+      >
+        Skip to main content
+      </a>
+
       <StarryBackground />
 
       {/* Header */}
-      <header className="relative z-10 border-b border-white/5 backdrop-blur-md">
+      <header
+        className="relative z-10 border-b border-white/5 backdrop-blur-md"
+        aria-label="Site header"
+      >
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Question className="w-9 h-9 text-[#FFB088]" weight="duotone" />
+            <Question
+              className="w-9 h-9"
+              style={{ color: LANDING_PEACH }}
+              weight="duotone"
+            />
             <h1 className="text-2xl font-bold tracking-tight">NPC Finder</h1>
           </div>
           <LandingButton
             href="/app"
-            variant="secondary"
+            variant="ghost"
             icon={<Lock className="w-4 h-4" weight="duotone" />}
             className="text-sm"
           >
@@ -55,7 +73,7 @@ const DemoLanding: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <main className="relative z-10">
+      <main className="relative z-10" id="main-content" role="main">
         {/* Hero Section */}
         <section className="max-w-7xl mx-auto px-6 py-12 sm:py-16 lg:py-28 relative">
           {/* Constellation Background - Full Width */}
@@ -73,25 +91,18 @@ const DemoLanding: React.FC = () => {
 
           {/* Text Content - Overlaid */}
           <div className="relative z-10 max-w-2xl pointer-events-auto">
-            <h2 className="text-[2rem] sm:text-[2.5rem] lg:text-[2.9rem] font-bold mb-4 leading-[1.12] tracking-tight">
+            <h2 className="text-[2rem] sm:text-[2.5rem] lg:text-[2.9rem] font-bold mb-6 leading-[1.12] tracking-tight">
               Your Private Life Hub
               <br />
-              <span className="block mt-1.5 text-[1.6rem] sm:text-[1.95rem] lg:text-[2.4rem] leading-[1.15] bg-gradient-to-r from-[#FF8E53] via-[#FFB088] to-[#FFC9A5] bg-clip-text text-transparent">
+              <span
+                className="block mt-1.5 text-[1.6rem] sm:text-[1.95rem] lg:text-[2.4rem] leading-[1.15] bg-clip-text text-transparent"
+                style={{
+                  backgroundImage: `linear-gradient(to right, ${LANDING_PEACH}, ${LANDING_PEACH}, ${LANDING_PEACH})`,
+                }}
+              >
                 Organized, Connected, and Fully Yours
               </span>
             </h2>
-
-            {/* Identity Badges */}
-            <div className="flex flex-wrap gap-3 mb-6 sm:mb-7">
-              {landingIdentity.badges.map((badge, index) => (
-                <IdentityBadge
-                  key={index}
-                  label={badge.label}
-                  icon={badge.icon}
-                  color={badge.color}
-                />
-              ))}
-            </div>
 
             <p className="text-base sm:text-lg text-neutral-300 mb-8 sm:mb-10 max-w-xl leading-relaxed font-light">
               A modular dashboard for your daily life. Track media, manage
@@ -109,24 +120,25 @@ const DemoLanding: React.FC = () => {
                 View Source
               </LandingButton>
               <LandingButton
-                onClick={() => {
-                  const section = document.getElementById("features");
-                  section?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start",
-                  });
-                }}
+                href="https://aftongauntlett.com"
                 variant="ghost"
-                icon={<Question className="w-4 h-4" weight="duotone" />}
+                icon={<ArrowSquareOut className="w-4 h-4" weight="duotone" />}
               >
-                Learn More
+                View Portfolio
               </LandingButton>
             </div>
           </div>
         </section>
 
         {/* Features Section */}
-        <section id="features" className="max-w-7xl mx-auto px-6 py-28">
+        <motion.section
+          id="features"
+          className="max-w-7xl mx-auto px-6 py-28"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        >
           <div className="mb-16">
             <h3 className="text-4xl font-bold mb-3 tracking-tight">
               What You Can Do Today
@@ -149,10 +161,16 @@ const DemoLanding: React.FC = () => {
               />
             ))}
           </div>
-        </section>
+        </motion.section>
 
         {/* Why Privacy Matters Section */}
-        <section className="max-w-7xl mx-auto px-6 py-24">
+        <motion.section
+          className="max-w-7xl mx-auto px-6 py-24"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        >
           <div className="mb-12">
             <h3 className="text-4xl font-bold mb-3 tracking-tight">
               {landingPrivacy.title}
@@ -165,7 +183,7 @@ const DemoLanding: React.FC = () => {
           {/* Privacy Points */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {landingPrivacy.points.map((point, index) => (
-              <AvailabilityPoint
+              <ModernCard
                 key={index}
                 icon={point.icon}
                 iconColor={point.iconColor}
@@ -195,12 +213,16 @@ const DemoLanding: React.FC = () => {
               </LandingButton>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* Technical Details */}
-        <section
+        <motion.section
           id="technical-details"
           className="max-w-7xl mx-auto px-6 py-24"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
         >
           <div className="mb-12">
             <h3 className="text-4xl font-bold mb-3 tracking-tight">
@@ -249,19 +271,34 @@ const DemoLanding: React.FC = () => {
               />
             ))}
           </div>
-        </section>
+        </motion.section>
 
         {/* What's Next */}
-        <section id="roadmap" className="max-w-7xl mx-auto px-6 py-24">
+        <motion.section
+          id="roadmap"
+          className="max-w-7xl mx-auto px-6 py-24"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        >
           <div className="mb-12">
             <h3 className="text-4xl font-bold mb-6 tracking-tight">
               Roadmap: Future Vision
             </h3>
 
             {/* Refined Disclaimer */}
-            <div className="relative bg-gradient-to-r from-cyan-500/5 to-transparent border-l-2 border-cyan-400/50 pl-6 pr-4 py-4 rounded-r-lg">
+            <div
+              className="relative pl-6 pr-4 py-4 rounded-r-lg"
+              style={{
+                background: `linear-gradient(to right, ${LANDING_TEAL}0D, transparent)`,
+                borderLeft: `2px solid ${LANDING_TEAL}80`,
+              }}
+            >
               <p className="text-gray-300 text-sm leading-relaxed">
-                <span className="text-cyan-300 font-medium">Note:</span>{" "}
+                <span className="font-medium" style={{ color: LANDING_TEAL }}>
+                  Note:
+                </span>{" "}
                 {futureDisclaimer}
               </p>
             </div>
@@ -307,10 +344,17 @@ const DemoLanding: React.FC = () => {
               </div>
             ))}
           </div>
-        </section>
+        </motion.section>
 
         {/* Access & Availability Section */}
-        <section id="availability" className="max-w-7xl mx-auto px-6 py-28">
+        <motion.section
+          id="availability"
+          className="max-w-7xl mx-auto px-6 py-28"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        >
           <div className="mb-12">
             <h3 className="text-4xl font-bold mb-3 tracking-tight">
               {landingAvailability.title}
@@ -325,6 +369,7 @@ const DemoLanding: React.FC = () => {
             {landingAvailability.points.map((point, index) => (
               <ModernCard
                 key={index}
+                icon={point.icon}
                 iconColor={point.iconColor}
                 title={point.title}
                 description={point.description}
@@ -333,14 +378,31 @@ const DemoLanding: React.FC = () => {
           </div>
 
           {/* Demo Video Coming Soon - Distinct callout style */}
-          <div className="relative bg-gradient-to-br from-slate-800/30 via-slate-800/20 to-transparent border border-[#FFB088]/20 rounded-xl p-8 mb-12 text-center">
+          <div
+            className="relative bg-gradient-to-br from-slate-800/30 via-slate-800/20 to-transparent rounded-xl p-8 mb-12 text-center"
+            style={{
+              borderWidth: "1px",
+              borderStyle: "solid",
+              borderColor: `${LANDING_PEACH}20`,
+            }}
+          >
             <div className="flex flex-col items-center gap-3">
-              <div className="w-14 h-14 flex items-center justify-center rounded-full bg-[#FFB088]/10 border border-[#FFB088]/30">
+              <div
+                className="w-14 h-14 flex items-center justify-center rounded-full"
+                style={{
+                  backgroundColor: `${LANDING_PEACH}10`,
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                  borderColor: `${LANDING_PEACH}30`,
+                }}
+              >
                 <svg
-                  className="w-7 h-7 text-[#FFB088]"
+                  className="w-7 h-7"
+                  style={{ color: LANDING_PEACH }}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -386,7 +448,8 @@ const DemoLanding: React.FC = () => {
               </p>
               <a
                 href="https://github.com/aftongauntlett/npcfinder/blob/main/docs/INVITE-SYSTEM-QUICKSTART.md"
-                className="text-[#FFB088] hover:text-[#FFC9A5] underline"
+                style={{ color: LANDING_PEACH }}
+                className="hover:opacity-80 underline transition-opacity"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -411,7 +474,8 @@ const DemoLanding: React.FC = () => {
               </p>
               <a
                 href="https://github.com/aftongauntlett/npcfinder/blob/main/docs/PRIVACY-REALITY-CHECK.md"
-                className="text-[#FFB088] hover:text-[#FFC9A5] underline"
+                style={{ color: LANDING_PEACH }}
+                className="hover:opacity-80 underline transition-opacity"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -430,7 +494,8 @@ const DemoLanding: React.FC = () => {
               </p>
               <a
                 href="https://github.com/aftongauntlett/npcfinder/blob/main/docs/QUICK-START.md"
-                className="text-[#FFB088] hover:text-[#FFC9A5] underline"
+                style={{ color: LANDING_PEACH }}
+                className="hover:opacity-80 underline transition-opacity"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -438,10 +503,16 @@ const DemoLanding: React.FC = () => {
               </a>
             </Accordion>
           </div>
-        </section>
+        </motion.section>
 
         {/* Who This Page Is For Section */}
-        <section className="max-w-7xl mx-auto px-6 py-24">
+        <motion.section
+          className="max-w-7xl mx-auto px-6 py-24"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        >
           <div className="mb-12 text-center">
             <h3 className="text-4xl font-bold mb-3 tracking-tight">
               {landingAudiences.sectionTitle}
@@ -454,7 +525,7 @@ const DemoLanding: React.FC = () => {
           {/* Audience Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {landingAudiences.audiences.map((audience, index) => (
-              <AudienceCard
+              <ModernCard
                 key={index}
                 icon={audience.icon}
                 iconColor={audience.iconColor}
@@ -463,10 +534,16 @@ const DemoLanding: React.FC = () => {
               />
             ))}
           </div>
-        </section>
+        </motion.section>
 
         {/* CTA Section */}
-        <section className="max-w-4xl mx-auto px-6 py-28 text-center">
+        <motion.section
+          className="max-w-4xl mx-auto px-6 py-28 text-center"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        >
           <h3 className="text-4xl font-bold mb-4 tracking-tight">
             For Developers & Recruiters
           </h3>
@@ -498,18 +575,22 @@ const DemoLanding: React.FC = () => {
               View Portfolio
             </LandingButton>
           </div>
-        </section>
+        </motion.section>
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-white/5 backdrop-blur-md">
+      <footer
+        className="relative z-10 border-t border-white/5 backdrop-blur-md"
+        aria-label="Site footer"
+      >
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-500">
             <p>© 2025 NPC Finder • Built by Afton Gauntlett</p>
             <div className="flex items-center gap-6">
               <span className="flex items-center gap-2">
                 <ShieldCheck
-                  className="w-4 h-4 text-purple-400"
+                  className="w-4 h-4"
+                  style={{ color: LANDING_PURPLE }}
                   weight="duotone"
                 />
                 Private within your friend group

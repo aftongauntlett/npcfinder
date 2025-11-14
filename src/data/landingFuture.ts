@@ -1,3 +1,5 @@
+import { LANDING_PURPLE, LANDING_PEACH, LANDING_TEAL } from "./landingTheme";
+
 interface FutureFeature {
   title: string;
   description: string;
@@ -15,7 +17,7 @@ export const futureDisclaimer =
 export const landingFutureCategories: FutureCategory[] = [
   {
     category: "Productivity",
-    color: "#A78BDD", // purple
+    color: LANDING_PURPLE,
     features: [
       {
         title: "Productivity Tools",
@@ -31,7 +33,7 @@ export const landingFutureCategories: FutureCategory[] = [
   },
   {
     category: "Social",
-    color: "#FFB088", // orange
+    color: LANDING_PEACH,
     features: [
       {
         title: "Custom Profiles",
@@ -47,7 +49,7 @@ export const landingFutureCategories: FutureCategory[] = [
   },
   {
     category: "Scalability",
-    color: "#5eead4", // teal-300
+    color: LANDING_TEAL,
     features: [
       {
         title: "Discord-Style Networks",

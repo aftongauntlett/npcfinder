@@ -1,4 +1,5 @@
-import { FC, ReactNode } from "react";
+import { FC, ReactNode, useState } from "react";
+import { LANDING_TEAL, LANDING_PEACH } from "../../data/landingTheme";
 
 interface LandingButtonProps {
   children: ReactNode;
@@ -17,47 +18,61 @@ const LandingButton: FC<LandingButtonProps> = ({
   icon,
   className = "",
 }) => {
-  const baseStyles =
-    "inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium relative overflow-hidden transition-all duration-300 ease-out";
+  const [isHovered, setIsHovered] = useState(false);
 
-  const variants = {
-    primary: `
-      bg-transparent
-      border-2 border-[#5DCCCC]/50
-      text-[#5DCCCC]
-      backdrop-blur-sm
-      hover:border-[#5DCCCC]
-      hover:bg-[#5DCCCC]/5
-      hover:shadow-[0_0_20px_-5px_rgba(93,204,204,0.5)]
-      active:scale-95
-      transition-all duration-400 ease-out
-    `,
-    secondary: `
-      bg-transparent 
-      border-2 border-[#FFB088]/40 
-      text-[#FFB088]
-      backdrop-blur-sm
-      hover:border-[#FFB088]/70
-      hover:bg-[#FFB088]/10
-      active:scale-95
-    `,
-    tertiary: `
-      bg-slate-800/60
-      border-2 border-white/10
-      text-gray-200
-      backdrop-blur-sm
-      hover:border-white/20
-      hover:bg-slate-800/80
-      active:scale-95
-    `,
-    ghost: `
-      bg-transparent
-      text-gray-300
-      border border-slate-700/40
-      hover:text-[#FFB088]
-      hover:bg-white/5
-      hover:border-[#FFB088]/30
-    `,
+  const baseStyles =
+    "inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium relative overflow-hidden backdrop-blur-sm active:scale-95";
+
+  const getStyles = () => {
+    switch (variant) {
+      case "primary":
+        return {
+          borderWidth: "2px",
+          borderStyle: "solid",
+          borderColor: isHovered ? LANDING_TEAL : `${LANDING_TEAL}80`,
+          color: LANDING_TEAL,
+          backgroundColor: isHovered ? `${LANDING_TEAL}0D` : "transparent",
+          boxShadow: isHovered ? `0 0 20px -5px ${LANDING_TEAL}80` : "none",
+          transition: "all 400ms ease-out",
+        };
+      case "secondary":
+        return {
+          borderWidth: "2px",
+          borderStyle: "solid",
+          borderColor: isHovered ? `${LANDING_PEACH}B3` : `${LANDING_PEACH}66`,
+          color: LANDING_PEACH,
+          backgroundColor: isHovered ? `${LANDING_PEACH}1A` : "transparent",
+          transition: "all 300ms ease-out",
+        };
+      case "tertiary":
+        return {
+          borderWidth: "2px",
+          borderStyle: "solid",
+          backgroundColor: isHovered
+            ? "rgba(30, 41, 59, 0.8)"
+            : "rgba(30, 41, 59, 0.6)",
+          borderColor: isHovered
+            ? "rgba(255, 255, 255, 0.2)"
+            : "rgba(255, 255, 255, 0.1)",
+          color: "#e5e7eb",
+          transition: "all 300ms ease-out",
+        };
+      case "ghost":
+        return {
+          borderWidth: "1px",
+          borderStyle: "solid",
+          backgroundColor: isHovered
+            ? "rgba(255, 255, 255, 0.05)"
+            : "transparent",
+          borderColor: isHovered
+            ? `${LANDING_PEACH}4D`
+            : "rgba(51, 65, 85, 0.4)",
+          color: isHovered ? LANDING_PEACH : "#d1d5db",
+          transition: "all 300ms ease-out",
+        };
+      default:
+        return {};
+    }
   };
 
   const Component = href ? "a" : "button";
@@ -70,8 +85,11 @@ const LandingButton: FC<LandingButtonProps> = ({
     <Component
       href={href}
       onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       {...(isExternalLink && { target: "_blank", rel: "noopener noreferrer" })}
-      className={`${baseStyles} ${variants[variant]} ${className} group`}
+      className={`${baseStyles} ${className} group`}
+      style={getStyles()}
     >
       {/* Content */}
       <span className="relative z-10 flex items-center gap-2">

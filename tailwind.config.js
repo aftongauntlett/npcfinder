@@ -11,6 +11,12 @@ export default {
           light: "var(--color-primary-light)",
           pale: "var(--color-primary-pale)",
         },
+        landing: {
+          peach: "#FFB088",
+          teal: "#5DCCCC",
+          purple: "#A78BDD",
+          blue: "#7BA8D1",
+        },
         background: "rgb(var(--color-background) / <alpha-value>)",
         surface: {
           DEFAULT: "rgb(var(--color-surface) / <alpha-value>)",

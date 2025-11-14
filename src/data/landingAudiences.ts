@@ -5,6 +5,12 @@ import {
   UserCheck,
   type Icon,
 } from "@phosphor-icons/react";
+import {
+  LANDING_TEAL,
+  LANDING_PURPLE,
+  LANDING_PEACH,
+  LANDING_BLUE,
+} from "./landingTheme";
 
 export interface AudienceItem {
   icon: Icon;
@@ -26,28 +32,28 @@ export const landingAudiences: AudiencesData = {
   audiences: [
     {
       icon: Briefcase,
-      iconColor: "#3b82f6",
+      iconColor: LANDING_TEAL,
       title: "Recruiters & Hiring Managers",
       description:
         "Full-stack React + TypeScript with Supabase, Row-Level Security, and modern tooling. Review the technical architecture below.",
     },
     {
       icon: Code,
-      iconColor: "#10b981",
+      iconColor: LANDING_PURPLE,
       title: "Developers",
       description:
         "Clone and deploy your own instance. Complete setup guides, migrations, and API configuration included.",
     },
     {
       icon: Eye,
-      iconColor: "#f59e0b",
+      iconColor: LANDING_PEACH,
       title: "Curious Visitors",
       description:
         "Exploring the concept? Learn what the app does, why privacy matters, and future plans. No signup needed.",
     },
     {
       icon: UserCheck,
-      iconColor: "#8b5cf6",
+      iconColor: LANDING_BLUE,
       title: "Invited Users",
       description:
         "Have an invite code? Click login in the header. Use the email address tied to your code.",
