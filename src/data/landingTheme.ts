@@ -104,27 +104,27 @@ export const LANDING_PEACH_10 = withOpacity(LANDING_PEACH, 0.1);
 
 export const LANDING_TEAL_90 = withOpacity(LANDING_TEAL, 0.9);
 export const LANDING_TEAL_80 = withOpacity(LANDING_TEAL, 0.8);
-export const LANDING_TEAL_70 = withOpacity(LANDING_TEAL, 0.7);
-export const LANDING_TEAL_50 = withOpacity(LANDING_TEAL, 0.5);
-export const LANDING_TEAL_30 = withOpacity(LANDING_TEAL, 0.3);
-export const LANDING_TEAL_20 = withOpacity(LANDING_TEAL, 0.2);
-export const LANDING_TEAL_10 = withOpacity(LANDING_TEAL, 0.1);
+export const LANDING_TEAL_70 = "rgba(93, 204, 204, 0.7)";
+export const LANDING_TEAL_50 = "rgba(93, 204, 204, 0.5)";
+export const LANDING_TEAL_30 = "rgba(93, 204, 204, 0.3)";
+export const LANDING_TEAL_20 = "rgba(93, 204, 204, 0.2)";
+export const LANDING_TEAL_10 = "rgba(93, 204, 204, 0.1)";
 
-export const LANDING_PURPLE_90 = withOpacity(LANDING_PURPLE, 0.9);
-export const LANDING_PURPLE_80 = withOpacity(LANDING_PURPLE, 0.8);
-export const LANDING_PURPLE_70 = withOpacity(LANDING_PURPLE, 0.7);
-export const LANDING_PURPLE_50 = withOpacity(LANDING_PURPLE, 0.5);
-export const LANDING_PURPLE_30 = withOpacity(LANDING_PURPLE, 0.3);
-export const LANDING_PURPLE_20 = withOpacity(LANDING_PURPLE, 0.2);
-export const LANDING_PURPLE_10 = withOpacity(LANDING_PURPLE, 0.1);
+export const LANDING_PURPLE_90 = "rgba(167, 139, 221, 0.9)";
+export const LANDING_PURPLE_80 = "rgba(167, 139, 221, 0.8)";
+export const LANDING_PURPLE_70 = "rgba(167, 139, 221, 0.7)";
+export const LANDING_PURPLE_50 = "rgba(167, 139, 221, 0.5)";
+export const LANDING_PURPLE_30 = "rgba(167, 139, 221, 0.3)";
+export const LANDING_PURPLE_20 = "rgba(167, 139, 221, 0.2)";
+export const LANDING_PURPLE_10 = "rgba(167, 139, 221, 0.1)";
 
-export const LANDING_BLUE_90 = withOpacity(LANDING_BLUE, 0.9);
-export const LANDING_BLUE_80 = withOpacity(LANDING_BLUE, 0.8);
-export const LANDING_BLUE_70 = withOpacity(LANDING_BLUE, 0.7);
-export const LANDING_BLUE_50 = withOpacity(LANDING_BLUE, 0.5);
-export const LANDING_BLUE_30 = withOpacity(LANDING_BLUE, 0.3);
-export const LANDING_BLUE_20 = withOpacity(LANDING_BLUE, 0.2);
-export const LANDING_BLUE_10 = withOpacity(LANDING_BLUE, 0.1);
+export const LANDING_BLUE_90 = "rgba(123, 168, 209, 0.9)";
+export const LANDING_BLUE_80 = "rgba(123, 168, 209, 0.8)";
+export const LANDING_BLUE_70 = "rgba(123, 168, 209, 0.7)";
+export const LANDING_BLUE_50 = "rgba(123, 168, 209, 0.5)";
+export const LANDING_BLUE_30 = "rgba(123, 168, 209, 0.3)";
+export const LANDING_BLUE_20 = "rgba(123, 168, 209, 0.2)";
+export const LANDING_BLUE_10 = "rgba(123, 168, 209, 0.1)";
 
 // ============================================================================
 // Usage Guidelines
