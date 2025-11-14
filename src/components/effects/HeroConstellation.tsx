@@ -68,7 +68,6 @@ function getDesignTokenColors() {
     purpleShadow,
     blueBase,
     blueShadow,
-    primaryColor,
   };
 }
 
