@@ -23,14 +23,13 @@ const LandingButton: FC<LandingButtonProps> = ({
   const variants = {
     primary: `
       bg-transparent
-      border-2 border-[#FFB088]/50
-      text-[#FFB088]
+      border-2 border-[#5DCCCC]/50
+      text-[#5DCCCC]
       backdrop-blur-sm
-      hover:border-[#FFB088]
-      hover:bg-[#FFB088]/5
-      hover:shadow-[0_0_20px_-5px_rgba(255,176,136,0.5)]
+      hover:border-[#5DCCCC]
+      hover:bg-[#5DCCCC]/5
+      hover:shadow-[0_0_20px_-5px_rgba(93,204,204,0.5)]
       active:scale-95
-      font-semibold
       transition-all duration-400 ease-out
     `,
     secondary: `
