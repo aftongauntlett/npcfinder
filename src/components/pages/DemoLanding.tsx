@@ -34,8 +34,8 @@ import { landingAvailability } from "../../data/landingAvailability";
 import { landingPrivacy } from "../../data/landingPrivacy";
 
 /**
- * Public demo landing page for portfolio showcase
- * Modern design with clean layouts and custom typography
+ * Public landing page for NPC Finder
+ * Real product in development - open source and self-hostable
  */
 const DemoLanding: React.FC = () => {
   return (
@@ -505,12 +505,12 @@ const DemoLanding: React.FC = () => {
           transition={{ duration: 0.5, ease: "easeOut" }}
         >
           <h3 className="text-4xl font-bold mb-6 tracking-tight">
-            Open Source Portfolio Project
+            Open Source & Self-Hostable
           </h3>
           <p className="text-lg text-gray-300 mb-8 max-w-2xl mx-auto">
-            This is a code portfolio and self-hosting guide—not a service you
-            sign up for. Clone the repo, run your own instance, and customize it
-            for your friend group.
+            A real product in active development. Currently in private beta for
+            testing with my friend group. Clone the repo and run your own instance,
+            or follow development as I build toward a public release.
           </p>
 
           {/* Development Warning Badge */}
