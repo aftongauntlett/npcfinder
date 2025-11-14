@@ -39,11 +39,7 @@ interface NodePosition {
 
 // Helper to get design token colors
 function getDesignTokenColors() {
-  const styles = getComputedStyle(document.documentElement);
-
   // Fallback colors matching StarryBackground.tsx soft white aesthetic
-  const primaryColor =
-    styles.getPropertyValue("--color-primary").trim() || "#9333ea";
   const whiteBase = withOpacity("#FFFFFF", 0.85); // Even brighter white
   const whiteShadow = withOpacity("#FFFFFF", 0.45); // Brighter shadow
 

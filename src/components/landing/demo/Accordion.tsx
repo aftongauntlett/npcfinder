@@ -17,14 +17,6 @@ interface AccordionProps {
   idPrefix?: string;
 }
 
-// Helper function to create URL-safe slugs from titles
-const slugify = (text: string): string => {
-  return text
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9-]/g, "");
-};
-
 export default function Accordion({
   title,
   children,
