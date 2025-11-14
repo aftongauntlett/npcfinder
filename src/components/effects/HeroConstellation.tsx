@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMotionValue, useSpring } from "framer-motion";
+import {
+  LANDING_PEACH,
+  LANDING_TEAL,
+  LANDING_PURPLE,
+  LANDING_BLUE,
+  withOpacity,
+} from "../../data/landingTheme";
 
 interface HeroConstellationProps {
   width?: number;
@@ -32,24 +39,31 @@ interface NodePosition {
 
 // Helper to get design token colors
 function getDesignTokenColors() {
-  const styles = getComputedStyle(document.documentElement);
-
   // Fallback colors matching StarryBackground.tsx soft white aesthetic
-  const primaryColor =
-    styles.getPropertyValue("--color-primary").trim() || "#9333ea";
-  const whiteBase = "rgba(255, 255, 255, 0.48)"; // From StarryBackground
-  const whiteShadow = "rgba(255, 255, 255, 0.18)"; // From StarryBackground
+  const whiteBase = withOpacity("#FFFFFF", 0.85); // Even brighter white
+  const whiteShadow = withOpacity("#FFFFFF", 0.45); // Brighter shadow
 
-  // Orange brand color from existing implementation
-  const orangeBase = "rgba(255, 184, 136, 0.6)";
-  const orangeShadow = "rgba(255, 142, 83, 0.4)";
+  // Brand colors from centralized theme (with higher opacity for brightness)
+  const peachBase = withOpacity(LANDING_PEACH, 0.85); // 85% opacity
+  const peachShadow = withOpacity(LANDING_PEACH, 0.5); // 50% opacity
+  const tealBase = withOpacity(LANDING_TEAL, 0.85); // 85% opacity
+  const tealShadow = withOpacity(LANDING_TEAL, 0.5); // 50% opacity
+  const purpleBase = withOpacity(LANDING_PURPLE, 0.85); // 85% opacity
+  const purpleShadow = withOpacity(LANDING_PURPLE, 0.5); // 50% opacity
+  const blueBase = withOpacity(LANDING_BLUE, 0.85); // 85% opacity
+  const blueShadow = withOpacity(LANDING_BLUE, 0.5); // 50% opacity
 
   return {
     whiteBase,
     whiteShadow,
-    orangeBase,
-    orangeShadow,
-    primaryColor,
+    peachBase,
+    peachShadow,
+    tealBase,
+    tealShadow,
+    purpleBase,
+    purpleShadow,
+    blueBase,
+    blueShadow,
   };
 }
 
@@ -182,11 +196,18 @@ export default function HeroConstellation({
           );
 
           if (distance < maxDist) {
-            // Use design token colors (Comment 3)
-            if (i % 3 === 0) {
-              ctx.strokeStyle = "rgba(255, 184, 136, 0.2)";
+            // Use brighter lines with varied colors
+            const lineColorIndex = (i + j) % 10;
+            if (lineColorIndex < 6) {
+              ctx.strokeStyle = withOpacity("#FFFFFF", 0.25); // Brighter white lines
+            } else if (lineColorIndex === 6) {
+              ctx.strokeStyle = withOpacity(LANDING_PEACH, 0.25); // Peach lines
+            } else if (lineColorIndex === 7) {
+              ctx.strokeStyle = withOpacity(LANDING_TEAL, 0.25); // Teal lines
+            } else if (lineColorIndex === 8) {
+              ctx.strokeStyle = withOpacity(LANDING_PURPLE, 0.25); // Purple lines
             } else {
-              ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+              ctx.strokeStyle = withOpacity(LANDING_BLUE, 0.25); // Blue lines
             }
 
             ctx.beginPath();
@@ -212,19 +233,41 @@ export default function HeroConstellation({
           node.radius * 3
         );
 
-        // Use design token colors (Comment 3)
-        if (i % 2 === 0) {
-          gradient.addColorStop(0, colors.whiteBase.replace("0.48", "0.8"));
-          gradient.addColorStop(0.5, colors.whiteBase.replace("0.48", "0.4"));
-        } else {
-          gradient.addColorStop(0, colors.orangeBase);
-          gradient.addColorStop(0.5, colors.orangeBase.replace("0.6", "0.3"));
-        }
-        gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+        // Use design token colors with all 4 brand colors sprinkled in
+        const colorIndex = i % 10; // 10 different patterns
+        let shadowColor;
 
-        ctx.shadowBlur = 6;
-        ctx.shadowColor =
-          i % 2 === 0 ? colors.whiteShadow : colors.orangeShadow;
+        if (colorIndex < 5) {
+          // 50% white nodes
+          shadowColor = colors.whiteShadow;
+          gradient.addColorStop(0, withOpacity("#FFFFFF", 0.9));
+          gradient.addColorStop(0.5, withOpacity("#FFFFFF", 0.5));
+        } else if (colorIndex === 5) {
+          // Peach nodes
+          shadowColor = colors.peachShadow;
+          gradient.addColorStop(0, colors.peachBase);
+          gradient.addColorStop(0.5, colors.peachShadow);
+        } else if (colorIndex === 6 || colorIndex === 7) {
+          // Teal nodes (2 out of 10 for more visibility)
+          shadowColor = colors.tealShadow;
+          gradient.addColorStop(0, colors.tealBase);
+          gradient.addColorStop(0.5, colors.tealShadow);
+        } else if (colorIndex === 8) {
+          // Purple nodes
+          shadowColor = colors.purpleShadow;
+          gradient.addColorStop(0, colors.purpleBase);
+          gradient.addColorStop(0.5, colors.purpleShadow);
+        } else {
+          // Blue nodes
+          shadowColor = colors.blueShadow;
+          gradient.addColorStop(0, colors.blueBase);
+          gradient.addColorStop(0.5, colors.blueShadow);
+        }
+
+        gradient.addColorStop(1, withOpacity("#FFFFFF", 0));
+
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = shadowColor;
 
         ctx.fillStyle = gradient;
         ctx.beginPath();
@@ -442,14 +485,21 @@ export default function HeroConstellation({
           );
 
           if (distance < maxDist) {
-            // Increased threshold for longer, more visible lines
-            const opacity = (1 - distance / maxDist) * 0.15;
+            // Brighter, more visible lines
+            const opacity = (1 - distance / maxDist) * 0.25; // Increased from 0.15
 
-            // Alternate between white and orange tint using design tokens (Comment 3)
-            if (i % 3 === 0) {
-              ctx.strokeStyle = `rgba(255, 184, 136, ${opacity})`;
+            // Alternate between colors with more variety
+            const lineColorIndex = (i + j) % 10;
+            if (lineColorIndex < 6) {
+              ctx.strokeStyle = withOpacity("#FFFFFF", opacity);
+            } else if (lineColorIndex === 6) {
+              ctx.strokeStyle = withOpacity(LANDING_PEACH, opacity); // Peach
+            } else if (lineColorIndex === 7) {
+              ctx.strokeStyle = withOpacity(LANDING_TEAL, opacity); // Teal
+            } else if (lineColorIndex === 8) {
+              ctx.strokeStyle = withOpacity(LANDING_PURPLE, opacity); // Purple
             } else {
-              ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
+              ctx.strokeStyle = withOpacity(LANDING_BLUE, opacity); // Blue
             }
 
             ctx.beginPath();
@@ -492,19 +542,19 @@ export default function HeroConstellation({
         // Use design token colors with purple accent nodes (Comment 3)
         if (i % 7 === 0) {
           // Purple nodes - sparse accent
-          gradient.addColorStop(0, `rgba(167, 139, 221, ${opacity0})`);
-          gradient.addColorStop(0.5, `rgba(167, 139, 221, ${opacity1})`);
-          ctx.shadowColor = `rgba(167, 139, 221, ${opacity3})`;
+          gradient.addColorStop(0, withOpacity(LANDING_PURPLE, opacity0));
+          gradient.addColorStop(0.5, withOpacity(LANDING_PURPLE, opacity1));
+          ctx.shadowColor = withOpacity(LANDING_PURPLE, opacity3);
         } else if (i % 2 === 0) {
-          gradient.addColorStop(0, `rgba(255, 255, 255, ${opacity0})`);
-          gradient.addColorStop(0.5, `rgba(255, 255, 255, ${opacity1})`);
-          ctx.shadowColor = `rgba(255, 255, 255, ${0.18 * twinkleOpacity})`;
+          gradient.addColorStop(0, withOpacity("#FFFFFF", opacity0));
+          gradient.addColorStop(0.5, withOpacity("#FFFFFF", opacity1));
+          ctx.shadowColor = withOpacity("#FFFFFF", 0.18 * twinkleOpacity);
         } else {
-          gradient.addColorStop(0, `rgba(255, 184, 136, ${opacity2})`);
-          gradient.addColorStop(0.5, `rgba(255, 184, 136, ${opacity3})`);
-          ctx.shadowColor = `rgba(255, 142, 83, ${0.4 * twinkleOpacity})`;
+          gradient.addColorStop(0, withOpacity(LANDING_PEACH, opacity2));
+          gradient.addColorStop(0.5, withOpacity(LANDING_PEACH, opacity3));
+          ctx.shadowColor = withOpacity(LANDING_PEACH, 0.4 * twinkleOpacity);
         }
-        gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+        gradient.addColorStop(1, withOpacity("#FFFFFF", 0));
 
         // Apply shadow blur for additional glow using design tokens (Comment 3)
         ctx.shadowBlur = 6;

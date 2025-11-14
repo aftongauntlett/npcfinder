@@ -5,6 +5,12 @@ import {
   Stack,
   type Icon,
 } from "@phosphor-icons/react";
+import {
+  LANDING_TEAL,
+  LANDING_PEACH,
+  LANDING_PURPLE,
+  LANDING_BLUE,
+} from "./landingTheme";
 
 export interface PrivacyPoint {
   icon: Icon;
@@ -31,35 +37,35 @@ export const landingPrivacy: PrivacyData = {
   points: [
     {
       icon: ShieldCheck,
-      iconColor: "#10b981",
+      iconColor: LANDING_TEAL,
       title: "Protected from Other Users",
       description:
         "PostgreSQL Row-Level Security ensures other users cannot access your private data - only you and connected friends.",
     },
     {
       icon: UserMinus,
-      iconColor: "#f59e0b",
+      iconColor: LANDING_PEACH,
       title: "Invite-Only Access",
       description:
         "No public signup means no strangers. Only people with admin-generated invite codes can join.",
     },
     {
       icon: EyeSlash,
-      iconColor: "#8b5cf6",
+      iconColor: LANDING_PURPLE,
       title: "No Tracking or Analytics",
       description:
         "No third-party tracking, no analytics scripts, no data mining. Your activity stays within the app.",
     },
     {
       icon: Stack,
-      iconColor: "#3b82f6",
+      iconColor: LANDING_BLUE,
       title: "Database Isolation",
       description:
         "Each installation uses its own Supabase project. When you clone this repo, you create a completely separate database.",
     },
   ],
   disclaimer:
-    "**What's NOT private:** This is not end-to-end encrypted like Signal or WhatsApp. The database admin (whoever runs the Supabase instance) can technically access the data. This is the same privacy model as Netflix, Spotify, or most web apps. If you need Signal-level privacy, this app isn't designed for that use case. See the Privacy Reality Check documentation for full details.",
+    "Important: This app is not end-to-end encrypted like Signal. The database admin can technically access data. This is the same privacy model as Netflix or Spotify. See the Privacy Reality Check for full details.",
   privacyDocsLink: {
     label: "Read the Privacy Reality Check",
     href: "https://github.com/aftongauntlett/npcfinder/blob/main/docs/PRIVACY-REALITY-CHECK.md",

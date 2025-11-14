@@ -5,6 +5,12 @@ import {
   Sliders,
   type Icon,
 } from "@phosphor-icons/react";
+import {
+  LANDING_PEACH,
+  LANDING_PURPLE,
+  LANDING_TEAL,
+  LANDING_BLUE,
+} from "./landingTheme";
 
 interface FeatureData {
   icon: Icon;
@@ -16,7 +22,7 @@ interface FeatureData {
 export const landingFeatures: FeatureData[] = [
   {
     icon: FilmStrip,
-    iconColor: "#ff6b35", // vibrant orange-red (peach accent)
+    iconColor: LANDING_PEACH,
     title: "Media Tracking & Recommendations",
     items: [
       "Build personal libraries for movies, TV, music, books, and games",
@@ -26,7 +32,7 @@ export const landingFeatures: FeatureData[] = [
   },
   {
     icon: ShieldCheck,
-    iconColor: "#a855f7", // vibrant purple (purple-500)
+    iconColor: LANDING_PURPLE,
     title: "Privacy-First",
     items: [
       "Invite-only access controlled by admins - no public signup, no strangers",
@@ -36,7 +42,7 @@ export const landingFeatures: FeatureData[] = [
   },
   {
     icon: UsersThree,
-    iconColor: "#14b8a6", // vibrant teal (teal-500)
+    iconColor: LANDING_TEAL,
     title: "Small Group Sharing",
     items: [
       "Connect with friends through manual, opt-in connections",
@@ -46,7 +52,7 @@ export const landingFeatures: FeatureData[] = [
   },
   {
     icon: Sliders,
-    iconColor: "#f59e0b", // amber-500
+    iconColor: LANDING_BLUE,
     title: "Customization & Personalization",
     items: [
       "Choose custom theme colors to personalize your dashboard",

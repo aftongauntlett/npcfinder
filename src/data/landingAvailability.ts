@@ -1,4 +1,5 @@
 import { Key, Lock, type Icon } from "@phosphor-icons/react";
+import { LANDING_TEAL, LANDING_PURPLE } from "./landingTheme";
 
 export interface AvailabilityPoint {
   icon: Icon;
@@ -29,14 +30,14 @@ export const landingAvailability: AvailabilityData = {
   points: [
     {
       icon: Key,
-      iconColor: "#5DCCCC", // Teal - matches brand
+      iconColor: LANDING_TEAL,
       title: "How Invites Work",
       description:
         "Admins generate invite codes tied to specific email addresses. Codes expire after 30 days and work only once. Your email must match the intended recipient to sign up - this prevents code sharing and keeps access controlled.",
     },
     {
       icon: Lock,
-      iconColor: "#A78BDD", // Purple - matches brand
+      iconColor: LANDING_PURPLE,
       title: "No Public Registration",
       description:
         "There is no 'Sign Up' button for the general public. You must have an invite code from an existing admin to create an account. NPC Finder is not a public social platform - it's designed for trust and privacy within small friend groups.",

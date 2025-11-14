@@ -1,4 +1,5 @@
 import { LockKey, TrendDown, Database, type Icon } from "@phosphor-icons/react";
+import { LANDING_TEAL, LANDING_PURPLE, LANDING_BLUE } from "./landingTheme";
 
 export interface IdentityBadge {
   label: string;
@@ -34,17 +35,17 @@ export const landingIdentity: IdentityData = {
     {
       label: "Invite-Only",
       icon: LockKey,
-      color: "#5DCCCC", // Teal - matches app primary color
+      color: LANDING_TEAL,
     },
     {
       label: "No Algorithms",
       icon: TrendDown,
-      color: "#A78BDD", // Soft purple - complements teal
+      color: LANDING_PURPLE,
     },
     {
       label: "Self-Hosted",
       icon: Database,
-      color: "#8E9DAD", // Dusty blue-gray - neutral complement
+      color: LANDING_BLUE,
     },
   ],
 };

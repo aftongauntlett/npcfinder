@@ -4,6 +4,7 @@ import {
   Lightning,
   type Icon,
 } from "@phosphor-icons/react";
+import { LANDING_TEAL, LANDING_PURPLE, LANDING_PEACH } from "./landingTheme";
 
 interface ArchitectureData {
   icon: Icon;
@@ -15,7 +16,7 @@ interface ArchitectureData {
 export const landingArchitecture: ArchitectureData[] = [
   {
     icon: Database,
-    iconColor: "#60a5fa", // blue-400
+    iconColor: LANDING_TEAL,
     title: "Database Architecture",
     items: [
       "PostgreSQL with Supabase",
@@ -26,7 +27,7 @@ export const landingArchitecture: ArchitectureData[] = [
   },
   {
     icon: ShieldCheck,
-    iconColor: "#4ade80", // green-400
+    iconColor: LANDING_PURPLE,
     title: "Security Features",
     items: [
       "Invite-code authentication",
@@ -37,7 +38,7 @@ export const landingArchitecture: ArchitectureData[] = [
   },
   {
     icon: Lightning,
-    iconColor: "#facc15", // yellow-400
+    iconColor: LANDING_PEACH,
     title: "Performance",
     items: [
       "React Query caching",
