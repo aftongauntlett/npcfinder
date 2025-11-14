@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { signIn, signUp } from "../../lib/auth";
 import Button from "../shared/Button";
 import Input from "../shared/Input";
@@ -11,6 +11,7 @@ import Input from "../shared/Input";
  */
 const AuthPage: React.FC = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState<boolean>(true);
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -231,12 +232,16 @@ const AuthPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Security Note */}
-        <div className="text-center text-sm text-gray-300 space-y-1">
-          <p>🔒 Your data is secure and private</p>
-          {!isLogin && (
-            <p className="text-xs">Invite-only access • End-to-end security</p>
-          )}
+        {/* Back to Home Link */}
+        <div className="text-center">
+          <button
+            onClick={() => {
+              void navigate("/");
+            }}
+            className="text-sm text-gray-300 hover:text-white transition-colors underline"
+          >
+            ← Back to Home
+          </button>
         </div>
       </div>
     </div>
