@@ -3,13 +3,14 @@ import { motion } from "framer-motion";
 import {
   ThumbsUp,
   ThumbsDown,
-  MessageSquare,
-  Trash2,
-  Undo2,
-  Edit3,
-} from "lucide-react";
+  ChatCircle,
+  Trash,
+  ArrowCounterClockwise,
+  PencilSimple,
+} from "@phosphor-icons/react";
 import ConfirmationModal from "./ConfirmationModal";
 import Button from "./Button";
+import ActionButtonGroup, { ActionConfig } from "./ActionButtonGroup";
 import type { BaseRecommendation } from "./types";
 
 interface MediaRecommendationCardProps<T extends BaseRecommendation> {
@@ -162,85 +163,83 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
         <div className="flex items-center gap-3">
           {isReceived ? (
             <>
-              {/* Hit/Miss/Comment buttons for received */}
-              <div className="flex items-center gap-2">
-                <Button
-                  size="icon"
-                  variant={rec.status === "hit" ? "primary" : "subtle"}
-                  icon={<ThumbsUp />}
-                  onClick={() => void onStatusUpdate(rec.id, "hit")}
-                  aria-label={
-                    rec.status === "hit"
-                      ? "Hit!"
-                      : `Mark as Hit (private feedback to ${
-                          senderName || "sender"
-                        })`
-                  }
-                  title={
-                    rec.status === "hit"
-                      ? "Hit!"
-                      : `Mark as Hit (private feedback to ${
-                          senderName || "sender"
-                        })`
-                  }
-                  className={
-                    rec.status === "hit"
-                      ? ""
-                      : "hover:bg-green-100 hover:text-green-600 dark:hover:bg-green-900/30 dark:hover:text-green-400"
-                  }
-                />
-                <Button
-                  size="icon"
-                  variant={rec.status === "miss" ? "danger" : "subtle"}
-                  icon={<ThumbsDown />}
-                  onClick={() => void onStatusUpdate(rec.id, "miss")}
-                  aria-label={
-                    rec.status === "miss"
-                      ? "Miss"
-                      : `Mark as Miss (private feedback to ${
-                          senderName || "sender"
-                        })`
-                  }
-                  title={
-                    rec.status === "miss"
-                      ? "Miss"
-                      : `Mark as Miss (private feedback to ${
-                          senderName || "sender"
-                        })`
-                  }
-                />
-                {/* Comment button - adds recipient's note */}
-                {!isAddingComment && (
-                  <Button
-                    size="icon"
-                    variant={rec.comment ? "primary" : "subtle"}
-                    icon={rec.comment ? <Edit3 /> : <MessageSquare />}
-                    onClick={() => {
-                      setCommentText(rec.comment || "");
-                      setIsAddingComment(true);
-                    }}
-                    aria-label={
-                      rec.comment
-                        ? "Edit your note"
-                        : `Add private note for ${senderName || "sender"}`
-                    }
-                    title={
-                      rec.comment
-                        ? "Edit your note"
-                        : `Add private note for ${senderName || "sender"}`
-                    }
-                  />
-                )}
-                {/* Delete button */}
-                <Button
-                  size="icon"
-                  variant="danger"
-                  icon={<Trash2 />}
-                  onClick={handleUnsend}
-                  aria-label="Delete"
-                  title="Delete"
-                />
-              </div>
+              {/* Hit/Miss/Comment/Delete buttons for received */}
+              <ActionButtonGroup
+                actions={[
+                  {
+                    id: "hit",
+                    icon: <ThumbsUp size={18} weight="duotone" />,
+                    label:
+                      rec.status === "hit"
+                        ? "Hit!"
+                        : `Mark as Hit (private feedback to ${
+                            senderName || "sender"
+                          })`,
+                    onClick: () => void onStatusUpdate(rec.id, "hit"),
+                    variant: rec.status === "hit" ? "success" : "default",
+                    tooltip:
+                      rec.status === "hit"
+                        ? "Hit!"
+                        : `Mark as Hit (private feedback to ${
+                            senderName || "sender"
+                          })`,
+                  },
+                  {
+                    id: "miss",
+                    icon: <ThumbsDown size={18} weight="duotone" />,
+                    label:
+                      rec.status === "miss"
+                        ? "Miss"
+                        : `Mark as Miss (private feedback to ${
+                            senderName || "sender"
+                          })`,
+                    onClick: () => void onStatusUpdate(rec.id, "miss"),
+                    variant: rec.status === "miss" ? "danger" : "default",
+                    tooltip:
+                      rec.status === "miss"
+                        ? "Miss"
+                        : `Mark as Miss (private feedback to ${
+                            senderName || "sender"
+                          })`,
+                  },
+                  ...(!isAddingComment
+                    ? [
+                        {
+                          id: "comment",
+                          icon: rec.comment ? (
+                            <PencilSimple size={18} weight="duotone" />
+                          ) : (
+                            <ChatCircle size={18} weight="duotone" />
+                          ),
+                          label: rec.comment
+                            ? "Edit your note"
+                            : `Add private note for ${senderName || "sender"}`,
+                          onClick: () => {
+                            setCommentText(rec.comment || "");
+                            setIsAddingComment(true);
+                          },
+                          variant: rec.comment
+                            ? "success"
+                            : ("default" as const),
+                          tooltip: rec.comment
+                            ? "Edit your note"
+                            : `Add private note for ${senderName || "sender"}`,
+                        },
+                      ]
+                    : []),
+                  {
+                    id: "delete",
+                    icon: <Trash size={18} weight="duotone" />,
+                    label: "Delete",
+                    onClick: handleUnsend,
+                    variant: "danger" as const,
+                    tooltip: "Delete",
+                  },
+                ]}
+                orientation="horizontal"
+                size="md"
+                spacing="tight"
+              />
             </>
           ) : (
             // Sent view - show status and delete/unsend option
@@ -254,7 +253,7 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
                       style={{ backgroundColor: "rgb(70 200 117)" }}
                       title="Hit"
                     >
-                      <ThumbsUp className="w-4 h-4" />
+                      <ThumbsUp size={16} weight="duotone" />
                     </span>
                   )}
                   {rec.status === "miss" && (
@@ -263,7 +262,7 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
                       style={{ backgroundColor: "rgb(218 113 113)" }}
                       title="Miss"
                     >
-                      <ThumbsDown className="w-4 h-4" />
+                      <ThumbsDown size={16} weight="duotone" />
                     </span>
                   )}
                   {(rec.status === "listened" ||
@@ -280,53 +279,65 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
                 </div>
               )}
 
-              {/* Comment button - adds sender's note */}
-              {!isAddingSenderComment && onUpdateSenderComment && (
-                <Button
-                  size="icon"
-                  variant={rec.sender_comment ? "primary" : "subtle"}
-                  icon={rec.sender_comment ? <Edit3 /> : <MessageSquare />}
-                  onClick={() => {
-                    setSenderCommentText(rec.sender_comment || "");
-                    setIsAddingSenderComment(true);
-                  }}
-                  aria-label={
-                    rec.sender_comment ? "Edit your note" : "Add your note"
-                  }
-                  title={
-                    rec.sender_comment ? "Edit your note" : "Add your note"
-                  }
-                />
-              )}
-
-              {/* Action button - Undo for unsent, Delete for opened/rated */}
-              {rec.status === "pending" && !rec.opened_at ? (
-                // Unsend (undo) - not yet opened
-                <Button
-                  size="icon"
-                  variant="subtle"
-                  icon={<Undo2 />}
-                  onClick={handleUnsend}
-                  disabled={isDeleting}
-                  aria-label="Unsend (recipient hasn't seen it yet)"
-                  title="Unsend (recipient hasn't seen it yet)"
-                />
-              ) : (
-                // Delete - opened or rated
-                <Button
-                  size="icon"
-                  variant="danger"
-                  icon={<Trash2 />}
-                  onClick={handleUnsend}
-                  disabled={isDeleting}
-                  aria-label={
-                    rec.opened_at ? "Delete (recipient has seen it)" : "Delete"
-                  }
-                  title={
-                    rec.opened_at ? "Delete (recipient has seen it)" : "Delete"
-                  }
-                />
-              )}
+              <ActionButtonGroup
+                actions={[
+                  ...(!isAddingSenderComment && onUpdateSenderComment
+                    ? [
+                        {
+                          id: "sender-comment",
+                          icon: rec.sender_comment ? (
+                            <PencilSimple size={18} weight="duotone" />
+                          ) : (
+                            <ChatCircle size={18} weight="duotone" />
+                          ),
+                          label: rec.sender_comment
+                            ? "Edit your note"
+                            : "Add your note",
+                          onClick: () => {
+                            setSenderCommentText(rec.sender_comment || "");
+                            setIsAddingSenderComment(true);
+                          },
+                          variant: rec.sender_comment
+                            ? "success"
+                            : ("default" as const),
+                          tooltip: rec.sender_comment
+                            ? "Edit your note"
+                            : "Add your note",
+                        },
+                      ]
+                    : []),
+                  {
+                    id: "unsend-delete",
+                    icon:
+                      rec.status === "pending" && !rec.opened_at ? (
+                        <ArrowCounterClockwise size={18} weight="duotone" />
+                      ) : (
+                        <Trash size={18} weight="duotone" />
+                      ),
+                    label:
+                      rec.status === "pending" && !rec.opened_at
+                        ? "Unsend (recipient hasn't seen it yet)"
+                        : rec.opened_at
+                        ? "Delete (recipient has seen it)"
+                        : "Delete",
+                    onClick: handleUnsend,
+                    variant:
+                      rec.status === "pending" && !rec.opened_at
+                        ? "warning"
+                        : ("danger" as const),
+                    disabled: isDeleting,
+                    tooltip:
+                      rec.status === "pending" && !rec.opened_at
+                        ? "Unsend (recipient hasn't seen it yet)"
+                        : rec.opened_at
+                        ? "Delete (recipient has seen it)"
+                        : "Delete",
+                  },
+                ]}
+                orientation="horizontal"
+                size="md"
+                spacing="tight"
+              />
             </div>
           )}
         </div>
