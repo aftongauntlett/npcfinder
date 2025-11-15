@@ -1,12 +1,24 @@
+/**
+ * @deprecated This component will be migrated to use the unified MediaDetailModal.
+ * For new features, consider using MediaDetailModal from @/components/shared instead.
+ * This component shares 90% of its structure with MovieDetailModal and GameDetailModal.
+ * Future work: Migrate to MediaDetailModal. The personal notes section can be passed as additionalContent prop.
+ * Note: TODO on line 214 mentions adding a BookReviewForm accordion - use the new Accordion component when implemented.
+ */
+
 import React, { useState } from "react";
-import { X, Star, BookOpen, Calendar, FileText, Hash } from "lucide-react";
-import Modal from "../../shared/Modal";
+import { Calendar, FileText, Hash } from "lucide-react";
+import MediaDetailModal from "../../shared/MediaDetailModal";
+import Accordion from "../../shared/Accordion";
+import StarRating from "../../shared/StarRating";
+import PrivacyToggle from "../../shared/PrivacyToggle";
 import Button from "../../shared/Button";
 import type { ReadingListItem } from "../../../services/booksService.types";
 import {
   useUpdateBookRating,
   useUpdateBookNotes,
 } from "../../../hooks/useReadingListQueries";
+import type { MetadataItem } from "../../shared/MetadataRow";
 
 interface BookDetailModalProps {
   book: ReadingListItem;
@@ -25,14 +37,15 @@ const BookDetailModal: React.FC<BookDetailModalProps> = ({
 }) => {
   const [rating, setRating] = useState(book.personal_rating || 0);
   const [notes, setNotes] = useState(book.personal_notes || "");
-  const [hoveredStar, setHoveredStar] = useState(0);
 
   const updateRating = useUpdateBookRating();
   const updateNotes = useUpdateBookNotes();
 
-  const handleRatingClick = (newRating: number) => {
-    setRating(newRating);
-    void updateRating.mutateAsync({ bookId: book.id, rating: newRating });
+  const handleRatingChange = (newRating: number | null) => {
+    setRating(newRating || 0);
+    if (newRating !== null) {
+      void updateRating.mutateAsync({ bookId: book.id, rating: newRating });
+    }
   };
 
   const handleNotesBlur = () => {
@@ -45,176 +58,107 @@ const BookDetailModal: React.FC<BookDetailModalProps> = ({
     ? new Date(book.published_date).getFullYear()
     : null;
 
-  return (
-    <Modal
-      isOpen={true}
-      onClose={onClose}
-      maxWidth="4xl"
-      showHeader={false}
-      closeOnBackdropClick={true}
+  // Build metadata array
+  const metadata: MetadataItem[] = [
+    ...(displayYear
+      ? [{ icon: <Calendar className="w-4 h-4" />, label: String(displayYear) }]
+      : []),
+    ...(book.page_count
+      ? [
+          {
+            icon: <FileText className="w-4 h-4" />,
+            label: `${book.page_count} pages`,
+          },
+        ]
+      : []),
+    ...(book.isbn
+      ? [{ icon: <Hash className="w-4 h-4" />, label: book.isbn }]
+      : []),
+  ];
+
+  // Build additional content (author + personal notes)
+  const additionalContent = (
+    <>
+      {book.authors && (
+        <div>
+          <p className="text-lg text-gray-600 dark:text-gray-400">
+            by {book.authors}
+          </p>
+        </div>
+      )}
+
+      {/* Personal Notes */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Your Notes
+        </label>
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          onBlur={handleNotesBlur}
+          placeholder="Add your thoughts, favorite quotes, or notes..."
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+          rows={4}
+        />
+      </div>
+    </>
+  );
+
+  // Build review section (BookReviewForm accordion - simplified version)
+  const reviewSection = (
+    <Accordion
+      title="Your Review"
+      subtitle={
+        book.personal_rating
+          ? "You've reviewed this book"
+          : "Add your thoughts (optional)"
+      }
+      defaultExpanded={false}
     >
-      {/* Close Button */}
-      <Button
-        onClick={onClose}
-        variant="subtle"
-        size="icon"
-        icon={<X className="w-5 h-5" />}
-        className="absolute top-4 right-4 glass-button backdrop-blur-sm z-10"
-        aria-label="Close modal"
-      />
+      <div className="space-y-4">
+        {/* Star Rating */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Rating
+          </label>
+          <StarRating
+            rating={rating}
+            onRatingChange={handleRatingChange}
+            showLabel={true}
+            showClearButton={false}
+          />
+        </div>
 
-      {/* Content */}
-      <div className="p-6 sm:p-8 max-h-[85vh] overflow-y-auto">
-        <div className="space-y-6">
-          {/* Header Section */}
-          <div className="flex flex-col sm:flex-row gap-8">
-            {/* Book Cover */}
-            <div className="flex-shrink-0">
-              {book.thumbnail_url ? (
-                <img
-                  src={book.thumbnail_url}
-                  alt={`${book.title} cover`}
-                  className="w-full sm:w-56 h-auto rounded-lg shadow-xl transition-transform duration-300 hover:scale-105"
-                />
-              ) : (
-                <div className="w-full sm:w-56 h-80 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center shadow-xl">
-                  <BookOpen className="w-16 h-16 text-gray-400 dark:text-gray-500" />
-                </div>
-              )}
-            </div>
-
-            {/* Vertical Divider (hidden on mobile) */}
-            <div className="hidden sm:block w-px bg-gradient-to-b from-transparent via-gray-300 dark:via-gray-600 to-transparent"></div>
-
-            {/* Title and Info */}
-            <div className="flex-1 min-w-0 space-y-4">
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-3">
-                  {book.title}
-                </h2>
-                {book.authors && (
-                  <p className="text-lg text-gray-600 dark:text-gray-400 mb-3">
-                    by {book.authors}
-                  </p>
-                )}
-
-                {/* Metadata */}
-                <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
-                  {displayYear && (
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="w-4 h-4" />
-                      <span>{displayYear}</span>
-                    </div>
-                  )}
-                  {book.page_count && (
-                    <div className="flex items-center gap-1.5">
-                      <FileText className="w-4 h-4" />
-                      <span>{book.page_count} pages</span>
-                    </div>
-                  )}
-                  {book.isbn && (
-                    <div className="flex items-center gap-1.5">
-                      <Hash className="w-4 h-4" />
-                      <span>{book.isbn}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Status Badge */}
-              <div>
-                {book.read ? (
-                  <span className="inline-flex items-center px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-sm font-medium">
-                    <FileText className="w-4 h-4 mr-1.5" />
-                    Read
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full text-sm font-medium">
-                    <BookOpen className="w-4 h-4 mr-1.5" />
-                    Reading
-                  </span>
-                )}
-              </div>
-
-              {/* Rating */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Your Rating
-                </label>
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Button
-                      key={star}
-                      onClick={() => handleRatingClick(star)}
-                      onMouseEnter={() => setHoveredStar(star)}
-                      onMouseLeave={() => setHoveredStar(0)}
-                      variant="subtle"
-                      size="icon"
-                      icon={
-                        <Star
-                          className={`w-7 h-7 transition-colors ${
-                            star <= (hoveredStar || rating)
-                              ? "text-yellow-500 fill-yellow-500"
-                              : "text-gray-300 dark:text-gray-600"
-                          }`}
-                        />
-                      }
-                      aria-label={`Rate ${star} stars`}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3 pt-2">
-                <Button
-                  onClick={onToggleRead}
-                  variant={book.read ? "secondary" : "primary"}
-                  size="sm"
-                >
-                  {book.read ? "Mark as Unread" : "Mark as Read"}
-                </Button>
-                <Button onClick={onRecommend} variant="secondary" size="sm">
-                  Recommend
-                </Button>
-                <Button onClick={onRemove} variant="danger" size="sm">
-                  Remove
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Description */}
-          {book.description && (
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-                Description
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                {book.description}
-              </p>
-            </div>
-          )}
-
-          {/* Personal Notes */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Your Notes
-            </label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              onBlur={handleNotesBlur}
-              placeholder="Add your thoughts, favorite quotes, or notes..."
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
-              rows={4}
-            />
-          </div>
-
-          {/* TODO: Add BookReviewForm accordion here */}
+        {/* Notes are in additionalContent, so just show a message here */}
+        <div className="text-sm text-gray-600 dark:text-gray-400">
+          Add your personal notes in the "Your Notes" section above.
         </div>
       </div>
-    </Modal>
+    </Accordion>
+  );
+
+  return (
+    <MediaDetailModal
+      isOpen={true}
+      onClose={onClose}
+      mediaType="book"
+      title={book.title}
+      posterUrl={book.thumbnail_url || undefined}
+      metadata={metadata}
+      genres={book.categories ? [book.categories] : []}
+      description={book.description}
+      status={{
+        label: book.read ? "read" : "reading",
+        isCompleted: book.read,
+      }}
+      rating={rating}
+      onRatingChange={handleRatingChange}
+      onToggleStatus={onToggleRead}
+      onRecommend={onRecommend}
+      onRemove={onRemove}
+      additionalContent={additionalContent}
+      reviewSection={reviewSection}
+    />
   );
 };
 
