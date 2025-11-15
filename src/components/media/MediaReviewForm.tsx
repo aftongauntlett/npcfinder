@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-import { Star, ThumbsUp, ThumbsDown, Lock } from "lucide-react";
+import { ThumbsUp, ThumbsDown } from "lucide-react";
 import Textarea from "../shared/Textarea";
 import Button from "../shared/Button";
+import StarRating from "../shared/StarRating";
+import PrivacyToggle from "../shared/PrivacyToggle";
 import type {
   MediaReview,
   CreateReviewData,
@@ -36,7 +38,6 @@ export function MediaReviewForm({
   const [rating, setRating] = useState<number | null>(
     initialData?.rating ?? null
   );
-  const [hoveredRating, setHoveredRating] = useState<number | null>(null);
   const [liked, setLiked] = useState<boolean | null>(
     initialData?.liked ?? null
   );
@@ -91,7 +92,6 @@ export function MediaReviewForm({
     }
   };
 
-  const displayRating = hoveredRating ?? rating ?? 0;
   const charCount = reviewText.length;
   const maxChars = 1000;
 
@@ -102,40 +102,12 @@ export function MediaReviewForm({
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Rating
         </label>
-        <div className="flex items-center gap-1">
-          {[1, 2, 3, 4, 5].map((star) => (
-            <Button
-              key={star}
-              type="button"
-              variant="subtle"
-              size="icon"
-              onClick={() => setRating(rating === star ? null : star)}
-              onMouseEnter={() => setHoveredRating(star)}
-              onMouseLeave={() => setHoveredRating(null)}
-              icon={
-                <Star
-                  className={`w-8 h-8 transition-colors ${
-                    star <= displayRating
-                      ? "fill-yellow-400 text-yellow-400"
-                      : "text-gray-300 dark:text-gray-600"
-                  }`}
-                />
-              }
-              aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
-            />
-          ))}
-          {rating && (
-            <Button
-              type="button"
-              variant="subtle"
-              size="sm"
-              onClick={() => setRating(null)}
-              className="ml-2"
-            >
-              Clear
-            </Button>
-          )}
-        </div>
+        <StarRating
+          rating={rating}
+          onRatingChange={setRating}
+          showClearButton={true}
+          showLabel={false}
+        />
       </div>
 
       {/* Like/Dislike Toggle */}
@@ -210,68 +182,13 @@ export function MediaReviewForm({
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Share with friends?
         </label>
-        <Button
-          type="button"
-          variant="subtle"
-          onClick={() => setIsPublic(!isPublic)}
-          className={`px-4 py-3 w-full justify-start ${
-            isPublic
-              ? "bg-green-50 dark:bg-green-900/20 border-green-500 dark:border-green-500"
-              : "bg-gray-50 dark:bg-gray-700"
-          }`}
-          role="switch"
-          aria-checked={isPublic}
-          aria-label={`Privacy: ${isPublic ? "Public" : "Private"}`}
-        >
-          <div className="flex items-center gap-3 w-full">
-            {isPublic ? (
-              <>
-                <span className="text-xl" role="img" aria-label="Public">
-                  🌐
-                </span>
-                <div className="flex-1 text-left">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">
-                    ✅ Your review will be visible to all friends
-                  </div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                    They can see this when they view {title}
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <Lock className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                <div className="flex-1 text-left">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">
-                    🔒 Your review is private - only you can see it
-                  </div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                    Keep it personal
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        </Button>
-
-        {/* Info box about distinction from recommendation feedback */}
-        <div className="mt-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-          <div className="flex items-start gap-2">
-            <span className="text-base" role="img" aria-label="Info">
-              💡
-            </span>
-            <div className="flex-1">
-              <p className="text-xs text-gray-700 dark:text-gray-300">
-                <strong>Note:</strong> This review is separate from any private
-                feedback you give to friends who recommended this to you.
-              </p>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                Example: If Sarah recommended this to you, she'll only see your
-                Hit/Miss feedback. Your public review is for all friends.
-              </p>
-            </div>
-          </div>
-        </div>
+        <PrivacyToggle
+          isPublic={isPublic}
+          onChange={setIsPublic}
+          variant="button"
+          showDescription={true}
+          contextLabel={title}
+        />
       </div>
 
       {/* Watched Date */}

@@ -1,12 +1,8 @@
-import { useState } from "react";
-import {
-  ChevronDown,
-  ChevronUp,
-  Star,
-  Check,
-  Users as UsersIcon,
-} from "lucide-react";
+import { Star, Check, Users as UsersIcon } from "lucide-react";
 import Button from "../../shared/Button";
+import Accordion from "../../shared/Accordion";
+import StarRating from "../../shared/StarRating";
+import PrivacyToggle from "../../shared/PrivacyToggle";
 
 interface Review {
   id: string;
@@ -34,23 +30,6 @@ interface MovieReviewFormProps {
   onDelete: () => void;
 }
 
-const RATING_LABELS: Record<string, string> = {
-  "1-2": "Awful",
-  "3-4": "Meh",
-  "5-6": "Not Bad",
-  "7-8": "Pretty Good",
-  "9-10": "Awesome",
-};
-
-function getRatingLabel(rating: number | null): string {
-  if (rating === null) return "Rate";
-  if (rating <= 2) return RATING_LABELS["1-2"];
-  if (rating <= 4) return RATING_LABELS["3-4"];
-  if (rating <= 6) return RATING_LABELS["5-6"];
-  if (rating <= 8) return RATING_LABELS["7-8"];
-  return RATING_LABELS["9-10"];
-}
-
 export function MovieReviewForm({
   myReview,
   friendsReviews,
@@ -66,72 +45,29 @@ export function MovieReviewForm({
   onSave,
   onDelete,
 }: MovieReviewFormProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-
   return (
     <div className="pt-6">
-      {/* Accordion Header */}
-      <Button
-        onClick={() => setIsExpanded(!isExpanded)}
-        variant="subtle"
-        fullWidth
-        icon={
-          isExpanded ? (
-            <ChevronUp className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-          ) : (
-            <ChevronDown className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-          )
+      <Accordion
+        title="Your Review"
+        subtitle={
+          myReview
+            ? "You've reviewed this"
+            : "Add your personal thoughts (optional)"
         }
-        iconPosition="right"
-        className={`p-4 border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 justify-start ${
-          isExpanded ? "rounded-t-lg" : "rounded-lg"
-        }`}
+        defaultExpanded={false}
       >
-        <div className="text-left">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Your Review
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
-            {myReview
-              ? "You've reviewed this"
-              : "Add your personal thoughts (optional)"}
-          </p>
-        </div>
-      </Button>
-
-      {/* Accordion Content */}
-      {isExpanded && (
-        <div className="space-y-6 p-6 border-x border-b border-gray-200 dark:border-gray-700 rounded-b-lg bg-white dark:bg-gray-900/50">
+        <div className="space-y-4">
           {/* Star Rating */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Rating
             </label>
-            <div className="flex gap-1.5">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Button
-                  key={star}
-                  onClick={() => onRatingChange(rating === star ? null : star)}
-                  variant="subtle"
-                  size="icon"
-                  icon={
-                    <Star
-                      className={`w-6 h-6 transition-colors ${
-                        rating && rating >= star
-                          ? "fill-primary text-primary"
-                          : "fill-none text-gray-300 dark:text-gray-600"
-                      }`}
-                    />
-                  }
-                  aria-label={`Rate ${star} stars`}
-                />
-              ))}
-            </div>
-            {rating && (
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                {getRatingLabel(rating)}
-              </p>
-            )}
+            <StarRating
+              rating={rating}
+              onRatingChange={onRatingChange}
+              showLabel={true}
+              showClearButton={false}
+            />
           </div>
 
           {/* Review Text */}
@@ -167,28 +103,13 @@ export function MovieReviewForm({
           {/* Bottom Row: Privacy Toggle and Buttons */}
           <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
             {/* Privacy Toggle */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                {isPublic ? "Public" : "Private"}
-              </span>
-              <Button
-                onClick={() => onPublicChange(!isPublic)}
-                variant="subtle"
-                size="icon"
-                className={`relative h-6 w-11 rounded-full p-0 ${
-                  isPublic ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"
-                }`}
-                role="switch"
-                aria-checked={isPublic}
-                aria-label="Toggle privacy"
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    isPublic ? "translate-x-6" : "translate-x-1"
-                  }`}
-                />
-              </Button>
-            </div>
+            <PrivacyToggle
+              isPublic={isPublic}
+              onChange={onPublicChange}
+              variant="switch"
+              size="sm"
+              showDescription={false}
+            />
 
             {/* Buttons */}
             <div className="flex gap-2">
@@ -263,7 +184,7 @@ export function MovieReviewForm({
             </div>
           )}
         </div>
-      )}
+      </Accordion>
     </div>
   );
 }
