@@ -131,7 +131,7 @@ const DemoLanding: React.FC = () => {
                 View Source
               </LandingButton>
               <LandingButton href="#availability" variant="ghost">
-                Get Started
+                Learn More
               </LandingButton>
             </div>
           </div>
