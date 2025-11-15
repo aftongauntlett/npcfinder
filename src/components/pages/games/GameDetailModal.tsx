@@ -1,10 +1,16 @@
+/**
+ * @deprecated This component will be migrated to use the unified MediaDetailModal.
+ * For new features, consider using MediaDetailModal from @/components/shared instead.
+ * This component shares 90% of its structure with MovieDetailModal and BookDetailModal.
+ * Future work: Migrate to MediaDetailModal to eliminate ~200 lines of duplicated code.
+ */
+
 import React, { useState } from "react";
-import { X, Star, Gamepad2, Calendar, DollarSign, Award } from "lucide-react";
-import Modal from "../../shared/Modal";
-import Button from "../../shared/Button";
-import { getGenreColor } from "../../../utils/genreColors";
+import { Calendar, Award, DollarSign } from "lucide-react";
+import MediaDetailModal from "../../shared/MediaDetailModal";
 import type { GameLibraryItem } from "../../../hooks/useGameLibraryQueries";
 import { useUpdateGameRating } from "../../../hooks/useGameLibraryQueries";
+import type { MetadataItem } from "../../shared/MetadataRow";
 
 interface GameDetailModalProps {
   game: GameLibraryItem;
@@ -22,13 +28,14 @@ const GameDetailModal: React.FC<GameDetailModalProps> = ({
   onRecommend,
 }) => {
   const [rating, setRating] = useState(game.personal_rating || 0);
-  const [hoveredStar, setHoveredStar] = useState(0);
 
   const updateRating = useUpdateGameRating();
 
-  const handleRatingClick = (newRating: number) => {
-    setRating(newRating);
-    void updateRating.mutateAsync({ gameId: game.id, rating: newRating });
+  const handleRatingChange = (newRating: number | null) => {
+    setRating(newRating || 0);
+    if (newRating !== null) {
+      void updateRating.mutateAsync({ gameId: game.id, rating: newRating });
+    }
   };
 
   const releaseYear = game.released
@@ -45,192 +52,85 @@ const GameDetailModal: React.FC<GameDetailModalProps> = ({
     ? game.platforms.split(",").map((p: string) => p.trim())
     : [];
 
+  // Build metadata array
+  const metadata: MetadataItem[] = [
+    ...(releaseYear
+      ? [{ icon: <Calendar className="w-4 h-4" />, label: String(releaseYear) }]
+      : []),
+    ...(game.playtime
+      ? [
+          {
+            icon: <Award className="w-4 h-4" />,
+            label: `${game.playtime}h avg playtime`,
+          },
+        ]
+      : []),
+    ...(game.metacritic
+      ? [
+          {
+            icon: <DollarSign className="w-4 h-4" />,
+            label: `Metacritic: ${game.metacritic}`,
+          },
+        ]
+      : []),
+  ];
+
+  // Build additional content section (platforms + RAWG rating)
+  const additionalContent = (
+    <>
+      {platformList.length > 0 && (
+        <div>
+          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Platforms
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {platformList.map((platform: string) => (
+              <span
+                key={platform}
+                className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded"
+              >
+                {platform}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {game.rating && (
+        <div>
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            RAWG Rating:{" "}
+          </span>
+          <span className="text-sm font-semibold text-purple-600 dark:text-purple-400">
+            {game.rating.toFixed(1)}/5
+          </span>
+        </div>
+      )}
+    </>
+  );
+
   return (
-    <Modal
+    <MediaDetailModal
       isOpen={true}
       onClose={onClose}
-      maxWidth="4xl"
-      showHeader={false}
-      closeOnBackdropClick={true}
-    >
-      {/* Close Button */}
-      <Button
-        onClick={onClose}
-        variant="subtle"
-        size="icon"
-        icon={<X className="w-5 h-5" />}
-        className="absolute top-4 right-4 glass-button backdrop-blur-sm z-10"
-        aria-label="Close modal"
-      />
-
-      {/* Content */}
-      <div className="p-6 sm:p-8 max-h-[85vh] overflow-y-auto">
-        <div className="space-y-6">
-          {/* Header Section */}
-          <div className="flex flex-col sm:flex-row gap-8">
-            {/* Game Cover */}
-            <div className="flex-shrink-0">
-              {game.background_image ? (
-                <img
-                  src={game.background_image}
-                  alt={`${game.name} cover`}
-                  className="w-full sm:w-56 h-auto rounded-lg shadow-xl transition-transform duration-300 hover:scale-105"
-                />
-              ) : (
-                <div className="w-full sm:w-56 h-80 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center shadow-xl">
-                  <Gamepad2 className="w-16 h-16 text-gray-400 dark:text-gray-500" />
-                </div>
-              )}
-            </div>
-
-            {/* Vertical Divider (hidden on mobile) */}
-            <div className="hidden sm:block w-px bg-gradient-to-b from-transparent via-gray-300 dark:via-gray-600 to-transparent"></div>
-
-            {/* Title and Info */}
-            <div className="flex-1 min-w-0 space-y-4">
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-3">
-                  {game.name}
-                </h2>
-
-                {/* Metadata */}
-                <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  {releaseYear && (
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="w-4 h-4" />
-                      <span>{releaseYear}</span>
-                    </div>
-                  )}
-                  {game.playtime && (
-                    <div className="flex items-center gap-1.5">
-                      <Award className="w-4 h-4" />
-                      <span>{game.playtime}h avg playtime</span>
-                    </div>
-                  )}
-                  {game.metacritic && (
-                    <div className="flex items-center gap-1.5">
-                      <DollarSign className="w-4 h-4" />
-                      <span>Metacritic: {game.metacritic}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Genres */}
-                {genreList.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-4" role="list">
-                    {genreList.map((genre: string) => (
-                      <span
-                        key={genre}
-                        role="listitem"
-                        className={`px-3 py-1.5 text-xs font-medium rounded-full ${getGenreColor(
-                          genre.toLowerCase()
-                        )}`}
-                      >
-                        {genre}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {/* Platforms */}
-                {platformList.length > 0 && (
-                  <div className="mb-4">
-                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Platforms
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {platformList.map((platform: string) => (
-                        <span
-                          key={platform}
-                          className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded"
-                        >
-                          {platform}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Status Badge */}
-              <div>
-                {game.played ? (
-                  <span className="inline-flex items-center px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-sm font-medium">
-                    <Award className="w-4 h-4 mr-1.5" />
-                    Played
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full text-sm font-medium">
-                    <Gamepad2 className="w-4 h-4 mr-1.5" />
-                    Playing
-                  </span>
-                )}
-              </div>
-
-              {/* Rating */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Your Rating
-                </label>
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Button
-                      key={star}
-                      onClick={() => handleRatingClick(star)}
-                      onMouseEnter={() => setHoveredStar(star)}
-                      onMouseLeave={() => setHoveredStar(0)}
-                      variant="subtle"
-                      size="icon"
-                      icon={
-                        <Star
-                          className={`w-7 h-7 transition-colors ${
-                            star <= (hoveredStar || rating)
-                              ? "text-yellow-500 fill-yellow-500"
-                              : "text-gray-300 dark:text-gray-600"
-                          }`}
-                        />
-                      }
-                      aria-label={`Rate ${star} stars`}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* RAWG Rating */}
-              {game.rating && (
-                <div>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    RAWG Rating:{" "}
-                  </span>
-                  <span className="text-sm font-semibold text-purple-600 dark:text-purple-400">
-                    {game.rating.toFixed(1)}/5
-                  </span>
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3 pt-2">
-                <Button
-                  onClick={onTogglePlayed}
-                  variant={game.played ? "secondary" : "primary"}
-                  size="sm"
-                >
-                  {game.played ? "Mark as Playing" : "Mark as Played"}
-                </Button>
-                <Button onClick={onRecommend} variant="secondary" size="sm">
-                  Recommend
-                </Button>
-                <Button onClick={onRemove} variant="danger" size="sm">
-                  Remove
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* TODO: Add GameReviewForm accordion here */}
-        </div>
-      </div>
-    </Modal>
+      mediaType="game"
+      title={game.name}
+      posterUrl={game.background_image || undefined}
+      metadata={metadata}
+      genres={genreList}
+      description={undefined}
+      status={{
+        label: game.played ? "played" : "playing",
+        isCompleted: game.played,
+      }}
+      rating={rating}
+      onRatingChange={handleRatingChange}
+      onToggleStatus={onTogglePlayed}
+      onRecommend={onRecommend}
+      onRemove={onRemove}
+      additionalContent={additionalContent}
+      reviewSection={undefined}
+    />
   );
 };
 
