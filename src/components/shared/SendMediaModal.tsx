@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { motion } from "framer-motion";
 import {
   Search,
   Send,
@@ -9,6 +10,7 @@ import {
   Video,
   BookOpen,
   Gamepad2,
+  X,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
@@ -411,9 +413,13 @@ export default function SendMediaModal({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title={`Recommend ${
-        mediaType.charAt(0).toUpperCase() + mediaType.slice(1)
-      }`}
+      title={
+        selectedItem
+          ? `Recommend: ${selectedItem.title}`
+          : `Recommend ${
+              mediaType.charAt(0).toUpperCase() + mediaType.slice(1)
+            }`
+      }
       maxWidth="2xl"
     >
       {/* Content */}
@@ -573,114 +579,168 @@ export default function SendMediaModal({
         {/* Details Step */}
         {step === "details" && (
           <div className="space-y-4">
+            {/* Recipients List */}
+            <div>
+              <label className="block text-sm font-medium text-gray-400 dark:text-gray-400 mb-3 uppercase tracking-wider">
+                Sending to ({selectedFriends.size})
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {Array.from(selectedFriends).map((friendId) => {
+                  const friend = friends.find((f) => f.user_id === friendId);
+                  if (!friend) return null;
+                  return (
+                    <button
+                      key={friendId}
+                      onClick={() => {
+                        const newSelected = new Set(selectedFriends);
+                        newSelected.delete(friendId);
+                        setSelectedFriends(newSelected);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 dark:bg-primary/10 border border-primary/30 dark:border-primary/30 text-primary dark:text-primary-light hover:bg-primary/20 dark:hover:bg-primary/20 transition-colors group"
+                      aria-label={`Remove ${friend.display_name} from recipients`}
+                    >
+                      <span className="text-sm font-medium">
+                        {friend.display_name}
+                      </span>
+                      <X
+                        size={14}
+                        className="text-primary/60 dark:text-primary-light/60 group-hover:text-primary dark:group-hover:text-primary-light transition-colors"
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+              {selectedFriends.size === 0 && (
+                <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+                  No recipients selected. Go back to select friends.
+                </p>
+              )}
+            </div>
+
             {/* Only show recommendation type selector if there are types */}
             {recommendationTypes && recommendationTypes.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-gray-400 dark:text-gray-400 mb-6 uppercase tracking-wider">
+                <label className="block text-sm font-medium text-gray-400 dark:text-gray-400 mb-4 uppercase tracking-wider">
                   Recommendation Type
                 </label>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   {recommendationTypes.map((type) => {
                     const isSelected = recommendationType === type.value;
 
-                    // Choose icon and glow color based on media type and recommendation type
+                    // Choose icon and color based on media type and recommendation type
                     let Icon = Eye;
-                    let glowColor = "rgba(59, 130, 246, 0.4)"; // blue
-                    let ringColor = "rgb(59, 130, 246)";
+                    let accentColor = "#3b82f6"; // blue
+                    let bgGradient = "from-blue-500/10 to-blue-600/5";
+                    let hoverGlow = "rgba(59, 130, 246, 0.3)";
 
                     // Music icons
                     if (mediaType === "music") {
                       if (type.value === "listen") {
                         Icon = Headphones;
-                        glowColor = "rgba(59, 130, 246, 0.4)"; // blue
-                        ringColor = "rgb(59, 130, 246)";
+                        accentColor = "#3b82f6";
+                        bgGradient = "from-blue-500/10 to-blue-600/5";
+                        hoverGlow = "rgba(59, 130, 246, 0.3)";
                       } else if (type.value === "watch") {
                         Icon = Video;
-                        glowColor = "rgba(99, 102, 241, 0.4)"; // indigo
-                        ringColor = "rgb(99, 102, 241)";
+                        accentColor = "#6366f1";
+                        bgGradient = "from-indigo-500/10 to-indigo-600/5";
+                        hoverGlow = "rgba(99, 102, 241, 0.3)";
                       }
                     }
                     // Movie/TV icons
                     else if (mediaType === "movies") {
                       if (type.value === "watch") {
                         Icon = Eye;
-                        glowColor = "rgba(59, 130, 246, 0.4)"; // blue
-                        ringColor = "rgb(59, 130, 246)";
+                        accentColor = "#3b82f6";
+                        bgGradient = "from-blue-500/10 to-blue-600/5";
+                        hoverGlow = "rgba(59, 130, 246, 0.3)";
                       } else if (type.value === "rewatch") {
                         Icon = RotateCcw;
-                        glowColor = "rgba(99, 102, 241, 0.4)"; // indigo
-                        ringColor = "rgb(99, 102, 241)";
+                        accentColor = "#6366f1";
+                        bgGradient = "from-indigo-500/10 to-indigo-600/5";
+                        hoverGlow = "rgba(99, 102, 241, 0.3)";
                       }
                     }
                     // Book icons
                     else if (mediaType === "books") {
                       if (type.value === "read") {
                         Icon = BookOpen;
-                        glowColor = "rgba(59, 130, 246, 0.4)"; // blue
-                        ringColor = "rgb(59, 130, 246)";
+                        accentColor = "#3b82f6";
+                        bgGradient = "from-blue-500/10 to-blue-600/5";
+                        hoverGlow = "rgba(59, 130, 246, 0.3)";
                       } else if (type.value === "listen") {
                         Icon = Headphones;
-                        glowColor = "rgba(99, 102, 241, 0.4)"; // indigo
-                        ringColor = "rgb(99, 102, 241)";
+                        accentColor = "#6366f1";
+                        bgGradient = "from-indigo-500/10 to-indigo-600/5";
+                        hoverGlow = "rgba(99, 102, 241, 0.3)";
                       }
                     }
                     // Game icons
                     else if (mediaType === "games") {
                       if (type.value === "play") {
                         Icon = Gamepad2;
-                        glowColor = "rgba(59, 130, 246, 0.4)"; // blue
-                        ringColor = "rgb(59, 130, 246)";
+                        accentColor = "#3b82f6";
+                        bgGradient = "from-blue-500/10 to-blue-600/5";
+                        hoverGlow = "rgba(59, 130, 246, 0.3)";
                       } else if (type.value === "replay") {
                         Icon = RotateCcw;
-                        glowColor = "rgba(99, 102, 241, 0.4)"; // indigo
-                        ringColor = "rgb(99, 102, 241)";
+                        accentColor = "#6366f1";
+                        bgGradient = "from-indigo-500/10 to-indigo-600/5";
+                        hoverGlow = "rgba(99, 102, 241, 0.3)";
                       }
                     }
                     return (
-                      <button
+                      <motion.button
                         key={type.value}
                         onClick={() => setRecommendationType(type.value)}
-                        className={`group relative flex flex-col items-center justify-center gap-4 py-8 px-6 rounded-2xl transition-all duration-300 ${
+                        className={`group relative flex flex-col items-center justify-center gap-3 py-5 px-4 rounded-xl transition-all duration-300 ${
                           isSelected
-                            ? "bg-gray-800/60 dark:bg-gray-800/60 scale-[1.02]"
-                            : "bg-gray-900/40 dark:bg-gray-900/40 hover:bg-gray-800/40 dark:hover:bg-gray-800/40"
+                            ? `bg-gradient-to-br ${bgGradient} border-2`
+                            : "bg-gray-800/40 dark:bg-gray-800/40 border-2 border-gray-700/30"
                         }`}
                         style={{
-                          border: isSelected
-                            ? `1px solid ${ringColor}`
-                            : "1px solid rgba(55, 65, 81, 0.3)",
-                          boxShadow: isSelected
-                            ? `0 0 40px ${glowColor}, 0 0 20px ${glowColor}, inset 0 0 20px ${glowColor}`
-                            : "none",
+                          borderColor: isSelected ? accentColor : undefined,
                         }}
+                        whileHover={{ scale: 1.02, y: -2 }}
+                        whileTap={{ scale: 0.98 }}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{
+                          opacity: 1,
+                          y: 0,
+                          boxShadow: isSelected
+                            ? `0 0 30px ${hoverGlow}, 0 10px 20px -5px rgba(0,0,0,0.3)`
+                            : "0 4px 6px -1px rgba(0,0,0,0.1)",
+                        }}
+                        transition={{ duration: 0.2 }}
                       >
-                        {/* Icon with glow effect */}
-                        <div
-                          className={`relative transition-all duration-300 ${
-                            isSelected ? "scale-110" : ""
-                          }`}
-                          style={{
-                            filter: isSelected
-                              ? `drop-shadow(0 0 20px ${glowColor}) drop-shadow(0 0 10px ${glowColor})`
-                              : "none",
+                        {/* Icon with animation */}
+                        <motion.div
+                          animate={
+                            isSelected
+                              ? { scale: [1, 1.15, 1], rotate: [0, -5, 5, 0] }
+                              : { scale: 1, rotate: 0 }
+                          }
+                          transition={{
+                            duration: 0.5,
+                            ease: "easeInOut",
                           }}
                         >
                           <Icon
-                            className={`w-12 h-12 transition-colors duration-300 ${
-                              isSelected
-                                ? "text-white"
-                                : "text-gray-500 group-hover:text-gray-400"
-                            }`}
-                            strokeWidth={1.5}
+                            size={28}
+                            className="transition-all duration-300"
                             style={{
-                              color: isSelected ? ringColor : undefined,
+                              color: isSelected ? accentColor : "#9ca3af",
+                              filter: isSelected
+                                ? `drop-shadow(0 0 8px ${hoverGlow})`
+                                : "none",
                             }}
+                            strokeWidth={1.5}
                           />
-                        </div>
+                        </motion.div>
 
                         {/* Label */}
                         <span
-                          className={`text-sm font-medium tracking-wide transition-all duration-300 ${
+                          className={`text-sm font-semibold transition-colors duration-300 ${
                             isSelected
                               ? "text-white"
                               : "text-gray-400 group-hover:text-gray-300"
@@ -688,7 +748,16 @@ export default function SendMediaModal({
                         >
                           {type.label}
                         </span>
-                      </button>
+
+                        {/* Shine effect on hover */}
+                        <motion.div
+                          className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
+                          initial={{ opacity: 0 }}
+                          whileHover={{ opacity: 1 }}
+                        >
+                          <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+                        </motion.div>
+                      </motion.button>
                     );
                   })}
                 </div>

@@ -375,3 +375,21 @@ textarea::-moz-selection {
 .animate-slide-up {
   animation: slide-up 0.3s ease-out;
 }
+
+/* Wiggle animation for icons (like landing page buttons) */
+@keyframes wiggle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-5deg);
+  }
+  75% {
+    transform: rotate(5deg);
+  }
+}
+
+.animate-wiggle {
+  animation: wiggle 0.5s ease-in-out;
+}
