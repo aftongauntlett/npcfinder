@@ -1,8 +1,17 @@
 import React from "react";
-import { Star, Book, X, Check, Lightbulb, Undo2 } from "lucide-react";
-import { STATUS_MAP, type MediaStatus } from "./mediaStatus";
-import { getGenreColor, parseGenres } from "../../utils/genreColors";
-import Button from "../shared/Button";
+import {
+  X,
+  Check,
+  Lightbulb,
+  ArrowCounterClockwise,
+  Book,
+} from "@phosphor-icons/react";
+import { type MediaStatus } from "./mediaStatus";
+import ActionButtonGroup, { ActionConfig } from "../shared/ActionButtonGroup";
+import GenreChips from "../shared/GenreChips";
+import StatusBadge from "../shared/StatusBadge";
+import StarRating from "../shared/StarRating";
+import MediaPoster from "../shared/MediaPoster";
 
 interface MediaListItemProps {
   id: string | number;
@@ -52,27 +61,7 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
   category,
   genres,
 }) => {
-  const statusConfig = status ? STATUS_MAP[status] : null;
   const hasActions = onToggleComplete || onRecommend || onRemove;
-  const genreList = parseGenres(genres, 2);
-
-  // Calculate remaining genres count for "+X more" chip
-  const totalGenres = genres
-    ? genres
-        .split(",")
-        .map((g) => g.trim())
-        .filter((g) => g.length > 0).length
-    : 0;
-  const remainingGenres = totalGenres - genreList.length;
-
-  // Get remaining genre names for tooltip
-  const remainingGenreList = genres
-    ? genres
-        .split(",")
-        .map((g) => g.trim())
-        .filter((g) => g.length > 0)
-        .slice(genreList.length)
-    : [];
 
   return (
     <div
@@ -82,17 +71,14 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
       <div className="flex gap-4 items-start">
         {/* Poster/Icon */}
         <div className="flex-shrink-0">
-          {posterUrl ? (
-            <img
-              src={posterUrl}
-              alt={title}
-              className="w-16 h-20 object-cover rounded"
-            />
-          ) : (
-            <div className="w-16 h-20 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
-              <Book className="w-8 h-8 text-gray-400 dark:text-gray-500" />
-            </div>
-          )}
+          <MediaPoster
+            src={posterUrl}
+            alt={title}
+            size="sm"
+            aspectRatio="2/3"
+            fallbackIcon={Book}
+            showOverlay={false}
+          />
         </div>
 
         {/* Content */}
@@ -117,36 +103,14 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
                     )}
                   </>
                 )}
-                {/* Category Badge for Books */}
-                {category && (
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded whitespace-nowrap flex-shrink-0 ${getGenreColor(
-                      category
-                    )}`}
-                  >
-                    {category}
-                  </span>
-                )}
-                {/* Genre Chips */}
-                {genreList.length > 0 &&
-                  genreList.map((genre) => (
-                    <span
-                      key={genre}
-                      className={`text-xs px-2 py-0.5 rounded whitespace-nowrap flex-shrink-0 ${getGenreColor(
-                        genre
-                      )}`}
-                    >
-                      {genre}
-                    </span>
-                  ))}
-                {/* +X more chip */}
-                {remainingGenres > 0 && (
-                  <span
-                    className="text-xs px-2 py-0.5 rounded whitespace-nowrap flex-shrink-0 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 cursor-help"
-                    title={remainingGenreList.join(", ")}
-                  >
-                    +{remainingGenres} more
-                  </span>
+                {/* Category/Genre Chips */}
+                {(category || genres) && (
+                  <GenreChips
+                    genres={category ? [category] : genres || ""}
+                    maxVisible={2}
+                    size="sm"
+                    className="flex-shrink-0"
+                  />
                 )}
               </div>
               {subtitle && (
@@ -167,14 +131,7 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
             </div>
 
             {/* Status Badge */}
-            {statusConfig && !hasActions && (
-              <div
-                className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${statusConfig.colorClass}`}
-              >
-                <statusConfig.icon className="w-4 h-4" />
-                <span className="hidden sm:inline">{statusConfig.label}</span>
-              </div>
-            )}
+            {status && !hasActions && <StatusBadge status={status} size="sm" />}
           </div>
 
           {/* Ratings */}
@@ -182,10 +139,13 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
             <div className="flex items-center gap-4 mt-2">
               {personalRating !== undefined && personalRating > 0 && (
                 <div className="flex items-center gap-1">
-                  <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {personalRating}
-                  </span>
+                  <StarRating
+                    rating={personalRating}
+                    onRatingChange={() => {}}
+                    readonly={true}
+                    showClearButton={false}
+                    size="sm"
+                  />
                   <span className="text-xs text-gray-500 dark:text-gray-400">
                     Personal
                   </span>
@@ -193,7 +153,6 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
               )}
               {criticRating !== undefined && criticRating > 0 && (
                 <div className="flex items-center gap-1">
-                  <Star className="w-4 h-4 text-purple-500" />
                   <span className="text-sm text-gray-700 dark:text-gray-300">
                     {criticRating}%
                   </span>
@@ -204,7 +163,6 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
               )}
               {audienceRating !== undefined && audienceRating > 0 && (
                 <div className="flex items-center gap-1">
-                  <Star className="w-4 h-4 text-blue-500" />
                   <span className="text-sm text-gray-700 dark:text-gray-300">
                     {audienceRating}%
                   </span>
@@ -219,73 +177,54 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
 
         {/* Action Buttons */}
         {hasActions && (
-          <div
-            className="flex items-center gap-2 flex-shrink-0"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {isCompleted ? (
-              <>
-                {/* Completed items: Delete (left) + Put Back (middle) + Recommend (right) */}
-                {onRemove && (
-                  <Button
-                    onClick={() => onRemove(id)}
-                    variant="subtle"
-                    size="icon"
-                    icon={<X className="w-5 h-5" />}
-                    className="text-danger hover:bg-danger-light dark:hover:bg-red-900/20"
-                    aria-label="Remove from list"
-                    title="Remove"
-                  />
-                )}
-                {onToggleComplete && (
-                  <Button
-                    onClick={() => onToggleComplete(id)}
-                    variant="subtle"
-                    size="icon"
-                    icon={<Undo2 className="w-5 h-5" />}
-                    aria-label="Mark as incomplete"
-                    title="Put Back"
-                  />
-                )}
-                {onRecommend && (
-                  <Button
-                    onClick={() => onRecommend(id)}
-                    variant="subtle"
-                    size="icon"
-                    icon={<Lightbulb className="w-5 h-5" />}
-                    className="text-success hover:bg-success-light dark:hover:bg-green-900/20"
-                    aria-label="Recommend to friends"
-                    title="Recommend"
-                  />
-                )}
-              </>
-            ) : (
-              <>
-                {/* Incomplete items: Delete (left) + Mark Complete (right) */}
-                {onRemove && (
-                  <Button
-                    onClick={() => onRemove(id)}
-                    variant="subtle"
-                    size="icon"
-                    icon={<X className="w-5 h-5" />}
-                    className="text-danger hover:bg-danger-light dark:hover:bg-red-900/20"
-                    aria-label="Remove from list"
-                    title="Remove"
-                  />
-                )}
-                {onToggleComplete && (
-                  <Button
-                    onClick={() => onToggleComplete(id)}
-                    variant="subtle"
-                    size="icon"
-                    icon={<Check className="w-5 h-5" />}
-                    className="text-success hover:bg-success-light dark:hover:bg-green-900/20"
-                    aria-label="Mark as complete"
-                    title="Complete"
-                  />
-                )}
-              </>
-            )}
+          <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+            <ActionButtonGroup
+              actions={[
+                ...(onRemove
+                  ? [
+                      {
+                        id: "remove",
+                        icon: <X size={18} weight="duotone" />,
+                        label: "Remove from list",
+                        onClick: () => onRemove(id),
+                        variant: "danger" as const,
+                        tooltip: "Remove",
+                      },
+                    ]
+                  : []),
+                ...(onToggleComplete
+                  ? [
+                      {
+                        id: "toggle",
+                        icon: isCompleted ? (
+                          <ArrowCounterClockwise size={18} weight="duotone" />
+                        ) : (
+                          <Check size={18} weight="bold" />
+                        ),
+                        label: isCompleted
+                          ? "Mark as incomplete"
+                          : "Mark as complete",
+                        onClick: () => onToggleComplete(id),
+                        variant: (isCompleted ? "warning" : "success") as const,
+                        tooltip: isCompleted ? "Put Back" : "Mark Complete",
+                      },
+                    ]
+                  : []),
+                ...(isCompleted && onRecommend
+                  ? [
+                      {
+                        id: "recommend",
+                        icon: <Lightbulb size={18} weight="duotone" />,
+                        label: "Recommend to friends",
+                        onClick: () => onRecommend(id),
+                        variant: "success" as const,
+                        tooltip: "Recommend",
+                      },
+                    ]
+                  : []),
+              ]}
+              orientation="horizontal"
+            />
           </div>
         )}
       </div>
