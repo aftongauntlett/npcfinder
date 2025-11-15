@@ -116,12 +116,10 @@ const DemoLanding: React.FC = () => {
             </h2>
 
             <p className="text-base sm:text-lg text-neutral-300 mb-8 max-w-xl leading-relaxed font-light">
-              An{" "}
-              <strong className="text-white">open-source, self-hosted</strong>{" "}
-              modular dashboard for your daily life. Track media, manage tasks,
-              organize recipes, and share with your trusted friends. Clone it,
-              run it with your own friend group, and customize it however you
-              want.
+              An open-source, self-hosted modular dashboard for your daily life.
+              Track media, manage tasks, organize recipes, and share with your
+              trusted friends. Clone it, run it with your own friend group, and
+              customize it however you want.
             </p>
 
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -509,8 +507,8 @@ const DemoLanding: React.FC = () => {
           </h3>
           <p className="text-lg text-gray-300 mb-8 max-w-2xl mx-auto">
             A real product in active development. Currently in private beta for
-            testing with my friend group. Clone the repo and run your own instance,
-            or follow development as I build toward a public release.
+            testing with my friend group. Clone the repo and run your own
+            instance, or follow development as I build toward a public release.
           </p>
 
           {/* Development Warning Badge */}
