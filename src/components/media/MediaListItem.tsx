@@ -37,9 +37,45 @@ interface MediaListItemProps {
 }
 
 /**
- * MediaListItem - Compact horizontal list view for media items
- * Optimized for items without poster images (e.g., books from APIs without covers)
- * Supports optional action buttons for complete/recommend/remove
+ * MediaListItem - Universal compact horizontal list view for all media types
+ *
+ * This is the primary reusable component for displaying media items in list views
+ * across all media types (movies, TV, books, games, music). It provides a consistent
+ * horizontal layout optimized for readability and accessibility.
+ *
+ * Data Mapping by Media Type:
+ * - **Movies/TV**: title, subtitle (director), year, genres, description, mediaType badge
+ * - **Books**: title, subtitle (authors), year, category, description, personalRating
+ * - **Games**: title, subtitle (platforms - developer/studio data not stored), year, genres, description, personalRating, criticRating (metacritic)
+ * - **Music**: title, subtitle (artist), year, genre, description, personalRating
+ *
+ * Features:
+ * - MediaPoster with fallback icon support
+ * - Optional action buttons (toggle complete, recommend, remove)
+ * - Status badges for items without actions
+ * - Personal and critic ratings display
+ * - Genre/category chips
+ * - Responsive hover effects
+ *
+ * @example
+ * // Movie with director
+ * <MediaListItem
+ *   title="Inception"
+ *   subtitle="Christopher Nolan"
+ *   mediaType="movie"
+ *   year={2010}
+ *   genres="Action, Sci-Fi"
+ * />
+ *
+ * @example
+ * // Book with author
+ * <MediaListItem
+ *   title="1984"
+ *   subtitle="George Orwell"
+ *   category="Dystopian"
+ *   year={1949}
+ *   personalRating={5}
+ * />
  */
 const MediaListItem: React.FC<MediaListItemProps> = ({
   id,
@@ -113,6 +149,7 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
                   />
                 )}
               </div>
+              {/* Subtitle shows creator info: director for movies/TV, authors for books, artist for music, platforms for games */}
               {subtitle && (
                 <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
                   {subtitle}

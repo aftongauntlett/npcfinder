@@ -270,6 +270,7 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
                 key={item.id}
                 id={item.id}
                 title={item.title}
+                subtitle={item.director || undefined}
                 posterUrl={item.poster_url || undefined}
                 year={item.release_date?.split("-")[0]}
                 description={item.overview || undefined}

@@ -380,6 +380,9 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
         />
       ) : (
         <div className="space-y-2">
+          {/* Note: subtitle field shows platforms for games (e.g., "PC, PlayStation, Xbox")
+              Unlike other media types that show creator info (director, author, artist),
+              game developer/studio data is not currently available from RAWG API */}
           {paginatedItems.map((game) => (
             <MediaListItem
               key={game.id}

@@ -136,6 +136,52 @@ src/
 
 See [src/services/README.md](src/services/README.md) for service layer details.
 
+### Component Architecture
+
+NPC Finder uses a **consistent component system** for displaying media across all types (movies, TV, books, games, music). This ensures a unified user experience and maintainable codebase.
+
+**Display Components:**
+
+- **List Views** (`MediaListItem`): All personal libraries use this component for consistent horizontal list display
+
+  - Compact layout optimized for readability
+  - Supports action buttons (toggle complete, recommend, remove)
+  - Shows poster, title, creator info, year, ratings, genres
+
+- **Card Views** (`UnifiedMediaCard`): Grid/tile displays use this component for consistent vertical card display
+
+  - Poster-focused design with hover overlay
+  - Shows title, year, rating on hover
+  - Status badges for tracking progress
+
+- **Recommendations** (`MediaRecommendationCard`): All recommendation views use this component with render props
+  - Hit/Miss buttons for received recommendations
+  - Comment system and status tracking
+  - Unsend functionality for sent recommendations
+
+**Shared Components:**
+
+- `MediaPoster` - Image display with fallback icons
+- `StatusBadge` - Progress indicators (watching, reading, playing)
+- `StarRating` - 1-5 star rating display and input
+- `ActionButtonGroup` - Reusable action button toolbar
+- `GenreChips` - Genre/category tag display
+
+**Media Type Data Mapping:**
+
+| Media Type | Title | Subtitle (Creator / Context) | Year          | Genres     | Personal Rating | Critic Rating      | Notes                                                            |
+| ---------- | ----- | ---------------------------- | ------------- | ---------- | --------------- | ------------------ | ---------------------------------------------------------------- |
+| Movies/TV  | title | director                     | release_date  | genres     | ❌              | TMDB vote_average  | media_type badge (Movie/TV)                                      |
+| Books      | title | authors                      | publishedDate | categories | ✅              | ❌                 | Primary category displayed                                       |
+| Games      | name  | platforms                    | released      | genres     | ✅              | metacritic (0-100) | Shows platforms instead of creator (developer/studio not stored) |
+| Music      | title | artist                       | release_date  | genre      | ✅              | ❌                 | Album/track based                                                |
+
+**Deprecated Components:**
+
+⚠️ Do not use `MediaCard` or `BookCard` in new code - these are deprecated wrappers around `UnifiedMediaCard` maintained only for backward compatibility. They will be removed in v2.0.0.
+
+Migration: Replace `<MediaCard ... />` with `<UnifiedMediaCard mediaType='movie' ... />`
+
 ## Build & Run
 
 **Prerequisites:**
