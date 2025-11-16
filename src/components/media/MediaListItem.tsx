@@ -7,7 +7,7 @@ import {
   Book,
 } from "@phosphor-icons/react";
 import { type MediaStatus } from "./mediaStatus";
-import ActionButtonGroup, { ActionConfig } from "../shared/ActionButtonGroup";
+import ActionButtonGroup from "../shared/ActionButtonGroup";
 import GenreChips from "../shared/GenreChips";
 import StatusBadge from "../shared/StatusBadge";
 import StarRating from "../shared/StarRating";
@@ -242,7 +242,9 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
                           ? "Mark as incomplete"
                           : "Mark as complete",
                         onClick: () => onToggleComplete(id),
-                        variant: (isCompleted ? "warning" : "success") as const,
+                        variant: (isCompleted ? "warning" : "success") as
+                          | "warning"
+                          | "success",
                         tooltip: isCompleted ? "Put Back" : "Mark Complete",
                       },
                     ]

@@ -115,7 +115,7 @@ export default function StarRating({
 
         {!readonly && showClearButton && rating !== null && (
           <Button
-            variant="ghost"
+            variant="subtle"
             size="sm"
             onClick={handleClear}
             className="text-xs"

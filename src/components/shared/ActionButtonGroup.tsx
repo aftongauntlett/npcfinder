@@ -1,6 +1,5 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { LucideIcon } from "lucide-react";
 
 export interface ActionConfig {
   id: string;

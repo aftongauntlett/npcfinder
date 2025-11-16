@@ -184,3 +184,59 @@ export function useDeleteFromLibrary() {
     },
   });
 }
+
+/**
+ * Update music rating
+ */
+export function useUpdateMusicRating() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      musicId,
+      rating,
+    }: {
+      musicId: string;
+      rating: number | null;
+    }) => {
+      const { error } = await supabase
+        .from("music_library")
+        .update({ personal_rating: rating })
+        .eq("id", musicId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["musicLibrary"] });
+      void queryClient.invalidateQueries({ queryKey: ["musicLibraryStats"] });
+    },
+  });
+}
+
+/**
+ * Update music notes
+ */
+export function useUpdateMusicNotes() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      musicId,
+      notes,
+    }: {
+      musicId: string;
+      notes: string | null;
+    }) => {
+      const { error } = await supabase
+        .from("music_library")
+        .update({ personal_notes: notes })
+        .eq("id", musicId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["musicLibrary"] });
+      void queryClient.invalidateQueries({ queryKey: ["musicLibraryStats"] });
+    },
+  });
+}

@@ -1,4 +1,3 @@
-import React from "react";
 import { Check, Clock, Play, Book, Music, LucideIcon } from "lucide-react";
 
 type MediaType = "movie" | "tv" | "book" | "game" | "music";

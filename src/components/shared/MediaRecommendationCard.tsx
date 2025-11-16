@@ -9,7 +9,7 @@ import {
 } from "@phosphor-icons/react";
 import ConfirmationModal from "./ConfirmationModal";
 import Button from "./Button";
-import ActionButtonGroup, { ActionConfig } from "./ActionButtonGroup";
+import ActionButtonGroup from "./ActionButtonGroup";
 import type { BaseRecommendation } from "./types";
 
 interface MediaRecommendationCardProps<T extends BaseRecommendation> {
@@ -254,9 +254,9 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
                             setCommentText(rec.comment || "");
                             setIsAddingComment(true);
                           },
-                          variant: rec.comment
-                            ? "success"
-                            : ("default" as const),
+                          variant: (rec.comment ? "success" : "default") as
+                            | "success"
+                            | "default",
                           tooltip: rec.comment
                             ? "Edit your note"
                             : `Add private note for ${senderName || "sender"}`,
@@ -333,9 +333,9 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
                             setSenderCommentText(rec.sender_comment || "");
                             setIsAddingSenderComment(true);
                           },
-                          variant: rec.sender_comment
+                          variant: (rec.sender_comment
                             ? "success"
-                            : ("default" as const),
+                            : "default") as "success" | "default",
                           tooltip: rec.sender_comment
                             ? "Edit your note"
                             : "Add your note",
@@ -357,10 +357,9 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
                         ? "Delete (recipient has seen it)"
                         : "Delete",
                     onClick: handleUnsend,
-                    variant:
-                      rec.status === "pending" && !rec.opened_at
-                        ? "warning"
-                        : ("danger" as const),
+                    variant: (rec.status === "pending" && !rec.opened_at
+                      ? "warning"
+                      : "danger") as "warning" | "danger",
                     disabled: isDeleting,
                     tooltip:
                       rec.status === "pending" && !rec.opened_at

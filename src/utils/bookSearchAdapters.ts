@@ -55,7 +55,6 @@ export async function searchBooks(query: string): Promise<MediaItem[]> {
       return [];
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     return data.items.map((item: GoogleBooksVolume) =>
       convertGoogleBookToMediaItem(item)
     );

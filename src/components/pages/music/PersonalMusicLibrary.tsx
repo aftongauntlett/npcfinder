@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { MediaItem } from "../../shared/SendMediaModal";
 import SearchMusicModal from "../../shared/SearchMusicModal";
+import MusicDetailModal from "./MusicDetailModal";
 import MediaEmptyState from "../../media/MediaEmptyState";
 import MediaListItem from "../../media/MediaListItem";
 import SendMediaModal from "../../shared/SendMediaModal";
@@ -46,6 +47,9 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
   const [sortBy, setSortBy] = useState<SortType>("date-added");
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
+  const [selectedMusic, setSelectedMusic] = useState<MusicLibraryItem | null>(
+    null
+  );
   const [musicToRecommend, setMusicToRecommend] =
     useState<MusicLibraryItem | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -253,7 +257,7 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
               status={music.listened ? "watched" : "to-watch"}
               isCompleted={music.listened}
               genres={music.genre || undefined}
-              onClick={() => handleRecommend(music)}
+              onClick={() => setSelectedMusic(music)}
               onToggleComplete={() => handleToggleListened(music.id)}
               onRemove={() => handleRemove(music)}
               onRecommend={() => handleRecommend(music)}
@@ -337,6 +341,25 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
       )}
 
       {/* Modals */}
+      {selectedMusic && (
+        <MusicDetailModal
+          music={selectedMusic}
+          onClose={() => setSelectedMusic(null)}
+          onToggleListened={() => {
+            handleToggleListened(selectedMusic.id);
+            setSelectedMusic(null);
+          }}
+          onRemove={() => {
+            handleRemove(selectedMusic);
+            setSelectedMusic(null);
+          }}
+          onRecommend={() => {
+            handleRecommend(selectedMusic);
+            setSelectedMusic(null);
+          }}
+        />
+      )}
+
       {showSearchModal && (
         <SearchMusicModal
           onClose={() => setShowSearchModal(false)}

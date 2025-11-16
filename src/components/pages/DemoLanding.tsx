@@ -7,9 +7,6 @@ import {
   Question,
   LinkedinLogo,
   ArrowUp,
-  ProhibitInset,
-  EyeSlash,
-  UsersFour,
 } from "@phosphor-icons/react";
 import StarryBackground from "../shared/StarryBackground";
 import LandingButton from "../landing/LandingButton";
@@ -17,11 +14,7 @@ import HeroConstellation from "../effects/HeroConstellation";
 import { FeatureBlock } from "../landing/demo/FeatureBlock";
 import ModernCard from "../landing/demo/ModernCard";
 import Accordion from "../landing/demo/Accordion";
-import {
-  LANDING_PEACH,
-  LANDING_TEAL,
-  LANDING_PURPLE,
-} from "../../data/landingTheme";
+import { LANDING_PEACH, LANDING_TEAL } from "../../data/landingTheme";
 import { landingFeatures } from "../../data/landingFeatures";
 import { landingArchitecture } from "../../data/landingArchitecture";
 import {
