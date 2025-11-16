@@ -1,24 +1,16 @@
-/**
- * @deprecated This component will be migrated to use the unified MediaDetailModal.
- * For new features, consider using MediaDetailModal from @/components/shared instead.
- * This component shares 90% of its structure with MovieDetailModal and GameDetailModal.
- * Future work: Migrate to MediaDetailModal. The personal notes section can be passed as additionalContent prop.
- * Note: TODO on line 214 mentions adding a BookReviewForm accordion - use the new Accordion component when implemented.
- */
-
 import React, { useState } from "react";
 import { Calendar, FileText, Hash } from "lucide-react";
 import MediaDetailModal from "../../shared/MediaDetailModal";
 import Accordion from "../../shared/Accordion";
 import StarRating from "../../shared/StarRating";
-import PrivacyToggle from "../../shared/PrivacyToggle";
-import Button from "../../shared/Button";
 import type { ReadingListItem } from "../../../services/booksService.types";
 import {
   useUpdateBookRating,
   useUpdateBookNotes,
 } from "../../../hooks/useReadingListQueries";
 import type { MetadataItem } from "../../shared/MetadataRow";
+
+type MediaStatus = "planned" | "in-progress" | "completed" | "dropped";
 
 interface BookDetailModalProps {
   book: ReadingListItem;
@@ -54,6 +46,16 @@ const BookDetailModal: React.FC<BookDetailModalProps> = ({
     }
   };
 
+  const handleStatusChange = (newStatus: MediaStatus) => {
+    // Map status to read boolean
+    // 'completed' means read, anything else means not read
+    if (newStatus === "completed" && !book.read) {
+      onToggleRead();
+    } else if (newStatus !== "completed" && book.read) {
+      onToggleRead();
+    }
+  };
+
   const displayYear = book.published_date
     ? new Date(book.published_date).getFullYear()
     : null;
@@ -61,19 +63,24 @@ const BookDetailModal: React.FC<BookDetailModalProps> = ({
   // Build metadata array
   const metadata: MetadataItem[] = [
     ...(displayYear
-      ? [{ icon: <Calendar className="w-4 h-4" />, label: String(displayYear) }]
+      ? [
+          {
+            icon: Calendar,
+            value: String(displayYear),
+            label: String(displayYear),
+          },
+        ]
       : []),
     ...(book.page_count
       ? [
           {
-            icon: <FileText className="w-4 h-4" />,
+            icon: FileText,
+            value: `${book.page_count} pages`,
             label: `${book.page_count} pages`,
           },
         ]
       : []),
-    ...(book.isbn
-      ? [{ icon: <Hash className="w-4 h-4" />, label: book.isbn }]
-      : []),
+    ...(book.isbn ? [{ icon: Hash, value: book.isbn, label: book.isbn }] : []),
   ];
 
   // Build additional content (author + personal notes)
@@ -146,18 +153,27 @@ const BookDetailModal: React.FC<BookDetailModalProps> = ({
       posterUrl={book.thumbnail_url || undefined}
       metadata={metadata}
       genres={book.categories ? [book.categories] : []}
-      description={book.description}
-      status={{
-        label: book.read ? "read" : "reading",
-        isCompleted: book.read,
-      }}
-      rating={rating}
-      onRatingChange={handleRatingChange}
-      onToggleStatus={onToggleRead}
+      description={book.description || undefined}
+      status={book.read ? "completed" : "planned"}
+      onStatusChange={handleStatusChange}
       onRecommend={onRecommend}
       onRemove={onRemove}
+      showReviewSection={false}
       additionalContent={additionalContent}
       reviewSection={reviewSection}
+      myReview={null}
+      friendsReviews={[]}
+      rating={rating}
+      reviewText=""
+      isPublic={true}
+      isSaving={false}
+      showSavedMessage={false}
+      hasUnsavedChanges={false}
+      onRatingChange={handleRatingChange}
+      onReviewTextChange={() => {}}
+      onPublicChange={() => {}}
+      onSaveReview={() => {}}
+      onDeleteReview={undefined}
     />
   );
 };

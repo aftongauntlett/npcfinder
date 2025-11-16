@@ -1,4 +1,3 @@
-import React from "react";
 import { LucideIcon } from "lucide-react";
 
 export interface MetadataItem {
@@ -43,7 +42,7 @@ export default function MetadataRow({
         return (
           <div
             key={`${item.label}-${index}`}
-            className="flex items-center gap-1.5"
+            className="flex items-center gap-1.5 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200"
           >
             <Icon
               className={`${iconSizeClass} text-gray-600 dark:text-gray-400`}

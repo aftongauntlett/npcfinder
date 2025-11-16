@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import Button from "../../shared/Button";
+import Button from "./Button";
 
-interface MovieCastListProps {
+interface MediaCastListProps {
   cast: string[];
   initialDisplayCount?: number;
 }
 
-export function MovieCastList({
+export function MediaCastList({
   cast,
   initialDisplayCount = 8,
-}: MovieCastListProps) {
+}: MediaCastListProps) {
   const [showAll, setShowAll] = useState(false);
 
   if (cast.length === 0) return null;

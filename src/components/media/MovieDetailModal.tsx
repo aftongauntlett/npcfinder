@@ -3,8 +3,9 @@ import { Loader2, Calendar, Clock } from "lucide-react";
 import MediaDetailModal from "../shared/MediaDetailModal";
 import MediaMetrics from "../shared/MediaMetrics";
 import Button from "../shared/Button";
-import { MovieCrewInfo } from "./movie/MovieCrewInfo";
-import { MovieCastList } from "./movie/MovieCastList";
+import { MediaCrewInfo } from "../shared/MediaCrewInfo";
+import { MediaCastList } from "../shared/MediaCastList";
+import SendMediaModal from "../shared/SendMediaModal";
 import { SimilarMoviesCarousel } from "./SimilarMoviesCarousel";
 import {
   fetchDetailedMediaInfo,
@@ -12,6 +13,7 @@ import {
   fetchSimilarMedia,
   SimilarMediaItem,
 } from "../../utils/tmdbDetails";
+import { searchMoviesAndTV } from "../../utils/mediaSearchAdapters";
 import type { WatchlistItem } from "../../services/recommendationsService.types";
 import {
   useAddToWatchlist,
@@ -70,6 +72,11 @@ export default function MovieDetailModal({
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showSavedMessage, setShowSavedMessage] = useState(false);
+
+  // Recommend modal state
+  const [showSendModal, setShowSendModal] = useState(false);
+  const [movieToRecommend, setMovieToRecommend] =
+    useState<WatchlistItem | null>(null);
 
   // Sync form with existing review
   useEffect(() => {
@@ -186,6 +193,11 @@ export default function MovieDetailModal({
     await toggleWatched.mutateAsync(item.id);
   };
 
+  const handleRecommend = () => {
+    setMovieToRecommend(item);
+    setShowSendModal(true);
+  };
+
   const handleStatusChange = (newStatus: MediaStatus) => {
     // Map status to watched boolean
     // For now, we'll just toggle watched on/off based on completed vs other states
@@ -236,7 +248,7 @@ export default function MovieDetailModal({
   const additionalContent = details ? (
     <>
       {/* Crew */}
-      <MovieCrewInfo
+      <MediaCrewInfo
         director={details.director}
         producer={details.producer}
         cinematographer={details.cinematographer}
@@ -246,7 +258,7 @@ export default function MovieDetailModal({
 
       {/* Cast */}
       {details.cast && details.cast.length > 0 && (
-        <MovieCastList cast={details.cast} />
+        <MediaCastList cast={details.cast} />
       )}
 
       {/* Critic Ratings, Awards, Box Office - all in one component */}
@@ -282,6 +294,7 @@ export default function MovieDetailModal({
         status={currentStatus}
         onStatusChange={handleStatusChange}
         onRemove={handleRemoveFromWatchlist}
+        onRecommend={handleRecommend}
         myReview={myReview}
         friendsReviews={friendsReviews}
         rating={rating}
@@ -321,6 +334,7 @@ export default function MovieDetailModal({
         status={currentStatus}
         onStatusChange={handleStatusChange}
         onRemove={handleRemoveFromWatchlist}
+        onRecommend={handleRecommend}
         myReview={myReview}
         friendsReviews={friendsReviews}
         rating={rating}
@@ -360,6 +374,7 @@ export default function MovieDetailModal({
         status={currentStatus}
         onStatusChange={handleStatusChange}
         onRemove={handleRemoveFromWatchlist}
+        onRecommend={handleRecommend}
         myReview={myReview}
         friendsReviews={friendsReviews}
         rating={rating}
@@ -375,6 +390,36 @@ export default function MovieDetailModal({
         onDeleteReview={handleDeleteReview}
         additionalContent={additionalContent}
       />
+
+      {/* Send/Recommend Modal */}
+      {showSendModal && movieToRecommend && (
+        <SendMediaModal
+          isOpen={showSendModal}
+          onClose={() => {
+            setShowSendModal(false);
+            setMovieToRecommend(null);
+          }}
+          onSent={() => {
+            setShowSendModal(false);
+            setMovieToRecommend(null);
+          }}
+          mediaType="movies"
+          tableName="movie_recommendations"
+          searchPlaceholder="Search for movies or TV shows..."
+          searchFunction={searchMoviesAndTV}
+          recommendationTypes={[
+            { value: "watch", label: "Watch" },
+            { value: "rewatch", label: "Rewatch" },
+          ]}
+          defaultRecommendationType="watch"
+          preselectedItem={{
+            external_id: movieToRecommend.external_id,
+            title: movieToRecommend.title,
+            media_type: movieToRecommend.media_type,
+            poster_url: movieToRecommend.poster_url,
+          }}
+        />
+      )}
 
       {/* Similar Movies Carousel - rendered separately below modal */}
       {isOpen && similarMovies.length > 0 && (

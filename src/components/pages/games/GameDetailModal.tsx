@@ -1,16 +1,11 @@
-/**
- * @deprecated This component will be migrated to use the unified MediaDetailModal.
- * For new features, consider using MediaDetailModal from @/components/shared instead.
- * This component shares 90% of its structure with MovieDetailModal and BookDetailModal.
- * Future work: Migrate to MediaDetailModal to eliminate ~200 lines of duplicated code.
- */
-
 import React, { useState } from "react";
 import { Calendar, Award, DollarSign } from "lucide-react";
 import MediaDetailModal from "../../shared/MediaDetailModal";
 import type { GameLibraryItem } from "../../../hooks/useGameLibraryQueries";
 import { useUpdateGameRating } from "../../../hooks/useGameLibraryQueries";
 import type { MetadataItem } from "../../shared/MetadataRow";
+
+type MediaStatus = "planned" | "in-progress" | "completed" | "dropped";
 
 interface GameDetailModalProps {
   game: GameLibraryItem;
@@ -55,12 +50,19 @@ const GameDetailModal: React.FC<GameDetailModalProps> = ({
   // Build metadata array
   const metadata: MetadataItem[] = [
     ...(releaseYear
-      ? [{ icon: <Calendar className="w-4 h-4" />, label: String(releaseYear) }]
+      ? [
+          {
+            icon: Calendar,
+            value: String(releaseYear),
+            label: String(releaseYear),
+          },
+        ]
       : []),
     ...(game.playtime
       ? [
           {
-            icon: <Award className="w-4 h-4" />,
+            icon: Award,
+            value: `${game.playtime}h avg playtime`,
             label: `${game.playtime}h avg playtime`,
           },
         ]
@@ -68,26 +70,37 @@ const GameDetailModal: React.FC<GameDetailModalProps> = ({
     ...(game.metacritic
       ? [
           {
-            icon: <DollarSign className="w-4 h-4" />,
+            icon: DollarSign,
+            value: `Metacritic: ${game.metacritic}`,
             label: `Metacritic: ${game.metacritic}`,
           },
         ]
       : []),
   ];
 
+  const handleStatusChange = (newStatus: MediaStatus) => {
+    // Map status to played boolean
+    // 'completed' means played, anything else means not played
+    if (newStatus === "completed" && !game.played) {
+      onTogglePlayed();
+    } else if (newStatus !== "completed" && game.played) {
+      onTogglePlayed();
+    }
+  };
+
   // Build additional content section (platforms + RAWG rating)
   const additionalContent = (
     <>
       {platformList.length > 0 && (
-        <div>
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <div className="pb-5">
+          <h3 className="text-sm font-medium text-primary mb-2.5 mt-0">
             Platforms
           </h3>
           <div className="flex flex-wrap gap-2">
             {platformList.map((platform: string) => (
               <span
                 key={platform}
-                className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded"
+                className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 cursor-default"
               >
                 {platform}
               </span>
@@ -119,17 +132,26 @@ const GameDetailModal: React.FC<GameDetailModalProps> = ({
       metadata={metadata}
       genres={genreList}
       description={undefined}
-      status={{
-        label: game.played ? "played" : "playing",
-        isCompleted: game.played,
-      }}
-      rating={rating}
-      onRatingChange={handleRatingChange}
-      onToggleStatus={onTogglePlayed}
+      status={game.played ? "completed" : "planned"}
+      onStatusChange={handleStatusChange}
       onRecommend={onRecommend}
       onRemove={onRemove}
+      showReviewSection={false}
       additionalContent={additionalContent}
       reviewSection={undefined}
+      myReview={null}
+      friendsReviews={[]}
+      rating={rating}
+      reviewText=""
+      isPublic={true}
+      isSaving={false}
+      showSavedMessage={false}
+      hasUnsavedChanges={false}
+      onRatingChange={handleRatingChange}
+      onReviewTextChange={() => {}}
+      onPublicChange={() => {}}
+      onSaveReview={() => {}}
+      onDeleteReview={undefined}
     />
   );
 };

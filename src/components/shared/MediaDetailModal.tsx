@@ -9,6 +9,12 @@ import type { MetadataItem } from "./MetadataRow";
 type MediaType = "movie" | "tv" | "book" | "game" | "music";
 type MediaStatus = "planned" | "in-progress" | "completed" | "dropped";
 
+/**
+ * Status can be either a MediaStatus string (for movies/TV)
+ * or a custom object with label and isCompleted (for books/games)
+ */
+type StatusType = MediaStatus | { label: string; isCompleted: boolean };
+
 interface MediaDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -18,11 +24,15 @@ interface MediaDetailModalProps {
   metadata: MetadataItem[];
   genres?: string[] | string;
   description?: string;
-  status: MediaStatus;
+  status: StatusType;
   onStatusChange: (status: MediaStatus) => void;
   onRemove: () => void;
+  onRecommend?: () => void;
+  showRecommendButton?: boolean;
+  showReviewSection?: boolean;
   isInWatchlist?: boolean;
   additionalContent?: React.ReactNode;
+  reviewSection?: React.ReactNode;
   // Review props
   myReview?: {
     id: string;
@@ -54,6 +64,7 @@ interface MediaDetailModalProps {
 export default function MediaDetailModal({
   isOpen,
   onClose,
+  mediaType,
   title,
   posterUrl,
   metadata,
@@ -62,8 +73,12 @@ export default function MediaDetailModal({
   status,
   onStatusChange,
   onRemove,
+  onRecommend,
+  showRecommendButton = true,
+  showReviewSection = true,
   isInWatchlist = true,
   additionalContent,
+  reviewSection,
   myReview,
   friendsReviews = [],
   rating,
@@ -79,6 +94,23 @@ export default function MediaDetailModal({
   onDeleteReview,
   maxWidth = "5xl",
 }: MediaDetailModalProps) {
+  // Map mediaType to action verb for button labels
+  const getActionVerb = (type: MediaType): string => {
+    switch (type) {
+      case "movie":
+      case "tv":
+        return "Watched";
+      case "book":
+        return "Read";
+      case "game":
+        return "Played";
+      case "music":
+        return "Listened";
+      default:
+        return "Watched";
+    }
+  };
+
   return (
     <Modal
       isOpen={isOpen}
@@ -113,26 +145,65 @@ export default function MediaDetailModal({
             {/* Action Buttons */}
             <div className="flex flex-col gap-2.5">
               <Button
-                onClick={() =>
-                  onStatusChange(
-                    status === "completed" ? "planned" : "completed"
+                onClick={() => {
+                  // Handle both status types
+                  if (typeof status === "string") {
+                    onStatusChange(
+                      status === "completed" ? "planned" : "completed"
+                    );
+                  } else {
+                    // For custom status objects, toggle completion
+                    onStatusChange(
+                      status.isCompleted ? "planned" : "completed"
+                    );
+                  }
+                }}
+                variant={
+                  (
+                    typeof status === "string"
+                      ? status === "completed"
+                      : status.isCompleted
                   )
+                    ? "secondary"
+                    : "primary"
                 }
-                variant={status === "completed" ? "secondary" : "primary"}
                 fullWidth
                 className="group"
               >
                 <span className="flex items-center justify-center gap-2">
                   <span className="group-hover:animate-wiggle inline-block">
-                    {status === "completed" ? (
+                    {(
+                      typeof status === "string"
+                        ? status === "completed"
+                        : status.isCompleted
+                    ) ? (
                       <ArrowLeft className="w-4 h-4" />
                     ) : (
                       <Check className="w-4 h-4" />
                     )}
                   </span>
-                  {status === "completed" ? "Move Back" : "Mark as Watched"}
+                  {(
+                    typeof status === "string"
+                      ? status === "completed"
+                      : status.isCompleted
+                  )
+                    ? "Move Back"
+                    : `Mark as ${getActionVerb(mediaType)}`}
                 </span>
               </Button>
+
+              {showRecommendButton && onRecommend && (
+                <Button
+                  onClick={onRecommend}
+                  variant="secondary"
+                  fullWidth
+                  className="group"
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    Recommend
+                  </span>
+                </Button>
+              )}
 
               {isInWatchlist && (
                 <Button
@@ -175,21 +246,26 @@ export default function MediaDetailModal({
             )}
 
             {/* Review Section */}
-            <MediaReview
-              myReview={myReview}
-              friendsReviews={friendsReviews}
-              rating={rating}
-              reviewText={reviewText}
-              isPublic={isPublic}
-              isSaving={isSaving}
-              showSavedMessage={showSavedMessage}
-              hasUnsavedChanges={hasUnsavedChanges}
-              onRatingChange={onRatingChange}
-              onReviewTextChange={onReviewTextChange}
-              onPublicChange={onPublicChange}
-              onSave={onSaveReview}
-              onDelete={onDeleteReview}
-            />
+            {showReviewSection && (
+              <MediaReview
+                myReview={myReview}
+                friendsReviews={friendsReviews}
+                rating={rating}
+                reviewText={reviewText}
+                isPublic={isPublic}
+                isSaving={isSaving}
+                showSavedMessage={showSavedMessage}
+                hasUnsavedChanges={hasUnsavedChanges}
+                onRatingChange={onRatingChange}
+                onReviewTextChange={onReviewTextChange}
+                onPublicChange={onPublicChange}
+                onSave={onSaveReview}
+                onDelete={onDeleteReview}
+              />
+            )}
+
+            {/* Custom Review Section (e.g., for books with accordion) */}
+            {reviewSection && reviewSection}
           </div>
         </div>
       </div>

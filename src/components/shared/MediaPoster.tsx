@@ -39,7 +39,7 @@ export default function MediaPoster({
 
   const aspectRatioClass = aspectRatioClasses[aspectRatio];
 
-  const containerClass = `relative rounded-lg overflow-hidden shadow-md ${
+  const containerClass = `relative rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-200 ${
     size === "sm" ? sizeClasses.sm : sizeClasses[size]
   } ${aspectRatioClass} ${className}`;
 

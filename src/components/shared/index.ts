@@ -19,3 +19,5 @@ export { default as GenreChips } from "./GenreChips";
 export { default as MediaPoster } from "./MediaPoster";
 export { default as MediaDetailModal } from "./MediaDetailModal";
 export { default as UnifiedMediaCard } from "./UnifiedMediaCard";
+export { MediaCastList } from "./MediaCastList";
+export { MediaCrewInfo } from "./MediaCrewInfo";

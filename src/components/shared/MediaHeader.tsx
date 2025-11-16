@@ -15,7 +15,7 @@ export default function MediaHeader({
   className = "",
 }: MediaHeaderProps) {
   return (
-    <div className={`space-y-1.5 ${className}`}>
+    <div className={`space-y-2 ${className}`}>
       {/* Title */}
       <h2 className="text-3xl font-bold text-gray-900 dark:text-white leading-tight">
         {title}
