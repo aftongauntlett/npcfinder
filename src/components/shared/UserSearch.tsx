@@ -109,7 +109,7 @@ export function UserSearch() {
                   </div>
                 ) : (
                   <Button
-                    onClick={() => handleConnect(user.user_id)}
+                    onClick={() => void handleConnect(user.user_id)}
                     disabled={createConnection.isPending}
                     variant="primary"
                     size="sm"

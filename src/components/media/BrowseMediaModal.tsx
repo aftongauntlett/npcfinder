@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { X, Search, Plus, Loader } from "lucide-react";
 import FocusTrap from "focus-trap-react";
-import MediaCard from "./MediaCard";
+import UnifiedMediaCard from "../shared/UnifiedMediaCard";
 import Button from "../shared/Button";
 
 interface BrowseMediaModalProps {
@@ -251,12 +251,13 @@ export function BrowseMediaModal({
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                   {searchResults.map((item) => (
                     <div key={item.id} className="relative group">
-                      <MediaCard
+                      <UnifiedMediaCard
+                        mediaType="movie"
                         id={item.id}
                         title={item.title}
                         year={item.year}
                         posterUrl={item.poster}
-                        onClick={() => {}} // Disable click in browse mode
+                        onClick={() => {}}
                       />
                       <Button
                         onClick={() => void handleAdd(item)}

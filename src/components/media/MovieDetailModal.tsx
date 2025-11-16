@@ -155,7 +155,7 @@ export default function MovieDetailModal({
         title: item.title,
         review_text: reviewText || null,
         rating,
-        liked: null, // No longer using like/dislike
+        liked: null,
         is_public: isPublic,
       });
       setHasUnsavedChanges(false);
@@ -306,7 +306,7 @@ export default function MovieDetailModal({
         onRatingChange={setRating}
         onReviewTextChange={setReviewText}
         onPublicChange={setIsPublic}
-        onSaveReview={handleSaveReview}
+        onSaveReview={() => void handleSaveReview()}
         onDeleteReview={handleDeleteReview}
         additionalContent={
           <div className="flex flex-col items-center justify-center py-12">
@@ -346,7 +346,7 @@ export default function MovieDetailModal({
         onRatingChange={setRating}
         onReviewTextChange={setReviewText}
         onPublicChange={setIsPublic}
-        onSaveReview={handleSaveReview}
+        onSaveReview={() => void handleSaveReview()}
         onDeleteReview={handleDeleteReview}
         additionalContent={
           <div className="flex flex-col items-center justify-center py-12">
@@ -386,7 +386,7 @@ export default function MovieDetailModal({
         onRatingChange={setRating}
         onReviewTextChange={setReviewText}
         onPublicChange={setIsPublic}
-        onSaveReview={handleSaveReview}
+        onSaveReview={() => void handleSaveReview()}
         onDeleteReview={handleDeleteReview}
         additionalContent={additionalContent}
       />
