@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { X } from "lucide-react";
 import FocusTrap from "focus-trap-react";
-import { useSidebar } from "../../contexts/SidebarContext";
+import { useSidebar } from "../../../contexts/SidebarContext";
 import Button from "./Button";
 
 interface ModalProps {
