@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getGenreColor } from "../../utils/genreColors";
+import { getGenreColor } from "../../../utils/genreColors";
 
 interface GenreChipsProps {
   genres: string[] | string;

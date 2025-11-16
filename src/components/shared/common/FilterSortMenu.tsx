@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
-import { SlidersHorizontal, Check } from "lucide-react";
+import { SlidersHorizontal } from "lucide-react";
+import FilterSortSection from "./FilterSortSection";
 
 export interface FilterSortOption {
   id: string;
@@ -136,34 +137,12 @@ const FilterSortMenu: React.FC<FilterSortMenuProps> = ({
         <div className="absolute left-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 max-h-[400px] overflow-y-auto">
           {sections.map((section, sectionIndex) => (
             <div key={section.id}>
-              {/* Section Header */}
-              <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                {section.title}
-              </div>
-
-              {/* Section Options */}
-              <div className="space-y-1 px-2">
-                {section.options.map((option) => {
-                  const isActive = isOptionActive(section, option.id);
-
-                  return (
-                    <button
-                      key={option.id}
-                      onClick={(e) => handleOptionClick(section, option.id, e)}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 ${
-                        isActive
-                          ? "bg-purple-500/10 text-purple-700 dark:text-purple-300 font-medium"
-                          : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      }`}
-                    >
-                      <span>{option.label}</span>
-                      {isActive && (
-                        <Check className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+              <FilterSortSection
+                section={section}
+                activeFilters={activeFilters}
+                onOptionClick={handleOptionClick}
+                isOptionActive={isOptionActive}
+              />
 
               {/* Divider between sections */}
               {sectionIndex < sections.length - 1 && (

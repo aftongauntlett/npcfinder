@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { ChevronDown, Grid3x3 } from "lucide-react";
-import { cards } from "../../data/dashboardCards";
-import Button from "./Button";
+import { useState, useEffect, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Grid3x3, ChevronDown } from "lucide-react";
+import { cards } from "../../../data/dashboardCards";
+import Button from "../ui/Button";
 
 const QuickSwitch: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);

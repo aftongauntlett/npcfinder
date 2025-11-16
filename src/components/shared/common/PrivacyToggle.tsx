@@ -1,6 +1,6 @@
 import React from "react";
 import { Lock, LockOpen } from "lucide-react";
-import Button from "./Button";
+import Button from "../ui/Button";
 
 interface PrivacyToggleProps {
   isPublic: boolean;

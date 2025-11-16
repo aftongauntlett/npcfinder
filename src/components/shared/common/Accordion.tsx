@@ -1,7 +1,8 @@
 import React, { useState, useId } from "react";
 import { ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import Button from "./Button";
+import type { ReactNode } from "react";
+import Button from "../ui/Button";
 
 interface AccordionProps {
   title: string;

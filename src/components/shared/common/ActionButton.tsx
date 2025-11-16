@@ -1,7 +1,7 @@
 import React from "react";
-import { LucideIcon } from "lucide-react";
-import Button from "./Button";
-import { logger } from "../../lib/logger";
+import type { LucideIcon } from "lucide-react";
+import Button from "../ui/Button";
+import { logger } from "../../../lib/logger";
 
 interface ActionButtonProps {
   icon: LucideIcon;
