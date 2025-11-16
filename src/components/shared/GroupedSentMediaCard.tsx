@@ -37,7 +37,7 @@ function GroupedSentMediaCard<T>({
   const remainingCount = recipients.length - maxVisible;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-900 p-3">
       <div className="flex items-start gap-3">
         {/* Index Number */}
         <div className="w-8 text-center text-gray-500 dark:text-gray-400 text-sm pt-2">

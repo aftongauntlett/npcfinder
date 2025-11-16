@@ -79,7 +79,7 @@ export function UserSearch() {
             {users.map((user) => (
               <div
                 key={user.user_id}
-                className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-900"
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   {/* Avatar */}

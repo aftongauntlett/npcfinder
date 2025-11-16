@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { motion } from "framer-motion";
 import {
   ThumbsUp,
   ThumbsDown,
@@ -34,9 +33,52 @@ interface MediaRecommendationCardProps<T extends BaseRecommendation> {
 }
 
 /**
- * Universal MediaRecommendationCard
- * Works for Music, Movies, TV, Books, and Games
- * Handles hit/miss buttons, comments, and unsend functionality
+ * MediaRecommendationCard - Universal recommendation card component for all media types
+ *
+ * This is the primary component for displaying media recommendations across the application.
+ * It uses a render props pattern to allow media-specific customization while maintaining
+ * consistent recommendation interactions and UI.
+ *
+ * Supported Media Types:
+ * - Movies & TV Shows
+ * - Music (albums, tracks)
+ * - Books
+ * - Games
+ *
+ * Features:
+ * - Hit/Miss buttons for received recommendations
+ * - Comment system (receiver comments, sender notes)
+ * - Delete/Unsend functionality
+ * - Status tracking (pending, hit, miss, queued)
+ * - Automatic UI adaptation based on isReceived (received vs sent)
+ * - Review indicator integration
+ * - Animated entrance with stagger effect
+ *
+ * Render Props Pattern:
+ * @param {function} renderMediaArt - Should return a 12x16 aspect ratio image or icon representing the media.
+ *                                    Example: <MediaPoster src={rec.poster_url} size="sm" />
+ *
+ * @param {function} renderMediaInfo - Should return title, badges, year, and description in a consistent format.
+ *                                     Example: <div><h3>{rec.title}</h3><p>{rec.year}</p></div>
+ *
+ * @param {boolean} isReceived - Determines UI mode: true = show hit/miss buttons, false = show unsend button
+ *
+ * Usage Examples:
+ * See implementation in:
+ * - src/components/pages/movies/MoviesSuggestions.tsx
+ * - src/components/pages/books/BooksSuggestions.tsx
+ * - src/components/pages/games/GamesSuggestions.tsx
+ * - src/components/pages/music/MusicSuggestions.tsx
+ *
+ * @example
+ * <MediaRecommendationCard
+ *   rec={recommendation}
+ *   isReceived={true}
+ *   renderMediaArt={(rec) => <MediaPoster src={rec.poster_url} />}
+ *   renderMediaInfo={(rec) => <div><h3>{rec.title}</h3></div>}
+ *   onStatusUpdate={handleStatusUpdate}
+ *   onDelete={handleDelete}
+ * />
  */
 function MediaRecommendationCard<T extends BaseRecommendation>({
   rec,
@@ -89,13 +131,7 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
   };
 
   return (
-    <motion.div
-      className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200/50 dark:border-gray-700/30 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.05 }}
-      whileHover={{ y: -2 }}
-    >
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 border border-gray-200 dark:border-gray-700 hover:shadow-md hover:bg-gray-100 dark:hover:bg-gray-900 transition-all duration-200">
       {/* Main Row: Index, Art, Info, Actions */}
       <div className="flex items-center gap-3">
         {/* Index Number */}
@@ -455,7 +491,7 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
         }
         variant="danger"
       />
-    </motion.div>
+    </div>
   );
 }
 
