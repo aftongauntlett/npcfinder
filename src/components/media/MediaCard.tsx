@@ -1,7 +1,13 @@
 /**
  * @deprecated This component is deprecated in favor of UnifiedMediaCard.
- * Please use UnifiedMediaCard from @/components/shared instead.
- * This component will be removed in a future version.
+ *
+ * Migration Path:
+ * Replace `<MediaCard ... />` with `<UnifiedMediaCard mediaType='movie' ... />`
+ *
+ * This wrapper only exists for backward compatibility and provides no additional functionality.
+ * All new code should use UnifiedMediaCard directly.
+ *
+ * TODO: Remove in v2.0.0
  */
 
 import React from "react";

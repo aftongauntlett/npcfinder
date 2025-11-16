@@ -5,10 +5,12 @@ import Button from "./Button";
 interface StarRatingProps {
   rating: number | null;
   onRatingChange: (rating: number | null) => void;
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
   readonly?: boolean;
   showClearButton?: boolean;
   showLabel?: boolean;
+  useThemeColor?: boolean;
+  showPlaceholder?: boolean;
   className?: string;
 }
 
@@ -27,11 +29,14 @@ export default function StarRating({
   readonly = false,
   showClearButton = true,
   showLabel = false,
+  useThemeColor = false,
+  showPlaceholder = false,
   className = "",
 }: StarRatingProps) {
   const [hoverRating, setHoverRating] = useState<number | null>(null);
 
   const starSizes = {
+    xs: "w-4 h-4",
     sm: "w-5 h-5",
     md: "w-7 h-7",
     lg: "w-9 h-9",
@@ -98,7 +103,9 @@ export default function StarRating({
               <Star
                 className={`w-full h-full transition-colors ${
                   displayRating && value <= displayRating
-                    ? "fill-yellow-400 text-yellow-400"
+                    ? useThemeColor
+                      ? "fill-primary text-primary"
+                      : "fill-yellow-400 text-yellow-400"
                     : "fill-none text-gray-300 dark:text-gray-600"
                 }`}
               />
@@ -119,9 +126,13 @@ export default function StarRating({
         )}
       </div>
 
-      {showLabel && displayRating && (
+      {showLabel && (
         <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          {RATING_LABELS[displayRating]}
+          {displayRating
+            ? RATING_LABELS[displayRating]
+            : showPlaceholder
+            ? "No Review Yet"
+            : ""}
         </p>
       )}
     </div>

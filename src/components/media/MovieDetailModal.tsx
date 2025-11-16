@@ -1,17 +1,10 @@
-/**
- * @deprecated This component will be migrated to use the unified MediaDetailModal.
- * For new features, consider using MediaDetailModal from @/components/shared instead.
- * This component shares 90% of its structure with GameDetailModal and BookDetailModal.
- * Future work: Migrate to MediaDetailModal to eliminate ~600 lines of duplicated code.
- */
-
 import { useState, useEffect } from "react";
-import { Loader2, Award, DollarSign, Calendar, Clock } from "lucide-react";
+import { Loader2, Calendar, Clock } from "lucide-react";
 import MediaDetailModal from "../shared/MediaDetailModal";
+import MediaMetrics from "../shared/MediaMetrics";
 import Button from "../shared/Button";
 import { MovieCrewInfo } from "./movie/MovieCrewInfo";
 import { MovieCastList } from "./movie/MovieCastList";
-import { MovieReviewForm } from "./movie/MovieReviewForm";
 import { SimilarMoviesCarousel } from "./SimilarMoviesCarousel";
 import {
   fetchDetailedMediaInfo,
@@ -33,6 +26,8 @@ import {
 } from "../../hooks/useSimpleMediaReviews";
 import { useAuth } from "../../contexts/AuthContext";
 import type { MetadataItem } from "../shared/MetadataRow";
+
+type MediaStatus = "planned" | "in-progress" | "completed" | "dropped";
 
 interface MovieDetailModalProps {
   isOpen: boolean;
@@ -191,11 +186,25 @@ export default function MovieDetailModal({
     await toggleWatched.mutateAsync(item.id);
   };
 
-  const handleRemoveFromWatchlist = async () => {
+  const handleStatusChange = (newStatus: MediaStatus) => {
+    // Map status to watched boolean
+    // For now, we'll just toggle watched on/off based on completed vs other states
+    // In the future, this should update a proper status field
+    if (newStatus === "completed" && !item.watched) {
+      void handleToggleWatched();
+    } else if (newStatus !== "completed" && item.watched) {
+      void handleToggleWatched();
+    }
+  };
+
+  const handleRemoveFromWatchlist = () => {
     // This should be handled by the parent component
     // Just close the modal for now
     onClose();
   };
+
+  // Map watched boolean to status
+  const currentStatus: MediaStatus = item.watched ? "completed" : "planned";
 
   const releaseYear = item.release_date
     ? new Date(item.release_date).getFullYear()
@@ -204,19 +213,26 @@ export default function MovieDetailModal({
   // Build metadata array
   const metadata: MetadataItem[] = [
     ...(releaseYear
-      ? [{ icon: <Calendar className="w-4 h-4" />, label: String(releaseYear) }]
+      ? [
+          {
+            icon: Calendar,
+            value: String(releaseYear),
+            label: String(releaseYear),
+          },
+        ]
       : []),
     ...(details?.runtime
       ? [
           {
-            icon: <Clock className="w-4 h-4" />,
+            icon: Clock,
+            value: `${details.runtime}min`,
             label: `${details.runtime}min`,
           },
         ]
       : []),
   ];
 
-  // Build additional content (crew, cast, awards, box office)
+  // Build additional content (crew, cast, awards, box office, critic ratings)
   const additionalContent = details ? (
     <>
       {/* Crew */}
@@ -233,111 +249,24 @@ export default function MovieDetailModal({
         <MovieCastList cast={details.cast} />
       )}
 
-      {/* Awards */}
-      {details.awards_text && (
-        <div>
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">
-            <Award className="w-4 h-4" />
-            Awards
-          </h3>
-          <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
-            {details.awards_text}
-          </p>
-        </div>
-      )}
-
-      {/* Box Office */}
-      {details.box_office && (
-        <div>
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">
-            <DollarSign className="w-4 h-4" />
-            Box Office
-          </h3>
-          <p className="text-lg font-semibold text-gray-900 dark:text-white">
-            {details.box_office}
-          </p>
-        </div>
-      )}
-
-      {/* Recognition Badges (fallback) */}
-      {details.awards && details.awards.length > 0 && !details.awards_text && (
-        <div>
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">
-            Recognition
-          </h3>
-          <div className="flex flex-wrap gap-2" role="list">
-            {details.awards.map((award, index) => (
-              <span
-                key={index}
-                role="listitem"
-                className="px-3 py-1.5 text-sm bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg font-medium border border-purple-200 dark:border-purple-800"
-              >
-                {award}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Ratings (RT, Metacritic, IMDB) */}
-      {(details.rotten_tomatoes_score ||
-        details.metacritic_score ||
-        details.imdb_rating) && (
-        <div>
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">
-            Critic Ratings
-          </h3>
-          <div className="flex flex-wrap gap-4 text-sm">
-            {details.rotten_tomatoes_score && (
-              <div>
-                <span className="text-gray-600 dark:text-gray-400">RT: </span>
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  {details.rotten_tomatoes_score}%
-                </span>
-              </div>
-            )}
-            {details.metacritic_score && (
-              <div>
-                <span className="text-gray-600 dark:text-gray-400">
-                  Metacritic:{" "}
-                </span>
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  {details.metacritic_score}
-                </span>
-              </div>
-            )}
-            {details.imdb_rating && (
-              <div>
-                <span className="text-gray-600 dark:text-gray-400">IMDB: </span>
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  {details.imdb_rating}/10
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Critic Ratings, Awards, Box Office - all in one component */}
+      <MediaMetrics
+        criticRatings={{
+          rottenTomatoes: details.rotten_tomatoes_score
+            ? parseInt(details.rotten_tomatoes_score.replace("%", ""))
+            : undefined,
+          metacritic: details.metacritic_score
+            ? parseInt(details.metacritic_score)
+            : undefined,
+          imdb: details.imdb_rating
+            ? parseFloat(details.imdb_rating.replace("/10", ""))
+            : undefined,
+        }}
+        awards={details.awards_text || undefined}
+        boxOffice={details.box_office || undefined}
+      />
     </>
   ) : null;
-
-  // Build review section
-  const reviewSection = (
-    <MovieReviewForm
-      myReview={myReview}
-      friendsReviews={friendsReviews}
-      reviewText={reviewText}
-      rating={rating}
-      isPublic={isPublic}
-      isSaving={isSaving}
-      showSavedMessage={showSavedMessage}
-      hasUnsavedChanges={hasUnsavedChanges}
-      onReviewTextChange={setReviewText}
-      onRatingChange={setRating}
-      onPublicChange={setIsPublic}
-      onSave={() => void handleSaveReview()}
-      onDelete={handleDeleteReview}
-    />
-  );
 
   if (loading) {
     return (
@@ -350,15 +279,22 @@ export default function MovieDetailModal({
         metadata={[]}
         genres={[]}
         description=""
-        status={{
-          label: item.status || "planned",
-          isCompleted: item.watched,
-        }}
-        rating={rating}
-        onRatingChange={setRating}
-        onToggleStatus={handleToggleWatched}
-        onRecommend={() => {}}
+        status={currentStatus}
+        onStatusChange={handleStatusChange}
         onRemove={handleRemoveFromWatchlist}
+        myReview={myReview}
+        friendsReviews={friendsReviews}
+        rating={rating}
+        reviewText={reviewText}
+        isPublic={isPublic}
+        isSaving={isSaving}
+        showSavedMessage={showSavedMessage}
+        hasUnsavedChanges={hasUnsavedChanges}
+        onRatingChange={setRating}
+        onReviewTextChange={setReviewText}
+        onPublicChange={setIsPublic}
+        onSaveReview={handleSaveReview}
+        onDeleteReview={handleDeleteReview}
         additionalContent={
           <div className="flex flex-col items-center justify-center py-12">
             <Loader2 className="w-12 h-12 text-gray-400 animate-spin mb-4" />
@@ -382,15 +318,22 @@ export default function MovieDetailModal({
         metadata={[]}
         genres={[]}
         description=""
-        status={{
-          label: item.status || "planned",
-          isCompleted: item.watched,
-        }}
-        rating={rating}
-        onRatingChange={setRating}
-        onToggleStatus={handleToggleWatched}
-        onRecommend={() => {}}
+        status={currentStatus}
+        onStatusChange={handleStatusChange}
         onRemove={handleRemoveFromWatchlist}
+        myReview={myReview}
+        friendsReviews={friendsReviews}
+        rating={rating}
+        reviewText={reviewText}
+        isPublic={isPublic}
+        isSaving={isSaving}
+        showSavedMessage={showSavedMessage}
+        hasUnsavedChanges={hasUnsavedChanges}
+        onRatingChange={setRating}
+        onReviewTextChange={setReviewText}
+        onPublicChange={setIsPublic}
+        onSaveReview={handleSaveReview}
+        onDeleteReview={handleDeleteReview}
         additionalContent={
           <div className="flex flex-col items-center justify-center py-12">
             <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
@@ -413,18 +356,24 @@ export default function MovieDetailModal({
         posterUrl={item.poster_url || undefined}
         metadata={metadata}
         genres={details?.genres || []}
-        description={details?.overview || item.overview}
-        status={{
-          label: item.status || "planned",
-          isCompleted: item.watched,
-        }}
-        rating={rating}
-        onRatingChange={setRating}
-        onToggleStatus={handleToggleWatched}
-        onRecommend={() => {}}
+        description={details?.overview || item.overview || undefined}
+        status={currentStatus}
+        onStatusChange={handleStatusChange}
         onRemove={handleRemoveFromWatchlist}
+        myReview={myReview}
+        friendsReviews={friendsReviews}
+        rating={rating}
+        reviewText={reviewText}
+        isPublic={isPublic}
+        isSaving={isSaving}
+        showSavedMessage={showSavedMessage}
+        hasUnsavedChanges={hasUnsavedChanges}
+        onRatingChange={setRating}
+        onReviewTextChange={setReviewText}
+        onPublicChange={setIsPublic}
+        onSaveReview={handleSaveReview}
+        onDeleteReview={handleDeleteReview}
         additionalContent={additionalContent}
-        reviewSection={reviewSection}
       />
 
       {/* Similar Movies Carousel - rendered separately below modal */}

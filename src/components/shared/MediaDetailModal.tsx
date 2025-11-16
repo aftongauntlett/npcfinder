@@ -1,19 +1,13 @@
-import React from "react";
-import { X } from "lucide-react";
+import { X, Check, ArrowLeft, Trash2 } from "lucide-react";
 import Modal from "./Modal";
 import MediaPoster from "./MediaPoster";
-import MetadataRow, { MetadataItem } from "./MetadataRow";
-import GenreChips from "./GenreChips";
-import StarRating from "./StarRating";
-import StatusBadge from "./StatusBadge";
+import MediaHeader from "./MediaHeader";
+import MediaReview from "./MediaReview";
 import Button from "./Button";
+import type { MetadataItem } from "./MetadataRow";
 
 type MediaType = "movie" | "tv" | "book" | "game" | "music";
-
-interface StatusInfo {
-  label: string;
-  isCompleted: boolean;
-}
+type MediaStatus = "planned" | "in-progress" | "completed" | "dropped";
 
 interface MediaDetailModalProps {
   isOpen: boolean;
@@ -24,126 +18,178 @@ interface MediaDetailModalProps {
   metadata: MetadataItem[];
   genres?: string[] | string;
   description?: string;
-  status: StatusInfo;
-  rating: number | null;
-  onRatingChange: (rating: number | null) => void;
-  onToggleStatus: () => void;
-  onRecommend: () => void;
+  status: MediaStatus;
+  onStatusChange: (status: MediaStatus) => void;
   onRemove: () => void;
+  isInWatchlist?: boolean;
   additionalContent?: React.ReactNode;
-  reviewSection?: React.ReactNode;
+  // Review props
+  myReview?: {
+    id: string;
+    review_text: string | null;
+    rating: number | null;
+    is_edited?: boolean;
+    edited_at?: string | null;
+  } | null;
+  friendsReviews?: Array<{
+    id: string;
+    display_name?: string;
+    review_text: string | null;
+    rating: number | null;
+  }>;
+  rating: number | null;
+  reviewText: string;
+  isPublic: boolean;
+  isSaving?: boolean;
+  showSavedMessage?: boolean;
+  hasUnsavedChanges?: boolean;
+  onRatingChange: (rating: number | null) => void;
+  onReviewTextChange: (text: string) => void;
+  onPublicChange: (isPublic: boolean) => void;
+  onSaveReview: () => void;
+  onDeleteReview?: () => void;
+  maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "4xl" | "5xl" | "6xl";
 }
 
 export default function MediaDetailModal({
   isOpen,
   onClose,
-  mediaType,
   title,
   posterUrl,
   metadata,
   genres,
   description,
   status,
-  rating,
-  onRatingChange,
-  onToggleStatus,
-  onRecommend,
+  onStatusChange,
   onRemove,
+  isInWatchlist = true,
   additionalContent,
-  reviewSection,
+  myReview,
+  friendsReviews = [],
+  rating,
+  reviewText,
+  isPublic,
+  isSaving = false,
+  showSavedMessage = false,
+  hasUnsavedChanges = false,
+  onRatingChange,
+  onReviewTextChange,
+  onPublicChange,
+  onSaveReview,
+  onDeleteReview,
+  maxWidth = "5xl",
 }: MediaDetailModalProps) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
-      <div className="relative max-h-[85vh] overflow-y-auto">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth={maxWidth}
+      showHeader={false}
+    >
+      <div className="relative">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-colors"
+          className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 hover:scale-110 active:scale-95 transition-all duration-200 shadow-lg hover:shadow-xl"
           aria-label="Close modal"
         >
           <X className="w-5 h-5" />
         </button>
 
-        {/* Content */}
-        <div className="flex flex-col sm:flex-row gap-8 p-6">
-          {/* Poster */}
-          <div className="flex-shrink-0">
-            <MediaPoster
-              src={posterUrl}
-              alt={`${title} poster`}
-              size="lg"
-              aspectRatio="2/3"
-            />
-          </div>
-
-          {/* Divider */}
-          <div className="hidden sm:block w-px bg-gradient-to-b from-transparent via-gray-300 dark:via-gray-700 to-transparent" />
-
-          {/* Info Section */}
-          <div className="flex-1 min-w-0 space-y-4">
-            {/* Title */}
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {title}
-            </h2>
-
-            {/* Metadata */}
-            {metadata.length > 0 && <MetadataRow items={metadata} />}
-
-            {/* Genres */}
-            {genres && <GenreChips genres={genres} maxVisible={5} />}
-
-            {/* Status Badge */}
-            <div>
-              <StatusBadge status={status.label} mediaType={mediaType} />
-            </div>
-
-            {/* Rating */}
-            <div>
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Your Rating
-              </h3>
-              <StarRating
-                rating={rating}
-                onRatingChange={onRatingChange}
-                showClearButton={true}
+        {/* Content - Single Column with Sticky Sidebar */}
+        <div className="flex flex-col lg:flex-row gap-8 p-6 max-h-[85vh] overflow-y-auto">
+          {/* Poster Sidebar */}
+          <div className="flex-shrink-0 lg:sticky lg:top-0 lg:self-start space-y-4">
+            <div className="group">
+              <MediaPoster
+                src={posterUrl}
+                alt={`${title} poster`}
+                size="lg"
+                aspectRatio="2/3"
+                className="mx-auto lg:mx-0 transition-transform duration-300 group-hover:scale-[1.02]"
               />
             </div>
 
-            {/* Description */}
-            {description && (
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-2.5">
+              <Button
+                onClick={() =>
+                  onStatusChange(
+                    status === "completed" ? "planned" : "completed"
+                  )
+                }
+                variant={status === "completed" ? "secondary" : "primary"}
+                fullWidth
+                className="group"
+              >
+                <span className="flex items-center justify-center gap-2">
+                  <span className="group-hover:animate-wiggle inline-block">
+                    {status === "completed" ? (
+                      <ArrowLeft className="w-4 h-4" />
+                    ) : (
+                      <Check className="w-4 h-4" />
+                    )}
+                  </span>
+                  {status === "completed" ? "Move Back" : "Mark as Watched"}
+                </span>
+              </Button>
+
+              {isInWatchlist && (
+                <Button
+                  onClick={onRemove}
+                  variant="danger"
+                  fullWidth
+                  className="group"
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="group-hover:animate-wiggle inline-block">
+                      <Trash2 className="w-4 h-4" />
+                    </span>
+                    Remove from List
+                  </span>
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Main Content Column */}
+          <div className="flex-1 min-w-0">
+            {/* Header: Title, Metadata, Genres */}
+            <div className="pb-5">
+              <MediaHeader title={title} metadata={metadata} genres={genres} />
+            </div>
+
+            {/* Overview Section - includes description, crew, and metrics */}
+            {(description || additionalContent) && (
+              <div className="pb-5">
+                <h3 className="text-sm font-medium text-primary mb-2.5 mt-0">
                   Overview
                 </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                  {description}
-                </p>
+                {description && (
+                  <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed m-0">
+                    {description}
+                  </p>
+                )}
+                {additionalContent}
               </div>
             )}
 
-            {/* Additional Content (Cast, Awards, etc.) */}
-            {additionalContent && <div>{additionalContent}</div>}
-
-            {/* Action Buttons */}
-            <div className="flex flex-wrap gap-3 pt-2">
-              <Button
-                onClick={onToggleStatus}
-                variant={status.isCompleted ? "secondary" : "primary"}
-              >
-                {status.isCompleted ? "Mark as Incomplete" : "Mark as Complete"}
-              </Button>
-
-              <Button onClick={onRecommend} variant="secondary">
-                Recommend to Friend
-              </Button>
-
-              <Button onClick={onRemove} variant="danger">
-                Remove from List
-              </Button>
-            </div>
-
             {/* Review Section */}
-            {reviewSection && <div className="mt-6">{reviewSection}</div>}
+            <MediaReview
+              myReview={myReview}
+              friendsReviews={friendsReviews}
+              rating={rating}
+              reviewText={reviewText}
+              isPublic={isPublic}
+              isSaving={isSaving}
+              showSavedMessage={showSavedMessage}
+              hasUnsavedChanges={hasUnsavedChanges}
+              onRatingChange={onRatingChange}
+              onReviewTextChange={onReviewTextChange}
+              onPublicChange={onPublicChange}
+              onSave={onSaveReview}
+              onDelete={onDeleteReview}
+            />
           </div>
         </div>
       </div>

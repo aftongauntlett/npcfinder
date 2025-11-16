@@ -92,7 +92,7 @@ export default function PrivacyToggle({
     <div className={`space-y-3 ${className}`}>
       <Button
         type="button"
-        variant="outline"
+        variant="secondary"
         onClick={handleToggle}
         onKeyDown={handleKeyDown}
         className={`w-full justify-start gap-3 ${

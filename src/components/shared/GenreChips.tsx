@@ -56,7 +56,9 @@ export default function GenreChips({
           role="listitem"
           className={`font-medium ${
             sizeClasses[size]
-          } ${roundedClass} ${getGenreColor(genre)}`}
+          } ${roundedClass} ${getGenreColor(
+            genre
+          )} hover:opacity-80 transition-opacity duration-200 cursor-default`}
         >
           {genre}
         </span>
@@ -69,7 +71,12 @@ export default function GenreChips({
           title={`Show ${remainingCount} more genre${
             remainingCount !== 1 ? "s" : ""
           }: ${genreArray.slice(maxVisible || 0).join(", ")}`}
-          className={`font-medium ${sizeClasses[size]} ${roundedClass} bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors cursor-pointer`}
+          className="px-3 py-1 text-xs font-medium rounded-full
+                     bg-purple-100 dark:bg-purple-900/30
+                     text-purple-700 dark:text-purple-300
+                     border border-purple-200 dark:border-purple-800
+                     hover:bg-purple-200 dark:hover:bg-purple-900/50
+                     transition-colors duration-200"
           aria-label={`Show ${remainingCount} more genres`}
         >
           +{remainingCount} more

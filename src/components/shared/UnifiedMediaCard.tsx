@@ -21,6 +21,58 @@ interface UnifiedMediaCardProps {
   className?: string;
 }
 
+/**
+ * UnifiedMediaCard - Primary reusable card component for grid/tile views of all media types
+ *
+ * This is the universal card component used across the application for displaying media items
+ * in grid or tile layouts. It supports all media types (movie, tv, book, game, music) with
+ * consistent design and interactions.
+ *
+ * Features:
+ * - Poster image with intelligent fallback icons based on mediaType
+ * - Hover overlay showing title, year, and rating
+ * - Status badge for tracking progress (watching, reading, playing, etc.)
+ * - Consistent hover effects and animations
+ * - Responsive design with mobile optimizations
+ * - Keyboard accessibility (Enter/Space to activate)
+ *
+ * When to use:
+ * - Grid/tile views of media collections
+ * - Card-based layouts (as opposed to list views)
+ * - Browse pages, search results, recommendations
+ *
+ * For list views, use MediaListItem instead.
+ *
+ * Props:
+ * @param {MediaType} mediaType - Determines icon fallback and type-specific styling
+ *                                 (movie, tv, book, game, music)
+ * @param {string} subtitle - Creator info: director (movies/TV), author (books),
+ *                           artist (music), developer (games if available)
+ * @param {boolean} showOverlay - Whether to show title/year/rating on hover (default: true)
+ * @param {string} status - Display status badge (e.g., "watching", "read", "playing")
+ *
+ * @example
+ * // Movie card
+ * <UnifiedMediaCard
+ *   mediaType="movie"
+ *   title="Inception"
+ *   subtitle="Christopher Nolan"
+ *   year={2010}
+ *   posterUrl="..."
+ *   personalRating={5}
+ *   onClick={handleClick}
+ * />
+ *
+ * @example
+ * // Book card without overlay
+ * <UnifiedMediaCard
+ *   mediaType="book"
+ *   title="1984"
+ *   subtitle="George Orwell"
+ *   showOverlay={false}
+ *   onClick={handleClick}
+ * />
+ */
 export default function UnifiedMediaCard({
   id,
   title,
