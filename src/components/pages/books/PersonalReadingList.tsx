@@ -1,15 +1,15 @@
 import React, { useState, useRef, useMemo, useCallback } from "react";
 import { BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
-import { MediaItem } from "../../shared/SendMediaModal";
-import SearchBookModal from "../../shared/SearchBookModal";
+import { MediaItem } from "../../shared/media/SendMediaModal";
+import SearchBookModal from "../../shared/search/SearchBookModal";
 import BookDetailModal from "./BookDetailModal";
 import MediaEmptyState from "../../media/MediaEmptyState";
 import MediaListItem from "../../media/MediaListItem";
-import { FilterSortSection } from "../../shared/FilterSortMenu";
-import SendMediaModal from "../../shared/SendMediaModal";
+import { FilterSortSection } from "../../shared/common/FilterSortMenu";
+import SendMediaModal from "../../shared/media/SendMediaModal";
 import Toast from "../../ui/Toast";
-import Button from "../../shared/Button";
-import { MediaPageToolbar } from "../../shared/MediaPageToolbar";
+import Button from "../../shared/ui/Button";
+import { MediaPageToolbar } from "../../shared/media/MediaPageToolbar";
 import { useMediaFiltering } from "../../../hooks/useMediaFiltering";
 import { searchBooks } from "../../../utils/bookSearchAdapters";
 import {

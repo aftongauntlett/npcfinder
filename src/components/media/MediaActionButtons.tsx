@@ -1,6 +1,6 @@
 import React from "react";
-import { Shuffle, List } from "lucide-react";
-import Button from "../shared/Button";
+import { Plus, X } from "lucide-react";
+import { Button } from "@/components/shared";
 
 interface MediaActionButtonsProps {
   onRandomClick: () => void;

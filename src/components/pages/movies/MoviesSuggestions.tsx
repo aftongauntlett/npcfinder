@@ -1,23 +1,22 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { Clapperboard, Tv as TvIcon } from "lucide-react";
-import SendMediaModal from "../../shared/SendMediaModal";
+import {
+  SendMediaModal,
+  MediaRecommendationCard,
+  GroupedSentMediaCard,
+  InlineRecommendationsLayout,
+  type BaseRecommendation,
+} from "@/components/shared";
 import { searchMoviesAndTV } from "../../../utils/mediaSearchAdapters";
-import MediaRecommendationCard from "../../shared/MediaRecommendationCard";
-import GroupedSentMediaCard from "../../shared/GroupedSentMediaCard";
-import { InlineRecommendationsLayout } from "../../shared/InlineRecommendationsLayout";
-import type { BaseRecommendation } from "../../shared/types";
 import ContentLayout from "../../layouts/ContentLayout";
 import MainLayout from "../../layouts/MainLayout";
-import { useAuth } from "../../../contexts/AuthContext";
 import {
-  useFriendsWithMovieRecs,
-  useMovieStats,
-  useMovieRecommendations,
   useUpdateMovieRecommendationStatus,
   useDeleteMovieRecommendation,
   useUpdateSenderNote,
   useUpdateRecipientNote,
 } from "../../../hooks/useMovieQueries";
+import { useMovieRecommendationsData } from "../../../hooks/useMovieRecommendationsData";
 import MovieDiscoveryCard from "../../media/MovieDiscoveryCard";
 
 // Extend BaseRecommendation with movie-specific fields
@@ -46,67 +45,19 @@ const MoviesSuggestions: React.FC<MoviesSuggestionsProps> = ({
   embedded = false,
 }) => {
   const [showSendModal, setShowSendModal] = useState(false);
-  const { user } = useAuth();
 
-  // TanStack Query hooks
-  const { data: friendsWithRecs = [], isLoading: friendsLoading } =
-    useFriendsWithMovieRecs();
-  const { data: quickStats = { hits: 0, misses: 0, queue: 0, sent: 0 } } =
-    useMovieStats();
-
-  // Fetch all recommendation types
-  const { data: hitsData = [] } = useMovieRecommendations("hits");
-  const { data: missesData = [] } = useMovieRecommendations("misses");
-  const { data: sentData = [] } = useMovieRecommendations("sent");
-  const { data: pendingData = [] } = useMovieRecommendations("queue");
-
-  const loading = friendsLoading;
-
-  // Create name lookup map from all data sources
-  const userNameMap = useMemo(() => {
-    const map = new Map<string, string>();
-
-    // Add senders from friends list
-    friendsWithRecs.forEach((friend) => {
-      map.set(friend.user_id, friend.display_name);
-    });
-
-    // Add names from hits data (sender_name)
-    hitsData.forEach((rec) => {
-      if (rec.sender_name && rec.from_user_id) {
-        map.set(rec.from_user_id, rec.sender_name);
-      }
-    });
-
-    // Add names from misses data (sender_name)
-    missesData.forEach((rec) => {
-      if (rec.sender_name && rec.from_user_id) {
-        map.set(rec.from_user_id, rec.sender_name);
-      }
-    });
-
-    // Add names from pending data (sender_name)
-    pendingData.forEach((rec) => {
-      if (rec.sender_name && rec.from_user_id) {
-        map.set(rec.from_user_id, rec.sender_name);
-      }
-    });
-
-    // Add recipients from sent data (recipient_name)
-    sentData.forEach((rec) => {
-      if (rec.recipient_name && rec.to_user_id) {
-        map.set(rec.to_user_id, rec.recipient_name);
-      }
-    });
-
-    return map;
-  }, [friendsWithRecs, hitsData, missesData, pendingData, sentData]);
-
-  // Filter out self from friends list
-  const filteredFriendsWithRecs = useMemo(() => {
-    if (!user) return friendsWithRecs;
-    return friendsWithRecs.filter((friend) => friend.user_id !== user.id);
-  }, [friendsWithRecs, user]);
+  // Use data transformation hook - returns fully-shaped data ready for rendering
+  const {
+    hits,
+    misses,
+    sent,
+    queue,
+    friendRecommendations,
+    friendsWithRecs: filteredFriendsWithRecs,
+    quickStats,
+    userNameMap,
+    loading,
+  } = useMovieRecommendationsData();
 
   // Mutations
   const updateStatusMutation = useUpdateMovieRecommendationStatus();
@@ -296,83 +247,6 @@ const MoviesSuggestions: React.FC<MoviesSuggestionsProps> = ({
       />
     );
   };
-
-  // Transform data for inline layout
-  const hits: MovieRecommendation[] = (hitsData || []).map((rec) => ({
-    ...rec,
-    sent_message: rec.sent_message ?? null,
-    comment: rec.recipient_note ?? null,
-    sender_comment: rec.sender_note ?? null,
-    sent_at: rec.created_at,
-    poster_url: rec.poster_url ?? null,
-    watched_at: rec.watched_at ?? null,
-    consumed_at: rec.watched_at ?? null,
-    overview: rec.overview ?? null,
-    release_date: rec.year ? `${rec.year}` : null,
-    media_type: rec.media_type,
-    status: "hit" as const,
-  }));
-
-  const misses: MovieRecommendation[] = (missesData || []).map((rec) => ({
-    ...rec,
-    sent_message: rec.sent_message ?? null,
-    comment: rec.recipient_note ?? null,
-    sender_comment: rec.sender_note ?? null,
-    sent_at: rec.created_at,
-    poster_url: rec.poster_url ?? null,
-    watched_at: rec.watched_at ?? null,
-    consumed_at: rec.watched_at ?? null,
-    overview: rec.overview ?? null,
-    release_date: rec.year ? `${rec.year}` : null,
-    media_type: rec.media_type,
-    status: "miss" as const,
-  }));
-
-  const sent: MovieRecommendation[] = (sentData || []).map((rec) => ({
-    ...rec,
-    sent_message: rec.sent_message ?? null,
-    comment: rec.recipient_note ?? null,
-    sender_comment: rec.sender_note ?? null,
-    sent_at: rec.created_at,
-    poster_url: rec.poster_url ?? null,
-    watched_at: rec.watched_at ?? null,
-    consumed_at: rec.watched_at ?? null,
-    overview: rec.overview ?? null,
-    release_date: rec.year ? `${rec.year}` : null,
-    media_type: rec.media_type,
-    status:
-      rec.status === "consumed" || rec.status === "watched"
-        ? "watched"
-        : rec.status,
-  }));
-
-  // Build friend recommendations map from pending data
-  const friendRecommendations = new Map<string, MovieRecommendation[]>();
-
-  // Transform pending data
-  const pendingRecs: MovieRecommendation[] = (pendingData || []).map((rec) => ({
-    ...rec,
-    sent_message: rec.sent_message ?? null,
-    comment: rec.recipient_note ?? null,
-    sender_comment: rec.sender_note ?? null,
-    sent_at: rec.created_at,
-    poster_url: rec.poster_url ?? null,
-    watched_at: rec.watched_at ?? null,
-    consumed_at: rec.watched_at ?? null,
-    overview: rec.overview ?? null,
-    release_date: rec.year ? `${rec.year}` : null,
-    media_type: rec.media_type,
-    status: "pending" as const,
-  }));
-
-  // Group by sender
-  pendingRecs.forEach((rec) => {
-    const senderId = rec.from_user_id;
-    if (!friendRecommendations.has(senderId)) {
-      friendRecommendations.set(senderId, []);
-    }
-    friendRecommendations.get(senderId)!.push(rec);
-  });
 
   const content = (
     <>

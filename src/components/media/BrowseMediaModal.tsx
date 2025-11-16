@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { X, Search, Plus, Loader } from "lucide-react";
 import FocusTrap from "focus-trap-react";
-import UnifiedMediaCard from "../shared/UnifiedMediaCard";
-import Button from "../shared/Button";
+import { UnifiedMediaCard, Button } from "@/components/shared";
 
 interface BrowseMediaModalProps {
   isOpen: boolean;

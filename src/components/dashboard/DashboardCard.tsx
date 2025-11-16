@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import SparkleEffect from "../effects/SparkleEffect";
-import Button from "../shared/Button";
+import { Button } from "@/components/shared";
 
 interface DashboardCardProps {
   title: string;

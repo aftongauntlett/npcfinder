@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { signIn, signUp } from "../../lib/auth";
-import Button from "../shared/Button";
-import Input from "../shared/Input";
+import { Button, Input } from "@/components/shared";
 
 /**
  * Authentication page with login and signup forms

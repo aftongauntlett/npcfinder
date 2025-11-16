@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import { Calendar, FileText, Hash } from "lucide-react";
-import MediaDetailModal from "../../shared/MediaDetailModal";
-import Accordion from "../../shared/Accordion";
-import StarRating from "../../shared/StarRating";
+import MediaDetailModal from "../../shared/media/MediaDetailModal";
+import Accordion from "../../shared/common/Accordion";
+import StarRating from "../../shared/common/StarRating";
 import type { ReadingListItem } from "../../../services/booksService.types";
 import {
   useUpdateBookRating,
   useUpdateBookNotes,
 } from "../../../hooks/useReadingListQueries";
-import type { MetadataItem } from "../../shared/MetadataRow";
+import type { MetadataItem } from "../../shared/common/MetadataRow";
 
 type MediaStatus = "planned" | "in-progress" | "completed" | "dropped";
 

@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { X, Search, UserPlus, Users, Check } from "lucide-react";
-import { useUserSearch, useCreateConnection } from "../../hooks/useUserSearch";
-import Button from "./Button";
+import {
+  useUserSearch,
+  useCreateConnection,
+} from "../../../hooks/useUserSearch";
+import Button from "../ui/Button";
 
 interface FriendSearchModalProps {
   isOpen: boolean;
@@ -256,3 +259,5 @@ export function FriendSearchModal({ isOpen, onClose }: FriendSearchModalProps) {
     </div>
   );
 }
+
+export default FriendSearchModal;

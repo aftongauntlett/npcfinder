@@ -1,6 +1,6 @@
 import React from "react";
-import { LucideIcon } from "lucide-react";
-import Button from "../shared/Button";
+import { Film, Tv } from "lucide-react";
+import { Button } from "@/components/shared";
 
 export interface FilterOption {
   id: string;

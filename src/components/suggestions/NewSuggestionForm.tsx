@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { Plus, X } from "lucide-react";
-import Button from "../shared/Button";
-import Input from "../shared/Input";
-import Textarea from "../shared/Textarea";
+import { Button, Input, Textarea } from "@/components/shared";
 
 interface SuggestionFormData {
   title: string;

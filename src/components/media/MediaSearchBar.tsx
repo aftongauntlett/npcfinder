@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Search, X } from "lucide-react";
-import Button from "../shared/Button";
+import { Button } from "@/components/shared";
 
 interface MediaSearchBarProps {
   onSearch: (query: string) => void;

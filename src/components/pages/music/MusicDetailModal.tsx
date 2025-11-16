@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { Calendar, Disc, Music2 } from "lucide-react";
-import MediaDetailModal from "../../shared/MediaDetailModal";
+import MediaDetailModal from "../../shared/media/MediaDetailModal";
 import type { MusicLibraryItem } from "../../../services/musicService.types";
 import {
   useUpdateMusicRating,
   useUpdateMusicNotes,
 } from "../../../hooks/useMusicLibraryQueries";
-import type { MetadataItem } from "../../shared/MetadataRow";
+import type { MetadataItem } from "../../shared/common/MetadataRow";
 
 type MediaStatus = "planned" | "in-progress" | "completed" | "dropped";
 

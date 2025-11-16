@@ -3,7 +3,7 @@
  * Converts Google Books API responses to our MediaItem format
  */
 
-import { MediaItem } from "../components/shared/SendMediaModal";
+import { MediaItem } from "@/components/shared";
 
 const GOOGLE_BOOKS_API_KEY = import.meta.env.VITE_GOOGLE_BOOKS_API_KEY;
 const GOOGLE_BOOKS_BASE_URL = "https://www.googleapis.com/books/v1/volumes";

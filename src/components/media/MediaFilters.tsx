@@ -1,6 +1,6 @@
 import React from "react";
-import { ChevronDown } from "lucide-react";
-import Button from "../shared/Button";
+import { Filter } from "lucide-react";
+import { Button } from "@/components/shared";
 
 type FilterType = "select" | "buttons";
 

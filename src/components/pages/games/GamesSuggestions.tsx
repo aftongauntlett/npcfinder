@@ -1,11 +1,13 @@
 import React, { useState, useMemo } from "react";
 import { Gamepad2 } from "lucide-react";
-import SendMediaModal from "../../shared/SendMediaModal";
+import {
+  SendMediaModal,
+  MediaRecommendationCard,
+  GroupedSentMediaCard,
+  InlineRecommendationsLayout,
+  type BaseRecommendation,
+} from "@/components/shared";
 import { searchGames } from "../../../utils/mediaSearchAdapters";
-import MediaRecommendationCard from "../../shared/MediaRecommendationCard";
-import GroupedSentMediaCard from "../../shared/GroupedSentMediaCard";
-import { InlineRecommendationsLayout } from "../../shared/InlineRecommendationsLayout";
-import type { BaseRecommendation } from "../../shared/types";
 import ContentLayout from "../../layouts/ContentLayout";
 import MainLayout from "../../layouts/MainLayout";
 import { useAuth } from "../../../contexts/AuthContext";

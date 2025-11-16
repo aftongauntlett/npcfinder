@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
 import { Loader2, Calendar, Clock } from "lucide-react";
-import MediaDetailModal from "../shared/MediaDetailModal";
-import MediaMetrics from "../shared/MediaMetrics";
-import Button from "../shared/Button";
-import { MediaCrewInfo } from "../shared/MediaCrewInfo";
-import { MediaCastList } from "../shared/MediaCastList";
-import SendMediaModal from "../shared/SendMediaModal";
+import {
+  MediaDetailModal,
+  MediaMetrics,
+  Button,
+  MediaCrewInfo,
+  MediaCastList,
+  SendMediaModal,
+  type MetadataItem,
+} from "@/components/shared";
 import { SimilarMoviesCarousel } from "./SimilarMoviesCarousel";
 import {
   fetchDetailedMediaInfo,
@@ -27,7 +30,6 @@ import {
   useDeleteMediaReview,
 } from "../../hooks/useSimpleMediaReviews";
 import { useAuth } from "../../contexts/AuthContext";
-import type { MetadataItem } from "../shared/MetadataRow";
 
 type MediaStatus = "planned" | "in-progress" | "completed" | "dropped";
 

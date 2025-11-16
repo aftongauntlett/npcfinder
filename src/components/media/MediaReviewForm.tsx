@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
-import Textarea from "../shared/Textarea";
-import Button from "../shared/Button";
-import StarRating from "../shared/StarRating";
-import PrivacyToggle from "../shared/PrivacyToggle";
+import {
+  Textarea,
+  Button,
+  StarRating,
+  PrivacyToggle,
+} from "@/components/shared";
 import type {
   MediaReview,
   CreateReviewData,

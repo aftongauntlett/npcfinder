@@ -1,12 +1,12 @@
 import React, { useState, useCallback, useMemo } from "react";
 import { Gamepad2, ChevronLeft, ChevronRight } from "lucide-react";
-import Button from "../../shared/Button";
+import Button from "../../shared/ui/Button";
 import MediaEmptyState from "../../media/MediaEmptyState";
 import MediaListItem from "../../media/MediaListItem";
-import { FilterSortSection } from "../../shared/FilterSortMenu";
-import { MediaPageToolbar } from "../../shared/MediaPageToolbar";
-import SendMediaModal from "../../shared/SendMediaModal";
-import SearchGameModal from "../../shared/SearchGameModal";
+import { FilterSortSection } from "../../shared/common/FilterSortMenu";
+import { MediaPageToolbar } from "../../shared/media/MediaPageToolbar";
+import SendMediaModal from "../../shared/media/SendMediaModal";
+import SearchGameModal from "../../shared/search/SearchGameModal";
 import GameDetailModal from "./GameDetailModal";
 import Toast from "../../ui/Toast";
 import { useMediaFiltering } from "../../../hooks/useMediaFiltering";
@@ -18,7 +18,7 @@ import {
   useDeleteFromGameLibrary,
 } from "../../../hooks/useGameLibraryQueries";
 import type { GameLibraryItem } from "../../../hooks/useGameLibraryQueries";
-import type { MediaItem } from "../../shared/SendMediaModal";
+import type { MediaItem } from "../../shared/media/SendMediaModal";
 
 type FilterType = "all" | "to-play" | "played";
 type SortType = "date-added" | "name" | "year" | "rating";

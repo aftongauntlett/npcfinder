@@ -1,6 +1,6 @@
 import React from "react";
 import MainLayout from "./MainLayout";
-import Footer from "../shared/Footer";
+import { Footer } from "@/components/shared";
 
 interface Tab {
   id: string;

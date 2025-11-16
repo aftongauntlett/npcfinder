@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Search, Plus, Check, BookOpen } from "lucide-react";
-import { searchBooks } from "../../utils/bookSearchAdapters";
-import { MediaItem } from "./SendMediaModal";
-import Modal from "./Modal";
-import { useTheme } from "../../hooks/useTheme";
-import { formatReleaseDate } from "../../utils/dateFormatting";
+import { searchBooks } from "../../../utils/bookSearchAdapters";
+import { MediaItem } from "../media/SendMediaModal";
+import Modal from "../ui/Modal";
+import { useTheme } from "../../../hooks/useTheme";
+import { formatReleaseDate } from "../../../utils/dateFormatting";
 
 interface SearchBookModalProps {
   onClose: () => void;

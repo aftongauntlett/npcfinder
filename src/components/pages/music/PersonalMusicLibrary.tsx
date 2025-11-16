@@ -6,15 +6,15 @@ import {
   ChevronRight,
   Music,
 } from "lucide-react";
-import { MediaItem } from "../../shared/SendMediaModal";
-import SearchMusicModal from "../../shared/SearchMusicModal";
+import { MediaItem } from "../../shared/media/SendMediaModal";
+import SearchMusicModal from "../../shared/search/SearchMusicModal";
 import MusicDetailModal from "./MusicDetailModal";
 import MediaEmptyState from "../../media/MediaEmptyState";
 import MediaListItem from "../../media/MediaListItem";
-import SendMediaModal from "../../shared/SendMediaModal";
+import SendMediaModal from "../../shared/media/SendMediaModal";
 import Toast from "../../ui/Toast";
-import Button from "../../shared/Button";
-import { MediaPageToolbar } from "../../shared/MediaPageToolbar";
+import Button from "../../shared/ui/Button";
+import { MediaPageToolbar } from "../../shared/media/MediaPageToolbar";
 import { searchMusic } from "../../../utils/mediaSearchAdapters";
 import {
   useMusicLibrary,

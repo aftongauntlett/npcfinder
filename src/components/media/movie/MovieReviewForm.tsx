@@ -1,8 +1,8 @@
 import { Star, Check, Users as UsersIcon } from "lucide-react";
-import Button from "../../shared/Button";
-import Accordion from "../../shared/Accordion";
-import StarRating from "../../shared/StarRating";
-import PrivacyToggle from "../../shared/PrivacyToggle";
+import Button from "../../shared/ui/Button";
+import Accordion from "../../shared/common/Accordion";
+import StarRating from "../../shared/common/StarRating";
+import PrivacyToggle from "../../shared/common/PrivacyToggle";
 
 interface Review {
   id: string;

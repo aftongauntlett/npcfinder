@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import { Search, UserPlus, Users, Check } from "lucide-react";
-import { useUserSearch, useCreateConnection } from "../../hooks/useUserSearch";
-import Button from "./Button";
+import {
+  useUserSearch,
+  useCreateConnection,
+} from "../../../hooks/useUserSearch";
+import Button from "../ui/Button";
 
 /**
  * UserSearch Component
@@ -151,3 +154,5 @@ export function UserSearch() {
     </div>
   );
 }
+
+export default UserSearch;

@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { X, Undo } from "lucide-react";
-import Button from "../shared/Button";
+import { Button } from "@/components/shared";
 
 interface ToastProps {
   message: string;

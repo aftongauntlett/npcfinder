@@ -15,11 +15,11 @@ import {
 } from "lucide-react";
 import MainLayout from "../../layouts/MainLayout";
 import ContentLayout from "../../layouts/ContentLayout";
-import ConfirmationModal from "../../shared/ConfirmationModal";
-import StatCard from "../../shared/StatCard";
-import Button from "../../shared/Button";
-import Input from "../../shared/Input";
-import EmptyState from "../../shared/EmptyState";
+import ConfirmationModal from "../../shared/ui/ConfirmationModal";
+import StatCard from "../../shared/common/StatCard";
+import Button from "../../shared/ui/Button";
+import Input from "../../shared/ui/Input";
+import EmptyState from "../../shared/common/EmptyState";
 import { useAdmin } from "../../../contexts/AdminContext";
 import {
   useAdminStats,

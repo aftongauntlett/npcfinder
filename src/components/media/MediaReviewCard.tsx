@@ -9,7 +9,7 @@ import {
   Trash2,
 } from "lucide-react";
 import type { MediaReviewWithUser } from "../../services/reviewsService.types";
-import Button from "../shared/Button";
+import { Button } from "@/components/shared";
 
 interface MediaReviewCardProps {
   review: MediaReviewWithUser;

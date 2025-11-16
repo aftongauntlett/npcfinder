@@ -8,7 +8,7 @@ import { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { Users, ChevronDown } from "lucide-react";
 import { logger } from "../../lib/logger";
-import Button from "../shared/Button";
+import { Button } from "@/components/shared";
 
 const DEV_TEST_USERS = [
   { id: "user-a-uuid-123", email: "alice@test.com", name: "Alice" },

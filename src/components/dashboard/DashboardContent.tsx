@@ -2,8 +2,7 @@ import React from "react";
 import { X } from "lucide-react";
 import { useDashboardStats } from "../../hooks/useDashboardStats";
 import { DashboardRecommendations } from "./DashboardRecommendations";
-import { UserSearch } from "../shared/UserSearch";
-import Button from "../shared/Button";
+import { UserSearch, Button } from "@/components/shared";
 
 interface DashboardContentProps {
   activeTab: string;

@@ -8,7 +8,7 @@ import {
   LinkedinLogo,
   ArrowUp,
 } from "@phosphor-icons/react";
-import StarryBackground from "../shared/StarryBackground";
+import { StarryBackground } from "@/components/shared";
 import LandingButton from "../landing/LandingButton";
 import HeroConstellation from "../effects/HeroConstellation";
 import { FeatureBlock } from "../landing/demo/FeatureBlock";

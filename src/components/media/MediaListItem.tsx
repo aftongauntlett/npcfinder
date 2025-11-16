@@ -6,12 +6,14 @@ import {
   ArrowCounterClockwise,
   Book,
 } from "@phosphor-icons/react";
-import { type MediaStatus } from "./mediaStatus";
-import ActionButtonGroup from "../shared/ActionButtonGroup";
-import GenreChips from "../shared/GenreChips";
-import StatusBadge from "../shared/StatusBadge";
-import StarRating from "../shared/StarRating";
-import MediaPoster from "../shared/MediaPoster";
+import { type MediaStatus } from "@/utils/mediaStatus";
+import {
+  ActionButtonGroup,
+  GenreChips,
+  StatusBadge,
+  StarRating,
+  MediaPoster,
+} from "@/components/shared";
 
 interface MediaListItemProps {
   id: string | number;

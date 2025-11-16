@@ -1,4 +1,4 @@
-import { MediaItem } from "../components/shared/SendMediaModal";
+import { MediaItem } from "@/components/shared";
 import { tmdbLimiter, itunesLimiter } from "./rateLimiter";
 
 // iTunes API response types

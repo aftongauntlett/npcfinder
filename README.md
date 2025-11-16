@@ -110,77 +110,80 @@ Evolving into a modular life dashboard beyond media - recipes, tasks, fitness, d
 - View user stats and activity
 - Manage connections
 
-## Architecture
+## Project Structure
 
-```
-src/
-├── components/         # React components
-│   ├── pages/         # Page-level components
-│   ├── layouts/       # Layout templates
-│   ├── shared/        # Reusable UI components
-│   └── media/         # Media-specific components
-├── contexts/          # React Context providers
-├── hooks/             # Custom React hooks
-├── lib/               # Core utilities and API clients
-├── services/          # Business logic layer
-└── utils/             # Helper functions
-```
+### Directory Organization
 
-**Patterns:**
+- **`/src/components/`** - React components organized by feature
 
-- TanStack Query for server state management
-- Service layer separates business logic from UI
-- Context providers for global state (auth, theme, admin)
-- Custom hooks encapsulate data fetching
-- React.memo and useCallback for performance
+  - `/shared/` - Reusable components organized by category (ui, media, search, layout, common)
+  - `/pages/` - Page-level components for each route
+  - `/layouts/` - Layout wrapper components
+  - `/media/` - Media-specific feature components
+  - `/dashboard/`, `/landing/`, `/settings/`, etc. - Feature-specific components
+
+- **`/src/hooks/`** - Custom React hooks
+
+  - Query hooks for data fetching
+  - UI hooks for interactions
+  - Data manipulation hooks
+
+- **`/src/contexts/`** - React Context providers
+
+  - `AuthContext` - Authentication state
+  - `ThemeContext` - Theme management
+  - `AdminContext` - Admin privileges
+  - `SidebarContext` - Sidebar state
+
+- **`/src/lib/`** - External integrations and API clients
+
+  - Database operations
+  - Authentication utilities
+  - Third-party API clients
+
+- **`/src/services/`** - Business logic layer
+
+  - Data validation
+  - Service layer functions
+  - Type definitions
+
+- **`/src/utils/`** - Pure utility functions
+
+  - Formatters and helpers
+  - Constants
+  - Adapters
+
+- **`/src/styles/`** - Global styles and theme configuration
+
+- **`/src/data/`** - Static data and configuration
+
+### Component Organization Principles
+
+1. **Shared Components** are organized by purpose:
+
+   - `ui/` - Primitive UI components (Button, Input, Modal)
+   - `media/` - Media-specific components
+   - `search/` - Search modal components
+   - `layout/` - Layout and navigation
+   - `common/` - Utility components
+
+2. **Page Components** follow a consistent pattern:
+
+   - Each media type has its own directory
+   - Consistent tab structure (Watching/Watched/Recommendations)
+   - Reusable patterns across different media types
+
+3. **Naming Conventions**:
+   - Components: PascalCase (e.g., `MediaDetailModal.tsx`)
+   - Hooks: camelCase with `use` prefix (e.g., `useWatchlistQueries.ts`)
+   - Utils/Lib: camelCase (e.g., `dateFormatting.ts`)
+   - Types: PascalCase interfaces/types
 
 See [src/services/README.md](src/services/README.md) for service layer details.
 
 ### Component Architecture
 
-NPC Finder uses a **consistent component system** for displaying media across all types (movies, TV, books, games, music). This ensures a unified user experience and maintainable codebase.
-
-**Display Components:**
-
-- **List Views** (`MediaListItem`): All personal libraries use this component for consistent horizontal list display
-
-  - Compact layout optimized for readability
-  - Supports action buttons (toggle complete, recommend, remove)
-  - Shows poster, title, creator info, year, ratings, genres
-
-- **Card Views** (`UnifiedMediaCard`): Grid/tile displays use this component for consistent vertical card display
-
-  - Poster-focused design with hover overlay
-  - Shows title, year, rating on hover
-  - Status badges for tracking progress
-
-- **Recommendations** (`MediaRecommendationCard`): All recommendation views use this component with render props
-  - Hit/Miss buttons for received recommendations
-  - Comment system and status tracking
-  - Unsend functionality for sent recommendations
-
-**Shared Components:**
-
-- `MediaPoster` - Image display with fallback icons
-- `StatusBadge` - Progress indicators (watching, reading, playing)
-- `StarRating` - 1-5 star rating display and input
-- `ActionButtonGroup` - Reusable action button toolbar
-- `GenreChips` - Genre/category tag display
-
-**Media Type Data Mapping:**
-
-| Media Type | Title | Subtitle (Creator / Context) | Year          | Genres     | Personal Rating | Critic Rating      | Notes                                                            |
-| ---------- | ----- | ---------------------------- | ------------- | ---------- | --------------- | ------------------ | ---------------------------------------------------------------- |
-| Movies/TV  | title | director                     | release_date  | genres     | ❌              | TMDB vote_average  | media_type badge (Movie/TV)                                      |
-| Books      | title | authors                      | publishedDate | categories | ✅              | ❌                 | Primary category displayed                                       |
-| Games      | name  | platforms                    | released      | genres     | ✅              | metacritic (0-100) | Shows platforms instead of creator (developer/studio not stored) |
-| Music      | title | artist                       | release_date  | genre      | ✅              | ❌                 | Album/track based                                                |
-
-**Deprecated Components:**
-
-⚠️ Do not use `MediaCard` or `BookCard` in new code - these are deprecated wrappers around `UnifiedMediaCard` maintained only for backward compatibility. They will be removed in v2.0.0.
-
-Migration: Replace `<MediaCard ... />` with `<UnifiedMediaCard mediaType='movie' ... />`
+NPC Finder uses a **consistent component system** for displaying media across all types (movies, TV, books, games, music). This ensures a unified user experience and maintainable codebase. |
 
 ## Build & Run
 

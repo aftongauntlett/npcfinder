@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Palette, Save } from "lucide-react";
 import { HexColorPicker } from "react-colorful";
 import { getContrastColor } from "../../styles/colorThemes";
-import Button from "../shared/Button";
+import { Button } from "@/components/shared";
 
 interface ColorThemePickerProps {
   selectedColor: string; // Hex color

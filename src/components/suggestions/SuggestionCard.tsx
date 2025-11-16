@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Trash2, Edit2, User, Calendar } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { SuggestionWithUser } from "../../lib/suggestions";
-import Button from "../shared/Button";
+import { Button } from "@/components/shared";
 
 interface SuggestionCardProps {
   suggestion: SuggestionWithUser;

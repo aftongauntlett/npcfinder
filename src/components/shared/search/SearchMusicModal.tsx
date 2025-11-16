@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Search, Plus, Check, Music } from "lucide-react";
-import { searchMusic } from "../../utils/mediaSearchAdapters";
-import { MediaItem } from "./SendMediaModal";
-import Modal from "./Modal";
-import { useTheme } from "../../hooks/useTheme";
-import { formatReleaseDate } from "../../utils/dateFormatting";
+import { searchMusic } from "../../../utils/mediaSearchAdapters";
+import { MediaItem } from "../media/SendMediaModal";
+import Modal from "../ui/Modal";
+import { useTheme } from "../../../hooks/useTheme";
+import { formatReleaseDate } from "../../../utils/dateFormatting";
 
 interface SearchMusicModalProps {
   onClose: () => void;

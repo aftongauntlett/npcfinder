@@ -1,9 +1,11 @@
 import { useState, useMemo } from "react";
 import { Music as MusicIcon, Headphones, Video } from "lucide-react";
-import SendMediaModal from "../shared/SendMediaModal";
+import {
+  SendMediaModal,
+  MediaRecommendationCard,
+  MediaRecommendationsLayout,
+} from "@/components/shared";
 import { searchMusic } from "../../utils/mediaSearchAdapters";
-import MediaRecommendationCard from "../shared/MediaRecommendationCard";
-import { MediaRecommendationsLayout } from "../shared/MediaRecommendationsLayout";
 import type { BaseRecommendation } from "../shared/types";
 import {
   useFriendsWithMusicRecs,

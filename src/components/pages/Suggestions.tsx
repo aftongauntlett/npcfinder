@@ -3,7 +3,7 @@ import type { User } from "@supabase/supabase-js";
 import { Plus, Lightbulb, RefreshCw } from "lucide-react";
 import { useAdmin } from "../../contexts/AdminContext";
 import { logger } from "../../lib/logger";
-import ConfirmationModal from "../shared/ConfirmationModal";
+import { ConfirmationModal, Button, Alert } from "@/components/shared";
 import {
   getSuggestions,
   createSuggestion,
@@ -17,9 +17,8 @@ import {
 import KanbanColumn from "../suggestions/KanbanColumn";
 import PageContentContainer from "../layouts/PageContentContainer";
 import NewSuggestionForm from "../suggestions/NewSuggestionForm";
-import Button from "../shared/Button";
-import Alert from "../shared/Alert";
 import { SUGGESTION_STATUSES } from "../../utils/suggestionConstants";
+
 import { isSetupError } from "../../utils/errorUtils";
 
 const STATUSES = SUGGESTION_STATUSES;

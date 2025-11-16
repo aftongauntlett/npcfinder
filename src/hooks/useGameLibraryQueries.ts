@@ -5,7 +5,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
-import type { MediaItem } from "../components/shared/SendMediaModal";
+import type { MediaItem } from "@/components/shared";
 
 export interface GameLibraryItem {
   id: string;

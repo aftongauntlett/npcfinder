@@ -1,37 +1,26 @@
 import React, { useState, useEffect } from "react";
-import { Search, Plus, Check, Film, Tv } from "lucide-react";
-import { searchMoviesAndTV } from "../../utils/mediaSearchAdapters";
-import { MediaItem } from "./SendMediaModal";
-import Modal from "./Modal";
-import { useTheme } from "../../hooks/useTheme";
-import { formatReleaseDate } from "../../utils/dateFormatting";
+import { Search, Plus, Check, Gamepad2 } from "lucide-react";
+import { searchGames } from "../../../utils/mediaSearchAdapters";
+import { MediaItem } from "../media/SendMediaModal";
+import Modal from "../ui/Modal";
+import { useTheme } from "../../../hooks/useTheme";
+import { formatReleaseDate } from "../../../utils/dateFormatting";
 
-interface SearchMovieModalProps {
-  isOpen: boolean;
+interface SearchGameModalProps {
   onClose: () => void;
-  onAdd: (item: MediaItem) => void;
-  existingIds?: string[]; // External IDs already in watch list
+  onSelect: (item: MediaItem) => void;
+  existingIds?: string[]; // External IDs already in game library
 }
 
-const SearchMovieModal: React.FC<SearchMovieModalProps> = ({
-  isOpen,
+const SearchGameModal: React.FC<SearchGameModalProps> = ({
   onClose,
-  onAdd,
+  onSelect,
   existingIds = [],
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<MediaItem[]>([]);
   const [searching, setSearching] = useState(false);
   const { themeColor } = useTheme();
-
-  // Reset state when modal closes
-  useEffect(() => {
-    if (!isOpen) {
-      setSearchQuery("");
-      setSearchResults([]);
-      setSearching(false);
-    }
-  }, [isOpen]);
 
   // Search with debounce
   useEffect(() => {
@@ -53,7 +42,7 @@ const SearchMovieModal: React.FC<SearchMovieModalProps> = ({
 
     setSearching(true);
     try {
-      const results = await searchMoviesAndTV(searchQuery);
+      const results = await searchGames(searchQuery);
       setSearchResults(results);
     } catch (error) {
       console.error("Search error:", error);
@@ -64,7 +53,7 @@ const SearchMovieModal: React.FC<SearchMovieModalProps> = ({
   };
 
   const handleAddClick = (result: MediaItem) => {
-    onAdd(result);
+    onSelect(result);
     setSearchQuery("");
     setSearchResults([]);
   };
@@ -74,7 +63,7 @@ const SearchMovieModal: React.FC<SearchMovieModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add Media" maxWidth="2xl">
+    <Modal isOpen={true} onClose={onClose} title="Add Game" maxWidth="2xl">
       {/* Search Input */}
       <div className="p-6 border-b border-gray-200 dark:border-gray-700">
         <div className="relative">
@@ -83,11 +72,11 @@ const SearchMovieModal: React.FC<SearchMovieModalProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search for movies or TV shows..."
+            placeholder="Search for games by title..."
             className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent"
             style={
               {
-                "--tw-ring-color": "var(--color-primary)",
+                "--tw-ring-color": themeColor,
               } as React.CSSProperties
             }
             autoFocus
@@ -109,7 +98,7 @@ const SearchMovieModal: React.FC<SearchMovieModalProps> = ({
 
         {!searching && !searchQuery && (
           <p className="text-center text-gray-500 py-8">
-            Start typing to search for movies and TV shows
+            Start typing to search for games
           </p>
         )}
 
@@ -120,7 +109,6 @@ const SearchMovieModal: React.FC<SearchMovieModalProps> = ({
             </p>
             {searchResults.map((result) => {
               const alreadyAdded = isAlreadyAdded(result.external_id);
-              const resultMediaType = result.media_type || "movie";
 
               return (
                 <div
@@ -142,24 +130,20 @@ const SearchMovieModal: React.FC<SearchMovieModalProps> = ({
                   aria-label={
                     alreadyAdded
                       ? `${result.title} - Already added`
-                      : `Add ${result.title} to watchlist`
+                      : `Add ${result.title} to game library`
                   }
                 >
-                  {/* Poster */}
+                  {/* Game Cover */}
                   <div className="flex-shrink-0">
                     {result.poster_url ? (
                       <img
                         src={result.poster_url}
                         alt={result.title}
-                        className="w-16 h-24 rounded object-cover"
+                        className="w-24 h-16 rounded object-cover"
                       />
                     ) : (
-                      <div className="w-16 h-24 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center">
-                        {resultMediaType === "tv" ? (
-                          <Tv className="w-8 h-8 text-gray-400" />
-                        ) : (
-                          <Film className="w-8 h-8 text-gray-400" />
-                        )}
+                      <div className="w-24 h-16 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center">
+                        <Gamepad2 className="w-8 h-8 text-gray-400" />
                       </div>
                     )}
                   </div>
@@ -170,21 +154,26 @@ const SearchMovieModal: React.FC<SearchMovieModalProps> = ({
                       {result.title}
                     </h3>
                     <div className="flex flex-col gap-1 mt-1">
-                      {result.release_date && (
+                      {result.platforms && (
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {formatReleaseDate(result.release_date)}
+                          {result.platforms}
                         </p>
                       )}
-                      {/* Media Type Chip */}
-                      <span
-                        className={`inline-flex items-center self-start px-2 py-0.5 text-xs font-medium rounded ${
-                          resultMediaType === "tv"
-                            ? "bg-purple-100/80 dark:bg-purple-500/20 text-purple-800 dark:text-purple-200"
-                            : "bg-blue-100/80 dark:bg-blue-500/20 text-blue-800 dark:text-blue-200"
-                        }`}
-                      >
-                        {resultMediaType === "tv" ? "TV Show" : "Movie"}
-                      </span>
+                      {result.release_date && (
+                        <p className="text-xs text-gray-500 dark:text-gray-500">
+                          Released: {formatReleaseDate(result.release_date)}
+                        </p>
+                      )}
+                      {result.genres && (
+                        <p className="text-xs text-gray-500 dark:text-gray-500">
+                          {result.genres}
+                        </p>
+                      )}
+                      {result.rating && (
+                        <p className="text-xs text-gray-500 dark:text-gray-500">
+                          Rating: {result.rating.toFixed(1)}/5.0
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -213,4 +202,4 @@ const SearchMovieModal: React.FC<SearchMovieModalProps> = ({
   );
 };
 
-export default SearchMovieModal;
+export default SearchGameModal;

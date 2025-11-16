@@ -6,7 +6,7 @@ import { StatCard } from "../dashboard/StatCard";
 import { useProfileQuery } from "../../hooks/useProfileQuery";
 import { useDashboardStats } from "../../hooks/useDashboardStats";
 import { useTheme } from "../../hooks/useTheme";
-import { STATUS_MAP } from "../media/mediaStatus";
+import { STATUS_MAP } from "../../utils/mediaStatus";
 import {
   TrendingUpDown,
   Clock,

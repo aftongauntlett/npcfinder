@@ -1,7 +1,7 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import type { User } from "@supabase/supabase-js";
-import StarryBackground from "../shared/StarryBackground";
+import { StarryBackground } from "@/components/shared";
 import PageContainer from "./PageContainer";
 import DevIndicator from "../dev/DevIndicator";
 import ProtectedAdminRoute from "./ProtectedAdminRoute";
@@ -10,7 +10,7 @@ import { useAdmin } from "../../contexts/AdminContext";
 
 // Lazy load authenticated components to avoid Supabase imports on landing page
 const HomePage = React.lazy(() => import("../pages/HomePage"));
-const Sidebar = React.lazy(() => import("../shared/Sidebar"));
+const Sidebar = React.lazy(() => import("../shared/layout/Sidebar"));
 const MoviesPage = React.lazy(() => import("../pages/movies/MoviesPage"));
 const BooksPage = React.lazy(() => import("../pages/books/BooksPage"));
 const MusicPage = React.lazy(() => import("../pages/music/MusicPage"));

@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { Calendar, Award, DollarSign } from "lucide-react";
-import MediaDetailModal from "../../shared/MediaDetailModal";
+import MediaDetailModal from "../../shared/media/MediaDetailModal";
 import type { GameLibraryItem } from "../../../hooks/useGameLibraryQueries";
 import { useUpdateGameRating } from "../../../hooks/useGameLibraryQueries";
-import type { MetadataItem } from "../../shared/MetadataRow";
+import type { MetadataItem } from "../../shared/common/MetadataRow";
 
 type MediaStatus = "planned" | "in-progress" | "completed" | "dropped";
 

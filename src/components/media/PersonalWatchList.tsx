@@ -1,17 +1,20 @@
 import React, { useState, useRef, useMemo, useCallback } from "react";
 import { Film } from "lucide-react";
-import { MediaItem } from "../shared/SendMediaModal";
-import SearchMovieModal from "../shared/SearchMovieModal";
-import MovieDetailModal from "./MovieDetailModal";
-import SendMediaModal from "../shared/SendMediaModal";
-import Toast from "../ui/Toast";
+import {
+  SearchMovieModal,
+  SendMediaModal,
+  MediaPageToolbar,
+  type SortOption,
+  type MediaItem,
+} from "@/components/shared";
 import MediaListItem from "./MediaListItem";
 import MediaEmptyState from "./MediaEmptyState";
 import WatchlistPagination from "./WatchlistPagination";
-import { SortOption } from "../shared/types";
-import { MediaPageToolbar } from "../shared/MediaPageToolbar";
+import MovieDetailModal from "./MovieDetailModal";
+import Toast from "../ui/Toast";
 import { useMediaFiltering } from "../../hooks/useMediaFiltering";
 import { searchMoviesAndTV } from "../../utils/mediaSearchAdapters";
+import { useWatchlistModals } from "../../hooks/useWatchlistModals";
 import {
   useWatchlist,
   useAddToWatchlist,
@@ -56,14 +59,17 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
   // Pagination state
   const [showItemsPerPageMenu, setShowItemsPerPageMenu] = useState(false);
 
-  // Modal state
-  const [showSearchModal, setShowSearchModal] = useState(false);
-  const [showSendModal, setShowSendModal] = useState(false);
-  const [selectedMovie, setSelectedMovie] = useState<WatchlistItem | null>(
-    null
-  );
-  const [movieToRecommend, setMovieToRecommend] =
-    useState<WatchlistItem | null>(null);
+  // Modal state (managed by custom hook)
+  const {
+    showSearchModal,
+    setShowSearchModal,
+    showSendModal,
+    setShowSendModal,
+    selectedMovie,
+    setSelectedMovie,
+    movieToRecommend,
+    setMovieToRecommend,
+  } = useWatchlistModals<WatchlistItem>();
 
   // Undo state
   const [lastDeletedItem, setLastDeletedItem] = useState<WatchlistItem | null>(

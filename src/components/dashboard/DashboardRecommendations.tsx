@@ -13,7 +13,7 @@ import {
   useDeleteMovieRecommendation,
   useUpdateRecipientNote,
 } from "../../hooks/useMovieQueries";
-import MediaRecommendationCard from "../shared/MediaRecommendationCard";
+import { MediaRecommendationCard } from "@/components/shared";
 import type { Recommendation } from "../../services/recommendationsService.types";
 
 interface FriendWithRecs {

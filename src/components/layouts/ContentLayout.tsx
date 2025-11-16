@@ -16,7 +16,7 @@ import {
 import { useAdmin } from "../../contexts/AdminContext";
 import { useProfileQuery } from "../../hooks/useProfileQuery";
 import { signOut } from "../../lib/auth";
-import Button from "../shared/Button";
+import { Button } from "@/components/shared";
 
 interface Tab {
   id: string;

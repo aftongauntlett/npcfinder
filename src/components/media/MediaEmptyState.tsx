@@ -1,6 +1,6 @@
 import React from "react";
 import type { LucideIcon } from "lucide-react";
-import Button from "../shared/Button";
+import { Button } from "@/components/shared";
 
 interface ActionButton {
   label: string;
