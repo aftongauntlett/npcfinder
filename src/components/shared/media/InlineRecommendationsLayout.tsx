@@ -7,7 +7,7 @@ import {
   User,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { BaseRecommendation, FriendSummary } from "./";
+import type { BaseRecommendation, FriendSummary } from "../types";
 
 interface QuickStats {
   hits: number;
@@ -355,3 +355,5 @@ export function InlineRecommendationsLayout<T extends BaseRecommendation>({
     </div>
   );
 }
+
+export default InlineRecommendationsLayout;

@@ -1,8 +1,8 @@
 import React from "react";
 import { User, ThumbsUp, ThumbsDown, ArrowLeft } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import MediaEmptyState from "../media/MediaEmptyState";
-import type { BaseRecommendation, FriendSummary } from "./";
+import MediaEmptyState from "../../media/MediaEmptyState";
+import type { BaseRecommendation, FriendSummary } from "../types";
 
 interface QuickStats {
   hits: number;
@@ -271,3 +271,5 @@ export function MediaRecommendationsLayout<T extends BaseRecommendation>({
     </div>
   );
 }
+
+export default MediaRecommendationsLayout;

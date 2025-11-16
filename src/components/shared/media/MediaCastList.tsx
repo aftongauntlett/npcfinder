@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import Button from "./Button";
+import Button from "../ui/Button";
 
 interface MediaCastListProps {
   cast: string[];

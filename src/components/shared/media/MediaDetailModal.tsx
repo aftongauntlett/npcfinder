@@ -1,10 +1,10 @@
-import { X, Check, ArrowLeft, Trash2 } from "lucide-react";
-import Modal from "./Modal";
+import { X } from "lucide-react";
+import Modal from "../ui/Modal";
 import MediaPoster from "./MediaPoster";
 import MediaHeader from "./MediaHeader";
 import MediaReview from "./MediaReview";
-import Button from "./Button";
-import type { MetadataItem } from "./MetadataRow";
+import MediaDetailActions from "./MediaDetailActions";
+import type { MetadataItem } from "../common/MetadataRow";
 
 type MediaType = "movie" | "tv" | "book" | "game" | "music";
 type MediaStatus = "planned" | "in-progress" | "completed" | "dropped";
@@ -94,23 +94,6 @@ export default function MediaDetailModal({
   onDeleteReview,
   maxWidth = "5xl",
 }: MediaDetailModalProps) {
-  // Map mediaType to action verb for button labels
-  const getActionVerb = (type: MediaType): string => {
-    switch (type) {
-      case "movie":
-      case "tv":
-        return "Watched";
-      case "book":
-        return "Read";
-      case "game":
-        return "Played";
-      case "music":
-        return "Listened";
-      default:
-        return "Watched";
-    }
-  };
-
   return (
     <Modal
       isOpen={isOpen}
@@ -143,84 +126,15 @@ export default function MediaDetailModal({
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col gap-2.5">
-              <Button
-                onClick={() => {
-                  // Handle both status types
-                  if (typeof status === "string") {
-                    onStatusChange(
-                      status === "completed" ? "planned" : "completed"
-                    );
-                  } else {
-                    // For custom status objects, toggle completion
-                    onStatusChange(
-                      status.isCompleted ? "planned" : "completed"
-                    );
-                  }
-                }}
-                variant={
-                  (
-                    typeof status === "string"
-                      ? status === "completed"
-                      : status.isCompleted
-                  )
-                    ? "secondary"
-                    : "primary"
-                }
-                fullWidth
-                className="group"
-              >
-                <span className="flex items-center justify-center gap-2">
-                  <span className="group-hover:animate-wiggle inline-block">
-                    {(
-                      typeof status === "string"
-                        ? status === "completed"
-                        : status.isCompleted
-                    ) ? (
-                      <ArrowLeft className="w-4 h-4" />
-                    ) : (
-                      <Check className="w-4 h-4" />
-                    )}
-                  </span>
-                  {(
-                    typeof status === "string"
-                      ? status === "completed"
-                      : status.isCompleted
-                  )
-                    ? "Move Back"
-                    : `Mark as ${getActionVerb(mediaType)}`}
-                </span>
-              </Button>
-
-              {showRecommendButton && onRecommend && (
-                <Button
-                  onClick={onRecommend}
-                  variant="secondary"
-                  fullWidth
-                  className="group"
-                >
-                  <span className="flex items-center justify-center gap-2">
-                    Recommend
-                  </span>
-                </Button>
-              )}
-
-              {isInWatchlist && (
-                <Button
-                  onClick={onRemove}
-                  variant="danger"
-                  fullWidth
-                  className="group"
-                >
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="group-hover:animate-wiggle inline-block">
-                      <Trash2 className="w-4 h-4" />
-                    </span>
-                    Remove from List
-                  </span>
-                </Button>
-              )}
-            </div>
+            <MediaDetailActions
+              status={status}
+              mediaType={mediaType}
+              onStatusChange={onStatusChange}
+              onRecommend={onRecommend}
+              onRemove={onRemove}
+              showRecommendButton={showRecommendButton}
+              isInWatchlist={isInWatchlist}
+            />
           </div>
 
           {/* Main Content Column */}

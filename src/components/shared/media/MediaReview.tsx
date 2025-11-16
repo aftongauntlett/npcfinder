@@ -1,6 +1,6 @@
 import { Trash2, Info } from "lucide-react";
-import StarRating from "./StarRating";
-import Button from "./Button";
+import StarRating from "../common/StarRating";
+import Button from "../ui/Button";
 
 interface Review {
   id: string;

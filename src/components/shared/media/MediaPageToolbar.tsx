@@ -1,10 +1,10 @@
 import { Plus, SlidersHorizontal } from "lucide-react";
 import { useId, useState, useRef, useEffect } from "react";
-import Button from "./Button";
-import FilterSortMenu from "./FilterSortMenu";
-import MediaTypeFilters from "../media/MediaTypeFilters";
-import type { FilterOption } from "../media/MediaTypeFilters";
-import type { SortOption } from "./types";
+import Button from "../ui/Button";
+import FilterSortMenu from "../common/FilterSortMenu";
+import MediaTypeFilters from "../../media/MediaTypeFilters";
+import type { FilterOption } from "../../media/MediaTypeFilters";
+import type { SortOption } from "../types";
 
 interface ChipFilterConfig {
   type: "chips";
@@ -151,3 +151,5 @@ export function MediaPageToolbar(props: MediaPageToolbarProps) {
     </div>
   );
 }
+
+export default MediaPageToolbar;

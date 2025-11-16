@@ -1,5 +1,5 @@
-import GenreChips from "./GenreChips";
-import MetadataRow, { MetadataItem } from "./MetadataRow";
+import GenreChips from "../common/GenreChips";
+import MetadataRow, { MetadataItem } from "../common/MetadataRow";
 
 interface MediaHeaderProps {
   title: string;

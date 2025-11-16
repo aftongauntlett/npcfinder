@@ -1,9 +1,9 @@
 import React from "react";
 import { motion } from "framer-motion";
 import MediaPoster from "./MediaPoster";
-import StatusBadge from "./StatusBadge";
-import StarRating from "./StarRating";
-import SparkleEffect from "../effects/SparkleEffect";
+import StatusBadge from "../common/StatusBadge";
+import StarRating from "../common/StarRating";
+import SparkleEffect from "../../effects/SparkleEffect";
 
 type MediaType = "movie" | "tv" | "book" | "game" | "music";
 
