@@ -1,7 +1,7 @@
 import React from "react";
 import { LogOut } from "lucide-react";
 import type { NavItem } from "./NavList";
-import { DROPDOWN_ITEM_PAD } from "../../styles/ui";
+import { DROPDOWN_ITEM_PAD } from "../../../styles/ui";
 
 interface UserMenuDropdownProps {
   isOpen: boolean;

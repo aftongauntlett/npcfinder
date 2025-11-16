@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Lightbulb } from "lucide-react";
-import Button from "./Button";
+import Button from "../ui/Button";
 
 const Footer: React.FC = () => {
   const navigate = useNavigate();

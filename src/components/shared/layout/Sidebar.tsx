@@ -12,15 +12,15 @@ import {
   ChevronDown,
   User as UserIcon,
 } from "lucide-react";
-import { useAdmin } from "../../contexts/AdminContext";
-import { useSidebar } from "../../contexts/SidebarContext";
-import { useProfileQuery } from "../../hooks/useProfileQuery";
-import ConfirmationModal from "./ConfirmationModal";
+import { useAdmin } from "../../../contexts/AdminContext";
+import { useSidebar } from "../../../contexts/SidebarContext";
+import { useProfileQuery } from "../../../hooks/useProfileQuery";
+import ConfirmationModal from "../ui/ConfirmationModal";
 import NavList, { type NavItem } from "./NavList";
 import UserMenuDropdown from "./UserMenuDropdown";
-import { signOut } from "../../lib/auth";
-import { BTN_PAD_DEFAULT } from "../../styles/ui";
-import Button from "./Button";
+import { signOut } from "../../../lib/auth";
+import { BTN_PAD_DEFAULT } from "../../../styles/ui";
+import Button from "../ui/Button";
 
 interface SidebarProps {
   currentUser: { id: string; email?: string } | null;

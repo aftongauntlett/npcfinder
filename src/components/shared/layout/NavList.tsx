@@ -1,5 +1,6 @@
 import React from "react";
-import { BTN_PAD_DEFAULT } from "../../styles/ui";
+import { motion } from "framer-motion";
+import { BTN_PAD_DEFAULT } from "../../../styles/ui";
 
 export interface NavItem {
   id: string;
