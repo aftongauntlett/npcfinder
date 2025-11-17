@@ -27,6 +27,21 @@ Built with React 19, TypeScript, and Supabase with Row-Level Security.
 **APIs**: TMDB, iTunes, Google Books, RAWG, OMDB  
 **Testing**: Vitest, React Testing Library
 
+## Security
+
+- **Authentication**: Supabase Auth with session management
+- **Database Security**: Row-Level Security (RLS) policies on all user tables
+- **Admin Protection**: Multi-layer authorization with database triggers
+- **Invite System**: Email-validated invite codes with expiration
+- **XSS Protection**: All user content rendered as plain text
+- **Security Headers**: CSP, X-Frame-Options, and other protective headers
+
+For comprehensive security documentation, see:
+
+- [Security Review 2025](docs/SECURITY-REVIEW-2025.md) - Full security assessment
+- [Security Checklist](docs/SECURITY-CHECKLIST.md) - Ongoing maintenance tasks
+- [Rate Limiting Guide](docs/RATE-LIMITING-GUIDE.md) - Optional rate limiting implementation
+
 ## Quick Start
 
 ```bash
