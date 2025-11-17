@@ -73,6 +73,7 @@ npm run db:migration:new # Create new database migration
 - [Quick Start Guide](docs/QUICK-START.md) - Complete setup and deployment
 - [API Setup](docs/API-SETUP.md) - Configure external APIs
 - [Database Migrations](docs/DATABASE-MIGRATIONS.md) - Schema management
+- [Dev/Prod Workflow](docs/DEV-PROD-WORKFLOW.md) - Safe database development workflow
 - [Invite System](docs/INVITE-SYSTEM-QUICKSTART.md) - User access control
 - [Testing Strategy](docs/TESTING-STRATEGY.md) - Writing and running tests
 - [Privacy & Security](docs/PRIVACY-REALITY-CHECK.md) - What is and isn't private

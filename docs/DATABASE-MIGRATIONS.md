@@ -1,196 +1,392 @@
 # Database Migrations
 
-## What Are Migrations?
+**Status**: Baseline + Forward-Only Migrations  
+**Last Reset**: November 16, 2025  
+**Current Baseline**: `20250116000000_baseline_schema.sql`
 
-Database migrations are version-controlled SQL files that update your database schema.
+---
 
-## Location
+## Overview
 
-All migrations are in: `supabase/migrations/`
+This project uses **database migrations** to manage schema changes in a version-controlled, reproducible way.
 
-Each file is timestamped: `20250101000000_description.sql`
+### Migration Philosophy
 
-## Running Migrations
+**Baseline + Forward-Only Approach**:
 
-### With Supabase CLI
+- ✅ Single baseline migration contains the complete, correct schema
+- ✅ All old prototype migrations are archived (preserved for history)
+- ✅ All future changes are forward-only migrations (never edit existing migrations)
+- ✅ Migrations are tested in dev database before applying to production
 
-```bash
-# Install CLI
-npm install -g supabase
+**Why This Approach**:
 
-# Link to your project
-supabase link --project-ref your-project-ref
+- Clean starting point before real user data
+- Simplified migration chain (no replaying 60+ prototype migrations)
+- Historical record preserved in archive
+- Professional workflow for production database
 
-# Run all migrations
-supabase db push
+---
 
-# Check status
-supabase migration list
+## Migration Structure
+
+```
+supabase/migrations/
+├── 20250116000000_baseline_schema.sql    ← The complete schema (start here)
+├── archive/                              ← Old prototype migrations (reference only)
+    ├── README.md
+    ├── 20241001000000_create_user_profiles.sql
+    ├── 20241002000000_create_recommendations.sql
+    └── ... (60+ archived files)
 ```
 
-### Manually
+**Note**: Future migrations will appear as additional files (e.g., `20250120000000_add_user_preferences.sql`) after you create them.
 
-1. Open Supabase dashboard
-2. Go to SQL Editor
-3. Copy migration file contents
-4. Run in editor
-5. Check for errors
+### Baseline Migration
 
-## Creating New Migrations
+**File**: `supabase/migrations/20250116000000_baseline_schema.sql`
+
+**What It Contains**:
+
+- All tables (user_profiles, connections, watchlists, recommendations, etc.)
+- All functions (is_admin, batch_connect_users, etc.)
+- All triggers (admin protection, timestamp updates, etc.)
+- All RLS policies (security policies for every table)
+- All indexes (performance optimization)
+- Bootstrap invite code (BOOTSTRAP_ADMIN_2025 for initial admin access)
+
+**When to Run**:
+
+- When setting up a new database (dev or prod)
+- Never on an existing database that already has data
+- If resetting database to clean state
+
+**How to Run**:
+
+1. Supabase Dashboard → SQL Editor
+2. Copy entire file contents
+3. Paste and execute
+4. Verify tables created: Database → Tables
+
+### Archived Migrations
+
+**Location**: `supabase/migrations/archive/`
+
+**What They Are**: 60+ migrations from prototype phase (Oct 2024 - Jan 2025)
+
+**Status**: Superseded by baseline migration
+
+**Purpose**: Historical reference only
+
+**⚠️ NEVER run these on new databases** - they're already included in the baseline
+
+---
+
+## Dev vs Prod Databases
+
+### Two-Database Setup
+
+This project uses separate databases for development and production:
+
+**Development Database** (Testing):
+
+- Safe to experiment
+- Can reset freely
+- Your local work
+
+**Production Database** (Real Data):
+
+- Real user data
+- Protected by 5-second warning
+- Deploy only after testing
+
+### How It Works
+
+The app automatically switches based on environment:
+
+```javascript
+// In src/lib/supabase.ts
+if (import.meta.env.DEV && dev_env_vars_exist) {
+  → Use development database
+} else {
+  → Use production database
+}
+```
+
+**Vite Development Mode** (`npm run dev`): Uses dev database  
+**Production Build** (`npm run build` + deploy): Uses production database
+
+**CLI Tools** require project ref configuration in `.env.local`:
+
+```bash
+SUPABASE_DEV_PROJECT_REF=your-dev-project-ref
+SUPABASE_PROD_PROJECT_REF=your-prod-project-ref
+```
+
+Find project refs in: Supabase Dashboard → Project Settings → General → Reference ID
+
+**See full setup**: [DEV-PROD-WORKFLOW.md](DEV-PROD-WORKFLOW.md)
+
+---
+
+## Available Commands
+
+### Creating Migrations
 
 ```bash
 # Create new migration file
-supabase migration new add_feature_name
-
-# Edit the generated file in supabase/migrations/
-# Add your SQL changes
-
-# Test locally (if using local Supabase)
-supabase db reset
-
-# Push to production
-supabase db push
+npm run db:migration:new add_user_preferences_table
 ```
 
-## Migration Best Practices
+**Result**: Creates `supabase/migrations/YYYYMMDDHHMMSS_add_user_preferences_table.sql`
 
-### Always Include
+**Edit the file** with your SQL changes.
+
+### Checking Migration Status
+
+```bash
+# List migrations for dev database
+npm run db:migration:list:dev
+
+# List migrations for prod database
+npm run db:migration:list:prod
+```
+
+Shows which migrations are pending vs. applied to the specified database.
+
+### Applying Migrations
+
+```bash
+# Apply to DEVELOPMENT database (safe, no warning)
+npm run db:push:dev
+
+# Apply to PRODUCTION database (5-second warning)
+npm run db:push:prod
+```
+
+**Always test in dev first!**
+
+### Resetting Development Database
+
+```bash
+# Drop and recreate dev database from all migrations
+npm run db:reset:dev
+```
+
+**⚠️ This is DESTRUCTIVE** - only use on development database
+
+**Never run on production** - this command is dev-only for safety
+
+### Checking Schema Differences
+
+```bash
+# See differences between database and migration files
+npm run db:diff:dev
+```
+
+Useful if you made manual changes in Supabase Dashboard and want to create a migration for them.
+
+---
+
+## Migration Workflow
+
+### Step-by-Step Process
+
+**1. Create Migration File**
+
+```bash
+npm run db:migration:new add_notification_settings
+```
+
+**2. Write SQL Changes**
+
+Edit the generated file in `supabase/migrations/`:
 
 ```sql
--- Add column with default
-ALTER TABLE table_name
-ADD COLUMN new_column TEXT DEFAULT 'default_value';
+-- Add notification settings table
+CREATE TABLE IF NOT EXISTS notification_settings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
+  email_enabled BOOLEAN DEFAULT true,
+  push_enabled BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
 
--- Add NOT NULL after data is populated
-ALTER TABLE table_name
-ALTER COLUMN new_column SET NOT NULL;
+-- Enable RLS
+ALTER TABLE notification_settings ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies
+CREATE POLICY "Users can view own settings"
+  ON notification_settings FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own settings"
+  ON notification_settings FOR UPDATE
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- Indexes
+CREATE INDEX idx_notification_settings_user_id
+  ON notification_settings(user_id);
+
+-- Trigger for updated_at
+CREATE TRIGGER update_notification_settings_updated_at
+  BEFORE UPDATE ON notification_settings
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
 ```
 
-### Never Do
+**3. Test in Development Database**
 
-```sql
--- Don't drop columns in production without backup
-ALTER TABLE table_name DROP COLUMN old_column;
-
--- Don't rename columns without data migration plan
-ALTER TABLE table_name RENAME COLUMN old TO new;
+```bash
+npm run db:push:dev
 ```
 
-## Current Schema
+Verify in Supabase Dashboard (dev project):
 
-Main tables:
+- Table appears in Database → Tables
+- Columns are correct
+- RLS policies are in place
 
-- `user_profiles` - User accounts and settings
-- `connections` - Friend relationships
-- `invite_codes` - Invitation system
-- `invite_code_audit_log` - Invite usage tracking
-- `music_recommendations` - Music sharing
-- `movie_recommendations` - Movie/TV sharing
-- `book_recommendations` - Book sharing
-- `game_recommendations` - Game sharing
-- `user_watchlist` - Movies/TV watchlist
-- `reading_list` - Books reading list
-- `music_library` - Music library
-- `game_library` - Games library
-- `media_reviews` - Reviews and ratings for all media types
-- `app_config` - Application configuration
+**4. Test in Application**
 
-## Rollback
+Run your app on localhost (uses dev database automatically):
 
-Migrations don't auto-rollback. To undo:
+```bash
+npm run dev
+```
 
-1. Create new migration that reverses changes
-2. Or restore from Supabase backup (Settings > Database > Backups)
+Test the feature thoroughly:
 
-## Common Issues
+- Create test data
+- Verify queries work
+- Check RLS prevents unauthorized access
+- Test edge cases
 
-**"Migration failed"**
+**5. Fix Issues (If Needed)**
 
-- Check SQL syntax
-- Check for conflicting column names
-- Check for missing tables/columns
+If the migration has problems:
 
-**"Can't drop column - in use"**
+```bash
+# Create a new migration that fixes it
+npm run db:migration:new fix_notification_settings
 
-- Remove foreign key constraints first
-- Check for dependent views/functions
+# Or reset dev database and fix the original migration
+npm run db:reset:dev
+```
 
-## Production Safety
+**Never edit an already-applied migration** - create a new one instead.
 
-Before running migrations in production:
+**6. Commit Migration**
 
-1. Test in development first
-2. Backup database
-3. Plan rollback strategy
-4. Run during low-traffic time
-5. Monitor for errors
+```bash
+git add supabase/migrations/YYYYMMDD_add_notification_settings.sql
+git commit -m "feat: add notification settings table"
+```
 
-## Recent Migrations (October-November 2025)
+**7. Apply to Production**
 
-### 20251022000001_create_media_reviews.sql
+```bash
+npm run db:push:prod
+```
 
-**Date**: October 22, 2025  
-**Purpose**: Add media reviews and ratings system  
-**Changes**:
+You'll see:
 
-- Creates `media_reviews` table for storing user reviews, ratings, and likes
-- Supports all media types (movies, TV, music, books, games)
-- Includes privacy controls (public/private)
-- Adds RLS policies for friend-based visibility
-- Adds indexes for performance
-- Adds trigger for updated_at timestamp
+```
+⚠️  WARNING: Pushing to PRODUCTION database. Press Ctrl+C to cancel...
+```
 
-**Key Features**:
+**5 seconds to abort** if you realize something's wrong.
 
-- One review per user per media item (unique constraint)
-- 1-5 star rating system (optional)
-- Like/dislike boolean (optional)
-- Written review text (optional, max 1000 chars)
-- Privacy toggle (public to friends or private)
-- Watched/consumed date tracking
+**8. Deploy Application Code**
 
-**RLS Policies**:
+```bash
+git push origin main
+```
 
-- Users can view their own reviews
-- Users can view public reviews from friends (via connections table)
-- Users can create/update/delete their own reviews
+Vercel automatically deploys the updated app that uses the new schema.
 
-**Dependencies**:
+---
 
-- Requires `connections` table for friend relationships
-- Uses existing `update_updated_at_column()` trigger function
+## Safety Rules
 
-**Safe to run in production**: Yes - new table, no data migration needed
+### ✅ DO
 
-### 20251021000011_fix_remaining_search_paths.sql
+- **Always test in dev first** before applying to prod
+- **Create new migrations** for all schema changes
+- **Use idempotent SQL** (`IF NOT EXISTS`, `ON CONFLICT`, etc.)
+- **Include RLS policies** on all new tables
+- **Add indexes** for frequently queried columns
+- **Document complex changes** with comments in migration files
+- **Commit migrations to git** before applying to prod
 
-**Date**: October 21, 2025  
-**Purpose**: Security hardening - Function search path protection  
-**What It Does**: Adds `SET search_path` to 6 functions flagged by Supabase Security Advisor to prevent schema hijacking attacks  
-**Critical**: Yes - includes SECURITY DEFINER function `validate_invite_code`  
-**Safe to Run**: Yes - only adds security constraints, doesn't change function behavior or data
+### ❌ DON'T
 
-**Functions Secured**:
+- **Don't edit existing migrations** - create new forward-only migrations
+- **Don't modify the baseline** (`20250116000000_baseline_schema.sql`) - it's sacred
+- **Don't run `db:reset:dev` on production** - it's dev-only for safety
+- **Don't skip dev testing** - always test before prod
+- **Don't make destructive changes** without backup plan
+- **Don't bypass RLS** or remove security constraints
+- **Don't reference archived migrations** for new work
 
-- `validate_invite_code(code_value text)` - Critical SECURITY DEFINER function
-- `update_user_profiles_updated_at()` - Trigger function
-- `update_music_rec_consumed_at()` - Trigger function
-- `update_movie_rec_watched_at()` - Trigger function
-- `update_watchlist_updated_at()` - Trigger function
-- `verify_data_integrity()` - Admin utility function
+---
 
-### 20251021000012_add_security_barrier_to_music_view.sql
+## The Baseline Migration
 
-**Date**: October 21, 2025  
-**Purpose**: Security hardening - View security barrier consistency  
-**What It Does**: Adds `security_barrier='true'` to `music_recommendations_with_users` view for consistency with movie view  
-**Critical**: Medium - prevents information leakage through query optimization  
-**Safe to Run**: Yes - only adds security constraint, doesn't change view logic or data
+### What Makes It Special
 
-**Why It Matters**: Security barriers prevent query optimization from pushing predicates down in ways that could leak information through side effects. Both movie and music views now have consistent security posture.
+**File**: `supabase/migrations/20250116000000_baseline_schema.sql`
 
-**Context**: These migrations address issues flagged by Supabase Security Advisor during October 2025 audit. See `08-SECURITY-RECOMMENDATIONS-REVIEW.md` for full audit details.
+**Purpose**: Single source of truth for complete schema
+
+**When Created**: November 16, 2025 (database reset before real users)
+
+**What It Replaced**: 60+ prototype migrations from Oct 2024 - Jan 2025
+
+**Why It's Sacred**:
+
+- Represents clean starting point
+- New databases start from this baseline
+- Editing it would break new database setups
+- All future changes must be new migrations
+
+### Bootstrap Invite Code
+
+The baseline includes a permanent invite code for admin access after database reset:
+
+**Code**: `BOOTSTRAP_ADMIN_2025`  
+**Email**: `afton.gauntlett@gmail.com`  
+**Expires**: December 31, 2099 (effectively never)  
+**Purpose**: Create initial admin account after fresh database setup
+
+**How to use**:
+
+1. Reset database (apply baseline migration)
+2. Sign up with email: `afton.gauntlett@gmail.com`
+3. Use invite code: `BOOTSTRAP_ADMIN_2025`
+4. You now have admin access to create more invite codes
+
+---
 
 ## Need Help?
 
-Check existing migrations in `supabase/migrations/` for examples.
+**Quick Reference**:
+
+- See `supabase/migrations/README.md` for command quick reference
+- See `docs/DEV-PROD-WORKFLOW.md` for dev/prod setup
+- Check existing migrations for SQL examples
+
+**Common Questions**:
+
+- "How do I create a migration?" → `npm run db:migration:new description`
+- "How do I test safely?" → `npm run db:push:dev` (uses dev database)
+- "How do I apply to prod?" → `npm run db:push:prod` (has 5-second warning)
+- "I broke dev database" → `npm run db:reset:dev` (resets from migrations)
+
+---
+
+**Last Updated**: November 16, 2025  
+**Baseline Migration**: `20250116000000_baseline_schema.sql`  
+**Archived Migrations**: 60 files in `supabase/migrations/archive/`

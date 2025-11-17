@@ -24,8 +24,28 @@ export const getSupabase = (): SupabaseClient => {
     return supabaseInstance;
   }
 
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  // Determine which database to use based on environment
+  const isDev = import.meta.env.DEV;
+  const hasDevConfig =
+    import.meta.env.VITE_SUPABASE_DEV_URL &&
+    import.meta.env.VITE_SUPABASE_DEV_ANON_KEY;
+
+  let supabaseUrl: string;
+  let supabaseKey: string;
+
+  if (isDev && hasDevConfig) {
+    // Development mode with dev database configured
+    supabaseUrl = import.meta.env.VITE_SUPABASE_DEV_URL;
+    supabaseKey = import.meta.env.VITE_SUPABASE_DEV_ANON_KEY;
+    console.log("🔧 Using DEVELOPMENT database");
+  } else {
+    // Production mode or dev mode without dev database configured
+    supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    if (isDev) {
+      console.log("⚠️ Using PRODUCTION database (dev database not configured)");
+    }
+  }
 
   // Validate that environment variables are loaded
   if (!supabaseUrl || !supabaseKey) {
@@ -38,7 +58,7 @@ export const getSupabase = (): SupabaseClient => {
       );
     } else {
       throw new Error(
-        "Missing Supabase environment variables. Make sure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set in your .env.local file."
+        "Missing Supabase environment variables. Make sure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (or VITE_SUPABASE_DEV_URL and VITE_SUPABASE_DEV_ANON_KEY for development) are set in your .env.local file."
       );
     }
   }

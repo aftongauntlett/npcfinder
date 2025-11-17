@@ -26,9 +26,11 @@ npm install
 In Supabase dashboard:
 
 1. Click SQL Editor
-2. Copy contents of `supabase/migrations/` files
-3. Run each migration in order
-4. Enable Row Level Security on all tables
+2. Copy contents of `supabase/migrations/20250116000000_baseline_schema.sql`
+3. Run the migration
+4. This single migration contains the complete schema
+
+**Note**: Old prototype migrations are archived in `supabase/migrations/archive/` and don't need to be run.
 
 See [DATABASE-MIGRATIONS.md](DATABASE-MIGRATIONS.md) for detailed migration management.
 
@@ -42,6 +44,27 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
 Find these in: Supabase Dashboard > Settings > API
+
+**Optional: Development Database Setup**
+
+For safe database development, create a second Supabase project for development:
+
+1. Create another Supabase project (free tier allows multiple projects)
+2. Run the baseline migration on this dev project too
+3. Add dev credentials to `.env.local`:
+
+```bash
+VITE_SUPABASE_DEV_URL=your-dev-project-url
+VITE_SUPABASE_DEV_ANON_KEY=your-dev-anon-key
+SUPABASE_DEV_PROJECT_REF=your-dev-project-ref
+SUPABASE_PROD_PROJECT_REF=your-prod-project-ref
+```
+
+When running `npm run dev` (Vite development mode), the app will automatically use the dev database. This protects your production data during development.
+
+Find project refs in: Supabase Dashboard → Project Settings → General → Reference ID
+
+See [DEV-PROD-WORKFLOW.md](DEV-PROD-WORKFLOW.md) for complete setup and benefits.
 
 See [API-SETUP.md](API-SETUP.md) for complete API key setup (TMDB, Google Books, OMDB, iTunes).
 
