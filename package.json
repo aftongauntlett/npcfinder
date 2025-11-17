@@ -20,12 +20,12 @@
     "audit:fix": "npm audit fix",
     "security:check": "npm audit --audit-level=moderate && npm run lint && npm run test -- --run",
     "db:migration:new": "npx supabase migration new",
-    "db:migration:list:dev": "npx supabase migration list --project-ref $SUPABASE_DEV_PROJECT_REF",
-    "db:migration:list:prod": "npx supabase migration list --project-ref $SUPABASE_PROD_PROJECT_REF",
-    "db:push:dev": "npx supabase db push --project-ref $SUPABASE_DEV_PROJECT_REF",
-    "db:push:prod": "echo '⚠️  WARNING: Pushing to PRODUCTION database. Press Ctrl+C to cancel...' && sleep 5 && npx supabase db push --project-ref $SUPABASE_PROD_PROJECT_REF",
-    "db:reset:dev": "npx supabase db reset --project-ref $SUPABASE_DEV_PROJECT_REF",
-    "db:diff:dev": "npx supabase db diff --project-ref $SUPABASE_DEV_PROJECT_REF"
+    "db:migration:list:dev": "npx supabase link --project-ref $SUPABASE_DEV_PROJECT_REF && npx supabase migration list",
+    "db:migration:list:prod": "npx supabase link --project-ref $SUPABASE_PROD_PROJECT_REF && npx supabase migration list",
+    "db:push:dev": "npx supabase link --project-ref $SUPABASE_DEV_PROJECT_REF && npx supabase db push",
+    "db:push:prod": "echo '⚠️  WARNING: Pushing to PRODUCTION database. Press Ctrl+C to cancel...' && sleep 5 && npx supabase link --project-ref $SUPABASE_PROD_PROJECT_REF && npx supabase db push",
+    "db:reset:dev": "npx supabase link --project-ref $SUPABASE_DEV_PROJECT_REF && npx supabase db reset",
+    "db:diff:dev": "npx supabase link --project-ref $SUPABASE_DEV_PROJECT_REF && npx supabase db diff"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
