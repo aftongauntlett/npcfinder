@@ -34,6 +34,19 @@ CREATE SCHEMA IF NOT EXISTS "public";
 
 ALTER SCHEMA "public" OWNER TO "postgres";
 
+-- =====================================================
+-- CREATE CUSTOM ROLE FOR SECURITY DEFINER FUNCTIONS
+-- =====================================================
+-- This role is used by SECURITY DEFINER functions to access tables under FORCE RLS
+-- It has minimal privileges (no LOGIN, not a superuser) for defense-in-depth
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'npc_service_role') THEN
+    CREATE ROLE npc_service_role NOLOGIN NOINHERIT;
+  END IF;
+END
+$$;
+
 
 CREATE OR REPLACE FUNCTION "public"."batch_connect_users"("user_ids" "uuid"[]) RETURNS json
     LANGUAGE "plpgsql" SECURITY DEFINER
@@ -1787,16 +1800,20 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE "public"."user_watchlist" TO "authent
 -- This code never expires and is tied to the super admin email
 INSERT INTO "public"."invite_codes" (
   "code",
-  "email",
+  "intended_email",
   "created_by",
   "expires_at",
-  "is_revoked"
+  "is_active",
+  "max_uses",
+  "current_uses"
 ) VALUES (
   'BOOTSTRAP_ADMIN_2025',
   'afton.gauntlett@gmail.com',
   NULL,  -- No creator (system-generated)
   '2099-12-31 23:59:59+00',  -- Effectively never expires
-  false
+  true,
+  1,
+  0
 ) ON CONFLICT ("code") DO NOTHING;  -- Idempotent: won't fail if code already exists
 
 
