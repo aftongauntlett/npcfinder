@@ -141,6 +141,10 @@ interface RAWGResult {
   playtime?: number;
 }
 
+interface RAWGGameDetails extends RAWGResult {
+  description_raw?: string;
+}
+
 interface RAWGResponse {
   results: RAWGResult[];
 }
@@ -189,5 +193,33 @@ export async function searchGames(query: string): Promise<MediaItem[]> {
   } catch (error) {
     console.error("Failed to search games:", error);
     return [];
+  }
+}
+
+/**
+ * Fetch detailed game information from RAWG API
+ */
+export async function fetchGameDetails(
+  gameId: string
+): Promise<RAWGGameDetails | null> {
+  const apiKey = import.meta.env.VITE_RAWG_API_KEY;
+  if (!apiKey) {
+    console.error("RAWG API key not configured");
+    return null;
+  }
+
+  const url = `https://api.rawg.io/api/games/${gameId}?key=${apiKey}`;
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`RAWG API error: ${response.status}`);
+    }
+
+    const data: RAWGGameDetails = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Failed to fetch game details:", error);
+    return null;
   }
 }

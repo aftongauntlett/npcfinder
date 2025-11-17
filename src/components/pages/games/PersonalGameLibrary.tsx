@@ -10,7 +10,10 @@ import SearchGameModal from "../../shared/search/SearchGameModal";
 import GameDetailModal from "./GameDetailModal";
 import Toast from "../../ui/Toast";
 import { useMediaFiltering } from "../../../hooks/useMediaFiltering";
-import { searchGames } from "../../../utils/mediaSearchAdapters";
+import {
+  searchGames,
+  fetchGameDetails,
+} from "../../../utils/mediaSearchAdapters";
 import {
   useGameLibrary,
   useAddToGameLibrary,
@@ -56,6 +59,11 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
   );
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+
+  // Undo state
+  const [lastDeletedGame, setLastDeletedGame] =
+    useState<GameLibraryItem | null>(null);
+  const [showUndoToast, setShowUndoToast] = useState(false);
 
   // Fetch library
   const { data: gameLibrary = [], isLoading } = useGameLibrary();
@@ -188,6 +196,9 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
   // Handle add game from search
   const handleAddGame = async (game: MediaItem) => {
     try {
+      // Fetch full game details to get description
+      const gameDetails = await fetchGameDetails(game.external_id);
+
       await addToLibrary.mutateAsync({
         external_id: game.external_id,
         slug: game.slug || "",
@@ -199,6 +210,7 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
         rating: game.rating || null,
         metacritic: game.metacritic || null,
         playtime: game.playtime || null,
+        description_raw: gameDetails?.description_raw || null,
         played: false,
       });
       setToastMessage(`Added "${game.title}" to your library!`);
@@ -226,14 +238,48 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
 
   // Handle delete
   const handleDelete = async (game: GameLibraryItem) => {
-    if (!confirm(`Remove "${game.name}" from your library?`)) return;
+    setLastDeletedGame(game);
+    setShowUndoToast(true);
     try {
       await deleteFromLibrary.mutateAsync(game.id);
-      setToastMessage(`Removed "${game.name}" from your library`);
-      setShowToast(true);
     } catch (error) {
       console.error("Failed to delete game:", error);
+      setShowUndoToast(false);
+      setLastDeletedGame(null);
       setToastMessage("Failed to remove game");
+      setShowToast(true);
+    }
+  };
+
+  // Handle undo delete
+  const handleUndoDelete = async () => {
+    if (!lastDeletedGame) return;
+
+    try {
+      // Fetch full game details to restore with description
+      const gameDetails = await fetchGameDetails(lastDeletedGame.external_id);
+
+      await addToLibrary.mutateAsync({
+        external_id: lastDeletedGame.external_id,
+        slug: lastDeletedGame.slug,
+        name: lastDeletedGame.name,
+        released: lastDeletedGame.released,
+        background_image: lastDeletedGame.background_image,
+        platforms: lastDeletedGame.platforms,
+        genres: lastDeletedGame.genres,
+        rating: lastDeletedGame.rating,
+        metacritic: lastDeletedGame.metacritic,
+        playtime: lastDeletedGame.playtime,
+        description_raw:
+          gameDetails?.description_raw || lastDeletedGame.description_raw,
+        played: lastDeletedGame.played,
+      });
+
+      setLastDeletedGame(null);
+      setShowUndoToast(false);
+    } catch (error) {
+      console.error("Failed to restore game:", error);
+      setToastMessage("Failed to restore game");
       setShowToast(true);
     }
   };
@@ -483,6 +529,21 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
         <Toast message={toastMessage} onClose={() => setShowToast(false)} />
       )}
 
+      {/* Undo Toast */}
+      {showUndoToast && lastDeletedGame && (
+        <Toast
+          message={`Removed "${lastDeletedGame.name}"`}
+          action={{
+            label: "Undo",
+            onClick: () => void handleUndoDelete(),
+          }}
+          onClose={() => {
+            setShowUndoToast(false);
+            setLastDeletedGame(null);
+          }}
+        />
+      )}
+
       {/* Game Detail Modal */}
       {selectedGame && showDetailModal && (
         <GameDetailModal
@@ -500,10 +561,6 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
             void handleDelete(selectedGame);
             setShowDetailModal(false);
             setSelectedGame(null);
-          }}
-          onRecommend={() => {
-            setShowDetailModal(false);
-            setShowRecommendModal(true);
           }}
         />
       )}

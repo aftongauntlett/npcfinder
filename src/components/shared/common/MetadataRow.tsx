@@ -1,7 +1,7 @@
 import { LucideIcon } from "lucide-react";
 
 export interface MetadataItem {
-  icon: LucideIcon;
+  icon?: LucideIcon;
   label: string;
   value: string | number;
   hidden?: boolean;
@@ -44,10 +44,12 @@ export default function MetadataRow({
             key={`${item.label}-${index}`}
             className="flex items-center gap-1.5 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200"
           >
-            <Icon
-              className={`${iconSizeClass} text-gray-600 dark:text-gray-400`}
-              aria-hidden="true"
-            />
+            {Icon && (
+              <Icon
+                className={`${iconSizeClass} text-gray-600 dark:text-gray-400`}
+                aria-hidden="true"
+              />
+            )}
             <span
               className={`${textSizeClass} text-gray-600 dark:text-gray-400`}
             >

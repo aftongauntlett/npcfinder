@@ -353,10 +353,6 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
             handleRemove(selectedMusic);
             setSelectedMusic(null);
           }}
-          onRecommend={() => {
-            handleRecommend(selectedMusic);
-            setSelectedMusic(null);
-          }}
         />
       )}
 

@@ -509,10 +509,6 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
             handleRemove(selectedBook.id);
             setSelectedBook(null);
           }}
-          onRecommend={() => {
-            setBookToRecommend(selectedBook);
-            setShowSendModal(true);
-          }}
         />
       )}
 

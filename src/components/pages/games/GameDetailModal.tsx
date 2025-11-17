@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Calendar, Award, DollarSign } from "lucide-react";
 import MediaDetailModal from "../../shared/media/MediaDetailModal";
+import { MediaContributorList } from "@/components/shared";
 import type { GameLibraryItem } from "../../../hooks/useGameLibraryQueries";
 import { useUpdateGameRating } from "../../../hooks/useGameLibraryQueries";
 import type { MetadataItem } from "../../shared/common/MetadataRow";
@@ -12,7 +12,6 @@ interface GameDetailModalProps {
   onClose: () => void;
   onTogglePlayed: () => void;
   onRemove: () => void;
-  onRecommend: () => void;
 }
 
 const GameDetailModal: React.FC<GameDetailModalProps> = ({
@@ -20,17 +19,22 @@ const GameDetailModal: React.FC<GameDetailModalProps> = ({
   onClose,
   onTogglePlayed,
   onRemove,
-  onRecommend,
 }) => {
-  const [rating, setRating] = useState(game.personal_rating || 0);
+  const [rating, setRating] = useState<number | null>(
+    game.personal_rating || null
+  );
+  const [reviewText, setReviewText] = useState("");
+  const [isPublic, setIsPublic] = useState(false);
 
   const updateRating = useUpdateGameRating();
 
   const handleRatingChange = (newRating: number | null) => {
-    setRating(newRating || 0);
-    if (newRating !== null) {
-      void updateRating.mutateAsync({ gameId: game.id, rating: newRating });
-    }
+    setRating(newRating);
+    void updateRating.mutateAsync({ gameId: game.id, rating: newRating });
+  };
+
+  const handleSaveReview = () => {
+    // Games don't have review text, so this is just for the interface
   };
 
   const releaseYear = game.released
@@ -47,36 +51,16 @@ const GameDetailModal: React.FC<GameDetailModalProps> = ({
     ? game.platforms.split(",").map((p: string) => p.trim())
     : [];
 
-  // Build metadata array
-  const metadata: MetadataItem[] = [
-    ...(releaseYear
-      ? [
-          {
-            icon: Calendar,
-            value: String(releaseYear),
-            label: String(releaseYear),
-          },
-        ]
-      : []),
-    ...(game.playtime
-      ? [
-          {
-            icon: Award,
-            value: `${game.playtime}h avg playtime`,
-            label: `${game.playtime}h avg playtime`,
-          },
-        ]
-      : []),
-    ...(game.metacritic
-      ? [
-          {
-            icon: DollarSign,
-            value: `Metacritic: ${game.metacritic}`,
-            label: `Metacritic: ${game.metacritic}`,
-          },
-        ]
-      : []),
-  ];
+  // Build metadata array - simple text without icons
+  const metadata: MetadataItem[] = [];
+
+  // Only add year if available
+  if (releaseYear) {
+    metadata.push({
+      value: String(releaseYear),
+      label: String(releaseYear),
+    });
+  }
 
   const handleStatusChange = (newStatus: MediaStatus) => {
     // Map status to played boolean
@@ -88,35 +72,44 @@ const GameDetailModal: React.FC<GameDetailModalProps> = ({
     }
   };
 
-  // Build additional content section (platforms + RAWG rating)
+  // Build additional content section (platforms, playtime, metacritic, RAWG rating)
   const additionalContent = (
     <>
       {platformList.length > 0 && (
-        <div className="pb-5">
-          <h3 className="text-sm font-medium text-primary mb-2.5 mt-0">
-            Platforms
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {platformList.map((platform: string) => (
-              <span
-                key={platform}
-                className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 cursor-default"
-              >
-                {platform}
-              </span>
-            ))}
-          </div>
-        </div>
+        <MediaContributorList
+          title="Platforms"
+          contributors={platformList}
+          variant="chips"
+        />
       )}
 
-      {game.rating && (
-        <div>
-          <span className="text-sm text-gray-600 dark:text-gray-400">
-            RAWG Rating:{" "}
-          </span>
-          <span className="text-sm font-semibold text-purple-600 dark:text-purple-400">
-            {game.rating.toFixed(1)}/5
-          </span>
+      {(game.playtime || game.metacritic || game.rating) && (
+        <div className="pb-5">
+          <h4 className="text-sm font-medium text-primary mb-2.5 mt-0">
+            Game Stats
+          </h4>
+          <div className="space-y-1">
+            {game.playtime && (
+              <p className="text-base text-gray-700 dark:text-gray-300 m-0">
+                Avg Playtime:{" "}
+                <span className="font-semibold">{game.playtime}h</span>
+              </p>
+            )}
+            {game.metacritic && (
+              <p className="text-base text-gray-700 dark:text-gray-300 m-0">
+                Metacritic:{" "}
+                <span className="font-semibold">{game.metacritic}/100</span>
+              </p>
+            )}
+            {game.rating && (
+              <p className="text-base text-gray-700 dark:text-gray-300 m-0">
+                RAWG Rating:{" "}
+                <span className="font-semibold text-purple-600 dark:text-purple-400">
+                  {game.rating.toFixed(1)}/5
+                </span>
+              </p>
+            )}
+          </div>
         </div>
       )}
     </>
@@ -131,26 +124,24 @@ const GameDetailModal: React.FC<GameDetailModalProps> = ({
       posterUrl={game.background_image || undefined}
       metadata={metadata}
       genres={genreList}
-      description={undefined}
+      description={game.description_raw || undefined}
       status={game.played ? "completed" : "planned"}
       onStatusChange={handleStatusChange}
-      onRecommend={onRecommend}
       onRemove={onRemove}
-      showReviewSection={false}
+      showReviewSection={true}
       additionalContent={additionalContent}
-      reviewSection={undefined}
       myReview={null}
       friendsReviews={[]}
       rating={rating}
-      reviewText=""
-      isPublic={true}
+      reviewText={reviewText}
+      isPublic={isPublic}
       isSaving={false}
       showSavedMessage={false}
       hasUnsavedChanges={false}
       onRatingChange={handleRatingChange}
-      onReviewTextChange={() => {}}
-      onPublicChange={() => {}}
-      onSaveReview={() => {}}
+      onReviewTextChange={setReviewText}
+      onPublicChange={setIsPublic}
+      onSaveReview={handleSaveReview}
       onDeleteReview={undefined}
     />
   );

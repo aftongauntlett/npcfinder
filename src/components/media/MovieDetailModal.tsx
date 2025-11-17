@@ -6,7 +6,6 @@ import {
   Button,
   MediaCrewInfo,
   MediaCastList,
-  SendMediaModal,
   type MetadataItem,
 } from "@/components/shared";
 import { SimilarMoviesCarousel } from "./SimilarMoviesCarousel";
@@ -16,7 +15,6 @@ import {
   fetchSimilarMedia,
   SimilarMediaItem,
 } from "../../utils/tmdbDetails";
-import { searchMoviesAndTV } from "../../utils/mediaSearchAdapters";
 import type { WatchlistItem } from "../../services/recommendationsService.types";
 import {
   useAddToWatchlist,
@@ -74,11 +72,6 @@ export default function MovieDetailModal({
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showSavedMessage, setShowSavedMessage] = useState(false);
-
-  // Recommend modal state
-  const [showSendModal, setShowSendModal] = useState(false);
-  const [movieToRecommend, setMovieToRecommend] =
-    useState<WatchlistItem | null>(null);
 
   // Sync form with existing review
   useEffect(() => {
@@ -195,11 +188,6 @@ export default function MovieDetailModal({
     await toggleWatched.mutateAsync(item.id);
   };
 
-  const handleRecommend = () => {
-    setMovieToRecommend(item);
-    setShowSendModal(true);
-  };
-
   const handleStatusChange = (newStatus: MediaStatus) => {
     // Map status to watched boolean
     // For now, we'll just toggle watched on/off based on completed vs other states
@@ -296,7 +284,6 @@ export default function MovieDetailModal({
         status={currentStatus}
         onStatusChange={handleStatusChange}
         onRemove={handleRemoveFromWatchlist}
-        onRecommend={handleRecommend}
         myReview={myReview}
         friendsReviews={friendsReviews}
         rating={rating}
@@ -336,7 +323,6 @@ export default function MovieDetailModal({
         status={currentStatus}
         onStatusChange={handleStatusChange}
         onRemove={handleRemoveFromWatchlist}
-        onRecommend={handleRecommend}
         myReview={myReview}
         friendsReviews={friendsReviews}
         rating={rating}
@@ -376,7 +362,6 @@ export default function MovieDetailModal({
         status={currentStatus}
         onStatusChange={handleStatusChange}
         onRemove={handleRemoveFromWatchlist}
-        onRecommend={handleRecommend}
         myReview={myReview}
         friendsReviews={friendsReviews}
         rating={rating}
@@ -392,36 +377,6 @@ export default function MovieDetailModal({
         onDeleteReview={handleDeleteReview}
         additionalContent={additionalContent}
       />
-
-      {/* Send/Recommend Modal */}
-      {showSendModal && movieToRecommend && (
-        <SendMediaModal
-          isOpen={showSendModal}
-          onClose={() => {
-            setShowSendModal(false);
-            setMovieToRecommend(null);
-          }}
-          onSent={() => {
-            setShowSendModal(false);
-            setMovieToRecommend(null);
-          }}
-          mediaType="movies"
-          tableName="movie_recommendations"
-          searchPlaceholder="Search for movies or TV shows..."
-          searchFunction={searchMoviesAndTV}
-          recommendationTypes={[
-            { value: "watch", label: "Watch" },
-            { value: "rewatch", label: "Rewatch" },
-          ]}
-          defaultRecommendationType="watch"
-          preselectedItem={{
-            external_id: movieToRecommend.external_id,
-            title: movieToRecommend.title,
-            media_type: movieToRecommend.media_type,
-            poster_url: movieToRecommend.poster_url,
-          }}
-        />
-      )}
 
       {/* Similar Movies Carousel - rendered separately below modal */}
       {isOpen && similarMovies.length > 0 && (

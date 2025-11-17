@@ -35,6 +35,7 @@ export interface MediaItem {
   rating?: number; // RAWG rating (0.00-5.00)
   metacritic?: number; // Metacritic score (0-100)
   playtime?: number; // Average playtime in hours
+  description_raw?: string; // Raw HTML description from RAWG API
 }
 
 // Friend interface

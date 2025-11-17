@@ -34,6 +34,10 @@ export { default as SendMediaModal } from "./media/SendMediaModal";
 export type { MediaItem } from "./media/SendMediaModal";
 export { default as MediaRecommendationsLayout } from "./media/MediaRecommendationsLayout";
 export { default as InlineRecommendationsLayout } from "./media/InlineRecommendationsLayout";
+export { default as MediaContributorList } from "./media/MediaContributorList";
+export { default as MediaOverviewSection } from "./media/MediaOverviewSection";
+export { default as MediaUserNotes } from "./media/MediaUserNotes";
+export { default as MediaUserRating } from "./media/MediaUserRating";
 
 // Search Components - Search modal components
 export { default as SearchMovieModal } from "./search/SearchMovieModal";

@@ -20,6 +20,7 @@ export interface GameLibraryItem {
   rating: number | null;
   metacritic: number | null;
   playtime: number | null;
+  description_raw: string | null;
   played: boolean;
   personal_rating: number | null;
   personal_notes: string | null;
@@ -76,6 +77,7 @@ export function useAddToGameLibrary() {
       rating: number | null;
       metacritic: number | null;
       playtime: number | null;
+      description_raw: string | null;
       played: boolean;
     }) => {
       const {

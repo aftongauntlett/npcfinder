@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { Calendar, FileText, Hash } from "lucide-react";
 import MediaDetailModal from "../../shared/media/MediaDetailModal";
-import Accordion from "../../shared/common/Accordion";
-import StarRating from "../../shared/common/StarRating";
+import { MediaContributorList } from "@/components/shared";
 import type { ReadingListItem } from "../../../services/booksService.types";
 import {
   useUpdateBookRating,
@@ -17,7 +16,6 @@ interface BookDetailModalProps {
   onClose: () => void;
   onToggleRead: () => void;
   onRemove: () => void;
-  onRecommend: () => void;
 }
 
 const BookDetailModal: React.FC<BookDetailModalProps> = ({
@@ -25,22 +23,26 @@ const BookDetailModal: React.FC<BookDetailModalProps> = ({
   onClose,
   onToggleRead,
   onRemove,
-  onRecommend,
 }) => {
-  const [rating, setRating] = useState(book.personal_rating || 0);
+  const [rating, setRating] = useState<number | null>(
+    book.personal_rating || null
+  );
   const [notes, setNotes] = useState(book.personal_notes || "");
+  const [isPublic, setIsPublic] = useState(false);
 
   const updateRating = useUpdateBookRating();
   const updateNotes = useUpdateBookNotes();
 
   const handleRatingChange = (newRating: number | null) => {
-    setRating(newRating || 0);
-    if (newRating !== null) {
-      void updateRating.mutateAsync({ bookId: book.id, rating: newRating });
-    }
+    setRating(newRating);
+    void updateRating.mutateAsync({ bookId: book.id, rating: newRating });
   };
 
-  const handleNotesBlur = () => {
+  const handleNotesChange = (newNotes: string) => {
+    setNotes(newNotes);
+  };
+
+  const handleSaveReview = () => {
     if (notes !== book.personal_notes) {
       void updateNotes.mutateAsync({ bookId: book.id, notes: notes || null });
     }
@@ -83,66 +85,14 @@ const BookDetailModal: React.FC<BookDetailModalProps> = ({
     ...(book.isbn ? [{ icon: Hash, value: book.isbn, label: book.isbn }] : []),
   ];
 
-  // Build additional content (author + personal notes)
-  const additionalContent = (
-    <>
-      {book.authors && (
-        <div>
-          <p className="text-lg text-gray-600 dark:text-gray-400">
-            by {book.authors}
-          </p>
-        </div>
-      )}
-
-      {/* Personal Notes */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Your Notes
-        </label>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          onBlur={handleNotesBlur}
-          placeholder="Add your thoughts, favorite quotes, or notes..."
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
-          rows={4}
-        />
-      </div>
-    </>
-  );
-
-  // Build review section (BookReviewForm accordion - simplified version)
-  const reviewSection = (
-    <Accordion
-      title="Your Review"
-      subtitle={
-        book.personal_rating
-          ? "You've reviewed this book"
-          : "Add your thoughts (optional)"
-      }
-      defaultExpanded={false}
-    >
-      <div className="space-y-4">
-        {/* Star Rating */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Rating
-          </label>
-          <StarRating
-            rating={rating}
-            onRatingChange={handleRatingChange}
-            showLabel={true}
-            showClearButton={false}
-          />
-        </div>
-
-        {/* Notes are in additionalContent, so just show a message here */}
-        <div className="text-sm text-gray-600 dark:text-gray-400">
-          Add your personal notes in the "Your Notes" section above.
-        </div>
-      </div>
-    </Accordion>
-  );
+  // Build additional content (author only)
+  const additionalContent = book.authors ? (
+    <MediaContributorList
+      title="Author"
+      contributors={[book.authors]}
+      variant="inline"
+    />
+  ) : null;
 
   return (
     <MediaDetailModal
@@ -156,23 +106,21 @@ const BookDetailModal: React.FC<BookDetailModalProps> = ({
       description={book.description || undefined}
       status={book.read ? "completed" : "planned"}
       onStatusChange={handleStatusChange}
-      onRecommend={onRecommend}
       onRemove={onRemove}
-      showReviewSection={false}
+      showReviewSection={true}
       additionalContent={additionalContent}
-      reviewSection={reviewSection}
       myReview={null}
       friendsReviews={[]}
       rating={rating}
-      reviewText=""
-      isPublic={true}
+      reviewText={notes}
+      isPublic={isPublic}
       isSaving={false}
       showSavedMessage={false}
       hasUnsavedChanges={false}
       onRatingChange={handleRatingChange}
-      onReviewTextChange={() => {}}
-      onPublicChange={() => {}}
-      onSaveReview={() => {}}
+      onReviewTextChange={handleNotesChange}
+      onPublicChange={setIsPublic}
+      onSaveReview={handleSaveReview}
       onDeleteReview={undefined}
     />
   );

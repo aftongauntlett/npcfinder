@@ -9,9 +9,7 @@ interface MediaDetailActionsProps {
   status: StatusType;
   mediaType: MediaType;
   onStatusChange: (status: MediaStatus) => void;
-  onRecommend?: () => void;
   onRemove: () => void;
-  showRecommendButton?: boolean;
   isInWatchlist?: boolean;
 }
 
@@ -25,9 +23,7 @@ const MediaDetailActions: React.FC<MediaDetailActionsProps> = ({
   status,
   mediaType,
   onStatusChange,
-  onRecommend,
   onRemove,
-  showRecommendButton = true,
   isInWatchlist = true,
 }) => {
   // Map mediaType to action verb for button labels
@@ -87,19 +83,6 @@ const MediaDetailActions: React.FC<MediaDetailActionsProps> = ({
           {getButtonLabel()}
         </span>
       </Button>
-
-      {showRecommendButton && onRecommend && (
-        <Button
-          onClick={onRecommend}
-          variant="secondary"
-          fullWidth
-          className="group"
-        >
-          <span className="flex items-center justify-center gap-2">
-            Recommend
-          </span>
-        </Button>
-      )}
 
       {isInWatchlist && (
         <Button onClick={onRemove} variant="danger" fullWidth className="group">
