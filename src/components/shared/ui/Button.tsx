@@ -280,11 +280,16 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {loading && <Spinner />}
 
-        {!loading && icon && iconPosition === "left" && (
-          <span className="flex-shrink-0 inline-flex items-center justify-center">
-            {icon}
-          </span>
-        )}
+        {!loading &&
+          icon &&
+          iconPosition === "left" &&
+          (shouldUseIconStyling ? (
+            icon
+          ) : (
+            <span className="flex-shrink-0 inline-flex items-center justify-center">
+              {icon}
+            </span>
+          ))}
 
         {children && (
           <span className={hideTextOnMobile ? "hidden sm:inline" : ""}>
@@ -292,11 +297,16 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           </span>
         )}
 
-        {!loading && icon && iconPosition === "right" && (
-          <span className="flex-shrink-0 inline-flex items-center justify-center">
-            {icon}
-          </span>
-        )}
+        {!loading &&
+          icon &&
+          iconPosition === "right" &&
+          (shouldUseIconStyling ? (
+            icon
+          ) : (
+            <span className="flex-shrink-0 inline-flex items-center justify-center">
+              {icon}
+            </span>
+          ))}
       </button>
     );
   }

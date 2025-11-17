@@ -16,6 +16,7 @@ export { default as Card } from "./ui/Card";
 export { default as Modal } from "./ui/Modal";
 export { default as ConfirmationModal } from "./ui/ConfirmationModal";
 export { default as Alert } from "./ui/Alert";
+export { default as Tooltip } from "./ui/Tooltip";
 
 // Media Components - Media-specific functionality
 export { default as MediaDetailModal } from "./media/MediaDetailModal";
