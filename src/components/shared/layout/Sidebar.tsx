@@ -212,17 +212,28 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
           )}
         </div>
 
-        {/* User Section with Dropdown */}
+        {/* Navigation Items */}
+        <nav className="flex-1 overflow-y-auto py-4" role="navigation">
+          <NavList
+            items={NAV_ITEMS}
+            currentPath={location.pathname}
+            isCollapsed={isCollapsed}
+            isAdmin={isAdmin}
+            onNavigate={handleNavigation}
+          />
+        </nav>
+
+        {/* User Section with Dropdown - Moved to bottom */}
         <div
           ref={userMenuRef}
-          className="relative border-b border-gray-200 dark:border-gray-700 p-2"
+          className="relative border-t border-gray-200 dark:border-gray-700 p-2"
         >
           {/* User Button */}
           <button
             type="button"
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-            className={`w-full flex items-center gap-3 px-2 py-3 rounded-lg transition-all duration-200 bg-gray-50 dark:bg-gray-700/30 hover:bg-gray-100 dark:hover:bg-gray-700/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
-              isCollapsed ? "justify-center" : ""
+            className={`w-full flex items-center px-2 py-3 rounded-lg transition-all duration-200 bg-gray-50 dark:bg-gray-700/30 hover:bg-gray-100 dark:hover:bg-gray-700/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
+              isCollapsed ? "justify-center" : "gap-2"
             }`}
             aria-expanded={isUserMenuOpen}
             aria-haspopup="true"
@@ -245,26 +256,22 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
               </div>
             ) : (
               <>
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                    {isAdmin ? (
-                      <ShieldCheck
-                        className="w-5 h-5 text-primary"
-                        aria-hidden="true"
-                      />
-                    ) : (
-                      <UserIcon
-                        className="w-5 h-5 text-primary"
-                        aria-hidden="true"
-                      />
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-base font-bold text-gray-900 dark:text-white truncate font-heading">
-                      {displayName}
-                    </p>
-                  </div>
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                  {isAdmin ? (
+                    <ShieldCheck
+                      className="w-5 h-5 text-primary"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <UserIcon
+                      className="w-5 h-5 text-primary"
+                      aria-hidden="true"
+                    />
+                  )}
                 </div>
+                <p className="text-base font-bold text-gray-900 dark:text-white truncate font-heading flex-1">
+                  {displayName}
+                </p>
                 <ChevronDown
                   className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform flex-shrink-0 ${
                     isUserMenuOpen ? "rotate-180" : ""
@@ -287,19 +294,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
           />
         </div>
 
-        {/* Navigation Items */}
-        <nav className="flex-1 overflow-y-auto py-4" role="navigation">
-          <NavList
-            items={NAV_ITEMS}
-            currentPath={location.pathname}
-            isCollapsed={isCollapsed}
-            isAdmin={isAdmin}
-            onNavigate={handleNavigation}
-          />
-        </nav>
-
         {/* Sidebar Footer - Collapse Toggle */}
-        <div className="p-2">
+        <div className="p-2 border-t border-gray-200 dark:border-gray-700">
           <Button
             onClick={toggleCollapse}
             variant="subtle"

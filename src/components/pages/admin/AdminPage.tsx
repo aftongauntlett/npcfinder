@@ -12,6 +12,7 @@ import {
   Plus,
   Shield,
   RefreshCw,
+  Sparkles,
 } from "lucide-react";
 import MainLayout from "../../layouts/MainLayout";
 import ContentLayout from "../../layouts/ContentLayout";
@@ -92,15 +93,42 @@ const AdminPage: React.FC = () => {
   const users = usersData?.users || [];
   const totalUserPages = usersData?.totalPages || 0;
 
+  // Identify master admin (first user created - bootstrap admin)
+  const masterAdminId =
+    users.length > 0
+      ? users.reduce((earliest, user) =>
+          new Date(user.created_at) < new Date(earliest.created_at)
+            ? user
+            : earliest
+        ).id
+      : null;
+
+  // Check if user is master admin (first user created)
+  const isMasterAdmin = useCallback(
+    (user: User) => {
+      return user.id === masterAdminId && user.is_admin;
+    },
+    [masterAdminId]
+  );
+
   // User Management Handlers
-  const handleToggleAdminClick = useCallback((user: User) => {
-    setUserToToggle({
-      id: user.id,
-      name: user.display_name,
-      isAdmin: user.is_admin || false,
-    });
-    setShowAdminToggleModal(true);
-  }, []);
+  const handleToggleAdminClick = useCallback(
+    (user: User) => {
+      // Prevent demoting master admin
+      if (user.is_admin && isMasterAdmin(user)) {
+        alert("Cannot remove admin privileges from Master Admin");
+        return;
+      }
+
+      setUserToToggle({
+        id: user.id,
+        name: user.display_name,
+        isAdmin: user.is_admin || false,
+      });
+      setShowAdminToggleModal(true);
+    },
+    [isMasterAdmin]
+  );
 
   const confirmToggleAdmin = useCallback(async () => {
     if (!userToToggle) return;
@@ -385,29 +413,32 @@ const AdminPage: React.FC = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <motion.div
-                              whileHover={{ y: -1 }}
-                              whileTap={{ scale: 0.98 }}
-                              transition={{
-                                type: "spring",
-                                stiffness: 400,
-                                damping: 30,
-                              }}
-                            >
-                              <Button
+                            {user.is_admin ? (
+                              <button
                                 onClick={() => handleToggleAdminClick(user)}
-                                variant={user.is_admin ? "primary" : "subtle"}
-                                size="sm"
-                                aria-pressed={user.is_admin}
-                                className={
-                                  user.is_admin
-                                    ? "bg-green-600 hover:bg-green-700 border-green-600"
-                                    : ""
+                                disabled={isMasterAdmin(user)}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-purple-500 text-white hover:bg-purple-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                                title={
+                                  isMasterAdmin(user)
+                                    ? "Master Admin cannot be demoted"
+                                    : "Click to remove admin"
                                 }
                               >
-                                {user.is_admin ? "Admin" : "User"}
-                              </Button>
-                            </motion.div>
+                                <Shield
+                                  className="w-3.5 h-3.5"
+                                  aria-hidden="true"
+                                />
+                                {isMasterAdmin(user) ? "Master Admin" : "Admin"}
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleToggleAdminClick(user)}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-gray-500 text-white hover:bg-gray-600 transition-colors"
+                                title="Click to make admin"
+                              >
+                                User
+                              </button>
+                            )}
                           </td>
                         </motion.tr>
                       ))}
@@ -458,8 +489,8 @@ const AdminPage: React.FC = () => {
               {!showCreateForm && (
                 <Button
                   onClick={() => setShowCreateForm(true)}
-                  variant="primary"
-                  icon={<Plus className="w-4 h-4" />}
+                  variant="action"
+                  icon={<Sparkles className="w-4 h-4" />}
                   hideTextOnMobile
                   aria-label="Create invite code"
                 >

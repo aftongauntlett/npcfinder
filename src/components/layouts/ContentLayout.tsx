@@ -16,7 +16,7 @@ import {
 import { useAdmin } from "../../contexts/AdminContext";
 import { useProfileQuery } from "../../hooks/useProfileQuery";
 import { signOut } from "../../lib/auth";
-import { Button } from "@/components/shared";
+import { Button, Footer } from "@/components/shared";
 
 interface Tab {
   id: string;
@@ -230,9 +230,12 @@ const ContentLayout: React.FC<ContentLayoutProps> = ({
       </header>
 
       {/* Page Content */}
-      <div className="container mx-auto px-6" role="main">
+      <div className="container mx-auto px-6 pb-8" role="main">
         {children}
       </div>
+
+      {/* Footer */}
+      <Footer />
     </main>
   );
 };

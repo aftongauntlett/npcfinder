@@ -35,10 +35,10 @@ const UserMenuDropdown: React.FC<UserMenuDropdownProps> = ({
     item.adminOnly ? isAdmin : true
   );
 
-  // Expanded state: dropdown below user button
+  // Expanded state: dropdown above user button
   if (!isCollapsed) {
     return (
-      <div className="absolute top-full left-0 mt-2 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 max-h-[80vh] overflow-y-auto">
+      <div className="absolute bottom-full left-0 mb-2 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 max-h-[80vh] overflow-y-auto">
         {/* Menu Items */}
         {visibleItems.map((item) => {
           const Icon = item.icon;
@@ -71,9 +71,9 @@ const UserMenuDropdown: React.FC<UserMenuDropdownProps> = ({
     );
   }
 
-  // Collapsed state: dropdown to the right with user name header
+  // Collapsed state: dropdown to the right above the button
   return (
-    <div className="absolute left-full top-0 ml-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 max-h-[80vh] overflow-y-auto">
+    <div className="absolute left-full bottom-0 ml-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 max-h-[80vh] overflow-y-auto">
       {/* User Name Header */}
       <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
         <p className="text-sm font-bold text-gray-900 dark:text-white truncate font-heading">

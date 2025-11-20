@@ -98,15 +98,15 @@ const MediaEmptyState: React.FC<MediaEmptyStateProps> = ({
   // If actions are provided, render with action buttons
   if (actions && actions.length > 0) {
     return (
-      <div className="w-full bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 dark:border-gray-700 p-12 text-center">
+      <div className="w-full bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 dark:border-gray-700 p-16 text-center">
         <Icon
-          className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500"
+          className="w-16 h-16 mx-auto mb-6 text-gray-400 dark:text-gray-500"
           aria-hidden="true"
         />
-        <p className="text-white dark:text-white text-lg font-semibold mb-2">
+        <p className="text-white dark:text-white text-lg font-semibold mb-3">
           {title}
         </p>
-        <p className="text-gray-400 dark:text-gray-400 text-sm max-w-md mx-auto mb-6">
+        <p className="text-gray-400 dark:text-gray-400 text-sm max-w-md mx-auto mb-8">
           {description}
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center items-center max-w-md mx-auto">
@@ -134,14 +134,14 @@ const MediaEmptyState: React.FC<MediaEmptyStateProps> = ({
         onClick={onClick}
         variant="subtle"
         fullWidth
-        className="bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm border border-gray-700 dark:border-gray-700 hover:border-purple-500/50 dark:hover:border-purple-500/50 p-12 text-center hover:bg-gray-800/70 dark:hover:bg-gray-800/70 group focus-visible:ring-offset-gray-900 dark:focus-visible:ring-offset-gray-900"
+        className="bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm border border-gray-700 dark:border-gray-700 hover:border-purple-500/50 dark:hover:border-purple-500/50 p-16 text-center hover:bg-gray-800/70 dark:hover:bg-gray-800/70 group focus-visible:ring-offset-gray-900 dark:focus-visible:ring-offset-gray-900"
         aria-label={ariaLabel || title}
       >
         <Icon
-          className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500 group-hover:text-purple-400 dark:group-hover:text-purple-400 transition-colors"
+          className="w-16 h-16 mx-auto mb-6 text-gray-400 dark:text-gray-500 group-hover:text-purple-400 dark:group-hover:text-purple-400 transition-colors"
           aria-hidden="true"
         />
-        <p className="text-white dark:text-white text-lg font-semibold mb-2">
+        <p className="text-white dark:text-white text-lg font-semibold mb-3">
           {title}
         </p>
         <p className="text-gray-400 dark:text-gray-400 text-sm max-w-md mx-auto">
@@ -153,12 +153,12 @@ const MediaEmptyState: React.FC<MediaEmptyStateProps> = ({
 
   // Otherwise, render as static informational display
   return (
-    <div className="w-full bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 dark:border-gray-700 p-12 text-center">
+    <div className="w-full bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 dark:border-gray-700 p-16 text-center">
       <Icon
-        className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500"
+        className="w-16 h-16 mx-auto mb-6 text-gray-400 dark:text-gray-500"
         aria-hidden="true"
       />
-      <p className="text-white dark:text-white text-lg font-semibold mb-2">
+      <p className="text-white dark:text-white text-lg font-semibold mb-3">
         {title}
       </p>
       <p className="text-gray-400 dark:text-gray-400 text-sm max-w-md mx-auto">

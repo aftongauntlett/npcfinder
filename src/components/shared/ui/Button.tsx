@@ -108,10 +108,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       "inline-flex items-center justify-center",
       hideTextOnMobile ? "gap-0 sm:gap-2" : "gap-2", // No gap on mobile when text is hidden
       "font-medium",
-      // Border and corners - conditional for action variant
-      effectiveVariant === "action"
-        ? "rounded-lg border-0"
-        : "rounded border-2",
+      // Border and corners - minimal borders for modern look
+      effectiveVariant === "action" ? "rounded-lg border-0" : "rounded-lg",
       // Smooth transitions
       "transition-all duration-300 ease-out",
       // Focus state - visible ring for accessibility
@@ -125,27 +123,29 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     // Variant styles with glassmorphism effects
     const variantStyles: Record<ButtonVariant, string[]> = {
       primary: [
-        "border-current bg-current text-white shadow-sm",
+        "bg-current text-white shadow-sm",
         "glass-button hover-sheen",
         "hover:opacity-90 hover:shadow-md hover:[backdrop-filter:blur(10px)_saturate(130%)]",
         "focus-visible:ring-current",
       ],
       secondary: [
-        "border-current bg-transparent text-current shadow-sm",
+        "border border-current bg-transparent text-current shadow-sm",
         "glass-button",
         "hover:shadow-md",
-        "hover:[background:color-mix(in_srgb,var(--color-primary)_15%,transparent)]",
+        "hover:[background:color-mix(in_srgb,var(--color-primary)_12%,transparent)]",
         "hover:[backdrop-filter:blur(8px)_saturate(120%)]",
         "focus-visible:ring-current",
       ],
       subtle: [
-        "border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 text-gray-800 dark:text-gray-200",
-        "hover:bg-white/70 dark:hover:bg-gray-800/70 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-sm",
+        "border-transparent bg-gray-50/50 dark:bg-gray-800/30 text-gray-700 dark:text-gray-300",
+        "backdrop-blur-sm",
+        "hover:bg-gray-100/70 dark:hover:bg-gray-700/40 hover:shadow-sm",
         "focus-visible:ring-primary",
       ],
       danger: [
-        "border-red-300 dark:border-red-400/50 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400",
-        "hover:bg-red-100 dark:hover:bg-red-950/50 hover:border-red-400 dark:hover:border-red-400/70 hover:shadow-sm",
+        "border-transparent bg-red-50/80 dark:bg-red-950/40 text-red-600 dark:text-red-400",
+        "backdrop-blur-sm",
+        "hover:bg-red-100/90 dark:hover:bg-red-950/60 hover:shadow-sm",
         "focus-visible:ring-red-500 dark:focus-visible:ring-red-400",
       ],
       action: [
