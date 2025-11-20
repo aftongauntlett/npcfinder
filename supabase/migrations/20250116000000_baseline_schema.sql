@@ -2,6 +2,7 @@
 -- BASELINE SCHEMA MIGRATION
 -- =====================================================
 -- Created: November 16, 2025
+-- Updated: November 17, 2025
 -- Purpose: Clean starting point before inviting real users
 --
 -- IMPORTANT NOTES:
@@ -9,12 +10,11 @@
 -- - All prototype migrations have been archived in supabase/migrations/archive/
 -- - This represents the complete, correct schema as of database reset
 -- - Future changes MUST be forward-only migrations (never edit this file)
--- - This migration includes a bootstrap invite code for initial admin access
 --
--- BOOTSTRAP INVITE CODE:
--- - Code: BOOTSTRAP_ADMIN_2025
--- - Email: afton.gauntlett@gmail.com
--- - Use this code to create your admin account after database reset
+-- BOOTSTRAP ADMIN SETUP:
+-- After running this migration, create your admin invite code by running:
+--   npm run db:create-bootstrap-code
+-- This will prompt for your email and generate a secure invite code.
 -- =====================================================
 
 SET statement_timeout = 0;
@@ -35,17 +35,11 @@ CREATE SCHEMA IF NOT EXISTS "public";
 ALTER SCHEMA "public" OWNER TO "postgres";
 
 -- =====================================================
--- CREATE CUSTOM ROLE FOR SECURITY DEFINER FUNCTIONS
+-- NOTE: Custom roles not needed in Supabase hosted environment
 -- =====================================================
--- This role is used by SECURITY DEFINER functions to access tables under FORCE RLS
--- It has minimal privileges (no LOGIN, not a superuser) for defense-in-depth
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'npc_service_role') THEN
-    CREATE ROLE npc_service_role NOLOGIN NOINHERIT;
-  END IF;
-END
-$$;
+-- Supabase manages roles automatically. SECURITY DEFINER functions
+-- use 'postgres' role for elevated privileges.
+-- =====================================================
 
 
 CREATE OR REPLACE FUNCTION "public"."batch_connect_users"("user_ids" "uuid"[]) RETURNS json
@@ -92,7 +86,7 @@ END;
 $$;
 
 
-ALTER FUNCTION "public"."batch_connect_users"("user_ids" "uuid"[]) OWNER TO "npc_service_role";
+ALTER FUNCTION "public"."batch_connect_users"("user_ids" "uuid"[]) OWNER TO "postgres";
 
 
 COMMENT ON FUNCTION "public"."batch_connect_users"("user_ids" "uuid"[]) IS 'Admin-only function to manually connect a group of users (max 100).
@@ -203,7 +197,7 @@ END;
 $$;
 
 
-ALTER FUNCTION "public"."consume_invite_code"("code_value" "text", "user_id" "uuid") OWNER TO "npc_service_role";
+ALTER FUNCTION "public"."consume_invite_code"("code_value" "text", "user_id" "uuid") OWNER TO "postgres";
 
 
 COMMENT ON FUNCTION "public"."consume_invite_code"("code_value" "text", "user_id" "uuid") IS 'Consumes an invite code for user registration. 
@@ -240,7 +234,7 @@ END;
 $$;
 
 
-ALTER FUNCTION "public"."create_bidirectional_connection"("user_a" "uuid", "user_b" "uuid") OWNER TO "npc_service_role";
+ALTER FUNCTION "public"."create_bidirectional_connection"("user_a" "uuid", "user_b" "uuid") OWNER TO "postgres";
 
 
 COMMENT ON FUNCTION "public"."create_bidirectional_connection"("user_a" "uuid", "user_b" "uuid") IS 'Creates bidirectional connection between two users.
@@ -368,7 +362,7 @@ END;
 $$;
 
 
-ALTER FUNCTION "public"."handle_new_user"() OWNER TO "npc_service_role";
+ALTER FUNCTION "public"."handle_new_user"() OWNER TO "postgres";
 
 
 COMMENT ON FUNCTION "public"."handle_new_user"() IS 'Trigger function (AFTER INSERT on auth.users) that creates user_profiles row.
@@ -393,7 +387,7 @@ END;
 $$;
 
 
-ALTER FUNCTION "public"."is_admin"("check_user_id" "uuid") OWNER TO "npc_service_role";
+ALTER FUNCTION "public"."is_admin"("check_user_id" "uuid") OWNER TO "postgres";
 
 
 COMMENT ON FUNCTION "public"."is_admin"("check_user_id" "uuid") IS 'Returns true if the specified user has admin privileges. SECURITY DEFINER with fixed search_path to prevent schema hijacking.';
@@ -420,7 +414,7 @@ END;
 $$;
 
 
-ALTER FUNCTION "public"."prevent_admin_escalation_update"() OWNER TO "npc_service_role";
+ALTER FUNCTION "public"."prevent_admin_escalation_update"() OWNER TO "postgres";
 
 
 COMMENT ON FUNCTION "public"."prevent_admin_escalation_update"() IS 'Trigger function that blocks is_admin changes unless caller is already admin. SECURITY DEFINER with fixed search_path.';
@@ -446,7 +440,7 @@ END;
 $$;
 
 
-ALTER FUNCTION "public"."prevent_admin_self_grant"() OWNER TO "npc_service_role";
+ALTER FUNCTION "public"."prevent_admin_self_grant"() OWNER TO "postgres";
 
 
 COMMENT ON FUNCTION "public"."prevent_admin_self_grant"() IS 'Trigger function that prevents users from granting themselves admin during profile creation. SECURITY DEFINER with fixed search_path.';
@@ -478,7 +472,7 @@ END;
 $$;
 
 
-ALTER FUNCTION "public"."prevent_is_admin_change"() OWNER TO "npc_service_role";
+ALTER FUNCTION "public"."prevent_is_admin_change"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."prevent_super_admin_revoke"() RETURNS "trigger"
@@ -509,7 +503,7 @@ END;
 $$;
 
 
-ALTER FUNCTION "public"."prevent_super_admin_revoke"() OWNER TO "npc_service_role";
+ALTER FUNCTION "public"."prevent_super_admin_revoke"() OWNER TO "postgres";
 
 
 COMMENT ON FUNCTION "public"."prevent_super_admin_revoke"() IS 'Prevents the super admin account (adfa92d6-532b-47be-9101-bbfced9f73b4) from having admin privileges revoked. Updated to only check when is_admin field is actually being modified, allowing other profile updates.';
@@ -530,7 +524,7 @@ END;
 $$;
 
 
-ALTER FUNCTION "public"."sync_user_email_on_update"() OWNER TO "npc_service_role";
+ALTER FUNCTION "public"."sync_user_email_on_update"() OWNER TO "postgres";
 
 
 COMMENT ON FUNCTION "public"."sync_user_email_on_update"() IS 'Trigger function (AFTER UPDATE OF email on auth.users) that syncs email changes.
@@ -673,7 +667,7 @@ END;
 $$;
 
 
-ALTER FUNCTION "public"."validate_invite_code"("code_value" "text") OWNER TO "npc_service_role";
+ALTER FUNCTION "public"."validate_invite_code"("code_value" "text") OWNER TO "postgres";
 
 
 COMMENT ON FUNCTION "public"."validate_invite_code"("code_value" "text") IS 'Validates an invite code without consuming it. Returns true if code is valid and available.';
@@ -730,7 +724,7 @@ END;
 $$;
 
 
-ALTER FUNCTION "public"."validate_invite_code"("code_value" "text", "user_email" "text") OWNER TO "npc_service_role";
+ALTER FUNCTION "public"."validate_invite_code"("code_value" "text", "user_email" "text") OWNER TO "postgres";
 
 
 COMMENT ON FUNCTION "public"."validate_invite_code"("code_value" "text", "user_email" "text") IS 'Validates an invite code with strict email checking.
@@ -775,6 +769,140 @@ $$;
 
 
 ALTER FUNCTION "public"."verify_data_integrity"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."update_reading_list_timestamps"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  
+  -- Only update read_at if this is an UPDATE operation (not INSERT)
+  IF TG_OP = 'UPDATE' THEN
+    -- Set read_at when read status changes to true
+    IF NEW.read = true AND OLD.read = false THEN
+      NEW.read_at = NOW();
+    END IF;
+    
+    -- Clear read_at when read status changes to false
+    IF NEW.read = false AND OLD.read = true THEN
+      NEW.read_at = NULL;
+    END IF;
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."update_reading_list_timestamps"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."update_book_rec_read_at"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  -- If status is being changed from 'pending' to read/hit/miss, set read_at
+  IF OLD.status = 'pending' AND NEW.status IN ('read', 'hit', 'miss') THEN
+    NEW.read_at = NOW();
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."update_book_rec_read_at"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."update_game_library_played_at"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  -- If played is being set to true and played_at is not already set
+  IF NEW.played = true AND OLD.played = false AND NEW.played_at IS NULL THEN
+    NEW.played_at = NOW();
+  END IF;
+  
+  -- If played is being set back to false, clear played_at
+  IF NEW.played = false AND OLD.played = true THEN
+    NEW.played_at = NULL;
+  END IF;
+  
+  -- Always update updated_at
+  NEW.updated_at = NOW();
+  
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."update_game_library_played_at"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."update_music_library_listened_at"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  -- If listened is being set to true and listened_at is not already set
+  IF NEW.listened = true AND OLD.listened = false AND NEW.listened_at IS NULL THEN
+    NEW.listened_at = NOW();
+  END IF;
+  
+  -- If listened is being set back to false, clear listened_at
+  IF NEW.listened = false AND OLD.listened = true THEN
+    NEW.listened_at = NULL;
+  END IF;
+  
+  -- Always update updated_at
+  NEW.updated_at = NOW();
+  
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."update_music_library_listened_at"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."update_game_recommendation_played_at"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  -- When status changes to played/hit/miss, set played_at if not already set
+  IF NEW.status IN ('played', 'hit', 'miss') 
+     AND OLD.status = 'pending' 
+     AND NEW.played_at IS NULL THEN
+    NEW.played_at = NOW();
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."update_game_recommendation_played_at"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."update_media_review_edited"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  -- Only mark as edited if review_text or rating changed (removed liked)
+  IF (OLD.review_text IS DISTINCT FROM NEW.review_text) OR
+     (OLD.rating IS DISTINCT FROM NEW.rating) THEN
+    NEW.is_edited := true;
+    NEW.edited_at := now();
+  END IF;
+  
+  -- Always update updated_at
+  NEW.updated_at := now();
+  
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."update_media_review_edited"() OWNER TO "postgres";
 
 SET default_tablespace = '';
 
@@ -1013,7 +1141,7 @@ CREATE TABLE IF NOT EXISTS "public"."music_recommendations" (
 ALTER TABLE "public"."music_recommendations" OWNER TO "postgres";
 
 
-CREATE OR REPLACE VIEW "public"."music_recommendations_with_users" AS
+CREATE OR REPLACE VIEW "public"."music_recommendations_with_users" WITH ("security_barrier"='true') AS
  SELECT "mr"."id",
     "mr"."from_user_id",
     "mr"."to_user_id",
@@ -1120,6 +1248,421 @@ COMMENT ON COLUMN "public"."user_watchlist"."list_order" IS 'Order in list for d
 
 
 
+CREATE TABLE IF NOT EXISTS "public"."reading_list" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "user_id" "uuid" NOT NULL,
+    "external_id" "text" NOT NULL,
+    "title" "text" NOT NULL,
+    "authors" "text",
+    "thumbnail_url" "text",
+    "published_date" "text",
+    "description" "text",
+    "isbn" "text",
+    "page_count" integer,
+    "categories" "text",
+    "read" boolean DEFAULT false,
+    "personal_rating" integer,
+    "personal_notes" "text",
+    "added_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    "read_at" timestamp with time zone,
+    CONSTRAINT "reading_list_personal_rating_check" CHECK ((("personal_rating" >= 1) AND ("personal_rating" <= 5)))
+);
+
+
+ALTER TABLE "public"."reading_list" OWNER TO "postgres";
+
+
+COMMENT ON TABLE "public"."reading_list" IS 'Personal reading list for books users want to read or have read';
+
+
+
+COMMENT ON COLUMN "public"."reading_list"."external_id" IS 'Google Books Volume ID';
+
+
+
+COMMENT ON COLUMN "public"."reading_list"."authors" IS 'Comma-separated list of author names (plural to match Google Books API)';
+
+
+
+COMMENT ON COLUMN "public"."reading_list"."read" IS 'Whether the user has read this book';
+
+
+
+COMMENT ON COLUMN "public"."reading_list"."personal_rating" IS 'User rating from 1-5 stars';
+
+
+
+COMMENT ON COLUMN "public"."reading_list"."read_at" IS 'Timestamp when book was marked as read';
+
+
+
+COMMENT ON COLUMN "public"."reading_list"."categories" IS 'Comma-separated book categories from Google Books API (e.g., "Fiction, Fantasy, Adventure")';
+
+
+
+CREATE TABLE IF NOT EXISTS "public"."book_recommendations" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "from_user_id" "uuid" NOT NULL,
+    "to_user_id" "uuid" NOT NULL,
+    "external_id" "text" NOT NULL,
+    "title" "text" NOT NULL,
+    "authors" "text",
+    "thumbnail_url" "text",
+    "published_date" "text",
+    "description" "text",
+    "isbn" "text",
+    "page_count" integer,
+    "recommendation_type" "text" DEFAULT 'read'::"text" NOT NULL,
+    "status" "text" DEFAULT 'pending'::"text" NOT NULL,
+    "sent_message" "text",
+    "sender_note" "text",
+    "recipient_note" "text",
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "read_at" timestamp with time zone,
+    "opened_at" timestamp with time zone,
+    CONSTRAINT "book_recommendations_check" CHECK (("from_user_id" <> "to_user_id")),
+    CONSTRAINT "book_recommendations_recommendation_type_check" CHECK (("recommendation_type" = ANY (ARRAY['read'::"text", 'reread'::"text", 'listen'::"text"]))),
+    CONSTRAINT "book_recommendations_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'read'::"text", 'hit'::"text", 'miss'::"text"])))
+);
+
+
+ALTER TABLE "public"."book_recommendations" OWNER TO "postgres";
+
+
+COMMENT ON TABLE "public"."book_recommendations" IS 'Book recommendations between users';
+
+
+
+COMMENT ON COLUMN "public"."book_recommendations"."external_id" IS 'Google Books Volume ID';
+
+
+
+COMMENT ON COLUMN "public"."book_recommendations"."authors" IS 'Comma-separated list of author names (plural to match Google Books API)';
+
+
+
+COMMENT ON COLUMN "public"."book_recommendations"."recommendation_type" IS 'Whether suggesting to read or reread';
+
+
+
+COMMENT ON COLUMN "public"."book_recommendations"."status" IS 'Recipient status: pending, read, hit (loved it), or miss (did not enjoy)';
+
+
+
+COMMENT ON COLUMN "public"."book_recommendations"."sent_message" IS 'Optional message from sender when recommending';
+
+
+
+COMMENT ON COLUMN "public"."book_recommendations"."sender_note" IS 'Private note for sender only';
+
+
+
+COMMENT ON COLUMN "public"."book_recommendations"."recipient_note" IS 'Recipient notes/review after reading';
+
+
+
+COMMENT ON COLUMN "public"."book_recommendations"."read_at" IS 'Timestamp when recipient marked as read/hit/miss';
+
+
+
+COMMENT ON COLUMN "public"."book_recommendations"."opened_at" IS 'Timestamp when recipient first opened the recommendation';
+
+
+
+CREATE OR REPLACE VIEW "public"."book_recommendations_with_users" WITH ("security_barrier"='true') AS
+ SELECT "br"."id",
+    "br"."from_user_id",
+    "br"."to_user_id",
+    "br"."external_id",
+    "br"."title",
+    "br"."authors",
+    "br"."thumbnail_url",
+    "br"."published_date",
+    "br"."description",
+    "br"."isbn",
+    "br"."page_count",
+    "br"."recommendation_type",
+    "br"."status",
+    "br"."sent_message",
+    "br"."sender_note",
+    "br"."recipient_note",
+    "br"."created_at",
+    "br"."read_at",
+    "br"."opened_at",
+    "from_profile"."display_name" AS "sender_name",
+    "to_profile"."display_name" AS "recipient_name"
+   FROM (("public"."book_recommendations" "br"
+     LEFT JOIN "public"."user_profiles" "from_profile" ON (("br"."from_user_id" = "from_profile"."user_id")))
+     LEFT JOIN "public"."user_profiles" "to_profile" ON (("br"."to_user_id" = "to_profile"."user_id")));
+
+
+ALTER VIEW "public"."book_recommendations_with_users" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."game_library" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "user_id" "uuid" NOT NULL,
+    "external_id" "text" NOT NULL,
+    "slug" "text" NOT NULL,
+    "name" "text" NOT NULL,
+    "released" "text",
+    "background_image" "text",
+    "platforms" "text",
+    "genres" "text",
+    "rating" numeric(3,2),
+    "metacritic" integer,
+    "playtime" integer,
+    "description_raw" "text",
+    "played" boolean DEFAULT false,
+    "personal_rating" integer,
+    "personal_notes" "text",
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    "played_at" timestamp with time zone,
+    CONSTRAINT "game_library_personal_rating_check" CHECK ((("personal_rating" >= 1) AND ("personal_rating" <= 5)))
+);
+
+
+ALTER TABLE "public"."game_library" OWNER TO "postgres";
+
+
+COMMENT ON TABLE "public"."game_library" IS 'Personal game library for tracking games to play and completed games';
+
+
+
+COMMENT ON COLUMN "public"."game_library"."external_id" IS 'RAWG API game ID';
+
+
+
+COMMENT ON COLUMN "public"."game_library"."slug" IS 'URL-friendly game identifier from RAWG';
+
+
+
+COMMENT ON COLUMN "public"."game_library"."played" IS 'False = playing/backlog, True = played/completed';
+
+
+
+COMMENT ON COLUMN "public"."game_library"."platforms" IS 'Comma-separated list of platform names';
+
+
+
+COMMENT ON COLUMN "public"."game_library"."genres" IS 'Comma-separated list of genre names';
+
+
+
+COMMENT ON COLUMN "public"."game_library"."rating" IS 'RAWG community rating (0.00-5.00)';
+
+
+
+COMMENT ON COLUMN "public"."game_library"."metacritic" IS 'Metacritic score (0-100)';
+
+
+
+COMMENT ON COLUMN "public"."game_library"."playtime" IS 'Average playtime in hours';
+
+
+
+COMMENT ON COLUMN "public"."game_library"."description_raw" IS 'Game description from RAWG API (raw HTML)';
+
+
+
+CREATE TABLE IF NOT EXISTS "public"."game_recommendations" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "from_user_id" "uuid" NOT NULL,
+    "to_user_id" "uuid" NOT NULL,
+    "external_id" "text" NOT NULL,
+    "slug" "text" NOT NULL,
+    "name" "text" NOT NULL,
+    "released" "text",
+    "background_image" "text",
+    "platforms" "text",
+    "genres" "text",
+    "rating" numeric(3,2),
+    "metacritic" integer,
+    "playtime" integer,
+    "recommendation_type" "text" DEFAULT 'play'::"text" NOT NULL,
+    "status" "text" DEFAULT 'pending'::"text" NOT NULL,
+    "sent_message" "text",
+    "sender_note" "text",
+    "recipient_note" "text",
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "played_at" timestamp with time zone,
+    "opened_at" timestamp with time zone,
+    CONSTRAINT "game_recommendations_check" CHECK (("from_user_id" <> "to_user_id")),
+    CONSTRAINT "game_recommendations_recommendation_type_check" CHECK (("recommendation_type" = ANY (ARRAY['play'::"text", 'replay'::"text"]))),
+    CONSTRAINT "game_recommendations_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'played'::"text", 'hit'::"text", 'miss'::"text"])))
+);
+
+
+ALTER TABLE "public"."game_recommendations" OWNER TO "postgres";
+
+
+CREATE OR REPLACE VIEW "public"."game_recommendations_with_users" WITH ("security_barrier"='true') AS
+ SELECT "gr"."id",
+    "gr"."from_user_id",
+    "gr"."to_user_id",
+    "gr"."external_id",
+    "gr"."slug",
+    "gr"."name",
+    "gr"."released",
+    "gr"."background_image",
+    "gr"."platforms",
+    "gr"."genres",
+    "gr"."rating",
+    "gr"."metacritic",
+    "gr"."playtime",
+    "gr"."recommendation_type",
+    "gr"."status",
+    "gr"."sent_message",
+    "gr"."sender_note",
+    "gr"."recipient_note",
+    "gr"."created_at",
+    "gr"."played_at",
+    "gr"."opened_at",
+    "from_profile"."display_name" AS "sender_name",
+    "to_profile"."display_name" AS "recipient_name"
+   FROM (("public"."game_recommendations" "gr"
+     LEFT JOIN "public"."user_profiles" "from_profile" ON (("gr"."from_user_id" = "from_profile"."user_id")))
+     LEFT JOIN "public"."user_profiles" "to_profile" ON (("gr"."to_user_id" = "to_profile"."user_id")));
+
+
+ALTER VIEW "public"."game_recommendations_with_users" OWNER TO "postgres";
+
+
+COMMENT ON TABLE "public"."game_recommendations" IS 'Game recommendations between users with tracking of play status and ratings';
+
+
+
+COMMENT ON COLUMN "public"."game_recommendations"."external_id" IS 'RAWG API game ID';
+
+
+
+COMMENT ON COLUMN "public"."game_recommendations"."slug" IS 'URL-friendly game identifier from RAWG';
+
+
+
+COMMENT ON COLUMN "public"."game_recommendations"."recommendation_type" IS 'Type: play (first time) or replay (play again)';
+
+
+
+COMMENT ON COLUMN "public"."game_recommendations"."status" IS 'Tracking status: pending, played, hit (loved it), miss (did not like)';
+
+
+
+COMMENT ON COLUMN "public"."game_recommendations"."platforms" IS 'Comma-separated list of platform names';
+
+
+
+COMMENT ON COLUMN "public"."game_recommendations"."genres" IS 'Comma-separated list of genre names';
+
+
+
+COMMENT ON COLUMN "public"."game_recommendations"."rating" IS 'RAWG community rating (0.00-5.00)';
+
+
+
+COMMENT ON COLUMN "public"."game_recommendations"."metacritic" IS 'Metacritic score (0-100)';
+
+
+
+COMMENT ON COLUMN "public"."game_recommendations"."playtime" IS 'Average playtime in hours';
+
+
+
+CREATE TABLE IF NOT EXISTS "public"."music_library" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "user_id" "uuid" NOT NULL,
+    "external_id" "text" NOT NULL,
+    "title" "text" NOT NULL,
+    "artist" "text" NOT NULL,
+    "album" "text",
+    "media_type" "text" NOT NULL,
+    "release_date" "text",
+    "album_cover_url" "text",
+    "preview_url" "text",
+    "genre" "text",
+    "listened" boolean DEFAULT false,
+    "personal_rating" integer,
+    "personal_notes" "text",
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    "listened_at" timestamp with time zone,
+    CONSTRAINT "music_library_media_type_check" CHECK (("media_type" = ANY (ARRAY['song'::"text", 'album'::"text", 'playlist'::"text"]))),
+    CONSTRAINT "music_library_personal_rating_check" CHECK ((("personal_rating" >= 1) AND ("personal_rating" <= 5)))
+);
+
+
+ALTER TABLE "public"."music_library" OWNER TO "postgres";
+
+
+COMMENT ON TABLE "public"."music_library" IS 'Personal music library for tracking songs and albums';
+
+
+
+COMMENT ON COLUMN "public"."music_library"."media_type" IS 'Type of media: song, album, or playlist';
+
+
+
+COMMENT ON COLUMN "public"."music_library"."listened" IS 'False = listening/queue, True = listened/completed';
+
+
+
+COMMENT ON COLUMN "public"."music_library"."release_date" IS 'Release date in text format (YYYY-MM-DD or YYYY) to match music_recommendations';
+
+
+
+COMMENT ON COLUMN "public"."music_library"."genre" IS 'Primary genre from iTunes API (e.g., Pop, Rock, Country)';
+
+
+
+CREATE TABLE IF NOT EXISTS "public"."media_reviews" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "user_id" "uuid" NOT NULL,
+    "external_id" "text" NOT NULL,
+    "media_type" "text" NOT NULL,
+    "title" "text" NOT NULL,
+    "rating" integer,
+    "liked" boolean,
+    "review_text" "text",
+    "is_public" boolean DEFAULT true NOT NULL,
+    "watched_at" timestamp with time zone,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "is_edited" boolean DEFAULT false,
+    "edited_at" timestamp with time zone,
+    CONSTRAINT "media_reviews_media_type_check" CHECK (("media_type" = ANY (ARRAY['movie'::"text", 'tv'::"text", 'song'::"text", 'album'::"text", 'book'::"text", 'game'::"text"]))),
+    CONSTRAINT "media_reviews_rating_check" CHECK ((("rating" >= 1) AND ("rating" <= 5)))
+);
+
+
+ALTER TABLE "public"."media_reviews" OWNER TO "postgres";
+
+
+COMMENT ON TABLE "public"."media_reviews" IS 'Media-agnostic review system for storing user reviews, ratings, and likes. Reviews are visible to friends based on privacy settings.';
+
+
+
+COMMENT ON COLUMN "public"."media_reviews"."external_id" IS 'External API ID (TMDB, iTunes, etc.)';
+
+
+
+COMMENT ON COLUMN "public"."media_reviews"."media_type" IS 'Type of media: movie, tv, song, album, book, game';
+
+
+
+COMMENT ON COLUMN "public"."media_reviews"."rating" IS '1-5 star rating (matching frontend 5-star system)';
+
+
+
+COMMENT ON COLUMN "public"."media_reviews"."liked" IS 'DEPRECATED: Thumbs up/down feature removed from UI. Column kept for data preservation.';
+
+
+
+COMMENT ON COLUMN "public"."media_reviews"."is_public" IS 'Whether review is visible to friends (true) or private (false)';
+
+
+
 ALTER TABLE ONLY "public"."app_config"
     ADD CONSTRAINT "app_config_pkey" PRIMARY KEY ("key");
 
@@ -1182,6 +1725,56 @@ ALTER TABLE ONLY "public"."user_watchlist"
 
 ALTER TABLE ONLY "public"."user_watchlist"
     ADD CONSTRAINT "user_watchlist_user_id_external_id_key" UNIQUE ("user_id", "external_id");
+
+
+
+ALTER TABLE ONLY "public"."reading_list"
+    ADD CONSTRAINT "reading_list_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."reading_list"
+    ADD CONSTRAINT "reading_list_user_id_external_id_key" UNIQUE ("user_id", "external_id");
+
+
+
+ALTER TABLE ONLY "public"."book_recommendations"
+    ADD CONSTRAINT "book_recommendations_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."game_library"
+    ADD CONSTRAINT "game_library_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."game_library"
+    ADD CONSTRAINT "game_library_user_id_external_id_key" UNIQUE ("user_id", "external_id");
+
+
+
+ALTER TABLE ONLY "public"."game_recommendations"
+    ADD CONSTRAINT "game_recommendations_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."music_library"
+    ADD CONSTRAINT "music_library_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."music_library"
+    ADD CONSTRAINT "music_library_user_id_external_id_key" UNIQUE ("user_id", "external_id");
+
+
+
+ALTER TABLE ONLY "public"."media_reviews"
+    ADD CONSTRAINT "media_reviews_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."media_reviews"
+    ADD CONSTRAINT "media_reviews_user_id_external_id_media_type_key" UNIQUE ("user_id", "external_id", "media_type");
 
 
 
@@ -1385,6 +1978,142 @@ CREATE INDEX "idx_watchlist_user_watched_added" ON "public"."user_watchlist" USI
 
 
 
+CREATE INDEX "idx_reading_list_user_id" ON "public"."reading_list" USING "btree" ("user_id");
+
+
+
+CREATE INDEX "idx_reading_list_user_read" ON "public"."reading_list" USING "btree" ("user_id", "read");
+
+
+
+CREATE INDEX "idx_reading_list_added_at" ON "public"."reading_list" USING "btree" ("user_id", "added_at" DESC);
+
+
+
+CREATE INDEX "idx_reading_list_external_id" ON "public"."reading_list" USING "btree" ("external_id");
+
+
+
+CREATE INDEX "idx_reading_list_authors" ON "public"."reading_list" USING "gin" ("to_tsvector"('english'::"regconfig", "authors"));
+
+
+
+CREATE INDEX "idx_reading_list_title" ON "public"."reading_list" USING "gin" ("to_tsvector"('english'::"regconfig", "title"));
+
+
+
+CREATE INDEX "idx_reading_list_categories" ON "public"."reading_list" USING "gin" ("to_tsvector"('english'::"regconfig", "categories"));
+
+
+
+CREATE INDEX "idx_book_recs_to_user" ON "public"."book_recommendations" USING "btree" ("to_user_id", "status");
+
+
+
+CREATE INDEX "idx_book_recs_from_user" ON "public"."book_recommendations" USING "btree" ("from_user_id");
+
+
+
+CREATE INDEX "idx_book_recs_created_at" ON "public"."book_recommendations" USING "btree" ("created_at" DESC);
+
+
+
+CREATE INDEX "idx_book_recs_status" ON "public"."book_recommendations" USING "btree" ("status");
+
+
+
+CREATE INDEX "idx_book_recs_external_id" ON "public"."book_recommendations" USING "btree" ("external_id");
+
+
+
+CREATE INDEX "idx_book_recs_authors" ON "public"."book_recommendations" USING "gin" ("to_tsvector"('english'::"regconfig", "authors"));
+
+
+
+CREATE INDEX "idx_book_recs_title" ON "public"."book_recommendations" USING "gin" ("to_tsvector"('english'::"regconfig", "title"));
+
+
+
+CREATE INDEX "idx_game_library_user_id" ON "public"."game_library" USING "btree" ("user_id");
+
+
+
+CREATE INDEX "idx_game_library_played" ON "public"."game_library" USING "btree" ("user_id", "played");
+
+
+
+CREATE INDEX "idx_game_library_created_at" ON "public"."game_library" USING "btree" ("user_id", "created_at" DESC);
+
+
+
+CREATE INDEX "idx_game_library_rating" ON "public"."game_library" USING "btree" ("user_id", "personal_rating" DESC) WHERE ("personal_rating" IS NOT NULL);
+
+
+
+CREATE INDEX "idx_game_library_external_id" ON "public"."game_library" USING "btree" ("external_id");
+
+
+
+CREATE INDEX "idx_game_recs_to_user" ON "public"."game_recommendations" USING "btree" ("to_user_id", "status");
+
+
+
+CREATE INDEX "idx_game_recs_from_user" ON "public"."game_recommendations" USING "btree" ("from_user_id");
+
+
+
+CREATE INDEX "idx_game_recs_created_at" ON "public"."game_recommendations" USING "btree" ("created_at" DESC);
+
+
+
+CREATE INDEX "idx_game_recs_status" ON "public"."game_recommendations" USING "btree" ("status");
+
+
+
+CREATE INDEX "idx_game_recs_external_id" ON "public"."game_recommendations" USING "btree" ("external_id");
+
+
+
+CREATE INDEX "idx_game_recs_name" ON "public"."game_recommendations" USING "gin" ("to_tsvector"('english'::"regconfig", "name"));
+
+
+
+CREATE INDEX "idx_game_recs_platforms" ON "public"."game_recommendations" USING "gin" ("to_tsvector"('english'::"regconfig", "platforms"));
+
+
+
+CREATE INDEX "idx_game_recs_genres" ON "public"."game_recommendations" USING "gin" ("to_tsvector"('english'::"regconfig", "genres"));
+
+
+
+CREATE INDEX "idx_music_library_user_id" ON "public"."music_library" USING "btree" ("user_id");
+
+
+
+CREATE INDEX "idx_music_library_listened" ON "public"."music_library" USING "btree" ("user_id", "listened");
+
+
+
+CREATE INDEX "idx_music_library_created_at" ON "public"."music_library" USING "btree" ("user_id", "created_at" DESC);
+
+
+
+CREATE INDEX "media_reviews_user_id_idx" ON "public"."media_reviews" USING "btree" ("user_id");
+
+
+
+CREATE INDEX "media_reviews_external_id_media_type_idx" ON "public"."media_reviews" USING "btree" ("external_id", "media_type");
+
+
+
+CREATE INDEX "media_reviews_user_id_media_type_idx" ON "public"."media_reviews" USING "btree" ("user_id", "media_type");
+
+
+
+CREATE INDEX "media_reviews_is_public_idx" ON "public"."media_reviews" USING "btree" ("is_public");
+
+
+
 CREATE OR REPLACE TRIGGER "check_is_admin_change" BEFORE UPDATE ON "public"."user_profiles" FOR EACH ROW EXECUTE FUNCTION "public"."prevent_is_admin_change"();
 
 
@@ -1418,6 +2147,30 @@ CREATE OR REPLACE TRIGGER "update_user_watched_archive_updated_at" BEFORE UPDATE
 
 
 CREATE OR REPLACE TRIGGER "update_watchlist_updated_at_trigger" BEFORE UPDATE ON "public"."user_watchlist" FOR EACH ROW EXECUTE FUNCTION "public"."update_watchlist_updated_at"();
+
+
+
+CREATE OR REPLACE TRIGGER "update_reading_list_timestamps_trigger" BEFORE UPDATE ON "public"."reading_list" FOR EACH ROW EXECUTE FUNCTION "public"."update_reading_list_timestamps"();
+
+
+
+CREATE OR REPLACE TRIGGER "update_book_rec_read_at_trigger" BEFORE UPDATE ON "public"."book_recommendations" FOR EACH ROW EXECUTE FUNCTION "public"."update_book_rec_read_at"();
+
+
+
+CREATE OR REPLACE TRIGGER "trigger_update_game_library_played_at" BEFORE UPDATE ON "public"."game_library" FOR EACH ROW EXECUTE FUNCTION "public"."update_game_library_played_at"();
+
+
+
+CREATE OR REPLACE TRIGGER "trigger_update_music_library_listened_at" BEFORE UPDATE ON "public"."music_library" FOR EACH ROW EXECUTE FUNCTION "public"."update_music_library_listened_at"();
+
+
+
+CREATE OR REPLACE TRIGGER "trigger_update_game_recommendation_played_at" BEFORE UPDATE ON "public"."game_recommendations" FOR EACH ROW EXECUTE FUNCTION "public"."update_game_recommendation_played_at"();
+
+
+
+CREATE OR REPLACE TRIGGER "update_media_review_edited_trigger" BEFORE UPDATE ON "public"."media_reviews" FOR EACH ROW EXECUTE FUNCTION "public"."update_media_review_edited"();
 
 
 
@@ -1473,6 +2226,46 @@ ALTER TABLE ONLY "public"."user_profiles"
 
 ALTER TABLE ONLY "public"."user_watchlist"
     ADD CONSTRAINT "user_watchlist_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."reading_list"
+    ADD CONSTRAINT "reading_list_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."book_recommendations"
+    ADD CONSTRAINT "book_recommendations_from_user_id_fkey" FOREIGN KEY ("from_user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."book_recommendations"
+    ADD CONSTRAINT "book_recommendations_to_user_id_fkey" FOREIGN KEY ("to_user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."game_library"
+    ADD CONSTRAINT "game_library_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."game_recommendations"
+    ADD CONSTRAINT "game_recommendations_from_user_id_fkey" FOREIGN KEY ("from_user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."game_recommendations"
+    ADD CONSTRAINT "game_recommendations_to_user_id_fkey" FOREIGN KEY ("to_user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."music_library"
+    ADD CONSTRAINT "music_library_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."media_reviews"
+    ADD CONSTRAINT "media_reviews_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 
@@ -1656,31 +2449,128 @@ CREATE POLICY "Users can view their own watchlist" ON "public"."user_watchlist" 
 
 
 
-CREATE POLICY "__is_admin_helper_policy__" ON "public"."user_profiles" FOR SELECT TO "npc_service_role" USING (true);
+CREATE POLICY "Users can view their own reading list" ON "public"."reading_list" FOR SELECT TO "authenticated" USING (("auth"."uid"() = "user_id"));
 
 
 
-COMMENT ON POLICY "__is_admin_helper_policy__" ON "public"."user_profiles" IS 'Allows SECURITY DEFINER functions owned by npc_service_role to read user_profiles under FORCE RLS.
-   
-SECURITY CONTEXT:
-  - FORCE RLS means even privileged roles require explicit policy grants
-  - This policy grants access ONLY to npc_service_role (not postgres superuser)
-  - Supabase client connections use authenticated/anon roles via JWT (never npc_service_role)
-  - All SECURITY DEFINER functions have fixed search_path to prevent schema hijacking
-  
-DEFENSE-IN-DEPTH IMPROVEMENTS:
-  - npc_service_role has NO LOGIN capability (cannot be used for direct connections)
-  - npc_service_role has minimal table privileges (SELECT on user_profiles, INSERT on connections, etc.)
-  - npc_service_role is NOT a superuser (limited blast radius vs postgres role)
-  - Functions owned by npc_service_role can only access tables explicitly granted
-  
-BOUNDARIES:
-  - npc_service_role access limited to: SECURITY DEFINER function execution only
-  - Client applications use authenticated/anon roles (connection string uses ANON_KEY)
-  - postgres role still used for: dashboard admins and migrations (not function execution)
-  - Functions should query minimal columns to reduce data exposure
-  
-Without this policy, is_admin() and other admin check functions would fail under FORCE RLS.';
+CREATE POLICY "Users can add to their own reading list" ON "public"."reading_list" FOR INSERT TO "authenticated" WITH CHECK (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "Users can update their own reading list" ON "public"."reading_list" FOR UPDATE TO "authenticated" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "Users can delete from their own reading list" ON "public"."reading_list" FOR DELETE TO "authenticated" USING (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "Users can view book recommendations they sent" ON "public"."book_recommendations" FOR SELECT TO "authenticated" USING (("auth"."uid"() = "from_user_id"));
+
+
+
+CREATE POLICY "Users can view book recommendations sent to them" ON "public"."book_recommendations" FOR SELECT TO "authenticated" USING (("auth"."uid"() = "to_user_id"));
+
+
+
+CREATE POLICY "Users can send book recommendations" ON "public"."book_recommendations" FOR INSERT TO "authenticated" WITH CHECK (("auth"."uid"() = "from_user_id"));
+
+
+
+CREATE POLICY "Recipients can update their book recommendations" ON "public"."book_recommendations" FOR UPDATE TO "authenticated" USING (("auth"."uid"() = "to_user_id")) WITH CHECK (("auth"."uid"() = "to_user_id"));
+
+
+
+CREATE POLICY "Senders can update their book notes" ON "public"."book_recommendations" FOR UPDATE TO "authenticated" USING (("auth"."uid"() = "from_user_id")) WITH CHECK (("auth"."uid"() = "from_user_id"));
+
+
+
+CREATE POLICY "Senders can delete book recommendations they sent" ON "public"."book_recommendations" FOR DELETE TO "authenticated" USING (("auth"."uid"() = "from_user_id"));
+
+
+
+CREATE POLICY "Users can view own game library" ON "public"."game_library" FOR SELECT TO "authenticated" USING (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "Users can insert own game library items" ON "public"."game_library" FOR INSERT TO "authenticated" WITH CHECK (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "Users can update own game library items" ON "public"."game_library" FOR UPDATE TO "authenticated" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "Users can delete own game library items" ON "public"."game_library" FOR DELETE TO "authenticated" USING (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "Users can view game recommendations they sent" ON "public"."game_recommendations" FOR SELECT TO "authenticated" USING (("auth"."uid"() = "from_user_id"));
+
+
+
+CREATE POLICY "Users can view game recommendations sent to them" ON "public"."game_recommendations" FOR SELECT TO "authenticated" USING (("auth"."uid"() = "to_user_id"));
+
+
+
+CREATE POLICY "Users can send game recommendations" ON "public"."game_recommendations" FOR INSERT TO "authenticated" WITH CHECK (("auth"."uid"() = "from_user_id"));
+
+
+
+CREATE POLICY "Recipients can update their game recommendations" ON "public"."game_recommendations" FOR UPDATE TO "authenticated" USING (("auth"."uid"() = "to_user_id")) WITH CHECK (("auth"."uid"() = "to_user_id"));
+
+
+
+CREATE POLICY "Senders can update their game notes" ON "public"."game_recommendations" FOR UPDATE TO "authenticated" USING (("auth"."uid"() = "from_user_id")) WITH CHECK (("auth"."uid"() = "from_user_id"));
+
+
+
+CREATE POLICY "Senders can delete game recommendations they sent" ON "public"."game_recommendations" FOR DELETE TO "authenticated" USING (("auth"."uid"() = "from_user_id"));
+
+
+
+CREATE POLICY "Users can view own music library" ON "public"."music_library" FOR SELECT TO "authenticated" USING (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "Users can insert own music library items" ON "public"."music_library" FOR INSERT TO "authenticated" WITH CHECK (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "Users can update own music library items" ON "public"."music_library" FOR UPDATE TO "authenticated" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "Users can delete own music library items" ON "public"."music_library" FOR DELETE TO "authenticated" USING (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "Users can view own reviews" ON "public"."media_reviews" FOR SELECT TO "authenticated" USING (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "Users can view friends public reviews" ON "public"."media_reviews" FOR SELECT TO "authenticated" USING ((("is_public" = true) AND ("user_id" IN ( SELECT "connections"."user_id"
+   FROM "public"."connections"
+  WHERE ("connections"."friend_id" = "auth"."uid"())
+UNION
+ SELECT "connections"."friend_id"
+   FROM "public"."connections"
+  WHERE ("connections"."user_id" = "auth"."uid"())))));
+
+
+
+CREATE POLICY "Users can create own reviews" ON "public"."media_reviews" FOR INSERT TO "authenticated" WITH CHECK (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "Users can update own reviews" ON "public"."media_reviews" FOR UPDATE TO "authenticated" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "Users can delete own reviews" ON "public"."media_reviews" FOR DELETE TO "authenticated" USING (("auth"."uid"() = "user_id"));
+
+
+
 
 
 
@@ -1711,9 +2601,26 @@ ALTER TABLE "public"."user_watched_archive" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."user_watchlist" ENABLE ROW LEVEL SECURITY;
 
 
+ALTER TABLE "public"."reading_list" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."book_recommendations" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."game_library" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."game_recommendations" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."music_library" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."media_reviews" ENABLE ROW LEVEL SECURITY;
+
+
 REVOKE USAGE ON SCHEMA "public" FROM PUBLIC;
 GRANT USAGE ON SCHEMA "public" TO "authenticated";
-GRANT USAGE ON SCHEMA "public" TO "npc_service_role";
 
 
 
@@ -1755,17 +2662,14 @@ GRANT SELECT ON TABLE "public"."app_config" TO "authenticated";
 
 
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE "public"."connections" TO "authenticated";
-GRANT INSERT ON TABLE "public"."connections" TO "npc_service_role";
 
 
 
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE "public"."invite_code_audit_log" TO "authenticated";
-GRANT INSERT ON TABLE "public"."invite_code_audit_log" TO "npc_service_role";
 
 
 
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE "public"."invite_codes" TO "authenticated";
-GRANT SELECT,UPDATE ON TABLE "public"."invite_codes" TO "npc_service_role";
 
 
 
@@ -1774,7 +2678,6 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE "public"."movie_recommendations" TO "
 
 
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE "public"."user_profiles" TO "authenticated";
-GRANT SELECT,UPDATE ON TABLE "public"."user_profiles" TO "npc_service_role";
 
 
 
@@ -1793,28 +2696,38 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE "public"."user_watched_archive" TO "a
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE "public"."user_watchlist" TO "authenticated";
 
 
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE "public"."reading_list" TO "authenticated";
+
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE "public"."book_recommendations" TO "authenticated";
+
+
+GRANT SELECT ON TABLE "public"."book_recommendations_with_users" TO "authenticated";
+
+
+GRANT SELECT ON TABLE "public"."game_recommendations_with_users" TO "authenticated";
+
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE "public"."game_library" TO "authenticated";
+
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE "public"."game_recommendations" TO "authenticated";
+
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE "public"."music_library" TO "authenticated";
+
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE "public"."media_reviews" TO "authenticated";
+
+
 -- =====================================================
 -- BOOTSTRAP ADMIN INVITE CODE
 -- =====================================================
--- Insert a permanent invite code for initial admin access after database reset
--- This code never expires and is tied to the super admin email
-INSERT INTO "public"."invite_codes" (
-  "code",
-  "intended_email",
-  "created_by",
-  "expires_at",
-  "is_active",
-  "max_uses",
-  "current_uses"
-) VALUES (
-  'BOOTSTRAP_ADMIN_2025',
-  'afton.gauntlett@gmail.com',
-  NULL,  -- No creator (system-generated)
-  '2099-12-31 23:59:59+00',  -- Effectively never expires
-  true,
-  1,
-  0
-) ON CONFLICT ("code") DO NOTHING;  -- Idempotent: won't fail if code already exists
+-- NOTE: Bootstrap invite code removed from migration for security
+-- After running this migration, create your admin invite code using:
+--   npm run db:create-bootstrap-code
+-- This will prompt for your email and generate a secure invite code
+-- =====================================================
 
 
 RESET ALL;
