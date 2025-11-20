@@ -30,6 +30,14 @@ export const getSupabase = (): SupabaseClient => {
     import.meta.env.VITE_SUPABASE_DEV_URL &&
     import.meta.env.VITE_SUPABASE_DEV_ANON_KEY;
 
+  // Debug logging
+  console.log("Environment check:", {
+    isDev,
+    hasDevConfig,
+    devUrl: import.meta.env.VITE_SUPABASE_DEV_URL,
+    prodUrl: import.meta.env.VITE_SUPABASE_URL,
+  });
+
   let supabaseUrl: string;
   let supabaseKey: string;
 
@@ -37,7 +45,7 @@ export const getSupabase = (): SupabaseClient => {
     // Development mode with dev database configured
     supabaseUrl = import.meta.env.VITE_SUPABASE_DEV_URL;
     supabaseKey = import.meta.env.VITE_SUPABASE_DEV_ANON_KEY;
-    console.log("🔧 Using DEVELOPMENT database");
+    console.log("🔧 Using DEVELOPMENT database:", supabaseUrl);
   } else {
     // Production mode or dev mode without dev database configured
     supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
