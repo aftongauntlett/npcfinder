@@ -32,8 +32,10 @@ This project uses **database migrations** to manage schema changes in a version-
 
 ```
 supabase/migrations/
-├── 20250116000000_baseline_schema.sql    ← The complete schema (start here)
-├── archive/                              ← Old prototype migrations (reference only)
+├── 20250116000000_baseline_schema.sql              ← Complete schema (start here)
+├── 20251119000000_allow_bootstrap_invite_creation.sql  ← Bootstrap RLS policy
+├── 20251119000001_add_auth_user_trigger.sql            ← Auto-create user profiles
+├── archive/                                        ← Old prototype migrations (reference only)
     ├── README.md
     ├── 20241001000000_create_user_profiles.sql
     ├── 20241002000000_create_recommendations.sql
@@ -48,12 +50,22 @@ supabase/migrations/
 
 **What It Contains**:
 
-- All tables (user_profiles, connections, watchlists, recommendations, etc.)
-- All functions (is_admin, batch_connect_users, etc.)
-- All triggers (admin protection, timestamp updates, etc.)
+- All tables (user_profiles, connections, invite_codes, watchlists, movie/music/book/game recommendations and libraries, reading_list, media_reviews, etc.)
+- All views with security_barrier (movie_recommendations_with_users, music_recommendations_with_users, book_recommendations_with_users, game_recommendations_with_users)
+- All functions (is_admin, handle_new_user, batch_connect_users, update triggers, etc.)
+- All triggers (admin protection, timestamp updates, status changes, etc.)
 - All RLS policies (security policies for every table)
 - All indexes (performance optimization)
-- Bootstrap invite code (BOOTSTRAP_ADMIN_2025 for initial admin access)
+- All table/column comments (documentation)
+
+**Consolidated Updates** (Nov 19, 2025):
+
+- ✅ Added `game_library.description_raw` column (required by frontend)
+- ✅ Updated `book_recommendations` constraint to allow `'listen'` type (audiobooks)
+- ✅ Added `security_barrier='true'` to all recommendation views (security consistency)
+- ✅ Added missing `game_recommendations_with_users` view
+
+**Note**: This baseline was initially created from archived prototype migrations and has been tested in dev database. All known issues have been fixed and consolidated.
 
 **When to Run**:
 
@@ -67,6 +79,43 @@ supabase/migrations/
 2. Copy entire file contents
 3. Paste and execute
 4. Verify tables created: Database → Tables
+
+### Forward-Only Migrations
+
+These migrations must be applied **after** the baseline migration. They add features required for bootstrap setup and user authentication.
+
+#### 1. Allow Bootstrap Invite Creation
+
+**File**: `supabase/migrations/20251119000000_allow_bootstrap_invite_creation.sql`
+
+**Purpose**: Adds RLS policy to allow invite code creation when no users exist in the database.
+
+**What It Does**:
+
+- Creates `is_bootstrap_allowed()` function (returns true only when user count = 0)
+- Adds RLS policy allowing INSERT to `invite_codes` during bootstrap phase
+- Enables the bootstrap script (`npm run db:create-bootstrap-code`) to work
+
+**When to Run**: After baseline, before creating your first admin user
+
+#### 2. Add Auth User Trigger
+
+**File**: `supabase/migrations/20251119000001_add_auth_user_trigger.sql`
+
+**Purpose**: Auto-creates user profile when user signs up via Supabase Auth.
+
+**What It Does**:
+
+- Creates trigger `on_auth_user_created` on `auth.users` table
+- Calls `handle_new_user()` function after each signup
+- Automatically inserts row into `user_profiles` table
+- Ensures every authenticated user has a profile entry
+
+**Why It's Critical**: Without this trigger, users can sign up but the app will fail with 406 errors (missing profile data).
+
+**When to Run**: After baseline, before first user signup
+
+---
 
 ### Archived Migrations
 
@@ -352,21 +401,91 @@ Vercel automatically deploys the updated app that uses the new schema.
 - Editing it would break new database setups
 - All future changes must be new migrations
 
-### Bootstrap Invite Code
+### Bootstrap Admin Setup
 
-The baseline includes a permanent invite code for admin access after database reset:
+After applying migrations to a fresh database, you need to create an admin invite code.
 
-**Code**: `BOOTSTRAP_ADMIN_2025`  
-**Email**: `afton.gauntlett@gmail.com`  
-**Expires**: December 31, 2099 (effectively never)  
-**Purpose**: Create initial admin account after fresh database setup
+**Step 1**: Apply all migrations in order
 
-**How to use**:
+```bash
+# Apply baseline + forward-only migrations to dev database
+npm run db:push:dev
+```
 
-1. Reset database (apply baseline migration)
-2. Sign up with email: `afton.gauntlett@gmail.com`
-3. Use invite code: `BOOTSTRAP_ADMIN_2025`
-4. You now have admin access to create more invite codes
+This applies:
+
+1. `20250116000000_baseline_schema.sql` (complete schema)
+2. `20251119000000_allow_bootstrap_invite_creation.sql` (bootstrap RLS)
+3. `20251119000001_add_auth_user_trigger.sql` (auto-create profiles)
+
+**Step 2**: Create your admin invite code
+
+```bash
+npm run db:create-bootstrap-code
+```
+
+This will:
+
+- Prompt for your admin email address
+- Generate a secure invite code (e.g., `XKCD-2K4P-9MNQ-7HJR`)
+- Insert it into the database
+- Display the code for you to use during signup
+
+**Step 3**: Sign up with admin privileges
+
+1. Go to your app signup page
+2. Sign up with the email you provided
+3. Use the generated invite code
+4. You now have admin access!
+
+**Security Notes**:
+
+- Each deployment uses its own unique admin credentials
+- No credentials are stored in git repository
+- Invite code is single-use and tied to your email
+- You can create additional invite codes from the admin panel
+
+---
+
+## Troubleshooting
+
+### Issue: Application fails with "relation does not exist" errors
+
+**Symptoms**: Errors like:
+
+- `relation "public.reading_list" does not exist`
+- `relation "public.book_recommendations" does not exist`
+- `relation "public.game_library" does not exist`
+- `relation "public.game_recommendations" does not exist`
+- `relation "public.music_library" does not exist`
+- `relation "public.media_reviews" does not exist`
+
+**Cause**: You ran the incomplete baseline migration before it was fixed (Nov 16, 2025).
+
+**Solution - Option 1** (Run missing migrations):
+
+```bash
+# Apply the archived migrations for the missing tables
+# In Supabase Dashboard → SQL Editor, run these in order:
+# 1. 20251024201314_create_reading_list.sql
+# 2. 20251024201354_create_book_recommendations.sql
+# 3. 20251104001011_create_game_library.sql
+# 4. 20251104001052_create_game_recommendations.sql
+# 5. 20251102000000_create_music_library.sql
+# 6. 20251022000001_create_media_reviews.sql
+# 7. 20251023043630_fix_media_reviews_rating_constraint.sql
+```
+
+**Solution - Option 2** (Reset and re-run corrected baseline):
+
+```bash
+# WARNING: This will delete all data
+# 1. In Supabase Dashboard → Database → drop all public tables
+# 2. Run the corrected baseline migration
+# 3. Use BOOTSTRAP_ADMIN_2025 to re-invite admin
+```
+
+**Prevention**: Always pull the latest migrations before setting up a new database.
 
 ---
 
@@ -387,6 +506,7 @@ The baseline includes a permanent invite code for admin access after database re
 
 ---
 
-**Last Updated**: November 16, 2025  
-**Baseline Migration**: `20250116000000_baseline_schema.sql`  
+**Last Updated**: November 19, 2025  
+**Baseline Migration**: `20250116000000_baseline_schema.sql` (consolidated fixes)  
+**Forward-Only Migrations**: 2 (bootstrap RLS + auth trigger)  
 **Archived Migrations**: 60 files in `supabase/migrations/archive/`
