@@ -265,19 +265,20 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
   const emptyStateProps =
     filter === "read"
       ? {
-          title: "No books read yet",
+          title: "Your Reading list is empty",
           message:
-            "Mark books as read to track your reading history and share recommendations.",
+            "You haven't added any books to your list yet. Add books above to start tracking what you're currently reading!",
         }
       : filter === "to-read"
       ? {
-          title: "Your reading list is empty",
+          title: "Your Reading list is empty",
           message:
-            "Start building your reading list by searching for books below.",
+            "You haven't added any books to your list yet. Add books above to start tracking what you're currently reading!",
         }
       : {
-          title: "No books yet",
-          message: "Add your first book to get started tracking your reading.",
+          title: "Your Reading list is empty",
+          message:
+            "You haven't added any books to your list yet. Add books above to start tracking what you're currently reading!",
         };
 
   return (

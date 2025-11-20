@@ -98,7 +98,7 @@ const MediaEmptyState: React.FC<MediaEmptyStateProps> = ({
   // If actions are provided, render with action buttons
   if (actions && actions.length > 0) {
     return (
-      <div className="w-full bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 dark:border-gray-700 p-16 text-center">
+      <div className="w-full bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 dark:border-gray-700 px-16 py-20 text-center">
         <Icon
           className="w-16 h-16 mx-auto mb-6 text-gray-400 dark:text-gray-500"
           aria-hidden="true"
@@ -134,7 +134,7 @@ const MediaEmptyState: React.FC<MediaEmptyStateProps> = ({
         onClick={onClick}
         variant="subtle"
         fullWidth
-        className="bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm border border-gray-700 dark:border-gray-700 hover:border-purple-500/50 dark:hover:border-purple-500/50 p-16 text-center hover:bg-gray-800/70 dark:hover:bg-gray-800/70 group focus-visible:ring-offset-gray-900 dark:focus-visible:ring-offset-gray-900"
+        className="bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm border border-gray-700 dark:border-gray-700 hover:border-purple-500/50 dark:hover:border-purple-500/50 px-16 py-20 text-center hover:bg-gray-800/70 dark:hover:bg-gray-800/70 group focus-visible:ring-offset-gray-900 dark:focus-visible:ring-offset-gray-900"
         aria-label={ariaLabel || title}
       >
         <Icon
@@ -153,7 +153,7 @@ const MediaEmptyState: React.FC<MediaEmptyStateProps> = ({
 
   // Otherwise, render as static informational display
   return (
-    <div className="w-full bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 dark:border-gray-700 p-16 text-center">
+    <div className="w-full bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 dark:border-gray-700 px-16 py-20 text-center">
       <Icon
         className="w-16 h-16 mx-auto mb-6 text-gray-400 dark:text-gray-500"
         aria-hidden="true"

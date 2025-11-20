@@ -176,7 +176,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
 
       {/* Sidebar - Hidden on mobile, visible on desktop */}
       <aside
-        className={`hidden md:fixed left-0 top-0 h-screen bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out z-40 md:flex flex-col overflow-hidden ${
+        className={`hidden md:fixed left-0 top-0 h-screen bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out z-40 md:flex flex-col ${
           isCollapsed ? "w-16" : "w-[224px]"
         }`}
         aria-label="Main sidebar navigation"
@@ -213,7 +213,10 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
         </div>
 
         {/* Navigation Items */}
-        <nav className="flex-1 overflow-y-auto py-4" role="navigation">
+        <nav
+          className="flex-1 overflow-y-auto overflow-x-hidden py-4"
+          role="navigation"
+        >
           <NavList
             items={NAV_ITEMS}
             currentPath={location.pathname}
@@ -226,12 +229,22 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
         {/* User Section with Dropdown - Moved to bottom */}
         <div
           ref={userMenuRef}
-          className="relative border-t border-gray-200 dark:border-gray-700 p-2"
+          className={`relative border-t border-gray-200 dark:border-gray-700 p-2 ${
+            isCollapsed ? "overflow-visible" : ""
+          }`}
         >
           {/* User Button */}
           <button
             type="button"
-            onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+            onClick={() => {
+              console.log(
+                "User menu clicked, isCollapsed:",
+                isCollapsed,
+                "current isUserMenuOpen:",
+                isUserMenuOpen
+              );
+              setIsUserMenuOpen(!isUserMenuOpen);
+            }}
             className={`w-full flex items-center px-2 py-3 rounded-lg transition-all duration-200 bg-gray-50 dark:bg-gray-700/30 hover:bg-gray-100 dark:hover:bg-gray-700/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
               isCollapsed ? "justify-center" : "gap-2"
             }`}

@@ -313,14 +313,8 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
         <div className="mt-6">
           <MediaEmptyState
             icon={Gamepad2}
-            title="No Games Yet"
-            description={
-              filter === "played"
-                ? "No games marked as played yet. Start tracking your gaming journey!"
-                : filter === "to-play"
-                ? "No games in your to-play list. Search for games above to add them!"
-                : "No games in your library yet. Click below to start building your collection!"
-            }
+            title="Your Game list is empty"
+            description="You haven't added any games to your list yet. Add games above to start tracking what you're currently playing!"
             onClick={() => setShowSearchModal(true)}
             ariaLabel="Add games to your library"
           />
@@ -397,8 +391,8 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
       {gameLibrary.length === 0 ? (
         <MediaEmptyState
           icon={Gamepad2}
-          title="Your game library is empty"
-          description="Start adding games to track what you're playing and discover recommendations from friends."
+          title="Your Game list is empty"
+          description="You haven't added any games to your list yet. Add games above to start tracking what you're currently playing!"
           onClick={() => setShowSearchModal(true)}
           ariaLabel="Add your first game"
         />
@@ -407,16 +401,16 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
           icon={Gamepad2}
           title={
             filter === "to-play"
-              ? "No Games Currently Playing"
+              ? "Your Game list is empty"
               : filter === "played"
-              ? "No Games Played Yet"
+              ? "Your Game list is empty"
               : "No Games Found"
           }
           description={
             filter === "to-play"
-              ? "You haven't added any games to your playing list yet. Add games above to start tracking what you're currently playing!"
+              ? "You haven't added any games to your list yet. Add games above to start tracking what you're currently playing!"
               : filter === "played"
-              ? "You haven't marked any games as played yet. Mark games as played to build your gaming history!"
+              ? "You haven't added any games to your list yet. Add games above to start tracking what you're currently playing!"
               : genreFilters.length > 0 && !genreFilters.includes("all")
               ? `No games found in selected genres: ${genreFilters.join(", ")}`
               : "No games found matching your current filters."

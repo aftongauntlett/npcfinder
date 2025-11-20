@@ -180,19 +180,20 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
   const emptyStateProps =
     filter === "listened"
       ? {
-          title: "No music listened yet",
+          title: "Your Music list is empty",
           message:
-            "Mark songs and albums as listened to track your music history.",
+            "You haven't added any albums or songs to your list yet. Add music above to start tracking what you're currently listening to!",
         }
       : filter === "listening"
       ? {
-          title: "Your listening queue is empty",
+          title: "Your Music list is empty",
           message:
-            "Start building your listening queue by searching for music below.",
+            "You haven't added any albums or songs to your list yet. Add music above to start tracking what you're currently listening to!",
         }
       : {
-          title: "No music yet",
-          message: "Add your first song or album to get started.",
+          title: "Your Music list is empty",
+          message:
+            "You haven't added any albums or songs to your list yet. Add music above to start tracking what you're currently listening to!",
         };
 
   return (
