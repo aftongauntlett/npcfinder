@@ -2,9 +2,68 @@
 
 All notable changes to this project will be documented in this file.
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
 ## [Unreleased]
 
-### Documentation - Truth Sweep & Cohesion (2025-01-XX)
+### In Progress
+- **Tasks System:** Board-based task management (not yet deployed)
+
+---
+
+## [1.0.0] - 2025-11-19
+
+### Added - Development Infrastructure
+- **Separate Dev/Prod Databases:** Created dedicated development Supabase project for safe testing
+  - Dev project: `tajptqmefszgxwollifi`
+  - Prod project: `hugcstixszgqcrqmqoss` (existing)
+- **Database Migration System:** Consolidated schema into versioned migration file
+  - Created `20250116000000_baseline_schema.sql` with complete database structure
+  - Includes all tables, RLS policies, triggers, indexes, and views
+  - NPM scripts for migration management: `db:push:dev`, `db:push:prod`, `db:migration:list`, etc.
+- **Development Workflow:** Clear separation between dev and production environments
+  - Dev environment for feature development and testing
+  - Prod environment protection with confirmation prompts
+  - Documentation in `DEV-PROD-WORKFLOW.md`
+
+### Changed - Database Management
+- Migrated from ad-hoc schema changes to formal migration system
+- Centralized all database logic in `/supabase/migrations/`
+- Updated npm scripts in `package.json` for database operations
+
+### Technical
+- Migration file: `20250116000000_baseline_schema.sql`
+- Tables: `profiles`, `invite_codes`, `watchlist`, `music_library`, `reading_list`, `game_library`, `recommendations`, `rate_limit_log`
+- Full RLS policies, triggers, indexes, and materialized views
+
+---
+
+## [0.9.0] - 2025-01-16 (Pre-Migration Baseline)
+
+### Summary
+Stable baseline release with core entertainment tracking features. This version includes Movies, TV Shows, Music, Books, and Games management with a complete invite-only authentication system.
+
+### Features
+- **Movies & TV Shows:** Search (TMDB API), watchlist, ratings, reviews, recommendations
+- **Music:** Search (iTunes API), library management, album/artist tracking
+- **Books:** Search (Google Books API), reading list, progress tracking
+- **Games:** Personal game library (manual entry)
+- **User System:** Invite-only registration with email validation, profile management
+- **Recommendations:** AI-powered content suggestions (OpenRouter integration)
+- **Security:** Row-Level Security (RLS) policies, rate limiting, secure authentication
+
+### Technical Stack
+- Frontend: React 19, TypeScript, Vite, TailwindCSS
+- Backend: Supabase (PostgreSQL + Auth)
+- State Management: TanStack Query v5
+- APIs: TMDB, iTunes, Google Books, OMDB, OpenRouter
+
+### Database
+- Migration: `20250116000000_baseline_schema.sql`
+- Tables: profiles, invite_codes, watchlist, music_library, reading_list, game_library, recommendations, rate_limit_log
+
+### Documentation - Truth Sweep & Cohesion (2025-01-16)
 
 **Truth-First Changes:**
 
