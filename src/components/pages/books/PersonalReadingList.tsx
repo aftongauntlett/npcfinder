@@ -152,8 +152,8 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
       switch (sortBy) {
         case "date-added":
           return (
-            new Date(b.created_at || "").getTime() -
-            new Date(a.created_at || "").getTime()
+            new Date(b.added_at || "").getTime() -
+            new Date(a.added_at || "").getTime()
           );
         case "title":
           return a.title.localeCompare(b.title);

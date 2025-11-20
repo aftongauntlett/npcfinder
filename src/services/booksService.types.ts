@@ -19,7 +19,7 @@ export interface ReadingListItem {
   personal_rating: number | null;
   personal_notes: string | null;
   read_at: string | null; // Timestamp when marked as read
-  created_at: string;
+  added_at: string; // Timestamp when added to reading list
   updated_at: string;
 }
 

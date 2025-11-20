@@ -167,10 +167,10 @@ const AuthPage: React.FC = () => {
                 type="text"
                 value={inviteCode}
                 onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-                placeholder="XXX-XXX-XXX-XXX"
+                placeholder="XXXX-XXXX-XXXX-XXXX"
                 disabled={loading}
                 required
-                maxLength={15}
+                maxLength={19}
                 inputClassName="font-mono"
                 helperText="🔒 This app is invite-only. Enter the code you received."
                 error={error && error.includes("invite") ? error : undefined}
