@@ -2,6 +2,7 @@
 
 **Status**: Baseline + Forward-Only Migrations  
 **Last Reset**: November 16, 2025  
+**Last Consolidation**: November 23, 2025 (Tasks System)  
 **Current Baseline**: `20250116000000_baseline_schema.sql`
 
 ---
@@ -16,6 +17,7 @@ This project uses **database migrations** to manage schema changes in a version-
 
 - ✅ Single baseline migration contains the complete, correct schema
 - ✅ All old prototype migrations are archived (preserved for history)
+- ✅ Recently added features can be consolidated into baseline before production deployment
 - ✅ All future changes are forward-only migrations (never edit existing migrations)
 - ✅ Migrations are tested in dev database before applying to production
 
@@ -25,6 +27,7 @@ This project uses **database migrations** to manage schema changes in a version-
 - Simplified migration chain (no replaying 60+ prototype migrations)
 - Historical record preserved in archive
 - Professional workflow for production database
+- Easy consolidation of development features into baseline
 
 ---
 
@@ -50,22 +53,35 @@ supabase/migrations/
 
 **What It Contains**:
 
-- All tables (user_profiles, connections, invite_codes, watchlists, movie/music/book/game recommendations and libraries, reading_list, media_reviews, etc.)
-- All views with security_barrier (movie_recommendations_with_users, music_recommendations_with_users, book_recommendations_with_users, game_recommendations_with_users)
-- All functions (is_admin, handle_new_user, batch_connect_users, update triggers, etc.)
+- All tables (user_profiles, connections, invite_codes, watchlists, movie/music/book/game recommendations and libraries, reading_list, media_reviews, **tasks system**, etc.)
+- All views with security_barrier (movie_recommendations_with_users, music_recommendations_with_users, book_recommendations_with_users, game_recommendations_with_users, **task_boards_with_stats**)
+- All functions (is_admin, handle_new_user, batch_connect_users, update triggers, **task timestamp triggers**, etc.)
 - All triggers (admin protection, timestamp updates, status changes, etc.)
 - All RLS policies (security policies for every table)
 - All indexes (performance optimization)
 - All table/column comments (documentation)
 
-**Consolidated Updates** (Nov 19, 2025):
+**Consolidated Updates**:
 
-- ✅ Added `game_library.description_raw` column (required by frontend)
-- ✅ Updated `book_recommendations` constraint to allow `'listen'` type (audiobooks)
-- ✅ Added `security_barrier='true'` to all recommendation views (security consistency)
-- ✅ Added missing `game_recommendations_with_users` view
+- Nov 17, 2025: Added `game_library.description_raw`, book `'listen'` type, `security_barrier` to views
+- **Nov 23, 2025: Consolidated tasks system** (3 tables: task_boards, task_board_sections, tasks)
+  - Template support: job_tracker, todo, grocery, recipe, notes, kanban, custom
+  - Flexible configuration: column_config, field_config, item_data
+  - Inbox tasks support (nullable board_id)
+  - Full RLS policies, triggers, indexes, and views
+  - Replaces 5 individual migrations (now archived)
 
 **Note**: This baseline was initially created from archived prototype migrations and has been tested in dev database. All known issues have been fixed and consolidated.
+
+**Consolidation Workflow**:
+
+When preparing for a fresh production database deployment, recently added features can be consolidated into the baseline to keep the migration chain clean:
+
+1. **Before consolidation**: Baseline + 5 task migrations + 2 bootstrap migrations = 8 files
+2. **After consolidation**: Baseline (with tasks) + 2 bootstrap migrations = 3 files
+3. **Result**: Cleaner migration history, easier to understand and maintain
+
+Consolidated migrations are moved to `archive/` for historical reference. This is the recommended approach before deploying to a fresh production database.
 
 **When to Run**:
 
