@@ -314,7 +314,7 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
           <MediaEmptyState
             icon={Gamepad2}
             title="Your Game list is empty"
-            description="You haven't added any games to your list yet. Add games above to start tracking what you're currently playing!"
+            description="You haven't added any games to your list yet. Add games to start tracking what you're currently playing!"
             onClick={() => setShowSearchModal(true)}
             ariaLabel="Add games to your library"
           />
@@ -338,7 +338,7 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
   }
 
   return (
-    <>
+    <div className="container mx-auto px-6">
       {/* Controls - Only show when there are items to display */}
       {paginatedItems.length > 0 && (
         <div className="space-y-3 mb-6">
@@ -392,7 +392,7 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
         <MediaEmptyState
           icon={Gamepad2}
           title="Your Game list is empty"
-          description="You haven't added any games to your list yet. Add games above to start tracking what you're currently playing!"
+          description="You haven't added any games to your list yet. Add games to start tracking what you're currently playing!"
           onClick={() => setShowSearchModal(true)}
           ariaLabel="Add your first game"
         />
@@ -408,9 +408,9 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
           }
           description={
             filter === "to-play"
-              ? "You haven't added any games to your list yet. Add games above to start tracking what you're currently playing!"
+              ? "You haven't added any games to your list yet. Add games to start tracking what you're currently playing!"
               : filter === "played"
-              ? "You haven't added any games to your list yet. Add games above to start tracking what you're currently playing!"
+              ? "You haven't added any games to your list yet. Add games to start tracking what you're currently playing!"
               : genreFilters.length > 0 && !genreFilters.includes("all")
               ? `No games found in selected genres: ${genreFilters.join(", ")}`
               : "No games found matching your current filters."
@@ -419,7 +419,7 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
           ariaLabel="Add games to your library"
         />
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2 max-w-full overflow-hidden">
           {/* Note: subtitle field shows platforms for games (e.g., "PC, PlayStation, Xbox")
               Unlike other media types that show creator info (director, author, artist),
               game developer/studio data is not currently available from RAWG API */}
@@ -558,7 +558,7 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
           }}
         />
       )}
-    </>
+    </div>
   );
 };
 

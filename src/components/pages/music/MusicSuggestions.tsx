@@ -354,7 +354,7 @@ const MusicSuggestions: React.FC<MusicSuggestionsProps> = ({
   };
 
   const content = (
-    <>
+    <div className="container mx-auto px-6">
       <div className="space-y-6">
         <InlineRecommendationsLayout
           mediaType="Music"
@@ -391,7 +391,7 @@ const MusicSuggestions: React.FC<MusicSuggestionsProps> = ({
         ]}
         defaultRecommendationType="listen"
       />
-    </>
+    </div>
   );
 
   // If embedded, return content without layouts

@@ -365,21 +365,23 @@ const GamesSuggestions: React.FC<GamesSuggestionsProps> = ({
   };
 
   const content = (
-    <InlineRecommendationsLayout
-      mediaType="Games"
-      mediaIcon={Gamepad2}
-      emptyMessage="No game recommendations yet"
-      emptySubMessage="When friends recommend games, they'll show up here"
-      loading={loading}
-      friendsWithRecs={filteredFriendsWithRecs}
-      quickStats={quickStats}
-      hits={hits}
-      misses={misses}
-      sent={sent}
-      friendRecommendations={friendRecommendations}
-      renderRecommendationCard={renderRecommendationCard}
-      renderGroupedSentCard={renderGroupedSentCard}
-    />
+    <div className="container mx-auto px-6">
+      <InlineRecommendationsLayout
+        mediaType="Games"
+        mediaIcon={Gamepad2}
+        emptyMessage="No game recommendations yet"
+        emptySubMessage="When friends recommend games, they'll show up here"
+        loading={loading}
+        friendsWithRecs={filteredFriendsWithRecs}
+        quickStats={quickStats}
+        hits={hits}
+        misses={misses}
+        sent={sent}
+        friendRecommendations={friendRecommendations}
+        renderRecommendationCard={renderRecommendationCard}
+        renderGroupedSentCard={renderGroupedSentCard}
+      />
+    </div>
   );
 
   return (

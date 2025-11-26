@@ -377,7 +377,7 @@ const BooksSuggestions: React.FC<BooksSuggestionsProps> = ({
   });
 
   const content = (
-    <>
+    <div className="container mx-auto px-6">
       <div className="space-y-6">
         <InlineRecommendationsLayout
           mediaType="Books"
@@ -415,7 +415,7 @@ const BooksSuggestions: React.FC<BooksSuggestionsProps> = ({
         ]}
         defaultRecommendationType="read"
       />
-    </>
+    </div>
   );
 
   // If embedded, return content without layouts

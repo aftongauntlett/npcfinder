@@ -51,7 +51,6 @@ const MoviesSuggestions: React.FC<MoviesSuggestionsProps> = ({
     hits,
     misses,
     sent,
-    queue,
     friendRecommendations,
     friendsWithRecs: filteredFriendsWithRecs,
     quickStats,
@@ -249,7 +248,7 @@ const MoviesSuggestions: React.FC<MoviesSuggestionsProps> = ({
   };
 
   const content = (
-    <>
+    <div className="container mx-auto px-6">
       <div className="space-y-6">
         <InlineRecommendationsLayout
           mediaType="Movies & TV"
@@ -287,7 +286,7 @@ const MoviesSuggestions: React.FC<MoviesSuggestionsProps> = ({
         ]}
         defaultRecommendationType="watch"
       />
-    </>
+    </div>
   );
 
   // If embedded, return content without layouts

@@ -267,22 +267,22 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
       ? {
           title: "Your Reading list is empty",
           message:
-            "You haven't added any books to your list yet. Add books above to start tracking what you're currently reading!",
+            "You haven't added any books to your list yet. Add books to start tracking what you're currently reading!",
         }
       : filter === "to-read"
       ? {
           title: "Your Reading list is empty",
           message:
-            "You haven't added any books to your list yet. Add books above to start tracking what you're currently reading!",
+            "You haven't added any books to your list yet. Add books to start tracking what you're currently reading!",
         }
       : {
           title: "Your Reading list is empty",
           message:
-            "You haven't added any books to your list yet. Add books above to start tracking what you're currently reading!",
+            "You haven't added any books to your list yet. Add books to start tracking what you're currently reading!",
         };
 
   return (
-    <div ref={topRef} className="space-y-6">
+    <div ref={topRef} className="container mx-auto px-6 space-y-6">
       {/* Controls Row: Filter/Sort + Actions */}
       {hasItemsForCurrentFilter && (
         <div className="space-y-3 mb-6">

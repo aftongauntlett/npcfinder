@@ -182,22 +182,22 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
       ? {
           title: "Your Music list is empty",
           message:
-            "You haven't added any albums or songs to your list yet. Add music above to start tracking what you're currently listening to!",
+            "You haven't added any albums or songs to your list yet. Add music to start tracking what you're currently listening to!",
         }
       : filter === "listening"
       ? {
           title: "Your Music list is empty",
           message:
-            "You haven't added any albums or songs to your list yet. Add music above to start tracking what you're currently listening to!",
+            "You haven't added any albums or songs to your list yet. Add music to start tracking what you're currently listening to!",
         }
       : {
           title: "Your Music list is empty",
           message:
-            "You haven't added any albums or songs to your list yet. Add music above to start tracking what you're currently listening to!",
+            "You haven't added any albums or songs to your list yet. Add music to start tracking what you're currently listening to!",
         };
 
   return (
-    <div ref={topRef} className="space-y-6">
+    <div ref={topRef} className="container mx-auto px-6 space-y-6">
       {/* Action Bar - Only show when there's data */}
       {sortedMusic.length > 0 && (
         <MediaPageToolbar
@@ -221,14 +221,6 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
           }}
           onAddClick={() => setShowSearchModal(true)}
         />
-      )}
-
-      {/* Results Count */}
-      {sortedMusic.length > 0 && (
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Showing {startIndex + 1}–{Math.min(endIndex, sortedMusic.length)} of{" "}
-          {sortedMusic.length} items
-        </p>
       )}
 
       {/* List View */}
