@@ -99,25 +99,25 @@ h6 {
 
 /* Text selection highlighting */
 ::selection {
-  background-color: var(--color-primary);
+  background-color: rgb(75 85 99 / 0.9); /* Neutral gray for text selection */
   color: white;
 }
 
 ::-moz-selection {
-  background-color: var(--color-primary);
+  background-color: rgb(75 85 99 / 0.9);
   color: white;
 }
 
-/* Input field selection highlighting */
+/* Input field selection highlighting - ensures high contrast */
 input::selection,
 textarea::selection {
-  background-color: var(--color-primary);
+  background-color: rgb(107 114 128); /* Lighter gray for input fields */
   color: white;
 }
 
 input::-moz-selection,
 textarea::-moz-selection {
-  background-color: var(--color-primary);
+  background-color: rgb(107 114 128);
   color: white;
 }
 
