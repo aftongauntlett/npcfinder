@@ -1,0 +1,70 @@
+/**
+ * Archive View
+ *
+ * Displays completed and archived tasks grouped by date
+ */
+
+import React from "react";
+import { Archive as ArchiveIcon, Inbox } from "lucide-react";
+import TaskCard from "../../tasks/TaskCard";
+import EmptyState from "../../shared/common/EmptyState";
+import { useArchivedTasks } from "../../../hooks/useTasksQueries";
+import { groupTasksByDate } from "../../../utils/taskHelpers";
+import { useMemo } from "react";
+
+const ArchiveView: React.FC = () => {
+  const { data: archivedTasks = [], isLoading } = useArchivedTasks();
+
+  // Group tasks by completion date
+  const groupedTasks = useMemo(() => {
+    return groupTasksByDate(archivedTasks);
+  }, [archivedTasks]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-gray-600 dark:text-gray-400">
+          Loading archive...
+        </div>
+      </div>
+    );
+  }
+
+  if (archivedTasks.length === 0) {
+    return (
+      <div className="mt-6">
+        <EmptyState
+          icon={Inbox}
+          title="Archive is empty"
+          description="Completed tasks will appear here. Archive tasks to keep your boards clean while preserving your work history."
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8">
+      {Object.entries(groupedTasks).map(([dateGroup, tasks]) => (
+        <div key={dateGroup} className="space-y-3">
+          <div className="flex items-center gap-2">
+            <ArchiveIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              {dateGroup}
+              <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+                ({tasks.length})
+              </span>
+            </h3>
+          </div>
+
+          <div className="space-y-2">
+            {tasks.map((task) => (
+              <TaskCard key={task.id} task={task} variant="detailed" />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default ArchiveView;
