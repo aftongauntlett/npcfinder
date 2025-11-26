@@ -207,7 +207,7 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
   };
 
   return (
-    <div ref={topRef} className="space-y-6">
+    <div ref={topRef} className="container mx-auto px-6 space-y-6">
       {/* Controls Row: Filters + Sort + Actions */}
       {hasItemsForCurrentFilter && (
         <MediaPageToolbar
@@ -254,7 +254,7 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
         <MediaEmptyState
           icon={Film}
           title="Your Movie & TV list is empty"
-          description="You haven't added any movies or TV shows to your list yet. Add content above to start tracking what you're currently watching!"
+          description="You haven't added any movies or TV shows to your list yet. Add content to start tracking what you're currently watching!"
           onClick={() => setShowSearchModal(true)}
           ariaLabel="Add movies or TV shows to your watchlist"
         />

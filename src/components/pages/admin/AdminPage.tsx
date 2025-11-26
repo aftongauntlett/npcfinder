@@ -9,7 +9,6 @@ import {
   ChevronLeft,
   ChevronRight,
   ShieldCheck,
-  Plus,
   Shield,
   RefreshCw,
   Sparkles,
@@ -319,166 +318,170 @@ const AdminPage: React.FC = () => {
             </div>
           )}
 
-          {/* User Management Section */}
-          <section className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                User Management
-              </h2>
-            </div>
-
-            {/* User Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search users by name or email..."
-                value={userSearch}
-                onChange={(e) => {
-                  setUserSearch(e.target.value);
-                  setUserPage(0);
-                }}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-primary focus:border-primary"
-              />
-            </div>
-
-            {/* Users Table */}
-            {isLoading ? (
-              <div className="flex justify-center items-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 dark:border-gray-700 border-t-primary"></div>
+          {/* User Management Section - Only show when more than 1 user */}
+          {stats && stats.totalUsers > 1 && (
+            <section className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  User Management
+                </h2>
               </div>
-            ) : users.length === 0 ? (
-              <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                No users found
+
+              {/* User Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search users by name or email..."
+                  value={userSearch}
+                  onChange={(e) => {
+                    setUserSearch(e.target.value);
+                    setUserPage(0);
+                  }}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-primary focus:border-primary"
+                />
               </div>
-            ) : (
-              <>
-                <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead className="bg-gray-50 dark:bg-gray-900">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          User
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Email
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Joined
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Admin
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                      {users.map((user) => (
-                        <motion.tr
-                          key={user.id}
-                          className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <motion.div
-                                className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-primary to-primary-dark rounded-full flex items-center justify-center"
-                                whileHover={{ rotate: 5 }}
-                                transition={{
-                                  type: "spring",
-                                  stiffness: 400,
-                                  damping: 20,
-                                }}
-                              >
-                                <span className="text-sm font-medium text-white">
-                                  {user.display_name.charAt(0).toUpperCase()}
-                                </span>
-                              </motion.div>
-                              <div className="ml-4">
-                                <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                  {user.display_name}
+
+              {/* Users Table */}
+              {isLoading ? (
+                <div className="flex justify-center items-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 dark:border-gray-700 border-t-primary"></div>
+                </div>
+              ) : users.length === 0 ? (
+                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                  No users found
+                </div>
+              ) : (
+                <>
+                  <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                      <thead className="bg-gray-50 dark:bg-gray-900">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            User
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Email
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Joined
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Admin
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        {users.map((user) => (
+                          <motion.tr
+                            key={user.id}
+                            className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <motion.div
+                                  className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-primary to-primary-dark rounded-full flex items-center justify-center"
+                                  whileHover={{ rotate: 5 }}
+                                  transition={{
+                                    type: "spring",
+                                    stiffness: 400,
+                                    damping: 20,
+                                  }}
+                                >
+                                  <span className="text-sm font-medium text-white">
+                                    {user.display_name.charAt(0).toUpperCase()}
+                                  </span>
+                                </motion.div>
+                                <div className="ml-4">
+                                  <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                    {user.display_name}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                              {user.email || "N/A"}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                              {new Date(user.created_at).toLocaleDateString()}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {user.is_admin ? (
-                              <button
-                                onClick={() => handleToggleAdminClick(user)}
-                                disabled={isMasterAdmin(user)}
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-purple-500 text-white hover:bg-purple-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                                title={
-                                  isMasterAdmin(user)
-                                    ? "Master Admin cannot be demoted"
-                                    : "Click to remove admin"
-                                }
-                              >
-                                <Shield
-                                  className="w-3.5 h-3.5"
-                                  aria-hidden="true"
-                                />
-                                {isMasterAdmin(user) ? "Master Admin" : "Admin"}
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => handleToggleAdminClick(user)}
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-gray-500 text-white hover:bg-gray-600 transition-colors"
-                                title="Click to make admin"
-                              >
-                                User
-                              </button>
-                            )}
-                          </td>
-                        </motion.tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Pagination */}
-                {totalUserPages > 1 && (
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
-                      Page {userPage + 1} of {totalUserPages}
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => setUserPage((p) => Math.max(0, p - 1))}
-                        disabled={userPage === 0}
-                        variant="subtle"
-                        size="icon"
-                        icon={<ChevronLeft className="w-5 h-5" />}
-                        aria-label="Previous page"
-                      />
-                      <Button
-                        onClick={() =>
-                          setUserPage((p) =>
-                            Math.min(totalUserPages - 1, p + 1)
-                          )
-                        }
-                        disabled={userPage >= totalUserPages - 1}
-                        variant="subtle"
-                        size="icon"
-                        icon={<ChevronRight className="w-5 h-5" />}
-                        aria-label="Next page"
-                      />
-                    </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-500 dark:text-gray-400">
+                                {user.email || "N/A"}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-500 dark:text-gray-400">
+                                {new Date(user.created_at).toLocaleDateString()}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              {user.is_admin ? (
+                                <button
+                                  onClick={() => handleToggleAdminClick(user)}
+                                  disabled={isMasterAdmin(user)}
+                                  className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-purple-500 text-white hover:bg-purple-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                                  title={
+                                    isMasterAdmin(user)
+                                      ? "Master Admin cannot be demoted"
+                                      : "Click to remove admin"
+                                  }
+                                >
+                                  <Shield
+                                    className="w-3.5 h-3.5"
+                                    aria-hidden="true"
+                                  />
+                                  {isMasterAdmin(user)
+                                    ? "Master Admin"
+                                    : "Admin"}
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleToggleAdminClick(user)}
+                                  className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-gray-500 text-white hover:bg-gray-600 transition-colors"
+                                  title="Click to make admin"
+                                >
+                                  User
+                                </button>
+                              )}
+                            </td>
+                          </motion.tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                )}
-              </>
-            )}
-          </section>
+
+                  {/* Pagination */}
+                  {totalUserPages > 1 && (
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-gray-700 dark:text-gray-300">
+                        Page {userPage + 1} of {totalUserPages}
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => setUserPage((p) => Math.max(0, p - 1))}
+                          disabled={userPage === 0}
+                          variant="subtle"
+                          size="icon"
+                          icon={<ChevronLeft className="w-5 h-5" />}
+                          aria-label="Previous page"
+                        />
+                        <Button
+                          onClick={() =>
+                            setUserPage((p) =>
+                              Math.min(totalUserPages - 1, p + 1)
+                            )
+                          }
+                          disabled={userPage >= totalUserPages - 1}
+                          variant="subtle"
+                          size="icon"
+                          icon={<ChevronRight className="w-5 h-5" />}
+                          aria-label="Next page"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </section>
+          )}
 
           {/* Invite Code Management Section */}
           <section className="space-y-4">
@@ -486,7 +489,7 @@ const AdminPage: React.FC = () => {
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                 Invite Code Management
               </h2>
-              {!showCreateForm && (
+              {!showCreateForm && codes.length > 0 && (
                 <Button
                   onClick={() => setShowCreateForm(true)}
                   variant="action"

@@ -17,7 +17,6 @@ const MediaUserRating: React.FC<MediaUserRatingProps> = ({
   label = "Your Rating",
   size = "sm",
   showLabel = true,
-  showClearButton = false,
   className = "",
 }) => {
   return (

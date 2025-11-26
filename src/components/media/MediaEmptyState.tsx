@@ -1,6 +1,7 @@
 import React from "react";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/shared";
+import { useTheme } from "../../hooks/useTheme";
 
 interface ActionButton {
   label: string;
@@ -95,6 +96,8 @@ const MediaEmptyState: React.FC<MediaEmptyStateProps> = ({
   actions,
   ariaLabel,
 }) => {
+  const { themeColor } = useTheme();
+
   // If actions are provided, render with action buttons
   if (actions && actions.length > 0) {
     return (
@@ -130,15 +133,32 @@ const MediaEmptyState: React.FC<MediaEmptyStateProps> = ({
   // If onClick is provided, render as clickable button
   if (onClick) {
     return (
-      <Button
+      <button
         onClick={onClick}
-        variant="subtle"
-        fullWidth
-        className="bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm border border-gray-700 dark:border-gray-700 hover:border-purple-500/50 dark:hover:border-purple-500/50 px-16 py-20 text-center hover:bg-gray-800/70 dark:hover:bg-gray-800/70 group focus-visible:ring-offset-gray-900 dark:focus-visible:ring-offset-gray-900"
+        className="w-full bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 dark:border-gray-700 px-16 py-20 text-center hover:bg-gray-800/70 dark:hover:bg-gray-800/70 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 dark:focus-visible:ring-offset-gray-900 transition-all cursor-pointer"
+        style={{
+          borderColor: undefined,
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = `${themeColor}80`; // 50% opacity
+          const icon = e.currentTarget.querySelector("svg");
+          if (icon) (icon as SVGElement).style.color = themeColor;
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = "";
+          const icon = e.currentTarget.querySelector("svg");
+          if (icon) (icon as SVGElement).style.color = "";
+        }}
+        onFocus={(e) => {
+          e.currentTarget.style.setProperty("--tw-ring-color", themeColor);
+        }}
+        onBlur={(e) => {
+          e.currentTarget.style.removeProperty("--tw-ring-color");
+        }}
         aria-label={ariaLabel || title}
       >
         <Icon
-          className="w-16 h-16 mx-auto mb-6 text-gray-400 dark:text-gray-500 group-hover:text-purple-400 dark:group-hover:text-purple-400 transition-colors"
+          className="w-16 h-16 mx-auto mb-6 text-gray-400 dark:text-gray-500 transition-colors pointer-events-none"
           aria-hidden="true"
         />
         <p className="text-white dark:text-white text-lg font-semibold mb-3">
@@ -147,7 +167,7 @@ const MediaEmptyState: React.FC<MediaEmptyStateProps> = ({
         <p className="text-gray-400 dark:text-gray-400 text-sm max-w-md mx-auto">
           {description}
         </p>
-      </Button>
+      </button>
     );
   }
 
