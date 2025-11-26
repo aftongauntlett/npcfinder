@@ -143,25 +143,25 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         "focus-visible:ring-primary",
       ],
       danger: [
-        "border-transparent bg-red-50/80 dark:bg-red-950/40 text-red-600 dark:text-red-400",
+        "border border-red-200 dark:border-red-800/50 bg-red-50/80 dark:bg-red-950/40 text-red-600 dark:text-red-400",
         "backdrop-blur-sm",
-        "hover:bg-red-100/90 dark:hover:bg-red-950/60 hover:shadow-sm",
+        "hover:bg-red-100/90 dark:hover:bg-red-950/60 hover:border-red-300 dark:hover:border-red-700/60 hover:shadow-sm",
         "focus-visible:ring-red-500 dark:focus-visible:ring-red-400",
       ],
       action: [
-        "border-2 border-primary/30 bg-transparent text-primary shadow-md",
+        "border-2 border-primary/40 bg-primary/5 dark:bg-primary-light/5 text-primary dark:text-primary-light shadow-md",
         "glass-button hover-sheen hover-glow",
-        "hover:border-primary/50 hover:shadow-lg",
-        "hover:[background:color-mix(in_srgb,var(--color-primary)_20%,transparent)]",
+        "hover:border-primary/60 dark:hover:border-primary-light/60 hover:shadow-lg",
+        "hover:bg-primary/15 dark:hover:bg-primary-light/15",
         "hover:[backdrop-filter:blur(12px)_saturate(130%)]",
         "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
       ],
       gradient: [
         // Deprecated - maps to action
-        "border-2 border-primary/30 bg-transparent text-primary shadow-md",
+        "border-2 border-primary/40 bg-primary/5 dark:bg-primary-light/5 text-primary dark:text-primary-light shadow-md",
         "glass-button hover-sheen hover-glow",
-        "hover:border-primary/50 hover:shadow-lg",
-        "hover:[background:color-mix(in_srgb,var(--color-primary)_20%,transparent)]",
+        "hover:border-primary/60 dark:hover:border-primary-light/60 hover:shadow-lg",
+        "hover:bg-primary/15 dark:hover:bg-primary-light/15",
         "hover:[backdrop-filter:blur(12px)_saturate(130%)]",
         "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
       ],
@@ -259,6 +259,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     };
 
     const combinedClasses = [
+      "group", // Add group class for icon hover effects
       ...classes,
       ...variantStyles[variant],
       getSizeStyles(),
@@ -284,7 +285,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           icon &&
           iconPosition === "left" &&
           (shouldUseIconStyling ? (
-            icon
+            <span className="inline-flex">{icon}</span>
           ) : (
             <span className="flex-shrink-0 inline-flex items-center justify-center">
               {icon}
@@ -301,7 +302,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           icon &&
           iconPosition === "right" &&
           (shouldUseIconStyling ? (
-            icon
+            <span className="inline-flex">{icon}</span>
           ) : (
             <span className="flex-shrink-0 inline-flex items-center justify-center">
               {icon}

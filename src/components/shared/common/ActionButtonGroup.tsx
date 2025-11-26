@@ -1,5 +1,4 @@
 import React from "react";
-import { motion } from "framer-motion";
 
 export interface ActionConfig {
   id: string;
@@ -21,13 +20,13 @@ interface ActionButtonGroupProps {
 
 const variantClasses = {
   default:
-    "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300",
+    "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800",
   danger:
-    "bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-700 dark:text-red-400",
+    "text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20",
   success:
-    "bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-900/50 text-green-700 dark:text-green-400",
+    "text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20",
   warning:
-    "bg-yellow-100 dark:bg-yellow-900/30 hover:bg-yellow-200 dark:hover:bg-yellow-900/50 text-yellow-700 dark:text-yellow-400",
+    "text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20",
 };
 
 export default function ActionButtonGroup({
@@ -59,7 +58,7 @@ export default function ActionButtonGroup({
         const variant = action.variant || "default";
 
         return (
-          <motion.button
+          <button
             key={action.id}
             type="button"
             onClick={(e) => {
@@ -69,12 +68,10 @@ export default function ActionButtonGroup({
             disabled={action.disabled}
             title={action.tooltip || action.label}
             aria-label={action.label}
-            className={`${sizeClasses[size]} rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${variantClasses[variant]}`}
-            whileHover={{ scale: action.disabled ? 1 : 1.05 }}
-            whileTap={{ scale: action.disabled ? 1 : 0.95 }}
+            className={`${sizeClasses[size]} rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${variantClasses[variant]}`}
           >
             {action.icon}
-          </motion.button>
+          </button>
         );
       })}
     </div>
