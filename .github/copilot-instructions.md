@@ -32,6 +32,15 @@ Commits: conventional-style messages, no emojis, small logical units. Prompt the
 
 When migrations are required: never edit old migrations; create a new one and use the CLI.
 
+Database Operations (CRITICAL):
+
+- ALWAYS use npm scripts for database operations - never raw `npx supabase` commands
+- DEV database: `npm run db:push:dev`, `npm run db:reset:dev`, `npm run db:migration:list:dev`
+- PROD database: `npm run db:push:prod` (has 7-second safety warning), `npm run db:migration:list:prod`
+- These scripts auto-link to the correct database and prevent dev/prod mixups
+- Never suggest `npx supabase db push` or `npx supabase link` directly
+- Migration order: 1) Baseline, 2) Bootstrap RLS, 3) Auth trigger
+
 When a Traycer plan is provided, follow 10-traycer-handoff.md. If anything is unclear, ask first; otherwise propose a minimal plan, then implement and summarize.
 
 After loading prompts, reference 15-project-context.md for domain rules.

@@ -15,6 +15,7 @@ Built with React 19, TypeScript, and Supabase with Row-Level Security.
 
 - **Media Tracking**: Movies, TV shows, music, books, and games
 - **Personal Libraries**: Watchlists, reading lists, and game libraries with custom statuses
+- **Tasks & Organization**: Board-based task management system with sections, priorities, due dates, and tags. Features include Today view for due/overdue tasks, multiple board support, and Kanban-style organization with drag-and-drop
 - **Recommendations**: Send and track media recommendations with friends
 - **Reviews & Ratings**: Rate and review content with privacy controls
 - **Customization**: Custom themes, dark/light mode, configurable dashboard
