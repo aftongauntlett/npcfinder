@@ -1,5 +1,4 @@
 import React from "react";
-import { motion } from "framer-motion";
 import { BTN_PAD_DEFAULT } from "../../../styles/ui";
 
 export interface NavItem {

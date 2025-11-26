@@ -5,6 +5,7 @@ import {
   Music,
   BookOpen,
   Gamepad2,
+  ListChecks,
   Settings,
   ShieldCheck,
   ChevronLeft,
@@ -36,6 +37,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "music", label: "Music", icon: Music, path: "/app/music" },
   { id: "books", label: "Books", icon: BookOpen, path: "/app/books" },
   { id: "games", label: "Games", icon: Gamepad2, path: "/app/games" },
+  { id: "tasks", label: "Tasks", icon: ListChecks, path: "/app/tasks" },
 ];
 
 // User menu items (shown in accordion under username)

@@ -1,7 +1,6 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ChevronRight, Home } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import { cards } from "../../../data/dashboardCards";
 import Button from "../ui/Button";
 
