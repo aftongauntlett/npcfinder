@@ -127,7 +127,7 @@ const HomePage: React.FC<HomePageProps> = () => {
     >
       {/* Stats Grid - Only on Dashboard Tab */}
       {activeTab === "dashboard" && (
-        <div className="mb-6">
+        <div className="container mx-auto px-6 mb-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <StatCard
               title="Movies"

@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
+import { X } from "lucide-react";
+import { motion } from "framer-motion";
 import MainLayout from "./MainLayout";
 import { Footer } from "@/components/shared";
 
@@ -8,6 +10,7 @@ interface Tab {
   icon?: React.ElementType;
   badge?: number;
   panelId?: string; // Optional explicit panel ID for aria-controls
+  closeable?: boolean; // Can this tab be closed?
 }
 
 interface AppLayoutProps {
@@ -16,6 +19,7 @@ interface AppLayoutProps {
   tabs?: Tab[];
   activeTab?: string;
   onTabChange?: (tabId: string) => void;
+  onTabClose?: (tabId: string) => void;
   children: React.ReactNode;
 }
 
@@ -36,8 +40,28 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   tabs,
   activeTab,
   onTabChange,
+  onTabClose,
   children,
 }) => {
+  const activeTabRef = useRef<HTMLButtonElement>(null);
+  const prevActiveTabRef = useRef<string | undefined>(activeTab);
+
+  // Scroll active tab into view and flash when it changes (especially for board tabs)
+  useEffect(() => {
+    if (activeTab && activeTab !== prevActiveTabRef.current) {
+      prevActiveTabRef.current = activeTab;
+
+      // Scroll to active tab
+      if (activeTabRef.current) {
+        activeTabRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "center",
+        });
+      }
+    }
+  }, [activeTab]);
+
   // Handle keyboard navigation for tabs (left/right arrow keys)
   const handleTabKeyDown = (
     event: React.KeyboardEvent<HTMLButtonElement>,
@@ -103,32 +127,69 @@ const AppLayout: React.FC<AppLayoutProps> = ({
                   const panelId = tab.panelId || `${tab.id}-panel`;
 
                   return (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      onClick={() => onTabChange?.(tab.id)}
-                      onKeyDown={(e) => handleTabKeyDown(e, index)}
-                      className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors border-b-2 whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
-                        isActive
-                          ? "text-primary dark:text-primary-light border-primary dark:border-primary-light"
-                          : "text-gray-600 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-gray-600"
-                      }`}
-                      role="tab"
-                      aria-selected={isActive || isFirstAndNoActive}
-                      aria-controls={panelId}
-                      tabIndex={shouldBeFocusable ? 0 : -1}
-                    >
-                      {Icon && <Icon className="w-5 h-5" aria-hidden="true" />}
-                      <span>{tab.label}</span>
-                      {tab.badge !== undefined && tab.badge > 0 && (
-                        <span
-                          className="px-2 py-0.5 text-xs font-semibold rounded-full bg-primary/20 text-primary dark:bg-primary-light/20 dark:text-primary-light"
-                          aria-label={`${tab.badge} items`}
+                    <div key={tab.id} className="flex items-center">
+                      <motion.button
+                        ref={isActive ? activeTabRef : null}
+                        type="button"
+                        onClick={() => onTabChange?.(tab.id)}
+                        onKeyDown={(e) => handleTabKeyDown(e, index)}
+                        className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors border-b-2 whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+                          isActive
+                            ? "text-primary dark:text-primary-light border-primary dark:border-primary-light"
+                            : "text-gray-600 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-gray-600"
+                        } ${tab.closeable ? "pr-2" : ""}`}
+                        role="tab"
+                        aria-selected={isActive || isFirstAndNoActive}
+                        aria-controls={panelId}
+                        tabIndex={shouldBeFocusable ? 0 : -1}
+                        animate={{
+                          backgroundColor: isActive
+                            ? [
+                                "rgba(0, 0, 0, 0)",
+                                "var(--color-primary-pale)",
+                                "rgba(0, 0, 0, 0)",
+                              ]
+                            : "rgba(0, 0, 0, 0)",
+                        }}
+                        transition={{
+                          backgroundColor: {
+                            duration: 0.6,
+                            times: [0, 0.5, 1],
+                            ease: "easeInOut",
+                          },
+                        }}
+                      >
+                        {Icon && (
+                          <Icon className="w-5 h-5" aria-hidden="true" />
+                        )}
+                        <span>{tab.label}</span>
+                        {tab.badge !== undefined && tab.badge > 0 && (
+                          <span
+                            className="flex items-center justify-center w-5 h-5 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600"
+                            aria-label={`${tab.badge} items`}
+                          >
+                            {tab.badge}
+                          </span>
+                        )}
+                      </motion.button>
+                      {tab.closeable && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onTabClose?.(tab.id);
+                          }}
+                          className={`ml-2 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${
+                            isActive
+                              ? "text-primary dark:text-primary-light"
+                              : "text-gray-400 dark:text-gray-500"
+                          }`}
+                          aria-label={`Close ${tab.label}`}
                         >
-                          {tab.badge}
-                        </span>
+                          <X className="w-3 h-3" />
+                        </button>
                       )}
-                    </button>
+                    </div>
                   );
                 })}
               </nav>
@@ -137,10 +198,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
         </header>
 
         {/* Page Content */}
-        <div
-          className="container mx-auto px-6 pt-6 pb-8 flex-1 flex flex-col"
-          role="main"
-        >
+        <div className="pt-6 pb-8 flex-1 flex flex-col" role="main">
           {children}
         </div>
 

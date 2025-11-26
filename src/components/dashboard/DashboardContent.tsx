@@ -27,7 +27,7 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({
   setShowGettingStarted,
 }) => {
   return (
-    <>
+    <div className="container mx-auto px-6">
       {/* Tab Panels */}
       <div role="tabpanel" id={`${activeTab}-panel`}>
         {activeTab === "dashboard" && (
@@ -139,6 +139,6 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({
           </ul>
         </div>
       )}
-    </>
+    </div>
   );
 };

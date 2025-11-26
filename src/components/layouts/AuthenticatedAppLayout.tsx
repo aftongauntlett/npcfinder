@@ -15,6 +15,7 @@ const MoviesPage = React.lazy(() => import("../pages/movies/MoviesPage"));
 const BooksPage = React.lazy(() => import("../pages/books/BooksPage"));
 const MusicPage = React.lazy(() => import("../pages/music/MusicPage"));
 const GamesPage = React.lazy(() => import("../pages/games/GamesPage"));
+const TasksPage = React.lazy(() => import("../pages/tasks/TasksPage"));
 const UserSettings = React.lazy(() => import("../pages/UserSettings"));
 const Suggestions = React.lazy(() => import("../pages/Suggestions"));
 const AdminPage = React.lazy(() => import("../pages/admin/AdminPage"));
@@ -61,6 +62,9 @@ const AuthenticatedAppLayout: React.FC<AuthenticatedAppLayoutProps> = ({
 
             {/* Games - consolidated single route */}
             <Route path="/games" element={<GamesPage />} />
+
+            {/* Tasks - accordion-style boards view */}
+            <Route path="/tasks" element={<TasksPage />} />
 
             <Route
               path="/settings"
