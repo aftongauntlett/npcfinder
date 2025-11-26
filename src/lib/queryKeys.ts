@@ -107,4 +107,23 @@ export const queryKeys = {
     all: ["dashboard"] as const,
     stats: () => [...queryKeys.dashboard.all, "stats"] as const,
   },
+
+  // Tasks
+  tasks: {
+    all: ["tasks"] as const,
+    boards: () => [...queryKeys.tasks.all, "boards"] as const,
+    board: (boardId: string) =>
+      [...queryKeys.tasks.all, "board", boardId] as const,
+    boardSections: (boardId: string) =>
+      [...queryKeys.tasks.all, "board-sections", boardId] as const,
+    boardTasks: (boardId: string | null) =>
+      [...queryKeys.tasks.all, "board-tasks", boardId ?? "inbox"] as const,
+    task: (taskId: string) => [...queryKeys.tasks.all, "task", taskId] as const,
+    todayTasks: (userId?: string) =>
+      [...queryKeys.tasks.all, "today", userId] as const,
+    archivedTasks: (userId?: string) =>
+      [...queryKeys.tasks.all, "archived", userId] as const,
+    tasksByStatus: (status: string, userId?: string) =>
+      [...queryKeys.tasks.all, "by-status", status, userId] as const,
+  },
 };
