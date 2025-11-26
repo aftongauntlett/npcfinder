@@ -7,14 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### In Progress
-- **Tasks System:** Board-based task management (not yet deployed)
+---
+
+## [1.1.0] - 2025-11-26
+
+### Added - Tasks System
+
+- **Board-Based Task Management:** Complete task organization system
+  - 6 board templates: Job Tracker, Grocery List, Recipe Collection, Quick Notes, To-Do, Kanban
+  - Custom fields per template (e.g., salary range for job applications, ingredients for recipes)
+  - Sections/columns within boards for workflow organization
+  - Rich task metadata: priority, due dates, tags, status tracking
+  - Inbox for unorganized tasks
+- **Task Features:**
+  - Template-specific data collection via JSONB fields
+  - Display order management for boards and tasks
+  - Archive functionality for completed items
+  - Date-based filtering (today, upcoming, overdue)
+- **URL Metadata Scraping:**
+  - Edge function for extracting job posting and recipe metadata
+  - Supports JSON-LD schema.org parsing
+  - Authentication-protected endpoint
+- **UI Components:**
+  - Task board views (Kanban, List, Table)
+  - Drag-and-drop task management
+  - Modal dialogs for creation and editing
+  - Empty states and loading indicators
+
+### Technical - Tasks Implementation
+
+- **Database:** 3 new tables (`task_boards`, `task_board_sections`, `tasks`)
+- **Service Layer:** Complete CRUD operations with optimistic updates
+- **State Management:** TanStack Query hooks with cache invalidation
+- **Utilities:** Date helpers (date-fns), validation, sorting, grouping
+- **Security:** RLS policies, user isolation, proper foreign key constraints
+- **Edge Function:** `scrape-url` with authentication and CORS support
 
 ---
 
 ## [1.0.0] - 2025-11-19
 
 ### Added - Development Infrastructure
+
 - **Separate Dev/Prod Databases:** Created dedicated development Supabase project for safe testing
 - **Database Migration System:** Consolidated schema into versioned migration file
   - Created `20250116000000_baseline_schema.sql` with complete database structure
@@ -26,23 +60,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Documentation in `DEV-PROD-WORKFLOW.md`
 
 ### Changed - Database Management
+
 - Migrated from ad-hoc schema changes to formal migration system
 - Centralized all database logic in `/supabase/migrations/`
 - Updated npm scripts in `package.json` for database operations
 
 ### Technical
+
 - Migration file: `20250116000000_baseline_schema.sql`
-- Tables: `profiles`, `invite_codes`, `watchlist`, `music_library`, `reading_list`, `game_library`, `recommendations`, `rate_limit_log`
-- Full RLS policies, triggers, indexes, and materialized views
+- Tables: `user_profiles`, `invite_codes`, `invite_code_audit_log`, `connections`, `app_config`, `user_watchlist`, `user_watched_archive`, `movie_recommendations`, `music_library`, `music_recommendations`, `reading_list`, `book_recommendations`, `game_library`, `game_recommendations`, `task_boards`, `task_board_sections`, `tasks`
+- Full RLS policies, triggers, indexes, and views
 
 ---
 
 ## [0.9.0] - 2025-01-16 (Pre-Migration Baseline)
 
 ### Summary
+
 Stable baseline release with core entertainment tracking features. This version includes Movies, TV Shows, Music, Books, and Games management with a complete invite-only authentication system.
 
 ### Features
+
 - **Movies & TV Shows:** Search (TMDB API), watchlist, ratings, reviews, recommendations
 - **Music:** Search (iTunes API), library management, album/artist tracking
 - **Books:** Search (Google Books API), reading list, progress tracking
@@ -52,14 +90,17 @@ Stable baseline release with core entertainment tracking features. This version 
 - **Security:** Row-Level Security (RLS) policies, rate limiting, secure authentication
 
 ### Technical Stack
+
 - Frontend: React 19, TypeScript, Vite, TailwindCSS
 - Backend: Supabase (PostgreSQL + Auth)
 - State Management: TanStack Query v5
 - APIs: TMDB, iTunes, Google Books, OMDB, OpenRouter
 
 ### Database
+
 - Migration: `20250116000000_baseline_schema.sql`
-- Tables: profiles, invite_codes, watchlist, music_library, reading_list, game_library, recommendations, rate_limit_log
+- Tables: `user_profiles`, `invite_codes`, `invite_code_audit_log`, `connections`, `app_config`, `user_watchlist`, `user_watched_archive`, `movie_recommendations`, `music_library`, `music_recommendations`, `reading_list`, `book_recommendations`, `game_library`, `game_recommendations`
+- Comprehensive RLS policies for user data isolation
 
 ### Documentation - Truth Sweep & Cohesion (2025-01-16)
 
