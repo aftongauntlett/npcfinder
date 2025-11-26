@@ -16,8 +16,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added - Development Infrastructure
 - **Separate Dev/Prod Databases:** Created dedicated development Supabase project for safe testing
-  - Dev project: `tajptqmefszgxwollifi`
-  - Prod project: `hugcstixszgqcrqmqoss` (existing)
 - **Database Migration System:** Consolidated schema into versioned migration file
   - Created `20250116000000_baseline_schema.sql` with complete database structure
   - Includes all tables, RLS policies, triggers, indexes, and views
