@@ -29,6 +29,12 @@ const BoardDetailView: React.FC = () => {
   >();
 
   const handleCreateTask = (sectionId?: string) => {
+    console.log("🎯 BoardDetailView - Creating task:", {
+      boardId: board?.id,
+      boardType: board?.board_type,
+      templateType: board?.template_type,
+      sectionId,
+    });
     setCreateTaskSectionId(sectionId);
     setShowCreateTask(true);
   };
@@ -75,7 +81,7 @@ const BoardDetailView: React.FC = () => {
       <main className="min-h-screen flex flex-col">
         {/* Header */}
         <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-          <div className="container mx-auto px-6 py-6">
+          <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <button
@@ -125,7 +131,7 @@ const BoardDetailView: React.FC = () => {
         </header>
 
         {/* Kanban Board */}
-        <div className="container mx-auto px-6 py-6 flex-1">
+        <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 flex-1">
           <KanbanBoard
             boardId={board.id}
             onCreateTask={handleCreateTask}
@@ -146,6 +152,7 @@ const BoardDetailView: React.FC = () => {
             setCreateTaskSectionId(undefined);
           }}
           boardId={board.id}
+          boardType={board.board_type}
           defaultSectionId={createTaskSectionId}
         />
       )}

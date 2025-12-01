@@ -23,6 +23,7 @@ import type {
 
 /**
  * Get all boards for current user
+ * Auto-creates starter boards on first use
  */
 export function useBoards() {
   const { user } = useAuth();
@@ -32,6 +33,15 @@ export function useBoards() {
     queryFn: async () => {
       const { data, error } = await tasksService.getBoardsWithStats();
       if (error) throw error;
+
+      // Temporarily disabled auto-creation - uncomment to re-enable
+      // if (!data || data.length === 0) {
+      //   const { data: starterData, error: starterError } =
+      //     await tasksService.ensureStarterBoards();
+      //   if (starterError) throw starterError;
+      //   return starterData || [];
+      // }
+
       return data || [];
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -72,9 +82,13 @@ export function useCreateBoard() {
       return data!;
     },
 
-    onSuccess: () => {
+    onSuccess: (data) => {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.tasks.boards(),
+      });
+      // Also invalidate the specific board query for the newly created board
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.tasks.board(data.id),
       });
     },
   });

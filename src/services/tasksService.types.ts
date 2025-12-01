@@ -16,7 +16,8 @@ export interface Board {
   color: string | null;
   is_public: boolean;
   board_type: string | null;
-  column_config: Record<string, unknown> | null;
+  template_type?: string | null;
+  field_config: Record<string, unknown> | null;
   display_order: number | null;
   created_at: string;
   updated_at: string;
@@ -58,7 +59,6 @@ export interface CreateBoardData {
   is_public?: boolean;
   board_type?: string;
   template_type?: string;
-  column_config?: Record<string, unknown>;
   field_config?: Record<string, unknown>;
 }
 
@@ -76,6 +76,7 @@ export interface CreateTaskData {
   priority?: Task["priority"];
   due_date?: string;
   tags?: string[];
+  item_data?: Record<string, unknown>;
 }
 
 export interface TaskFilters {

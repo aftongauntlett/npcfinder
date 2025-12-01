@@ -508,6 +508,7 @@ export async function createTask(
         priority: taskData.priority || null,
         due_date: taskData.due_date || null,
         tags: taskData.tags || null,
+        item_data: taskData.item_data || null,
         display_order: nextOrder,
       })
       .select()
@@ -658,6 +659,89 @@ export async function archiveTask(
     return { data, error: null };
   } catch (error) {
     logger.error(`Failed to archive task ${taskId}`, error);
+    return { data: null, error: error as Error };
+  }
+}
+
+// =====================================================
+// ONBOARDING & STARTER TEMPLATES
+// =====================================================
+
+/**
+ * Create default starter boards for new users
+ * Creates Job Applications and Recipe Collection boards
+ */
+export async function createStarterBoards(): Promise<ServiceResponse<Board[]>> {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
+    // Check if user already has boards
+    const { data: existingBoards } = await supabase
+      .from("task_boards")
+      .select("id")
+      .eq("user_id", user.id)
+      .limit(1);
+
+    if (existingBoards && existingBoards.length > 0) {
+      // User already has boards, skip creation
+      return { data: [], error: null };
+    }
+
+    const starterBoards: CreateBoardData[] = [
+      {
+        name: "Job Applications",
+        description: "Track your job search and application progress",
+        icon: "Briefcase",
+        color: "#3b82f6",
+        board_type: "job_tracker",
+        template_type: "job_tracker",
+        field_config: { starter: true },
+      },
+      {
+        name: "Recipe Collection",
+        description: "Save and organize your favorite recipes",
+        icon: "ChefHat",
+        color: "#f59e0b",
+        board_type: "list",
+        template_type: "recipe",
+        field_config: { starter: true },
+      },
+    ];
+
+    const createdBoards: Board[] = [];
+
+    for (const boardData of starterBoards) {
+      const result = await createBoard(boardData);
+      if (result.data) {
+        createdBoards.push(result.data);
+      }
+    }
+
+    return { data: createdBoards, error: null };
+  } catch (error) {
+    logger.error("Failed to create starter boards", error);
+    return { data: null, error: error as Error };
+  }
+}
+
+/**
+ * Ensure starter boards exist for the current user
+ * Call this on first getBoardsWithStats when empty
+ */
+export async function ensureStarterBoards(): Promise<
+  ServiceResponse<BoardWithStats[]>
+> {
+  try {
+    // First attempt to create starter boards
+    await createStarterBoards();
+
+    // Then fetch all boards with stats
+    return await getBoardsWithStats();
+  } catch (error) {
+    logger.error("Failed to ensure starter boards", error);
     return { data: null, error: error as Error };
   }
 }

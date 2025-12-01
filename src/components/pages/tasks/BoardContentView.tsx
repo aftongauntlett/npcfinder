@@ -10,9 +10,11 @@ import { Settings } from "lucide-react";
 import KanbanBoard from "../../tasks/KanbanBoard";
 import SimpleListView from "../../tasks/SimpleListView";
 import { JobTrackerView } from "../../tasks/views/JobTrackerView";
+import { RecipeListView } from "../../tasks/views/RecipeListView";
 import BoardFormModal from "../../tasks/BoardFormModal";
 import CreateTaskModal from "../../tasks/CreateTaskModal";
 import TaskDetailModal from "../../tasks/TaskDetailModal";
+import RecipeDetailModal from "../../tasks/RecipeDetailModal";
 import { useBoard } from "../../../hooks/useTasksQueries";
 import type { Task } from "../../../services/tasksService.types";
 
@@ -27,9 +29,14 @@ const BoardContentView: React.FC<BoardContentViewProps> = ({ boardId }) => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [viewRecipeTask, setViewRecipeTask] = useState<Task | null>(null);
 
   const handleEditTask = (task: Task) => {
     setSelectedTask(task);
+  };
+
+  const handleViewRecipe = (task: Task) => {
+    setViewRecipeTask(task);
   };
 
   if (isLoading || !board) {
@@ -41,7 +48,7 @@ const BoardContentView: React.FC<BoardContentViewProps> = ({ boardId }) => {
   }
 
   // For Job Tracker, always use the specialized view
-  if (board.board_type === "job_tracker") {
+  if (board.template_type === "job_tracker") {
     return (
       <div className="mx-auto px-6 max-w-[1600px] h-full flex flex-col">
         {/* Job Tracker View */}
@@ -67,7 +74,61 @@ const BoardContentView: React.FC<BoardContentViewProps> = ({ boardId }) => {
             isOpen={showCreateTask}
             onClose={() => setShowCreateTask(false)}
             boardId={boardId}
-            boardType={board.board_type}
+            boardType={board.template_type || board.board_type}
+          />
+        )}
+
+        {selectedTask && (
+          <TaskDetailModal
+            task={selectedTask}
+            isOpen={!!selectedTask}
+            onClose={() => setSelectedTask(null)}
+          />
+        )}
+      </div>
+    );
+  }
+
+  // For Recipe boards, use the specialized recipe view
+  if (board.template_type === "recipe") {
+    return (
+      <div className="mx-auto px-6 max-w-[1600px] h-full flex flex-col">
+        {/* Recipe View */}
+        <div className="flex-1 overflow-auto">
+          <RecipeListView
+            boardId={boardId}
+            onCreateTask={() => setShowCreateTask(true)}
+            onViewRecipe={handleViewRecipe}
+          />
+        </div>
+
+        {/* Modals */}
+        {showEditModal && (
+          <BoardFormModal
+            isOpen={showEditModal}
+            onClose={() => setShowEditModal(false)}
+            board={board}
+          />
+        )}
+
+        {showCreateTask && (
+          <CreateTaskModal
+            isOpen={showCreateTask}
+            onClose={() => setShowCreateTask(false)}
+            boardId={boardId}
+            boardType={board.template_type || board.board_type}
+          />
+        )}
+
+        {viewRecipeTask && (
+          <RecipeDetailModal
+            task={viewRecipeTask}
+            isOpen={!!viewRecipeTask}
+            onClose={() => setViewRecipeTask(null)}
+            onEdit={() => {
+              setSelectedTask(viewRecipeTask);
+              setViewRecipeTask(null);
+            }}
           />
         )}
 
@@ -126,7 +187,7 @@ const BoardContentView: React.FC<BoardContentViewProps> = ({ boardId }) => {
           isOpen={showCreateTask}
           onClose={() => setShowCreateTask(false)}
           boardId={boardId}
-          boardType={board?.board_type}
+          boardType={board.template_type || board?.board_type}
         />
       )}
 
