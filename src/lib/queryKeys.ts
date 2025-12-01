@@ -55,13 +55,6 @@ export const queryKeys = {
     current: () => [...queryKeys.profiles.all, "current"] as const,
   },
 
-  // Suggestions
-  suggestions: {
-    all: ["suggestions"] as const,
-    byStatus: (status: string) =>
-      [...queryKeys.suggestions.all, "by-status", status] as const,
-  },
-
   // Admin
   admin: {
     all: ["admin"] as const,

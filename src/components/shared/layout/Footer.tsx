@@ -1,10 +1,10 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
 import { Lightbulb } from "lucide-react";
 import Button from "../ui/Button";
+import FeedbackModal from "../common/FeedbackModal";
 
 const Footer: React.FC = () => {
-  const navigate = useNavigate();
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
 
   return (
     <footer className="mt-16 py-6 border-t border-gray-200 dark:border-gray-700">
@@ -29,7 +29,7 @@ const Footer: React.FC = () => {
             aria-label="Footer navigation"
           >
             <Button
-              onClick={() => void navigate("/app/suggestions")}
+              onClick={() => setIsFeedbackModalOpen(true)}
               variant="subtle"
               size="sm"
               icon={<Lightbulb className="w-4 h-4" aria-hidden="true" />}
@@ -41,6 +41,11 @@ const Footer: React.FC = () => {
           </nav>
         </div>
       </div>
+
+      <FeedbackModal
+        isOpen={isFeedbackModalOpen}
+        onClose={() => setIsFeedbackModalOpen(false)}
+      />
     </footer>
   );
 };

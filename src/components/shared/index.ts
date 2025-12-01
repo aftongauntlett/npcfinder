@@ -73,3 +73,4 @@ export type { MetadataItem } from "./common/MetadataRow";
 export { default as StatCard } from "./common/StatCard";
 export { default as StarryBackground } from "./common/StarryBackground";
 export { default as QuickSwitch } from "./common/QuickSwitch";
+export { default as FeedbackModal } from "./common/FeedbackModal";

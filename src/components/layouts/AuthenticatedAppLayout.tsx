@@ -17,7 +17,6 @@ const MusicPage = React.lazy(() => import("../pages/music/MusicPage"));
 const GamesPage = React.lazy(() => import("../pages/games/GamesPage"));
 const TasksPage = React.lazy(() => import("../pages/tasks/TasksPage"));
 const UserSettings = React.lazy(() => import("../pages/UserSettings"));
-const Suggestions = React.lazy(() => import("../pages/Suggestions"));
 const AdminPage = React.lazy(() => import("../pages/admin/AdminPage"));
 
 interface AuthenticatedAppLayoutProps {
@@ -69,10 +68,6 @@ const AuthenticatedAppLayout: React.FC<AuthenticatedAppLayoutProps> = ({
             <Route
               path="/settings"
               element={<UserSettings currentUser={user} />}
-            />
-            <Route
-              path="/suggestions"
-              element={<Suggestions currentUser={user} />}
             />
 
             {/* Admin route */}

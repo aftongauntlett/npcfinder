@@ -47,7 +47,6 @@ const Breadcrumb: React.FC = () => {
 function getPageNameFromPath(path: string): string {
   if (path.includes("/settings")) return "Settings";
   if (path.includes("/admin")) return "Admin Panel";
-  if (path.includes("/suggestions")) return "Suggestions";
 
   // Fallback: capitalize path segments
   const segments = path.split("/").filter(Boolean);

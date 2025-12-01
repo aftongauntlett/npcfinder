@@ -1,7 +1,15 @@
-import {
-  DB_SETUP_ERROR_INDICATORS,
-  DB_SETUP_ERROR_CODES,
-} from "./suggestionConstants";
+/**
+ * Database setup error indicators and codes
+ */
+const DB_SETUP_ERROR_INDICATORS = [
+  "relation",
+  "does not exist",
+  "table",
+  "column",
+  "permission denied",
+];
+
+const DB_SETUP_ERROR_CODES = ["42P01", "42703"];
 
 /**
  * Error object with optional Supabase properties
@@ -24,7 +32,7 @@ export function isSetupError(error: unknown): boolean {
   const errorCode = supabaseError.code;
 
   // Check error message for keywords
-  const hasSetupKeyword = DB_SETUP_ERROR_INDICATORS.some((keyword) =>
+  const hasSetupKeyword = DB_SETUP_ERROR_INDICATORS.some((keyword: string) =>
     errorMessage.includes(keyword.toLowerCase())
   );
 
