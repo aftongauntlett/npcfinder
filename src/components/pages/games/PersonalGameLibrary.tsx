@@ -338,7 +338,7 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
   }
 
   return (
-    <div className="container mx-auto px-6">
+    <div className="container mx-auto px-4 sm:px-6">
       {/* Controls - Only show when there are items to display */}
       {paginatedItems.length > 0 && (
         <div className="space-y-3 mb-6">

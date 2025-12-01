@@ -127,7 +127,15 @@ serve(async (req) => {
     // Extract job posting data (JSON-LD schema.org)
     const jobPosting = extractJobPosting(html);
     if (jobPosting) {
+      console.log("Found job posting via JSON-LD:", jobPosting);
       metadata.jobPosting = jobPosting;
+    } else {
+      // Fallback: try to extract from meta tags and common patterns
+      const fallbackJob = extractJobPostingFallback(html, metadata);
+      if (fallbackJob) {
+        console.log("Found job posting via fallback:", fallbackJob);
+        metadata.jobPosting = fallbackJob;
+      }
     }
 
     // Extract recipe data (JSON-LD schema.org)
@@ -234,6 +242,63 @@ function extractJobPosting(
     }
   } catch {
     // No job posting found
+  }
+
+  return undefined;
+}
+
+function extractJobPostingFallback(
+  html: string,
+  metadata: ScrapedMetadata
+): ScrapedMetadata["jobPosting"] | undefined {
+  // Try to extract job info from common patterns
+  const jobPosting: ScrapedMetadata["jobPosting"] = {};
+
+  // Extract company from meta tags or title
+  const companyPatterns = [
+    /at\s+([A-Z][A-Za-z0-9\s&,.]+?)(?:\s*[-|]|\s*$)/,
+    /hiring.*?at\s+([A-Z][A-Za-z0-9\s&,.]+)/i,
+  ];
+
+  for (const pattern of companyPatterns) {
+    const match = metadata.title?.match(pattern);
+    if (match?.[1]) {
+      jobPosting.company = match[1].trim();
+      break;
+    }
+  }
+
+  // Extract position from title (usually the first part before " at " or " - ")
+  const positionMatch = metadata.title?.match(/^([^-|]+?)(?:\s*[-|at])/);
+  if (positionMatch?.[1]) {
+    jobPosting.position = positionMatch[1].trim();
+  }
+
+  // Extract location from description or common patterns
+  const locationPatterns = [
+    /location[:\s]+([A-Z][A-Za-z\s,]+?)(?:\s*[•|]|\s*$)/i,
+    /([A-Z][a-z]+,\s*[A-Z]{2})/, // City, ST format
+    /([A-Z][a-z]+\s+[A-Z][a-z]+,\s*[A-Z]{2})/, // City Name, ST
+  ];
+
+  for (const pattern of locationPatterns) {
+    const match = metadata.description?.match(pattern);
+    if (match?.[1]) {
+      jobPosting.location = match[1].trim();
+      break;
+    }
+  }
+
+  // Extract salary range
+  const salaryPattern = /\$[\d,]+k?\s*[-–to]\s*\$[\d,]+k?/i;
+  const salaryMatch = (metadata.description || html).match(salaryPattern);
+  if (salaryMatch) {
+    jobPosting.salary = salaryMatch[0];
+  }
+
+  // Return only if we found at least position or company
+  if (jobPosting.position || jobPosting.company) {
+    return jobPosting;
   }
 
   return undefined;

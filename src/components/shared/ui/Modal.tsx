@@ -41,7 +41,7 @@ const Modal: React.FC<ModalProps> = ({
   closeOnBackdropClick = true,
   showHeader = true,
 }) => {
-  const { isCollapsed } = useSidebar();
+  const { isCollapsed, isMobile } = useSidebar();
 
   // Handle ESC key
   useEffect(() => {
@@ -85,7 +85,7 @@ const Modal: React.FC<ModalProps> = ({
   return (
     <div
       className={`fixed inset-0 z-50 overflow-y-auto transition-all duration-300 ${
-        isCollapsed ? "pl-16" : "pl-16 md:pl-[224px]"
+        isMobile ? "" : isCollapsed ? "pl-16" : "pl-16 md:pl-[224px]"
       }`}
     >
       {/* Backdrop */}

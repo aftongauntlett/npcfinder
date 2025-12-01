@@ -1,13 +1,15 @@
 /**
  * BoardCard Component
  *
- * Displays a board in accordion style with inline Kanban view
+ * Displays a board in accordion style with template-aware preview
  */
 
 import React from "react";
 import { LayoutGrid } from "lucide-react";
 import AccordionCard from "../shared/common/AccordionCard";
 import KanbanBoard from "./KanbanBoard";
+import { JobTrackerView } from "./views/JobTrackerView";
+import { RecipeListView } from "./views/RecipeListView";
 import type { BoardWithStats } from "../../services/tasksService.types";
 import type { Task } from "../../services/tasksService.types";
 
@@ -19,6 +21,8 @@ interface BoardCardProps {
   onOpenInTab?: () => void;
   onCreateTask?: (sectionId?: string) => void;
   onEditTask?: (task: Task) => void;
+  isMobile?: boolean;
+  isStarter?: boolean;
 }
 
 const BoardCard: React.FC<BoardCardProps> = ({
@@ -29,6 +33,8 @@ const BoardCard: React.FC<BoardCardProps> = ({
   onOpenInTab,
   onCreateTask,
   onEditTask,
+  isMobile = false,
+  isStarter = false,
 }) => {
   // Board icon with color
   const icon = (
@@ -43,19 +49,42 @@ const BoardCard: React.FC<BoardCardProps> = ({
     </div>
   );
 
-  // Subtitle showing task count
-  const subtitle = `${board.total_tasks || 0} task${
-    board.total_tasks !== 1 ? "s" : ""
-  }`;
+  // Subtitle showing task count and starter badge
+  const subtitle = (
+    <div className="flex items-center gap-2">
+      <span>
+        {board.total_tasks || 0} task{board.total_tasks !== 1 ? "s" : ""}
+      </span>
+      {isStarter && (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
+          Starter
+        </span>
+      )}
+    </div>
+  );
 
-  // Expanded content - embedded Kanban board
+  // Expanded content - template-aware preview
   const expandedContent = (
     <div className="mt-4">
-      <KanbanBoard
-        boardId={board.id}
-        onCreateTask={onCreateTask || (() => {})}
-        onEditTask={onEditTask || (() => {})}
-      />
+      {board.template_type === "job_tracker" ? (
+        <JobTrackerView
+          boardId={board.id}
+          onCreateTask={onCreateTask || (() => {})}
+          onEditTask={onEditTask || (() => {})}
+        />
+      ) : board.template_type === "recipe" ? (
+        <RecipeListView
+          boardId={board.id}
+          onCreateTask={onCreateTask || (() => {})}
+          onViewRecipe={() => {}} // No-op in preview
+        />
+      ) : (
+        <KanbanBoard
+          boardId={board.id}
+          onCreateTask={onCreateTask || (() => {})}
+          onEditTask={onEditTask || (() => {})}
+        />
+      )}
     </div>
   );
 
@@ -68,7 +97,7 @@ const BoardCard: React.FC<BoardCardProps> = ({
       expandedContent={expandedContent}
       onEdit={onEdit}
       onDelete={onDelete}
-      onOpenInTab={onOpenInTab}
+      onOpenInTab={!isMobile ? onOpenInTab : undefined}
       onClick={onClick}
     />
   );

@@ -282,7 +282,10 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
         };
 
   return (
-    <div ref={topRef} className="container mx-auto px-6 space-y-6">
+    <div
+      ref={topRef}
+      className="container mx-auto px-4 sm:px-6 space-y-4 sm:space-y-6"
+    >
       {/* Controls Row: Filter/Sort + Actions */}
       {hasItemsForCurrentFilter && (
         <div className="space-y-3 mb-6">

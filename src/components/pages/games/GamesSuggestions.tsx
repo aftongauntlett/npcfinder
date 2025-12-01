@@ -365,7 +365,7 @@ const GamesSuggestions: React.FC<GamesSuggestionsProps> = ({
   };
 
   const content = (
-    <div className="container mx-auto px-6">
+    <div className="container mx-auto px-4 sm:px-6">
       <InlineRecommendationsLayout
         mediaType="Games"
         mediaIcon={Gamepad2}

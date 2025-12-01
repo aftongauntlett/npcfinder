@@ -197,7 +197,10 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
         };
 
   return (
-    <div ref={topRef} className="container mx-auto px-6 space-y-6">
+    <div
+      ref={topRef}
+      className="container mx-auto px-4 sm:px-6 space-y-4 sm:space-y-6"
+    >
       {/* Action Bar - Only show when there's data */}
       {sortedMusic.length > 0 && (
         <MediaPageToolbar

@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import DemoLanding from "./components/pages/DemoLanding";
 import AuthPage from "./components/pages/AuthPage";
 import AuthenticatedAppLayout from "./components/layouts/AuthenticatedAppLayout";
-import { DesktopOnlyGuard } from "./components/layouts/DesktopOnlyGuard";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { AdminProvider } from "./contexts/AdminContext";
@@ -55,22 +54,20 @@ const App: React.FC = () => {
   return (
     <BrowserRouter>
       <ThemeProvider>
-        <DesktopOnlyGuard>
-          <Routes>
-            {/* Public routes - NO AUTH REQUIRED */}
-            <Route path="/" element={<DemoLanding />} />
+        <Routes>
+          {/* Public routes - NO AUTH REQUIRED */}
+          <Route path="/" element={<DemoLanding />} />
 
-            {/* All authenticated routes wrapped in AuthProvider */}
-            <Route
-              path="/*"
-              element={
-                <AuthProvider>
-                  <AuthenticatedApp />
-                </AuthProvider>
-              }
-            />
-          </Routes>
-        </DesktopOnlyGuard>
+          {/* All authenticated routes wrapped in AuthProvider */}
+          <Route
+            path="/*"
+            element={
+              <AuthProvider>
+                <AuthenticatedApp />
+              </AuthProvider>
+            }
+          />
+        </Routes>
       </ThemeProvider>
     </BrowserRouter>
   );

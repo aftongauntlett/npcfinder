@@ -354,8 +354,8 @@ const MusicSuggestions: React.FC<MusicSuggestionsProps> = ({
   };
 
   const content = (
-    <div className="container mx-auto px-6">
-      <div className="space-y-6">
+    <div className="container mx-auto px-4 sm:px-6">
+      <div className="space-y-4 sm:space-y-6">
         <InlineRecommendationsLayout
           mediaType="Music"
           mediaIcon={MusicIcon}

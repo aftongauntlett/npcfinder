@@ -13,7 +13,7 @@ interface AccordionCardProps {
   // Header content
   icon?: ReactNode;
   title: string;
-  subtitle?: string;
+  subtitle?: string | ReactNode;
   metadata?: ReactNode; // Priority badge for tasks, nothing for boards
 
   // Description
@@ -86,7 +86,7 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
             <div className="flex-1 min-w-0">
               <h3 className="font-bold text-base text-white">{title}</h3>
               {subtitle && (
-                <p className="text-sm text-gray-400 mt-0.5">{subtitle}</p>
+                <div className="text-sm text-gray-400 mt-0.5">{subtitle}</div>
               )}
             </div>
           </div>

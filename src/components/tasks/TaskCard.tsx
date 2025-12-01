@@ -6,10 +6,11 @@
  * Features accordion-style expand/collapse for description
  */
 
-import React, { useState } from "react";
+import React from "react";
 import { Calendar, Flag, Tag } from "@phosphor-icons/react";
 import ActionButtonGroup from "../shared/common/ActionButtonGroup";
 import AccordionCard from "../shared/common/AccordionCard";
+import { useIsMobile } from "../../hooks/useIsMobile";
 import type { Task } from "../../services/tasksService.types";
 import {
   formatDueDate,
@@ -39,9 +40,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
   onClick,
   draggable = false,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
   const isDone = task.status === "done";
   const overdue = isOverdue(task.due_date);
+  const isMobile = useIsMobile();
 
   const handleCardClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -50,11 +51,8 @@ const TaskCard: React.FC<TaskCardProps> = ({
       return;
     }
 
-    // For detailed variant, always toggle accordion
-    if (variant === "detailed") {
-      setIsExpanded(!isExpanded);
-    } else if (onClick) {
-      // For other variants, trigger onClick callback
+    // For non-detailed variants, trigger onClick callback
+    if (onClick && variant !== "detailed") {
       onClick(task.id);
     }
   };
@@ -125,8 +123,12 @@ const TaskCard: React.FC<TaskCardProps> = ({
             {task.title}
           </h4>
 
-          {/* Action buttons - hidden by default, shown on card hover */}
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Action buttons - always visible on mobile, shown on hover on desktop */}
+          <div
+            className={`${
+              isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+            } transition-opacity`}
+          >
             <ActionButtonGroup
               actions={actionButtons}
               size="sm"
@@ -230,6 +232,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
       expandedContent={expandedContent}
       onEdit={() => onClick?.(task.id)}
       onDelete={() => onRemove?.(task.id)}
+      onClick={isMobile && onClick ? () => onClick(task.id) : undefined}
       className={isDone ? "opacity-60" : ""}
     />
   );
