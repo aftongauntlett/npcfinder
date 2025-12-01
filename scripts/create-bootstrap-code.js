@@ -106,7 +106,7 @@ async function main() {
   // Insert into database
   console.log("\n⏳ Inserting invite code into database...");
 
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from("invite_codes")
     .insert([
       {

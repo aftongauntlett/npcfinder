@@ -563,7 +563,8 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
             !showDeleteConfirm &&
             (() => {
               const isStarter =
-                (board.field_config as Record<string, any>)?.starter === true;
+                (board.field_config as Record<string, unknown>)?.starter ===
+                true;
               return !isStarter;
             })() && (
               <Button
