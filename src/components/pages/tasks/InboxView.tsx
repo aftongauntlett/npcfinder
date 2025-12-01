@@ -11,10 +11,15 @@ import CreateTaskModal from "../../tasks/CreateTaskModal";
 import TaskDetailModal from "../../tasks/TaskDetailModal";
 import Button from "../../shared/ui/Button";
 import MediaEmptyState from "../../media/MediaEmptyState";
+import ConfirmDialog from "../../shared/ui/ConfirmDialog";
 import FilterSortMenu, {
   FilterSortSection,
 } from "../../shared/common/FilterSortMenu";
-import { useTasks } from "../../../hooks/useTasksQueries";
+import {
+  useTasks,
+  useUpdateTask,
+  useDeleteTask,
+} from "../../../hooks/useTasksQueries";
 import type { Task } from "../../../services/tasksService.types";
 
 const InboxView: React.FC = () => {
@@ -24,8 +29,11 @@ const InboxView: React.FC = () => {
       unassigned: true,
     }
   );
+  const updateTask = useUpdateTask();
+  const deleteTask = useDeleteTask();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<
     Record<string, string | string[]>
   >({
@@ -75,6 +83,41 @@ const InboxView: React.FC = () => {
         );
     }
   }, [tasks, activeFilters.sort]);
+
+  const handleToggleComplete = (taskId: string) => {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
+
+    updateTask.mutate({
+      taskId,
+      updates: {
+        status: task.status === "done" ? "todo" : "done",
+      },
+    });
+  };
+
+  const handleSnooze = (taskId: string) => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    updateTask.mutate({
+      taskId,
+      updates: {
+        due_date: tomorrow.toISOString().split("T")[0],
+      },
+    });
+  };
+
+  const handleRemove = (taskId: string) => {
+    setTaskToDelete(taskId);
+  };
+
+  const confirmDelete = () => {
+    if (taskToDelete) {
+      deleteTask.mutate(taskToDelete);
+      setTaskToDelete(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -132,6 +175,9 @@ const InboxView: React.FC = () => {
           <TaskCard
             key={task.id}
             task={task}
+            onToggleComplete={handleToggleComplete}
+            onSnooze={handleSnooze}
+            onRemove={handleRemove}
             onClick={() => setSelectedTask(task)}
           />
         ))}
@@ -152,6 +198,17 @@ const InboxView: React.FC = () => {
           onClose={() => setSelectedTask(null)}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={!!taskToDelete}
+        onClose={() => setTaskToDelete(null)}
+        onConfirm={confirmDelete}
+        title="Delete Task?"
+        message="Are you sure you want to delete this task? This action cannot be undone."
+        confirmText="Delete"
+        variant="danger"
+      />
     </div>
   );
 };

@@ -54,7 +54,7 @@ const USER_MENU_ITEMS: NavItem[] = [
   },
 ];
 
-const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
+const Sidebar: React.FC<SidebarProps> = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAdmin } = useAdmin();

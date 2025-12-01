@@ -174,7 +174,6 @@ const TodayView: React.FC = () => {
                   key={task.id}
                   task={task}
                   variant="detailed"
-                  showBoard={false}
                   onToggleComplete={handleToggleComplete}
                   onSnooze={handleSnooze}
                   onRemove={handleRemove}
