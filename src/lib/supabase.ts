@@ -30,29 +30,22 @@ export const getSupabase = (): SupabaseClient => {
     import.meta.env.VITE_SUPABASE_DEV_URL &&
     import.meta.env.VITE_SUPABASE_DEV_ANON_KEY;
 
-  // Debug logging
-  console.log("Environment check:", {
-    isDev,
-    hasDevConfig,
-    devUrl: import.meta.env.VITE_SUPABASE_DEV_URL,
-    prodUrl: import.meta.env.VITE_SUPABASE_URL,
-  });
-
   let supabaseUrl: string;
   let supabaseKey: string;
 
   if (isDev && hasDevConfig) {
-    // Development mode with dev database configured
+    // Development mode with dev database configured via VITE_SUPABASE_DEV_* vars
     supabaseUrl = import.meta.env.VITE_SUPABASE_DEV_URL;
     supabaseKey = import.meta.env.VITE_SUPABASE_DEV_ANON_KEY;
-    console.log("🔧 Using DEVELOPMENT database:", supabaseUrl);
   } else {
-    // Production mode or dev mode without dev database configured
+    // Use VITE_SUPABASE_URL (can be dev or prod depending on .env.local)
     supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    if (isDev) {
-      console.log("⚠️ Using PRODUCTION database (dev database not configured)");
-    }
+  }
+
+  // Debug logging
+  if (isDev) {
+    console.log("📊 Using database:", supabaseUrl);
   }
 
   // Validate that environment variables are loaded
