@@ -15,8 +15,19 @@ import type { CreateTaskData } from "../../services/tasksService.types";
 import { useCreateTask } from "../../hooks/useTasksQueries";
 import { useUrlMetadata } from "../../hooks/useUrlMetadata";
 import { PRIORITY_OPTIONS } from "../../utils/taskConstants";
-import { Link, Loader2 } from "lucide-react";
+import {
+  Link,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  ChevronDown,
+} from "lucide-react";
 import { useTheme } from "../../hooks/useTheme";
+import {
+  applyJobMetadataToForm,
+  applyRecipeMetadataToForm,
+  applyGenericMetadataToForm,
+} from "../../utils/metadataFormHelpers";
 
 interface CreateTaskModalProps {
   isOpen: boolean;
@@ -32,10 +43,12 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   boardId,
   boardType,
 }) => {
-  console.log("🔍 CreateTaskModal Props:", { isOpen, boardId, boardType });
-
   const { themeColor } = useTheme();
   const [url, setUrl] = useState("");
+  const [urlFeedback, setUrlFeedback] = useState<{
+    type: "success" | "warning" | "error";
+    message: string;
+  } | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high" | null>(
@@ -71,82 +84,100 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
   const handleUrlChange = async (value: string) => {
     setUrl(value);
+    setUrlFeedback(null);
 
     // Auto-fill when URL looks valid (has http/https)
     if (value.match(/^https?:\/\/.+/)) {
-      console.log("📡 Fetching metadata for URL:", value);
       const metadata = await fetchMetadata(value);
-      console.log("📦 Metadata received:", metadata);
+
       if (metadata) {
-        // Auto-fill from job posting
-        if (metadata.jobPosting) {
-          console.log("💼 Job posting data:", metadata.jobPosting);
-          const {
-            company,
-            position: jobPosition,
-            salary,
-            location: jobLocation,
-            employmentType: empType,
-          } = metadata.jobPosting;
-          if (jobPosition) {
-            setTitle(jobPosition);
-            setPosition(jobPosition);
+        // Use the kind discriminant to branch on metadata type
+        if (metadata.kind === "job" && metadata.jobPosting) {
+          const patch = applyJobMetadataToForm(metadata, value);
+
+          // Apply the patch to form state
+          if (patch.title) setTitle(patch.title);
+          if (patch.position) setPosition(patch.position);
+          if (patch.companyName) setCompanyName(patch.companyName);
+          if (patch.companyUrl) setCompanyUrl(patch.companyUrl);
+          if (patch.salaryRange) setSalaryRange(patch.salaryRange);
+          if (patch.location) setLocation(patch.location);
+          if (patch.employmentType) setEmploymentType(patch.employmentType);
+          if (patch.description) setDescription(patch.description);
+
+          // Provide feedback to user
+          if (patch.extractedFields > 0) {
+            setUrlFeedback({
+              type: "success",
+              message: `Auto-filled ${patch.fieldNames.join(", ")}`,
+            });
+          } else {
+            setUrlFeedback({
+              type: "warning",
+              message: "Couldn't extract job details - please fill manually",
+            });
           }
-          if (company) setCompanyName(company);
-          if (salary) setSalaryRange(salary);
-          if (jobLocation) setLocation(jobLocation);
-          if (empType) setEmploymentType(empType);
-          if (value) setCompanyUrl(value);
-        }
-        // Auto-fill from recipe
-        else if (metadata.recipe) {
-          const {
-            name,
-            description: recipeDesc,
-            ingredients: recipeIngredients,
-            instructions: recipeInstructions,
-            prepTime: recipePrepTime,
-            cookTime: recipeCookTime,
-            totalTime: recipeTotalTime,
-            servings: recipeServings,
-          } = metadata.recipe;
-          if (name) {
-            setTitle(name);
-            setRecipeName(name);
+        } else if (metadata.kind === "recipe" && metadata.recipe) {
+          const patch = applyRecipeMetadataToForm(metadata, value);
+
+          // Apply the patch to form state
+          if (patch.title) setTitle(patch.title);
+          if (patch.recipeName) setRecipeName(patch.recipeName);
+          if (patch.description) setDescription(patch.description);
+          if (patch.recipeUrl) setRecipeUrl(patch.recipeUrl);
+          if (patch.ingredients) setIngredients(patch.ingredients);
+          if (patch.instructions) setInstructions(patch.instructions);
+          if (patch.prepTime) setPrepTime(patch.prepTime);
+          if (patch.cookTime) setCookTime(patch.cookTime);
+          if (patch.totalTime) setTotalTime(patch.totalTime);
+          if (patch.servings) setServings(patch.servings);
+
+          // Provide feedback to user
+          if (patch.extractedFields > 0) {
+            setUrlFeedback({
+              type: "success",
+              message: `Auto-filled ${patch.fieldNames.slice(0, 3).join(", ")}${
+                patch.fieldNames.length > 3
+                  ? ` +${patch.fieldNames.length - 3} more`
+                  : ""
+              }`,
+            });
+          } else {
+            setUrlFeedback({
+              type: "warning",
+              message: "Couldn't extract recipe details - please fill manually",
+            });
           }
-          if (recipeDesc) {
-            setDescription(recipeDesc);
+        } else {
+          // Generic metadata fallback
+          const patch = applyGenericMetadataToForm(
+            metadata,
+            title,
+            description
+          );
+
+          // Apply the patch to form state
+          if (patch.title) setTitle(patch.title);
+          if (patch.description) setDescription(patch.description);
+
+          // Provide feedback to user
+          if (patch.extractedFields > 0) {
+            setUrlFeedback({
+              type: "success",
+              message: `Auto-filled ${patch.fieldNames.join(", ")}`,
+            });
+          } else {
+            setUrlFeedback({
+              type: "warning",
+              message: "No metadata found - you'll need to fill in manually",
+            });
           }
-          if (recipeIngredients)
-            setIngredients(
-              Array.isArray(recipeIngredients)
-                ? recipeIngredients.join("\n")
-                : recipeIngredients
-            );
-          if (recipeInstructions)
-            setInstructions(
-              Array.isArray(recipeInstructions)
-                ? recipeInstructions.join("\n")
-                : recipeInstructions
-            );
-          if (recipePrepTime) setPrepTime(recipePrepTime);
-          if (recipeCookTime) setCookTime(recipeCookTime);
-          if (recipeTotalTime) setTotalTime(recipeTotalTime);
-          if (recipeServings) setServings(recipeServings.toString());
-          if (value) setRecipeUrl(value);
-        }
-        // General metadata fallback
-        else {
-          console.log("📄 Using general metadata fallback:", {
-            title: metadata.title,
-            description: metadata.description,
-          });
-          if (metadata.title && !title) setTitle(metadata.title);
-          if (metadata.description && !description)
-            setDescription(metadata.description);
         }
       } else {
-        console.log("⚠️ No metadata returned");
+        setUrlFeedback({
+          type: "error",
+          message: "Failed to extract data from URL",
+        });
       }
     }
   };
@@ -292,7 +323,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 id="task-url"
                 type="url"
                 value={url}
-                onChange={(e) => handleUrlChange(e.target.value)}
+                onChange={(e) => void handleUrlChange(e.target.value)}
                 placeholder="Paste a recipe URL..."
                 className="block w-full rounded-lg border border-purple-300 dark:border-purple-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 px-3 py-2.5 pr-10 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-transparent transition-colors"
               />
@@ -300,6 +331,25 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-500 animate-spin" />
               )}
             </div>
+            {/* URL Feedback Message */}
+            {urlFeedback && (
+              <div
+                className={`flex items-start gap-2 mt-2 text-xs px-2 py-1.5 rounded ${
+                  urlFeedback.type === "success"
+                    ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300"
+                    : urlFeedback.type === "warning"
+                    ? "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300"
+                    : "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300"
+                }`}
+              >
+                {urlFeedback.type === "success" ? (
+                  <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                ) : (
+                  <AlertCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                )}
+                <span>{urlFeedback.message}</span>
+              </div>
+            )}
             <p className="text-xs text-purple-700 dark:text-purple-300 mt-2">
               Auto-fills title and details as soon as you paste a link
             </p>
@@ -372,7 +422,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                   id="job-url"
                   type="url"
                   value={url}
-                  onChange={(e) => handleUrlChange(e.target.value)}
+                  onChange={(e) => void handleUrlChange(e.target.value)}
                   placeholder="Paste job posting URL to auto-fill details..."
                   className="block w-full rounded-lg border bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 pr-10 focus:outline-none focus:ring-2 transition-colors"
                   style={{
@@ -395,6 +445,25 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                   </div>
                 )}
               </div>
+              {/* URL Feedback Message */}
+              {urlFeedback && (
+                <div
+                  className={`flex items-start gap-2 mt-2 text-xs px-2 py-1.5 rounded ${
+                    urlFeedback.type === "success"
+                      ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300"
+                      : urlFeedback.type === "warning"
+                      ? "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300"
+                      : "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300"
+                  }`}
+                >
+                  {urlFeedback.type === "success" ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                  ) : (
+                    <AlertCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                  )}
+                  <span>{urlFeedback.message}</span>
+                </div>
+              )}
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Or fill in the details manually below
               </p>
