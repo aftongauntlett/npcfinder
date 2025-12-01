@@ -15,6 +15,7 @@ import BoardContentView from "./BoardContentView";
 import CreateTaskModal from "../../tasks/CreateTaskModal";
 import TaskDetailModal from "../../tasks/TaskDetailModal";
 import { useBoards, useTasks } from "../../../hooks/useTasksQueries";
+import { useIsMobile } from "../../../hooks/useIsMobile";
 
 type ViewType = "tasks" | "boards" | { type: "board"; boardId: string };
 
@@ -43,12 +44,20 @@ const TasksPage: React.FC = () => {
 
   const { data: boards = [] } = useBoards();
   const { data: tasks = [] } = useTasks();
+  const isMobile = useIsMobile();
 
   // Find task being edited
   const editingTask = useMemo(() => {
     if (!editingTaskId) return null;
     return tasks.find((t) => t.id === editingTaskId) || null;
   }, [editingTaskId, tasks]);
+
+  // Find board for create task modal
+  const createTaskBoard = useMemo(() => {
+    if (!createTaskBoardId) return null;
+    return boards.find((b) => b.id === createTaskBoardId) || null;
+  }, [createTaskBoardId, boards]);
+
   // Dynamic title based on current view
   const pageTitle = useMemo(() => {
     if (typeof selectedView === "string") {
@@ -74,7 +83,12 @@ const TasksPage: React.FC = () => {
       },
     ];
 
-    // Add tabs for open boards
+    // On mobile, skip dynamic board tabs
+    if (isMobile) {
+      return baseTabs;
+    }
+
+    // Add tabs for open boards (desktop only)
     const boardTabs = openBoardIds.map((boardId) => {
       const board = boards.find((b) => b.id === boardId);
       return {
@@ -85,7 +99,7 @@ const TasksPage: React.FC = () => {
     });
 
     return [...baseTabs, ...boardTabs];
-  }, [boards, openBoardIds]);
+  }, [boards, openBoardIds, isMobile]);
 
   // Get active tab ID from selectedView
   const activeTabId = useMemo(() => {
@@ -95,8 +109,14 @@ const TasksPage: React.FC = () => {
     return `board-${selectedView.boardId}`;
   }, [selectedView]);
 
-  // Handle board selection - opens new tab
+  // Handle board selection - opens new tab (desktop) or navigates (mobile handled in BoardsView)
   const handleSelectBoard = (boardId: string) => {
+    // Skip tab management on mobile
+    if (isMobile) {
+      setSelectedView({ type: "board", boardId });
+      return;
+    }
+
     if (!openBoardIds.includes(boardId)) {
       let updatedBoardIds = [...openBoardIds, boardId];
 
@@ -167,6 +187,7 @@ const TasksPage: React.FC = () => {
             onSelectBoard={handleSelectBoard}
             onCreateTask={handleCreateTask}
             onEditTask={handleEditTask}
+            isMobile={isMobile}
           />
         )}
         {typeof selectedView === "object" && selectedView.type === "board" && (
@@ -184,6 +205,9 @@ const TasksPage: React.FC = () => {
             setCreateTaskSectionId(undefined);
           }}
           boardId={createTaskBoardId}
+          boardType={
+            createTaskBoard?.board_type || createTaskBoard?.template_type
+          }
           defaultSectionId={createTaskSectionId}
         />
       )}

@@ -21,12 +21,14 @@ interface BoardsViewProps {
   onSelectBoard: (boardId: string) => void;
   onCreateTask?: (boardId: string, sectionId?: string) => void;
   onEditTask?: (taskId: string) => void;
+  isMobile?: boolean;
 }
 
 const BoardsView: React.FC<BoardsViewProps> = ({
   onSelectBoard,
   onCreateTask,
   onEditTask,
+  isMobile = false,
 }) => {
   const { data: boards = [], isLoading } = useBoards();
   const deleteBoard = useDeleteBoard();
@@ -95,7 +97,7 @@ const BoardsView: React.FC<BoardsViewProps> = ({
 
   if (boards.length === 0) {
     return (
-      <div className="container mx-auto px-6">
+      <div className="container mx-auto px-4 sm:px-6">
         <MediaEmptyState
           icon={LayoutGrid}
           title="No boards yet"
@@ -113,7 +115,7 @@ const BoardsView: React.FC<BoardsViewProps> = ({
   }
 
   return (
-    <div className="container mx-auto px-6">
+    <div className="container mx-auto px-4 sm:px-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         {/* Filter & Sort Menu */}
@@ -137,17 +139,23 @@ const BoardsView: React.FC<BoardsViewProps> = ({
 
       {/* Boards List */}
       <div className="space-y-3">
-        {sortedBoards.map((board) => (
-          <BoardCard
-            key={board.id}
-            board={board}
-            onEdit={() => setEditingBoard(board)}
-            onDelete={() => setDeletingBoard(board)}
-            onOpenInTab={() => onSelectBoard(board.id)}
-            onCreateTask={(sectionId) => onCreateTask?.(board.id, sectionId)}
-            onEditTask={(task) => onEditTask?.(task.id)}
-          />
-        ))}
+        {sortedBoards.map((board) => {
+          const isStarter = board.field_config?.starter === true;
+          return (
+            <BoardCard
+              key={board.id}
+              board={board}
+              onEdit={() => setEditingBoard(board)}
+              onDelete={() => setDeletingBoard(board)}
+              onOpenInTab={isMobile ? undefined : () => onSelectBoard(board.id)}
+              onClick={isMobile ? () => onSelectBoard(board.id) : undefined}
+              onCreateTask={(sectionId) => onCreateTask?.(board.id, sectionId)}
+              onEditTask={(task) => onEditTask?.(task.id)}
+              isMobile={isMobile}
+              isStarter={isStarter}
+            />
+          );
+        })}
       </div>
 
       {/* Create Board Modal */}

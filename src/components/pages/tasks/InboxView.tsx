@@ -86,7 +86,7 @@ const InboxView: React.FC = () => {
 
   if (tasks.length === 0) {
     return (
-      <div className="container mx-auto px-6">
+      <div className="container mx-auto px-4 sm:px-6">
         <MediaEmptyState
           icon={ListChecks}
           title="No tasks yet"
@@ -104,7 +104,7 @@ const InboxView: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-6">
+    <div className="container mx-auto px-4 sm:px-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         {/* Filter & Sort Menu */}

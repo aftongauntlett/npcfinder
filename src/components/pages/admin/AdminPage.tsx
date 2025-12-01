@@ -353,7 +353,8 @@ const AdminPage: React.FC = () => {
                 </div>
               ) : (
                 <>
-                  <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+                  {/* Desktop Table View */}
+                  <div className="hidden md:block overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                       <thead className="bg-gray-50 dark:bg-gray-900">
                         <tr>
@@ -446,6 +447,73 @@ const AdminPage: React.FC = () => {
                         ))}
                       </tbody>
                     </table>
+                  </div>
+
+                  {/* Mobile Card View */}
+                  <div className="md:hidden space-y-3">
+                    {users.map((user) => (
+                      <motion.div
+                        key={user.id}
+                        className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <motion.div
+                            className="flex-shrink-0 h-12 w-12 bg-gradient-to-br from-primary to-primary-dark rounded-full flex items-center justify-center"
+                            whileHover={{ rotate: 5 }}
+                            transition={{
+                              type: "spring",
+                              stiffness: 400,
+                              damping: 20,
+                            }}
+                          >
+                            <span className="text-base font-medium text-white">
+                              {user.display_name.charAt(0).toUpperCase()}
+                            </span>
+                          </motion.div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-base font-medium text-gray-900 dark:text-white truncate">
+                              {user.display_name}
+                            </div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                              {user.email || "N/A"}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            Joined:{" "}
+                            {new Date(user.created_at).toLocaleDateString()}
+                          </div>
+                          {user.is_admin ? (
+                            <button
+                              onClick={() => handleToggleAdminClick(user)}
+                              disabled={isMasterAdmin(user)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-full bg-purple-500 text-white hover:bg-purple-600 active:bg-purple-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                              title={
+                                isMasterAdmin(user)
+                                  ? "Master Admin cannot be demoted"
+                                  : "Click to remove admin"
+                              }
+                            >
+                              <Shield className="w-4 h-4" aria-hidden="true" />
+                              {isMasterAdmin(user) ? "Master Admin" : "Admin"}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleToggleAdminClick(user)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-full bg-gray-500 text-white hover:bg-gray-600 active:bg-gray-700 transition-colors"
+                              title="Click to make admin"
+                            >
+                              User
+                            </button>
+                          )}
+                        </div>
+                      </motion.div>
+                    ))}
                   </div>
 
                   {/* Pagination */}
@@ -562,126 +630,209 @@ const AdminPage: React.FC = () => {
                 }
               />
             ) : (
-              <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead className="bg-gray-50 dark:bg-gray-900">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                        Code
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                        For Email
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                        Uses
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                        Expires
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    {codes.map((code) => (
-                      <motion.tr
-                        key={code.id}
-                        className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200 ${
-                          newlyCreatedCodes.has(code.code)
-                            ? "bg-green-50 dark:bg-green-900/20"
-                            : ""
-                        }`}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <code className="text-sm font-mono text-gray-900 dark:text-white">
+              <>
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-900">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                          Code
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                          For Email
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                          Uses
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                          Expires
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                      {codes.map((code) => (
+                        <motion.tr
+                          key={code.id}
+                          className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200 ${
+                            newlyCreatedCodes.has(code.code)
+                              ? "bg-green-50 dark:bg-green-900/20"
+                              : ""
+                          }`}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <code className="text-sm font-mono text-gray-900 dark:text-white">
+                              {code.code}
+                            </code>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {code.intended_email || "Any"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {code.current_uses} / {code.max_uses}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {code.expires_at
+                              ? format(new Date(code.expires_at), "MMM d, yyyy")
+                              : "Never"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {getStatusBadge(code)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div className="flex gap-2 justify-end">
+                              <motion.div
+                                whileHover={{ y: -1 }}
+                                whileTap={{ scale: 0.98 }}
+                                transition={{
+                                  type: "spring",
+                                  stiffness: 400,
+                                  damping: 30,
+                                }}
+                              >
+                                <Button
+                                  onClick={() => void copyCodeOnly(code.code)}
+                                  variant="subtle"
+                                  size="sm"
+                                >
+                                  {copiedCode === code.code
+                                    ? "Copied!"
+                                    : "Copy"}
+                                </Button>
+                              </motion.div>
+                              <motion.div
+                                whileHover={{ y: -1 }}
+                                whileTap={{ scale: 0.98 }}
+                                transition={{
+                                  type: "spring",
+                                  stiffness: 400,
+                                  damping: 30,
+                                }}
+                              >
+                                <Button
+                                  onClick={() =>
+                                    void copyCodeWithMessage(code.code)
+                                  }
+                                  variant="subtle"
+                                  size="sm"
+                                >
+                                  Copy Msg
+                                </Button>
+                              </motion.div>
+                              <motion.div
+                                whileHover={{ y: -1 }}
+                                whileTap={{ scale: 0.98 }}
+                                transition={{
+                                  type: "spring",
+                                  stiffness: 400,
+                                  damping: 30,
+                                }}
+                              >
+                                <Button
+                                  onClick={() =>
+                                    handleRevokeCode(code.id, code.code)
+                                  }
+                                  variant="danger"
+                                  size="sm"
+                                >
+                                  Delete
+                                </Button>
+                              </motion.div>
+                            </div>
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden space-y-3">
+                  {codes.map((code) => (
+                    <motion.div
+                      key={code.id}
+                      className={`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3 ${
+                        newlyCreatedCodes.has(code.code)
+                          ? "ring-2 ring-green-500 dark:ring-green-400"
+                          : ""
+                      }`}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <code className="block text-sm font-mono font-semibold text-gray-900 dark:text-white break-all">
                             {code.code}
                           </code>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {code.intended_email || "Any"}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {code.current_uses} / {code.max_uses}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {code.expires_at
-                            ? format(new Date(code.expires_at), "MMM d, yyyy")
-                            : "Never"}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {getStatusBadge(code)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex gap-2 justify-end">
-                            <motion.div
-                              whileHover={{ y: -1 }}
-                              whileTap={{ scale: 0.98 }}
-                              transition={{
-                                type: "spring",
-                                stiffness: 400,
-                                damping: 30,
-                              }}
-                            >
-                              <Button
-                                onClick={() => void copyCodeOnly(code.code)}
-                                variant="subtle"
-                                size="sm"
-                              >
-                                {copiedCode === code.code ? "Copied!" : "Copy"}
-                              </Button>
-                            </motion.div>
-                            <motion.div
-                              whileHover={{ y: -1 }}
-                              whileTap={{ scale: 0.98 }}
-                              transition={{
-                                type: "spring",
-                                stiffness: 400,
-                                damping: 30,
-                              }}
-                            >
-                              <Button
-                                onClick={() =>
-                                  void copyCodeWithMessage(code.code)
-                                }
-                                variant="subtle"
-                                size="sm"
-                              >
-                                Copy Msg
-                              </Button>
-                            </motion.div>
-                            <motion.div
-                              whileHover={{ y: -1 }}
-                              whileTap={{ scale: 0.98 }}
-                              transition={{
-                                type: "spring",
-                                stiffness: 400,
-                                damping: 30,
-                              }}
-                            >
-                              <Button
-                                onClick={() =>
-                                  handleRevokeCode(code.id, code.code)
-                                }
-                                variant="danger"
-                                size="sm"
-                              >
-                                Delete
-                              </Button>
-                            </motion.div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            For: {code.intended_email || "Any"}
                           </div>
-                        </td>
-                      </motion.tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                        </div>
+                        <div className="flex-shrink-0">
+                          {getStatusBadge(code)}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-sm pt-2 border-t border-gray-200 dark:border-gray-700">
+                        <div>
+                          <div className="text-gray-500 dark:text-gray-400">
+                            Uses
+                          </div>
+                          <div className="font-medium text-gray-900 dark:text-white">
+                            {code.current_uses} / {code.max_uses}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500 dark:text-gray-400">
+                            Expires
+                          </div>
+                          <div className="font-medium text-gray-900 dark:text-white">
+                            {code.expires_at
+                              ? format(new Date(code.expires_at), "MMM d, yyyy")
+                              : "Never"}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                        <Button
+                          onClick={() => void copyCodeOnly(code.code)}
+                          variant="subtle"
+                          size="sm"
+                          fullWidth
+                        >
+                          {copiedCode === code.code ? "Copied!" : "Copy"}
+                        </Button>
+                        <Button
+                          onClick={() => void copyCodeWithMessage(code.code)}
+                          variant="subtle"
+                          size="sm"
+                          fullWidth
+                        >
+                          Copy Msg
+                        </Button>
+                        <Button
+                          onClick={() => handleRevokeCode(code.id, code.code)}
+                          variant="danger"
+                          size="sm"
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </>
             )}
           </section>
 

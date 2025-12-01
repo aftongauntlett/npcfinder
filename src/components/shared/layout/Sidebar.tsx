@@ -10,15 +10,12 @@ import {
   ShieldCheck,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
-  User as UserIcon,
+  LogOut,
 } from "lucide-react";
 import { useAdmin } from "../../../contexts/AdminContext";
 import { useSidebar } from "../../../contexts/SidebarContext";
-import { useProfileQuery } from "../../../hooks/useProfileQuery";
 import ConfirmationModal from "../ui/ConfirmationModal";
 import NavList, { type NavItem } from "./NavList";
-import UserMenuDropdown from "./UserMenuDropdown";
 import { signOut } from "../../../lib/auth";
 import { BTN_PAD_DEFAULT } from "../../../styles/ui";
 import Button from "../ui/Button";
@@ -62,23 +59,13 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
   const location = useLocation();
   const { isAdmin } = useAdmin();
   const { isCollapsed, isMobile, setIsCollapsed } = useSidebar();
-  const { data: profile } = useProfileQuery();
 
   const [showSignOutModal, setShowSignOutModal] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const userMenuRef = useRef<HTMLDivElement>(null);
   const focusTimeoutRef = useRef<number | null>(null);
-
-  const displayName = profile?.display_name || currentUser?.email || "User";
 
   const handleLogout = () => {
     setShowSignOutModal(true);
-  };
-
-  const handleUserMenuSignOut = () => {
-    setIsUserMenuOpen(false);
-    handleLogout();
   };
 
   const confirmSignOut = async () => {
@@ -93,50 +80,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
     }
   };
 
-  // Close user menu on click outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        userMenuRef.current &&
-        !userMenuRef.current.contains(event.target as Node)
-      ) {
-        setIsUserMenuOpen(false);
-      }
-    };
-
-    if (isUserMenuOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isUserMenuOpen]);
-
-  // Close user menu on Escape key
-  useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setIsUserMenuOpen(false);
-      }
-    };
-
-    if (isUserMenuOpen) {
-      document.addEventListener("keydown", handleEscape);
-    }
-
-    return () => {
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [isUserMenuOpen]);
-
-  // Close user menu when sidebar collapse state changes
-  useEffect(() => {
-    setIsUserMenuOpen(false);
-  }, [isCollapsed]);
-
   const handleNavigation = (path: string) => {
-    setIsUserMenuOpen(false); // Close dropdown on navigation
     void navigate(path);
     // Auto-collapse on mobile after navigation
     if (isMobile) {
@@ -176,10 +120,16 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
         />
       )}
 
-      {/* Sidebar - Hidden on mobile, visible on desktop */}
+      {/* Sidebar - Shows as overlay from right on mobile, fixed sidebar on left on desktop */}
       <aside
-        className={`hidden md:fixed left-0 top-0 h-screen bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out z-40 md:flex flex-col ${
+        className={`fixed z-40 flex flex-col bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out ${
           isCollapsed ? "w-16" : "w-[224px]"
+        } ${
+          isMobile
+            ? `inset-y-0 right-0 border-l ${
+                isCollapsed ? "translate-x-full" : "translate-x-0"
+              }`
+            : "inset-y-0 left-0 border-r"
         }`}
         aria-label="Main sidebar navigation"
       >
@@ -228,89 +178,37 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
           />
         </nav>
 
-        {/* User Section with Dropdown - Moved to bottom */}
-        <div
-          ref={userMenuRef}
-          className={`relative border-t border-gray-200 dark:border-gray-700 p-2 ${
-            isCollapsed ? "overflow-visible" : ""
-          }`}
-        >
-          {/* User Button */}
-          <button
-            type="button"
-            onClick={() => {
-              console.log(
-                "User menu clicked, isCollapsed:",
-                isCollapsed,
-                "current isUserMenuOpen:",
-                isUserMenuOpen
-              );
-              setIsUserMenuOpen(!isUserMenuOpen);
-            }}
-            className={`w-full flex items-center px-2 py-3 rounded-lg transition-all duration-200 bg-gray-50 dark:bg-gray-700/30 hover:bg-gray-100 dark:hover:bg-gray-700/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
-              isCollapsed ? "justify-center" : "gap-2"
-            }`}
-            aria-expanded={isUserMenuOpen}
-            aria-haspopup="true"
-            aria-label={isCollapsed ? "User menu" : undefined}
-            title={isCollapsed ? "User menu" : undefined}
-          >
-            {isCollapsed ? (
-              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                {isAdmin ? (
-                  <ShieldCheck
-                    className="w-5 h-5 text-primary"
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <UserIcon
-                    className="w-5 h-5 text-primary"
-                    aria-hidden="true"
-                  />
-                )}
-              </div>
-            ) : (
-              <>
-                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                  {isAdmin ? (
-                    <ShieldCheck
-                      className="w-5 h-5 text-primary"
-                      aria-hidden="true"
-                    />
-                  ) : (
-                    <UserIcon
-                      className="w-5 h-5 text-primary"
-                      aria-hidden="true"
-                    />
-                  )}
-                </div>
-                <p className="text-base font-bold text-gray-900 dark:text-white truncate font-heading flex-1">
-                  {displayName}
-                </p>
-                <ChevronDown
-                  className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform flex-shrink-0 ${
-                    isUserMenuOpen ? "rotate-180" : ""
-                  }`}
-                  aria-hidden="true"
-                />
-              </>
-            )}
-          </button>
+        {/* Bottom section: Settings, Admin, Sign Out */}
+        <div className="border-t border-gray-200 dark:border-gray-700 p-2">
+          <div className="space-y-1">
+            <NavList
+              items={USER_MENU_ITEMS}
+              currentPath={location.pathname}
+              isCollapsed={isCollapsed}
+              isAdmin={isAdmin}
+              onNavigate={handleNavigation}
+            />
 
-          {/* User Menu Dropdown */}
-          <UserMenuDropdown
-            isOpen={isUserMenuOpen}
-            isCollapsed={isCollapsed}
-            displayName={displayName}
-            items={USER_MENU_ITEMS}
-            isAdmin={isAdmin}
-            onNavigate={handleNavigation}
-            onSignOut={handleUserMenuSignOut}
-          />
+            {/* Sign Out Button */}
+            <div className="px-2">
+              <button
+                type="button"
+                onClick={handleLogout}
+                className={`w-full flex items-center gap-3 ${BTN_PAD_DEFAULT} rounded-lg transition-all duration-200 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
+                  isCollapsed ? "justify-center" : ""
+                }`}
+                aria-label="Sign out"
+                title={isCollapsed ? "Sign out" : undefined}
+              >
+                <LogOut className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                {!isCollapsed && <span className="truncate">Sign Out</span>}
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Sidebar Footer - Collapse Toggle */}
-        <div className="p-2 border-t border-gray-200 dark:border-gray-700">
+        {/* Sidebar Footer - Collapse Toggle (Desktop only) */}
+        <div className="hidden md:block p-2 border-t border-gray-200 dark:border-gray-700">
           <Button
             onClick={toggleCollapse}
             variant="subtle"
