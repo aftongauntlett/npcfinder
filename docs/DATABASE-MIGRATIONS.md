@@ -65,11 +65,15 @@ supabase/migrations/
 
 - Nov 17, 2025: Added `game_library.description_raw`, book `'listen'` type, `security_barrier` to views
 - **Nov 23, 2025: Consolidated tasks system** (3 tables: task_boards, task_board_sections, tasks)
-  - Template support: job_tracker, todo, grocery, recipe, notes, kanban, custom
+  - Template support: job_tracker, markdown, recipe, kanban, custom
   - Flexible configuration: column_config, field_config, item_data
   - Inbox tasks support (nullable board_id)
   - Full RLS policies, triggers, indexes, and views
   - Replaces 5 individual migrations (now archived)
+- **Dec 1, 2025: Updated board template types**
+  - Removed old templates: grocery, notes, todo
+  - Added markdown template as the new default
+  - Migration auto-converts old templates to markdown
 
 **Note**: This baseline was initially created from archived prototype migrations and has been tested in dev database. All known issues have been fixed and consolidated.
 

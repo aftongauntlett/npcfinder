@@ -173,7 +173,7 @@ const TasksPage: React.FC = () => {
   return (
     <AppLayout
       title={pageTitle}
-      description="Organize your tasks and projects"
+      description="Quick access to one-off tasks and to-dos. Use boards for organized projects and workflows."
       tabs={tabs}
       activeTab={activeTabId}
       onTabChange={handleTabChange}

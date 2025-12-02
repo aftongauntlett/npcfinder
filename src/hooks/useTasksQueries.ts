@@ -361,7 +361,7 @@ export function useTasks(boardId?: string, filters?: TaskFilters) {
   return useQuery({
     queryKey: boardId
       ? [...queryKeys.tasks.boardTasks(boardId), { filters }]
-      : [...queryKeys.tasks.all, { filters }],
+      : [...queryKeys.tasks.boardTasks(null), { filters }],
     queryFn: async () => {
       const { data, error } = await tasksService.getTasks(boardId, filters);
       if (error) throw error;
@@ -430,6 +430,12 @@ export function useCreateTask() {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.tasks.boardTasks(data.board_id),
       });
+      // If no board_id (inbox task), also invalidate the inbox
+      if (!data.board_id) {
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.tasks.boardTasks(null),
+        });
+      }
       void queryClient.invalidateQueries({
         queryKey: queryKeys.tasks.todayTasks(user?.id),
       });

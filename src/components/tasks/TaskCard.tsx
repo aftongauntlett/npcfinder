@@ -7,7 +7,7 @@
  */
 
 import React from "react";
-import { Calendar, Flag, Tag } from "@phosphor-icons/react";
+import { Calendar, Flag } from "@phosphor-icons/react";
 import ActionButtonGroup from "../shared/common/ActionButtonGroup";
 import AccordionCard from "../shared/common/AccordionCard";
 import { useIsMobile } from "../../hooks/useIsMobile";
@@ -69,7 +69,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
     return (
       <div
         onClick={handleCardClick}
-        className={`flex items-center gap-3 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
+        className={`flex items-center gap-3 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors ${
           onClick ? "cursor-pointer" : ""
         }`}
       >
@@ -104,10 +104,8 @@ const TaskCard: React.FC<TaskCardProps> = ({
     return (
       <div
         onClick={handleCardClick}
-        className={`group bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-200 dark:border-gray-700 p-4 ${
-          onClick
-            ? "cursor-pointer hover:bg-primary/5 dark:hover:bg-primary/10"
-            : ""
+        className={`group bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-900 p-4 ${
+          onClick ? "cursor-pointer" : ""
         } ${draggable ? "cursor-grab active:cursor-grabbing" : ""} ${
           overdue ? "border-l-4 border-l-red-500" : ""
         }`}
@@ -163,12 +161,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
             </span>
           )}
 
-          {task.tags && task.tags.length > 0 && (
-            <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
-              <Tag className="w-3 h-3" />
-              {task.tags.length}
-            </span>
-          )}
+          {/* TODO: Tags hidden from UI but kept in DB - may add back later with better UX */}
         </div>
       </div>
     );
@@ -188,24 +181,10 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
   const expandedContent = (
     <>
-      {/* Tags and Due Date Row - aligned in same row */}
-      {(task.tags && task.tags.length > 0) || task.due_date ? (
-        <div className="flex items-center justify-between gap-3">
-          {/* Tags - left side */}
-          {task.tags && task.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {task.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center gap-1.5 text-xs px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30"
-                >
-                  <Tag className="w-3 h-3" />
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
-
+      {/* Due Date */}
+      {/* TODO: Tags removed from UI but kept in DB - may add back later with better UX */}
+      {task.due_date ? (
+        <div className="flex items-center justify-end gap-3">
           {/* Due Date - right aligned */}
           {task.due_date && (
             <span

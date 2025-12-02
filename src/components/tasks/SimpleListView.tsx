@@ -31,44 +31,51 @@ const SimpleListView: React.FC<SimpleListViewProps> = ({
   });
 
   return (
-    <div className="w-full max-w-3xl mx-auto">
-      {/* Header with Add Button */}
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-          Tasks ({tasks.length})
-        </h3>
-        <Button
-          onClick={onCreateTask}
-          variant="action"
-          size="sm"
-          icon={<Plus className="w-4 h-4" />}
-        >
-          Add Task
-        </Button>
-      </div>
+    <div className="w-full h-full flex flex-col">
+      {/* Header with Add Button - only show when tasks exist */}
+      {sortedTasks.length > 0 && (
+        <div className="flex items-center justify-between mb-4 px-2">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Tasks ({tasks.length})
+          </h3>
+          <Button
+            onClick={() => onCreateTask()}
+            variant="action"
+            size="sm"
+            icon={<Plus className="w-4 h-4" />}
+          >
+            Add Task
+          </Button>
+        </div>
+      )}
 
       {/* Task List */}
-      <div className="space-y-2">
+      <div className="flex-1 flex flex-col">
         {sortedTasks.length === 0 ? (
-          <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-12 text-center">
-            <div className="flex flex-col items-center gap-2">
-              <Plus className="w-12 h-12 text-gray-400 dark:text-gray-500" />
-              <p className="text-gray-600 dark:text-gray-400 font-medium">
+          <button
+            onClick={() => onCreateTask()}
+            className="flex-1 min-h-[400px] border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-12 text-center hover:border-purple-500 dark:hover:border-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-900/10 transition-all duration-200 cursor-pointer group"
+          >
+            <div className="flex flex-col items-center gap-3">
+              <Plus className="w-16 h-16 text-gray-400 dark:text-gray-500 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors" />
+              <p className="text-lg text-gray-600 dark:text-gray-400 font-medium group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors">
                 No tasks yet
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-500">
-                Click "Add Task" to get started
+              <p className="text-sm text-gray-500 dark:text-gray-500 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors">
+                Click here to add your first task
               </p>
             </div>
-          </div>
+          </button>
         ) : (
-          sortedTasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onClick={() => onEditTask(task)}
-            />
-          ))
+          <div className="space-y-2 px-2">
+            {sortedTasks.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                onClick={() => onEditTask(task)}
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>

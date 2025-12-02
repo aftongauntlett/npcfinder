@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added - Tasks System
 
 - **Board-Based Task Management:** Complete task organization system
-  - 6 board templates: Job Tracker, Grocery List, Recipe Collection, Quick Notes, To-Do, Kanban
+  - 4 board templates: Job Tracker, Recipe Collection, Kanban, Markdown To-Do List (default)
   - Custom fields per template (e.g., salary range for job applications, ingredients for recipes)
   - Sections/columns within boards for workflow organization
   - Rich task metadata: priority, due dates, tags, status tracking

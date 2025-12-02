@@ -5,13 +5,61 @@
  */
 
 import React from "react";
-import { LayoutGrid } from "lucide-react";
+import {
+  LayoutGrid,
+  Briefcase,
+  ShoppingCart,
+  Heart,
+  BookOpen,
+  Home,
+  Dumbbell,
+  Plane,
+  DollarSign,
+  Code,
+  Music,
+  Camera,
+  Star,
+  Target,
+  CheckSquare,
+  Calendar,
+  Users,
+  Package,
+  TrendingUp,
+  Lightbulb,
+} from "lucide-react";
 import AccordionCard from "../shared/common/AccordionCard";
 import KanbanBoard from "./KanbanBoard";
+import SimpleListView from "./SimpleListView";
 import { JobTrackerView } from "./views/JobTrackerView";
 import { RecipeListView } from "./views/RecipeListView";
 import type { BoardWithStats } from "../../services/tasksService.types";
 import type { Task } from "../../services/tasksService.types";
+
+// Map icon labels to Lucide components
+const ICON_MAP: Record<
+  string,
+  React.ComponentType<{ className?: string; style?: React.CSSProperties }>
+> = {
+  Briefcase,
+  Shopping: ShoppingCart,
+  Health: Heart,
+  Reading: BookOpen,
+  Home,
+  Fitness: Dumbbell,
+  Travel: Plane,
+  Finance: DollarSign,
+  Development: Code,
+  Music,
+  Creative: Camera,
+  Favorites: Star,
+  Goals: Target,
+  Tasks: CheckSquare,
+  Events: Calendar,
+  Team: Users,
+  Projects: Package,
+  Growth: TrendingUp,
+  Ideas: Lightbulb,
+};
 
 interface BoardCardProps {
   board: BoardWithStats;
@@ -36,13 +84,17 @@ const BoardCard: React.FC<BoardCardProps> = ({
   isMobile = false,
   isStarter = false,
 }) => {
+  // Get the icon component
+  const IconComponent =
+    board.icon && ICON_MAP[board.icon] ? ICON_MAP[board.icon] : LayoutGrid;
+
   // Board icon with color
   const icon = (
     <div
       className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
       style={{ backgroundColor: `${board.color || "#9333ea"}20` }}
     >
-      <LayoutGrid
+      <IconComponent
         className="w-5 h-5"
         style={{ color: board.color || "#9333ea" }}
       />
@@ -77,6 +129,12 @@ const BoardCard: React.FC<BoardCardProps> = ({
           boardId={board.id}
           onCreateTask={onCreateTask || (() => {})}
           onViewRecipe={() => {}} // No-op in preview
+        />
+      ) : board.template_type === "markdown" || board.board_type === "list" ? (
+        <SimpleListView
+          boardId={board.id}
+          onCreateTask={onCreateTask || (() => {})}
+          onEditTask={onEditTask || (() => {})}
         />
       ) : (
         <KanbanBoard

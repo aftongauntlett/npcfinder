@@ -170,6 +170,7 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
           className="px-4 pb-4"
+          onClick={(e) => e.stopPropagation()}
         >
           {/* Full Description */}
           {description && description.trim().length > 0 && (
