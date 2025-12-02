@@ -35,30 +35,24 @@ const TemplateSelectionModal: React.FC<TemplateSelectionModalProps> = ({
 
   const templates = [
     {
+      id: "markdown",
+      name: "To-Do List",
+      desc: "Markdown-style list with support for bold, bullets, and formatting",
+    },
+    {
       id: "job_tracker",
       name: "Job Applications",
-      desc: "Track your job search with company details and application status",
-    },
-    {
-      id: "todo",
-      name: "To-Do List",
-      desc: "Simple task list to track what you need to get done",
-    },
-    {
-      id: "grocery",
-      name: "Grocery List",
-      desc: "Simple shopping list with easy check-off",
+      desc: "Quick add via URL and track job applications with detailed fields",
     },
     {
       id: "recipe",
       name: "Recipe Collection",
-      desc: "Save and organize your favorite recipes",
+      desc: "Quick add via URL and organize recipes with ingredients and instructions",
     },
-    { id: "notes", name: "Notes", desc: "Quick notes and ideas" },
     {
       id: "kanban",
       name: "Kanban Board",
-      desc: "Traditional task management with columns",
+      desc: "Drag-and-drop style board for organizing tasks in columns",
     },
   ];
 

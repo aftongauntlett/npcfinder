@@ -114,7 +114,7 @@ export async function createBoard(
     // Create board
     const boardType = boardData.board_type || "kanban";
     const templateType =
-      boardData.template_type || (boardType === "list" ? "notes" : "kanban");
+      boardData.template_type || (boardType === "list" ? "markdown" : "kanban");
 
     const { data, error } = await supabase
       .from("task_boards")
@@ -475,9 +475,15 @@ export async function createTask(
     let existingTasksQuery = supabase
       .from("tasks")
       .select("display_order")
-      .eq("board_id", taskData.board_id)
       .order("display_order", { ascending: false, nullsFirst: false })
       .limit(1);
+
+    // Handle null board_id properly (inbox tasks)
+    if (taskData.board_id) {
+      existingTasksQuery = existingTasksQuery.eq("board_id", taskData.board_id);
+    } else {
+      existingTasksQuery = existingTasksQuery.is("board_id", null);
+    }
 
     // Handle null section_id properly
     if (taskData.section_id) {

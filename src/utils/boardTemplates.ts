@@ -6,10 +6,8 @@
 
 export type TemplateType =
   | "job_tracker"
-  | "todo"
-  | "grocery"
+  | "markdown"
   | "recipe"
-  | "notes"
   | "kanban"
   | "custom";
 
@@ -103,48 +101,32 @@ export const JOB_TRACKER_TEMPLATE: BoardTemplate = {
 };
 
 /**
- * Grocery List Template
+ * Markdown To-Do List Template
  */
-export const GROCERY_TEMPLATE: BoardTemplate = {
-  id: "grocery",
-  name: "Grocery List",
-  description: "Simple shopping list with easy check-off and sharing",
-  icon: "ShoppingCart",
-  emoji: "🛒",
-  defaultView: "checklist",
+export const MARKDOWN_TODO_TEMPLATE: BoardTemplate = {
+  id: "markdown",
+  name: "To-Do List",
+  description:
+    "Markdown-style list with support for bold, bullets, and formatting",
+  icon: "ListTodo",
+  emoji: "✅",
+  defaultView: "list",
   fields: [
     {
-      id: "item_name",
-      label: "Item",
+      id: "task_title",
+      label: "Task",
       type: "text",
       required: true,
-      placeholder: "Milk, eggs, bread...",
+      placeholder: "What do you need to do?",
     },
     {
-      id: "quantity",
-      label: "Quantity",
-      type: "text",
-      placeholder: "2 lbs, 1 dozen, etc.",
-    },
-    {
-      id: "category",
-      label: "Category",
-      type: "select",
-      options: [
-        "Produce",
-        "Dairy",
-        "Meat",
-        "Bakery",
-        "Pantry",
-        "Frozen",
-        "Beverages",
-        "Snacks",
-        "Household",
-        "Other",
-      ],
+      id: "content",
+      label: "Details",
+      type: "textarea",
+      placeholder: "Use markdown: **bold**, - bullets, etc.",
     },
   ],
-  statusOptions: ["Need", "Got It"],
+  statusOptions: ["To Do", "In Progress", "Done"],
 };
 
 /**
@@ -212,68 +194,6 @@ export const RECIPE_TEMPLATE: BoardTemplate = {
 };
 
 /**
- * Quick Notes Template
- */
-export const NOTES_TEMPLATE: BoardTemplate = {
-  id: "notes",
-  name: "Quick Notes",
-  description: "Fast, simple note-taking for ideas and reminders",
-  icon: "StickyNote",
-  emoji: "📝",
-  defaultView: "list",
-  fields: [
-    {
-      id: "note_title",
-      label: "Title",
-      type: "text",
-      required: true,
-      placeholder: "Note title...",
-    },
-    {
-      id: "content",
-      label: "Content",
-      type: "textarea",
-      placeholder: "Start typing...",
-    },
-    {
-      id: "tags",
-      label: "Tags",
-      type: "text",
-      placeholder: "work, personal, idea",
-    },
-  ],
-  statusOptions: ["Active", "Archived"],
-};
-
-/**
- * To-Do List Template
- */
-export const TODO_TEMPLATE: BoardTemplate = {
-  id: "todo",
-  name: "To-Do List",
-  description: "Simple task list to track what you need to get done",
-  icon: "ListTodo",
-  emoji: "✅",
-  defaultView: "list",
-  fields: [
-    {
-      id: "task_title",
-      label: "Task",
-      type: "text",
-      required: true,
-      placeholder: "What do you need to do?",
-    },
-    {
-      id: "notes",
-      label: "Notes",
-      type: "textarea",
-      placeholder: "Additional details...",
-    },
-  ],
-  statusOptions: ["To Do", "Done"],
-};
-
-/**
  * Kanban Template (original task board)
  */
 export const KANBAN_TEMPLATE: BoardTemplate = {
@@ -317,10 +237,8 @@ export const KANBAN_TEMPLATE: BoardTemplate = {
  */
 export const BOARD_TEMPLATES: Record<TemplateType, BoardTemplate> = {
   job_tracker: JOB_TRACKER_TEMPLATE,
-  todo: TODO_TEMPLATE,
-  grocery: GROCERY_TEMPLATE,
+  markdown: MARKDOWN_TODO_TEMPLATE,
   recipe: RECIPE_TEMPLATE,
-  notes: NOTES_TEMPLATE,
   kanban: KANBAN_TEMPLATE,
   custom: {
     id: "custom",
