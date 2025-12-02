@@ -37,8 +37,10 @@ const InboxView: React.FC = () => {
   const [activeFilters, setActiveFilters] = useState<
     Record<string, string | string[]>
   >({
-    sort: "date",
+    sort: "custom",
   });
+  const [draggedTask, setDraggedTask] = useState<Task | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   // Filter/sort sections for FilterSortMenu
   const filterSortSections = useMemo((): FilterSortSection[] => {
@@ -47,6 +49,7 @@ const InboxView: React.FC = () => {
         id: "sort",
         title: "Sort By",
         options: [
+          { id: "custom", label: "Custom" },
           { id: "date", label: "Date" },
           { id: "name", label: "Name" },
           { id: "priority", label: "Priority" },
@@ -59,7 +62,14 @@ const InboxView: React.FC = () => {
   const sortedTasks = useMemo(() => {
     const sorted = [...tasks];
     const sortBy = activeFilters.sort as string;
+
     switch (sortBy) {
+      case "custom":
+        return sorted.sort((a, b) => {
+          const orderA = a.display_order ?? 999999;
+          const orderB = b.display_order ?? 999999;
+          return orderA - orderB;
+        });
       case "name":
         return sorted.sort((a, b) => a.title.localeCompare(b.title));
       case "priority": {
@@ -119,6 +129,74 @@ const InboxView: React.FC = () => {
     }
   };
 
+  const handleDragStart = (e: React.DragEvent, task: Task) => {
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", task.id);
+    setDraggedTask(task);
+    // Small delay to allow browser to create drag image
+    setTimeout(() => {
+      const dragElement = e.currentTarget as HTMLElement;
+      if (dragElement) {
+        dragElement.style.opacity = "0.5";
+      }
+    }, 0);
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    const dragElement = e.currentTarget as HTMLElement;
+    if (dragElement) {
+      dragElement.style.opacity = "1";
+    }
+    setDraggedTask(null);
+    setDragOverId(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent, targetTask: Task) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (draggedTask && draggedTask.id !== targetTask.id) {
+      setDragOverId(targetTask.id);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Only clear if leaving the drop zone entirely
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    if (!relatedTarget || !e.currentTarget.contains(relatedTarget)) {
+      setDragOverId(null);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent, targetTask: Task) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverId(null);
+
+    if (!draggedTask || draggedTask.id === targetTask.id) return;
+
+    const draggedIndex = sortedTasks.findIndex((t) => t.id === draggedTask.id);
+    const targetIndex = sortedTasks.findIndex((t) => t.id === targetTask.id);
+
+    const reordered = [...sortedTasks];
+    reordered.splice(draggedIndex, 1);
+
+    const insertIndex =
+      draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
+    reordered.splice(insertIndex, 0, draggedTask);
+
+    // Update display_order for ALL tasks to ensure consistency
+    reordered.forEach((task, index) => {
+      updateTask.mutate({
+        taskId: task.id,
+        updates: { display_order: index },
+      });
+    });
+
+    setDraggedTask(null);
+  };
+
+  const isCustomSort = activeFilters.sort === "custom";
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -149,7 +227,7 @@ const InboxView: React.FC = () => {
   return (
     <div className="container mx-auto px-4 sm:px-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         {/* Filter & Sort Menu */}
         <FilterSortMenu
           sections={filterSortSections}
@@ -171,16 +249,86 @@ const InboxView: React.FC = () => {
 
       {/* Task List */}
       <div className="space-y-3">
-        {sortedTasks.map((task) => (
-          <TaskCard
-            key={task.id}
-            task={task}
-            onToggleComplete={handleToggleComplete}
-            onSnooze={handleSnooze}
-            onRemove={handleRemove}
-            onClick={() => setSelectedTask(task)}
-          />
-        ))}
+        {/* Drop zone for top position */}
+        {isCustomSort && draggedTask && sortedTasks.length > 0 && (
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setDragOverId("__top__");
+            }}
+            onDragLeave={() => setDragOverId(null)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOverId(null);
+              if (!draggedTask) return;
+
+              const draggedIndex = sortedTasks.findIndex(
+                (t) => t.id === draggedTask.id
+              );
+
+              if (draggedIndex === 0) return;
+
+              const reordered = [...sortedTasks];
+              reordered.splice(draggedIndex, 1);
+              reordered.unshift(draggedTask);
+
+              // Update ALL tasks to ensure consistency
+              reordered.forEach((task, index) => {
+                updateTask.mutate({
+                  taskId: task.id,
+                  updates: { display_order: index },
+                });
+              });
+
+              setDraggedTask(null);
+            }}
+            className={`h-8 flex items-center justify-center transition-all duration-200 -mb-2 ${
+              dragOverId === "__top__"
+                ? "bg-primary/10 border-2 border-dashed border-primary rounded-lg"
+                : "border-2 border-transparent"
+            }`}
+          >
+            {dragOverId === "__top__" && (
+              <span className="text-sm text-primary font-medium">
+                Drop here to move to top
+              </span>
+            )}
+          </div>
+        )}
+        {sortedTasks.map((task) => {
+          const isDragging = draggedTask?.id === task.id;
+          const isDropTarget = dragOverId === task.id;
+          return (
+            <div
+              key={task.id}
+              draggable={isCustomSort}
+              onDragStart={(e) => isCustomSort && handleDragStart(e, task)}
+              onDragEnd={(e) => isCustomSort && handleDragEnd(e)}
+              onDragOver={(e) => isCustomSort && handleDragOver(e, task)}
+              onDragLeave={(e) => isCustomSort && handleDragLeave(e)}
+              onDrop={(e) => isCustomSort && handleDrop(e, task)}
+              className={`relative transition-all duration-150 ${
+                isCustomSort ? "cursor-move" : ""
+              } ${isDragging ? "opacity-50" : "opacity-100"} ${
+                isDropTarget ? "scale-[1.02]" : ""
+              }`}
+            >
+              {/* Drop indicator line */}
+              {isCustomSort && isDropTarget && (
+                <div className="absolute -top-1.5 left-0 right-0 h-0.5 bg-primary rounded-full z-10" />
+              )}
+
+              <TaskCard
+                task={task}
+                onToggleComplete={handleToggleComplete}
+                onSnooze={handleSnooze}
+                onRemove={handleRemove}
+                onClick={() => setSelectedTask(task)}
+              />
+            </div>
+          );
+        })}
       </div>
 
       {/* Modals */}

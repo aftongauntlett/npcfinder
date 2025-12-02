@@ -14,7 +14,11 @@ import ConfirmDialog from "../../shared/ui/ConfirmDialog";
 import FilterSortMenu, {
   FilterSortSection,
 } from "../../shared/common/FilterSortMenu";
-import { useBoards, useDeleteBoard } from "../../../hooks/useTasksQueries";
+import {
+  useBoards,
+  useDeleteBoard,
+  useUpdateBoard,
+} from "../../../hooks/useTasksQueries";
 import type { BoardWithStats } from "../../../services/tasksService.types";
 
 interface BoardsViewProps {
@@ -32,6 +36,7 @@ const BoardsView: React.FC<BoardsViewProps> = ({
 }) => {
   const { data: boards = [], isLoading } = useBoards();
   const deleteBoard = useDeleteBoard();
+  const updateBoard = useUpdateBoard();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingBoard, setEditingBoard] = useState<BoardWithStats | null>(null);
   const [deletingBoard, setDeletingBoard] = useState<BoardWithStats | null>(
@@ -40,8 +45,10 @@ const BoardsView: React.FC<BoardsViewProps> = ({
   const [activeFilters, setActiveFilters] = useState<
     Record<string, string | string[]>
   >({
-    sort: "date",
+    sort: "custom",
   });
+  const [draggedBoard, setDraggedBoard] = useState<BoardWithStats | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   const handleDeleteBoard = () => {
     if (deletingBoard) {
@@ -50,6 +57,72 @@ const BoardsView: React.FC<BoardsViewProps> = ({
     }
   };
 
+  const handleDragStart = (e: React.DragEvent, board: BoardWithStats) => {
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", board.id);
+    setDraggedBoard(board);
+    setTimeout(() => {
+      const dragElement = e.currentTarget as HTMLElement;
+      if (dragElement) {
+        dragElement.style.opacity = "0.5";
+      }
+    }, 0);
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    const dragElement = e.currentTarget as HTMLElement;
+    if (dragElement) {
+      dragElement.style.opacity = "1";
+    }
+    setDraggedBoard(null);
+    setDragOverId(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent, targetBoard: BoardWithStats) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (draggedBoard && draggedBoard.id !== targetBoard.id) {
+      setDragOverId(targetBoard.id);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    if (!relatedTarget || !e.currentTarget.contains(relatedTarget)) {
+      setDragOverId(null);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent, targetBoard: BoardWithStats) => {
+    e.preventDefault();
+    setDragOverId(null);
+
+    if (!draggedBoard || draggedBoard.id === targetBoard.id) return;
+
+    const draggedIndex = sortedBoards.findIndex(
+      (b) => b.id === draggedBoard.id
+    );
+    const targetIndex = sortedBoards.findIndex((b) => b.id === targetBoard.id);
+
+    const reordered = [...sortedBoards];
+    reordered.splice(draggedIndex, 1);
+
+    const insertIndex =
+      draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
+    reordered.splice(insertIndex, 0, draggedBoard);
+
+    // Update display_order for ALL boards to ensure consistency
+    reordered.forEach((board, index) => {
+      updateBoard.mutate({
+        boardId: board.id,
+        updates: { display_order: index },
+      });
+    });
+
+    setDraggedBoard(null);
+  };
+  const isCustomSort = activeFilters.sort === "custom";
+
   // Filter/sort sections for FilterSortMenu
   const filterSortSections = useMemo((): FilterSortSection[] => {
     return [
@@ -57,6 +130,7 @@ const BoardsView: React.FC<BoardsViewProps> = ({
         id: "sort",
         title: "Sort By",
         options: [
+          { id: "custom", label: "Custom" },
           { id: "date", label: "Date" },
           { id: "name", label: "Name" },
           { id: "tasks", label: "Task Count" },
@@ -70,6 +144,12 @@ const BoardsView: React.FC<BoardsViewProps> = ({
     const sorted = [...boards];
     const sortBy = activeFilters.sort as string;
     switch (sortBy) {
+      case "custom":
+        return sorted.sort((a, b) => {
+          const orderA = a.display_order ?? 999999;
+          const orderB = b.display_order ?? 999999;
+          return orderA - orderB;
+        });
       case "name":
         return sorted.sort((a, b) => a.name.localeCompare(b.name));
       case "tasks":
@@ -101,7 +181,7 @@ const BoardsView: React.FC<BoardsViewProps> = ({
         <MediaEmptyState
           icon={LayoutGrid}
           title="No boards yet"
-          description="Create boards to organize your tasks by project, category, or any way you like."
+          description="Create boards from templates: Kanban for visual workflows, Job Tracker for applications, Recipe boards for cooking, or Markdown lists for simple notes."
           onClick={() => setShowCreateModal(true)}
           ariaLabel="Create your first board"
         />
@@ -117,7 +197,7 @@ const BoardsView: React.FC<BoardsViewProps> = ({
   return (
     <div className="container mx-auto px-4 sm:px-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         {/* Filter & Sort Menu */}
         <FilterSortMenu
           sections={filterSortSections}
@@ -139,21 +219,93 @@ const BoardsView: React.FC<BoardsViewProps> = ({
 
       {/* Boards List */}
       <div className="space-y-3">
+        {/* Drop zone for top position */}
+        {isCustomSort && draggedBoard && sortedBoards.length > 0 && (
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setDragOverId("__top__");
+            }}
+            onDragLeave={() => setDragOverId(null)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOverId(null);
+              if (!draggedBoard) return;
+
+              const draggedIndex = sortedBoards.findIndex(
+                (b) => b.id === draggedBoard.id
+              );
+
+              if (draggedIndex === 0) return;
+
+              const reordered = [...sortedBoards];
+              reordered.splice(draggedIndex, 1);
+              reordered.unshift(draggedBoard);
+
+              // Update ALL boards to ensure consistency
+              reordered.forEach((board, index) => {
+                updateBoard.mutate({
+                  boardId: board.id,
+                  updates: { display_order: index },
+                });
+              });
+
+              setDraggedBoard(null);
+            }}
+            className={`h-8 flex items-center justify-center transition-all duration-200 -mb-2 ${
+              dragOverId === "__top__"
+                ? "bg-primary/10 border-2 border-dashed border-primary rounded-lg"
+                : "border-2 border-transparent"
+            }`}
+          >
+            {dragOverId === "__top__" && (
+              <span className="text-sm text-primary font-medium">
+                Drop here to move to top
+              </span>
+            )}
+          </div>
+        )}
         {sortedBoards.map((board) => {
           const isStarter = board.field_config?.starter === true;
+          const isDragging = draggedBoard?.id === board.id;
+          const isDropTarget = dragOverId === board.id;
           return (
-            <BoardCard
+            <div
               key={board.id}
-              board={board}
-              onEdit={() => setEditingBoard(board)}
-              onDelete={() => setDeletingBoard(board)}
-              onOpenInTab={isMobile ? undefined : () => onSelectBoard(board.id)}
-              onClick={isMobile ? () => onSelectBoard(board.id) : undefined}
-              onCreateTask={(sectionId) => onCreateTask?.(board.id, sectionId)}
-              onEditTask={(task) => onEditTask?.(task.id)}
-              isMobile={isMobile}
-              isStarter={isStarter}
-            />
+              draggable={isCustomSort}
+              onDragStart={(e) => isCustomSort && handleDragStart(e, board)}
+              onDragEnd={(e) => isCustomSort && handleDragEnd(e)}
+              onDragOver={(e) => isCustomSort && handleDragOver(e, board)}
+              onDragLeave={(e) => isCustomSort && handleDragLeave(e)}
+              onDrop={(e) => isCustomSort && handleDrop(e, board)}
+              className={`relative group/board transition-all duration-150 ${
+                isCustomSort ? "cursor-move" : ""
+              } ${isDragging ? "opacity-50" : "opacity-100"} ${
+                isDropTarget ? "scale-[1.02]" : ""
+              }`}
+            >
+              {/* Drop indicator line */}
+              {isCustomSort && isDropTarget && (
+                <div className="absolute -top-1.5 left-0 right-0 h-0.5 bg-primary rounded-full z-10" />
+              )}
+
+              <BoardCard
+                board={board}
+                onEdit={() => setEditingBoard(board)}
+                onDelete={() => setDeletingBoard(board)}
+                onOpenInTab={
+                  isMobile ? undefined : () => onSelectBoard(board.id)
+                }
+                onClick={isMobile ? () => onSelectBoard(board.id) : undefined}
+                onCreateTask={(sectionId) =>
+                  onCreateTask?.(board.id, sectionId)
+                }
+                onEditTask={(task) => onEditTask?.(task.id)}
+                isMobile={isMobile}
+                isStarter={isStarter}
+              />
+            </div>
           );
         })}
       </div>
