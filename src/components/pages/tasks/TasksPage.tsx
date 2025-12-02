@@ -13,6 +13,7 @@ import InboxView from "./InboxView";
 import BoardsView from "./BoardsView";
 import BoardContentView from "./BoardContentView";
 import CreateTaskModal from "../../tasks/CreateTaskModal";
+import RecipeFormModal from "../../tasks/RecipeFormModal";
 import TaskDetailModal from "../../tasks/TaskDetailModal";
 import { useBoards, useTasks } from "../../../hooks/useTasksQueries";
 import { useIsMobile } from "../../../hooks/useIsMobile";
@@ -196,21 +197,32 @@ const TasksPage: React.FC = () => {
       </div>
 
       {/* Modals */}
-      {showCreateTask && (
-        <CreateTaskModal
-          isOpen={showCreateTask}
-          onClose={() => {
-            setShowCreateTask(false);
-            setCreateTaskBoardId(undefined);
-            setCreateTaskSectionId(undefined);
-          }}
-          boardId={createTaskBoardId}
-          boardType={
-            createTaskBoard?.board_type || createTaskBoard?.template_type
-          }
-          defaultSectionId={createTaskSectionId}
-        />
-      )}
+      {showCreateTask &&
+        (createTaskBoard?.template_type === "recipe" ? (
+          <RecipeFormModal
+            isOpen={showCreateTask}
+            onClose={() => {
+              setShowCreateTask(false);
+              setCreateTaskBoardId(undefined);
+              setCreateTaskSectionId(undefined);
+            }}
+            boardId={createTaskBoardId!}
+          />
+        ) : (
+          <CreateTaskModal
+            isOpen={showCreateTask}
+            onClose={() => {
+              setShowCreateTask(false);
+              setCreateTaskBoardId(undefined);
+              setCreateTaskSectionId(undefined);
+            }}
+            boardId={createTaskBoardId}
+            boardType={
+              createTaskBoard?.board_type || createTaskBoard?.template_type
+            }
+            defaultSectionId={createTaskSectionId}
+          />
+        ))}
 
       {editingTask && (
         <TaskDetailModal

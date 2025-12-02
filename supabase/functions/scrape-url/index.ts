@@ -41,13 +41,17 @@ interface ScrapedMetadata {
     cookTime?: string;
     totalTime?: string;
     servings?: string;
+    category?: string;
   };
 }
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", {
+      headers: corsHeaders,
+      status: 200,
+    });
   }
 
   try {
@@ -1009,6 +1013,19 @@ function extractRecipe(html: string): ScrapedMetadata["recipe"] | undefined {
           : null;
 
         if (recipeData) {
+          // Extract category from recipeCategory or recipeCuisine
+          let category: string | undefined;
+          if (recipeData.recipeCategory) {
+            category = Array.isArray(recipeData.recipeCategory)
+              ? recipeData.recipeCategory[0]
+              : recipeData.recipeCategory;
+          } else if (recipeData.recipeCuisine) {
+            // Use cuisine as fallback category
+            category = Array.isArray(recipeData.recipeCuisine)
+              ? recipeData.recipeCuisine[0]
+              : recipeData.recipeCuisine;
+          }
+
           return {
             name: recipeData.name || undefined,
             description: recipeData.description || undefined,
@@ -1027,6 +1044,7 @@ function extractRecipe(html: string): ScrapedMetadata["recipe"] | undefined {
               recipeData.recipeYield?.toString() ||
               recipeData.servings?.toString() ||
               undefined,
+            category: category,
           };
         }
       } catch {

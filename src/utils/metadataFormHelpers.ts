@@ -34,6 +34,7 @@ export interface RecipeMetadataFormPatch {
   cookTime?: string;
   totalTime?: string;
   servings?: string;
+  category?: string;
   extractedFields: number;
   fieldNames: string[];
 }
@@ -164,6 +165,7 @@ export function applyRecipeMetadataToForm(
     cookTime: recipeCookTime,
     totalTime: recipeTotalTime,
     servings: recipeServings,
+    category: recipeCategory,
   } = metadata.recipe;
 
   if (name) {
@@ -213,6 +215,11 @@ export function applyRecipeMetadataToForm(
 
   if (recipeServings) {
     patch.servings = recipeServings.toString();
+  }
+
+  if (recipeCategory) {
+    patch.category = recipeCategory;
+    patch.fieldNames.push("category");
   }
 
   if (currentUrl) {

@@ -49,6 +49,11 @@ export interface Task {
   archived_at: string | null;
   created_at: string;
   updated_at: string;
+  // Repeatable task fields
+  is_repeatable: boolean | null;
+  repeat_frequency: "weekly" | "monthly" | "yearly" | "custom" | null;
+  repeat_custom_days: number | null; // For custom frequency (days between repeats)
+  last_completed_at: string | null; // Track when last completed for repeatable tasks
 }
 
 export interface CreateBoardData {
@@ -77,6 +82,9 @@ export interface CreateTaskData {
   due_date?: string;
   tags?: string[];
   item_data?: Record<string, unknown>;
+  is_repeatable?: boolean;
+  repeat_frequency?: "weekly" | "monthly" | "yearly" | "custom";
+  repeat_custom_days?: number;
 }
 
 export interface TaskFilters {

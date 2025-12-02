@@ -69,6 +69,7 @@ interface BoardCardProps {
   onOpenInTab?: () => void;
   onCreateTask?: (sectionId?: string) => void;
   onEditTask?: (task: Task) => void;
+  onDeleteTask?: (taskId: string) => void;
   isMobile?: boolean;
   isStarter?: boolean;
 }
@@ -81,6 +82,7 @@ const BoardCard: React.FC<BoardCardProps> = ({
   onOpenInTab,
   onCreateTask,
   onEditTask,
+  onDeleteTask,
   isMobile = false,
   isStarter = false,
 }) => {
@@ -123,6 +125,7 @@ const BoardCard: React.FC<BoardCardProps> = ({
           boardId={board.id}
           onCreateTask={onCreateTask || (() => {})}
           onEditTask={onEditTask || (() => {})}
+          onDeleteTask={onDeleteTask}
         />
       ) : board.template_type === "recipe" ? (
         <RecipeListView

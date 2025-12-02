@@ -83,64 +83,66 @@ const Modal: React.FC<ModalProps> = ({
   };
 
   return (
-    <div
-      className={`fixed inset-0 z-50 overflow-y-auto transition-all duration-300 ${
-        isMobile ? "" : isCollapsed ? "pl-16" : "pl-16 md:pl-[224px]"
-      }`}
-    >
-      {/* Backdrop */}
+    <>
+      {/* Backdrop - Full screen */}
       <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
         onClick={handleBackdropClick}
         aria-hidden="true"
       />
 
-      {/* Modal Container - Centered within main content area */}
-      <div className="flex min-h-full items-center justify-center p-4">
-        <FocusTrap
-          focusTrapOptions={{
-            initialFocus: false,
-            escapeDeactivates: false,
-            clickOutsideDeactivates: closeOnBackdropClick,
-            returnFocusOnDeactivate: true,
-          }}
-        >
-          <div
-            className={`relative my-8 w-full ${maxWidthClasses[maxWidth]} bg-white dark:bg-gray-800 rounded-xl shadow-2xl focus:outline-none`}
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={title ? "modal-title" : undefined}
+      {/* Modal Container - Offset for sidebar */}
+      <div
+        className={`fixed inset-0 z-50 overflow-y-auto pointer-events-none transition-all duration-300 ${
+          isMobile ? "" : isCollapsed ? "pl-16" : "pl-16 md:pl-[224px]"
+        }`}
+      >
+        <div className="flex min-h-full items-center justify-center p-4 pointer-events-none">
+          <FocusTrap
+            focusTrapOptions={{
+              initialFocus: false,
+              escapeDeactivates: false,
+              clickOutsideDeactivates: closeOnBackdropClick,
+              returnFocusOnDeactivate: true,
+            }}
           >
-            {/* Header - Only show if showHeader is true and (title or close button requested) */}
-            {showHeader && (title || showCloseButton) && (
-              <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-                {title && (
-                  <h2
-                    id="modal-title"
-                    className="text-xl font-semibold text-gray-900 dark:text-white font-heading"
-                  >
-                    {title}
-                  </h2>
-                )}
-                {showCloseButton && (
-                  <Button
-                    onClick={onClose}
-                    variant="subtle"
-                    size="icon"
-                    icon={<X className="w-5 h-5" />}
-                    aria-label="Close modal"
-                  />
-                )}
-              </div>
-            )}
+            <div
+              className={`relative my-8 w-full ${maxWidthClasses[maxWidth]} bg-white dark:bg-gray-800 rounded-xl shadow-2xl focus:outline-none pointer-events-auto`}
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={title ? "modal-title" : undefined}
+            >
+              {/* Header - Only show if showHeader is true and (title or close button requested) */}
+              {showHeader && (title || showCloseButton) && (
+                <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                  {title && (
+                    <h2
+                      id="modal-title"
+                      className="text-xl font-semibold text-gray-900 dark:text-white font-heading"
+                    >
+                      {title}
+                    </h2>
+                  )}
+                  {showCloseButton && (
+                    <Button
+                      onClick={onClose}
+                      variant="subtle"
+                      size="icon"
+                      icon={<X className="w-5 h-5" />}
+                      aria-label="Close modal"
+                    />
+                  )}
+                </div>
+              )}
 
-            {/* Content */}
-            {children}
-          </div>
-        </FocusTrap>
+              {/* Content */}
+              {children}
+            </div>
+          </FocusTrap>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

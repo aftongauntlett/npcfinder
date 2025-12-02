@@ -49,6 +49,7 @@ export interface UrlMetadata {
     cookTime?: string;
     totalTime?: string;
     servings?: string;
+    category?: string;
   };
 }
 

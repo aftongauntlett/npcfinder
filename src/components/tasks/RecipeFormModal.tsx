@@ -36,6 +36,7 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
   // Form fields
   const [recipeName, setRecipeName] = useState("");
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
   const [ingredients, setIngredients] = useState("");
   const [instructions, setInstructions] = useState("");
   const [prepTime, setPrepTime] = useState("");
@@ -56,6 +57,7 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
         (data.recipe_name as string) || (data.name as string) || task.title
       );
       setDescription((data.description as string) || task.description || "");
+      setCategory((data.category as string) || "");
 
       const ingredientsArr = data.ingredients as string[] | undefined;
       setIngredients(ingredientsArr ? ingredientsArr.join("\n") : "");
@@ -134,11 +136,16 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
           extractedCount++;
           fieldNames.push("total time");
         }
-
         if (recipe.servings && !servings) {
           setServings(recipe.servings);
           extractedCount++;
           fieldNames.push("servings");
+        }
+
+        if (recipe.category && !category) {
+          setCategory(recipe.category);
+          extractedCount++;
+          fieldNames.push("category");
         }
 
         if (extractedCount > 0) {
@@ -182,6 +189,7 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
       recipe_name: recipeName,
       name: recipeName,
       description: description || "",
+      category: category || "",
       ingredients: ingredients ? ingredients.split("\n").filter(Boolean) : [],
       instructions: instructions
         ? instructions.split("\n").filter(Boolean)
@@ -239,6 +247,7 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
     setUrl("");
     setRecipeName("");
     setDescription("");
+    setCategory("");
     setIngredients("");
     setInstructions("");
     setPrepTime("");
@@ -264,7 +273,7 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
       title={task ? "Edit Recipe" : "Add Recipe"}
       maxWidth="2xl"
     >
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="p-6 space-y-5">
         {/* URL Input with Scraping */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -329,8 +338,63 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Brief description of the recipe..."
             rows={2}
-            className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            style={
+              {
+                "--tw-ring-color": themeColor,
+              } as React.CSSProperties
+            }
+            className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2"
           />
+        </div>
+
+        {/* Category */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Category
+          </label>
+          <div className="relative">
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              style={
+                {
+                  "--tw-ring-color": themeColor,
+                } as React.CSSProperties
+              }
+              className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white appearance-none cursor-pointer focus:outline-none focus:ring-2 transition-all"
+            >
+              <option value="" className="text-gray-500">
+                Select a category...
+              </option>
+              <option value="Appetizer">Appetizer</option>
+              <option value="Breakfast">Breakfast</option>
+              <option value="Main">Main Course</option>
+              <option value="Side">Side Dish</option>
+              <option value="Dessert">Dessert</option>
+              <option value="Snack">Snack</option>
+              <option value="Beverage">Beverage</option>
+              <option value="Sauce">Sauce/Condiment</option>
+              <option value="Soup">Soup</option>
+              <option value="Salad">Salad</option>
+              <option value="Bread">Bread/Baked Goods</option>
+              <option value="Other">Other</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500 dark:text-gray-400">
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </div>
+          </div>
         </div>
 
         {/* Time Fields Row */}
@@ -393,7 +457,12 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
             onChange={(e) => setIngredients(e.target.value)}
             placeholder="Enter each ingredient on a new line..."
             rows={6}
-            className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono text-sm"
+            style={
+              {
+                "--tw-ring-color": themeColor,
+              } as React.CSSProperties
+            }
+            className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 font-mono text-sm"
           />
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             One ingredient per line
@@ -410,7 +479,12 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
             onChange={(e) => setInstructions(e.target.value)}
             placeholder="Enter each step on a new line..."
             rows={8}
-            className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono text-sm"
+            style={
+              {
+                "--tw-ring-color": themeColor,
+              } as React.CSSProperties
+            }
+            className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 font-mono text-sm"
           />
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             One step per line
@@ -427,7 +501,12 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Any additional notes or tips..."
             rows={3}
-            className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            style={
+              {
+                "--tw-ring-color": themeColor,
+              } as React.CSSProperties
+            }
+            className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2"
           />
         </div>
 

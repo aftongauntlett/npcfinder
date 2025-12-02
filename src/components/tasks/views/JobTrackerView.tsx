@@ -1,10 +1,6 @@
 import React from "react";
 import { JobTrackerTable } from "./JobTrackerTable";
-import {
-  useTasks,
-  useUpdateTask,
-  useDeleteTask,
-} from "../../../hooks/useTasksQueries";
+import { useTasks, useUpdateTask } from "../../../hooks/useTasksQueries";
 import type { Task } from "../../../services/tasksService.types";
 import { getTemplate } from "../../../utils/boardTemplates";
 import { Plus } from "lucide-react";
@@ -15,16 +11,17 @@ interface JobTrackerViewProps {
   boardId: string;
   onCreateTask: () => void;
   onEditTask: (task: Task) => void;
+  onDeleteTask?: (taskId: string) => void;
 }
 
 export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
   boardId,
   onCreateTask,
   onEditTask,
+  onDeleteTask,
 }) => {
   const { data: tasks = [], isLoading } = useTasks(boardId);
   const updateTask = useUpdateTask();
-  const deleteTask = useDeleteTask();
   const { themeColor } = useTheme();
 
   const template = getTemplate("job_tracker");
@@ -88,14 +85,7 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
   };
 
   const handleDelete = (taskId: string) => {
-    if (
-      window.confirm("Are you sure you want to delete this job application?")
-    ) {
-      void deleteTask.mutateAsync(taskId).catch((error) => {
-        console.error("Failed to delete task:", error);
-        alert("Failed to delete task. Please try again.");
-      });
-    }
+    onDeleteTask?.(taskId);
   };
 
   if (isLoading) {

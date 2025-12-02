@@ -18,6 +18,7 @@ import {
   useBoards,
   useDeleteBoard,
   useUpdateBoard,
+  useDeleteTask,
 } from "../../../hooks/useTasksQueries";
 import type { BoardWithStats } from "../../../services/tasksService.types";
 
@@ -37,11 +38,13 @@ const BoardsView: React.FC<BoardsViewProps> = ({
   const { data: boards = [], isLoading } = useBoards();
   const deleteBoard = useDeleteBoard();
   const updateBoard = useUpdateBoard();
+  const deleteTask = useDeleteTask();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingBoard, setEditingBoard] = useState<BoardWithStats | null>(null);
   const [deletingBoard, setDeletingBoard] = useState<BoardWithStats | null>(
     null
   );
+  const [deletingTask, setDeletingTask] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<
     Record<string, string | string[]>
   >({
@@ -54,6 +57,13 @@ const BoardsView: React.FC<BoardsViewProps> = ({
     if (deletingBoard) {
       deleteBoard.mutate(deletingBoard.id);
       setDeletingBoard(null);
+    }
+  };
+
+  const handleDeleteTask = () => {
+    if (deletingTask) {
+      deleteTask.mutate(deletingTask);
+      setDeletingTask(null);
     }
   };
 
@@ -302,6 +312,7 @@ const BoardsView: React.FC<BoardsViewProps> = ({
                   onCreateTask?.(board.id, sectionId)
                 }
                 onEditTask={(task) => onEditTask?.(task.id)}
+                onDeleteTask={(taskId) => setDeletingTask(taskId)}
                 isMobile={isMobile}
                 isStarter={isStarter}
               />
@@ -333,6 +344,19 @@ const BoardsView: React.FC<BoardsViewProps> = ({
           onConfirm={handleDeleteBoard}
           title="Delete Board"
           message={`Are you sure you want to delete "${deletingBoard.name}"? All tasks in this board will be permanently removed.`}
+          confirmText="Delete"
+          variant="danger"
+        />
+      )}
+
+      {/* Delete Task Confirmation */}
+      {deletingTask && (
+        <ConfirmDialog
+          isOpen={!!deletingTask}
+          onClose={() => setDeletingTask(null)}
+          onConfirm={handleDeleteTask}
+          title="Delete Job Application?"
+          message="Are you sure you want to delete this job application? This action cannot be undone."
           confirmText="Delete"
           variant="danger"
         />

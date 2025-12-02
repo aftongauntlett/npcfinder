@@ -21,6 +21,7 @@ import {
   useDeleteTask,
 } from "../../../hooks/useTasksQueries";
 import type { Task } from "../../../services/tasksService.types";
+import { getNextDueDate } from "../../../utils/repeatableTaskHelpers";
 
 const InboxView: React.FC = () => {
   const { data: tasks = [], isLoading } = useTasks(
@@ -98,12 +99,31 @@ const InboxView: React.FC = () => {
     const task = tasks.find((t) => t.id === taskId);
     if (!task) return;
 
-    updateTask.mutate({
-      taskId,
-      updates: {
-        status: task.status === "done" ? "todo" : "done",
-      },
-    });
+    // If task is repeatable and being marked complete
+    if (task.is_repeatable && task.status !== "done" && task.due_date) {
+      const nextDueDate = getNextDueDate(
+        task.due_date,
+        task.repeat_frequency || "weekly",
+        task.repeat_custom_days || undefined
+      );
+
+      updateTask.mutate({
+        taskId,
+        updates: {
+          status: "todo", // Keep status as todo
+          due_date: nextDueDate,
+          last_completed_at: new Date().toISOString(),
+        },
+      });
+    } else {
+      // Normal toggle for non-repeatable tasks
+      updateTask.mutate({
+        taskId,
+        updates: {
+          status: task.status === "done" ? "todo" : "done",
+        },
+      });
+    }
   };
 
   const handleSnooze = (taskId: string) => {

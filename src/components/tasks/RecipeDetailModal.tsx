@@ -29,6 +29,7 @@ const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
     task.title;
   const description =
     (task.item_data?.description as string) || task.description || "";
+  const category = task.item_data?.category as string | undefined;
   const ingredients = task.item_data?.ingredients as string[] | string;
   const instructions = task.item_data?.instructions as string[] | string;
   const prepTime = task.item_data?.prep_time as string;
@@ -74,6 +75,15 @@ const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
             >
               Edit Recipe
             </Button>
+          </div>
+        )}
+
+        {/* Category Badge */}
+        {category && (
+          <div>
+            <span className="inline-block px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-sm font-medium rounded-full">
+              {category}
+            </span>
           </div>
         )}
 
@@ -125,13 +135,13 @@ const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
               Ingredients
             </h3>
-            <ul className="space-y-2">
+            <ul className="space-y-1.5">
               {ingredientsList.map((ingredient, index) => (
                 <li
                   key={index}
                   className="flex items-start gap-2 text-gray-700 dark:text-gray-300"
                 >
-                  <span className="text-purple-600 dark:text-purple-400 mt-1">
+                  <span className="text-purple-500 dark:text-purple-400 mt-1.5">
                     •
                   </span>
                   <span>{ingredient}</span>
@@ -151,12 +161,12 @@ const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
               {instructionsList.map((instruction, index) => (
                 <li
                   key={index}
-                  className="flex gap-3 text-gray-700 dark:text-gray-300"
+                  className="flex items-start gap-3 text-gray-700 dark:text-gray-300"
                 >
-                  <span className="font-semibold text-purple-600 dark:text-purple-400 min-w-[1.5rem]">
-                    {index + 1}.
+                  <span className="flex-shrink-0 w-7 h-7 rounded-full bg-purple-500 dark:bg-purple-600 text-white text-sm font-semibold flex items-center justify-center">
+                    {index + 1}
                   </span>
-                  <span>{instruction}</span>
+                  <span className="flex-1 pt-1">{instruction}</span>
                 </li>
               ))}
             </ol>
@@ -165,11 +175,11 @@ const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
 
         {/* Notes */}
         {notes && (
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+            <h3 className="text-md font-semibold text-yellow-900 dark:text-yellow-100 mb-2">
               Notes
             </h3>
-            <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+            <p className="text-sm text-yellow-800 dark:text-yellow-200 whitespace-pre-wrap">
               {notes}
             </p>
           </div>

@@ -52,6 +52,13 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [tags, setTags] = useState(""); // Keep for DB, but hidden from UI
 
+  // Repeatable task fields
+  const [isRepeatable, setIsRepeatable] = useState(false);
+  const [repeatFrequency, setRepeatFrequency] = useState<
+    "weekly" | "monthly" | "yearly" | "custom"
+  >("weekly");
+  const [repeatCustomDays, setRepeatCustomDays] = useState<number>(7);
+
   // Job tracker specific fields
   const [companyName, setCompanyName] = useState("");
   const [companyUrl, setCompanyUrl] = useState("");
@@ -240,6 +247,12 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
             .filter(Boolean)
         : undefined,
       item_data,
+      is_repeatable: isRepeatable || undefined,
+      repeat_frequency: isRepeatable ? repeatFrequency : undefined,
+      repeat_custom_days:
+        isRepeatable && repeatFrequency === "custom"
+          ? repeatCustomDays
+          : undefined,
     };
 
     void createTask
@@ -254,6 +267,10 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
           setPriority(null);
           setDueDate(null);
           setTags(""); // Keep resetting for DB consistency
+          // Reset repeatable fields
+          setIsRepeatable(false);
+          setRepeatFrequency("weekly");
+          setRepeatCustomDays(7);
           // Reset job tracker fields
           setCompanyName("");
           setCompanyUrl("");
@@ -886,6 +903,107 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 />
               </div>
             </div>
+
+            {/* Repeatable Task Toggle */}
+            <div>
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={isRepeatable}
+                    onChange={(e) => {
+                      setIsRepeatable(e.target.checked);
+                      // If enabling repeatable and no due date, prompt user
+                      if (e.target.checked && !dueDate) {
+                        // Set default to tomorrow
+                        const tomorrow = new Date();
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        setDueDate(tomorrow);
+                      }
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-300 dark:bg-gray-600 rounded-full peer peer-checked:bg-purple-500 dark:peer-checked:bg-purple-400 transition-colors"></div>
+                  <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    Repeatable Task
+                  </span>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Auto-reschedules after completion
+                  </p>
+                </div>
+              </label>
+            </div>
+
+            {/* Repeat Frequency - Show only if repeatable */}
+            {isRepeatable && (
+              <div className="pl-14 space-y-3">
+                <label className="block text-sm font-medium text-primary mb-2.5">
+                  Repeat Frequency
+                  {!dueDate && (
+                    <span className="ml-2 text-xs text-red-500">
+                      (Due date required)
+                    </span>
+                  )}
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { value: "weekly", label: "Weekly" },
+                    { value: "monthly", label: "Monthly" },
+                    { value: "yearly", label: "Yearly" },
+                    { value: "custom", label: "Custom" },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() =>
+                        setRepeatFrequency(
+                          option.value as
+                            | "weekly"
+                            | "monthly"
+                            | "yearly"
+                            | "custom"
+                        )
+                      }
+                      className={`px-3 py-2 rounded-lg border-2 transition-all text-sm ${
+                        repeatFrequency === option.value
+                          ? "border-purple-500 dark:border-purple-400 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300"
+                          : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300"
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Custom Days Input */}
+                {repeatFrequency === "custom" && (
+                  <div>
+                    <label
+                      htmlFor="custom-days"
+                      className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+                    >
+                      Repeat every (days)
+                    </label>
+                    <input
+                      id="custom-days"
+                      type="number"
+                      min="1"
+                      max="365"
+                      value={repeatCustomDays}
+                      onChange={(e) =>
+                        setRepeatCustomDays(
+                          Math.max(1, parseInt(e.target.value) || 1)
+                        )
+                      }
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -907,7 +1025,8 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               createTask.isPending ||
               (boardType === "job_tracker"
                 ? !companyName.trim() || !position.trim()
-                : !title.trim() || !description.trim())
+                : !title.trim() || !description.trim()) ||
+              (isRepeatable && !dueDate)
             }
           >
             {createTask.isPending

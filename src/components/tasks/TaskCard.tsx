@@ -19,6 +19,7 @@ import {
   getTaskPriorityBg,
   getTaskPriorityLabel,
 } from "../../utils/taskHelpers";
+import { isSevenDaysOverdue } from "../../utils/repeatableTaskHelpers";
 import { generateTaskActions } from "../../utils/taskActions";
 
 interface TaskCardProps {
@@ -42,6 +43,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
 }) => {
   const isDone = task.status === "done";
   const overdue = isOverdue(task.due_date);
+  const severelyOverdue = isSevenDaysOverdue(task.due_date);
   const isMobile = useIsMobile();
 
   const handleCardClick = (e: React.MouseEvent) => {
@@ -179,6 +181,19 @@ const TaskCard: React.FC<TaskCardProps> = ({
     </span>
   ) : undefined;
 
+  const overdueBadge = severelyOverdue ? (
+    <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full flex-shrink-0 bg-red-500/90 text-white border border-red-600">
+      ⚠️ Overdue
+    </span>
+  ) : undefined;
+
+  const badges = (
+    <>
+      {overdueBadge}
+      {priorityBadge}
+    </>
+  );
+
   const expandedContent = (
     <>
       {/* Due Date */}
@@ -205,7 +220,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
   return (
     <AccordionCard
-      metadata={priorityBadge}
+      metadata={badges}
       title={task.title}
       description={task.description || undefined}
       expandedContent={expandedContent}
