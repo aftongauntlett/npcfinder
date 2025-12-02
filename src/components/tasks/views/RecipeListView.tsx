@@ -32,7 +32,7 @@ export const RecipeListView: React.FC<RecipeListViewProps> = ({
       {/* Add Recipe Button */}
       <div className="flex justify-end">
         <Button
-          onClick={onCreateTask}
+          onClick={() => onCreateTask()}
           variant="action"
           size="sm"
           icon={<Plus className="w-4 h-4" />}

@@ -113,7 +113,7 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
       {jobApplications.length === 0 ? (
         /* Empty State Card */
         <div
-          onClick={onCreateTask}
+          onClick={() => onCreateTask()}
           className="flex flex-col items-center justify-center py-16 px-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors"
           style={
             {
@@ -146,7 +146,7 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
           {/* Add Item Button */}
           <div className="flex justify-end">
             <Button
-              onClick={onCreateTask}
+              onClick={() => onCreateTask()}
               variant="action"
               size="sm"
               icon={<Plus className="w-4 h-4" />}

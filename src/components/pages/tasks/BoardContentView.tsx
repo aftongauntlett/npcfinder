@@ -15,6 +15,8 @@ import BoardFormModal from "../../tasks/BoardFormModal";
 import CreateTaskModal from "../../tasks/CreateTaskModal";
 import TaskDetailModal from "../../tasks/TaskDetailModal";
 import RecipeDetailModal from "../../tasks/RecipeDetailModal";
+import RecipeFormModal from "../../tasks/RecipeFormModal";
+import MarkdownToDoModal from "../../tasks/MarkdownToDoModal";
 import { useBoard } from "../../../hooks/useTasksQueries";
 import type { Task } from "../../../services/tasksService.types";
 
@@ -112,11 +114,10 @@ const BoardContentView: React.FC<BoardContentViewProps> = ({ boardId }) => {
         )}
 
         {showCreateTask && (
-          <CreateTaskModal
+          <RecipeFormModal
             isOpen={showCreateTask}
             onClose={() => setShowCreateTask(false)}
             boardId={boardId}
-            boardType={board.template_type || board.board_type}
           />
         )}
 
@@ -133,10 +134,11 @@ const BoardContentView: React.FC<BoardContentViewProps> = ({ boardId }) => {
         )}
 
         {selectedTask && (
-          <TaskDetailModal
-            task={selectedTask}
+          <RecipeFormModal
             isOpen={!!selectedTask}
             onClose={() => setSelectedTask(null)}
+            boardId={boardId}
+            task={selectedTask}
           />
         )}
       </div>
@@ -158,7 +160,7 @@ const BoardContentView: React.FC<BoardContentViewProps> = ({ boardId }) => {
 
       {/* Board Content */}
       <div className="flex-1 overflow-auto">
-        {board.board_type === "list" ? (
+        {board.template_type === "markdown" || board.board_type === "list" ? (
           <SimpleListView
             boardId={boardId}
             onCreateTask={() => setShowCreateTask(true)}
@@ -182,22 +184,37 @@ const BoardContentView: React.FC<BoardContentViewProps> = ({ boardId }) => {
         />
       )}
 
-      {showCreateTask && (
-        <CreateTaskModal
-          isOpen={showCreateTask}
-          onClose={() => setShowCreateTask(false)}
-          boardId={boardId}
-          boardType={board.template_type || board?.board_type}
-        />
-      )}
+      {showCreateTask &&
+        (board.template_type === "markdown" || board.board_type === "list" ? (
+          <MarkdownToDoModal
+            isOpen={showCreateTask}
+            onClose={() => setShowCreateTask(false)}
+            boardId={boardId}
+          />
+        ) : (
+          <CreateTaskModal
+            isOpen={showCreateTask}
+            onClose={() => setShowCreateTask(false)}
+            boardId={boardId}
+            boardType={board.template_type || board?.board_type}
+          />
+        ))}
 
-      {selectedTask && (
-        <TaskDetailModal
-          task={selectedTask}
-          isOpen={!!selectedTask}
-          onClose={() => setSelectedTask(null)}
-        />
-      )}
+      {selectedTask &&
+        (board.template_type === "markdown" || board.board_type === "list" ? (
+          <MarkdownToDoModal
+            isOpen={!!selectedTask}
+            onClose={() => setSelectedTask(null)}
+            boardId={boardId}
+            task={selectedTask}
+          />
+        ) : (
+          <TaskDetailModal
+            task={selectedTask}
+            isOpen={!!selectedTask}
+            onClose={() => setSelectedTask(null)}
+          />
+        ))}
     </div>
   );
 };

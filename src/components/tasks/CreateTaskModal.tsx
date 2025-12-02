@@ -15,13 +15,7 @@ import type { CreateTaskData } from "../../services/tasksService.types";
 import { useCreateTask } from "../../hooks/useTasksQueries";
 import { useUrlMetadata } from "../../hooks/useUrlMetadata";
 import { PRIORITY_OPTIONS } from "../../utils/taskConstants";
-import {
-  Link,
-  Loader2,
-  CheckCircle2,
-  AlertCircle,
-  ChevronDown,
-} from "lucide-react";
+import { Link, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { useTheme } from "../../hooks/useTheme";
 import {
   applyJobMetadataToForm,
@@ -42,6 +36,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   onClose,
   boardId,
   boardType,
+  defaultSectionId,
 }) => {
   const { themeColor } = useTheme();
   const [url, setUrl] = useState("");
@@ -55,8 +50,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     null
   );
   const [dueDate, setDueDate] = useState<Date | null>(null);
-  const [tags, setTags] = useState("");
-  const [showOptional, setShowOptional] = useState(false);
+  const [tags, setTags] = useState(""); // Keep for DB, but hidden from UI
 
   // Job tracker specific fields
   const [companyName, setCompanyName] = useState("");
@@ -234,6 +228,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
     const taskData: CreateTaskData = {
       board_id: boardId || null,
+      section_id: defaultSectionId || undefined,
       title: finalTitle,
       description: description || undefined,
       priority: priority || undefined,
@@ -258,8 +253,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
           setDescription("");
           setPriority(null);
           setDueDate(null);
-          setTags("");
-          setShowOptional(false);
+          setTags(""); // Keep resetting for DB consistency
           // Reset job tracker fields
           setCompanyName("");
           setCompanyUrl("");
@@ -385,7 +379,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               htmlFor="task-description"
               className="block text-sm font-medium text-primary mb-2.5"
             >
-              Description
+              Description *
             </label>
             <textarea
               id="task-description"
@@ -394,6 +388,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               placeholder="Add more details..."
               rows={3}
               maxLength={1000}
+              required
               className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-transparent transition-colors"
             />
           </div>
@@ -827,104 +822,70 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
           </div>
         )}
 
-        {/* Optional Fields Accordion - Hidden for job tracker */}
+        {/* Optional Fields - Hidden for job tracker */}
+        {/* TODO: Tags field removed from UI but kept in DB - may add back later with better UX */}
         {boardType !== "job_tracker" && (
-          <div className="border border-gray-300 dark:border-gray-600 rounded-lg">
-            <button
-              type="button"
-              onClick={() => setShowOptional(!showOptional)}
-              className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg transition-colors"
-            >
-              <span>Optional Fields</span>
-              <ChevronDown
-                className={`w-4 h-4 transition-transform ${
-                  showOptional ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-
-            {showOptional && (
-              <div className="px-4 pb-4 space-y-5 border-t border-gray-200 dark:border-gray-700 pt-4">
-                {/* Priority */}
-                <div>
-                  <label className="block text-sm font-medium text-primary mb-2.5">
-                    Priority
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {PRIORITY_OPTIONS.map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() =>
-                          setPriority(
-                            priority === option.value ? null : option.value
-                          )
-                        }
-                        className={`px-3 py-2 rounded-lg border-2 transition-all text-sm ${
-                          priority === option.value
-                            ? `${option.bg} ${option.color} border-current`
-                            : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300"
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Due Date */}
-                <div>
-                  <label
-                    htmlFor="task-due-date"
-                    className="block text-sm font-medium text-primary mb-2.5"
+          <div className="space-y-5">
+            {/* Priority */}
+            <div>
+              <label className="block text-sm font-medium text-primary mb-2.5">
+                Priority
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {PRIORITY_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() =>
+                      setPriority(
+                        priority === option.value ? null : option.value
+                      )
+                    }
+                    className={`px-3 py-2 rounded-lg border-2 transition-all text-sm ${
+                      priority === option.value
+                        ? `${option.bg} ${option.color} border-current`
+                        : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300"
+                    }`}
                   >
-                    Due Date
-                  </label>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setDueDate(null)}
-                      className={`px-3 py-2 rounded-lg border-2 transition-all text-sm whitespace-nowrap ${
-                        dueDate === null
-                          ? "border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300"
-                          : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300"
-                      }`}
-                    >
-                      None
-                    </button>
-                    <DatePicker
-                      selected={dueDate}
-                      onChange={(date) => setDueDate(date)}
-                      dateFormat="MMM d, yyyy"
-                      placeholderText="Select a date"
-                      minDate={new Date()}
-                      showPopperArrow={false}
-                      className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2.5 pr-10 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-transparent transition-colors"
-                      calendarClassName="bg-white dark:bg-gray-800 border-2 border-purple-500 dark:border-purple-400 rounded-lg shadow-xl"
-                      wrapperClassName="flex-1"
-                    />
-                  </div>
-                </div>
-
-                {/* Tags */}
-                <div>
-                  <label
-                    htmlFor="task-tags"
-                    className="block text-sm font-medium text-primary mb-2.5"
-                  >
-                    Tags
-                  </label>
-                  <Input
-                    id="task-tags"
-                    type="text"
-                    value={tags}
-                    onChange={(e) => setTags(e.target.value)}
-                    placeholder="work, urgent, personal (comma-separated)"
-                    helperText="Separate tags with commas"
-                  />
-                </div>
+                    {option.label}
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
+
+            {/* Due Date */}
+            <div>
+              <label
+                htmlFor="task-due-date"
+                className="block text-sm font-medium text-primary mb-2.5"
+              >
+                Due Date
+              </label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDueDate(null)}
+                  className={`px-3 py-2 rounded-lg border-2 transition-all text-sm whitespace-nowrap ${
+                    dueDate === null
+                      ? "border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300"
+                      : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300"
+                  }`}
+                >
+                  None
+                </button>
+                <DatePicker
+                  selected={dueDate}
+                  onChange={(date) => setDueDate(date)}
+                  dateFormat="MMM d, yyyy"
+                  placeholderText="Select a date"
+                  minDate={new Date()}
+                  showPopperArrow={false}
+                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2.5 pr-10 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-transparent transition-colors"
+                  calendarClassName="bg-white dark:bg-gray-800 border-2 border-purple-500 dark:border-purple-400 rounded-lg shadow-xl"
+                  wrapperClassName="flex-1"
+                />
+              </div>
+            </div>
           </div>
         )}
 
@@ -946,7 +907,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               createTask.isPending ||
               (boardType === "job_tracker"
                 ? !companyName.trim() || !position.trim()
-                : !title.trim())
+                : !title.trim() || !description.trim())
             }
           >
             {createTask.isPending
