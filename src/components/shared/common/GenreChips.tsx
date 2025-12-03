@@ -1,5 +1,6 @@
 import { getGenreColor } from "../../../utils/genreColors";
 import Tooltip from "../ui/Tooltip";
+import Chip from "../ui/Chip";
 
 interface GenreChipsProps {
   genres: string[] | string;
@@ -79,18 +80,17 @@ export default function GenreChips({
           }
           position="right"
         >
-          <span
-            role="listitem"
-            className={`inline-flex items-center font-medium ${sizeClasses[size]} ${roundedClass} 
-                       bg-purple-100 dark:bg-purple-900/30
-                       text-purple-700 dark:text-purple-300
-                       cursor-default select-none`}
+          <Chip
+            variant="primary"
+            size={size}
+            rounded="full"
+            className="cursor-default select-none"
             aria-label={`${remainingCount} more genres: ${remainingGenres.join(
               ", "
             )}`}
           >
             +{remainingCount}
-          </span>
+          </Chip>
         </Tooltip>
       )}
     </div>

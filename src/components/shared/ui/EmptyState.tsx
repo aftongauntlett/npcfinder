@@ -27,9 +27,9 @@ const EmptyState: React.FC<EmptyStateProps> = ({
 
   return (
     <div
-      className={`border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg transition-all ${
+      className={`border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg transition-all group ${
         isClickable
-          ? "cursor-pointer hover:border-purple-400 dark:hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+          ? "cursor-pointer hover:border-primary hover:bg-primary/5"
           : ""
       } ${className}`}
       onClick={onAction}
@@ -51,7 +51,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
           <Icon
             className={`w-12 h-12 ${
               isClickable
-                ? "text-gray-400 dark:text-gray-500 group-hover:text-purple-500 dark:group-hover:text-purple-400"
+                ? "text-gray-400 dark:text-gray-500 group-hover:text-primary"
                 : "text-gray-400 dark:text-gray-500"
             }`}
           />
@@ -67,7 +67,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
           </p>
         )}
         {actionLabel && isClickable && (
-          <span className="text-sm text-purple-600 dark:text-purple-300 font-medium mt-2">
+          <span className="text-sm text-primary font-medium mt-2">
             {actionLabel}
           </span>
         )}

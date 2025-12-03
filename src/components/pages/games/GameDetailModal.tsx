@@ -104,7 +104,7 @@ const GameDetailModal: React.FC<GameDetailModalProps> = ({
             {game.rating && (
               <p className="text-base text-gray-700 dark:text-gray-300 m-0">
                 RAWG Rating:{" "}
-                <span className="font-semibold text-purple-600 dark:text-purple-400">
+                <span className="font-semibold text-primary">
                   {game.rating.toFixed(1)}/5
                 </span>
               </p>

@@ -77,7 +77,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [iconName, setIconName] = useState("");
-  const [color, setColor] = useState("#9333ea");
+  const [color, setColor] = useState("");
   const [isPublic, setIsPublic] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showIconDropdown, setShowIconDropdown] = useState(false);
@@ -203,7 +203,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
       setName(board.name);
       setDescription(board.description || "");
       setIconName(board.icon || "");
-      setColor(board.color || "#9333ea");
+      setColor(board.color || themeColor);
       setIsPublic(board.is_public || false);
       setTemplateType((board.template_type as string) || "kanban");
       setNameError("");
@@ -215,13 +215,13 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
       setName(uniqueName);
       setDescription(template.description);
       setIconName("");
-      setColor("#9333ea");
+      setColor(themeColor);
       setIsPublic(false);
       setTemplateType("markdown");
       setNameError("");
       setIsNameAutoFilled(true);
     }
-  }, [board, isOpen, generateUniqueBoardName]);
+  }, [board, isOpen, generateUniqueBoardName, themeColor]);
 
   // Handle template type change - auto-fill name and description
   const handleTemplateChange = (newTemplateType: string) => {
@@ -494,7 +494,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
                     }}
                     className={`w-full px-3 py-2 text-left transition-colors focus:outline-none bg-transparent ${
                       templateType === option.value
-                        ? "bg-purple-500/10 text-purple-700 dark:text-purple-300"
+                        ? "bg-primary/10 text-primary"
                         : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                     }`}
                   >
@@ -504,7 +504,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
                       </span>
                       {templateType === option.value && (
                         <svg
-                          className="w-4 h-4 text-purple-600 dark:text-purple-400"
+                          className="w-4 h-4 text-primary"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"

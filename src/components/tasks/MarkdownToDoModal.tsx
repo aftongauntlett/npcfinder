@@ -127,7 +127,7 @@ const MarkdownToDoModal: React.FC<MarkdownToDoModalProps> = ({
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Add any additional details or context..."
             rows={4}
-            className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+            className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary resize-none"
           />
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             Supports markdown formatting

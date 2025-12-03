@@ -184,7 +184,7 @@ export function FriendSearchModal({ isOpen, onClose }: FriendSearchModalProps) {
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     {/* Avatar */}
-                    <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-pink-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
+                    <div className="flex-shrink-0 w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-semibold">
                       {user.display_name.charAt(0).toUpperCase()}
                     </div>
 

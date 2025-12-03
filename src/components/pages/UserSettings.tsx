@@ -341,7 +341,12 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
 
           {/* Theme Color Card */}
           <motion.div
-            className="group bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700/50 dark:border-gray-700/50 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300"
+            className="group bg-gray-800/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700/50 dark:border-gray-700/50 hover:border-primary/50 hover:shadow-lg transition-all duration-300"
+            style={
+              {
+                "--shadow-color": `${profile.theme_color}10`,
+              } as React.CSSProperties
+            }
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}

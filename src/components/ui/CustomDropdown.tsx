@@ -33,7 +33,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
     <div className={`relative ${className}`}>
       <label
         htmlFor={id}
-        className="block text-sm font-medium text-primary mb-2"
+        className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1"
       >
         {label}
       </label>
@@ -41,26 +41,27 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         onBlur={() => setTimeout(() => setIsOpen(false), 200)}
-        className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white focus:outline-none transition-colors text-left"
-        style={{ outline: "none" }}
-        onFocus={(e) => {
-          e.currentTarget.style.borderColor = themeColor;
-          e.currentTarget.style.boxShadow = `0 0 0 3px ${themeColor}33`;
-        }}
-        onMouseLeave={(e) => {
-          if (document.activeElement !== e.currentTarget) {
-            e.currentTarget.style.borderColor = "";
-            e.currentTarget.style.boxShadow = "";
-          }
-        }}
+        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 text-left ${
+          isOpen
+            ? "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
+            : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700"
+        }`}
+        style={
+          isOpen
+            ? {
+                borderColor: themeColor,
+                boxShadow: `0 0 0 2px ${themeColor}33`,
+              }
+            : {}
+        }
       >
         <span className={value ? "" : "text-gray-400 dark:text-gray-500"}>
           {value || placeholder}
         </span>
-        <ChevronDown className="w-4 h-4 text-gray-500" />
+        <ChevronDown className="w-4 h-4" />
       </button>
       {isOpen && (
-        <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 max-h-60 overflow-auto">
+        <div className="absolute z-[100] mt-1 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 max-h-60 overflow-auto">
           {options.map((option) => (
             <button
               key={option}

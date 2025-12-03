@@ -311,8 +311,8 @@ const AdminPage: React.FC = () => {
                   icon={ShieldCheck}
                   label="Invite Codes"
                   value={stats.totalInviteCodes}
-                  iconColor="text-purple-400"
-                  valueColor="text-purple-400"
+                  iconColor="text-primary"
+                  valueColor="text-primary"
                 />
               </motion.div>
             </div>

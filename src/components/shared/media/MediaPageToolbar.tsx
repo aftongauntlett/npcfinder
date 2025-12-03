@@ -1,6 +1,7 @@
 import { Plus, SlidersHorizontal } from "lucide-react";
 import { useId, useState, useRef, useEffect } from "react";
 import Button from "../ui/Button";
+import Select from "../ui/Select";
 import FilterSortMenu from "../common/FilterSortMenu";
 import MediaTypeFilters from "../../media/MediaTypeFilters";
 import type { FilterOption } from "../../media/MediaTypeFilters";
@@ -124,18 +125,17 @@ export function MediaPageToolbar(props: MediaPageToolbarProps) {
             >
               Sort by:
             </label>
-            <select
+            <Select
               id={selectId}
               value={sortConfig.activeSort}
               onChange={(e) => sortConfig.onSortChange(e.target.value)}
-              className="appearance-none px-4 pr-10 py-2 rounded-lg border-2 border-transparent bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium shadow-sm transition-colors hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-gray-200 dark:focus:bg-gray-700 cursor-pointer bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23737373%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3e%3cpolyline points=%276 9 12 15 18 9%27%3e%3c/polyline%3e%3c/svg%3e')] dark:bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23a3a3a3%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3e%3cpolyline points=%276 9 12 15 18 9%27%3e%3c/polyline%3e%3c/svg%3e')] bg-[length:16px_16px] bg-[right_0.75rem_center] bg-no-repeat"
             >
               {sortConfig.options.map((option) => (
                 <option key={option.id} value={option.id}>
                   {option.label}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         )}
       </div>

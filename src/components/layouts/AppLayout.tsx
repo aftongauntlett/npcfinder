@@ -170,7 +170,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
                 <div ref={mobileMenuRef} className="sm:hidden mb-6 relative">
                   <button
                     onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-base font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 ${
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-base font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                       isMobileMenuOpen
                         ? "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
                         : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
@@ -208,9 +208,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({
                               onTabChange?.(tab.id);
                               setIsMobileMenuOpen(false);
                             }}
-                            className={`w-full flex items-center justify-between px-4 py-3 text-base transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 ${
+                            className={`w-full flex items-center justify-between px-4 py-3 text-base transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                               isActive
-                                ? "bg-purple-500/10 text-purple-700 dark:text-purple-300 font-medium"
+                                ? "bg-primary/10 text-primary font-medium"
                                 : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                             }`}
                           >

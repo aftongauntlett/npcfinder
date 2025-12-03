@@ -28,6 +28,8 @@ import {
   Lightbulb,
 } from "lucide-react";
 import AccordionCard from "../shared/common/AccordionCard";
+import { useTheme } from "../../hooks/useTheme";
+import { lightenColor, darkenColor } from "../../styles/colorThemes";
 import KanbanBoard from "./KanbanBoard";
 import SimpleListView from "./SimpleListView";
 import { JobTrackerView } from "./views/JobTrackerView";
@@ -86,6 +88,7 @@ const BoardCard: React.FC<BoardCardProps> = ({
   isMobile = false,
   isStarter = false,
 }) => {
+  const { themeColor } = useTheme();
   // Get the icon component
   const IconComponent =
     board.icon && ICON_MAP[board.icon] ? ICON_MAP[board.icon] : LayoutGrid;
@@ -94,11 +97,11 @@ const BoardCard: React.FC<BoardCardProps> = ({
   const icon = (
     <div
       className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
-      style={{ backgroundColor: `${board.color || "#9333ea"}20` }}
+      style={{ backgroundColor: `${board.color || themeColor}20` }}
     >
       <IconComponent
         className="w-5 h-5"
-        style={{ color: board.color || "#9333ea" }}
+        style={{ color: board.color || themeColor }}
       />
     </div>
   );
@@ -110,7 +113,13 @@ const BoardCard: React.FC<BoardCardProps> = ({
         {board.total_tasks || 0} task{board.total_tasks !== 1 ? "s" : ""}
       </span>
       {isStarter && (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
+        <span
+          className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+          style={{
+            backgroundColor: lightenColor(themeColor, 0.85),
+            color: darkenColor(themeColor, 0.3),
+          }}
+        >
           Starter
         </span>
       )}

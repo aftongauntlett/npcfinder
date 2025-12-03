@@ -54,14 +54,14 @@ const SimpleListView: React.FC<SimpleListViewProps> = ({
         {sortedTasks.length === 0 ? (
           <button
             onClick={() => onCreateTask()}
-            className="flex-1 min-h-[400px] border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-12 text-center hover:border-purple-500 dark:hover:border-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-900/10 transition-all duration-200 cursor-pointer group"
+            className="flex-1 min-h-[400px] border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-12 text-center hover:border-primary hover:bg-primary/5 transition-all duration-200 cursor-pointer group"
           >
             <div className="flex flex-col items-center gap-3">
-              <Plus className="w-16 h-16 text-gray-400 dark:text-gray-500 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors" />
-              <p className="text-lg text-gray-600 dark:text-gray-400 font-medium group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors">
+              <Plus className="w-16 h-16 text-gray-400 dark:text-gray-500 group-hover:text-primary transition-colors" />
+              <p className="text-lg text-gray-600 dark:text-gray-400 font-medium group-hover:text-primary transition-colors">
                 No tasks yet
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-500 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors">
+              <p className="text-sm text-gray-500 dark:text-gray-500 group-hover:text-primary transition-colors">
                 Click here to add your first task
               </p>
             </div>

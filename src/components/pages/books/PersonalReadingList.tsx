@@ -1,5 +1,6 @@
 import React, { useState, useRef, useMemo, useCallback } from "react";
 import { BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
+import Chip from "../../shared/ui/Chip";
 import { MediaItem } from "../../shared/media/SendMediaModal";
 import SearchBookModal from "../../shared/search/SearchBookModal";
 import BookDetailModal from "./BookDetailModal";
@@ -313,9 +314,13 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
           {!categoryFilters.includes("all") && categoryFilters.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {categoryFilters.map((category) => (
-                <button
+                <Chip
                   key={category}
-                  onClick={() => {
+                  variant="primary"
+                  size="sm"
+                  rounded="full"
+                  removable
+                  onRemove={() => {
                     const newFilters = categoryFilters.filter(
                       (c) => c !== category
                     );
@@ -323,13 +328,9 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
                       newFilters.length > 0 ? newFilters : ["all"]
                     );
                   }}
-                  className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
                 >
                   {category.charAt(0).toUpperCase() + category.slice(1)}
-                  <span className="text-purple-600 dark:text-purple-400">
-                    ×
-                  </span>
-                </button>
+                </Chip>
               ))}
             </div>
           )}

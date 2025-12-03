@@ -7,6 +7,8 @@ import React from "react";
 import { ExternalLink, Clock, Users, Pencil } from "lucide-react";
 import Modal from "../shared/ui/Modal";
 import Button from "../shared/ui/Button";
+import { useTheme } from "../../hooks/useTheme";
+import { lightenColor, darkenColor } from "../../styles/colorThemes";
 import type { Task } from "../../services/tasksService.types";
 
 interface RecipeDetailModalProps {
@@ -22,6 +24,7 @@ const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
   task,
   onEdit,
 }) => {
+  const { themeColor } = useTheme();
   // Extract recipe data from item_data or fallback to task fields
   const recipeName =
     (task.item_data?.recipe_name as string) ||
@@ -81,7 +84,13 @@ const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
         {/* Category Badge */}
         {category && (
           <div>
-            <span className="inline-block px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-sm font-medium rounded-full">
+            <span
+              className="inline-block px-3 py-1 text-sm font-medium rounded-full"
+              style={{
+                backgroundColor: lightenColor(themeColor, 0.85),
+                color: darkenColor(themeColor, 0.3),
+              }}
+            >
               {category}
             </span>
           </div>
@@ -121,7 +130,12 @@ const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
               href={sourceUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300"
+              className="flex items-center gap-2"
+              style={{ color: themeColor }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.color = darkenColor(themeColor, 0.15))
+              }
+              onMouseLeave={(e) => (e.currentTarget.style.color = themeColor)}
             >
               <ExternalLink className="w-4 h-4" />
               <span>View Source</span>
@@ -141,7 +155,7 @@ const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
                   key={index}
                   className="flex items-start gap-2 text-gray-700 dark:text-gray-300"
                 >
-                  <span className="text-purple-500 dark:text-purple-400 mt-1.5">
+                  <span className="mt-1.5" style={{ color: themeColor }}>
                     •
                   </span>
                   <span>{ingredient}</span>
@@ -163,7 +177,10 @@ const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
                   key={index}
                   className="flex items-start gap-3 text-gray-700 dark:text-gray-300"
                 >
-                  <span className="flex-shrink-0 w-7 h-7 rounded-full bg-purple-500 dark:bg-purple-600 text-white text-sm font-semibold flex items-center justify-center">
+                  <span
+                    className="flex-shrink-0 w-7 h-7 rounded-full text-white text-sm font-semibold flex items-center justify-center"
+                    style={{ backgroundColor: themeColor }}
+                  >
                     {index + 1}
                   </span>
                   <span className="flex-1 pt-1">{instruction}</span>

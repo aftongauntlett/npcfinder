@@ -104,8 +104,7 @@ export default function UnifiedMediaCard({
         tabIndex={0}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
-        className={`relative bg-white dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 shadow-md hover:shadow-xl hover:border-primary/30 transition-all cursor-pointer ${className}`}
-        whileHover={{ y: -4 }}
+        className={`relative bg-white dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 shadow-md hover:shadow-xl hover:border-primary transition-all cursor-pointer ${className}`}
         whileTap={{ scale: 0.98 }}
         aria-label={`View details for ${title}`}
       >

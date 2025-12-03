@@ -131,7 +131,7 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
                 {mediaType && (
                   <>
                     {mediaType === "tv" ? (
-                      <span className="text-xs text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 px-2 py-0.5 rounded whitespace-nowrap flex-shrink-0">
+                      <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded whitespace-nowrap flex-shrink-0">
                         TV
                       </span>
                     ) : (

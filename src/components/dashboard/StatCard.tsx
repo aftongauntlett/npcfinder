@@ -30,9 +30,14 @@ const colorClasses = {
     titleText: "group-hover:text-amber-500",
   },
   purple: {
-    border: "hover:border-purple-500/50",
-    shadow: "hover:shadow-purple-500/10",
-    titleText: "group-hover:text-purple-500",
+    border: "hover:border-primary/50",
+    shadow: "hover:shadow-primary/10",
+    titleText: "group-hover:text-primary",
+  },
+  primary: {
+    border: "hover:border-primary/50",
+    shadow: "hover:shadow-primary/10",
+    titleText: "group-hover:text-primary",
   },
   pink: {
     border: "hover:border-pink-500/50",

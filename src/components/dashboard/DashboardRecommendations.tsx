@@ -280,7 +280,7 @@ export function DashboardRecommendations() {
                                   {typed.title}
                                 </h3>
                                 {typed.media_type === "tv" ? (
-                                  <span className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 px-2 py-0.5 rounded whitespace-nowrap">
+                                  <span className="flex items-center gap-1 text-xs text-primary bg-primary/10 px-2 py-0.5 rounded whitespace-nowrap">
                                     <TvIcon className="w-3 h-3" />
                                     TV
                                   </span>

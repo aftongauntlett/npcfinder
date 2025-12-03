@@ -215,6 +215,7 @@ const BoardsView: React.FC<BoardsViewProps> = ({
           onFilterChange={(sectionId, value) => {
             setActiveFilters({ ...activeFilters, [sectionId]: value });
           }}
+          label="Sort"
         />
 
         <Button

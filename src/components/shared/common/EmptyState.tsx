@@ -102,18 +102,10 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   const content = (
     <>
       <Icon
-        className={`${iconSize} mx-auto mb-3 ${iconColor} ${
-          isClickable ? "group-hover:text-primary transition-colors" : ""
-        }`}
+        className={`${iconSize} mx-auto mb-3 ${iconColor}`}
         aria-hidden="true"
       />
-      <p
-        className={`${
-          isClickable
-            ? "text-white dark:text-white"
-            : "text-gray-900 dark:text-white"
-        } text-lg font-semibold mb-1`}
-      >
+      <p className="text-gray-900 dark:text-white text-lg font-semibold mb-1">
         {title}
       </p>
       {description && (
@@ -141,7 +133,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
         onClick={action.onClick}
         variant="subtle"
         fullWidth
-        className="bg-white/5 dark:bg-white/5 backdrop-blur-sm border border-white/10 dark:border-white/10 hover:border-purple-500/50 p-8 text-center hover:bg-white/8 dark:hover:bg-white/8 group focus-visible:ring-offset-gray-900 dark:focus-visible:ring-offset-gray-900"
+        className="bg-white/5 dark:bg-white/5 backdrop-blur-sm border border-white/10 dark:border-white/10 hover:border-primary/50 p-8 text-center hover:bg-white/8 dark:hover:bg-white/8 group focus-visible:ring-offset-gray-900 dark:focus-visible:ring-offset-gray-900"
         aria-label={title}
       >
         {content}

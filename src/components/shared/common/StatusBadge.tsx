@@ -31,13 +31,13 @@ const STATUS_CONFIG: Record<string, StatusConfig> = {
   playing: { label: "Playing", icon: Play, colorClass: "bg-blue-500" },
   listening: { label: "Listening", icon: Music, colorClass: "bg-blue-500" },
 
-  // Planned states (purple)
-  "to-watch": { label: "To Watch", icon: Clock, colorClass: "bg-purple-500" },
-  "to-read": { label: "To Read", icon: Book, colorClass: "bg-purple-500" },
-  "to-play": { label: "To Play", icon: Play, colorClass: "bg-purple-500" },
-  "to-listen": { label: "To Listen", icon: Music, colorClass: "bg-purple-500" },
-  planned: { label: "Planned", icon: Clock, colorClass: "bg-purple-500" },
-  queued: { label: "Queued", icon: Clock, colorClass: "bg-purple-500" },
+  // Planned states (theme color)
+  "to-watch": { label: "To Watch", icon: Clock, colorClass: "bg-primary" },
+  "to-read": { label: "To Read", icon: Book, colorClass: "bg-primary" },
+  "to-play": { label: "To Play", icon: Play, colorClass: "bg-primary" },
+  "to-listen": { label: "To Listen", icon: Music, colorClass: "bg-primary" },
+  planned: { label: "Planned", icon: Clock, colorClass: "bg-primary" },
+  queued: { label: "Queued", icon: Clock, colorClass: "bg-primary" },
 
   // Dropped states (red)
   dropped: { label: "Dropped", icon: Check, colorClass: "bg-red-500" },

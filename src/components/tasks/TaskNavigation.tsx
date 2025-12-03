@@ -92,7 +92,7 @@ const TaskNavigation: React.FC<TaskNavigationProps> = ({
             onClick={() => onViewChange("inbox")}
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
               isViewSelected("inbox")
-                ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
+                ? "bg-primary/10 text-primary"
                 : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
             }`}
           >
@@ -104,7 +104,7 @@ const TaskNavigation: React.FC<TaskNavigationProps> = ({
             onClick={() => onViewChange("today")}
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
               isViewSelected("today")
-                ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
+                ? "bg-primary/10 text-primary"
                 : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
             }`}
           >
@@ -116,7 +116,7 @@ const TaskNavigation: React.FC<TaskNavigationProps> = ({
             onClick={() => onViewChange("upcoming")}
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
               isViewSelected("upcoming")
-                ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
+                ? "bg-primary/10 text-primary"
                 : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
             }`}
           >
@@ -157,7 +157,7 @@ const TaskNavigation: React.FC<TaskNavigationProps> = ({
                   onClick={() => onViewChange(viewObj)}
                   className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     isSelected
-                      ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
+                      ? "bg-primary/10 text-primary"
                       : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
                   }`}
                 >

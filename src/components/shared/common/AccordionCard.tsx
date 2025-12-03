@@ -68,7 +68,7 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
   return (
     <motion.div
       onClick={handleCardClick}
-      className={`relative bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 hover:border-white/20 transition-all duration-300 cursor-pointer group overflow-hidden ${className}`}
+      className={`relative bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 hover:border-white/20 hover:bg-white/10 transition-all duration-300 cursor-pointer group overflow-hidden ${className}`}
     >
       {/* Header */}
       <div className="p-4">

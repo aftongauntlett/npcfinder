@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo } from "react";
 import { Gamepad2, ChevronLeft, ChevronRight } from "lucide-react";
 import Button from "../../shared/ui/Button";
+import Chip from "../../shared/ui/Chip";
 import MediaEmptyState from "../../media/MediaEmptyState";
 import MediaListItem from "../../media/MediaListItem";
 import { FilterSortSection } from "../../shared/common/FilterSortMenu";
@@ -374,12 +375,16 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
                       newFilters.length > 0 ? newFilters : ["all"]
                     );
                   }}
-                  className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
                 >
-                  {genre.charAt(0).toUpperCase() + genre.slice(1)}
-                  <span className="text-purple-600 dark:text-purple-400">
-                    ×
-                  </span>
+                  <Chip
+                    variant="primary"
+                    size="sm"
+                    rounded="full"
+                    removable
+                    onRemove={() => {}}
+                  >
+                    {genre.charAt(0).toUpperCase() + genre.slice(1)}
+                  </Chip>
                 </button>
               ))}
             </div>

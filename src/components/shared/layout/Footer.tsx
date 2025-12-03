@@ -33,7 +33,7 @@ const Footer: React.FC = () => {
               variant="subtle"
               size="sm"
               icon={<Lightbulb className="w-4 h-4" aria-hidden="true" />}
-              className="inline-flex items-center gap-1.5 font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300"
+              className="inline-flex items-center gap-1.5 font-medium text-primary hover:opacity-80"
               aria-label="Submit a suggestion"
             >
               Suggestions

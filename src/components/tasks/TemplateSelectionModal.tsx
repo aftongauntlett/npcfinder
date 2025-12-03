@@ -65,7 +65,7 @@ const TemplateSelectionModal: React.FC<TemplateSelectionModalProps> = ({
         className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-6 font-heading">
+        <h2 className="text-2xl font-bold text-primary mb-6 font-heading">
           Choose a Board Template
         </h2>
 
@@ -74,9 +74,9 @@ const TemplateSelectionModal: React.FC<TemplateSelectionModalProps> = ({
             <button
               key={template.id}
               onClick={() => onSelectTemplate(template.id as TemplateType)}
-              className="p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-purple-500 dark:hover:border-purple-400 text-left transition-all duration-200 group flex flex-col items-start"
+              className="p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary text-left transition-all duration-200 group flex flex-col items-start"
             >
-              <div className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 mb-2 transition-colors">
+              <div className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-primary mb-2 transition-colors">
                 {template.name}
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-400 flex-grow">

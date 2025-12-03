@@ -30,7 +30,7 @@ const STATUS_OPTIONS: StatusOption[] = [
     label: "Watching",
     icon: <PlayCircle className="w-3.5 h-3.5" />,
     colorClass:
-      "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 hover:bg-purple-200 dark:hover:bg-purple-900/50",
+      "bg-primary/10 text-primary border-primary/20 hover:bg-primary/20",
   },
   {
     value: "completed",
@@ -84,7 +84,6 @@ export default function MediaStatusSelector({
             className={`
               flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium
               border transition-all duration-200
-              transform hover:scale-105 active:scale-95
               ${
                 isSelected
                   ? `${option.colorClass} ring-2 ring-offset-1 ring-current ring-offset-white dark:ring-offset-gray-800`

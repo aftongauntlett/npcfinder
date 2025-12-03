@@ -25,7 +25,9 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({
 }) => {
   return (
     <Card
-      className="cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200 border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-purple-400 dark:hover:border-purple-500"
+      variant="interactive"
+      hover="border"
+      className="cursor-pointer border-2 border-dashed border-gray-300 dark:border-gray-600"
       onClick={onClick}
     >
       <div className="p-6">
@@ -35,8 +37,8 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({
             {emoji ? (
               <span className="text-4xl">{emoji}</span>
             ) : Icon ? (
-              <div className="w-12 h-12 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                <Icon className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Icon className="w-6 h-6 text-primary" />
               </div>
             ) : null}
           </div>

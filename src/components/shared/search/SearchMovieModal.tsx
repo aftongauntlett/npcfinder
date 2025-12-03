@@ -179,7 +179,7 @@ const SearchMovieModal: React.FC<SearchMovieModalProps> = ({
                       <span
                         className={`inline-flex items-center self-start px-2 py-0.5 text-xs font-medium rounded ${
                           resultMediaType === "tv"
-                            ? "bg-purple-100/80 dark:bg-purple-500/20 text-purple-800 dark:text-purple-200"
+                            ? "bg-primary/10 text-primary"
                             : "bg-blue-100/80 dark:bg-blue-500/20 text-blue-800 dark:text-blue-200"
                         }`}
                       >
