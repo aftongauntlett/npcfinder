@@ -2,10 +2,19 @@ import React from "react";
 import { JobTrackerTable } from "./JobTrackerTable";
 import { useTasks, useUpdateTask } from "../../../hooks/useTasksQueries";
 import type { Task } from "../../../services/tasksService.types";
+import type { StatusHistoryEntry } from "../../../services/tasksService.types";
 import { getTemplate } from "../../../utils/boardTemplates";
-import { Plus } from "lucide-react";
-import Button from "../../shared/ui/Button";
-import { useTheme } from "../../../hooks/useTheme";
+import { Briefcase } from "lucide-react";
+import EmptyState from "../../shared/common/EmptyState";
+
+// Helper to get local date in YYYY-MM-DD format (not UTC)
+const getLocalDateString = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 interface JobTrackerViewProps {
   boardId: string;
@@ -22,7 +31,6 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
 }) => {
   const { data: tasks = [], isLoading } = useTasks(boardId);
   const updateTask = useUpdateTask();
-  const { themeColor } = useTheme();
 
   const template = getTemplate("job_tracker");
   const statusOptions = template?.statusOptions || [];
@@ -39,23 +47,58 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
       (task.item_data?.position as string) || task.title || "Unknown Position",
     salary_range: (task.item_data?.salary_range as string) || undefined,
     location: (task.item_data?.location as string) || undefined,
+    location_type:
+      (task.item_data?.location_type as "Remote" | "Hybrid" | "In-Office") ||
+      undefined,
     employment_type: (task.item_data?.employment_type as string) || undefined,
     date_applied:
       (task.item_data?.date_applied as string) || task.created_at.split("T")[0],
+    job_description: (task.item_data?.job_description as string) || undefined,
     notes: (task.item_data?.notes as string) || task.description || undefined,
     status:
-      task.status === "todo"
+      (task.item_data?.status as string) ||
+      (task.status === "todo"
         ? "Applied"
         : task.status === "in_progress"
         ? "Phone Screen"
         : task.status === "done"
         ? "Accepted"
-        : "Applied",
+        : "Applied"),
+    status_history:
+      (task.item_data?.status_history as StatusHistoryEntry[]) || undefined,
   }));
 
   const handleStatusChange = (taskId: string, newStatus: string) => {
     const task = tasks.find((t) => t.id === taskId);
     if (!task) return;
+
+    // Get current status from item_data or derive from system status
+    const currentJobStatus =
+      (task.item_data?.status as string) ||
+      (task.status === "todo"
+        ? "Applied"
+        : task.status === "in_progress"
+        ? "Phone Screen"
+        : task.status === "done"
+        ? "Accepted"
+        : "Applied");
+
+    // Get current status_history or initialize as empty array
+    const currentHistory =
+      (task.item_data?.status_history as StatusHistoryEntry[]) || [];
+
+    // Check if status is actually changing
+    const lastHistoryStatus = currentHistory[currentHistory.length - 1]?.status;
+    if (newStatus === currentJobStatus || newStatus === lastHistoryStatus) {
+      return; // No change, skip update
+    }
+
+    // Append new status entry with current date
+    const newEntry: StatusHistoryEntry = {
+      status: newStatus,
+      date: getLocalDateString(),
+    };
+    const updatedHistory = [...currentHistory, newEntry];
 
     // Map job tracker statuses back to system statuses
     const systemStatus =
@@ -65,8 +108,7 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
           newStatus === "No Response" ||
           newStatus === "Declined"
         ? "archived"
-        : newStatus === "Interviewing" ||
-          [
+        : [
             "Phone Screen",
             "Interview - Round 1",
             "Interview - Round 2",
@@ -80,6 +122,11 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
       taskId: taskId,
       updates: {
         status: systemStatus as Task["status"],
+        item_data: {
+          ...task.item_data,
+          status: newStatus,
+          status_history: updatedHistory,
+        },
       },
     });
   };
@@ -99,65 +146,29 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
   }
 
   return (
-    <div className="space-y-4 px-2 sm:px-0">
+    <div className="px-2 sm:px-0">
       {jobApplications.length === 0 ? (
-        /* Empty State Card */
-        <div
-          onClick={() => onCreateTask()}
-          className="flex flex-col items-center justify-center py-16 px-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors"
-          style={
-            {
-              "--hover-border-color": themeColor,
-            } as React.CSSProperties
-          }
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = themeColor;
+        <EmptyState
+          icon={Briefcase}
+          title="Add Your First Job Application"
+          description="Track your job search progress. Paste a job posting URL or manually enter details."
+          action={{
+            label: "Add Job Application",
+            onClick: onCreateTask,
           }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "";
-          }}
-        >
-          <div
-            className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
-            style={{ backgroundColor: `${themeColor}20` }}
-          >
-            <Plus className="w-8 h-8" style={{ color: themeColor }} />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-            Add Your First Job Application
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400 text-center max-w-sm">
-            Track your job search progress. Paste a job posting URL or manually
-            enter details.
-          </p>
-        </div>
+        />
       ) : (
-        <>
-          {/* Add Item Button */}
-          <div className="flex justify-end">
-            <Button
-              onClick={() => onCreateTask()}
-              variant="action"
-              size="sm"
-              icon={<Plus className="w-4 h-4" />}
-            >
-              <span className="hidden sm:inline">Add</span>
-              <span className="sm:hidden">Add Item</span>
-            </Button>
-          </div>
-
-          {/* Job Tracker Table */}
-          <JobTrackerTable
-            items={jobApplications}
-            onEdit={(id) => {
-              const task = tasks.find((t) => t.id === id);
-              if (task) onEditTask(task);
-            }}
-            onDelete={handleDelete}
-            onStatusChange={handleStatusChange}
-            statusOptions={statusOptions}
-          />
-        </>
+        <JobTrackerTable
+          items={jobApplications}
+          onEdit={(id) => {
+            const task = tasks.find((t) => t.id === id);
+            if (task) onEditTask(task);
+          }}
+          onDelete={handleDelete}
+          onStatusChange={handleStatusChange}
+          onAdd={onCreateTask}
+          statusOptions={statusOptions}
+        />
       )}
     </div>
   );

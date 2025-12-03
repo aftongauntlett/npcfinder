@@ -14,6 +14,8 @@ import Button from "../shared/ui/Button";
 import Input from "../shared/ui/Input";
 import CustomDropdown from "../ui/CustomDropdown";
 import type { Task } from "../../services/tasksService.types";
+import type { StatusHistoryEntry } from "../../services/tasksService.types";
+import { getTemplate } from "../../utils/boardTemplates";
 import {
   useTask,
   useUpdateTask,
@@ -72,6 +74,9 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   const [jobStatus, setJobStatus] = useState(
     (task.item_data?.status as string) || "Applied"
   );
+  const [statusHistory, setStatusHistory] = useState<StatusHistoryEntry[]>(
+    (task.item_data?.status_history as StatusHistoryEntry[]) || []
+  );
 
   // Recipe specific fields
   const [recipeName, setRecipeName] = useState(
@@ -112,10 +117,28 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   const deleteTask = useDeleteTask();
   const { themeColor } = useTheme();
 
+  // Track previous job status to detect changes
+  const [prevJobStatus, setPrevJobStatus] = useState(jobStatus);
+
   // Detect if this is a job tracker task
   const isJobTracker =
     task.item_data?.company_name !== undefined ||
     task.item_data?.position !== undefined;
+
+  // Get job tracker template for status options
+  const jobTrackerTemplate = getTemplate("job_tracker");
+  const jobStatusOptions = jobTrackerTemplate?.statusOptions || [
+    "Applied",
+    "Phone Screen",
+    "Interview - Round 1",
+    "Interview - Round 2",
+    "Interview - Round 3",
+    "Offer Received",
+    "Rejected",
+    "No Response",
+    "Accepted",
+    "Declined",
+  ];
 
   // Update form when task changes (including when fresh data is fetched)
   useEffect(() => {
@@ -134,7 +157,26 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     setLocation((task.item_data?.location as string) || "");
     setEmploymentType((task.item_data?.employment_type as string) || "");
     setJobNotes((task.item_data?.notes as string) || "");
-    setJobStatus((task.item_data?.status as string) || "Applied");
+    const currentJobStatus = (task.item_data?.status as string) || "Applied";
+    setJobStatus(currentJobStatus);
+    setPrevJobStatus(currentJobStatus); // Sync prevJobStatus to prevent duplicate entries
+
+    // Initialize status_history from existing array or create from date_applied for legacy tasks
+    const existingHistory = task.item_data
+      ?.status_history as StatusHistoryEntry[];
+    if (existingHistory && existingHistory.length > 0) {
+      setStatusHistory(existingHistory);
+    } else if (isJobTracker && task.item_data?.date_applied) {
+      // Legacy task with date_applied but no status_history
+      setStatusHistory([
+        {
+          status: currentJobStatus,
+          date: task.item_data.date_applied as string,
+        },
+      ]);
+    } else {
+      setStatusHistory([]);
+    }
 
     // Update recipe fields
     setRecipeName(
@@ -160,6 +202,18 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     setRecipeNotes((task.item_data?.notes as string) || "");
   }, [task]);
 
+  // Handle status changes - append to status history
+  useEffect(() => {
+    if (jobStatus !== prevJobStatus && isJobTracker) {
+      const newEntry: StatusHistoryEntry = {
+        status: jobStatus,
+        date: new Date().toISOString().split("T")[0],
+      };
+      setStatusHistory((prev) => [...prev, newEntry]);
+      setPrevJobStatus(jobStatus);
+    }
+  }, [jobStatus, prevJobStatus, isJobTracker]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -168,6 +222,15 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
     // Check if this is a job tracker task (by presence of job-specific fields in item_data)
     if (task.item_data?.company_name !== undefined || companyName || position) {
+      // Find the date of the first "Applied" status in history, or use existing date_applied
+      const appliedEntry = statusHistory.find(
+        (entry) => entry.status === "Applied"
+      );
+      const dateApplied =
+        appliedEntry?.date ||
+        (task.item_data?.date_applied as string) ||
+        new Date().toISOString().split("T")[0];
+
       item_data = {
         ...item_data,
         company_name: companyName,
@@ -178,9 +241,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         employment_type: employmentType,
         notes: jobNotes,
         status: jobStatus,
-        date_applied:
-          (task.item_data?.date_applied as string) ||
-          new Date().toISOString().split("T")[0],
+        date_applied: dateApplied,
+        status_history: statusHistory,
       };
     }
     // Check if this is a recipe task
@@ -459,16 +521,43 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
               label="Status"
               value={jobStatus}
               onChange={setJobStatus}
-              options={[
-                "Applied",
-                "Phone Screen",
-                "Interview",
-                "Offer",
-                "Accepted",
-                "Rejected",
-              ]}
+              options={jobStatusOptions}
               themeColor={themeColor}
             />
+
+            {/* Date for current status */}
+            {statusHistory.length > 0 && (
+              <div>
+                <label
+                  htmlFor="status-date"
+                  className="block text-sm font-medium text-primary mb-2"
+                >
+                  {jobStatus} Date
+                </label>
+                <DatePicker
+                  id="status-date"
+                  selected={
+                    statusHistory[statusHistory.length - 1]?.date
+                      ? new Date(statusHistory[statusHistory.length - 1].date)
+                      : new Date()
+                  }
+                  onChange={(date: Date | null) => {
+                    if (date && statusHistory.length > 0) {
+                      const updatedHistory = [...statusHistory];
+                      updatedHistory[updatedHistory.length - 1] = {
+                        ...updatedHistory[updatedHistory.length - 1],
+                        date: date.toISOString().split("T")[0],
+                      };
+                      setStatusHistory(updatedHistory);
+                    }
+                  }}
+                  dateFormat="MM/dd/yyyy"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white focus:outline-none transition-colors"
+                  wrapperClassName="w-full"
+                  calendarClassName="dark:bg-gray-800 dark:border-gray-700"
+                />
+              </div>
+            )}
 
             <div>
               <label

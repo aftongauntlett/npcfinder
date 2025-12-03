@@ -9,7 +9,6 @@ import "react-datepicker/dist/react-datepicker.css";
 import "../../styles/datepicker.css";
 import Modal from "../shared/ui/Modal";
 import Button from "../shared/ui/Button";
-import Input from "../shared/ui/Input";
 import CustomDropdown from "../ui/CustomDropdown";
 import type { CreateTaskData } from "../../services/tasksService.types";
 import { useCreateTask } from "../../hooks/useTasksQueries";
@@ -17,11 +16,21 @@ import { useUrlMetadata } from "../../hooks/useUrlMetadata";
 import { PRIORITY_OPTIONS } from "../../utils/taskConstants";
 import { Link, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { useTheme } from "../../hooks/useTheme";
+import { lightenColor, darkenColor } from "../../styles/colorThemes";
 import {
   applyJobMetadataToForm,
   applyRecipeMetadataToForm,
   applyGenericMetadataToForm,
 } from "../../utils/metadataFormHelpers";
+
+// Helper to get local date in YYYY-MM-DD format (not UTC)
+const getLocalDateString = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 interface CreateTaskModalProps {
   isOpen: boolean;
@@ -66,6 +75,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   const [salaryRange, setSalaryRange] = useState("");
   const [location, setLocation] = useState("");
   const [employmentType, setEmploymentType] = useState("");
+  const [jobDescription, setJobDescription] = useState("");
   const [jobNotes, setJobNotes] = useState("");
   const [status, setStatus] = useState("Applied");
 
@@ -203,14 +213,14 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         salary_range: salaryRange || "",
         location: location || "",
         employment_type: employmentType || "",
-        date_applied: new Date().toISOString().split("T")[0],
-        notes: jobNotes || description || "",
+        date_applied: getLocalDateString(),
+        job_description: jobDescription || "",
+        notes: jobNotes || "",
         status: status,
-        timeline: [
+        status_history: [
           {
-            date: new Date().toISOString().split("T")[0],
-            status: "Applied",
-            label: "Date Applied",
+            status: status,
+            date: getLocalDateString(),
           },
         ],
       };
@@ -278,6 +288,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
           setSalaryRange("");
           setLocation("");
           setEmploymentType("");
+          setJobDescription("");
           setJobNotes("");
           // Reset recipe fields
           setRecipeName("");
@@ -321,10 +332,19 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
       >
         {/* Quick Add from URL - Only for recipe boards (job tracker has it integrated below) */}
         {boardType === "recipe" && (
-          <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+          <div
+            className="rounded-lg p-4"
+            style={{
+              backgroundColor: lightenColor(themeColor, 0.9),
+              borderWidth: "1px",
+              borderStyle: "solid",
+              borderColor: lightenColor(themeColor, 0.6),
+            }}
+          >
             <label
               htmlFor="task-url"
-              className="flex items-center gap-2 text-sm font-medium text-purple-900 dark:text-purple-200 mb-2"
+              className="flex items-center gap-2 text-sm font-medium mb-2"
+              style={{ color: darkenColor(themeColor, 0.4) }}
             >
               <Link className="w-4 h-4" />
               Quick Add from URL (Optional)
@@ -336,10 +356,22 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 value={url}
                 onChange={(e) => void handleUrlChange(e.target.value)}
                 placeholder="Paste a recipe URL..."
-                className="block w-full rounded-lg border border-purple-300 dark:border-purple-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 px-3 py-2.5 pr-10 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-transparent transition-colors"
+                className="block w-full rounded-lg border bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 px-3 py-2.5 pr-10 focus:outline-none focus:border-transparent transition-colors"
+                style={{ borderColor: lightenColor(themeColor, 0.6) }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = themeColor;
+                  e.target.style.boxShadow = `0 0 0 3px ${themeColor}33`;
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = lightenColor(themeColor, 0.6);
+                  e.target.style.boxShadow = "";
+                }}
               />
               {urlLoading && (
-                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-500 animate-spin" />
+                <Loader2
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 animate-spin"
+                  style={{ color: themeColor }}
+                />
               )}
             </div>
             {/* URL Feedback Message */}
@@ -361,7 +393,10 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 <span>{urlFeedback.message}</span>
               </div>
             )}
-            <p className="text-xs text-purple-700 dark:text-purple-300 mt-2">
+            <p
+              className="text-xs mt-2"
+              style={{ color: darkenColor(themeColor, 0.3) }}
+            >
               Auto-fills title and details as soon as you paste a link
             </p>
           </div>
@@ -384,7 +419,11 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               placeholder="What needs to be done?"
               required
               maxLength={200}
-              className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-transparent transition-colors"
+              className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 px-3 py-2.5 focus:outline-none focus:border-transparent transition-colors"
+              onFocus={(e) =>
+                (e.target.style.boxShadow = `0 0 0 3px ${themeColor}33`)
+              }
+              onBlur={(e) => (e.target.style.boxShadow = "")}
             />
           </div>
         )}
@@ -406,7 +445,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               rows={3}
               maxLength={1000}
               required
-              className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-transparent transition-colors"
+              className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 px-3 py-2.5 focus:outline-none  focus:border-transparent transition-colors"
             />
           </div>
         )}
@@ -636,11 +675,11 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               </label>
               <textarea
                 id="job-description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Brief description of the role..."
-                rows={4}
-                className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 transition-colors"
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+                placeholder="Paste or type the full job description here..."
+                rows={8}
+                className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 transition-colors resize-y"
                 style={{
                   outlineColor: themeColor,
                 }}
@@ -666,8 +705,8 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 value={jobNotes}
                 onChange={(e) => setJobNotes(e.target.value)}
                 placeholder="Interview notes, contacts, follow-ups, etc."
-                rows={4}
-                className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 transition-colors"
+                rows={8}
+                className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 transition-colors resize-y"
                 style={{
                   outlineColor: themeColor,
                 }}
@@ -704,7 +743,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                   value={recipeName}
                   onChange={(e) => setRecipeName(e.target.value)}
                   placeholder="Chocolate Chip Cookies"
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
+                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none "
                 />
               </div>
               <div>
@@ -720,7 +759,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                   value={recipeUrl}
                   onChange={(e) => setRecipeUrl(e.target.value)}
                   placeholder="https://recipe-site.com/..."
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
+                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none "
                 />
               </div>
               <div>
@@ -736,7 +775,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                   value={prepTime}
                   onChange={(e) => setPrepTime(e.target.value)}
                   placeholder="15 minutes"
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
+                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none "
                 />
               </div>
               <div>
@@ -752,7 +791,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                   value={cookTime}
                   onChange={(e) => setCookTime(e.target.value)}
                   placeholder="30 minutes"
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
+                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none "
                 />
               </div>
               <div>
@@ -768,7 +807,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                   value={totalTime}
                   onChange={(e) => setTotalTime(e.target.value)}
                   placeholder="45 minutes"
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
+                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none "
                 />
               </div>
               <div>
@@ -784,7 +823,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                   value={servings}
                   onChange={(e) => setServings(e.target.value)}
                   placeholder="4"
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
+                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none "
                 />
               </div>
             </div>
@@ -801,7 +840,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 onChange={(e) => setIngredients(e.target.value)}
                 placeholder="2 cups flour&#10;1 cup sugar&#10;2 eggs"
                 rows={4}
-                className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
+                className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none "
               />
             </div>
             <div>
@@ -817,7 +856,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 onChange={(e) => setInstructions(e.target.value)}
                 placeholder="Preheat oven to 350°F&#10;Mix dry ingredients&#10;Add wet ingredients"
                 rows={4}
-                className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
+                className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none "
               />
             </div>
             <div>
@@ -833,7 +872,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 onChange={(e) => setRecipeNotes(e.target.value)}
                 placeholder="Personal notes, modifications, etc."
                 rows={2}
-                className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
+                className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none "
               />
             </div>
           </div>
@@ -897,8 +936,8 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                   placeholderText="Select a date"
                   minDate={new Date()}
                   showPopperArrow={false}
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2.5 pr-10 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-transparent transition-colors"
-                  calendarClassName="bg-white dark:bg-gray-800 border-2 border-purple-500 dark:border-purple-400 rounded-lg shadow-xl"
+                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2.5 pr-10 focus:outline-none  focus:border-transparent transition-colors"
+                  calendarClassName="bg-white dark:bg-gray-800 border-2 rounded-lg shadow-xl"
                   wrapperClassName="flex-1"
                 />
               </div>
@@ -923,7 +962,10 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                     }}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-300 dark:bg-gray-600 rounded-full peer peer-checked:bg-purple-500 dark:peer-checked:bg-purple-400 transition-colors"></div>
+                  <div
+                    className="w-11 h-6 bg-gray-300 dark:bg-gray-600 rounded-full peer transition-colors"
+                    style={isRepeatable ? { backgroundColor: themeColor } : {}}
+                  ></div>
                   <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
                 </div>
                 <div>
@@ -967,11 +1009,18 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                             | "custom"
                         )
                       }
-                      className={`px-3 py-2 rounded-lg border-2 transition-all text-sm ${
+                      className="px-3 py-2 rounded-lg border-2 transition-all text-sm"
+                      style={
                         repeatFrequency === option.value
-                          ? "border-purple-500 dark:border-purple-400 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300"
-                          : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300"
-                      }`}
+                          ? {
+                              borderColor: themeColor,
+                              backgroundColor: lightenColor(themeColor, 0.9),
+                              color: darkenColor(themeColor, 0.3),
+                            }
+                          : {
+                              borderColor: "",
+                            }
+                      }
                     >
                       {option.label}
                     </button>
@@ -998,7 +1047,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                           Math.max(1, parseInt(e.target.value) || 1)
                         )
                       }
-                      className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white focus:outline-none "
                     />
                   </div>
                 )}

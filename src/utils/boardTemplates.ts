@@ -37,6 +37,13 @@ export interface BoardTemplate {
 
 /**
  * Job Application Tracker Template
+ *
+ * The item_data field for job tracker tasks includes:
+ * - status_history: Array of StatusHistoryEntry objects tracking each status change
+ *   - Each entry contains: { status: string, date: string (YYYY-MM-DD), notes?: string }
+ *   - The first entry represents the initial application
+ *   - New entries are appended when status changes
+ * - date_applied: The date of initial application (also tracked in status_history)
  */
 export const JOB_TRACKER_TEMPLATE: BoardTemplate = {
   id: "job_tracker",
@@ -67,10 +74,30 @@ export const JOB_TRACKER_TEMPLATE: BoardTemplate = {
       placeholder: "Software Engineer",
     },
     {
+      id: "location",
+      label: "Location",
+      type: "text",
+      placeholder: "City, State or Remote",
+    },
+    {
+      id: "location_type",
+      label: "Work Location",
+      type: "select",
+      options: ["Remote", "Hybrid", "In-Office"],
+      placeholder: "Select work location type",
+    },
+    {
       id: "salary_range",
       label: "Salary Range",
       type: "text",
       placeholder: "$100k - $150k",
+    },
+    {
+      id: "employment_type",
+      label: "Employment Type",
+      type: "select",
+      options: ["Full-time", "Part-time", "Contract", "Internship"],
+      placeholder: "Select employment type",
     },
     {
       id: "date_applied",
