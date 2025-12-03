@@ -4,12 +4,7 @@
  * Defines available board templates with their fields and configurations
  */
 
-export type TemplateType =
-  | "job_tracker"
-  | "markdown"
-  | "recipe"
-  | "kanban"
-  | "custom";
+export type TemplateType = "job_tracker" | "markdown" | "recipe" | "kanban";
 
 export type ViewType = "table" | "checklist" | "cards" | "kanban" | "list";
 
@@ -267,16 +262,6 @@ export const BOARD_TEMPLATES: Record<TemplateType, BoardTemplate> = {
   markdown: MARKDOWN_TODO_TEMPLATE,
   recipe: RECIPE_TEMPLATE,
   kanban: KANBAN_TEMPLATE,
-  custom: {
-    id: "custom",
-    name: "Custom Board",
-    description: "Create your own board with custom fields",
-    icon: "Wrench",
-    emoji: "🔧",
-    defaultView: "list",
-    fields: [],
-    statusOptions: ["Active", "Completed"],
-  },
 };
 
 /**
@@ -294,8 +279,8 @@ export function getAllTemplates(): BoardTemplate[] {
 }
 
 /**
- * Get featured templates (exclude custom)
+ * Get featured templates
  */
 export function getFeaturedTemplates(): BoardTemplate[] {
-  return getAllTemplates().filter((t) => t.id !== "custom");
+  return getAllTemplates();
 }

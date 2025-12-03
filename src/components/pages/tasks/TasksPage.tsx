@@ -1,39 +1,33 @@
 /**
  * Tasks Page
  *
- * Horizontal tab layout with:
- * - Tasks (unassigned) + Boards tabs + Dynamic board tabs
- * - Content area (selected view)
+ * Features:
+ * - Tasks: Unassigned tasks (no board)
+ * - Kanban: Kanban template boards
+ * - Job Applications: Job tracker template boards
+ * - Recipes: Recipe template boards
  */
 
 import React, { useState, useMemo } from "react";
-import { ListChecks, LayoutGrid } from "lucide-react";
+import {
+  ListChecks,
+  LayoutGrid,
+  Briefcase,
+  ChefHat,
+  ListTodo,
+} from "lucide-react";
 import AppLayout from "../../layouts/AppLayout";
 import InboxView from "./InboxView";
-import BoardsView from "./BoardsView";
-import BoardContentView from "./BoardContentView";
+import TemplateView from "./TemplateView";
 import CreateTaskModal from "../../tasks/CreateTaskModal";
 import RecipeFormModal from "../../tasks/RecipeFormModal";
 import TaskDetailModal from "../../tasks/TaskDetailModal";
 import { useBoards, useTasks } from "../../../hooks/useTasksQueries";
-import { useIsMobile } from "../../../hooks/useIsMobile";
 
-type ViewType = "tasks" | "boards" | { type: "board"; boardId: string };
+type ViewType = "tasks" | "todo" | "kanban" | "job_applications" | "recipes";
 
-// Maximum number of board tabs that can be open at once
-const MAX_OPEN_BOARDS = 5;
-
-/**
- * Tasks Page
- *
- * Features:
- * - Tasks: Unassigned tasks (no board)
- * - Boards: Overview of all boards
- * - Individual boards: Dynamic tabs for each opened board
- */
 const TasksPage: React.FC = () => {
   const [selectedView, setSelectedView] = useState<ViewType>("tasks");
-  const [openBoardIds, setOpenBoardIds] = useState<string[]>([]);
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [createTaskBoardId, setCreateTaskBoardId] = useState<
     string | undefined
@@ -45,7 +39,24 @@ const TasksPage: React.FC = () => {
 
   const { data: boards = [] } = useBoards();
   const { data: tasks = [] } = useTasks();
-  const isMobile = useIsMobile();
+
+  // Filter boards by template type
+  const todoBoards = useMemo(
+    () => boards.filter((b) => b.template_type === "markdown"),
+    [boards]
+  );
+  const kanbanBoards = useMemo(
+    () => boards.filter((b) => b.template_type === "kanban"),
+    [boards]
+  );
+  const jobBoards = useMemo(
+    () => boards.filter((b) => b.template_type === "job_tracker"),
+    [boards]
+  );
+  const recipeBoards = useMemo(
+    () => boards.filter((b) => b.template_type === "recipe"),
+    [boards]
+  );
 
   // Find task being edited
   const editingTask = useMemo(() => {
@@ -61,75 +72,61 @@ const TasksPage: React.FC = () => {
 
   // Dynamic title based on current view
   const pageTitle = useMemo(() => {
-    if (typeof selectedView === "string") {
-      return selectedView === "tasks" ? "Tasks" : "Boards";
+    switch (selectedView) {
+      case "tasks":
+        return "Tasks";
+      case "todo":
+        return "To-Do Lists";
+      case "kanban":
+        return "Kanban";
+      case "job_applications":
+        return "Job Applications";
+      case "recipes":
+        return "Recipes";
+      default:
+        return "Tasks";
     }
-    const board = boards.find((b) => b.id === selectedView.boardId);
-    return board?.name || "Board";
-  }, [selectedView, boards]);
+  }, [selectedView]);
 
-  // Build tabs array: Tasks + Boards + Open Board Tabs
+  // Build tabs array with template-specific views
   const tabs = useMemo(() => {
-    const baseTabs = [
+    return [
       {
         id: "tasks",
         label: "Tasks",
         icon: ListChecks,
       },
       {
-        id: "boards",
-        label: "Boards",
+        id: "todo",
+        label: "To-Do Lists",
+        icon: ListTodo,
+        badge: todoBoards.length > 0 ? todoBoards.length : undefined,
+      },
+      {
+        id: "kanban",
+        label: "Kanban",
         icon: LayoutGrid,
-        badge: boards.length > 0 ? boards.length : undefined,
+        badge: kanbanBoards.length > 0 ? kanbanBoards.length : undefined,
+      },
+      {
+        id: "job_applications",
+        label: "Job Applications",
+        icon: Briefcase,
+        badge: jobBoards.length > 0 ? jobBoards.length : undefined,
+      },
+      {
+        id: "recipes",
+        label: "Recipes",
+        icon: ChefHat,
+        badge: recipeBoards.length > 0 ? recipeBoards.length : undefined,
       },
     ];
-
-    // On mobile, skip dynamic board tabs
-    if (isMobile) {
-      return baseTabs;
-    }
-
-    // Add tabs for open boards (desktop only)
-    const boardTabs = openBoardIds.map((boardId) => {
-      const board = boards.find((b) => b.id === boardId);
-      return {
-        id: `board-${boardId}`,
-        label: board?.name || "Board",
-        closeable: true,
-      };
-    });
-
-    return [...baseTabs, ...boardTabs];
-  }, [boards, openBoardIds, isMobile]);
-
-  // Get active tab ID from selectedView
-  const activeTabId = useMemo(() => {
-    if (typeof selectedView === "string") {
-      return selectedView;
-    }
-    return `board-${selectedView.boardId}`;
-  }, [selectedView]);
-
-  // Handle board selection - opens new tab (desktop) or navigates (mobile handled in BoardsView)
-  const handleSelectBoard = (boardId: string) => {
-    // Skip tab management on mobile
-    if (isMobile) {
-      setSelectedView({ type: "board", boardId });
-      return;
-    }
-
-    if (!openBoardIds.includes(boardId)) {
-      let updatedBoardIds = [...openBoardIds, boardId];
-
-      // If we exceed max tabs, remove the oldest (first) board tab
-      if (updatedBoardIds.length > MAX_OPEN_BOARDS) {
-        updatedBoardIds = updatedBoardIds.slice(1);
-      }
-
-      setOpenBoardIds(updatedBoardIds);
-    }
-    setSelectedView({ type: "board", boardId });
-  };
+  }, [
+    todoBoards.length,
+    kanbanBoards.length,
+    jobBoards.length,
+    recipeBoards.length,
+  ]);
 
   // Handle create task from board
   const handleCreateTask = (boardId: string, sectionId?: string) => {
@@ -145,30 +142,7 @@ const TasksPage: React.FC = () => {
 
   // Handle tab change
   const handleTabChange = (tabId: string) => {
-    if (tabId === "tasks") {
-      setSelectedView("tasks");
-    } else if (tabId === "boards") {
-      setSelectedView("boards");
-    } else if (tabId.startsWith("board-")) {
-      const boardId = tabId.replace("board-", "");
-      setSelectedView({ type: "board", boardId });
-    }
-  };
-
-  // Handle tab close
-  const handleCloseTab = (tabId: string) => {
-    if (tabId.startsWith("board-")) {
-      const boardId = tabId.replace("board-", "");
-      setOpenBoardIds(openBoardIds.filter((id) => id !== boardId));
-
-      // If closing active tab, switch to boards view
-      if (
-        typeof selectedView === "object" &&
-        selectedView.boardId === boardId
-      ) {
-        setSelectedView("boards");
-      }
-    }
+    setSelectedView(tabId as ViewType);
   };
 
   return (
@@ -176,23 +150,43 @@ const TasksPage: React.FC = () => {
       title={pageTitle}
       description="Quick access to one-off tasks and to-dos. Use boards for organized projects and workflows."
       tabs={tabs}
-      activeTab={activeTabId}
+      activeTab={selectedView}
       onTabChange={handleTabChange}
-      onTabClose={handleCloseTab}
     >
       {/* Content */}
-      <div role="tabpanel" id={`${activeTabId}-panel`}>
+      <div role="tabpanel" id={`${selectedView}-panel`}>
         {selectedView === "tasks" && <InboxView />}
-        {selectedView === "boards" && (
-          <BoardsView
-            onSelectBoard={handleSelectBoard}
+        {selectedView === "todo" && (
+          <TemplateView
+            templateType="markdown"
+            boards={todoBoards}
             onCreateTask={handleCreateTask}
             onEditTask={handleEditTask}
-            isMobile={isMobile}
           />
         )}
-        {typeof selectedView === "object" && selectedView.type === "board" && (
-          <BoardContentView boardId={selectedView.boardId} />
+        {selectedView === "kanban" && (
+          <TemplateView
+            templateType="kanban"
+            boards={kanbanBoards}
+            onCreateTask={handleCreateTask}
+            onEditTask={handleEditTask}
+          />
+        )}
+        {selectedView === "job_applications" && (
+          <TemplateView
+            templateType="job_tracker"
+            boards={jobBoards}
+            onCreateTask={handleCreateTask}
+            onEditTask={handleEditTask}
+          />
+        )}
+        {selectedView === "recipes" && (
+          <TemplateView
+            templateType="recipe"
+            boards={recipeBoards}
+            onCreateTask={handleCreateTask}
+            onEditTask={handleEditTask}
+          />
         )}
       </div>
 

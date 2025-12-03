@@ -68,7 +68,7 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
   return (
     <motion.div
       onClick={handleCardClick}
-      className={`relative bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 hover:border-white/20 hover:bg-white/10 transition-all duration-300 cursor-pointer group overflow-hidden ${className}`}
+      className={`relative bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 hover:border-white/20 hover:bg-gray-900/[0.04] dark:hover:bg-gray-900 transition-all duration-300 cursor-pointer group overflow-hidden ${className}`}
     >
       {/* Header */}
       <div className="p-4">
@@ -95,7 +95,7 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
           <div className="flex items-center gap-2 flex-shrink-0">
             {/* Quick action buttons - visible on hover on desktop, always visible on mobile */}
             <div
-              className="flex items-center gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity"
+              className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
               data-action-buttons
             >
               {onOpenInTab && isExpanded && (
@@ -104,7 +104,7 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
                     e.stopPropagation();
                     onOpenInTab();
                   }}
-                  className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-gray-400 hover:text-white"
+                  className="h-8 w-8 p-0 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
                   aria-label="Open in new tab"
                   title="Open in new tab"
                 >
@@ -117,7 +117,7 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
                     e.stopPropagation();
                     onEdit();
                   }}
-                  className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-gray-400 hover:text-white"
+                  className="h-8 w-8 p-0 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
                   aria-label="Edit"
                 >
                   <Edit2 className="w-4 h-4" />
@@ -129,7 +129,7 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
                     e.stopPropagation();
                     onDelete();
                   }}
-                  className="p-1.5 rounded-lg hover:bg-red-500/20 transition-colors text-gray-400 hover:text-red-400"
+                  className="h-8 w-8 p-0 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
                   aria-label="Delete"
                 >
                   <Trash2 className="w-4 h-4" />

@@ -1,41 +1,75 @@
 /**
- * Boards View
+ * Template View
  *
- * Displays all Kanban boards in a list view similar to Tasks
+ * Displays boards for a specific template type
+ * Replaces the accordion-based BoardsView with template-specific card views
  */
 
 import React, { useState, useMemo } from "react";
-import { Plus, LayoutGrid } from "lucide-react";
+import { Plus, LayoutGrid, Briefcase, ChefHat, ListTodo } from "lucide-react";
 import Button from "../../shared/ui/Button";
 import MediaEmptyState from "../../media/MediaEmptyState";
 import BoardFormModal from "../../tasks/BoardFormModal";
 import BoardCard from "../../tasks/BoardCard";
+import { JobTrackerView } from "../../tasks/views/JobTrackerView";
+import { RecipeListView } from "../../tasks/views/RecipeListView";
 import ConfirmDialog from "../../shared/ui/ConfirmDialog";
 import FilterSortMenu, {
   FilterSortSection,
 } from "../../shared/common/FilterSortMenu";
 import {
-  useBoards,
   useDeleteBoard,
   useUpdateBoard,
   useDeleteTask,
 } from "../../../hooks/useTasksQueries";
 import type { BoardWithStats } from "../../../services/tasksService.types";
+import type { TemplateType } from "../../../utils/boardTemplates";
 
-interface BoardsViewProps {
-  onSelectBoard: (boardId: string) => void;
+interface TemplateViewProps {
+  templateType: TemplateType;
+  boards: BoardWithStats[];
   onCreateTask?: (boardId: string, sectionId?: string) => void;
   onEditTask?: (taskId: string) => void;
-  isMobile?: boolean;
 }
 
-const BoardsView: React.FC<BoardsViewProps> = ({
-  onSelectBoard,
+// Template metadata
+const TEMPLATE_META = {
+  kanban: {
+    icon: LayoutGrid,
+    title: "Kanban Boards",
+    emptyTitle: "No kanban boards yet",
+    emptyDescription:
+      "Create a kanban board to organize tasks in columns with drag-and-drop functionality.",
+  },
+  markdown: {
+    icon: ListTodo,
+    title: "To-Do Lists",
+    emptyTitle: "No to-do lists yet",
+    emptyDescription:
+      "Create a markdown-style to-do list with support for formatting and bullets.",
+  },
+  job_tracker: {
+    icon: Briefcase,
+    title: "Job Applications",
+    emptyTitle: "No job applications yet",
+    emptyDescription:
+      "Track your job search progress with company details and application status.",
+  },
+  recipe: {
+    icon: ChefHat,
+    title: "Recipes",
+    emptyTitle: "No recipes yet",
+    emptyDescription:
+      "Save and organize your favorite recipes with ingredients and instructions.",
+  },
+};
+
+const TemplateView: React.FC<TemplateViewProps> = ({
+  templateType,
+  boards,
   onCreateTask,
   onEditTask,
-  isMobile = false,
 }) => {
-  const { data: boards = [], isLoading } = useBoards();
   const deleteBoard = useDeleteBoard();
   const updateBoard = useUpdateBoard();
   const deleteTask = useDeleteTask();
@@ -52,6 +86,14 @@ const BoardsView: React.FC<BoardsViewProps> = ({
   });
   const [draggedBoard, setDraggedBoard] = useState<BoardWithStats | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
+
+  const meta =
+    TEMPLATE_META[templateType as keyof typeof TEMPLATE_META] ||
+    TEMPLATE_META.kanban;
+
+  // Only kanban and markdown templates allow multiple boards
+  const allowsMultipleBoards =
+    templateType === "kanban" || templateType === "markdown";
 
   const handleDeleteBoard = () => {
     if (deletingBoard) {
@@ -131,6 +173,7 @@ const BoardsView: React.FC<BoardsViewProps> = ({
 
     setDraggedBoard(null);
   };
+
   const isCustomSort = activeFilters.sort === "custom";
 
   // Filter/sort sections for FilterSortMenu
@@ -175,35 +218,90 @@ const BoardsView: React.FC<BoardsViewProps> = ({
     }
   }, [boards, activeFilters.sort]);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-600 dark:text-gray-400">
-          Loading boards...
-        </div>
-      </div>
-    );
-  }
-
   if (boards.length === 0) {
     return (
       <div className="container mx-auto px-4 sm:px-6">
         <MediaEmptyState
-          icon={LayoutGrid}
-          title="No boards yet"
-          description="Create boards from templates: Kanban for visual workflows, Job Tracker for applications, Recipe boards for cooking, or Markdown lists for simple notes."
-          onClick={() => setShowCreateModal(true)}
-          ariaLabel="Create your first board"
+          icon={meta.icon}
+          title={meta.emptyTitle}
+          description={meta.emptyDescription}
+          onClick={
+            allowsMultipleBoards ? () => setShowCreateModal(true) : undefined
+          }
+          ariaLabel={
+            allowsMultipleBoards
+              ? `Create your first ${templateType} board`
+              : undefined
+          }
         />
 
-        <BoardFormModal
-          isOpen={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
-        />
+        {allowsMultipleBoards && (
+          <BoardFormModal
+            isOpen={showCreateModal}
+            onClose={() => setShowCreateModal(false)}
+            preselectedTemplate={templateType}
+          />
+        )}
       </div>
     );
   }
 
+  // For job_tracker and recipe templates, show the list view directly (no board cards)
+  if (templateType === "job_tracker" && boards.length > 0) {
+    const board = sortedBoards[0]; // Use the first (and typically only) board
+    return (
+      <div className="container mx-auto px-4 sm:px-6">
+        <JobTrackerView
+          boardId={board.id}
+          onCreateTask={() => onCreateTask?.(board.id)}
+          onEditTask={(task) => onEditTask?.(task.id)}
+          onDeleteTask={(taskId) => setDeletingTask(taskId)}
+        />
+
+        {/* Delete Task Confirmation */}
+        {deletingTask && (
+          <ConfirmDialog
+            isOpen={!!deletingTask}
+            onClose={() => setDeletingTask(null)}
+            onConfirm={handleDeleteTask}
+            title="Delete Job Application?"
+            message="Are you sure you want to delete this job application? This action cannot be undone."
+            confirmText="Delete"
+            variant="danger"
+          />
+        )}
+      </div>
+    );
+  }
+
+  if (templateType === "recipe" && boards.length > 0) {
+    const board = sortedBoards[0]; // Use the first (and typically only) board
+    return (
+      <div className="container mx-auto px-4 sm:px-6">
+        <RecipeListView
+          boardId={board.id}
+          onCreateTask={() => onCreateTask?.(board.id)}
+          onViewRecipe={(task) => onEditTask?.(task.id)}
+          onDeleteTask={(taskId) => setDeletingTask(taskId)}
+        />
+
+        {/* Delete Task Confirmation */}
+        {deletingTask && (
+          <ConfirmDialog
+            isOpen={!!deletingTask}
+            onClose={() => setDeletingTask(null)}
+            onConfirm={handleDeleteTask}
+            title="Delete Recipe?"
+            message="Are you sure you want to delete this recipe? This action cannot be undone."
+            confirmText="Delete"
+            variant="danger"
+          />
+        )}
+      </div>
+    );
+  }
+
+  // For kanban and markdown templates, show board cards
   return (
     <div className="container mx-auto px-4 sm:px-6">
       {/* Header */}
@@ -218,14 +316,16 @@ const BoardsView: React.FC<BoardsViewProps> = ({
           label="Sort"
         />
 
-        <Button
-          onClick={() => setShowCreateModal(true)}
-          variant="action"
-          size="md"
-          icon={<Plus className="w-5 h-5" />}
-        >
-          Create Board
-        </Button>
+        {allowsMultipleBoards && (
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            variant="action"
+            size="md"
+            icon={<Plus className="w-5 h-5" />}
+          >
+            Create Board
+          </Button>
+        )}
       </div>
 
       {/* Boards List */}
@@ -303,18 +403,21 @@ const BoardsView: React.FC<BoardsViewProps> = ({
 
               <BoardCard
                 board={board}
-                onEdit={() => setEditingBoard(board)}
-                onDelete={() => setDeletingBoard(board)}
-                onOpenInTab={
-                  isMobile ? undefined : () => onSelectBoard(board.id)
+                onEdit={
+                  allowsMultipleBoards
+                    ? () => setEditingBoard(board)
+                    : undefined
                 }
-                onClick={isMobile ? () => onSelectBoard(board.id) : undefined}
+                onDelete={
+                  allowsMultipleBoards
+                    ? () => setDeletingBoard(board)
+                    : undefined
+                }
                 onCreateTask={(sectionId) =>
                   onCreateTask?.(board.id, sectionId)
                 }
                 onEditTask={(task) => onEditTask?.(task.id)}
                 onDeleteTask={(taskId) => setDeletingTask(taskId)}
-                isMobile={isMobile}
                 isStarter={isStarter}
               />
             </div>
@@ -322,14 +425,17 @@ const BoardsView: React.FC<BoardsViewProps> = ({
         })}
       </div>
 
-      {/* Create Board Modal */}
-      <BoardFormModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-      />
+      {/* Create Board Modal - only for multi-board templates */}
+      {allowsMultipleBoards && (
+        <BoardFormModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          preselectedTemplate={templateType}
+        />
+      )}
 
-      {/* Edit Board Modal */}
-      {editingBoard && (
+      {/* Edit Board Modal - only for multi-board templates */}
+      {allowsMultipleBoards && editingBoard && (
         <BoardFormModal
           isOpen={!!editingBoard}
           onClose={() => setEditingBoard(null)}
@@ -337,8 +443,8 @@ const BoardsView: React.FC<BoardsViewProps> = ({
         />
       )}
 
-      {/* Delete Confirmation */}
-      {deletingBoard && (
+      {/* Delete Board Confirmation - only for multi-board templates */}
+      {allowsMultipleBoards && deletingBoard && (
         <ConfirmDialog
           isOpen={!!deletingBoard}
           onClose={() => setDeletingBoard(null)}
@@ -356,8 +462,8 @@ const BoardsView: React.FC<BoardsViewProps> = ({
           isOpen={!!deletingTask}
           onClose={() => setDeletingTask(null)}
           onConfirm={handleDeleteTask}
-          title="Delete Job Application?"
-          message="Are you sure you want to delete this job application? This action cannot be undone."
+          title="Delete Task?"
+          message="Are you sure you want to delete this task? This action cannot be undone."
           confirmText="Delete"
           variant="danger"
         />
@@ -366,4 +472,4 @@ const BoardsView: React.FC<BoardsViewProps> = ({
   );
 };
 
-export default BoardsView;
+export default TemplateView;

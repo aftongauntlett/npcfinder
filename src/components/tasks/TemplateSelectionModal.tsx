@@ -68,6 +68,10 @@ const TemplateSelectionModal: React.FC<TemplateSelectionModalProps> = ({
         <h2 className="text-2xl font-bold text-primary mb-6 font-heading">
           Choose a Board Template
         </h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          Select from four predefined templates: Kanban, To-Do List, Job
+          Applications, or Recipes
+        </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {templates.map((template) => (

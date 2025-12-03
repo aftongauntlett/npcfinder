@@ -45,6 +45,7 @@ interface BoardFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   board?: Board; // If provided, edit mode; otherwise create mode
+  preselectedTemplate?: TemplateType; // Pre-select template type (for template-specific views)
 }
 
 const ICON_OPTIONS = [
@@ -73,6 +74,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
   isOpen,
   onClose,
   board,
+  preselectedTemplate,
 }) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -196,7 +198,6 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
         document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [showTemplateDropdown]);
-
   // Populate form when editing
   useEffect(() => {
     if (board) {
@@ -209,19 +210,21 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
       setNameError("");
       setIsNameAutoFilled(false);
     } else {
-      // Reset form for new board - auto-fill with default template
-      const template = getTemplate("markdown" as TemplateType);
+      // Reset form for new board - use preselected template or default
+      const defaultTemplate =
+        preselectedTemplate || ("markdown" as TemplateType);
+      const template = getTemplate(defaultTemplate);
       const uniqueName = generateUniqueBoardName(template.name);
       setName(uniqueName);
       setDescription(template.description);
       setIconName("");
       setColor(themeColor);
       setIsPublic(false);
-      setTemplateType("markdown");
+      setTemplateType(defaultTemplate);
       setNameError("");
       setIsNameAutoFilled(true);
     }
-  }, [board, isOpen, generateUniqueBoardName, themeColor]);
+  }, [board, isOpen, generateUniqueBoardName, themeColor, preselectedTemplate]);
 
   // Handle template type change - auto-fill name and description
   const handleTemplateChange = (newTemplateType: string) => {
@@ -444,8 +447,16 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
           <div ref={templateDropdownRef} className="relative">
             <button
               type="button"
-              onClick={() => setShowTemplateDropdown(!showTemplateDropdown)}
-              className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white text-left focus:outline-none focus:ring-2 focus:border-transparent transition-colors"
+              onClick={() =>
+                !preselectedTemplate &&
+                setShowTemplateDropdown(!showTemplateDropdown)
+              }
+              disabled={!!preselectedTemplate || !!board}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-left focus:outline-none focus:ring-2 focus:border-transparent transition-colors ${
+                preselectedTemplate || board
+                  ? "bg-gray-100 dark:bg-gray-800/50 cursor-not-allowed opacity-60"
+                  : "bg-white dark:bg-gray-700/50"
+              }`}
               style={
                 {
                   "--tw-ring-color": themeColor,
@@ -458,7 +469,9 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
                 {templateType === "job_tracker" && "Job Applications"}
                 {templateType === "recipe" && "Recipe Collection"}
               </span>
-              <ChevronDown className="w-4 h-4 text-gray-500" />
+              {!preselectedTemplate && !board && (
+                <ChevronDown className="w-4 h-4 text-gray-500" />
+              )}
             </button>
 
             {showTemplateDropdown && (
@@ -527,7 +540,9 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
             )}
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Choose how this board will display and organize items
+            {preselectedTemplate || board
+              ? "Template type cannot be changed"
+              : "Choose how this board will display and organize items"}
           </p>
         </div>
 

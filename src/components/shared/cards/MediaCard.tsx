@@ -53,9 +53,9 @@ const MediaCard: React.FC<MediaCardProps> = ({
     <SparkleEffect>
       <Card
         variant="interactive"
-        hover="lift"
+        hover="none"
         spacing="none"
-        className={`overflow-hidden ${className}`}
+        className={`overflow-hidden hover:bg-gray-900/[0.04] dark:hover:bg-gray-900 transition-colors ${className}`}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         clickable

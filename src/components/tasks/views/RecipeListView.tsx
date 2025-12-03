@@ -9,12 +9,14 @@ interface RecipeListViewProps {
   boardId: string;
   onCreateTask: () => void;
   onViewRecipe: (task: Task) => void;
+  onDeleteTask?: (taskId: string) => void;
 }
 
 export const RecipeListView: React.FC<RecipeListViewProps> = ({
   boardId,
   onCreateTask,
   onViewRecipe,
+  onDeleteTask,
 }) => {
   const { data: tasks = [], isLoading } = useTasks(boardId);
 
@@ -114,6 +116,9 @@ export const RecipeListView: React.FC<RecipeListViewProps> = ({
                   sourceUrl={sourceUrl}
                   notes={notes}
                   onEdit={() => onViewRecipe(task)}
+                  onDelete={
+                    onDeleteTask ? () => onDeleteTask(task.id) : undefined
+                  }
                 />
               );
             })}

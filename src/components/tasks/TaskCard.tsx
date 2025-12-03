@@ -106,7 +106,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
     return (
       <div
         onClick={handleCardClick}
-        className={`group bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/70 p-4 ${
+        className={`group bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-900/[0.04] dark:hover:bg-gray-900 p-4 ${
           onClick ? "cursor-pointer" : ""
         } ${draggable ? "cursor-grab active:cursor-grabbing" : ""} ${
           overdue ? "border-l-4 border-l-red-500" : ""

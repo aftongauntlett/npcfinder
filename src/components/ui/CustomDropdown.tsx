@@ -61,7 +61,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
         <ChevronDown className="w-4 h-4" />
       </button>
       {isOpen && (
-        <div className="absolute z-[100] mt-1 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 max-h-60 overflow-auto">
+        <div className="absolute z-dropdown mt-1 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 max-h-60 overflow-auto">
           {options.map((option) => (
             <button
               key={option}

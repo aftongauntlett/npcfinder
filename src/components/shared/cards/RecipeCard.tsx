@@ -2,7 +2,14 @@ import React, { useState } from "react";
 import Card from "../ui/Card";
 import Chip from "../ui/Chip";
 import Button from "../ui/Button";
-import { Clock, Users, ChefHat, ExternalLink } from "lucide-react";
+import {
+  Clock,
+  Users,
+  ChefHat,
+  ExternalLink,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 
 interface RecipeCardProps {
   id?: string;
@@ -18,6 +25,7 @@ interface RecipeCardProps {
   notes?: string;
   sourceUrl?: string;
   onEdit?: () => void;
+  onDelete?: () => void;
   compact?: boolean;
 }
 
@@ -38,6 +46,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
   notes,
   sourceUrl,
   onEdit,
+  onDelete,
   compact = false,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -86,9 +95,49 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
 
   // Expandable mode: full card with inline expansion
   return (
-    <Card variant="interactive" hover="border" spacing="none">
+    <Card
+      variant="interactive"
+      hover="none"
+      spacing="none"
+      className="group relative hover:bg-gray-900/[0.04] dark:hover:bg-gray-900"
+    >
+      {/* Action Buttons - Always visible on mobile, hover on desktop */}
+      <div className="absolute top-3 right-3 flex gap-2 z-10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
+        {onEdit && (
+          <Button
+            variant="subtle"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
+            className="h-8 w-8 p-0"
+            aria-label="Edit recipe"
+          >
+            <Pencil className="w-4 h-4" />
+          </Button>
+        )}
+        {onDelete && (
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="h-8 w-8 p-0"
+            aria-label="Delete recipe"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        )}
+      </div>
+
       {/* Header - Always Visible */}
-      <div className="p-4">
+      <div
+        className="p-4 cursor-pointer pr-20 sm:pr-4"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex-1 min-w-0">
             <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">
@@ -137,19 +186,10 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
 
         {/* Description */}
         {description && (
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             {description}
           </p>
         )}
-
-        {/* Expand/Collapse Button */}
-        <Button
-          variant="subtle"
-          size="sm"
-          onClick={() => setIsExpanded(!isExpanded)}
-        >
-          {isExpanded ? "Hide Details" : "View Recipe"}
-        </Button>
       </div>
 
       {/* Expanded Content */}
@@ -215,20 +255,12 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
               href={sourceUrl}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
               className="inline-flex items-center gap-1.5 text-sm text-primary hover:opacity-80 transition-opacity"
             >
               <ExternalLink className="w-4 h-4" />
               View Original Recipe
             </a>
-          )}
-
-          {/* Edit Button */}
-          {onEdit && (
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <Button variant="secondary" size="sm" onClick={() => onEdit()}>
-                Edit Recipe
-              </Button>
-            </div>
           )}
         </div>
       )}

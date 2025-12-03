@@ -56,11 +56,9 @@ const JobCard: React.FC<JobCardProps> = ({
   onStatusChange,
 }) => {
   const { themeColor } = useTheme();
-  const [showNotes, setShowNotes] = useState(false);
-  const [showFullDescription, setShowFullDescription] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const hasNotes = notes && notes.trim().length > 0;
   const hasDescription = jobDescription && jobDescription.trim().length > 0;
-  const descriptionTruncateLength = 150;
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -93,23 +91,13 @@ const JobCard: React.FC<JobCardProps> = ({
     }
   };
 
-  const getTruncatedDescription = () => {
-    if (!hasDescription) return "";
-    if (
-      showFullDescription ||
-      jobDescription.length <= descriptionTruncateLength
-    ) {
-      return jobDescription;
-    }
-    return jobDescription.substring(0, descriptionTruncateLength) + "...";
-  };
-
   return (
     <Card
       variant="interactive"
       hover="none"
       spacing="md"
-      className="group relative hover:bg-gray-50 dark:hover:bg-gray-700/50"
+      className="group relative hover:bg-gray-900/[0.04] dark:hover:bg-gray-900 cursor-pointer"
+      onClick={() => setIsExpanded(!isExpanded)}
     >
       {/* Action Buttons - Always visible on mobile, hover on desktop */}
       <div className="absolute top-3 right-3 flex gap-2 z-10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
@@ -140,7 +128,7 @@ const JobCard: React.FC<JobCardProps> = ({
       </div>
 
       {/* Main Content - Compact Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 pr-20 lg:pr-0">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 pr-24 lg:pr-2">
         {/* Left Column - Company & Position */}
         <div className="space-y-2">
           {/* Company Name with Link */}
@@ -201,28 +189,10 @@ const JobCard: React.FC<JobCardProps> = ({
               </Chip>
             )}
           </div>
-
-          {/* Job Description with Truncation */}
-          {hasDescription && (
-            <div className="text-xs text-gray-600 dark:text-gray-400 pt-1">
-              <p className="whitespace-pre-wrap">{getTruncatedDescription()}</p>
-              {jobDescription.length > descriptionTruncateLength && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowFullDescription(!showFullDescription);
-                  }}
-                  className="text-primary hover:opacity-80 transition-opacity mt-1 text-xs font-medium"
-                >
-                  {showFullDescription ? "See less" : "See more"}
-                </button>
-              )}
-            </div>
-          )}
         </div>
 
         {/* Right Column - Status Dropdown (narrower) */}
-        <div className="lg:w-48 relative z-20">
+        <div className="lg:w-44" onClick={(e) => e.stopPropagation()}>
           <CustomDropdown
             id={`status-${id}`}
             label="Status"
@@ -235,41 +205,46 @@ const JobCard: React.FC<JobCardProps> = ({
         </div>
       </div>
 
-      {/* Full Width Sections */}
-      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
-        {/* Timeline (Status History) */}
-        {statusHistory && statusHistory.length > 0 && (
-          <div>
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-              Timeline
-            </p>
-            <p className="text-xs text-gray-700 dark:text-gray-300">
-              {formatStatusHistory()}
-            </p>
-          </div>
-        )}
+      {/* Expandable Details Section */}
+      {isExpanded && (
+        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-3">
+          {/* Job Description */}
+          {hasDescription && (
+            <div>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                Job Description
+              </p>
+              <p className="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                {jobDescription}
+              </p>
+            </div>
+          )}
 
-        {/* Notes (Expandable with right-aligned button) */}
-        {hasNotes && (
-          <div className="flex justify-end">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowNotes(!showNotes);
-              }}
-              className="text-xs font-medium text-primary hover:opacity-80 transition-opacity"
-              aria-label={showNotes ? "Hide notes" : "Show notes"}
-            >
-              {showNotes ? "Hide notes" : "Show notes"}
-            </button>
-          </div>
-        )}
-        {showNotes && hasNotes && (
-          <div className="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap bg-gray-50 dark:bg-gray-900/50 rounded-md p-3">
-            {notes}
-          </div>
-        )}
-      </div>
+          {/* Timeline (Status History) */}
+          {statusHistory && statusHistory.length > 0 && (
+            <div>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                Timeline
+              </p>
+              <p className="text-xs text-gray-700 dark:text-gray-300">
+                {formatStatusHistory()}
+              </p>
+            </div>
+          )}
+
+          {/* Notes */}
+          {hasNotes && (
+            <div>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                Notes
+              </p>
+              <div className="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap bg-gray-50 dark:bg-gray-900/50 rounded-md p-3">
+                {notes}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </Card>
   );
 };
