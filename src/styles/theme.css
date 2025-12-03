@@ -1,9 +1,10 @@
 /* Theme Variables */
 :root {
-  /* Primary Colors (Mauve/Purple) */
-  --color-primary: 167 139 250; /* #A78BFA - violet-400 */
-  --color-primary-dark: 139 92 246; /* #8B5CF6 - violet-500 */
-  --color-primary-light: 196 181 253; /* #C4B5FD - violet-300 */
+  /* Primary Colors (Theme color - updated dynamically by ThemeContext) */
+  --color-primary: 167 139 250; /* Default: #A78BFA - violet-400 */
+  --color-primary-dark: 139 92 246; /* Default: #8B5CF6 - violet-500 */
+  --color-primary-light: 196 181 253; /* Default: #C4B5FD - violet-300 */
+  --color-primary-pale: 237 233 254; /* Default: #EDE9FE - violet-100 */
 
   /* Neutral Colors - Light Mode */
   --color-background: 249 250 251; /* gray-50 */
@@ -195,3 +196,26 @@ body {
 .link:hover {
   color: rgb(var(--color-primary));
 }
+
+/**
+ * Theme Color Utility Classes
+ * 
+ * Use these classes throughout the app instead of hard-coding purple colors.
+ * These classes automatically use the user's selected theme color.
+ * 
+ * Text: .text-primary
+ * Background: .bg-primary, .bg-primary/10 (with opacity)
+ * Border: .border-primary, .hover:border-primary
+ * Focus ring: .focus:ring-primary, .focus-visible:ring-primary
+ * 
+ * Examples:
+ *   <button className="bg-primary text-white hover:bg-primary-dark">
+ *   <div className="border-primary/20 hover:border-primary">
+ *   <input className="focus:ring-primary focus:border-primary">
+ * 
+ * Z-Index Layers (defined in designTokens.ts):
+ *   dropdown: 1000
+ *   modal: 1300
+ *   tooltip: 1500
+ *   toast: 1600
+ */

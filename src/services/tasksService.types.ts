@@ -7,6 +7,16 @@
  * - Rich task metadata (priority, tags, due dates)
  */
 
+/**
+ * Status History Entry
+ * Tracks the date and status for each status change in job tracker tasks
+ */
+export interface StatusHistoryEntry {
+  status: string;
+  date: string; // YYYY-MM-DD format
+  notes?: string;
+}
+
 export interface Board {
   id: string;
   user_id: string;

@@ -64,6 +64,12 @@ export default {
         md: "var(--shadow-md)",
         lg: "var(--shadow-lg)",
       },
+      zIndex: {
+        dropdown: "1000",
+        modal: "1100",
+        tooltip: "1200",
+        toast: "1300",
+      },
       transitionDuration: {
         fast: "150ms",
         DEFAULT: "200ms",
