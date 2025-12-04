@@ -2,6 +2,7 @@ import React from "react";
 import { X } from "lucide-react";
 import { useDashboardStats } from "../../hooks/useDashboardStats";
 import { DashboardRecommendations } from "./DashboardRecommendations";
+import { DashboardActivitySummary } from "./DashboardActivitySummary";
 import { UserSearch, Button } from "@/components/shared";
 
 interface DashboardContentProps {
@@ -21,8 +22,8 @@ interface DashboardContentProps {
  */
 export const DashboardContent: React.FC<DashboardContentProps> = ({
   activeTab,
-  stats: _stats,
-  statsLoading: _statsLoading,
+  stats,
+  statsLoading,
   showGettingStarted,
   setShowGettingStarted,
 }) => {
@@ -31,11 +32,7 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({
       {/* Tab Panels */}
       <div role="tabpanel" id={`${activeTab}-panel`}>
         {activeTab === "dashboard" && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-12 shadow-sm">
-            <p className="text-gray-600 dark:text-gray-400 text-center">
-              Your dashboard stats are shown above. More widgets coming soon!
-            </p>
-          </div>
+          <DashboardActivitySummary stats={stats} statsLoading={statsLoading} />
         )}
 
         {activeTab === "friends" && (

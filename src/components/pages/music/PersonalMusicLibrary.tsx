@@ -9,7 +9,6 @@ import MediaEmptyState from "../../media/MediaEmptyState";
 import MediaListItem from "../../media/MediaListItem";
 import SendMediaModal from "../../shared/media/SendMediaModal";
 import ConfirmationModal from "../../shared/ui/ConfirmationModal";
-import Button from "../../shared/ui/Button";
 import { MediaPageToolbar } from "../../shared/media/MediaPageToolbar";
 import { searchMusic } from "../../../utils/mediaSearchAdapters";
 import {

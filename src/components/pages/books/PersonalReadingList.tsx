@@ -1,6 +1,5 @@
 import React, { useState, useRef, useMemo, useCallback } from "react";
 import { BookOpen } from "lucide-react";
-import Chip from "../../shared/ui/Chip";
 import { Pagination } from "../../shared/common/Pagination";
 import { MediaItem } from "../../shared/media/SendMediaModal";
 import SearchBookModal from "../../shared/search/SearchBookModal";
@@ -10,7 +9,6 @@ import MediaListItem from "../../media/MediaListItem";
 import { FilterSortSection } from "../../shared/common/FilterSortMenu";
 import SendMediaModal from "../../shared/media/SendMediaModal";
 import ConfirmationModal from "../../shared/ui/ConfirmationModal";
-import Button from "../../shared/ui/Button";
 import { MediaPageToolbar } from "../../shared/media/MediaPageToolbar";
 import { useMediaFiltering } from "../../../hooks/useMediaFiltering";
 import { searchBooks } from "../../../utils/bookSearchAdapters";

@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useMemo } from "react";
 import { Gamepad2 } from "lucide-react";
-import Button from "../../shared/ui/Button";
 import { Pagination } from "../../shared/common/Pagination";
 import MediaEmptyState from "../../media/MediaEmptyState";
 import MediaListItem from "../../media/MediaListItem";

@@ -16,6 +16,19 @@ interface DashboardStats {
   gamesToPlay: number;
   friendsCount: number;
   pendingRecommendations: number;
+  // Task and board statistics
+  totalBoards: number;
+  totalTasks: number;
+  completedTasks: number;
+  overdueTasks: number;
+  todayTasks: number;
+  upcomingTasks: number;
+  sharedBoardsCount: number;
+  jobTasksCount: number;
+  recipeTasksCount: number;
+  groceryTasksCount: number;
+  todoTasksCount: number;
+  kanbanTasksCount: number;
 }
 
 async function fetchDashboardStats(): Promise<DashboardStats> {
@@ -24,85 +37,223 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
 
-  // Get combined movies & TV shows count from user_watchlist
-  const { data: watchlistItems, error: watchlistError } = await supabase
-    .from("user_watchlist")
-    .select("watched")
-    .eq("user_id", user.id);
+  // Batch 1: Fetch all media-related data in parallel
+  const [
+    watchlistResult,
+    booksResult,
+    musicResult,
+    gamesResult,
+    connectionsResult,
+    movieRecsResult,
+    bookRecsResult,
+  ] = await Promise.all([
+    supabase.from("user_watchlist").select("watched").eq("user_id", user.id),
+    supabase.from("reading_list").select("read").eq("user_id", user.id),
+    supabase
+      .from("music_library")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id),
+    supabase.from("game_library").select("played").eq("user_id", user.id),
+    supabase.from("connections").select("user_id, friend_id"),
+    supabase
+      .from("movie_recommendations")
+      .select("*", { count: "exact", head: true })
+      .eq("to_user_id", user.id)
+      .eq("status", "pending")
+      .is("opened_at", null),
+    supabase
+      .from("book_recommendations")
+      .select("*", { count: "exact", head: true })
+      .eq("to_user_id", user.id)
+      .eq("status", "pending")
+      .is("opened_at", null),
+  ]);
 
-  if (watchlistError) throw watchlistError;
+  // Check for errors in media queries
+  if (watchlistResult.error) throw watchlistResult.error;
+  if (booksResult.error) throw booksResult.error;
+  if (musicResult.error) throw musicResult.error;
+  if (gamesResult.error) throw gamesResult.error;
+  if (connectionsResult.error) throw connectionsResult.error;
+  if (movieRecsResult.error) throw movieRecsResult.error;
+  if (bookRecsResult.error) throw bookRecsResult.error;
 
+  // Process media data
+  const watchlistItems = watchlistResult.data;
   const moviesAndTvCount = watchlistItems?.length || 0;
   const moviesWatched =
     watchlistItems?.filter((item) => item.watched).length || 0;
   const moviesToWatch = moviesAndTvCount - moviesWatched;
 
-  // Get books count from reading_list with read status
-  const { data: bookItems, error: booksError } = await supabase
-    .from("reading_list")
-    .select("read")
-    .eq("user_id", user.id);
-
-  if (booksError) throw booksError;
-
+  const bookItems = booksResult.data;
   const booksCount = bookItems?.length || 0;
   const booksRead = bookItems?.filter((item) => item.read === true).length || 0;
   const booksReading = 0; // reading_list doesn't track "currently reading" status
   const booksToRead =
     bookItems?.filter((item) => item.read === false).length || 0;
 
-  // Get music library count
-  const { count: musicCount, error: musicError } = await supabase
-    .from("music_library")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", user.id);
+  const musicCount = musicResult.count || 0;
 
-  if (musicError) throw musicError;
-
-  // Get games count from game_library with played status
-  const { data: gameItems, error: gamesError } = await supabase
-    .from("game_library")
-    .select("played")
-    .eq("user_id", user.id);
-
-  if (gamesError) throw gamesError;
-
+  const gameItems = gamesResult.data;
   const gamesCount = gameItems?.length || 0;
   const gamesPlayed = gameItems?.filter((item) => item.played).length || 0;
   const gamesToPlay = gamesCount - gamesPlayed;
 
-  // Get friends count - need to count bidirectional connections
-  const { data: connections, error: friendsError } = await supabase
-    .from("connections")
-    .select("user_id, friend_id");
-
-  if (friendsError) throw friendsError;
-
-  // Count connections where current user is involved
+  const connections = connectionsResult.data;
   const friendsCount =
     connections?.filter(
       (conn) => conn.user_id === user.id || conn.friend_id === user.id
     ).length || 0;
 
-  // Get pending movie/TV recommendations count (only unopened ones)
-  const { count: movieRecsCount, error: movieRecsError } = await supabase
-    .from("movie_recommendations")
-    .select("*", { count: "exact", head: true })
-    .eq("to_user_id", user.id)
-    .eq("status", "pending")
-    .is("opened_at", null);
+  const movieRecsCount = movieRecsResult.count || 0;
+  const bookRecsCount = bookRecsResult.count || 0;
 
-  if (movieRecsError) throw movieRecsError;
+  // Batch 2: Fetch task boards and parallel task counts
+  const { data: taskBoards, error: boardsError } = await supabase
+    .from("task_boards_with_stats")
+    .select("*")
+    .eq("user_id", user.id);
 
-  // Get pending book recommendations count (only unopened ones)
-  const { count: bookRecsCount, error: bookRecsError } = await supabase
-    .from("book_recommendations")
-    .select("*", { count: "exact", head: true })
-    .eq("to_user_id", user.id)
-    .eq("status", "pending")
-    .is("opened_at", null);
+  if (boardsError) throw boardsError;
 
-  if (bookRecsError) throw bookRecsError;
+  const totalBoards = taskBoards?.length || 0;
+  const totalTasks =
+    taskBoards?.reduce((sum, board) => sum + (board.total_tasks || 0), 0) || 0;
+  const completedTasks =
+    taskBoards?.reduce((sum, board) => sum + (board.completed_tasks || 0), 0) ||
+    0;
+
+  // Prepare date ranges for task queries
+  const now = new Date().toISOString();
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date();
+  endOfDay.setHours(23, 59, 59, 999);
+  const nextWeek = new Date();
+  nextWeek.setDate(nextWeek.getDate() + 7);
+
+  // Prepare board IDs for template-type queries
+  const jobBoardIds =
+    taskBoards
+      ?.filter((b) => b.template_type === "job_tracker")
+      .map((b) => b.id) || [];
+  const recipeBoardIds =
+    taskBoards?.filter((b) => b.template_type === "recipe").map((b) => b.id) ||
+    [];
+  const groceryBoardIds =
+    taskBoards?.filter((b) => b.template_type === "grocery").map((b) => b.id) ||
+    [];
+  const todoBoardIds =
+    taskBoards
+      ?.filter((b) => b.template_type === "markdown")
+      .map((b) => b.id) || [];
+  const kanbanBoardIds =
+    taskBoards?.filter((b) => b.template_type === "kanban").map((b) => b.id) ||
+    [];
+
+  // Batch 3: Fetch all task-related counts in parallel
+  const [
+    overdueResult,
+    todayResult,
+    upcomingResult,
+    sharedResult,
+    jobResult,
+    recipeResult,
+    groceryResult,
+    todoResult,
+    kanbanResult,
+  ] = await Promise.all([
+    supabase
+      .from("tasks")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .in("status", ["todo", "in_progress"])
+      .lt("due_date", now),
+    supabase
+      .from("tasks")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .in("status", ["todo", "in_progress"])
+      .gte("due_date", startOfDay.toISOString())
+      .lte("due_date", endOfDay.toISOString()),
+    supabase
+      .from("tasks")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .in("status", ["todo", "in_progress"])
+      .gt("due_date", endOfDay.toISOString())
+      .lte("due_date", nextWeek.toISOString()),
+    supabase.from("board_shares").select("id", { count: "exact", head: true }),
+    jobBoardIds.length > 0
+      ? supabase
+          .from("tasks")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .neq("status", "archived")
+          .in("board_id", jobBoardIds)
+      : Promise.resolve({ count: 0, error: null }),
+    recipeBoardIds.length > 0
+      ? supabase
+          .from("tasks")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .neq("status", "archived")
+          .in("board_id", recipeBoardIds)
+      : Promise.resolve({ count: 0, error: null }),
+    groceryBoardIds.length > 0
+      ? supabase
+          .from("tasks")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .neq("status", "archived")
+          .in("board_id", groceryBoardIds)
+      : Promise.resolve({ count: 0, error: null }),
+    todoBoardIds.length > 0
+      ? supabase
+          .from("tasks")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .neq("status", "archived")
+          .in("board_id", todoBoardIds)
+      : Promise.resolve({ count: 0, error: null }),
+    kanbanBoardIds.length > 0
+      ? supabase
+          .from("tasks")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .neq("status", "archived")
+          .in("board_id", kanbanBoardIds)
+      : Promise.resolve({ count: 0, error: null }),
+  ]);
+
+  // Check for errors in task queries
+  if (overdueResult.error) throw overdueResult.error;
+  if (todayResult.error) throw todayResult.error;
+  if (upcomingResult.error) throw upcomingResult.error;
+  // Gracefully handle board_shares errors (table might not exist or RLS not configured)
+  // Don't throw - just set count to 0
+  if (sharedResult.error) {
+    console.warn(
+      "board_shares query failed (table may not exist yet):",
+      sharedResult.error
+    );
+  }
+  if (jobResult.error) throw jobResult.error;
+  if (recipeResult.error) throw recipeResult.error;
+  if (groceryResult.error) throw groceryResult.error;
+  if (todoResult.error) throw todoResult.error;
+  if (kanbanResult.error) throw kanbanResult.error;
+
+  // Extract counts
+  const overdueCount = overdueResult.count || 0;
+  const todayCount = todayResult.count || 0;
+  const upcomingCount = upcomingResult.count || 0;
+  const sharedCount = sharedResult.error ? 0 : sharedResult.count || 0;
+  const jobCount = jobResult.count || 0;
+  const recipeCount = recipeResult.count || 0;
+  const groceryCount = groceryResult.count || 0;
+  const todoCount = todoResult.count || 0;
+  const kanbanCount = kanbanResult.count || 0;
 
   const finalStats = {
     moviesAndTvCount: moviesAndTvCount || 0,
@@ -117,7 +268,20 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
     gamesPlayed: gamesPlayed || 0,
     gamesToPlay: gamesToPlay || 0,
     friendsCount,
-    pendingRecommendations: (movieRecsCount || 0) + (bookRecsCount || 0),
+    pendingRecommendations: movieRecsCount + bookRecsCount,
+    // Task and board statistics
+    totalBoards,
+    totalTasks,
+    completedTasks,
+    overdueTasks: overdueCount,
+    todayTasks: todayCount,
+    upcomingTasks: upcomingCount,
+    sharedBoardsCount: sharedCount,
+    jobTasksCount: jobCount,
+    recipeTasksCount: recipeCount,
+    groceryTasksCount: groceryCount,
+    todoTasksCount: todoCount,
+    kanbanTasksCount: kanbanCount,
   };
 
   return finalStats;
