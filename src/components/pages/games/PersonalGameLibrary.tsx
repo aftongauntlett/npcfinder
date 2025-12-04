@@ -10,6 +10,7 @@ import SendMediaModal from "../../shared/media/SendMediaModal";
 import SearchGameModal from "../../shared/search/SearchGameModal";
 import GameDetailModal from "./GameDetailModal";
 import Toast from "../../ui/Toast";
+import ConfirmationModal from "../../shared/ui/ConfirmationModal";
 import { useMediaFiltering } from "../../../hooks/useMediaFiltering";
 import {
   searchGames,
@@ -61,10 +62,11 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
-  // Undo state
-  const [lastDeletedGame, setLastDeletedGame] =
-    useState<GameLibraryItem | null>(null);
-  const [showUndoToast, setShowUndoToast] = useState(false);
+  // Delete confirmation state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [gameToDelete, setGameToDelete] = useState<GameLibraryItem | null>(
+    null
+  );
 
   // Fetch library
   const { data: gameLibrary = [], isLoading } = useGameLibrary();
@@ -238,49 +240,22 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
   };
 
   // Handle delete
-  const handleDelete = async (game: GameLibraryItem) => {
-    setLastDeletedGame(game);
-    setShowUndoToast(true);
-    try {
-      await deleteFromLibrary.mutateAsync(game.id);
-    } catch (error) {
-      console.error("Failed to delete game:", error);
-      setShowUndoToast(false);
-      setLastDeletedGame(null);
-      setToastMessage("Failed to remove game");
-      setShowToast(true);
-    }
+  const handleDelete = (game: GameLibraryItem) => {
+    setGameToDelete(game);
+    setShowDeleteModal(true);
   };
 
-  // Handle undo delete
-  const handleUndoDelete = async () => {
-    if (!lastDeletedGame) return;
+  // Handle confirm delete
+  const handleConfirmDelete = async () => {
+    if (!gameToDelete) return;
 
     try {
-      // Fetch full game details to restore with description
-      const gameDetails = await fetchGameDetails(lastDeletedGame.external_id);
-
-      await addToLibrary.mutateAsync({
-        external_id: lastDeletedGame.external_id,
-        slug: lastDeletedGame.slug,
-        name: lastDeletedGame.name,
-        released: lastDeletedGame.released,
-        background_image: lastDeletedGame.background_image,
-        platforms: lastDeletedGame.platforms,
-        genres: lastDeletedGame.genres,
-        rating: lastDeletedGame.rating,
-        metacritic: lastDeletedGame.metacritic,
-        playtime: lastDeletedGame.playtime,
-        description_raw:
-          gameDetails?.description_raw || lastDeletedGame.description_raw,
-        played: lastDeletedGame.played,
-      });
-
-      setLastDeletedGame(null);
-      setShowUndoToast(false);
+      await deleteFromLibrary.mutateAsync(gameToDelete.id);
+      setShowDeleteModal(false);
+      setGameToDelete(null);
     } catch (error) {
-      console.error("Failed to restore game:", error);
-      setToastMessage("Failed to restore game");
+      console.error("Failed to delete game:", error);
+      setToastMessage("Failed to remove game");
       setShowToast(true);
     }
   };
@@ -310,16 +285,14 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
   // Empty state
   if (gameLibrary.length === 0) {
     return (
-      <>
-        <div className="mt-6">
-          <MediaEmptyState
-            icon={Gamepad2}
-            title="Your Game list is empty"
-            description="You haven't added any games to your list yet. Add games to start tracking what you're currently playing!"
-            onClick={() => setShowSearchModal(true)}
-            ariaLabel="Add games to your library"
-          />
-        </div>
+      <div className="container mx-auto px-4 sm:px-6">
+        <MediaEmptyState
+          icon={Gamepad2}
+          title="Your Game list is empty"
+          description="You haven't added any games to your list yet. Add games to start tracking what you're currently playing!"
+          onClick={() => setShowSearchModal(true)}
+          ariaLabel="Add games to your library"
+        />
 
         {/* Search Modal */}
         {showSearchModal && (
@@ -334,7 +307,7 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
         {showToast && (
           <Toast message={toastMessage} onClose={() => setShowToast(false)} />
         )}
-      </>
+      </div>
     );
   }
 
@@ -367,25 +340,21 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
           {!genreFilters.includes("all") && genreFilters.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {genreFilters.map((genre) => (
-                <button
+                <Chip
                   key={genre}
-                  onClick={() => {
+                  variant="primary"
+                  size="sm"
+                  rounded="full"
+                  removable
+                  onRemove={() => {
                     const newFilters = genreFilters.filter((g) => g !== genre);
                     setGenreFilters(
                       newFilters.length > 0 ? newFilters : ["all"]
                     );
                   }}
                 >
-                  <Chip
-                    variant="primary"
-                    size="sm"
-                    rounded="full"
-                    removable
-                    onRemove={() => {}}
-                  >
-                    {genre.charAt(0).toUpperCase() + genre.slice(1)}
-                  </Chip>
-                </button>
+                  {genre.charAt(0).toUpperCase() + genre.slice(1)}
+                </Chip>
               ))}
             </div>
           )}
@@ -524,24 +493,9 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
         />
       )}
 
-      {/* Toast */}
+      {/* Success notification Toast (NOT for delete operations) */}
       {showToast && (
         <Toast message={toastMessage} onClose={() => setShowToast(false)} />
-      )}
-
-      {/* Undo Toast */}
-      {showUndoToast && lastDeletedGame && (
-        <Toast
-          message={`Removed "${lastDeletedGame.name}"`}
-          action={{
-            label: "Undo",
-            onClick: () => void handleUndoDelete(),
-          }}
-          onClose={() => {
-            setShowUndoToast(false);
-            setLastDeletedGame(null);
-          }}
-        />
       )}
 
       {/* Game Detail Modal */}
@@ -564,6 +518,25 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
           }}
         />
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setGameToDelete(null);
+        }}
+        onConfirm={() => void handleConfirmDelete()}
+        title="Remove from Library?"
+        message={
+          gameToDelete
+            ? `Are you sure you want to remove "${gameToDelete.name}" from your library?`
+            : ""
+        }
+        confirmText="Remove"
+        variant="danger"
+        isLoading={deleteFromLibrary.isPending}
+      />
     </div>
   );
 };

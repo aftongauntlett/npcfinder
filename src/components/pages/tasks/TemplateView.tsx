@@ -13,7 +13,7 @@ import BoardFormModal from "../../tasks/BoardFormModal";
 import BoardCard from "../../tasks/BoardCard";
 import { JobTrackerView } from "../../tasks/views/JobTrackerView";
 import { RecipeListView } from "../../tasks/views/RecipeListView";
-import ConfirmDialog from "../../shared/ui/ConfirmDialog";
+import ConfirmationModal from "../../shared/ui/ConfirmationModal";
 import FilterSortMenu, {
   FilterSortSection,
 } from "../../shared/common/FilterSortMenu";
@@ -260,7 +260,7 @@ const TemplateView: React.FC<TemplateViewProps> = ({
 
         {/* Delete Task Confirmation */}
         {deletingTask && (
-          <ConfirmDialog
+          <ConfirmationModal
             isOpen={!!deletingTask}
             onClose={() => setDeletingTask(null)}
             onConfirm={handleDeleteTask}
@@ -268,6 +268,7 @@ const TemplateView: React.FC<TemplateViewProps> = ({
             message="Are you sure you want to delete this job application? This action cannot be undone."
             confirmText="Delete"
             variant="danger"
+            isLoading={deleteTask.isPending}
           />
         )}
       </div>
@@ -287,7 +288,7 @@ const TemplateView: React.FC<TemplateViewProps> = ({
 
         {/* Delete Task Confirmation */}
         {deletingTask && (
-          <ConfirmDialog
+          <ConfirmationModal
             isOpen={!!deletingTask}
             onClose={() => setDeletingTask(null)}
             onConfirm={handleDeleteTask}
@@ -295,6 +296,7 @@ const TemplateView: React.FC<TemplateViewProps> = ({
             message="Are you sure you want to delete this recipe? This action cannot be undone."
             confirmText="Delete"
             variant="danger"
+            isLoading={deleteTask.isPending}
           />
         )}
       </div>
@@ -445,20 +447,21 @@ const TemplateView: React.FC<TemplateViewProps> = ({
 
       {/* Delete Board Confirmation - only for multi-board templates */}
       {allowsMultipleBoards && deletingBoard && (
-        <ConfirmDialog
+        <ConfirmationModal
           isOpen={!!deletingBoard}
           onClose={() => setDeletingBoard(null)}
           onConfirm={handleDeleteBoard}
-          title="Delete Board"
+          title="Delete Board?"
           message={`Are you sure you want to delete "${deletingBoard.name}"? All tasks in this board will be permanently removed.`}
           confirmText="Delete"
           variant="danger"
+          isLoading={deleteBoard.isPending}
         />
       )}
 
       {/* Delete Task Confirmation */}
       {deletingTask && (
-        <ConfirmDialog
+        <ConfirmationModal
           isOpen={!!deletingTask}
           onClose={() => setDeletingTask(null)}
           onConfirm={handleDeleteTask}
@@ -466,6 +469,7 @@ const TemplateView: React.FC<TemplateViewProps> = ({
           message="Are you sure you want to delete this task? This action cannot be undone."
           confirmText="Delete"
           variant="danger"
+          isLoading={deleteTask.isPending}
         />
       )}
     </div>

@@ -164,7 +164,7 @@ const TodayView: React.FC = () => {
             /* TODO: Add filter/sort functionality */
           }}
         >
-          Filters & Sort
+          Sort
         </Button>
 
         <Button

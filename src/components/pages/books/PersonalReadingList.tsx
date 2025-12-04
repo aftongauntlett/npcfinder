@@ -8,7 +8,7 @@ import MediaEmptyState from "../../media/MediaEmptyState";
 import MediaListItem from "../../media/MediaListItem";
 import { FilterSortSection } from "../../shared/common/FilterSortMenu";
 import SendMediaModal from "../../shared/media/SendMediaModal";
-import Toast from "../../ui/Toast";
+import ConfirmationModal from "../../shared/ui/ConfirmationModal";
 import Button from "../../shared/ui/Button";
 import { MediaPageToolbar } from "../../shared/media/MediaPageToolbar";
 import { useMediaFiltering } from "../../../hooks/useMediaFiltering";
@@ -56,10 +56,11 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
   const [bookToRecommend, setBookToRecommend] =
     useState<ReadingListItem | null>(null);
 
-  // Undo state
-  const [lastDeletedItem, setLastDeletedItem] =
-    useState<ReadingListItem | null>(null);
-  const [showUndoToast, setShowUndoToast] = useState(false);
+  // Delete confirmation state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [bookToDelete, setBookToDelete] = useState<ReadingListItem | null>(
+    null
+  );
 
   // Ref for scroll-to-top
   const topRef = useRef<HTMLDivElement>(null);
@@ -233,28 +234,21 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
     const book = readingList.find((b) => b.id === String(id));
     if (!book) return;
 
-    setLastDeletedItem(book);
-    setShowUndoToast(true);
-    void deleteFromReadingList.mutateAsync(book.id);
+    setBookToDelete(book);
+    setShowDeleteModal(true);
   };
 
-  const handleUndo = () => {
-    if (lastDeletedItem) {
-      void addToReadingList.mutateAsync({
-        external_id: lastDeletedItem.external_id,
-        title: lastDeletedItem.title,
-        authors: lastDeletedItem.authors,
-        thumbnail_url: lastDeletedItem.thumbnail_url,
-        published_date: lastDeletedItem.published_date,
-        description: lastDeletedItem.description,
-        isbn: lastDeletedItem.isbn,
-        page_count: lastDeletedItem.page_count,
-        categories: lastDeletedItem.categories,
-        read: lastDeletedItem.read,
-      });
-      setLastDeletedItem(null);
+  const handleConfirmDelete = async () => {
+    if (!bookToDelete) return;
+
+    try {
+      await deleteFromReadingList.mutateAsync(bookToDelete.id);
+      setShowDeleteModal(false);
+      setBookToDelete(null);
+    } catch (error) {
+      console.error("Failed to delete from reading list:", error);
+      // Keep modal open so user sees the action failed
     }
-    setShowUndoToast(false);
   };
 
   const handlePageChange = (page: number) => {
@@ -522,20 +516,24 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
         />
       )}
 
-      {/* Undo Toast */}
-      {showUndoToast && lastDeletedItem && (
-        <Toast
-          message={`Removed "${lastDeletedItem.title}"`}
-          action={{
-            label: "Undo",
-            onClick: handleUndo,
-          }}
-          onClose={() => {
-            setShowUndoToast(false);
-            setLastDeletedItem(null);
-          }}
-        />
-      )}
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setBookToDelete(null);
+        }}
+        onConfirm={() => void handleConfirmDelete()}
+        title="Remove from Reading List?"
+        message={
+          bookToDelete
+            ? `Are you sure you want to remove "${bookToDelete.title}" from your reading list?`
+            : ""
+        }
+        confirmText="Remove"
+        variant="danger"
+        isLoading={deleteFromReadingList.isPending}
+      />
     </div>
   );
 };

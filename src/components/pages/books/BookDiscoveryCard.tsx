@@ -263,6 +263,7 @@ const BookDiscoveryCard: React.FC = () => {
         </div>
       </div>
 
+      {/* Success notification Toast (NOT for delete operations) */}
       {toast && (
         <Toast message={toast.message} onClose={() => setToast(null)} />
       )}

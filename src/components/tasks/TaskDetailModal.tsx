@@ -14,6 +14,7 @@ import Button from "../shared/ui/Button";
 import Input from "../shared/ui/Input";
 import Textarea from "../shared/ui/Textarea";
 import Select from "../shared/ui/Select";
+import ConfirmationModal from "../shared/ui/ConfirmationModal";
 import type { Task } from "../../services/tasksService.types";
 import type { StatusHistoryEntry } from "../../services/tasksService.types";
 import { getTemplate } from "../../utils/boardTemplates";
@@ -47,7 +48,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     task.due_date ? new Date(task.due_date) : null
   );
   const [tags, setTags] = useState(task.tags?.join(", ") || "");
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Job tracker specific fields
   const [companyName, setCompanyName] = useState(
@@ -314,442 +315,430 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={
-        isJobTracker
-          ? "Edit Job Application"
-          : isRecipe
-          ? "Edit Recipe"
-          : "Edit Task"
-      }
-      maxWidth="2xl"
-      closeOnBackdropClick={true}
-    >
-      {/* Delete Confirmation Banner */}
-      {showDeleteConfirm && (
-        <div className="p-4 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800">
-          <p className="text-sm text-red-800 dark:text-red-200 mb-3">
-            Are you sure you want to delete this task? This action cannot be
-            undone.
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setShowDeleteConfirm(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={handleDelete}
-              disabled={deleteTask.isPending}
-              className="bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700"
-            >
-              {deleteTask.isPending ? "Deleting..." : "Delete Task"}
-            </Button>
-          </div>
-        </div>
-      )}
+    <>
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        title={
+          isJobTracker
+            ? "Edit Job Application"
+            : isRecipe
+            ? "Edit Recipe"
+            : "Edit Task"
+        }
+        maxWidth="2xl"
+        closeOnBackdropClick={true}
+      >
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          {/* Title - Hidden for job tracker */}
+          {!isJobTracker && (
+            <Input
+              id="task-title"
+              label="Task Title"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              maxLength={200}
+            />
+          )}
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="p-6 space-y-5">
-        {/* Title - Hidden for job tracker */}
-        {!isJobTracker && (
-          <Input
-            id="task-title"
-            label="Task Title"
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            maxLength={200}
-          />
-        )}
-
-        {/* Description - Hidden for job tracker */}
-        {!isJobTracker && (
-          <Textarea
-            id="task-description"
-            label="Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Add more details..."
-            rows={4}
-            maxLength={1000}
-          />
-        )}
-
-        {/* Job Tracker Specific Fields */}
-        {(task.item_data?.company_name !== undefined ||
-          task.item_data?.position !== undefined) && (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                id="company-name"
-                label="Company Name"
-                type="text"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                placeholder="Company name"
-              />
-              <Input
-                id="position"
-                label="Position"
-                type="text"
-                value={position}
-                onChange={(e) => setPosition(e.target.value)}
-                placeholder="Software Engineer"
-              />
-            </div>
-
-            {/* Description (formerly Notes) - larger and supports markdown */}
+          {/* Description - Hidden for job tracker */}
+          {!isJobTracker && (
             <Textarea
-              id="job-description"
+              id="task-description"
               label="Description"
-              value={jobNotes}
-              onChange={(e) => setJobNotes(e.target.value)}
-              placeholder="**Role Overview**&#10;&#10;Key responsibilities:\n- Lead feature development\n- Collaborate with cross-functional teams\n- Mentor junior engineers"
-              rows={6}
-              helperText="Supports basic markdown: **bold**, - bullet lists"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Add more details..."
+              rows={4}
+              maxLength={1000}
             />
+          )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                id="salary-range"
-                label="Salary Range"
-                type="text"
-                value={salaryRange}
-                onChange={(e) => setSalaryRange(e.target.value)}
-                placeholder="$100k - $150k"
-              />
-              <Input
-                id="location"
-                label="Location"
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="San Francisco, CA"
-              />
-              <Select
-                id="employment-type"
-                label="Employment Type"
-                value={employmentType}
-                onChange={(e) => setEmploymentType(e.target.value)}
-                placeholder="Select type"
-                options={[
-                  { value: "Full-time", label: "Full-time" },
-                  { value: "Part-time", label: "Part-time" },
-                  { value: "Contract", label: "Contract" },
-                  { value: "Internship", label: "Internship" },
-                  { value: "Remote", label: "Remote" },
-                ]}
-              />
-              <Input
-                id="company-url"
-                label="Company URL"
-                type="url"
-                value={companyUrl}
-                onChange={(e) => setCompanyUrl(e.target.value)}
-                placeholder="https://company.com/careers/job-id"
-              />
-            </div>
+          {/* Job Tracker Specific Fields */}
+          {(task.item_data?.company_name !== undefined ||
+            task.item_data?.position !== undefined) && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input
+                  id="company-name"
+                  label="Company Name"
+                  type="text"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  placeholder="Company name"
+                />
+                <Input
+                  id="position"
+                  label="Position"
+                  type="text"
+                  value={position}
+                  onChange={(e) => setPosition(e.target.value)}
+                  placeholder="Software Engineer"
+                />
+              </div>
 
-            {/* Status and Applied Date - 2 columns */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Select
-                id="job-status"
-                label="Status"
-                value={jobStatus}
-                onChange={(e) => setJobStatus(e.target.value)}
-                options={jobStatusOptions.map((status) => ({
-                  value: status,
-                  label: status,
-                }))}
+              {/* Description (formerly Notes) - larger and supports markdown */}
+              <Textarea
+                id="job-description"
+                label="Description"
+                value={jobNotes}
+                onChange={(e) => setJobNotes(e.target.value)}
+                placeholder="**Role Overview**&#10;&#10;Key responsibilities:\n- Lead feature development\n- Collaborate with cross-functional teams\n- Mentor junior engineers"
+                rows={6}
+                helperText="Supports basic markdown: **bold**, - bullet lists"
               />
 
-              {/* Date for current status */}
-              {statusHistory.length > 0 && (
-                <div>
-                  <label
-                    htmlFor="status-date"
-                    className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1.5"
-                  >
-                    Applied Date
-                  </label>
-                  <DatePicker
-                    id="status-date"
-                    selected={
-                      statusHistory[statusHistory.length - 1]?.date
-                        ? new Date(statusHistory[statusHistory.length - 1].date)
-                        : new Date()
-                    }
-                    onChange={(date: Date | null) => {
-                      if (date && statusHistory.length > 0) {
-                        const updatedHistory = [...statusHistory];
-                        updatedHistory[updatedHistory.length - 1] = {
-                          ...updatedHistory[updatedHistory.length - 1],
-                          date: date.toISOString().split("T")[0],
-                        };
-                        setStatusHistory(updatedHistory);
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input
+                  id="salary-range"
+                  label="Salary Range"
+                  type="text"
+                  value={salaryRange}
+                  onChange={(e) => setSalaryRange(e.target.value)}
+                  placeholder="$100k - $150k"
+                />
+                <Input
+                  id="location"
+                  label="Location"
+                  type="text"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="San Francisco, CA"
+                />
+                <Select
+                  id="employment-type"
+                  label="Employment Type"
+                  value={employmentType}
+                  onChange={(e) => setEmploymentType(e.target.value)}
+                  placeholder="Select type"
+                  options={[
+                    { value: "Full-time", label: "Full-time" },
+                    { value: "Part-time", label: "Part-time" },
+                    { value: "Contract", label: "Contract" },
+                    { value: "Internship", label: "Internship" },
+                    { value: "Remote", label: "Remote" },
+                  ]}
+                />
+                <Input
+                  id="company-url"
+                  label="Company URL"
+                  type="url"
+                  value={companyUrl}
+                  onChange={(e) => setCompanyUrl(e.target.value)}
+                  placeholder="https://company.com/careers/job-id"
+                />
+              </div>
+
+              {/* Status and Applied Date - 2 columns */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Select
+                  id="job-status"
+                  label="Status"
+                  value={jobStatus}
+                  onChange={(e) => setJobStatus(e.target.value)}
+                  options={jobStatusOptions.map((status) => ({
+                    value: status,
+                    label: status,
+                  }))}
+                />
+
+                {/* Date for current status */}
+                {statusHistory.length > 0 && (
+                  <div>
+                    <label
+                      htmlFor="status-date"
+                      className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1.5"
+                    >
+                      Applied Date
+                    </label>
+                    <DatePicker
+                      id="status-date"
+                      selected={
+                        statusHistory[statusHistory.length - 1]?.date
+                          ? new Date(
+                              statusHistory[statusHistory.length - 1].date
+                            )
+                          : new Date()
                       }
-                    }}
-                    dateFormat="MM/dd/yyyy"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white focus:outline-none transition-colors"
-                    wrapperClassName="w-full"
-                    calendarClassName="dark:bg-gray-800 dark:border-gray-700"
-                  />
-                </div>
-              )}
-            </div>
-          </>
-        )}
+                      onChange={(date: Date | null) => {
+                        if (date && statusHistory.length > 0) {
+                          const updatedHistory = [...statusHistory];
+                          updatedHistory[updatedHistory.length - 1] = {
+                            ...updatedHistory[updatedHistory.length - 1],
+                            date: date.toISOString().split("T")[0],
+                          };
+                          setStatusHistory(updatedHistory);
+                        }
+                      }}
+                      dateFormat="MM/dd/yyyy"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white focus:outline-none transition-colors"
+                      wrapperClassName="w-full"
+                      calendarClassName="dark:bg-gray-800 dark:border-gray-700"
+                    />
+                  </div>
+                )}
+              </div>
+            </>
+          )}
 
-        {/* Recipe Specific Fields */}
-        {(task.item_data?.recipe_name !== undefined ||
-          task.item_data?.name !== undefined ||
-          task.item_data?.ingredients !== undefined) && (
-          <div className="space-y-4 border border-gray-300 dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-800/30">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-              Recipe Details
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                id="recipe-name"
-                label="Recipe Name"
-                type="text"
-                value={recipeName}
-                onChange={(e) => setRecipeName(e.target.value)}
-                placeholder="Chocolate Chip Cookies"
+          {/* Recipe Specific Fields */}
+          {(task.item_data?.recipe_name !== undefined ||
+            task.item_data?.name !== undefined ||
+            task.item_data?.ingredients !== undefined) && (
+            <div className="space-y-4 border border-gray-300 dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-800/30">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                Recipe Details
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input
+                  id="recipe-name"
+                  label="Recipe Name"
+                  type="text"
+                  value={recipeName}
+                  onChange={(e) => setRecipeName(e.target.value)}
+                  placeholder="Chocolate Chip Cookies"
+                />
+                <Input
+                  id="recipe-url"
+                  label="Source URL"
+                  type="url"
+                  value={recipeUrl}
+                  onChange={(e) => setRecipeUrl(e.target.value)}
+                  placeholder="https://recipe-site.com/..."
+                />
+                <Input
+                  id="prep-time"
+                  label="Prep Time"
+                  type="text"
+                  value={prepTime}
+                  onChange={(e) => setPrepTime(e.target.value)}
+                  placeholder="15 minutes"
+                />
+                <Input
+                  id="cook-time"
+                  label="Cook Time"
+                  type="text"
+                  value={cookTime}
+                  onChange={(e) => setCookTime(e.target.value)}
+                  placeholder="30 minutes"
+                />
+                <Input
+                  id="total-time"
+                  label="Total Time"
+                  type="text"
+                  value={totalTime}
+                  onChange={(e) => setTotalTime(e.target.value)}
+                  placeholder="45 minutes"
+                />
+                <Input
+                  id="servings"
+                  label="Servings"
+                  type="text"
+                  value={servings}
+                  onChange={(e) => setServings(e.target.value)}
+                  placeholder="4"
+                />
+              </div>
+              <Textarea
+                id="ingredients"
+                label="Ingredients (one per line)"
+                value={ingredients}
+                onChange={(e) => setIngredients(e.target.value)}
+                placeholder="2 cups flour&#10;1 cup sugar&#10;2 eggs"
+                rows={4}
               />
-              <Input
-                id="recipe-url"
-                label="Source URL"
-                type="url"
-                value={recipeUrl}
-                onChange={(e) => setRecipeUrl(e.target.value)}
-                placeholder="https://recipe-site.com/..."
+              <Textarea
+                id="instructions"
+                label="Instructions (one step per line)"
+                value={instructions}
+                onChange={(e) => setInstructions(e.target.value)}
+                placeholder="Preheat oven to 350°F&#10;Mix dry ingredients&#10;Add wet ingredients"
+                rows={4}
               />
-              <Input
-                id="prep-time"
-                label="Prep Time"
-                type="text"
-                value={prepTime}
-                onChange={(e) => setPrepTime(e.target.value)}
-                placeholder="15 minutes"
-              />
-              <Input
-                id="cook-time"
-                label="Cook Time"
-                type="text"
-                value={cookTime}
-                onChange={(e) => setCookTime(e.target.value)}
-                placeholder="30 minutes"
-              />
-              <Input
-                id="total-time"
-                label="Total Time"
-                type="text"
-                value={totalTime}
-                onChange={(e) => setTotalTime(e.target.value)}
-                placeholder="45 minutes"
-              />
-              <Input
-                id="servings"
-                label="Servings"
-                type="text"
-                value={servings}
-                onChange={(e) => setServings(e.target.value)}
-                placeholder="4"
+              <Textarea
+                id="recipe-notes"
+                label="Notes"
+                value={recipeNotes}
+                onChange={(e) => setRecipeNotes(e.target.value)}
+                placeholder="Personal notes, modifications, etc."
+                rows={2}
               />
             </div>
-            <Textarea
-              id="ingredients"
-              label="Ingredients (one per line)"
-              value={ingredients}
-              onChange={(e) => setIngredients(e.target.value)}
-              placeholder="2 cups flour&#10;1 cup sugar&#10;2 eggs"
-              rows={4}
-            />
-            <Textarea
-              id="instructions"
-              label="Instructions (one step per line)"
-              value={instructions}
-              onChange={(e) => setInstructions(e.target.value)}
-              placeholder="Preheat oven to 350°F&#10;Mix dry ingredients&#10;Add wet ingredients"
-              rows={4}
-            />
-            <Textarea
-              id="recipe-notes"
-              label="Notes"
-              value={recipeNotes}
-              onChange={(e) => setRecipeNotes(e.target.value)}
-              placeholder="Personal notes, modifications, etc."
-              rows={2}
-            />
-          </div>
-        )}
+          )}
 
-        {/* Status - Hidden for job tracker */}
-        {!isJobTracker && (
-          <div>
-            <label className="block text-sm font-medium text-primary mb-2.5">
-              Status
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {STATUS_OPTIONS.filter((s) => s.value !== "archived").map(
-                (option) => (
+          {/* Status - Hidden for job tracker */}
+          {!isJobTracker && (
+            <div>
+              <label className="block text-sm font-medium text-primary mb-2.5">
+                Status
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {STATUS_OPTIONS.filter((s) => s.value !== "archived").map(
+                  (option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setStatus(option.value)}
+                      className={`px-3 py-2 rounded-lg border-2 transition-all text-sm ${
+                        status === option.value
+                          ? `${option.bg} ${option.color} border-current`
+                          : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300"
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  )
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Priority - Hidden for job tracker */}
+          {!isJobTracker && (
+            <div>
+              <label className="block text-sm font-medium text-primary mb-2.5">
+                Priority
+              </label>
+              <div className="grid grid-cols-4 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPriority(null)}
+                  className={`px-3 py-2 rounded-lg border-2 transition-all text-sm ${
+                    priority === null
+                      ? "border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300"
+                      : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300"
+                  }`}
+                >
+                  None
+                </button>
+                {PRIORITY_OPTIONS.map((option) => (
                   <button
                     key={option.value}
                     type="button"
-                    onClick={() => setStatus(option.value)}
+                    onClick={() => setPriority(option.value)}
                     className={`px-3 py-2 rounded-lg border-2 transition-all text-sm ${
-                      status === option.value
+                      priority === option.value
                         ? `${option.bg} ${option.color} border-current`
                         : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300"
                     }`}
                   >
                     {option.label}
                   </button>
-                )
-              )}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Priority - Hidden for job tracker */}
-        {!isJobTracker && (
-          <div>
-            <label className="block text-sm font-medium text-primary mb-2.5">
-              Priority
-            </label>
-            <div className="grid grid-cols-4 gap-2">
-              <button
-                type="button"
-                onClick={() => setPriority(null)}
-                className={`px-3 py-2 rounded-lg border-2 transition-all text-sm ${
-                  priority === null
-                    ? "border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300"
-                    : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300"
-                }`}
+          {/* Due Date - Hidden for job tracker */}
+          {!isJobTracker && (
+            <div>
+              <label
+                htmlFor="task-due-date"
+                className="block text-sm font-medium text-primary mb-2.5"
               >
-                None
-              </button>
-              {PRIORITY_OPTIONS.map((option) => (
+                Due Date
+              </label>
+              <div className="flex gap-2">
                 <button
-                  key={option.value}
                   type="button"
-                  onClick={() => setPriority(option.value)}
-                  className={`px-3 py-2 rounded-lg border-2 transition-all text-sm ${
-                    priority === option.value
-                      ? `${option.bg} ${option.color} border-current`
+                  onClick={() => setDueDate(null)}
+                  className={`px-3 py-2 rounded-lg border-2 transition-all text-sm whitespace-nowrap ${
+                    dueDate === null
+                      ? "border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300"
                       : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300"
                   }`}
                 >
-                  {option.label}
+                  None
                 </button>
-              ))}
+                <DatePicker
+                  selected={dueDate}
+                  onChange={(date) => setDueDate(date)}
+                  dateFormat="MMM d, yyyy"
+                  placeholderText="Select a date"
+                  minDate={new Date()}
+                  showPopperArrow={false}
+                  isClearable
+                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2.5 pr-10 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent transition-colors"
+                  calendarClassName="bg-white dark:bg-gray-800 border-2 border-gray-400 dark:border-gray-500 rounded-lg shadow-xl"
+                  wrapperClassName="flex-1"
+                />
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Due Date - Hidden for job tracker */}
-        {!isJobTracker && (
-          <div>
-            <label
-              htmlFor="task-due-date"
-              className="block text-sm font-medium text-primary mb-2.5"
-            >
-              Due Date
-            </label>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setDueDate(null)}
-                className={`px-3 py-2 rounded-lg border-2 transition-all text-sm whitespace-nowrap ${
-                  dueDate === null
-                    ? "border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300"
-                    : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300"
-                }`}
+          {/* Tags - Hidden for job tracker */}
+          {!isJobTracker && (
+            <div>
+              <label
+                htmlFor="task-tags"
+                className="block text-sm font-medium text-primary mb-2.5"
               >
-                None
-              </button>
-              <DatePicker
-                selected={dueDate}
-                onChange={(date) => setDueDate(date)}
-                dateFormat="MMM d, yyyy"
-                placeholderText="Select a date"
-                minDate={new Date()}
-                showPopperArrow={false}
-                isClearable
-                className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2.5 pr-10 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent transition-colors"
-                calendarClassName="bg-white dark:bg-gray-800 border-2 border-gray-400 dark:border-gray-500 rounded-lg shadow-xl"
-                wrapperClassName="flex-1"
+                Tags
+              </label>
+              <Input
+                id="task-tags"
+                type="text"
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+                placeholder="work, urgent, personal"
+                helperText="Separate tags with commas"
               />
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Tags - Hidden for job tracker */}
-        {!isJobTracker && (
-          <div>
-            <label
-              htmlFor="task-tags"
-              className="block text-sm font-medium text-primary mb-2.5"
+          {/* Actions */}
+          <div className="flex gap-3 pt-4">
+            <Button
+              type="button"
+              variant="danger"
+              onClick={() => setShowDeleteModal(true)}
+              icon={<Trash2 className="w-4 h-4" />}
+              iconPosition="left"
             >
-              Tags
-            </label>
-            <Input
-              id="task-tags"
-              type="text"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              placeholder="work, urgent, personal"
-              helperText="Separate tags with commas"
-            />
+              Delete
+            </Button>
+            <div className="flex-1" />
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={onClose}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              className="flex-1"
+              disabled={
+                isJobTracker
+                  ? !companyName.trim() ||
+                    !position.trim() ||
+                    updateTask.isPending
+                  : !title.trim() || updateTask.isPending
+              }
+            >
+              {updateTask.isPending ? "Saving..." : "Save Changes"}
+            </Button>
           </div>
-        )}
+        </form>
+      </Modal>
 
-        {/* Actions */}
-        <div className="flex gap-3 pt-4">
-          <Button
-            type="button"
-            variant="danger"
-            onClick={() => setShowDeleteConfirm(true)}
-            icon={<Trash2 className="w-4 h-4" />}
-            iconPosition="left"
-          >
-            Delete
-          </Button>
-          <div className="flex-1" />
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={onClose}
-            className="flex-1"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            className="flex-1"
-            disabled={
-              isJobTracker
-                ? !companyName.trim() ||
-                  !position.trim() ||
-                  updateTask.isPending
-                : !title.trim() || updateTask.isPending
-            }
-          >
-            {updateTask.isPending ? "Saving..." : "Save Changes"}
-          </Button>
-        </div>
-      </form>
-    </Modal>
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+        title="Delete Task?"
+        message="Are you sure you want to delete this task? This action cannot be undone."
+        confirmText="Delete Task"
+        variant="danger"
+        isLoading={deleteTask.isPending}
+      />
+    </>
   );
 };
 

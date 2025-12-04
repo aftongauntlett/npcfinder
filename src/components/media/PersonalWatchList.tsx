@@ -1,5 +1,7 @@
 import React, { useState, useRef, useMemo, useCallback } from "react";
 import { Film } from "lucide-react";
+import Chip from "../shared/ui/Chip";
+import { getGenreColor } from "../../utils/genreColors";
 import {
   SearchMovieModal,
   SendMediaModal,
@@ -10,7 +12,7 @@ import {
 import MediaListItem from "./MediaListItem";
 import MediaEmptyState from "./MediaEmptyState";
 import WatchlistPagination from "./WatchlistPagination";
-import Toast from "../ui/Toast";
+import ConfirmationModal from "../shared/ui/ConfirmationModal";
 import { useMediaFiltering } from "../../hooks/useMediaFiltering";
 import { searchMoviesAndTV } from "../../utils/mediaSearchAdapters";
 import { useWatchlistModals } from "../../hooks/useWatchlistModals";
@@ -21,6 +23,7 @@ import {
   useDeleteFromWatchlist,
 } from "../../hooks/useWatchlistQueries";
 import type { WatchlistItem } from "../../services/recommendationsService.types";
+import { fetchDetailedMediaInfo } from "../../utils/tmdbDetails";
 
 type FilterType = "all" | "to-watch" | "watched";
 type SortType = "date-added" | "title" | "year" | "rating";
@@ -53,6 +56,7 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
   const [filter] = useState<FilterType>(initialFilter);
   const [mediaTypeFilter, setMediaTypeFilter] =
     useState<MediaTypeFilter>("all");
+  const [genreFilters, setGenreFilters] = useState<string[]>(["all"]);
   const [sortBy, setSortBy] = useState<SortType>("date-added");
 
   // Pagination state
@@ -68,14 +72,26 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
     setMovieToRecommend,
   } = useWatchlistModals<WatchlistItem>();
 
-  // Undo state
-  const [lastDeletedItem, setLastDeletedItem] = useState<WatchlistItem | null>(
-    null
-  );
-  const [showUndoToast, setShowUndoToast] = useState(false);
+  // Delete confirmation state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<WatchlistItem | null>(null);
 
   // Ref for scroll-to-top
   const topRef = useRef<HTMLDivElement>(null);
+
+  // Extract unique genres from watchlist
+  const availableGenres = useMemo(() => {
+    const genreSet = new Set<string>();
+    watchList.forEach((item) => {
+      if (item.genres && Array.isArray(item.genres)) {
+        item.genres.forEach((genre) => {
+          const trimmedGenre = genre.trim().toLowerCase();
+          if (trimmedGenre) genreSet.add(trimmedGenre);
+        });
+      }
+    });
+    return genreSet;
+  }, [watchList]);
 
   // Filter function based on current filter state
   const filterFn = useCallback(
@@ -89,9 +105,20 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
         return false;
       }
 
+      // Filter by genres (multiple selection support)
+      if (genreFilters.length > 0 && !genreFilters.includes("all")) {
+        if (!item.genres || item.genres.length === 0) return false;
+
+        const itemGenres = item.genres.map((g) => g.trim().toLowerCase());
+        const hasMatchingGenre = genreFilters.some((selectedGenre) =>
+          itemGenres.includes(selectedGenre)
+        );
+        if (!hasMatchingGenre) return false;
+      }
+
       return true;
     },
-    [filter, mediaTypeFilter]
+    [filter, mediaTypeFilter, genreFilters]
   );
 
   // Sort function based on current sort state
@@ -153,17 +180,30 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
       : watchedCount > 0;
 
   // Event handlers
-  const handleAddToWatchList = (result: MediaItem) => {
+  const handleAddToWatchList = async (result: MediaItem) => {
     const shouldMarkAsWatched = filter === "watched";
+    const mediaType = (result.media_type || "movie") as "movie" | "tv";
+
+    // Fetch detailed info to get genres, director, cast, etc.
+    const detailedInfo = await fetchDetailedMediaInfo(
+      result.external_id,
+      mediaType
+    );
 
     void addToWatchlist.mutateAsync({
       external_id: result.external_id,
       title: result.title,
-      media_type: (result.media_type || "movie") as "movie" | "tv",
+      media_type: mediaType,
       poster_url: result.poster_url,
       release_date: result.release_date || null,
       overview: result.description || null,
       watched: shouldMarkAsWatched,
+      genres: detailedInfo?.genres || null,
+      director: detailedInfo?.director || null,
+      cast_members: detailedInfo?.cast || null,
+      vote_average: detailedInfo?.vote_average || null,
+      vote_count: detailedInfo?.vote_count || null,
+      runtime: detailedInfo?.runtime || null,
     });
     setShowSearchModal(false);
   };
@@ -173,29 +213,24 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
   };
 
   const handleRemoveFromWatchList = (id: string | number) => {
-    const itemToDelete = watchList.find((item) => item.id === id);
-    if (!itemToDelete) return;
+    const item = watchList.find((item) => item.id === id);
+    if (!item) return;
 
-    setLastDeletedItem(itemToDelete);
-    setShowUndoToast(true);
-    void deleteFromWatchlist.mutateAsync(String(id));
+    setItemToDelete(item);
+    setShowDeleteModal(true);
   };
 
-  const handleUndoDelete = async () => {
-    if (!lastDeletedItem) return;
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return;
 
-    await addToWatchlist.mutateAsync({
-      external_id: lastDeletedItem.external_id,
-      title: lastDeletedItem.title,
-      media_type: lastDeletedItem.media_type,
-      poster_url: lastDeletedItem.poster_url,
-      release_date: lastDeletedItem.release_date,
-      overview: lastDeletedItem.overview,
-      watched: lastDeletedItem.watched,
-    });
-
-    setLastDeletedItem(null);
-    setShowUndoToast(false);
+    try {
+      await deleteFromWatchlist.mutateAsync(String(itemToDelete.id));
+      setShowDeleteModal(false);
+      setItemToDelete(null);
+    } catch (error) {
+      console.error("Failed to delete from watchlist:", error);
+      // Keep modal open so user sees the action failed
+    }
   };
 
   const handlePageChange = (page: number) => {
@@ -210,42 +245,124 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
     >
       {/* Controls Row: Filters + Sort + Actions */}
       {hasItemsForCurrentFilter && (
-        <MediaPageToolbar
-          filterConfig={{
-            type: "menu",
-            sections: [
-              {
-                id: "mediaType",
-                title: "Media Type",
-                options: [
-                  { id: "all", label: "All Media" },
-                  { id: "movie", label: "Movies" },
-                  { id: "tv", label: "TV Shows" },
-                ],
+        <>
+          <MediaPageToolbar
+            filterConfig={{
+              type: "menu",
+              sections: [
+                {
+                  id: "mediaType",
+                  title: "Media Type",
+                  options: [
+                    { id: "all", label: "All Media" },
+                    { id: "movie", label: "Movies" },
+                    { id: "tv", label: "TV Shows" },
+                  ],
+                },
+                {
+                  id: "genre",
+                  title: "Genre",
+                  multiSelect: true,
+                  options: [
+                    { id: "all", label: "All Genres" },
+                    ...Array.from(availableGenres)
+                      .sort()
+                      .map((genre) => ({
+                        id: genre,
+                        label: genre.charAt(0).toUpperCase() + genre.slice(1),
+                      })),
+                  ],
+                },
+                {
+                  id: "sort",
+                  title: "Sort By",
+                  options: SORT_OPTIONS.map((opt) => ({
+                    id: opt.id,
+                    label: opt.label.replace("Sort: ", ""),
+                  })),
+                },
+              ],
+              activeFilters: {
+                mediaType: mediaTypeFilter,
+                genre: genreFilters,
+                sort: sortBy,
               },
-              {
-                id: "sort",
-                title: "Sort By",
-                options: SORT_OPTIONS.map((opt) => ({
-                  id: opt.id,
-                  label: opt.label.replace("Sort: ", ""),
-                })),
+              onFilterChange: (sectionId, filterId) => {
+                if (sectionId === "mediaType") {
+                  setMediaTypeFilter(filterId as MediaTypeFilter);
+                } else if (sectionId === "genre") {
+                  const genres = Array.isArray(filterId)
+                    ? filterId
+                    : [filterId];
+                  setGenreFilters(genres);
+                } else if (sectionId === "sort") {
+                  setSortBy(filterId as SortType);
+                }
               },
-            ],
-            activeFilters: {
-              mediaType: mediaTypeFilter,
-              sort: sortBy,
-            },
-            onFilterChange: (sectionId, filterId) => {
-              if (sectionId === "mediaType") {
-                setMediaTypeFilter(filterId as MediaTypeFilter);
-              } else if (sectionId === "sort") {
-                setSortBy(filterId as SortType);
-              }
-            },
-          }}
-          onAddClick={() => setShowSearchModal(true)}
-        />
+            }}
+            onAddClick={() => setShowSearchModal(true)}
+          />
+
+          {/* Active Filter Chips */}
+          {(mediaTypeFilter !== "all" ||
+            (!genreFilters.includes("all") && genreFilters.length > 0)) && (
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              {mediaTypeFilter !== "all" && (
+                <Chip
+                  variant="primary"
+                  size="sm"
+                  rounded="full"
+                  removable
+                  onRemove={() => setMediaTypeFilter("all")}
+                >
+                  {mediaTypeFilter === "movie" ? "Movies" : "TV Shows"}
+                </Chip>
+              )}
+
+              {!genreFilters.includes("all") && genreFilters.length > 0 && (
+                <>
+                  {genreFilters.map((genre) => (
+                    <span
+                      key={genre}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full cursor-pointer hover:opacity-80 transition-opacity ${getGenreColor(
+                        genre
+                      )}`}
+                      onClick={() => {
+                        const newFilters = genreFilters.filter(
+                          (g) => g !== genre
+                        );
+                        setGenreFilters(
+                          newFilters.length > 0 ? newFilters : ["all"]
+                        );
+                      }}
+                    >
+                      {genre.charAt(0).toUpperCase() + genre.slice(1)}
+                      <button
+                        type="button"
+                        className="hover:opacity-70 transition-opacity"
+                        aria-label="Remove filter"
+                      >
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    </span>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
+        </>
       )}
 
       {/* Content: List or Empty State */}
@@ -352,20 +469,24 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
         }
       />
 
-      {/* Undo Toast */}
-      {showUndoToast && lastDeletedItem && (
-        <Toast
-          message={`Removed "${lastDeletedItem.title}"`}
-          action={{
-            label: "Undo",
-            onClick: () => void handleUndoDelete(),
-          }}
-          onClose={() => {
-            setShowUndoToast(false);
-            setLastDeletedItem(null);
-          }}
-        />
-      )}
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setItemToDelete(null);
+        }}
+        onConfirm={() => void handleConfirmDelete()}
+        title="Remove from Watchlist?"
+        message={
+          itemToDelete
+            ? `Are you sure you want to remove "${itemToDelete.title}" from your watchlist?`
+            : ""
+        }
+        confirmText="Remove"
+        variant="danger"
+        isLoading={deleteFromWatchlist.isPending}
+      />
     </div>
   );
 };

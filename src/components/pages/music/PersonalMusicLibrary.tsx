@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import {
   Check,
   ChevronDown,
@@ -6,13 +6,15 @@ import {
   ChevronRight,
   Music,
 } from "lucide-react";
+import Chip from "../../shared/ui/Chip";
+import { FilterSortSection } from "../../shared/common/FilterSortMenu";
 import { MediaItem } from "../../shared/media/SendMediaModal";
 import SearchMusicModal from "../../shared/search/SearchMusicModal";
 import MusicDetailModal from "./MusicDetailModal";
 import MediaEmptyState from "../../media/MediaEmptyState";
 import MediaListItem from "../../media/MediaListItem";
 import SendMediaModal from "../../shared/media/SendMediaModal";
-import Toast from "../../ui/Toast";
+import ConfirmationModal from "../../shared/ui/ConfirmationModal";
 import Button from "../../shared/ui/Button";
 import { MediaPageToolbar } from "../../shared/media/MediaPageToolbar";
 import { searchMusic } from "../../../utils/mediaSearchAdapters";
@@ -44,6 +46,7 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
 
   // Filter is controlled by tabs (initialFilter prop), not by dropdown
   const [filter] = useState<FilterType>(initialFilter);
+  const [genreFilters, setGenreFilters] = useState<string[]>(["all"]);
   const [sortBy, setSortBy] = useState<SortType>("date-added");
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
@@ -56,9 +59,12 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [showItemsPerPageMenu, setShowItemsPerPageMenu] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
-  const [lastDeletedItem, setLastDeletedItem] =
-    useState<MusicLibraryItem | null>(null);
-  const [showUndoToast, setShowUndoToast] = useState(false);
+
+  // Delete confirmation state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [musicToDelete, setMusicToDelete] = useState<MusicLibraryItem | null>(
+    null
+  );
 
   // Add to library
   const handleAddToLibrary = (result: MediaItem) => {
@@ -88,40 +94,105 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
     void toggleListened.mutateAsync(id);
   };
 
-  // Remove from library with undo
+  // Remove from library
   const handleRemove = (music: MusicLibraryItem) => {
-    setLastDeletedItem(music);
-    void deleteFromLibrary.mutateAsync(music.id);
-    setShowUndoToast(true);
+    setMusicToDelete(music);
+    setShowDeleteModal(true);
   };
 
-  // Undo deletion
-  const handleUndo = () => {
-    if (lastDeletedItem) {
-      void addToLibrary.mutateAsync({
-        external_id: lastDeletedItem.external_id,
-        title: lastDeletedItem.title,
-        artist: lastDeletedItem.artist,
-        album: lastDeletedItem.album,
-        media_type: lastDeletedItem.media_type,
-        release_date: lastDeletedItem.release_date,
-        album_cover_url: lastDeletedItem.album_cover_url,
-        preview_url: lastDeletedItem.preview_url,
-        genre: lastDeletedItem.genre,
-        track_duration: lastDeletedItem.track_duration,
-        track_count: lastDeletedItem.track_count,
-        listened: lastDeletedItem.listened,
-      });
-      setLastDeletedItem(null);
+  // Confirm delete
+  const handleConfirmDelete = async () => {
+    if (!musicToDelete) return;
+
+    try {
+      await deleteFromLibrary.mutateAsync(musicToDelete.id);
+      setShowDeleteModal(false);
+      setMusicToDelete(null);
+    } catch (error) {
+      console.error("Failed to delete from music library:", error);
+      // Keep modal open so user sees the action failed
     }
-    setShowUndoToast(false);
   };
 
-  // Filter music based on filter
-  const filteredMusic = musicLibrary.filter((music: MusicLibraryItem) => {
-    if (filter === "listening") return !music.listened;
-    if (filter === "listened") return music.listened;
-    return true; // "all"
+  // First, filter by listened status to get the current view
+  const filteredByStatus = useMemo(() => {
+    if (filter === "listening") return musicLibrary.filter((m) => !m.listened);
+    if (filter === "listened") return musicLibrary.filter((m) => m.listened);
+    return musicLibrary;
+  }, [musicLibrary, filter]);
+
+  // Extract unique genres from the currently filtered music (by listened status)
+  const availableGenres = useMemo(() => {
+    const genreSet = new Set<string>();
+    filteredByStatus.forEach((music) => {
+      if (music.genre) {
+        // Split comma-separated genres and trim whitespace
+        music.genre.split(",").forEach((genre) => {
+          const trimmedGenre = genre.trim().toLowerCase();
+          if (trimmedGenre) genreSet.add(trimmedGenre);
+        });
+      }
+    });
+    return genreSet;
+  }, [filteredByStatus]);
+
+  // Create filter & sort sections for FilterSortMenu
+  const filterSortSections = useMemo((): FilterSortSection[] => {
+    // Sort options
+    const sortOptions = [
+      { id: "date-added" as SortType, label: "Recently Added" },
+      { id: "title" as SortType, label: "Title" },
+      { id: "artist" as SortType, label: "Artist" },
+      { id: "year" as SortType, label: "Release Year" },
+      { id: "rating" as SortType, label: "Your Rating" },
+    ];
+
+    // Sort genres alphabetically
+    const sortedGenres = Array.from(availableGenres).sort();
+
+    const genreOptions = [
+      { id: "all", label: "All Genres" },
+      ...sortedGenres.map((genre) => ({
+        id: genre,
+        label: genre.charAt(0).toUpperCase() + genre.slice(1),
+      })),
+    ];
+
+    return [
+      {
+        id: "genre",
+        title: "Genre",
+        multiSelect: true,
+        options: genreOptions,
+      },
+      {
+        id: "sort",
+        title: "Sort By",
+        options: sortOptions,
+      },
+    ];
+  }, [availableGenres]);
+
+  // Filter music based on filter and genre
+  const filteredMusic = filteredByStatus.filter((music: MusicLibraryItem) => {
+    // Filter by genres (multiple selection support)
+    if (genreFilters.length === 0 || genreFilters.includes("all")) {
+      return true;
+    }
+
+    // Music matches if it matches ANY of the selected genres
+    if (music.genre) {
+      const musicGenres = music.genre
+        .toLowerCase()
+        .split(",")
+        .map((g) => g.trim());
+
+      return genreFilters.some((selectedGenre) =>
+        musicGenres.includes(selectedGenre)
+      );
+    }
+
+    return false;
   });
 
   // Sort music
@@ -171,14 +242,6 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
     setShowSendModal(true);
   };
 
-  const sortOptions = [
-    { id: "date-added" as SortType, label: "Recently Added" },
-    { id: "title" as SortType, label: "Title" },
-    { id: "artist" as SortType, label: "Artist" },
-    { id: "year" as SortType, label: "Release Year" },
-    { id: "rating" as SortType, label: "Your Rating" },
-  ];
-
   const itemsPerPageOptions = [10, 25, 50, 100];
 
   // Empty state props
@@ -208,27 +271,50 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
     >
       {/* Action Bar - Only show when there's data */}
       {sortedMusic.length > 0 && (
-        <MediaPageToolbar
-          filterConfig={{
-            type: "menu",
-            sections: [
-              {
-                id: "sort",
-                title: "Sort By",
-                options: sortOptions,
+        <div className="space-y-3">
+          <MediaPageToolbar
+            filterConfig={{
+              type: "menu",
+              sections: filterSortSections,
+              activeFilters: {
+                genre: genreFilters,
+                sort: sortBy,
               },
-            ],
-            activeFilters: {
-              sort: sortBy,
-            },
-            onFilterChange: (sectionId, filterId) => {
-              if (sectionId === "sort") {
-                setSortBy(filterId as SortType);
-              }
-            },
-          }}
-          onAddClick={() => setShowSearchModal(true)}
-        />
+              onFilterChange: (sectionId, value) => {
+                if (sectionId === "genre") {
+                  const genres = Array.isArray(value) ? value : [value];
+                  setGenreFilters(genres);
+                } else if (sectionId === "sort") {
+                  setSortBy(value as SortType);
+                }
+              },
+            }}
+            onAddClick={() => setShowSearchModal(true)}
+          />
+
+          {/* Active Filter Chips */}
+          {!genreFilters.includes("all") && genreFilters.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {genreFilters.map((genre) => (
+                <Chip
+                  key={genre}
+                  variant="primary"
+                  size="sm"
+                  rounded="full"
+                  removable
+                  onRemove={() => {
+                    const newFilters = genreFilters.filter((g) => g !== genre);
+                    setGenreFilters(
+                      newFilters.length > 0 ? newFilters : ["all"]
+                    );
+                  }}
+                >
+                  {genre.charAt(0).toUpperCase() + genre.slice(1)}
+                </Chip>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {/* List View */}
@@ -403,17 +489,24 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
         />
       )}
 
-      {/* Undo Toast */}
-      {showUndoToast && (
-        <Toast
-          message={`Removed ${lastDeletedItem?.title || "item"} from library`}
-          action={{
-            label: "Undo",
-            onClick: handleUndo,
-          }}
-          onClose={() => setShowUndoToast(false)}
-        />
-      )}
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setMusicToDelete(null);
+        }}
+        onConfirm={() => void handleConfirmDelete()}
+        title="Remove from Library?"
+        message={
+          musicToDelete
+            ? `Are you sure you want to remove "${musicToDelete.title}" by ${musicToDelete.artist} from your library?`
+            : ""
+        }
+        confirmText="Remove"
+        variant="danger"
+        isLoading={deleteFromLibrary.isPending}
+      />
     </div>
   );
 };

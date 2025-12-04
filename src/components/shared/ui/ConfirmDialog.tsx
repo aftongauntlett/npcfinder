@@ -1,6 +1,11 @@
 /**
  * Confirm Dialog
  * Reusable confirmation modal with clean design
+ *
+ * @deprecated This component is deprecated in favor of ConfirmationModal.
+ * Please use ConfirmationModal for all new delete confirmations as it provides
+ * better features including loading states, more variants, and consistent styling.
+ * This component is kept for backward compatibility but will be removed in a future release.
  */
 
 import React from "react";

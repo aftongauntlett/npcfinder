@@ -11,7 +11,7 @@ import CreateTaskModal from "../../tasks/CreateTaskModal";
 import TaskDetailModal from "../../tasks/TaskDetailModal";
 import Button from "../../shared/ui/Button";
 import MediaEmptyState from "../../media/MediaEmptyState";
-import ConfirmDialog from "../../shared/ui/ConfirmDialog";
+import ConfirmationModal from "../../shared/ui/ConfirmationModal";
 import FilterSortMenu, {
   FilterSortSection,
 } from "../../shared/common/FilterSortMenu";
@@ -248,13 +248,14 @@ const InboxView: React.FC = () => {
     <div className="container mx-auto px-4 sm:px-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        {/* Filter & Sort Menu */}
+        {/* Sort Menu */}
         <FilterSortMenu
           sections={filterSortSections}
           activeFilters={activeFilters}
           onFilterChange={(sectionId, value) => {
             setActiveFilters({ ...activeFilters, [sectionId]: value });
           }}
+          label="Sort"
         />
 
         <Button
@@ -367,8 +368,8 @@ const InboxView: React.FC = () => {
         />
       )}
 
-      {/* Delete Confirmation Dialog */}
-      <ConfirmDialog
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
         isOpen={!!taskToDelete}
         onClose={() => setTaskToDelete(null)}
         onConfirm={confirmDelete}
@@ -376,6 +377,7 @@ const InboxView: React.FC = () => {
         message="Are you sure you want to delete this task? This action cannot be undone."
         confirmText="Delete"
         variant="danger"
+        isLoading={deleteTask.isPending}
       />
     </div>
   );

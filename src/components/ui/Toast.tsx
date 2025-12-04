@@ -2,6 +2,16 @@ import React, { useEffect } from "react";
 import { X, Undo } from "lucide-react";
 import { Button } from "@/components/shared";
 
+/**
+ * Toast Component
+ *
+ * Use this component for success/info notifications only (e.g., "Added to watchlist").
+ *
+ * ⚠️ WARNING: Do NOT use the action prop for undo operations on delete actions.
+ * All delete operations should use ConfirmationModal to confirm BEFORE deletion,
+ * not Toast with undo AFTER deletion. The undo pattern has been deprecated.
+ */
+
 interface ToastProps {
   message: string;
   action?: {

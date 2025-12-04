@@ -7,7 +7,7 @@ import React, { useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import type { Task, BoardSection } from "../../services/tasksService.types";
 import Button from "../shared/ui/Button";
-import ConfirmDialog from "../shared/ui/ConfirmDialog";
+import ConfirmationModal from "../shared/ui/ConfirmationModal";
 import TaskCard from "./TaskCard";
 
 interface KanbanColumnProps {
@@ -173,9 +173,9 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
         </div>
       </div>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Confirmation Modal */}
       {onDeleteSection && (
-        <ConfirmDialog
+        <ConfirmationModal
           isOpen={showDeleteConfirm}
           onClose={() => setShowDeleteConfirm(false)}
           onConfirm={() => onDeleteSection(section.id)}
@@ -189,6 +189,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
           }`}
           confirmText="Delete"
           variant="danger"
+          isLoading={false}
         />
       )}
     </div>
