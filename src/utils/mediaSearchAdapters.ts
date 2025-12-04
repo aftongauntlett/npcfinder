@@ -11,6 +11,9 @@ interface iTunesResult {
   artworkUrl100?: string;
   releaseDate?: string;
   primaryGenreName?: string;
+  trackTimeMillis?: number;
+  trackCount?: number;
+  previewUrl?: string;
   wrapperType: string;
 }
 
@@ -67,6 +70,9 @@ export async function searchMusic(query: string): Promise<MediaItem[]> {
       release_date: item.releaseDate || null,
       media_type: mediaType,
       genre: item.primaryGenreName || null,
+      track_duration: item.trackTimeMillis || null,
+      track_count: item.trackCount || null,
+      preview_url: item.previewUrl || null,
     };
   });
 }

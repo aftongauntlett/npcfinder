@@ -18,11 +18,15 @@ import {
 /**
  * Hook to get current user's review for a specific media item
  */
-export function useMyMediaReview(externalId: string, mediaType: string) {
+export function useMyMediaReview(
+  externalId: string,
+  mediaType: string,
+  enabled = true
+) {
   return useQuery({
     queryKey: ["myMediaReview", externalId, mediaType],
     queryFn: () => getMyMediaReview(externalId, mediaType),
-    enabled: !!externalId && !!mediaType,
+    enabled: enabled && !!externalId && !!mediaType,
     staleTime: 30000, // 30 seconds
   });
 }
@@ -30,11 +34,15 @@ export function useMyMediaReview(externalId: string, mediaType: string) {
 /**
  * Hook to get friends' public reviews for a specific media item
  */
-export function useFriendsMediaReviews(externalId: string, mediaType: string) {
+export function useFriendsMediaReviews(
+  externalId: string,
+  mediaType: string,
+  enabled = true
+) {
   return useQuery({
     queryKey: ["friendsMediaReviews", externalId, mediaType],
     queryFn: () => getFriendsMediaReviews(externalId, mediaType),
-    enabled: !!externalId && !!mediaType,
+    enabled: enabled && !!externalId && !!mediaType,
     staleTime: 60000, // 1 minute
   });
 }

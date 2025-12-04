@@ -88,6 +88,8 @@ export function useAddToLibrary() {
           album_cover_url: params.album_cover_url,
           preview_url: params.preview_url || null,
           genre: params.genre || null,
+          track_duration: params.track_duration || null,
+          track_count: params.track_count || null,
           listened: params.listened || false,
         })
         .select()

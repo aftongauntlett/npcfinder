@@ -16,6 +16,8 @@ export interface MusicLibraryItem {
   album_cover_url: string | null; // Album artwork
   preview_url: string | null; // Preview audio URL
   genre: string | null; // Primary genre from iTunes API
+  track_duration: number | null; // Track duration in milliseconds (for songs)
+  track_count: number | null; // Number of tracks (for albums)
   listened: boolean; // false = listening, true = listened
   personal_rating: number | null; // 1-5 stars
   personal_notes: string | null; // User's thoughts
@@ -34,6 +36,8 @@ export interface AddToLibraryParams {
   album_cover_url: string | null;
   preview_url?: string | null;
   genre?: string | null;
+  track_duration?: number | null;
+  track_count?: number | null;
   listened?: boolean;
 }
 
