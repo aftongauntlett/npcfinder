@@ -20,14 +20,14 @@ export const landingFutureCategories: FutureCategory[] = [
     color: LANDING_PURPLE,
     features: [
       {
-        title: "Personal Trackers",
+        title: "Advanced Analytics",
         description:
-          "Task management with drag-and-drop, priorities, and shared lists. Track fitness routines, job applications, or personal goals - all integrated into the dashboard.",
+          "Track productivity patterns, media consumption trends, and personal insights over time",
       },
       {
-        title: "Recipe & Meal Planning",
+        title: "Calendar Integration",
         description:
-          "Organize recipes, plan weekly meals, and share favorite dishes with friends. Track what you've cooked, save cooking notes, and build a personal cookbook - all integrated into the dashboard.",
+          "Sync tasks and meal plans with your calendar for better time management",
       },
     ],
   },

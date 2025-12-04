@@ -3,6 +3,8 @@ import {
   ShieldCheck,
   UsersThree,
   Sliders,
+  CookingPot,
+  ListChecks,
   type Icon,
 } from "@phosphor-icons/react";
 import {
@@ -58,6 +60,27 @@ export const landingFeatures: FeatureData[] = [
       "Choose custom theme colors to personalize your dashboard",
       "Customize which dashboard cards you see and hide unused features",
       "Set your display name and personal greeting",
+    ],
+  },
+  {
+    icon: CookingPot,
+    iconColor: LANDING_PEACH,
+    title: "Recipe & Meal Planning",
+    items: [
+      "Save and organize your favorite recipes with ingredients, instructions, and cooking notes",
+      "Plan weekly meals and generate grocery lists automatically",
+      "Share recipes with friends and build a collaborative cookbook",
+    ],
+  },
+  {
+    icon: ListChecks,
+    iconColor: LANDING_BLUE,
+    title: "Personal Trackers",
+    items: [
+      "Kanban boards for task management with drag-and-drop, priorities, and due dates",
+      "Grocery lists with sharing capabilities for household coordination",
+      "Job application tracker to manage your job search pipeline",
+      "Today view for quick access to due and overdue tasks",
     ],
   },
 ];

@@ -26,14 +26,14 @@ export interface DocLink {
 export const landingAvailability: AvailabilityData = {
   title: "Access & Availability",
   description:
-    "NPC Finder is currently invite-only and operates as a private tool for small, trusted friend groups. There is no public signup or open registration.",
+    "NPC Finder is currently invite-only while in beta. You'll receive a code from an existing admin to join your friend group.",
   points: [
     {
       icon: Key,
       iconColor: LANDING_TEAL,
       title: "How Invites Work",
       description:
-        "Admins generate invite codes tied to specific email addresses. Codes expire after 30 days and work only once. Your email must match the intended recipient to sign up - this prevents code sharing and keeps access controlled.",
+        "Admins generate invite codes for specific email addresses. Each code expires after 30 days and works only once. This keeps the community trusted and private.",
     },
     {
       icon: Lock,

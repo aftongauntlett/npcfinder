@@ -1,4 +1,8 @@
-# Advanced Self-Hosting (Optional)
+# Self-Hosting Guide
+
+This guide walks you through setting up your own instance of NPC Finder. You'll have complete control over your data and can customize the platform for your friend group.
+
+**Note**: NPC Finder is in active development. I recommend waiting for the v1.0 milestone before deploying to production unless you're comfortable with frequent updates and potential breaking changes.
 
 ## Prerequisites
 

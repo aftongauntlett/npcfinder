@@ -4,7 +4,9 @@
 [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/aftongauntlett/npcfinder)](https://github.com/aftongauntlett/npcfinder/commits/main)
 [![License](https://img.shields.io/badge/License-MIT-blue)](https://opensource.org/licenses/MIT)
 
-A private, invite-only media tracking platform for small friend groups. Track movies, TV shows, music, books, and games. Share recommendations with friends, not algorithms.
+Your private life dashboard for tracking media, managing tasks, organizing recipes, and sharing with friends. Built for small, trusted groups who want control over their data.
+
+Open source, self-hostable, and designed with privacy as a core principle.
 
 Built with React 19, TypeScript, and Supabase with Row-Level Security.
 
@@ -13,12 +15,13 @@ Built with React 19, TypeScript, and Supabase with Row-Level Security.
 
 ## Features
 
-- **Media Tracking**: Movies, TV shows, music, books, and games
-- **Personal Libraries**: Watchlists, reading lists, and game libraries with custom statuses
-- **Tasks & Organization**: Board-based task management system with sections, priorities, due dates, and tags. Features include Today view for due/overdue tasks, multiple board support, and Kanban-style organization with drag-and-drop
-- **Recommendations**: Send and track media recommendations with friends
+- **Media Tracking**: Movies, TV shows, music, books, and games with personal libraries and custom statuses
+- **Friend Recommendations**: Send and track media recommendations with personal notes and feedback
+- **Recipe & Meal Planning**: Save recipes, plan meals, and generate grocery lists
+- **Personal Trackers**: Kanban boards, task management, grocery lists, and job application tracking
 - **Reviews & Ratings**: Rate and review content with privacy controls
 - **Customization**: Custom themes, dark/light mode, configurable dashboard
+- **Friend Connections**: Manual, opt-in connections with trusted friends
 - **Admin Tools**: Invite code management and user activity monitoring
 
 ## Tech Stack
@@ -28,22 +31,30 @@ Built with React 19, TypeScript, and Supabase with Row-Level Security.
 **APIs**: TMDB, iTunes, Google Books, RAWG, OMDB  
 **Testing**: Vitest, React Testing Library
 
-## Security
+## For Users
 
-- **Authentication**: Supabase Auth with session management
-- **Database Security**: Row-Level Security (RLS) policies on all user tables
-- **Admin Protection**: Multi-layer authorization with database triggers
-- **Invite System**: Email-validated invite codes with expiration
-- **XSS Protection**: All user content rendered as plain text
-- **Security Headers**: CSP, X-Frame-Options, and other protective headers
+NPC Finder is currently invite-only while in beta. To join:
 
-For comprehensive security documentation, see:
+1. Receive an invite code from an existing admin
+2. Visit [npcfinder.com](https://npcfinder.com)
+3. Sign up with the email address your invite was sent to
 
-- [Security Review 2025](docs/SECURITY-REVIEW-2025.md) - Full security assessment
-- [Security Checklist](docs/SECURITY-CHECKLIST.md) - Ongoing maintenance tasks
-- [Rate Limiting Guide](docs/RATE-LIMITING-GUIDE.md) - Optional rate limiting implementation
+No public signup is available - this keeps the platform private and trusted.
 
-## Quick Start
+### Privacy & Access
+
+- **Invite-only**: Admin-generated codes with email verification and 30-day expiration
+- **Row-Level Security**: PostgreSQL RLS enforces data isolation
+- **Database Isolation**: Each installation uses its own Supabase project
+- **Standard Security Model**: Not end-to-end encrypted; database admin can access data
+
+See [docs/PRIVACY-REALITY-CHECK.md](docs/PRIVACY-REALITY-CHECK.md) for full details.
+
+## For Developers: Self-Hosting
+
+Want to run NPC Finder for your own friend group? Follow these steps to set up your own instance.
+
+### Quick Start
 
 ```bash
 git clone https://github.com/aftongauntlett/npcfinder.git
@@ -59,7 +70,38 @@ npm run dev
 
 For complete setup including database migrations, API configuration, and deployment, see [docs/QUICK-START.md](docs/QUICK-START.md).
 
-## Available Scripts
+### Supabase Setup
+
+See [docs/QUICK-START.md](docs/QUICK-START.md) for detailed Supabase project setup and database migration instructions.
+
+### Environment Configuration
+
+Configure your `.env.local` file with Supabase credentials and optional API keys. See [docs/API-SETUP.md](docs/API-SETUP.md) for API configuration.
+
+### Database Migrations
+
+All schema changes are managed through migrations. See [docs/DATABASE-MIGRATIONS.md](docs/DATABASE-MIGRATIONS.md) for migration management.
+
+### API Keys
+
+Optional external APIs for media metadata (TMDB, Google Books, OMDB, iTunes). See [docs/API-SETUP.md](docs/API-SETUP.md) for setup instructions.
+
+### Security
+
+- **Authentication**: Supabase Auth with session management
+- **Database Security**: Row-Level Security (RLS) policies on all user tables
+- **Admin Protection**: Multi-layer authorization with database triggers
+- **Invite System**: Email-validated invite codes with expiration
+- **XSS Protection**: All user content rendered as plain text
+- **Security Headers**: CSP, X-Frame-Options, and other protective headers
+
+For comprehensive security documentation, see:
+
+- [Security Review 2025](docs/SECURITY-REVIEW-2025.md) - Full security assessment
+- [Security Checklist](docs/SECURITY-CHECKLIST.md) - Ongoing maintenance tasks
+- [Rate Limiting Guide](docs/RATE-LIMITING-GUIDE.md) - Optional rate limiting implementation
+
+### Available Scripts
 
 ```bash
 npm run dev              # Start development server
@@ -69,9 +111,11 @@ npm run lint             # Run ESLint
 npm run db:migration:new # Create new database migration
 ```
 
-## Documentation
+### Documentation
 
-- [Quick Start Guide](docs/QUICK-START.md) - Complete setup and deployment
+These guides are for developers who want to self-host or contribute to the project.
+
+- [Self-Hosting Guide](docs/QUICK-START.md) - Complete setup and deployment
 - [API Setup](docs/API-SETUP.md) - Configure external APIs
 - [Database Migrations](docs/DATABASE-MIGRATIONS.md) - Schema management
 - [Dev/Prod Workflow](docs/DEV-PROD-WORKFLOW.md) - Safe database development workflow
@@ -80,14 +124,24 @@ npm run db:migration:new # Create new database migration
 - [Privacy & Security](docs/PRIVACY-REALITY-CHECK.md) - What is and isn't private
 - [Services Layer](src/services/README.md) - Business logic architecture
 
-## Privacy & Access
+## Roadmap
 
-- **Invite-only**: Admin-generated codes with email verification and 30-day expiration
-- **Row-Level Security**: PostgreSQL RLS enforces data isolation
-- **Database Isolation**: Each installation uses its own Supabase project
-- **Standard Security Model**: Not end-to-end encrypted; database admin can access data
+Future features under consideration. These are not currently available and plans may change based on user feedback, technical feasibility, and project priorities.
 
-See [docs/PRIVACY-REALITY-CHECK.md](docs/PRIVACY-REALITY-CHECK.md) for full details.
+**Productivity:**
+
+- Advanced Analytics - Track productivity patterns, media consumption trends, and personal insights over time
+- Calendar Integration - Sync tasks and meal plans with your calendar for better time management
+
+**Social:**
+
+- Custom Profiles - Customizable profiles inspired by MySpace with custom backgrounds and music players
+- In-Browser Social Game - A cozy social game built into the dashboard (think Animal Crossing meets productivity tracking)
+
+**Scalability:**
+
+- Discord-Style Networks - Optional user-created networks for scaling beyond small friend groups
+- End-to-End Encryption - Private messaging and journaling with full E2E encryption (long-term goal requiring significant architectural changes)
 
 ## License
 

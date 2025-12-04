@@ -109,22 +109,21 @@ const DemoLanding: React.FC = () => {
             </h2>
 
             <p className="text-base sm:text-lg text-neutral-300 mb-8 max-w-xl leading-relaxed font-light">
-              An open-source, self-hosted modular dashboard for your daily life.
               Track media, manage tasks, organize recipes, and share with your
-              trusted friends. Clone it, run it with your own friend group, and
-              customize it however you want.
+              trusted friends. Private, customizable, and built for small
+              groups.
             </p>
 
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <LandingButton href="#availability" variant="primary">
+                Request Invite
+              </LandingButton>
               <LandingButton
                 href="https://github.com/aftongauntlett/npcfinder"
-                variant="primary"
+                variant="ghost"
                 icon={<GithubLogo className="w-5 h-5" weight="duotone" />}
               >
                 View Source
-              </LandingButton>
-              <LandingButton href="#availability" variant="ghost">
-                Learn More
               </LandingButton>
             </div>
           </div>
@@ -144,8 +143,9 @@ const DemoLanding: React.FC = () => {
               What You Can Do Today
             </h3>
             <p className="text-gray-400 max-w-2xl">
-              NPC Finder currently provides media tracking and recommendations
-              as the first module in a broader private dashboard.
+              NPC Finder provides media tracking, task management, recipe
+              organization, and friend recommendations - all in one private
+              dashboard.
             </p>
           </div>
 
@@ -401,93 +401,24 @@ const DemoLanding: React.FC = () => {
             </div>
           </div>
 
-          {/* Documentation Accordions */}
-          <div className="space-y-4">
-            <Accordion
-              title="Invite System Guide"
-              defaultOpen={true}
-              index={0}
-              idPrefix="availability"
-            >
-              <p className="mb-3">
-                Learn how invite codes work and how to generate them for your
-                friend group.
-              </p>
-              <p className="mb-3">
-                Admins can create invite codes tied to specific email addresses.
-                Each code expires after 30 days and works only once. When
-                someone signs up, their email must match the intended recipient
-                - this prevents code sharing and unauthorized access.
-              </p>
+          {/* Developer Documentation Link */}
+          <div className="mt-8">
+            <p className="text-gray-400">
+              For detailed setup instructions and developer documentation, visit
+              our{" "}
               <a
-                href="https://github.com/aftongauntlett/npcfinder/blob/main/docs/INVITE-SYSTEM-QUICKSTART.md"
+                href="/docs"
                 style={{ color: LANDING_PEACH }}
                 className="hover:opacity-80 underline transition-opacity"
-                target="_blank"
-                rel="noopener noreferrer"
               >
-                View full invite system documentation →
+                Developer Guide
               </a>
-            </Accordion>
-
-            <Accordion
-              title="Privacy Reality Check"
-              defaultOpen={false}
-              index={1}
-              idPrefix="availability"
-            >
-              <p className="mb-3">
-                NPC Finder uses Row-Level Security to protect your data from
-                other users. However, the database administrator has technical
-                access to the underlying data, similar to how Netflix or Spotify
-                administrators can access their platforms.
-              </p>
-              <p className="mb-3">
-                End-to-end encryption for private messaging and journaling (like
-                Signal) is on the future roadmap, but it requires significant
-                architectural changes. For now, if you need that level of
-                privacy for sensitive communications, use a platform
-                specifically built for that purpose.
-              </p>
-              <a
-                href="https://github.com/aftongauntlett/npcfinder/blob/main/docs/PRIVACY-REALITY-CHECK.md"
-                style={{ color: LANDING_PEACH }}
-                className="hover:opacity-80 underline transition-opacity"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Read the full privacy documentation →
-              </a>
-            </Accordion>
-
-            <Accordion
-              title="Quick Start Guide"
-              defaultOpen={false}
-              index={2}
-              idPrefix="availability"
-            >
-              <p className="mb-3">Set up your own instance from scratch.</p>
-              <p className="mb-3">
-                Want to run NPC Finder for your own friend group? This guide
-                covers everything: cloning the repo, setting up Supabase,
-                configuring API keys, running migrations, and deploying to
-                production. Perfect for developers who want full control over
-                their data.
-              </p>
-              <a
-                href="https://github.com/aftongauntlett/npcfinder/blob/main/docs/QUICK-START.md"
-                style={{ color: LANDING_PEACH }}
-                className="hover:opacity-80 underline transition-opacity"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                View setup instructions →
-              </a>
-            </Accordion>
+              .
+            </p>
           </div>
         </motion.section>
 
-        {/* CTA Section */}
+        {/* Open Source & Self-Hostable Section */}
         <motion.section
           className="max-w-4xl mx-auto px-6 py-32 text-center"
           initial={{ opacity: 0, y: 20 }}
@@ -499,9 +430,9 @@ const DemoLanding: React.FC = () => {
             Open Source & Self-Hostable
           </h3>
           <p className="text-lg text-gray-300 mb-8 max-w-2xl mx-auto">
-            A real product in active development. Currently in private beta for
-            testing with my friend group. Clone the repo and run your own
-            instance, or follow development as I build toward a public release.
+            NPC Finder is open source and designed to be self-hosted. Run your
+            own instance with full control over your data, or follow development
+            as we build toward a public release.
           </p>
 
           {/* Development Warning Badge */}
@@ -511,6 +442,7 @@ const DemoLanding: React.FC = () => {
               In active development - recommend waiting for v1.0 milestone
             </span>
           </div>
+
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <LandingButton
               href="https://github.com/aftongauntlett/npcfinder"
@@ -519,11 +451,8 @@ const DemoLanding: React.FC = () => {
             >
               View Source Code
             </LandingButton>
-            <LandingButton
-              href="https://github.com/aftongauntlett/npcfinder/blob/main/docs/README.md"
-              variant="primary"
-            >
-              Read Documentation
+            <LandingButton href="/docs" variant="primary">
+              Developer Setup Guide
             </LandingButton>
           </div>
         </motion.section>
