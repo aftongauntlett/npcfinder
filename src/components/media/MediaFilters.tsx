@@ -1,6 +1,6 @@
 import React from "react";
 import { Filter } from "lucide-react";
-import { Button } from "@/components/shared";
+import { Button, Select } from "@/components/shared";
 
 type FilterType = "select" | "buttons";
 
@@ -32,21 +32,15 @@ const MediaFilters: React.FC<MediaFiltersProps> = ({
       {filters.map((filter) => (
         <div key={filter.id} className="relative">
           {filter.type === "select" ? (
-            <select
+            <Select
               value={activeFilters[filter.id] || ""}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                 onFilterChange(filter.id, e.target.value)
               }
+              options={filter.options}
+              placeholder={filter.label}
               aria-label={filter.label}
-              className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="">{filter.label}</option>
-              {filter.options.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            />
           ) : filter.type === "buttons" ? (
             <div
               className="flex flex-wrap gap-2"

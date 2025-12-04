@@ -425,21 +425,22 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
         />
       ) : (
         <div className="space-y-2 max-w-full overflow-hidden">
-          {/* Note: subtitle field shows platforms for games (e.g., "PC, PlayStation, Xbox")
-              Unlike other media types that show creator info (director, author, artist),
-              game developer/studio data is not currently available from RAWG API */}
           {paginatedItems.map((game) => (
             <MediaListItem
               key={game.id}
               id={game.id}
               title={game.name}
-              subtitle={game.platforms || undefined}
+              subtitle={undefined}
               posterUrl={game.background_image || undefined}
               year={game.released?.split("-")[0]}
               personalRating={game.personal_rating || undefined}
-              criticRating={game.rating ? game.rating * 20 : undefined} // Convert 0-5 to 0-100 scale
               genres={game.genres || undefined}
               isCompleted={game.played}
+              mediaType="game"
+              externalId={game.external_id}
+              platforms={game.platforms || undefined}
+              metacritic={game.metacritic || undefined}
+              playtime={game.playtime || undefined}
               onToggleComplete={() => void handleTogglePlayed(game)}
               onRecommend={() => handleRecommendClick(game)}
               onRemove={() => void handleDelete(game)}

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Search, X } from "lucide-react";
-import { Button } from "@/components/shared";
+import { Button, Input } from "@/components/shared";
 
 interface MediaSearchBarProps {
   onSearch: (query: string) => void;
@@ -25,31 +25,27 @@ const MediaSearchBar: React.FC<MediaSearchBarProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="relative">
-      <div className="relative">
-        <Search
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
-          aria-hidden="true"
+      <Input
+        type="text"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder={placeholder}
+        leftIcon={
+          <Search className="w-5 h-5 text-gray-400" aria-hidden="true" />
+        }
+        aria-label="Search media"
+      />
+      {query && (
+        <Button
+          type="button"
+          onClick={handleClear}
+          variant="subtle"
+          size="icon"
+          icon={<X className="w-5 h-5" />}
+          className="absolute right-3 top-1/2 -translate-y-1/2"
+          aria-label="Clear search"
         />
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={placeholder}
-          className="w-full pl-10 pr-10 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-          aria-label="Search media"
-        />
-        {query && (
-          <Button
-            type="button"
-            onClick={handleClear}
-            variant="subtle"
-            size="icon"
-            icon={<X className="w-5 h-5" />}
-            className="absolute right-3 top-1/2 -translate-y-1/2"
-            aria-label="Clear search"
-          />
-        )}
-      </div>
+      )}
     </form>
   );
 };

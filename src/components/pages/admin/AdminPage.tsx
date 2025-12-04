@@ -328,19 +328,16 @@ const AdminPage: React.FC = () => {
               </div>
 
               {/* User Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search users by name or email..."
-                  value={userSearch}
-                  onChange={(e) => {
-                    setUserSearch(e.target.value);
-                    setUserPage(0);
-                  }}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-primary focus:border-primary"
-                />
-              </div>
+              <Input
+                type="text"
+                placeholder="Search users by name or email..."
+                value={userSearch}
+                onChange={(e) => {
+                  setUserSearch(e.target.value);
+                  setUserPage(0);
+                }}
+                leftIcon={<Search className="w-5 h-5" />}
+              />
 
               {/* Users Table */}
               {isLoading ? (
@@ -415,10 +412,17 @@ const AdminPage: React.FC = () => {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               {user.is_admin ? (
-                                <button
+                                <Button
                                   onClick={() => handleToggleAdminClick(user)}
                                   disabled={isMasterAdmin(user)}
-                                  className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-purple-500 text-white hover:bg-purple-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                                  variant="primary"
+                                  size="sm"
+                                  className="gap-1.5"
+                                  aria-label={
+                                    isMasterAdmin(user)
+                                      ? "Master Admin cannot be demoted"
+                                      : "Click to remove admin"
+                                  }
                                   title={
                                     isMasterAdmin(user)
                                       ? "Master Admin cannot be demoted"
@@ -432,15 +436,17 @@ const AdminPage: React.FC = () => {
                                   {isMasterAdmin(user)
                                     ? "Master Admin"
                                     : "Admin"}
-                                </button>
+                                </Button>
                               ) : (
-                                <button
+                                <Button
                                   onClick={() => handleToggleAdminClick(user)}
-                                  className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-gray-500 text-white hover:bg-gray-600 transition-colors"
+                                  variant="subtle"
+                                  size="sm"
+                                  aria-label="Click to make admin"
                                   title="Click to make admin"
                                 >
                                   User
-                                </button>
+                                </Button>
                               )}
                             </td>
                           </motion.tr>
@@ -489,10 +495,17 @@ const AdminPage: React.FC = () => {
                             {new Date(user.created_at).toLocaleDateString()}
                           </div>
                           {user.is_admin ? (
-                            <button
+                            <Button
                               onClick={() => handleToggleAdminClick(user)}
                               disabled={isMasterAdmin(user)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-full bg-purple-500 text-white hover:bg-purple-600 active:bg-purple-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                              variant="primary"
+                              size="sm"
+                              className="gap-1.5"
+                              aria-label={
+                                isMasterAdmin(user)
+                                  ? "Master Admin cannot be demoted"
+                                  : "Click to remove admin"
+                              }
                               title={
                                 isMasterAdmin(user)
                                   ? "Master Admin cannot be demoted"
@@ -501,15 +514,17 @@ const AdminPage: React.FC = () => {
                             >
                               <Shield className="w-4 h-4" aria-hidden="true" />
                               {isMasterAdmin(user) ? "Master Admin" : "Admin"}
-                            </button>
+                            </Button>
                           ) : (
-                            <button
+                            <Button
                               onClick={() => handleToggleAdminClick(user)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-full bg-gray-500 text-white hover:bg-gray-600 active:bg-gray-700 transition-colors"
+                              variant="subtle"
+                              size="sm"
+                              aria-label="Click to make admin"
                               title="Click to make admin"
                             >
                               User
-                            </button>
+                            </Button>
                           )}
                         </div>
                       </motion.div>

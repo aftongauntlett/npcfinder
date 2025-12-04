@@ -10,7 +10,6 @@ import {
 import MediaListItem from "./MediaListItem";
 import MediaEmptyState from "./MediaEmptyState";
 import WatchlistPagination from "./WatchlistPagination";
-import MovieDetailModal from "./MovieDetailModal";
 import Toast from "../ui/Toast";
 import { useMediaFiltering } from "../../hooks/useMediaFiltering";
 import { searchMoviesAndTV } from "../../utils/mediaSearchAdapters";
@@ -65,8 +64,6 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
     setShowSearchModal,
     showSendModal,
     setShowSendModal,
-    selectedMovie,
-    setSelectedMovie,
     movieToRecommend,
     setMovieToRecommend,
   } = useWatchlistModals<WatchlistItem>();
@@ -285,10 +282,11 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
                 description={item.overview || undefined}
                 mediaType={item.media_type}
                 genres={item.genres?.join(", ") || undefined}
+                externalId={item.external_id}
+                releaseDate={item.release_date || undefined}
                 isCompleted={item.watched}
                 onToggleComplete={handleToggleWatched}
                 onRemove={handleRemoveFromWatchList}
-                onClick={() => setSelectedMovie(item)}
                 onRecommend={() => {
                   setMovieToRecommend(item);
                   setShowSendModal(true);
@@ -353,14 +351,6 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
             : undefined
         }
       />
-
-      {selectedMovie && (
-        <MovieDetailModal
-          isOpen={!!selectedMovie}
-          onClose={() => setSelectedMovie(null)}
-          item={selectedMovie}
-        />
-      )}
 
       {/* Undo Toast */}
       {showUndoToast && lastDeletedItem && (

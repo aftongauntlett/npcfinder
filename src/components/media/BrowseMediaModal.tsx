@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { X, Search, Plus, Loader } from "lucide-react";
+import { useState } from "react";
+import { Search, Plus, Loader } from "lucide-react";
 import FocusTrap from "focus-trap-react";
-import { UnifiedMediaCard, Button } from "@/components/shared";
+import { UnifiedMediaCard, Button, Input, Modal } from "@/components/shared";
 
 interface BrowseMediaModalProps {
   isOpen: boolean;
@@ -35,25 +35,6 @@ export function BrowseMediaModal({
   const [searchResults, setSearchResults] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [addingIds, setAddingIds] = useState<Set<string>>(new Set());
-
-  // Handle ESC key
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener("keydown", handleEscape);
-    }
-
-    return () => {
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,44 +99,26 @@ export function BrowseMediaModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
+    <Modal isOpen={isOpen} onClose={onClose} title={getTitle()} maxWidth="6xl">
       <FocusTrap
         focusTrapOptions={{
           initialFocus: false,
-          escapeDeactivates: false, // We handle ESC manually
-          clickOutsideDeactivates: true,
+          escapeDeactivates: false,
+          clickOutsideDeactivates: false,
           returnFocusOnDeactivate: true,
         }}
       >
-        <div className="w-full max-w-6xl my-8 max-h-[85vh] bg-white dark:bg-gray-900 rounded-xl shadow-2xl flex flex-col focus:outline-none">
-          {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {getTitle()}
-            </h2>
-            <Button
-              onClick={onClose}
-              variant="subtle"
-              size="icon"
-              icon={<X size={24} />}
-              aria-label="Close modal"
-            />
-          </div>
-
+        <div className="flex flex-col max-h-[75vh]">
           {/* Search Bar */}
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
             <form onSubmit={(e) => void handleSearch(e)} className="flex gap-3">
-              <div className="flex-1 relative">
-                <Search
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                  size={20}
-                />
-                <input
+              <div className="flex-1">
+                <Input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={getPlaceholder()}
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors"
+                  leftIcon={<Search size={20} className="text-gray-400" />}
                 />
               </div>
               <Button
@@ -297,6 +260,6 @@ export function BrowseMediaModal({
           </div>
         </div>
       </FocusTrap>
-    </div>
+    </Modal>
   );
 }

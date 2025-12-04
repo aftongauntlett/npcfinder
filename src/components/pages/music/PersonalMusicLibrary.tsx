@@ -74,8 +74,10 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
         (result.media_type as "song" | "album" | "playlist") || "song",
       release_date: result.release_date || null,
       album_cover_url: result.poster_url,
-      preview_url: null, // iTunes search doesn't provide preview URLs in basic search
+      preview_url: result.preview_url || null,
       genre: result.genre || null,
+      track_duration: result.track_duration || null,
+      track_count: result.track_count || null,
       listened: shouldMarkAsListened,
     });
     setShowSearchModal(false);
@@ -104,7 +106,10 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
         media_type: lastDeletedItem.media_type,
         release_date: lastDeletedItem.release_date,
         album_cover_url: lastDeletedItem.album_cover_url,
+        preview_url: lastDeletedItem.preview_url,
         genre: lastDeletedItem.genre,
+        track_duration: lastDeletedItem.track_duration,
+        track_count: lastDeletedItem.track_count,
         listened: lastDeletedItem.listened,
       });
       setLastDeletedItem(null);
@@ -250,9 +255,16 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
                   : undefined
               }
               personalRating={music.personal_rating || undefined}
-              status={music.listened ? "watched" : "to-watch"}
               isCompleted={music.listened}
               genres={music.genre || undefined}
+              mediaType={music.media_type}
+              artist={music.artist}
+              album={music.album || undefined}
+              trackDuration={music.track_duration || undefined}
+              trackCount={music.track_count || undefined}
+              previewUrl={music.preview_url || undefined}
+              externalId={music.external_id}
+              description={undefined}
               onClick={() => setSelectedMusic(music)}
               onToggleComplete={() => handleToggleListened(music.id)}
               onRemove={() => handleRemove(music)}

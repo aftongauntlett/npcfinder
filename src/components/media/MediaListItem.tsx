@@ -1,19 +1,20 @@
-import React from "react";
-import {
-  X,
-  Check,
-  Lightbulb,
-  ArrowCounterClockwise,
-  Book,
-} from "@phosphor-icons/react";
+import React, { useState, useEffect } from "react";
+import { Calendar, Clock, RotateCcw, Check, Lightbulb } from "lucide-react";
+import { Book } from "@phosphor-icons/react";
 import { type MediaStatus } from "@/utils/mediaStatus";
 import {
-  ActionButtonGroup,
+  AccordionListCard,
   GenreChips,
   StatusBadge,
   StarRating,
   MediaPoster,
+  MediaDetailsContent,
+  MediaReviewModal,
 } from "@/components/shared";
+import {
+  fetchDetailedMediaInfo,
+  type DetailedMediaInfo,
+} from "@/utils/tmdbDetails";
 
 interface MediaListItemProps {
   id: string | number;
@@ -25,17 +26,38 @@ interface MediaListItemProps {
   criticRating?: number;
   audienceRating?: number;
   status?: MediaStatus;
-  onClick: (id: string | number) => void;
-  mediaType?: "movie" | "tv"; // Add media type
+  mediaType?: "movie" | "tv" | "song" | "album" | "playlist" | "game" | "book";
   category?: string; // For books - display primary category
   genres?: string; // Comma-separated genre string
+  externalId?: string; // TMDB/external ID for fetching details
+  releaseDate?: string; // For fetching additional data
 
   // Action buttons (optional)
   isCompleted?: boolean; // For watched/read status
   onToggleComplete?: (id: string | number) => void;
   onRecommend?: (id: string | number) => void;
   onRemove?: (id: string | number) => void;
+  onClick?: (id: string | number) => void; // For opening detail modal/page
   description?: string; // For overview/description text
+
+  // Music-specific props
+  artist?: string;
+  album?: string;
+  trackDuration?: number; // in milliseconds
+  trackCount?: number;
+  previewUrl?: string;
+
+  // Game-specific props
+  developer?: string;
+  platforms?: string;
+  metacritic?: number;
+  playtime?: number;
+
+  // Book-specific props
+  authors?: string;
+  publisher?: string;
+  isbn?: string;
+  pageCount?: number;
 }
 
 /**
@@ -89,187 +111,251 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
   criticRating,
   audienceRating,
   status,
-  onClick,
   isCompleted,
   onToggleComplete,
   onRecommend,
   onRemove,
+  onClick: _onClick, // Unused after removing edit button from accordion header
   description,
   mediaType,
   category,
   genres,
+  externalId,
+  releaseDate: _releaseDate,
+  artist,
+  album,
+  trackDuration,
+  trackCount,
+  previewUrl,
+  developer,
+  platforms,
+  metacritic,
+  playtime,
+  authors,
+  publisher,
+  isbn,
+  pageCount,
 }) => {
-  const hasActions = onToggleComplete || onRecommend || onRemove;
+  // State for detailed info
+  const [details, setDetails] = useState<DetailedMediaInfo | null>(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
-  return (
-    <div
-      onClick={() => onClick(id)}
-      className="bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-900 p-4"
-    >
-      <div className="flex gap-4 items-start">
-        {/* Poster/Icon */}
-        <div className="flex-shrink-0">
-          <MediaPoster
-            src={posterUrl}
-            alt={title}
-            size="sm"
-            aspectRatio="2/3"
-            fallbackIcon={Book}
-            showOverlay={false}
-          />
+  // Fetch detailed info when accordion expands (only for movies/TV)
+  useEffect(() => {
+    if (
+      isExpanded &&
+      !details &&
+      externalId &&
+      mediaType &&
+      (mediaType === "movie" || mediaType === "tv")
+    ) {
+      setLoadingDetails(true);
+      fetchDetailedMediaInfo(externalId, mediaType)
+        .then((info) => {
+          setDetails(info);
+        })
+        .catch((err) => {
+          console.error("Error loading media details:", err);
+        })
+        .finally(() => {
+          setLoadingDetails(false);
+        });
+    }
+  }, [isExpanded, details, externalId, mediaType]);
+
+  // Build custom actions for media-specific buttons
+  const customActions = [];
+
+  // Add recommend button if available and item is completed
+  if (isCompleted && onRecommend) {
+    customActions.push({
+      icon: <Lightbulb className="w-4 h-4" />,
+      onClick: () => onRecommend(id),
+      variant: "secondary" as const,
+      ariaLabel: "Recommend to friends",
+      className:
+        "!border-purple-400/50 dark:!border-purple-500/50 !bg-purple-50/50 dark:!bg-purple-950/30 !text-purple-600 dark:!text-purple-400 hover:!bg-purple-100/60 dark:hover:!bg-purple-900/40 hover:!border-purple-500/60 dark:hover:!border-purple-400/60",
+    });
+  }
+
+  // Add toggle complete button
+  if (onToggleComplete) {
+    customActions.push({
+      icon: isCompleted ? (
+        <RotateCcw className="w-4 h-4" />
+      ) : (
+        <Check className="w-4 h-4" />
+      ),
+      onClick: () => onToggleComplete(id),
+      variant: isCompleted ? ("subtle" as const) : ("secondary" as const),
+      ariaLabel: isCompleted ? "Mark as incomplete" : "Mark as complete",
+      className: isCompleted
+        ? ""
+        : "!border-primary/30 dark:!border-primary-light/30 !bg-primary/5 dark:!bg-primary-light/5 !text-primary dark:!text-primary-light hover:!bg-primary/10 dark:hover:!bg-primary-light/10 hover:!border-primary/40 dark:hover:!border-primary-light/40",
+    });
+  }
+
+  // Header content (always visible)
+  const headerContent = (
+    <div className="flex gap-4 items-start">
+      {/* Poster/Icon */}
+      <div className="flex-shrink-0">
+        <MediaPoster
+          src={posterUrl}
+          alt={title}
+          size="sm"
+          aspectRatio="2/3"
+          fallbackIcon={Book}
+          showOverlay={false}
+        />
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <h3 className="font-semibold text-gray-900 dark:text-white">
+            {title}
+          </h3>
+          {/* Movie/TV Badge - only show for movies and TV */}
+          {mediaType === "tv" && (
+            <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded whitespace-nowrap">
+              TV
+            </span>
+          )}
+          {mediaType === "movie" && (
+            <span className="text-xs text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 rounded whitespace-nowrap">
+              Movie
+            </span>
+          )}
+          {/* Genre Chips - show for all media types */}
+          {(category || genres) && (
+            <GenreChips
+              genres={category ? [category] : genres || ""}
+              maxVisible={2}
+              size="sm"
+            />
+          )}
+          {/* Status Badge */}
+          {status && <StatusBadge status={status} size="sm" />}
         </div>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-gray-900 dark:text-white truncate">
-                  {title}
-                </h3>
-                {/* Movie/TV Badge */}
-                {mediaType && (
-                  <>
-                    {mediaType === "tv" ? (
-                      <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded whitespace-nowrap flex-shrink-0">
-                        TV
-                      </span>
-                    ) : (
-                      <span className="text-xs text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 rounded whitespace-nowrap flex-shrink-0">
-                        Movie
-                      </span>
-                    )}
-                  </>
-                )}
-                {/* Category/Genre Chips */}
-                {(category || genres) && (
-                  <GenreChips
-                    genres={category ? [category] : genres || ""}
-                    maxVisible={2}
-                    size="sm"
-                    className="flex-shrink-0"
-                  />
-                )}
-              </div>
-              {/* Subtitle shows creator info: director for movies/TV, authors for books, artist for music, platforms for games */}
-              {subtitle && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                  {subtitle}
-                </p>
-              )}
-              {year && (
-                <p className="text-sm text-gray-500 dark:text-gray-500">
-                  {year}
-                </p>
-              )}
-              {description && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                  {description}
-                </p>
-              )}
-            </div>
+        {/* Subtitle shows creator info (director/author/artist/developer) */}
+        {subtitle && (
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            {subtitle}
+          </p>
+        )}
 
-            {/* Status Badge */}
-            {status && !hasActions && <StatusBadge status={status} size="sm" />}
-          </div>
-
-          {/* Ratings */}
-          {!hasActions && (
-            <div className="flex items-center gap-4 mt-2">
-              {personalRating !== undefined && personalRating > 0 && (
-                <div className="flex items-center gap-1">
-                  <StarRating
-                    rating={personalRating}
-                    onRatingChange={() => {}}
-                    readonly={true}
-                    showClearButton={false}
-                    size="sm"
-                  />
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    Personal
-                  </span>
-                </div>
-              )}
-              {criticRating !== undefined && criticRating > 0 && (
-                <div className="flex items-center gap-1">
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
-                    {criticRating}%
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    Critics
-                  </span>
-                </div>
-              )}
-              {audienceRating !== undefined && audienceRating > 0 && (
-                <div className="flex items-center gap-1">
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
-                    {audienceRating}%
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    Audience
-                  </span>
-                </div>
-              )}
-            </div>
+        {/* Year and Runtime */}
+        <div className="flex items-center gap-2 mt-1 flex-wrap">
+          {year && (
+            <span className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 whitespace-nowrap">
+              <Calendar className="w-3 h-3" />
+              {year}
+            </span>
+          )}
+          {details && details.runtime && (
+            <span className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 whitespace-nowrap">
+              <Clock className="w-3 h-3" />
+              {(() => {
+                const totalMinutes =
+                  typeof details.runtime === "string"
+                    ? parseInt(details.runtime)
+                    : details.runtime;
+                const hours = Math.floor(totalMinutes / 60);
+                const minutes = totalMinutes % 60;
+                return hours > 0
+                  ? `${hours} ${hours === 1 ? "hour" : "hours"}${
+                      minutes > 0
+                        ? ` ${minutes} ${minutes === 1 ? "minute" : "minutes"}`
+                        : ""
+                    }`
+                  : `${minutes} ${minutes === 1 ? "minute" : "minutes"}`;
+              })()}
+            </span>
           )}
         </div>
 
-        {/* Action Buttons */}
-        {hasActions && (
-          <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-            <ActionButtonGroup
-              actions={[
-                ...(onRemove
-                  ? [
-                      {
-                        id: "remove",
-                        icon: <X size={18} weight="duotone" />,
-                        label: "Remove from list",
-                        onClick: () => onRemove(id),
-                        variant: "danger" as const,
-                        tooltip: "Remove",
-                      },
-                    ]
-                  : []),
-                ...(onToggleComplete
-                  ? [
-                      {
-                        id: "toggle",
-                        icon: isCompleted ? (
-                          <ArrowCounterClockwise size={18} weight="duotone" />
-                        ) : (
-                          <Check size={18} weight="bold" />
-                        ),
-                        label: isCompleted
-                          ? "Mark as incomplete"
-                          : "Mark as complete",
-                        onClick: () => onToggleComplete(id),
-                        variant: (isCompleted ? "warning" : "success") as
-                          | "warning"
-                          | "success",
-                        tooltip: isCompleted ? "Put Back" : "Mark Complete",
-                      },
-                    ]
-                  : []),
-                ...(isCompleted && onRecommend
-                  ? [
-                      {
-                        id: "recommend",
-                        icon: <Lightbulb size={18} weight="duotone" />,
-                        label: "Recommend to friends",
-                        onClick: () => onRecommend(id),
-                        variant: "success" as const,
-                        tooltip: "Recommend",
-                      },
-                    ]
-                  : []),
-              ]}
-              orientation="horizontal"
-            />
-          </div>
-        )}
+        {/* Ratings */}
+        <div className="flex items-center gap-3 mt-1 flex-wrap">
+          {personalRating !== undefined && personalRating > 0 && (
+            <div className="flex items-center gap-1">
+              <StarRating
+                rating={personalRating}
+                onRatingChange={() => {}}
+                readonly={true}
+                showClearButton={false}
+                size="sm"
+              />
+            </div>
+          )}
+          {criticRating !== undefined && criticRating > 0 && (
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {criticRating}% Critics
+            </span>
+          )}
+          {audienceRating !== undefined && audienceRating > 0 && (
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {audienceRating}% Audience
+            </span>
+          )}
+        </div>
       </div>
     </div>
+  );
+
+  // Expanded content (shown when accordion opens)
+  const expandedContent = (
+    <MediaDetailsContent
+      description={description}
+      details={details}
+      loadingDetails={loadingDetails}
+      mediaType={mediaType}
+      externalId={externalId}
+      isCompleted={isCompleted}
+      onOpenReview={() => setIsReviewModalOpen(true)}
+      artist={artist}
+      album={album}
+      trackDuration={trackDuration}
+      trackCount={trackCount}
+      previewUrl={previewUrl}
+      genre={category || (genres ? genres.split(",")[0].trim() : undefined)}
+      year={year}
+      developer={developer}
+      platforms={platforms}
+      metacritic={metacritic}
+      playtime={playtime}
+      pageCount={pageCount}
+      authors={authors}
+      publisher={publisher}
+      isbn={isbn}
+    />
+  );
+
+  return (
+    <>
+      <AccordionListCard
+        onDelete={onRemove ? () => onRemove(id) : undefined}
+        expandedContent={expandedContent}
+        customActions={customActions.length > 0 ? customActions : undefined}
+        onExpandChange={setIsExpanded}
+      >
+        {headerContent}
+      </AccordionListCard>
+
+      {/* Review Modal - Only for watched items */}
+      {externalId && mediaType && isCompleted && (
+        <MediaReviewModal
+          isOpen={isReviewModalOpen}
+          onClose={() => setIsReviewModalOpen(false)}
+          externalId={externalId}
+          mediaType={mediaType}
+          title={title}
+        />
+      )}
+    </>
   );
 };
 

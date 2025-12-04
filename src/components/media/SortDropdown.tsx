@@ -1,6 +1,7 @@
-import React, { useState } from "react";
-import { Check, ChevronDown } from "lucide-react";
-import { Button } from "@/components/shared";
+import React from "react";
+import { ChevronDown } from "lucide-react";
+import { Button, Dropdown } from "@/components/shared";
+import type { DropdownOption } from "@/components/shared/ui/Dropdown";
 
 export interface SortOption {
   id: string;
@@ -13,65 +14,40 @@ interface SortDropdownProps {
   onSortChange: (sortId: string) => void;
 }
 
+/**
+ * Sort Dropdown Component
+ * Uses the reusable Dropdown component for consistent behavior
+ */
 const SortDropdown: React.FC<SortDropdownProps> = ({
   options,
   activeSort,
   onSortChange,
 }) => {
-  const [showMenu, setShowMenu] = useState(false);
   const activeOption = options.find((opt) => opt.id === activeSort);
 
+  // Convert SortOption[] to DropdownOption[]
+  const dropdownOptions: DropdownOption[] = options.map((opt) => ({
+    id: opt.id,
+    label: opt.label,
+  }));
+
   return (
-    <div className="relative">
-      <Button
-        onClick={() => setShowMenu(!showMenu)}
-        variant="secondary"
-        size="sm"
-        icon={<ChevronDown className="w-4 h-4" />}
-        iconPosition="right"
-        aria-expanded={showMenu}
-        aria-haspopup="true"
-      >
-        {activeOption?.label || "Sort"}
-      </Button>
-
-      {showMenu && (
-        <>
-          <div
-            className="fixed inset-0 z-10"
-            onClick={() => setShowMenu(false)}
-          />
-          <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-20 py-1 overflow-hidden">
-            {options.map((option) => {
-              const isActive = activeSort === option.id;
-
-              return (
-                <Button
-                  key={option.id}
-                  onClick={() => {
-                    onSortChange(option.id);
-                    setShowMenu(false);
-                  }}
-                  variant="subtle"
-                  size="sm"
-                  fullWidth
-                  icon={
-                    isActive ? (
-                      <Check className="w-4 h-4 text-primary" />
-                    ) : undefined
-                  }
-                  className={`justify-start rounded-none ${
-                    isActive ? "font-semibold" : ""
-                  }`}
-                >
-                  {option.label}
-                </Button>
-              );
-            })}
-          </div>
-        </>
-      )}
-    </div>
+    <Dropdown
+      trigger={
+        <Button
+          variant="secondary"
+          size="sm"
+          icon={<ChevronDown className="w-4 h-4" />}
+          iconPosition="right"
+        >
+          {activeOption?.label || "Sort"}
+        </Button>
+      }
+      options={dropdownOptions}
+      value={activeSort}
+      onChange={(value) => onSortChange(value as string)}
+      size="sm"
+    />
   );
 };
 

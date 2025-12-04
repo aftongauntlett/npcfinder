@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { User as UserIcon, Save } from "lucide-react";
 import { getUserProfile, updateUserProfile } from "../../lib/profiles";
 import { logger } from "../../lib/logger";
-import { Button, Input, Textarea } from "@/components/shared";
+import { Button, Input, Textarea, ConfirmDialog } from "@/components/shared";
 import MainLayout from "../layouts/MainLayout";
 import ContentLayout from "../layouts/ContentLayout";
 import ColorThemePicker from "../settings/ColorThemePicker";
@@ -241,27 +241,16 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
         description="Customize your profile and dashboard preferences"
       >
         {/* Unsaved Changes Confirmation Dialog */}
-        {showConfirmDialog && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Unsaved Changes
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
-                You have unsaved changes. Are you sure you want to leave? Your
-                changes will be lost.
-              </p>
-              <div className="flex gap-3 justify-end">
-                <Button variant="secondary" onClick={cancelNavigation}>
-                  Stay on Page
-                </Button>
-                <Button variant="danger" onClick={confirmNavigation}>
-                  Leave Without Saving
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
+        <ConfirmDialog
+          isOpen={showConfirmDialog}
+          onClose={cancelNavigation}
+          onConfirm={confirmNavigation}
+          title="Unsaved Changes"
+          message="You have unsaved changes. Are you sure you want to leave? Your changes will be lost."
+          confirmText="Leave Without Saving"
+          cancelText="Stay on Page"
+          variant="danger"
+        />
 
         {/* Message */}
         {message && (

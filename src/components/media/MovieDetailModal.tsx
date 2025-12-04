@@ -2,10 +2,8 @@ import { useState, useEffect } from "react";
 import { Loader2, Calendar, Clock } from "lucide-react";
 import {
   MediaDetailModal,
-  MediaMetrics,
+  MediaDetailsAccordion,
   Button,
-  MediaCrewInfo,
-  MediaCastList,
   type MetadataItem,
 } from "@/components/shared";
 import { SimilarMoviesCarousel } from "./SimilarMoviesCarousel";
@@ -237,22 +235,14 @@ export default function MovieDetailModal({
   // Build additional content (crew, cast, awards, box office, critic ratings)
   const additionalContent = details ? (
     <>
-      {/* Crew */}
-      <MediaCrewInfo
+      {/* Details Accordion: Crew, Cast, Ratings, Awards, Box Office */}
+      <MediaDetailsAccordion
         director={details.director}
         producer={details.producer}
         cinematographer={details.cinematographer}
         writer={details.writer}
+        cast={details.cast}
         mediaType={item.media_type}
-      />
-
-      {/* Cast */}
-      {details.cast && details.cast.length > 0 && (
-        <MediaCastList cast={details.cast} />
-      )}
-
-      {/* Critic Ratings, Awards, Box Office - all in one component */}
-      <MediaMetrics
         criticRatings={{
           rottenTomatoes: details.rotten_tomatoes_score
             ? parseInt(details.rotten_tomatoes_score.replace("%", ""))
