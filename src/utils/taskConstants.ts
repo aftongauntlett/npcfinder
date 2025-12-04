@@ -77,6 +77,9 @@ export const TASK_LIMITS = {
   MAX_BOARDS_PER_USER: 50,
   MAX_SECTIONS_PER_BOARD: 20,
   MAX_TASKS_PER_BOARD: 500,
+  MAX_TIMER_MINUTES: 1440, // 24 hours
+  MIN_TIMER_MINUTES: 1,
+  MAX_REMINDER_DAYS_AHEAD: 365, // 1 year
 } as const;
 
 // Priority labels and colors
@@ -141,3 +144,91 @@ export const STATUS_OPTIONS = [
   { value: "done" as const, ...STATUS_CONFIG.done },
   { value: "archived" as const, ...STATUS_CONFIG.archived },
 ] as const;
+
+/**
+ * Grocery Categories
+ */
+export const GROCERY_CATEGORIES = [
+  "Produce",
+  "Dairy",
+  "Meat",
+  "Bakery",
+  "Pantry",
+  "Frozen",
+  "Beverages",
+  "Snacks",
+  "Other",
+] as const;
+
+/**
+ * Category Colors for Grocery Items
+ */
+export const CATEGORY_COLORS = {
+  Produce: {
+    bg: "bg-green-100 dark:bg-green-900/20",
+    text: "text-green-700 dark:text-green-300",
+    border: "border-green-300 dark:border-green-700",
+  },
+  Dairy: {
+    bg: "bg-blue-100 dark:bg-blue-900/20",
+    text: "text-blue-700 dark:text-blue-300",
+    border: "border-blue-300 dark:border-blue-700",
+  },
+  Meat: {
+    bg: "bg-red-100 dark:bg-red-900/20",
+    text: "text-red-700 dark:text-red-300",
+    border: "border-red-300 dark:border-red-700",
+  },
+  Bakery: {
+    bg: "bg-amber-100 dark:bg-amber-900/20",
+    text: "text-amber-700 dark:text-amber-300",
+    border: "border-amber-300 dark:border-amber-700",
+  },
+  Pantry: {
+    bg: "bg-yellow-100 dark:bg-yellow-900/20",
+    text: "text-yellow-700 dark:text-yellow-300",
+    border: "border-yellow-300 dark:border-yellow-700",
+  },
+  Frozen: {
+    bg: "bg-cyan-100 dark:bg-cyan-900/20",
+    text: "text-cyan-700 dark:text-cyan-300",
+    border: "border-cyan-300 dark:border-cyan-700",
+  },
+  Beverages: {
+    bg: "bg-purple-100 dark:bg-purple-900/20",
+    text: "text-purple-700 dark:text-purple-300",
+    border: "border-purple-300 dark:border-purple-700",
+  },
+  Snacks: {
+    bg: "bg-pink-100 dark:bg-pink-900/20",
+    text: "text-pink-700 dark:text-pink-300",
+    border: "border-pink-300 dark:border-pink-700",
+  },
+  Other: {
+    bg: "bg-gray-100 dark:bg-gray-900/20",
+    text: "text-gray-700 dark:text-gray-300",
+    border: "border-gray-300 dark:border-gray-700",
+  },
+} as const;
+
+/**
+ * Timer Status Constants
+ */
+export const TIMER_STATUS = {
+  NOT_STARTED: "not_started",
+  RUNNING: "running",
+  PAUSED: "paused",
+  COMPLETED: "completed",
+} as const;
+
+export type TimerStatus = (typeof TIMER_STATUS)[keyof typeof TIMER_STATUS];
+
+/**
+ * Reminder Type Constants
+ */
+export const REMINDER_TYPE = {
+  DATE_BASED: "date_based",
+  TIMER_BASED: "timer_based",
+} as const;
+
+export type ReminderType = (typeof REMINDER_TYPE)[keyof typeof REMINDER_TYPE];
