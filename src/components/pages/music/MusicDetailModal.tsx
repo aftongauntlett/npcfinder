@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Calendar, Disc, Music2 } from "lucide-react";
 import MediaDetailModal from "../../shared/media/MediaDetailModal";
-import { MediaContributorList } from "@/components/shared";
+import { MediaDetailsContent } from "@/components/shared";
 import type { MusicLibraryItem } from "../../../services/musicService.types";
 import {
   useUpdateMusicRating,
@@ -85,24 +85,27 @@ const MusicDetailModal: React.FC<MusicDetailModalProps> = ({
       : []),
   ];
 
+  // Build additional content using MediaDetailsContent
   const additionalContent = (
-    <>
-      {music.artist && (
-        <MediaContributorList
-          title="Artist"
-          contributors={[music.artist]}
-          variant="inline"
-        />
-      )}
-
-      {music.album && music.media_type === "song" && (
-        <div className="pb-5">
-          <p className="text-sm italic text-gray-600 dark:text-gray-400 mt-1">
-            from <span className="font-medium">{music.album}</span>
-          </p>
-        </div>
-      )}
-    </>
+    <MediaDetailsContent
+      title={music.title}
+      details={null}
+      loadingDetails={false}
+      mediaType={music.media_type as "song" | "album" | "playlist"}
+      externalId={music.external_id}
+      isCompleted={music.listened}
+      artist={music.artist || undefined}
+      album={music.media_type === "song" ? music.album || undefined : undefined}
+      genre={music.genre || undefined}
+      year={displayYear || undefined}
+      trackDuration={music.track_duration || undefined}
+      trackCount={
+        music.media_type === "album"
+          ? music.track_count || undefined
+          : undefined
+      }
+      previewUrl={music.preview_url || undefined}
+    />
   );
 
   const currentStatus: MediaStatus = music.listened ? "completed" : "planned";

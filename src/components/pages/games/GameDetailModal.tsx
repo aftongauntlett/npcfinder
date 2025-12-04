@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import MediaDetailModal from "../../shared/media/MediaDetailModal";
-import { MediaContributorList } from "@/components/shared";
+import { MediaDetailsContent } from "@/components/shared";
 import type { GameLibraryItem } from "../../../hooks/useGameLibraryQueries";
 import { useUpdateGameRating } from "../../../hooks/useGameLibraryQueries";
 import type { MetadataItem } from "../../shared/common/MetadataRow";
@@ -51,16 +51,8 @@ const GameDetailModal: React.FC<GameDetailModalProps> = ({
     ? game.platforms.split(",").map((p: string) => p.trim())
     : [];
 
-  // Build metadata array - simple text without icons
+  // Build metadata array - keep header minimal
   const metadata: MetadataItem[] = [];
-
-  // Only add year if available
-  if (releaseYear) {
-    metadata.push({
-      value: String(releaseYear),
-      label: String(releaseYear),
-    });
-  }
 
   const handleStatusChange = (newStatus: MediaStatus) => {
     // Map status to played boolean
@@ -72,47 +64,23 @@ const GameDetailModal: React.FC<GameDetailModalProps> = ({
     }
   };
 
-  // Build additional content section (platforms, playtime, metacritic, RAWG rating)
+  // Build additional content using MediaDetailsContent
   const additionalContent = (
-    <>
-      {platformList.length > 0 && (
-        <MediaContributorList
-          title="Platforms"
-          contributors={platformList}
-          variant="chips"
-        />
-      )}
-
-      {(game.playtime || game.metacritic || game.rating) && (
-        <div className="pb-5">
-          <h4 className="text-sm font-medium text-primary mb-2.5 mt-0">
-            Game Stats
-          </h4>
-          <div className="space-y-1">
-            {game.playtime && (
-              <p className="text-base text-gray-700 dark:text-gray-300 m-0">
-                Avg Playtime:{" "}
-                <span className="font-semibold">{game.playtime}h</span>
-              </p>
-            )}
-            {game.metacritic && (
-              <p className="text-base text-gray-700 dark:text-gray-300 m-0">
-                Metacritic:{" "}
-                <span className="font-semibold">{game.metacritic}/100</span>
-              </p>
-            )}
-            {game.rating && (
-              <p className="text-base text-gray-700 dark:text-gray-300 m-0">
-                RAWG Rating:{" "}
-                <span className="font-semibold text-primary">
-                  {game.rating.toFixed(1)}/5
-                </span>
-              </p>
-            )}
-          </div>
-        </div>
-      )}
-    </>
+    <MediaDetailsContent
+      title={game.name}
+      details={null}
+      loadingDetails={false}
+      mediaType="game"
+      externalId={game.external_id}
+      isCompleted={game.played}
+      developer={undefined} // Not available in current schema
+      platforms={platformList.join(", ")}
+      genre={genreList[0] || undefined} // First genre from list
+      year={releaseYear || undefined}
+      metacritic={game.metacritic || undefined}
+      playtime={game.playtime || undefined}
+      rawgRating={game.rating || undefined}
+    />
   );
 
   return (

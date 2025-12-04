@@ -18,6 +18,7 @@ export { default as ConfirmDialog } from "./ui/ConfirmDialog";
 export { default as ConfirmationModal } from "./ui/ConfirmationModal";
 export { default as Alert } from "./ui/Alert";
 export { default as Tooltip } from "./ui/Tooltip";
+export { AudioPlayer } from "./ui/AudioPlayer";
 
 // Media Components - Media-specific functionality
 export { default as MediaDetailModal } from "./media/MediaDetailModal";
@@ -31,7 +32,6 @@ export { MediaCrewInfo } from "./media/MediaCrewInfo";
 export { default as MediaMetrics } from "./media/MediaMetrics";
 export { default as MetadataGrid } from "./media/MetadataGrid";
 export type { MetadataGridItem } from "./media/MetadataGrid";
-export { default as MediaDetailsAccordion } from "./media/MediaDetailsAccordion";
 export { default as MediaRecommendationCard } from "./media/MediaRecommendationCard";
 export { default as UnifiedMediaCard } from "./media/UnifiedMediaCard";
 export { default as MediaStatusSelector } from "./media/MediaStatusSelector";

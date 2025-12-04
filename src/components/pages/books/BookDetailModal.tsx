@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { Calendar, FileText, Hash } from "lucide-react";
 import MediaDetailModal from "../../shared/media/MediaDetailModal";
-import { MediaContributorList } from "@/components/shared";
+import { MediaDetailsContent } from "@/components/shared";
 import type { ReadingListItem } from "../../../services/booksService.types";
 import {
   useUpdateBookRating,
@@ -62,37 +61,25 @@ const BookDetailModal: React.FC<BookDetailModalProps> = ({
     ? new Date(book.published_date).getFullYear()
     : null;
 
-  // Build metadata array
-  const metadata: MetadataItem[] = [
-    ...(displayYear
-      ? [
-          {
-            icon: Calendar,
-            value: String(displayYear),
-            label: String(displayYear),
-          },
-        ]
-      : []),
-    ...(book.page_count
-      ? [
-          {
-            icon: FileText,
-            value: `${book.page_count} pages`,
-            label: `${book.page_count} pages`,
-          },
-        ]
-      : []),
-    ...(book.isbn ? [{ icon: Hash, value: book.isbn, label: book.isbn }] : []),
-  ];
+  // Build metadata array - keep header minimal
+  const metadata: MetadataItem[] = [];
 
-  // Build additional content (author only)
-  const additionalContent = book.authors ? (
-    <MediaContributorList
-      title="Author"
-      contributors={[book.authors]}
-      variant="inline"
+  // Build additional content using MediaDetailsContent
+  const additionalContent = (
+    <MediaDetailsContent
+      title={book.title}
+      details={null}
+      loadingDetails={false}
+      mediaType="book"
+      externalId={book.external_id}
+      isCompleted={book.read}
+      authors={book.authors || undefined}
+      genre={book.categories || undefined}
+      year={displayYear || undefined}
+      pageCount={book.page_count || undefined}
+      isbn={book.isbn || undefined}
     />
-  ) : null;
+  );
 
   return (
     <MediaDetailModal

@@ -1,12 +1,11 @@
 import { Loader2, MessageSquare } from "lucide-react";
-import { MediaCrewInfo } from "./MediaCrewInfo";
-import MediaMetrics from "./MediaMetrics";
-import { Button } from "@/components/shared";
+import { Button, AudioPlayer } from "@/components/shared";
 import { useMyMediaReview } from "@/hooks/useSimpleMediaReviews";
 import type { DetailedMediaInfo } from "@/utils/tmdbDetails";
 
 interface MediaDetailsContentProps {
-  description?: string;
+  title?: string; // Media title for aria-label context
+  description?: string; // Overview/description text
   details: DetailedMediaInfo | null;
   loadingDetails: boolean;
   mediaType?: "movie" | "tv" | "song" | "album" | "playlist" | "game" | "book";
@@ -26,6 +25,7 @@ interface MediaDetailsContentProps {
   platforms?: string;
   metacritic?: number;
   playtime?: number;
+  rawgRating?: number; // RAWG rating out of 5
   pageCount?: number;
   authors?: string;
   publisher?: string;
@@ -39,6 +39,7 @@ interface MediaDetailsContentProps {
  * Styled to match design system with uppercase labels for metadata
  */
 export default function MediaDetailsContent({
+  title,
   description,
   details,
   loadingDetails,
@@ -57,6 +58,7 @@ export default function MediaDetailsContent({
   platforms,
   metacritic,
   playtime,
+  rawgRating,
   pageCount,
   authors,
   publisher,
@@ -77,6 +79,67 @@ export default function MediaDetailsContent({
   const isGame = mediaType === "game";
   const isBook = mediaType === "book";
 
+  // Helper function to parse awards string and extract individual awards as chips
+  const parseAwards = (awardsText: string): string[] => {
+    const awards: string[] = [];
+
+    // Extract Oscar wins
+    const oscarMatch = awardsText.match(/Won (\d+) Oscar/i);
+    if (oscarMatch) {
+      const count = parseInt(oscarMatch[1]);
+      awards.push(count === 1 ? "Oscar Winner" : `${count} Oscars`);
+    }
+
+    // Extract nominated for Oscar
+    if (awardsText.match(/Nominated for (\d+) Oscar/i)) {
+      awards.push("Oscar Nominated");
+    }
+
+    // Extract other wins
+    const winsMatch = awardsText.match(/(\d+) wins?/i);
+    if (winsMatch && !oscarMatch) {
+      awards.push(`${winsMatch[1]} Wins`);
+    }
+
+    // Extract nominations
+    const nomsMatch = awardsText.match(/(\d+) nominations?/i);
+    if (nomsMatch) {
+      awards.push(`${nomsMatch[1]} Nominations`);
+    }
+
+    // Extract BAFTA
+    if (awardsText.match(/BAFTA/i)) {
+      awards.push("BAFTA");
+    }
+
+    // Extract Golden Globe
+    if (awardsText.match(/Golden Globe/i)) {
+      awards.push("Golden Globe");
+    }
+
+    return awards;
+  };
+
+  // Helper function to get color styling for award chips
+  const getAwardChipStyle = (award: string): string => {
+    if (award.includes("Oscar")) {
+      return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700";
+    }
+    if (award.includes("Golden Globe")) {
+      return "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700";
+    }
+    if (award.includes("BAFTA")) {
+      return "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700";
+    }
+    if (award.includes("Wins")) {
+      return "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-700";
+    }
+    if (award.includes("Nominations")) {
+      return "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700";
+    }
+    return "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700";
+  };
+
   // Helper function to format playtime
   const formatPlaytime = (minutes: number): string => {
     const hours = Math.floor(minutes / 60);
@@ -96,9 +159,23 @@ export default function MediaDetailsContent({
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
+  // Helper function to estimate reading time from page count
+  // Assumes 250 words per page and average reading speed of ~250 words/minute
+  const formatReadingTime = (pages: number): string => {
+    const minutes = Math.round((pages / 250) * 60); // ~1 minute per page
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0) {
+      return `approx. ${hours} ${hours === 1 ? "hour" : "hours"}${
+        mins > 0 ? ` ${mins} ${mins === 1 ? "minute" : "minutes"}` : ""
+      } reading`;
+    }
+    return `approx. ${mins} ${mins === 1 ? "minute" : "minutes"} reading`;
+  };
+
   return (
     <div className="space-y-4">
-      {/* Overview */}
+      {/* Overview Section */}
       {description && (
         <div>
           <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
@@ -120,145 +197,194 @@ export default function MediaDetailsContent({
       {/* Music-specific details */}
       {isMusic && !loadingDetails && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Left Column: Track/Album Info */}
-          <div className="space-y-2">
-            {album && mediaType === "song" && (
-              <div className="text-sm">
-                <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Album:
-                </span>{" "}
-                <span className="font-medium text-gray-700 dark:text-gray-300">
-                  {album}
-                </span>
-              </div>
-            )}
-            {genre && (
-              <div className="text-sm">
-                <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Genre:
-                </span>{" "}
-                <span className="font-medium text-gray-700 dark:text-gray-300">
-                  {genre}
-                </span>
-              </div>
-            )}
-            {trackDuration && mediaType === "song" && (
-              <div className="text-sm">
-                <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Duration:
-                </span>{" "}
-                <span className="font-medium text-gray-700 dark:text-gray-300">
-                  {formatTrackDuration(trackDuration)}
-                </span>
-              </div>
-            )}
-            {trackCount && mediaType === "album" && (
-              <div className="text-sm">
-                <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Tracks:
-                </span>{" "}
-                <span className="font-medium text-gray-700 dark:text-gray-300">
-                  {trackCount} {trackCount === 1 ? "track" : "tracks"}
-                </span>
+          {/* Left Column: Details */}
+          <div>
+            {(album || genre || trackDuration || trackCount) && (
+              <div>
+                <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
+                  Details
+                </h4>
+                <div className="space-y-2">
+                  {album && mediaType === "song" && (
+                    <div className="text-sm">
+                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Album:
+                      </span>{" "}
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        {album}
+                      </span>
+                    </div>
+                  )}
+                  {genre && (
+                    <div className="text-sm">
+                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Genre:
+                      </span>{" "}
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        {genre}
+                      </span>
+                    </div>
+                  )}
+                  {trackDuration && mediaType === "song" && (
+                    <div className="text-sm">
+                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Duration:
+                      </span>{" "}
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        {formatTrackDuration(trackDuration)}
+                      </span>
+                    </div>
+                  )}
+                  {trackCount && mediaType === "album" && (
+                    <div className="text-sm">
+                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Tracks:
+                      </span>{" "}
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        {trackCount} {trackCount === 1 ? "track" : "tracks"}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
 
-          {/* Right Column: Release Info */}
-          <div className="space-y-2">
+          {/* Right Column: Info and Preview */}
+          <div className="space-y-4">
             {year && (
-              <div className="text-sm">
-                <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Released:
-                </span>{" "}
-                <span className="font-medium text-gray-700 dark:text-gray-300">
-                  {year}
-                </span>
+              <div>
+                <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
+                  Info
+                </h4>
+                <div className="space-y-2">
+                  <div className="text-sm">
+                    <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                      Released:
+                    </span>{" "}
+                    <span className="font-medium text-gray-700 dark:text-gray-300">
+                      {year}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Preview Audio Player */}
+            {previewUrl && (
+              <div>
+                <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
+                  Preview
+                </h4>
+                <AudioPlayer src={previewUrl} title={title} />
               </div>
             )}
           </div>
-
-          {/* Preview Audio Player - Full Width Below */}
-          {previewUrl && (
-            <div className="col-span-1 md:col-span-2">
-              <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 block mb-3">
-                Preview:
-              </span>
-              <div className="rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800/30 p-2">
-                <audio controls className="w-full" preload="none">
-                  <source src={previewUrl} type="audio/mpeg" />
-                  Your browser does not support the audio element.
-                </audio>
-              </div>
-            </div>
-          )}
         </div>
       )}
 
       {/* Game-specific details */}
       {isGame && !loadingDetails && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            {developer && (
-              <div className="text-sm">
-                <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Developer:
-                </span>{" "}
-                <span className="font-medium text-gray-700 dark:text-gray-300">
-                  {developer}
-                </span>
-              </div>
-            )}
-            {genre && (
-              <div className="text-sm">
-                <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Genre:
-                </span>{" "}
-                <span className="font-medium text-gray-700 dark:text-gray-300">
-                  {genre}
-                </span>
-              </div>
-            )}
-            {platforms && (
-              <div className="text-sm">
-                <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Platforms:
-                </span>{" "}
-                <span className="font-medium text-gray-700 dark:text-gray-300">
-                  {platforms}
-                </span>
+          {/* Left Column: Details */}
+          <div>
+            {(developer || genre || platforms || year) && (
+              <div>
+                <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
+                  Details
+                </h4>
+                <div className="space-y-2">
+                  {developer && (
+                    <div className="text-sm">
+                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Developer:
+                      </span>{" "}
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        {developer}
+                      </span>
+                    </div>
+                  )}
+                  {genre && (
+                    <div className="text-sm">
+                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Genre:
+                      </span>{" "}
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        {genre}
+                      </span>
+                    </div>
+                  )}
+                  {platforms && (
+                    <div className="text-sm">
+                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Platforms:
+                      </span>{" "}
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        {platforms}
+                      </span>
+                    </div>
+                  )}
+                  {year && (
+                    <div className="text-sm">
+                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Release Year:
+                      </span>{" "}
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        {year}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
-          <div className="space-y-2">
-            {year && (
-              <div className="text-sm">
-                <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Release Year:
-                </span>{" "}
-                <span className="font-medium text-gray-700 dark:text-gray-300">
-                  {year}
-                </span>
-              </div>
-            )}
-            {metacritic && (
-              <div className="text-sm">
-                <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Metacritic:
-                </span>{" "}
-                <span className="font-medium text-gray-700 dark:text-gray-300">
-                  {metacritic}
-                </span>
+
+          {/* Right Column: Reviews & Info */}
+          <div className="space-y-4">
+            {(metacritic || rawgRating) && (
+              <div>
+                <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
+                  Reviews
+                </h4>
+                <div className="space-y-2">
+                  {metacritic && (
+                    <div className="text-sm">
+                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Metacritic:
+                      </span>{" "}
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        {metacritic}/100
+                      </span>
+                    </div>
+                  )}
+                  {rawgRating && (
+                    <div className="text-sm">
+                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        RAWG Rating:
+                      </span>{" "}
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        {rawgRating.toFixed(1)}/5
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
             {playtime && (
-              <div className="text-sm">
-                <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Avg Playtime:
-                </span>{" "}
-                <span className="font-medium text-gray-700 dark:text-gray-300">
-                  {formatPlaytime(playtime)}
-                </span>
+              <div>
+                <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
+                  Info
+                </h4>
+                <div className="space-y-2">
+                  <div className="text-sm">
+                    <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                      Avg Playtime:
+                    </span>{" "}
+                    <span className="font-medium text-gray-700 dark:text-gray-300">
+                      {formatPlaytime(playtime)}
+                    </span>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -268,68 +394,88 @@ export default function MediaDetailsContent({
       {/* Book-specific details */}
       {isBook && !loadingDetails && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            {authors && (
-              <div className="text-sm">
-                <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Author:
-                </span>{" "}
-                <span className="font-medium text-gray-700 dark:text-gray-300">
-                  {authors}
-                </span>
-              </div>
-            )}
-            {publisher && (
-              <div className="text-sm">
-                <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Publisher:
-                </span>{" "}
-                <span className="font-medium text-gray-700 dark:text-gray-300">
-                  {publisher}
-                </span>
-              </div>
-            )}
-            {genre && (
-              <div className="text-sm">
-                <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Category:
-                </span>{" "}
-                <span className="font-medium text-gray-700 dark:text-gray-300">
-                  {genre}
-                </span>
+          {/* Left Column: Details */}
+          <div>
+            {(authors || publisher || genre) && (
+              <div>
+                <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
+                  Details
+                </h4>
+                <div className="space-y-2">
+                  {authors && (
+                    <div className="text-sm">
+                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Author:
+                      </span>{" "}
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        {authors}
+                      </span>
+                    </div>
+                  )}
+                  {publisher && (
+                    <div className="text-sm">
+                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Publisher:
+                      </span>{" "}
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        {publisher}
+                      </span>
+                    </div>
+                  )}
+                  {genre && (
+                    <div className="text-sm">
+                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Category:
+                      </span>{" "}
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        {genre}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
-          <div className="space-y-2">
-            {year && (
-              <div className="text-sm">
-                <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Published:
-                </span>{" "}
-                <span className="font-medium text-gray-700 dark:text-gray-300">
-                  {year}
-                </span>
-              </div>
-            )}
-            {pageCount && (
-              <div className="text-sm">
-                <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Pages:
-                </span>{" "}
-                <span className="font-medium text-gray-700 dark:text-gray-300">
-                  {pageCount} (
-                  {formatPlaytime(Math.round((pageCount / 250) * 60))})
-                </span>
-              </div>
-            )}
-            {isbn && (
-              <div className="text-sm">
-                <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  ISBN:
-                </span>{" "}
-                <span className="font-medium text-gray-700 dark:text-gray-300">
-                  {isbn}
-                </span>
+
+          {/* Right Column: Info */}
+          <div>
+            {(year || pageCount || isbn) && (
+              <div>
+                <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
+                  Info
+                </h4>
+                <div className="space-y-2">
+                  {year && (
+                    <div className="text-sm">
+                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Published:
+                      </span>{" "}
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        {year}
+                      </span>
+                    </div>
+                  )}
+                  {pageCount && (
+                    <div className="text-sm">
+                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Pages:
+                      </span>{" "}
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        {pageCount} ({formatReadingTime(pageCount)})
+                      </span>
+                    </div>
+                  )}
+                  {isbn && (
+                    <div className="text-sm">
+                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        ISBN:
+                      </span>{" "}
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        {isbn}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -339,105 +485,149 @@ export default function MediaDetailsContent({
       {/* Movie/TV-specific details (Box Office, Crew, Cast, Ratings, Awards) */}
       {isMovie && (
         <>
-          {/* Box Office - Above crew/cast section */}
-          {details && !loadingDetails && details.box_office && (
-            <div className="text-sm">
-              <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                Box Office:
-              </span>{" "}
-              <span className="font-medium text-gray-700 dark:text-gray-300">
-                {details.box_office}
-              </span>
-            </div>
-          )}
-
-          {/* Crew and Cast in 2-column layout */}
+          {/* Two-column layout for all movie details */}
           {details && !loadingDetails && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Left Column: Crew Info */}
-              {(details.director ||
-                details.producer ||
-                details.cinematographer ||
-                details.writer) && (
-                <MediaCrewInfo
-                  director={details.director}
-                  producer={details.producer}
-                  cinematographer={details.cinematographer}
-                  writer={details.writer}
-                  mediaType={mediaType}
-                />
-              )}
-
-              {/* Right Column: Cast (top 10 only) */}
-              {details.cast && details.cast.length > 0 && (
-                <div>
-                  <div className="space-y-2">
-                    <div className="text-sm">
-                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                        Cast:
-                      </span>{" "}
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
-                        {details.cast.slice(0, 10).join(", ")}
-                      </span>
+              {/* Left Column: Details (Crew/Cast) */}
+              <div>
+                {/* Details Section */}
+                {(details.director ||
+                  details.producer ||
+                  details.cinematographer ||
+                  details.writer ||
+                  (details.cast && details.cast.length > 0)) && (
+                  <div>
+                    <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
+                      Details
+                    </h4>
+                    <div className="space-y-2">
+                      {details.cast && details.cast.length > 0 && (
+                        <div className="text-sm">
+                          <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                            Cast:
+                          </span>{" "}
+                          <span className="font-medium text-gray-700 dark:text-gray-300">
+                            {details.cast.slice(0, 10).join(", ")}
+                          </span>
+                        </div>
+                      )}
+                      {details.director && (
+                        <div className="text-sm">
+                          <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                            {mediaType === "tv" ? "Creator:" : "Director:"}
+                          </span>{" "}
+                          <span className="font-medium text-gray-700 dark:text-gray-300">
+                            {details.director}
+                          </span>
+                        </div>
+                      )}
+                      {details.producer && (
+                        <div className="text-sm">
+                          <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                            Producer:
+                          </span>{" "}
+                          <span className="font-medium text-gray-700 dark:text-gray-300">
+                            {details.producer}
+                          </span>
+                        </div>
+                      )}
+                      {details.cinematographer && (
+                        <div className="text-sm">
+                          <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                            Cinematographer:
+                          </span>{" "}
+                          <span className="font-medium text-gray-700 dark:text-gray-300">
+                            {details.cinematographer}
+                          </span>
+                        </div>
+                      )}
+                      {details.writer && (
+                        <div className="text-sm">
+                          <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                            Writer:
+                          </span>{" "}
+                          <span className="font-medium text-gray-700 dark:text-gray-300">
+                            {details.writer}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </div>
 
-          {/* Ratings and Awards in 2-column layout */}
-          {details && !loadingDetails && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Left Column: Critic Ratings */}
-              {(details.rotten_tomatoes_score ||
-                details.metacritic_score ||
-                details.imdb_rating) && (
-                <div className="space-y-2">
-                  {details.rotten_tomatoes_score && (
-                    <div className="text-sm">
-                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                        Rotten Tomatoes:
-                      </span>{" "}
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
-                        {details.rotten_tomatoes_score}
-                      </span>
+              {/* Right Column: Reviews and Success */}
+              <div className="space-y-4">
+                {/* Reviews Section */}
+                {(details.rotten_tomatoes_score ||
+                  details.metacritic_score ||
+                  details.imdb_rating) && (
+                  <div>
+                    <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
+                      Reviews
+                    </h4>
+                    <div className="space-y-2">
+                      {details.rotten_tomatoes_score && (
+                        <div className="text-sm">
+                          <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                            Rotten Tomatoes:
+                          </span>{" "}
+                          <span className="font-medium text-gray-700 dark:text-gray-300">
+                            {details.rotten_tomatoes_score}
+                          </span>
+                        </div>
+                      )}
+                      {details.metacritic_score && (
+                        <div className="text-sm">
+                          <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                            Metacritic:
+                          </span>{" "}
+                          <span className="font-medium text-gray-700 dark:text-gray-300">
+                            {details.metacritic_score}
+                          </span>
+                        </div>
+                      )}
+                      {details.imdb_rating && (
+                        <div className="text-sm">
+                          <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                            IMDB:
+                          </span>{" "}
+                          <span className="font-medium text-gray-700 dark:text-gray-300">
+                            {details.imdb_rating}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {details.metacritic_score && (
-                    <div className="text-sm">
-                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                        Metacritic:
-                      </span>{" "}
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
-                        {details.metacritic_score}
-                      </span>
-                    </div>
-                  )}
-                  {details.imdb_rating && (
-                    <div className="text-sm">
-                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                        IMDB:
-                      </span>{" "}
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
-                        {details.imdb_rating}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Right Column: Awards */}
-              {details.awards_text && (
-                <div className="space-y-2">
-                  <div className="text-sm">
-                    <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                      Awards:
-                    </span>
                   </div>
-                  <MediaMetrics awards={details.awards_text} />
-                </div>
-              )}
+                )}
+
+                {/* Success Section (Awards + Box Office) */}
+                {(details.awards_text || details.box_office) && (
+                  <div>
+                    <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
+                      Success
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {details.box_office && (
+                        <span className="px-2.5 py-1 text-xs rounded-md border font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700">
+                          {details.box_office}
+                        </span>
+                      )}
+                      {details.awards_text &&
+                        parseAwards(details.awards_text).map((award, index) => (
+                          <span
+                            key={index}
+                            className={`px-2.5 py-1 text-xs rounded-md border font-medium ${getAwardChipStyle(
+                              award
+                            )}`}
+                          >
+                            {award}
+                          </span>
+                        ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </>

@@ -1,6 +1,6 @@
 import React, { useState, useId } from "react";
 import { ChevronDown } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import Button from "../ui/Button";
 
 interface AccordionProps {
@@ -26,6 +26,7 @@ export default function Accordion({
 }: AccordionProps) {
   const [internalExpanded, setInternalExpanded] = useState(defaultExpanded);
   const uniqueId = useId();
+  const prefersReducedMotion = useReducedMotion();
 
   // Use controlled mode if isExpanded is provided, otherwise use internal state
   const isControlled = controlledExpanded !== undefined;
@@ -93,10 +94,18 @@ export default function Accordion({
         {expanded && (
           <motion.div
             id={contentId}
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: "easeInOut" }}
+            initial={
+              prefersReducedMotion ? undefined : { height: 0, opacity: 0 }
+            }
+            animate={
+              prefersReducedMotion ? undefined : { height: "auto", opacity: 1 }
+            }
+            exit={prefersReducedMotion ? undefined : { height: 0, opacity: 0 }}
+            transition={
+              prefersReducedMotion
+                ? { duration: 0 }
+                : { duration: 0.2, ease: "easeInOut" }
+            }
             className="overflow-hidden border-x border-b border-gray-200 dark:border-gray-700 rounded-b-lg"
           >
             <div className={`${variant === "compact" ? "p-3" : "p-4"}`}>

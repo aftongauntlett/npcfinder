@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Loader2, Calendar, Clock } from "lucide-react";
 import {
   MediaDetailModal,
-  MediaDetailsAccordion,
+  MediaDetailsContent,
   Button,
   type MetadataItem,
 } from "@/components/shared";
@@ -232,33 +232,27 @@ export default function MovieDetailModal({
       : []),
   ];
 
-  // Build additional content (crew, cast, awards, box office, critic ratings)
-  const additionalContent = details ? (
-    <>
-      {/* Details Accordion: Crew, Cast, Ratings, Awards, Box Office */}
-      <MediaDetailsAccordion
-        director={details.director}
-        producer={details.producer}
-        cinematographer={details.cinematographer}
-        writer={details.writer}
-        cast={details.cast}
-        mediaType={item.media_type}
-        criticRatings={{
-          rottenTomatoes: details.rotten_tomatoes_score
-            ? parseInt(details.rotten_tomatoes_score.replace("%", ""))
-            : undefined,
-          metacritic: details.metacritic_score
-            ? parseInt(details.metacritic_score)
-            : undefined,
-          imdb: details.imdb_rating
-            ? parseFloat(details.imdb_rating.replace("/10", ""))
-            : undefined,
-        }}
-        awards={details.awards_text || undefined}
-        boxOffice={details.box_office || undefined}
-      />
-    </>
-  ) : null;
+  // Build additional content using MediaDetailsContent
+  const additionalContent = (
+    <MediaDetailsContent
+      title={item.title}
+      details={details}
+      loadingDetails={loading}
+      mediaType={item.media_type}
+      externalId={item.external_id}
+      isCompleted={item.watched}
+      onOpenReview={() => {
+        // Scroll to review section or focus on it
+        const reviewSection = document.querySelector("[data-review-section]");
+        if (reviewSection) {
+          reviewSection.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+          });
+        }
+      }}
+    />
+  );
 
   if (loading) {
     return (

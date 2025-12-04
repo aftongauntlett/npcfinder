@@ -309,6 +309,7 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
   // Expanded content (shown when accordion opens)
   const expandedContent = (
     <MediaDetailsContent
+      title={title}
       description={description}
       details={details}
       loadingDetails={loadingDetails}

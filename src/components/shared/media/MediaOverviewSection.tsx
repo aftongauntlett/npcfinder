@@ -16,11 +16,11 @@ const MediaOverviewSection: React.FC<MediaOverviewSectionProps> = ({
 
   return (
     <div className={`space-y-3 ${className}`}>
-      <h3 className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">
+      <h3 className="font-semibold text-primary dark:text-primary-light">
         Overview
       </h3>
       {description && (
-        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+        <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
           {description}
         </p>
       )}
