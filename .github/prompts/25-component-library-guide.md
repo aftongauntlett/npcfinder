@@ -4,6 +4,168 @@
 
 This guide documents the NPC Finder component library, design system, and best practices for building consistent, accessible, and maintainable UI components.
 
+## ⚠️ Mandatory Component Usage
+
+**ALWAYS use reusable components from `src/components/shared/ui/` and `src/components/shared/common/` instead of creating custom implementations.** This ensures consistency, accessibility, and maintainability across the entire application.
+
+### Required Components
+
+You MUST use these components for the following UI elements:
+
+#### Form Elements
+
+- **Button** (`/src/components/shared/ui/Button.tsx`) - ALL buttons, including icon-only buttons
+
+  - ❌ Never use `<button>` directly
+  - ❌ Never use deprecated `IconButton` or `ActionButton`
+  - ✅ Use `<Button variant="primary" />` for primary actions
+  - ✅ Use `<Button size="icon" icon={<Icon />} aria-label="..." />` for icon buttons
+
+- **Input** (`/src/components/shared/ui/Input.tsx`) - ALL text/email/number/etc inputs
+
+  - ❌ Never use `<input>` directly
+  - ✅ Use `<Input label="Email" type="email" error={errors.email} />`
+  - Provides consistent styling, labels, errors, helper text, and accessibility
+
+- **Textarea** (`/src/components/shared/ui/Textarea.tsx`) - ALL text areas
+
+  - ❌ Never use `<textarea>` directly
+  - ✅ Use `<Textarea label="Description" rows={4} />`
+  - Provides consistent styling, labels, errors, helper text, and accessibility
+
+- **Select** (`/src/components/shared/ui/Select.tsx`) - ALL native dropdown selects
+
+  - ❌ Never use `<select>` directly
+  - ❌ Never use deprecated `CustomDropdown`
+  - ✅ Use `<Select label="Status" options={statusOptions} />`
+  - Provides consistent styling, labels, errors, and accessibility
+
+- **Dropdown** (`/src/components/shared/ui/Dropdown.tsx`) - Custom dropdown menus (non-native)
+  - ❌ Never build custom dropdown implementations with manual click-outside handling
+  - ✅ Use `<Dropdown trigger={<Button>Menu</Button>} options={menuOptions} />`
+  - Handles keyboard navigation, backdrop clicks, and positioning automatically
+
+#### Modal Dialogs
+
+- **Modal** (`/src/components/shared/ui/Modal.tsx`) - Base for ALL modals
+
+  - ❌ Never build custom modal dialogs with backdrop and card manually
+  - ✅ Use `<Modal isOpen={isOpen} onClose={onClose} title="Title">Content</Modal>`
+  - All modal components should use Modal as their base
+
+- **ConfirmDialog** (`/src/components/shared/ui/ConfirmDialog.tsx`) - ALL confirmation dialogs
+
+  - ❌ Never build custom confirmation dialogs
+  - ✅ Use `<ConfirmDialog isOpen={show} onConfirm={handleConfirm} message="..." variant="danger" />`
+
+- **ConfirmationModal** (`/src/components/shared/ui/ConfirmationModal.tsx`) - Alternative confirmation component
+  - Similar to ConfirmDialog, use for consistency
+
+#### Layout Components
+
+- **Card** (`/src/components/shared/ui/Card.tsx`) - ALL content containers
+
+  - ❌ Never build custom cards with manual styling
+  - ✅ Use `<Card variant="interactive" hover="border">Content</Card>`
+  - Provides consistent spacing, shadows, hover effects, and theme integration
+
+- **Accordion** / **AccordionCard** (`/src/components/shared/common/`) - ALL expandable sections
+  - ❌ Never build custom expand/collapse logic
+  - ✅ Use `<Accordion title="Title">Content</Accordion>`
+  - Handles animation, keyboard navigation, and accessibility
+
+### Component Consistency Rules
+
+1. **All modals MUST use Modal as base** - Never create standalone modals with custom backdrop/positioning
+2. **All buttons MUST use Button component** - Never use `<button>` or deprecated button components
+3. **All form inputs MUST use Input/Textarea/Select** - Never use native HTML form elements directly
+4. **All dropdowns MUST use Dropdown/Select** - Never build custom dropdown menus
+5. **All cards MUST use Card component** - Ensures consistent hover effects and spacing
+6. **All accordions MUST use Accordion/AccordionCard** - Consistent expand/collapse behavior
+
+## 🚫 Deprecated Components
+
+**DO NOT USE** these components in new code. They are kept for backwards compatibility only and will be removed in a future version.
+
+### IconButton (DEPRECATED)
+
+❌ **DEPRECATED** - Use `<Button size="icon" />` instead
+
+```tsx
+// ❌ WRONG - Deprecated
+<IconButton icon={Trash} onClick={handleDelete} title="Delete" />
+
+// ✅ CORRECT - Use Button
+<Button
+  size="icon"
+  variant="danger"
+  icon={<Trash className="w-4 h-4" />}
+  onClick={handleDelete}
+  aria-label="Delete"
+/>
+```
+
+**Migration:**
+
+- `variant="default"` → `<Button variant="subtle" size="icon" />`
+- `variant="danger"` → `<Button variant="danger" size="icon" />`
+- `variant="primary"` → `<Button variant="primary" size="icon" />`
+- **ALWAYS add `aria-label` for accessibility**
+
+### ActionButton (DEPRECATED)
+
+❌ **DEPRECATED** - Use `<Button variant="action" size="icon" />` instead
+
+```tsx
+// ❌ WRONG - Deprecated
+<ActionButton icon={MessageCircle} onClick={handleComment} variant="comment" />
+
+// ✅ CORRECT - Use Button
+<Button
+  size="icon"
+  variant="action"
+  icon={<MessageCircle className="w-4 h-4" />}
+  onClick={handleComment}
+  aria-label="Add comment"
+/>
+```
+
+### CustomDropdown (DELETED)
+
+❌ **DELETED** - This component has been removed. Use `Select` or `Dropdown` instead.
+
+```tsx
+// ❌ WRONG - CustomDropdown no longer exists
+<CustomDropdown
+  label="Status"
+  value={status}
+  onChange={setStatus}
+  options={["Active", "Inactive"]}
+/>
+
+// ✅ CORRECT - Use Select for simple dropdowns
+<Select
+  label="Status"
+  value={status}
+  onChange={(e) => setStatus(e.target.value)}
+  options={[
+    { value: "active", label: "Active" },
+    { value: "inactive", label: "Inactive" }
+  ]}
+/>
+
+// ✅ CORRECT - Use Dropdown for custom menus
+<Dropdown
+  trigger={<Button>Select Status</Button>}
+  options={[
+    { id: "active", label: "Active" },
+    { id: "inactive", label: "Inactive" }
+  ]}
+  value={status}
+  onChange={(value) => setStatus(value)}
+/>
+```
+
 ## Core Principles
 
 1. **Consistency**: All components follow the same design patterns and styling conventions
@@ -580,6 +742,438 @@ Ensure components work correctly:
 4. Screen readers (use aria-labels)
 5. Mobile/touch devices
 6. Hover states (subtle, no scale)
+
+## Real-World Examples
+
+### Correct Modal Usage (TaskDetailModal)
+
+```tsx
+import Modal from "../shared/ui/Modal";
+import Button from "../shared/ui/Button";
+import Input from "../shared/ui/Input";
+import Textarea from "../shared/ui/Textarea";
+import Select from "../shared/ui/Select";
+
+const TaskDetailModal = ({ isOpen, onClose, task }) => {
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Edit Task" maxWidth="2xl">
+      <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <Input
+          id="task-title"
+          label="Task Title"
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+          maxLength={200}
+        />
+
+        <Textarea
+          id="task-description"
+          label="Description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={4}
+          maxLength={1000}
+        />
+
+        <Select
+          id="status"
+          label="Status"
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          options={[
+            { value: "todo", label: "To Do" },
+            { value: "in_progress", label: "In Progress" },
+            { value: "done", label: "Done" },
+          ]}
+        />
+
+        <div className="flex gap-3">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" variant="primary">
+            Save Changes
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+};
+```
+
+### Correct Dropdown Usage (SortDropdown)
+
+```tsx
+import { Dropdown } from "@/components/shared";
+import { Button } from "@/components/shared";
+
+const SortDropdown = ({ options, activeSort, onSortChange }) => {
+  const activeOption = options.find((opt) => opt.id === activeSort);
+
+  return (
+    <Dropdown
+      trigger={
+        <Button variant="secondary" size="sm">
+          {activeOption?.label || "Sort"}
+        </Button>
+      }
+      options={options.map((opt) => ({ id: opt.id, label: opt.label }))}
+      value={activeSort}
+      onChange={(value) => onSortChange(value)}
+      size="sm"
+    />
+  );
+};
+```
+
+### Correct Confirmation Dialog Usage (UserSettings)
+
+```tsx
+import { ConfirmDialog } from "@/components/shared";
+
+const UserSettings = () => {
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+
+  return (
+    <>
+      <ConfirmDialog
+        isOpen={showConfirmDialog}
+        onClose={() => setShowConfirmDialog(false)}
+        onConfirm={handleConfirm}
+        title="Unsaved Changes"
+        message="You have unsaved changes. Are you sure you want to leave? Your changes will be lost."
+        confirmText="Leave Without Saving"
+        cancelText="Stay on Page"
+        variant="danger"
+      />
+
+      {/* Rest of component */}
+    </>
+  );
+};
+```
+
+### Job Tracker Form (CreateTaskModal)
+
+```tsx
+const CreateTaskModal = ({ isOpen, onClose, boardType }) => {
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Add Job Application">
+      <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input
+            id="company-name"
+            label="Company Name"
+            type="text"
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
+            required
+          />
+
+          <Input
+            id="position"
+            label="Position"
+            type="text"
+            value={position}
+            onChange={(e) => setPosition(e.target.value)}
+            required
+          />
+
+          <Input
+            id="salary-range"
+            label="Salary Range"
+            type="text"
+            value={salaryRange}
+            onChange={(e) => setSalaryRange(e.target.value)}
+          />
+
+          <Input
+            id="location"
+            label="Location"
+            type="text"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+          />
+
+          <Select
+            id="employment-type"
+            label="Employment Type"
+            value={employmentType}
+            onChange={(e) => setEmploymentType(e.target.value)}
+            options={[
+              { value: "Full-time", label: "Full-time" },
+              { value: "Part-time", label: "Part-time" },
+              { value: "Contract", label: "Contract" },
+              { value: "Internship", label: "Internship" },
+              { value: "Remote", label: "Remote" },
+            ]}
+          />
+
+          <Select
+            id="status"
+            label="Status"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            options={[
+              { value: "Applied", label: "Applied" },
+              { value: "Phone Screen", label: "Phone Screen" },
+              { value: "Interview - Round 1", label: "Interview - Round 1" },
+              { value: "Offer Received", label: "Offer Received" },
+            ]}
+          />
+        </div>
+
+        <Textarea
+          id="job-notes"
+          label="Notes"
+          value={jobNotes}
+          onChange={(e) => setJobNotes(e.target.value)}
+          rows={4}
+        />
+
+        <Button type="submit" variant="primary" fullWidth>
+          Add Job Application
+        </Button>
+      </form>
+    </Modal>
+  );
+};
+```
+
+## Common Mistakes to Avoid
+
+### ❌ Building Custom Dropdowns
+
+```tsx
+// ❌ WRONG - Custom dropdown implementation
+const [isOpen, setIsOpen] = useState(false);
+
+return (
+  <div className="relative">
+    <button onClick={() => setIsOpen(!isOpen)}>Options</button>
+    {isOpen && (
+      <div className="absolute mt-2 bg-white shadow-lg">
+        {/* Custom menu logic */}
+      </div>
+    )}
+  </div>
+);
+```
+
+```tsx
+// ✅ CORRECT - Use Dropdown component
+<Dropdown
+  trigger={<Button>Options</Button>}
+  options={options}
+  onChange={handleChange}
+/>
+```
+
+### ❌ Inline Form Elements
+
+```tsx
+// ❌ WRONG - Inline input with custom styling
+<div>
+  <label className="block text-sm font-medium mb-2">Email</label>
+  <input
+    type="email"
+    className="w-full border rounded-lg px-3 py-2 focus:ring-2"
+  />
+</div>
+```
+
+```tsx
+// ✅ CORRECT - Use Input component
+<Input
+  label="Email"
+  type="email"
+  error={errors.email}
+  helperText="We'll never share your email"
+/>
+```
+
+### ❌ Custom Confirmation Dialogs
+
+```tsx
+// ❌ WRONG - Custom dialog markup
+{
+  showConfirm && (
+    <div className="fixed inset-0 z-50 bg-black/50">
+      <div className="bg-white rounded-lg p-6">
+        <h3>Are you sure?</h3>
+        <button onClick={handleCancel}>Cancel</button>
+        <button onClick={handleConfirm}>Confirm</button>
+      </div>
+    </div>
+  );
+}
+```
+
+```tsx
+// ✅ CORRECT - Use ConfirmDialog
+<ConfirmDialog
+  isOpen={showConfirm}
+  onClose={handleCancel}
+  onConfirm={handleConfirm}
+  title="Are you sure?"
+  message="This action cannot be undone."
+/>
+```
+
+## Accordion Design System
+
+### Accordion Component Types
+
+1. **AccordionCard** (`/src/components/shared/common/AccordionCard.tsx`) - Rich glassmorphic cards for Boards and Tasks
+2. **AccordionListCard** (`/src/components/shared/common/AccordionListCard.tsx`) - Lightweight cards for Jobs, Recipes, Media items
+3. **Accordion** (`/src/components/shared/common/Accordion.tsx`) - Simple collapsible sections (base component)
+
+### Consistent Accordion Content Styling
+
+**All accordion expanded content MUST follow these exact standards for visual cohesion:**
+
+#### Section Titles (h4)
+
+```tsx
+<h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
+  Section Title
+</h4>
+```
+
+#### Body Text
+
+```tsx
+<p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+  Body text content
+</p>
+```
+
+#### Unordered Lists (Bullets)
+
+```tsx
+<ul className="space-y-1.5">
+  <li className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2 leading-relaxed">
+    <span className="text-primary mt-1 flex-shrink-0">•</span>
+    <span>List item content</span>
+  </li>
+</ul>
+```
+
+#### Ordered Lists (Numbered)
+
+```tsx
+<ol className="space-y-2">
+  <li className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-3 leading-relaxed">
+    <span className="font-semibold text-primary flex-shrink-0">1.</span>
+    <span>List item content</span>
+  </li>
+</ol>
+```
+
+#### Highlighted Content (Notes, Backgrounds)
+
+```tsx
+<div className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed bg-gray-50 dark:bg-gray-800/30 rounded-md p-3">
+  {notes}
+</div>
+```
+
+**Note:** Use `dark:bg-gray-800/30` NOT `dark:bg-gray-900/50` for consistency
+
+#### Section Container Spacing
+
+```tsx
+<div className="space-y-4">{/* Sections with space-y-4 between each */}</div>
+```
+
+#### Divider Styling
+
+Both AccordionCard and AccordionListCard use consistent dividers:
+
+```tsx
+className = "px-4 pb-4 border-t border-gray-200 dark:border-gray-700 pt-3";
+```
+
+### Accordion Action Buttons Pattern
+
+**Standard pattern:** `[Edit] [Delete] | [Chevron]`
+
+```tsx
+<div className="flex items-center gap-2 flex-shrink-0">
+  {/* Action buttons - hover on desktop, always visible on mobile */}
+  <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+    <Button
+      variant="subtle"
+      size="icon"
+      icon={<Pencil className="w-4 h-4" />}
+      aria-label="Edit"
+    />
+    <Button
+      variant="danger"
+      size="icon"
+      icon={<Trash2 className="w-4 h-4" />}
+      aria-label="Delete"
+    />
+  </div>
+
+  {/* Chevron - always visible, rotates on expand */}
+  <ChevronDown
+    className={`w-5 h-5 text-gray-400 transition-transform ${
+      isExpanded ? "rotate-180" : ""
+    }`}
+  />
+</div>
+```
+
+**Custom actions (media items):** Use `customActions` prop on AccordionListCard
+
+```tsx
+<AccordionListCard
+  customActions={[
+    {
+      label: "Recommend",
+      icon: <Heart className="w-4 h-4" />,
+      onClick: handleRecommend,
+      variant: "primary",
+    },
+  ]}
+/>
+```
+
+### Typography & Color Standards
+
+#### Text Sizes
+
+- **Card headers**: `text-base` or `text-lg` (recipe names)
+- **Section headings (h4)**: `font-semibold`
+- **Body text**: `text-sm` with `leading-relaxed`
+- **Chips/Badges**: `text-xs`
+- **Metadata**: `text-xs` or `text-sm`
+
+#### Text Colors
+
+- **Primary text**: `text-gray-900 dark:text-gray-100`
+- **Secondary text**: `text-gray-700 dark:text-gray-300`
+- **Muted text**: `text-gray-500 dark:text-gray-400`
+- **Accent/Interactive**: `text-primary`
+- **Errors**: `text-red-500 dark:text-red-400`
+
+#### Background Colors
+
+- **Note/Highlight backgrounds**: `bg-gray-50 dark:bg-gray-800/30`
+- **Card hover**: `hover:bg-gray-900/[0.04] dark:hover:bg-gray-900`
+- **Dividers**: `border-gray-200 dark:border-gray-700`
+
+### Spacing Standards
+
+- **Section gaps**: `space-y-4` between major sections
+- **List item gaps**: `space-y-1.5` (bullets), `space-y-2` (numbered)
+- **Inline chips**: `gap-2`
+- **Action buttons**: `gap-1` between buttons, `gap-2` to chevron
+- **Card padding**: `p-4` (body), `p-3` (highlighted content)
+- **Divider padding**: `pt-3` after border-t
 
 ## Questions?
 

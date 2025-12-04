@@ -26,6 +26,24 @@ Produce small, focused components. If a component exceeds ~200 lines or clearly 
 
 Prefer data-driven patterns (maps/arrays/config) over copy-paste. If encountering repetition (≥3 occurrences), propose an extraction.
 
+Reusable Components (CRITICAL):
+
+- ALWAYS check if a reusable component exists before creating a new one
+- NEVER use inline `<input>`, `<textarea>`, `<select>`, or `<button>` elements directly
+- MANDATORY components from `src/components/shared/ui/`:
+  - Button - for ALL buttons (including icon-only with `size="icon"`)
+  - Input - for ALL text/email/number inputs
+  - Textarea - for ALL text areas
+  - Select - for ALL native dropdown selects
+  - Dropdown - for custom dropdown menus (non-native)
+  - Modal - base for ALL modals
+  - ConfirmDialog - for ALL confirmation dialogs
+  - Card - for ALL content containers
+- NEVER use deprecated components: IconButton, ActionButton, CustomDropdown
+- Reference 25-component-library-guide.md for complete component usage rules
+- When building forms/modals, always use Input/Textarea/Select components with labels, errors, and helper text
+- When building dropdown menus, always use Dropdown or Select, never build custom implementations
+
 Tests: add/adjust tests when behavior changes or is new/fragile. Ensure `typecheck`, `lint`, and `test` pass before calling the task complete.
 
 Commits: conventional-style messages, no emojis, small logical units. Prompt the user to commit if work is complete.
