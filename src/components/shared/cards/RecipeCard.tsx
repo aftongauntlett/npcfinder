@@ -1,15 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
+import AccordionListCard from "../common/AccordionListCard";
 import Card from "../ui/Card";
 import Chip from "../ui/Chip";
-import Button from "../ui/Button";
-import {
-  Clock,
-  Users,
-  ChefHat,
-  ExternalLink,
-  Pencil,
-  Trash2,
-} from "lucide-react";
+import { Clock, Users, ChefHat, ExternalLink, Check } from "lucide-react";
 
 interface RecipeCardProps {
   id?: string;
@@ -31,7 +24,7 @@ interface RecipeCardProps {
 
 /**
  * RecipeCard - Specialized card component for recipe display
- * Supports expandable content without accordion-within-accordion pattern
+ * Uses AccordionListCard for consistent accordion pattern
  */
 const RecipeCard: React.FC<RecipeCardProps> = ({
   recipeName,
@@ -49,8 +42,22 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
   onDelete,
   compact = false,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  // Track completed instructions for cooking mode
+  const [completedInstructions, setCompletedInstructions] = React.useState<
+    Set<number>
+  >(new Set());
 
+  const toggleInstruction = (index: number) => {
+    setCompletedInstructions((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
+  };
   if (compact) {
     // Compact mode: minimal info, opens modal on click
     return (
@@ -93,178 +100,207 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
     );
   }
 
-  // Expandable mode: full card with inline expansion
-  return (
-    <Card
-      variant="interactive"
-      hover="none"
-      spacing="none"
-      className="group relative hover:bg-gray-900/[0.04] dark:hover:bg-gray-900"
-    >
-      {/* Action Buttons - Always visible on mobile, hover on desktop */}
-      <div className="absolute top-3 right-3 flex gap-2 z-10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
-        {onEdit && (
-          <Button
-            variant="subtle"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit();
-            }}
-            className="h-8 w-8 p-0"
-            aria-label="Edit recipe"
+  // Header content (always visible)
+  const headerContent = (
+    <div>
+      <div className="flex items-start gap-2 mb-2">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex-1">
+          {recipeName}
+        </h3>
+        {sourceUrl && (
+          <a
+            href={sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:opacity-80 transition-opacity flex-shrink-0"
+            onClick={(e) => e.stopPropagation()}
+            aria-label="View source"
           >
-            <Pencil className="w-4 h-4" />
-          </Button>
-        )}
-        {onDelete && (
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="h-8 w-8 p-0"
-            aria-label="Delete recipe"
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
+            <ExternalLink className="w-4 h-4" />
+          </a>
         )}
       </div>
 
-      {/* Header - Always Visible */}
-      <div
-        className="p-4 cursor-pointer pr-20 sm:pr-4"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">
-              {recipeName}
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {category && (
-                <Chip
-                  variant="primary"
-                  size="sm"
-                  icon={<ChefHat className="w-3 h-3" />}
-                >
-                  {category}
-                </Chip>
-              )}
-              {prepTime && (
-                <Chip
-                  variant="default"
-                  size="sm"
-                  icon={<Clock className="w-3 h-3" />}
-                >
-                  Prep: {prepTime}
-                </Chip>
-              )}
-              {cookTime && (
-                <Chip
-                  variant="default"
-                  size="sm"
-                  icon={<Clock className="w-3 h-3" />}
-                >
-                  Cook: {cookTime}
-                </Chip>
-              )}
-              {servings && (
-                <Chip
-                  variant="default"
-                  size="sm"
-                  icon={<Users className="w-3 h-3" />}
-                >
-                  {servings}
-                </Chip>
-              )}
-            </div>
-          </div>
+      <div className="flex flex-wrap gap-2 mb-3">
+        {category && (
+          <Chip
+            variant="primary"
+            size="sm"
+            icon={<ChefHat className="w-3 h-3" />}
+          >
+            {category}
+          </Chip>
+        )}
+        {prepTime && (
+          <Chip
+            variant="default"
+            size="sm"
+            icon={<Clock className="w-3 h-3" />}
+          >
+            Prep: {prepTime}
+          </Chip>
+        )}
+        {cookTime && (
+          <Chip
+            variant="default"
+            size="sm"
+            icon={<Clock className="w-3 h-3" />}
+          >
+            Cook: {cookTime}
+          </Chip>
+        )}
+        {servings && (
+          <Chip
+            variant="default"
+            size="sm"
+            icon={<Users className="w-3 h-3" />}
+          >
+            {servings}
+          </Chip>
+        )}
+      </div>
+
+      {description && (
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          {description}
+        </p>
+      )}
+    </div>
+  );
+
+  // Expanded content (shown when accordion is open)
+  const expandedContent = (
+    <div className="space-y-4">
+      {/* Ingredients */}
+      {ingredients.length > 0 && (
+        <div>
+          <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
+            Ingredients
+          </h4>
+          <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-1.5">
+            {ingredients.map((ingredient, index) => (
+              <li
+                key={index}
+                className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2 leading-relaxed"
+              >
+                <span className="text-primary flex-shrink-0">—</span>
+                <span>{ingredient}</span>
+              </li>
+            ))}
+          </ul>
         </div>
+      )}
 
-        {/* Description */}
-        {description && (
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            {description}
-          </p>
-        )}
-      </div>
+      {/* Instructions */}
+      {instructions.length > 0 && (
+        <div>
+          <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
+            Instructions
+          </h4>
+          <ol className="space-y-2">
+            {instructions.map((instruction, index) => {
+              const isCompleted = completedInstructions.has(index);
+              return (
+                <li
+                  key={index}
+                  className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-3 leading-relaxed group"
+                >
+                  {/* Custom Checkbox */}
+                  <label className="relative flex items-center cursor-pointer flex-shrink-0">
+                    <input
+                      type="checkbox"
+                      checked={isCompleted}
+                      onChange={() => toggleInstruction(index)}
+                      className="sr-only peer"
+                      aria-label={`Mark step ${index + 1} as ${
+                        isCompleted ? "incomplete" : "complete"
+                      }`}
+                    />
+                    <div className="w-4 h-4 mt-0.5 border-2 border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 peer-checked:bg-primary peer-checked:border-primary peer-focus:ring-2 peer-focus:ring-primary/30 transition-all flex items-center justify-center">
+                      {isCompleted && (
+                        <Check className="w-3 h-3 text-white stroke-[3]" />
+                      )}
+                    </div>
+                  </label>
 
-      {/* Expanded Content */}
-      {isExpanded && (
-        <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-          {/* Ingredients */}
-          {ingredients.length > 0 && (
-            <div className="mb-4">
-              <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                Ingredients
-              </h4>
-              <ul className="space-y-1">
-                {ingredients.map((ingredient, index) => (
-                  <li
-                    key={index}
-                    className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2"
+                  {/* Step number */}
+                  <span
+                    className={`font-semibold flex-shrink-0 transition-all ${
+                      isCompleted
+                        ? "text-gray-400 dark:text-gray-600 line-through"
+                        : "text-primary"
+                    }`}
                   >
-                    <span className="text-primary mt-1">•</span>
-                    <span>{ingredient}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+                    {index + 1}.
+                  </span>
 
-          {/* Instructions */}
-          {instructions.length > 0 && (
-            <div className="mb-4">
-              <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                Instructions
-              </h4>
-              <ol className="space-y-2">
-                {instructions.map((instruction, index) => (
-                  <li
-                    key={index}
-                    className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-3"
+                  {/* Instruction text */}
+                  <span
+                    className={`transition-all ${
+                      isCompleted
+                        ? "text-gray-400 dark:text-gray-600 line-through"
+                        : ""
+                    }`}
                   >
-                    <span className="font-semibold text-primary flex-shrink-0">
-                      {index + 1}.
-                    </span>
-                    <span>{instruction}</span>
-                  </li>
-                ))}
-              </ol>
+                    {instruction}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+          {/* Reset Instructions Button */}
+          {completedInstructions.size > 0 && (
+            <div className="flex justify-end mt-3">
+              <button
+                onClick={() => setCompletedInstructions(new Set())}
+                className="text-xs text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary-light transition-colors underline"
+              >
+                Reset Instructions
+              </button>
             </div>
-          )}
-
-          {/* Notes */}
-          {notes && (
-            <div className="mb-4">
-              <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                Notes
-              </h4>
-              <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap bg-gray-50 dark:bg-gray-900/50 rounded-md p-3">
-                {notes}
-              </p>
-            </div>
-          )}
-
-          {/* Source Link */}
-          {sourceUrl && (
-            <a
-              href={sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1.5 text-sm text-primary hover:opacity-80 transition-opacity"
-            >
-              <ExternalLink className="w-4 h-4" />
-              View Original Recipe
-            </a>
           )}
         </div>
       )}
-    </Card>
+
+      {/* Notes */}
+      {notes && (
+        <div>
+          <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
+            Notes
+          </h4>
+          <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed bg-gray-50 dark:bg-gray-800/30 rounded-md p-3">
+            {notes}
+          </p>
+        </div>
+      )}
+
+      {/* Source Link */}
+      {sourceUrl && (
+        <div>
+          <a
+            href={sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center gap-1.5 text-sm text-primary hover:opacity-80 transition-opacity"
+          >
+            <ExternalLink className="w-4 h-4" />
+            View Original Recipe
+          </a>
+        </div>
+      )}
+    </div>
+  );
+
+  // Expandable mode: use AccordionListCard
+  return (
+    <AccordionListCard
+      onEdit={onEdit}
+      onDelete={onDelete}
+      expandedContent={expandedContent}
+    >
+      {headerContent}
+    </AccordionListCard>
   );
 };
 

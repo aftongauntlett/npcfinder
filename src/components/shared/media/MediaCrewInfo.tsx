@@ -31,20 +31,18 @@ export function MediaCrewInfo({
   if (crew.length === 0) return null;
 
   return (
-    <div className="pb-5">
-      <div className="space-y-1.5 text-sm">
-        {crew.map((member) => (
-          <p
-            key={member.role}
-            className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200 m-0"
-          >
-            <span className="font-normal text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-              {member.role}:
-            </span>{" "}
-            <span className="font-medium">{member.name}</span>
-          </p>
-        ))}
-      </div>
+    <div className="space-y-1.5 text-sm">
+      {crew.map((member) => (
+        <p
+          key={member.role}
+          className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200 m-0"
+        >
+          <span className="font-normal text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+            {member.role}:
+          </span>{" "}
+          <span className="font-medium">{member.name}</span>
+        </p>
+      ))}
     </div>
   );
 }

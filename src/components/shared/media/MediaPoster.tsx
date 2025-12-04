@@ -26,9 +26,9 @@ export default function MediaPoster({
 
   const sizeClasses = {
     sm: "w-16 h-20",
-    md: "w-full sm:w-56",
-    lg: "w-64",
-    xl: "w-80",
+    md: "w-full sm:w-48",
+    lg: "w-56",
+    xl: "w-72",
   };
 
   const aspectRatioClasses = {

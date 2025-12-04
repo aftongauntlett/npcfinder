@@ -15,17 +15,17 @@ export default function MediaHeader({
   className = "",
 }: MediaHeaderProps) {
   return (
-    <div className={`space-y-2 ${className}`}>
+    <div className={`space-y-2.5 ${className}`}>
       {/* Title */}
-      <h2 className="text-3xl font-bold text-gray-900 dark:text-white leading-tight">
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">
         {title}
       </h2>
 
       {/* Metadata (Year, Runtime, etc.) */}
-      {metadata.length > 0 && <MetadataRow items={metadata} />}
+      {metadata.length > 0 && <MetadataRow items={metadata} size="sm" />}
 
       {/* Genres */}
-      {genres && <GenreChips genres={genres} maxVisible={6} />}
+      {genres && <GenreChips genres={genres} maxVisible={6} size="sm" />}
     </div>
   );
 }

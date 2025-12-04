@@ -52,6 +52,12 @@ export default function Accordion({
 
   return (
     <div className={`${className}`}>
+      {/* Accordion Toggle Button - Standard Pattern
+       * - Uses Button component with variant="subtle"
+       * - Full width with justify-between for title and chevron
+       * - ChevronDown icon rotates 180deg when expanded
+       * - Includes proper ARIA attributes for accessibility
+       */}
       <Button
         variant="subtle"
         onClick={handleToggle}

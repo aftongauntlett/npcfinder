@@ -3,6 +3,7 @@ import { Search, Plus, Check, Music } from "lucide-react";
 import { searchMusic } from "../../../utils/mediaSearchAdapters";
 import { MediaItem } from "../media/SendMediaModal";
 import Modal from "../ui/Modal";
+import Input from "../ui/Input";
 import { useTheme } from "../../../hooks/useTheme";
 import { formatReleaseDate } from "../../../utils/dateFormatting";
 
@@ -66,22 +67,14 @@ const SearchMusicModal: React.FC<SearchMusicModalProps> = ({
     <Modal isOpen={true} onClose={onClose} title="Add Music" maxWidth="2xl">
       {/* Search Input */}
       <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search for songs, albums, or artists..."
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent"
-            style={
-              {
-                "--tw-ring-color": themeColor,
-              } as React.CSSProperties
-            }
-            autoFocus
-          />
-        </div>
+        <Input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search for songs, albums, or artists..."
+          leftIcon={<Search className="w-5 h-5 text-gray-400" />}
+          autoFocus
+        />
       </div>
 
       {/* Results */}

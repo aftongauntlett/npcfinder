@@ -15,10 +15,12 @@ const MediaOverviewSection: React.FC<MediaOverviewSectionProps> = ({
   if (!description && !children) return null;
 
   return (
-    <div className={`pb-5 ${className}`}>
-      <h3 className="text-sm font-medium text-primary mb-2.5 mt-0">Overview</h3>
+    <div className={`space-y-3 ${className}`}>
+      <h3 className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">
+        Overview
+      </h3>
       {description && (
-        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed m-0 mb-4">
+        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
           {description}
         </p>
       )}

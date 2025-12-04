@@ -14,10 +14,11 @@ interface MediaDetailActionsProps {
 }
 
 /**
- * MediaDetailActions - Action buttons sidebar for media detail modals
+ * MediaDetailActions - Action buttons for media detail modals
  *
- * Handles the action buttons for media status toggle, recommend, and remove.
+ * Handles the action buttons for media status toggle and remove.
  * Encapsulates the complex status toggle logic and button rendering.
+ * Displays as a horizontal button group for compact layout.
  */
 const MediaDetailActions: React.FC<MediaDetailActionsProps> = ({
   status,
@@ -65,11 +66,11 @@ const MediaDetailActions: React.FC<MediaDetailActionsProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-2.5">
+    <div className="flex flex-wrap gap-2">
       <Button
         onClick={handleStatusToggle}
         variant={getButtonVariant()}
-        fullWidth
+        size="sm"
         className="group"
       >
         <span className="flex items-center justify-center gap-2">
@@ -85,7 +86,7 @@ const MediaDetailActions: React.FC<MediaDetailActionsProps> = ({
       </Button>
 
       {isInWatchlist && (
-        <Button onClick={onRemove} variant="danger" fullWidth className="group">
+        <Button onClick={onRemove} variant="danger" size="sm" className="group">
           <span className="flex items-center justify-center gap-2">
             <span className="group-hover:animate-wiggle inline-block">
               <Trash2 className="w-4 h-4" />

@@ -8,6 +8,7 @@ import React, { useState, useEffect } from "react";
 import Modal from "../shared/ui/Modal";
 import Button from "../shared/ui/Button";
 import Input from "../shared/ui/Input";
+import Textarea from "../shared/ui/Textarea";
 import { useCreateTask, useUpdateTask } from "../../hooks/useTasksQueries";
 import { useTheme } from "../../hooks/useTheme";
 import type { Task, CreateTaskData } from "../../services/tasksService.types";
@@ -118,21 +119,14 @@ const MarkdownToDoModal: React.FC<MarkdownToDoModalProps> = ({
         </div>
 
         {/* Notes */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Notes (Optional)
-          </label>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Add any additional details or context..."
-            rows={4}
-            className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-          />
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Supports markdown formatting
-          </p>
-        </div>
+        <Textarea
+          label="Notes (Optional)"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Add any additional details or context..."
+          rows={4}
+          helperText="Supports markdown formatting"
+        />
 
         {/* Actions */}
         <div className="flex gap-3 pt-2">

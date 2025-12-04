@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { Plus } from "lucide-react";
 import Button from "../../shared/ui/Button";
 import { RecipeCard } from "../../shared/cards";
+import FilterSortMenu from "../../shared/common/FilterSortMenu";
+import type { FilterSortSection } from "../../shared/common/FilterSortMenu";
 import { useTasks } from "../../../hooks/useTasksQueries";
 import type { Task } from "../../../services/tasksService.types";
 
@@ -19,6 +21,57 @@ export const RecipeListView: React.FC<RecipeListViewProps> = ({
   onDeleteTask,
 }) => {
   const { data: tasks = [], isLoading } = useTasks(boardId);
+  const [activeSort, setActiveSort] = useState<string>("name-asc");
+
+  const sortedTasks = [...tasks].sort((a, b) => {
+    const aName =
+      (a.item_data?.recipe_name as string) ||
+      (a.item_data?.name as string) ||
+      a.title;
+    const bName =
+      (b.item_data?.recipe_name as string) ||
+      (b.item_data?.name as string) ||
+      b.title;
+
+    switch (activeSort) {
+      case "name-asc":
+        return aName.localeCompare(bName);
+      case "name-desc":
+        return bName.localeCompare(aName);
+      case "date-newest":
+        return (
+          new Date(b.created_at || 0).getTime() -
+          new Date(a.created_at || 0).getTime()
+        );
+      case "date-oldest":
+        return (
+          new Date(a.created_at || 0).getTime() -
+          new Date(b.created_at || 0).getTime()
+        );
+      default:
+        return 0;
+    }
+  });
+
+  const filterSortSections: FilterSortSection[] = [
+    {
+      id: "sort",
+      title: "SORT BY",
+      options: [
+        { id: "name-asc", label: "Name (A-Z)" },
+        { id: "name-desc", label: "Name (Z-A)" },
+        { id: "date-newest", label: "Date (Newest)" },
+        { id: "date-oldest", label: "Date (Oldest)" },
+      ],
+      multiSelect: false,
+    },
+  ];
+
+  const handleFilterChange = (_sectionId: string, value: string | string[]) => {
+    if (typeof value === "string") {
+      setActiveSort(value);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -32,7 +85,7 @@ export const RecipeListView: React.FC<RecipeListViewProps> = ({
 
   return (
     <div className="space-y-4 px-2 sm:px-0">
-      {tasks.length === 0 ? (
+      {sortedTasks.length === 0 ? (
         /* Empty State Card */
         <div
           onClick={() => onCreateTask()}
@@ -51,22 +104,27 @@ export const RecipeListView: React.FC<RecipeListViewProps> = ({
         </div>
       ) : (
         <>
-          {/* Add Recipe Button */}
-          <div className="flex justify-end">
+          {/* Toolbar */}
+          <div className="flex flex-nowrap items-center justify-between gap-3">
+            <FilterSortMenu
+              sections={filterSortSections}
+              activeFilters={{ sort: activeSort }}
+              onFilterChange={handleFilterChange}
+              label="Sort"
+            />
             <Button
               onClick={() => onCreateTask()}
               variant="action"
               size="sm"
               icon={<Plus className="w-4 h-4" />}
             >
-              <span className="hidden sm:inline">Add Recipe</span>
-              <span className="sm:hidden">Add</span>
+              Add
             </Button>
           </div>
 
           {/* Recipe List */}
           <div className="space-y-3">
-            {tasks.map((task) => {
+            {sortedTasks.map((task) => {
               const recipeName =
                 (task.item_data?.recipe_name as string) ||
                 (task.item_data?.name as string) ||

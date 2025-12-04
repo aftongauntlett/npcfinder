@@ -8,6 +8,7 @@
 import React, { useState, ReactNode } from "react";
 import { ChevronDown, Edit2, Trash2, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
+import Button from "../ui/Button";
 
 interface AccordionCardProps {
   // Header content
@@ -95,45 +96,48 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
           <div className="flex items-center gap-2 flex-shrink-0">
             {/* Quick action buttons - visible on hover on desktop, always visible on mobile */}
             <div
-              className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+              className="flex items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
               data-action-buttons
             >
               {onOpenInTab && isExpanded && (
-                <button
+                <Button
                   onClick={(e) => {
                     e.stopPropagation();
                     onOpenInTab();
                   }}
-                  className="h-8 w-8 p-0 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+                  variant="subtle"
+                  size="icon"
+                  icon={<ExternalLink className="w-4 h-4" />}
                   aria-label="Open in new tab"
                   title="Open in new tab"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </button>
+                  className="h-8 w-8"
+                />
               )}
               {onEdit && (
-                <button
+                <Button
                   onClick={(e) => {
                     e.stopPropagation();
                     onEdit();
                   }}
-                  className="h-8 w-8 p-0 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+                  variant="subtle"
+                  size="icon"
+                  icon={<Edit2 className="w-4 h-4" />}
                   aria-label="Edit"
-                >
-                  <Edit2 className="w-4 h-4" />
-                </button>
+                  className="h-8 w-8"
+                />
               )}
               {onDelete && (
-                <button
+                <Button
                   onClick={(e) => {
                     e.stopPropagation();
                     onDelete();
                   }}
-                  className="h-8 w-8 p-0 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+                  variant="danger"
+                  size="icon"
+                  icon={<Trash2 className="w-4 h-4" />}
                   aria-label="Delete"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                  className="h-8 w-8"
+                />
               )}
             </div>
 
@@ -169,7 +173,7 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
-          className="px-4 pb-4"
+          className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700 pt-3"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Full Description */}

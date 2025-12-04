@@ -5,6 +5,7 @@ import {
   useCreateConnection,
 } from "../../../hooks/useUserSearch";
 import Button from "../ui/Button";
+import Input from "../ui/Input";
 
 /**
  * UserSearch Component
@@ -50,17 +51,14 @@ export function UserSearch() {
   return (
     <div className="space-y-4">
       {/* Search Input */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Search by username..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-          aria-label="Search for users"
-        />
-      </div>
+      <Input
+        type="text"
+        placeholder="Search by username..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        leftIcon={<Search className="w-5 h-5 text-gray-400" />}
+        aria-label="Search for users"
+      />
 
       {/* User List */}
       <div>

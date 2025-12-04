@@ -12,7 +12,8 @@ import "../../styles/datepicker.css";
 import Modal from "../shared/ui/Modal";
 import Button from "../shared/ui/Button";
 import Input from "../shared/ui/Input";
-import CustomDropdown from "../ui/CustomDropdown";
+import Textarea from "../shared/ui/Textarea";
+import Select from "../shared/ui/Select";
 import type { Task } from "../../services/tasksService.types";
 import type { StatusHistoryEntry } from "../../services/tasksService.types";
 import { getTemplate } from "../../utils/boardTemplates";
@@ -22,7 +23,6 @@ import {
   useDeleteTask,
 } from "../../hooks/useTasksQueries";
 import { PRIORITY_OPTIONS, STATUS_OPTIONS } from "../../utils/taskConstants";
-import { useTheme } from "../../hooks/useTheme";
 
 interface TaskDetailModalProps {
   isOpen: boolean;
@@ -115,7 +115,6 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
-  const { themeColor } = useTheme();
 
   // Track previous job status to detect changes
   const [prevJobStatus, setPrevJobStatus] = useState(jobStatus);
@@ -124,6 +123,12 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   const isJobTracker =
     task.item_data?.company_name !== undefined ||
     task.item_data?.position !== undefined;
+
+  // Detect if this is a recipe task
+  const isRecipe =
+    task.item_data?.recipe_name !== undefined ||
+    task.item_data?.name !== undefined ||
+    task.item_data?.ingredients !== undefined;
 
   // Get job tracker template for status options
   const jobTrackerTemplate = getTemplate("job_tracker");
@@ -200,7 +205,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     setTotalTime((task.item_data?.total_time as string) || "");
     setServings((task.item_data?.servings as string) || "");
     setRecipeNotes((task.item_data?.notes as string) || "");
-  }, [task]);
+  }, [task, isJobTracker]);
 
   // Handle status changes - append to status history
   useEffect(() => {
@@ -312,7 +317,13 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isJobTracker ? "Edit Job Application" : "Edit Task"}
+      title={
+        isJobTracker
+          ? "Edit Job Application"
+          : isRecipe
+          ? "Edit Recipe"
+          : "Edit Task"
+      }
       maxWidth="2xl"
       closeOnBackdropClick={true}
     >
@@ -348,44 +359,28 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       <form onSubmit={handleSubmit} className="p-6 space-y-5">
         {/* Title - Hidden for job tracker */}
         {!isJobTracker && (
-          <div>
-            <label
-              htmlFor="task-title"
-              className="block text-sm font-medium text-primary mb-2.5"
-            >
-              Task Title *
-            </label>
-            <input
-              id="task-title"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-              maxLength={200}
-              className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent transition-colors"
-            />
-          </div>
+          <Input
+            id="task-title"
+            label="Task Title"
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+            maxLength={200}
+          />
         )}
 
         {/* Description - Hidden for job tracker */}
         {!isJobTracker && (
-          <div>
-            <label
-              htmlFor="task-description"
-              className="block text-sm font-medium text-primary mb-2.5"
-            >
-              Description
-            </label>
-            <textarea
-              id="task-description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Add more details..."
-              rows={4}
-              maxLength={1000}
-              className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent transition-colors"
-            />
-          </div>
+          <Textarea
+            id="task-description"
+            label="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Add more details..."
+            rows={4}
+            maxLength={1000}
+          />
         )}
 
         {/* Job Tracker Specific Fields */}
@@ -393,192 +388,122 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
           task.item_data?.position !== undefined) && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="company-name"
-                  className="block text-sm font-medium text-primary mb-2"
-                >
-                  Company Name
-                </label>
-                <input
-                  id="company-name"
-                  type="text"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  onFocus={(e) =>
-                    (e.target.style.boxShadow = `0 0 0 3px ${themeColor}33`)
-                  }
-                  onBlur={(e) => (e.target.style.boxShadow = "")}
-                  placeholder="Company name"
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:border-transparent transition-colors"
-                  style={{ outline: "none" }}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="position"
-                  className="block text-sm font-medium text-primary mb-2"
-                >
-                  Position
-                </label>
-                <input
-                  id="position"
-                  type="text"
-                  value={position}
-                  onChange={(e) => setPosition(e.target.value)}
-                  onFocus={(e) =>
-                    (e.target.style.boxShadow = `0 0 0 3px ${themeColor}33`)
-                  }
-                  onBlur={(e) => (e.target.style.boxShadow = "")}
-                  placeholder="Software Engineer"
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:border-transparent transition-colors"
-                  style={{ outline: "none" }}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="salary-range"
-                  className="block text-sm font-medium text-primary mb-2"
-                >
-                  Salary Range
-                </label>
-                <input
-                  id="salary-range"
-                  type="text"
-                  value={salaryRange}
-                  onChange={(e) => setSalaryRange(e.target.value)}
-                  onFocus={(e) =>
-                    (e.target.style.boxShadow = `0 0 0 3px ${themeColor}33`)
-                  }
-                  onBlur={(e) => (e.target.style.boxShadow = "")}
-                  placeholder="$100k - $150k"
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:border-transparent transition-colors"
-                  style={{ outline: "none" }}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="location"
-                  className="block text-sm font-medium text-primary mb-2"
-                >
-                  Location
-                </label>
-                <input
-                  id="location"
-                  type="text"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  onFocus={(e) =>
-                    (e.target.style.boxShadow = `0 0 0 3px ${themeColor}33`)
-                  }
-                  onBlur={(e) => (e.target.style.boxShadow = "")}
-                  placeholder="San Francisco, CA"
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:border-transparent transition-colors"
-                  style={{ outline: "none" }}
-                />
-              </div>
-              <CustomDropdown
+              <Input
+                id="company-name"
+                label="Company Name"
+                type="text"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                placeholder="Company name"
+              />
+              <Input
+                id="position"
+                label="Position"
+                type="text"
+                value={position}
+                onChange={(e) => setPosition(e.target.value)}
+                placeholder="Software Engineer"
+              />
+            </div>
+
+            {/* Description (formerly Notes) - larger and supports markdown */}
+            <Textarea
+              id="job-description"
+              label="Description"
+              value={jobNotes}
+              onChange={(e) => setJobNotes(e.target.value)}
+              placeholder="**Role Overview**&#10;&#10;Key responsibilities:\n- Lead feature development\n- Collaborate with cross-functional teams\n- Mentor junior engineers"
+              rows={6}
+              helperText="Supports basic markdown: **bold**, - bullet lists"
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                id="salary-range"
+                label="Salary Range"
+                type="text"
+                value={salaryRange}
+                onChange={(e) => setSalaryRange(e.target.value)}
+                placeholder="$100k - $150k"
+              />
+              <Input
+                id="location"
+                label="Location"
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="San Francisco, CA"
+              />
+              <Select
                 id="employment-type"
                 label="Employment Type"
                 value={employmentType}
-                onChange={setEmploymentType}
-                options={[
-                  "Full-time",
-                  "Part-time",
-                  "Contract",
-                  "Internship",
-                  "Remote",
-                ]}
+                onChange={(e) => setEmploymentType(e.target.value)}
                 placeholder="Select type"
-                themeColor={themeColor}
+                options={[
+                  { value: "Full-time", label: "Full-time" },
+                  { value: "Part-time", label: "Part-time" },
+                  { value: "Contract", label: "Contract" },
+                  { value: "Internship", label: "Internship" },
+                  { value: "Remote", label: "Remote" },
+                ]}
               />
-              <div>
-                <label
-                  htmlFor="company-url"
-                  className="block text-sm font-medium text-primary mb-2"
-                >
-                  Company URL
-                </label>
-                <input
-                  id="company-url"
-                  type="url"
-                  value={companyUrl}
-                  onChange={(e) => setCompanyUrl(e.target.value)}
-                  onFocus={(e) =>
-                    (e.target.style.boxShadow = `0 0 0 3px ${themeColor}33`)
-                  }
-                  onBlur={(e) => (e.target.style.boxShadow = "")}
-                  placeholder="https://company.com/careers/job-id"
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:border-transparent transition-colors"
-                  style={{ outline: "none" }}
-                />
-              </div>
+              <Input
+                id="company-url"
+                label="Company URL"
+                type="url"
+                value={companyUrl}
+                onChange={(e) => setCompanyUrl(e.target.value)}
+                placeholder="https://company.com/careers/job-id"
+              />
             </div>
 
-            {/* Status field for job tracker */}
-            <CustomDropdown
-              id="job-status"
-              label="Status"
-              value={jobStatus}
-              onChange={setJobStatus}
-              options={jobStatusOptions}
-              themeColor={themeColor}
-            />
-
-            {/* Date for current status */}
-            {statusHistory.length > 0 && (
-              <div>
-                <label
-                  htmlFor="status-date"
-                  className="block text-sm font-medium text-primary mb-2"
-                >
-                  {jobStatus} Date
-                </label>
-                <DatePicker
-                  id="status-date"
-                  selected={
-                    statusHistory[statusHistory.length - 1]?.date
-                      ? new Date(statusHistory[statusHistory.length - 1].date)
-                      : new Date()
-                  }
-                  onChange={(date: Date | null) => {
-                    if (date && statusHistory.length > 0) {
-                      const updatedHistory = [...statusHistory];
-                      updatedHistory[updatedHistory.length - 1] = {
-                        ...updatedHistory[updatedHistory.length - 1],
-                        date: date.toISOString().split("T")[0],
-                      };
-                      setStatusHistory(updatedHistory);
-                    }
-                  }}
-                  dateFormat="MM/dd/yyyy"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white focus:outline-none transition-colors"
-                  wrapperClassName="w-full"
-                  calendarClassName="dark:bg-gray-800 dark:border-gray-700"
-                />
-              </div>
-            )}
-
-            <div>
-              <label
-                htmlFor="job-notes"
-                className="block text-sm font-medium text-primary mb-2"
-              >
-                Notes
-              </label>
-              <textarea
-                id="job-notes"
-                value={jobNotes}
-                onChange={(e) => setJobNotes(e.target.value)}
-                onFocus={(e) =>
-                  (e.target.style.boxShadow = `0 0 0 3px ${themeColor}33`)
-                }
-                onBlur={(e) => (e.target.style.boxShadow = "")}
-                placeholder="Interview notes, contacts, etc."
-                rows={3}
-                className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:border-transparent transition-colors"
-                style={{ outline: "none" }}
+            {/* Status and Applied Date - 2 columns */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Select
+                id="job-status"
+                label="Status"
+                value={jobStatus}
+                onChange={(e) => setJobStatus(e.target.value)}
+                options={jobStatusOptions.map((status) => ({
+                  value: status,
+                  label: status,
+                }))}
               />
+
+              {/* Date for current status */}
+              {statusHistory.length > 0 && (
+                <div>
+                  <label
+                    htmlFor="status-date"
+                    className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1.5"
+                  >
+                    Applied Date
+                  </label>
+                  <DatePicker
+                    id="status-date"
+                    selected={
+                      statusHistory[statusHistory.length - 1]?.date
+                        ? new Date(statusHistory[statusHistory.length - 1].date)
+                        : new Date()
+                    }
+                    onChange={(date: Date | null) => {
+                      if (date && statusHistory.length > 0) {
+                        const updatedHistory = [...statusHistory];
+                        updatedHistory[updatedHistory.length - 1] = {
+                          ...updatedHistory[updatedHistory.length - 1],
+                          date: date.toISOString().split("T")[0],
+                        };
+                        setStatusHistory(updatedHistory);
+                      }
+                    }}
+                    dateFormat="MM/dd/yyyy"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white focus:outline-none transition-colors"
+                    wrapperClassName="w-full"
+                    calendarClassName="dark:bg-gray-800 dark:border-gray-700"
+                  />
+                </div>
+              )}
             </div>
           </>
         )}
@@ -592,151 +517,79 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
               Recipe Details
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="recipe-name"
-                  className="block text-sm font-medium text-primary mb-2"
-                >
-                  Recipe Name
-                </label>
-                <input
-                  id="recipe-name"
-                  type="text"
-                  value={recipeName}
-                  onChange={(e) => setRecipeName(e.target.value)}
-                  placeholder="Chocolate Chip Cookies"
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="recipe-url"
-                  className="block text-sm font-medium text-primary mb-2"
-                >
-                  Source URL
-                </label>
-                <input
-                  id="recipe-url"
-                  type="url"
-                  value={recipeUrl}
-                  onChange={(e) => setRecipeUrl(e.target.value)}
-                  placeholder="https://recipe-site.com/..."
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="prep-time"
-                  className="block text-sm font-medium text-primary mb-2"
-                >
-                  Prep Time
-                </label>
-                <input
-                  id="prep-time"
-                  type="text"
-                  value={prepTime}
-                  onChange={(e) => setPrepTime(e.target.value)}
-                  placeholder="15 minutes"
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="cook-time"
-                  className="block text-sm font-medium text-primary mb-2"
-                >
-                  Cook Time
-                </label>
-                <input
-                  id="cook-time"
-                  type="text"
-                  value={cookTime}
-                  onChange={(e) => setCookTime(e.target.value)}
-                  placeholder="30 minutes"
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="total-time"
-                  className="block text-sm font-medium text-primary mb-2"
-                >
-                  Total Time
-                </label>
-                <input
-                  id="total-time"
-                  type="text"
-                  value={totalTime}
-                  onChange={(e) => setTotalTime(e.target.value)}
-                  placeholder="45 minutes"
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="servings"
-                  className="block text-sm font-medium text-primary mb-2"
-                >
-                  Servings
-                </label>
-                <input
-                  id="servings"
-                  type="text"
-                  value={servings}
-                  onChange={(e) => setServings(e.target.value)}
-                  placeholder="4"
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
-                />
-              </div>
-            </div>
-            <div>
-              <label
-                htmlFor="ingredients"
-                className="block text-sm font-medium text-primary mb-2"
-              >
-                Ingredients (one per line)
-              </label>
-              <textarea
-                id="ingredients"
-                value={ingredients}
-                onChange={(e) => setIngredients(e.target.value)}
-                placeholder="2 cups flour&#10;1 cup sugar&#10;2 eggs"
-                rows={4}
-                className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
+              <Input
+                id="recipe-name"
+                label="Recipe Name"
+                type="text"
+                value={recipeName}
+                onChange={(e) => setRecipeName(e.target.value)}
+                placeholder="Chocolate Chip Cookies"
+              />
+              <Input
+                id="recipe-url"
+                label="Source URL"
+                type="url"
+                value={recipeUrl}
+                onChange={(e) => setRecipeUrl(e.target.value)}
+                placeholder="https://recipe-site.com/..."
+              />
+              <Input
+                id="prep-time"
+                label="Prep Time"
+                type="text"
+                value={prepTime}
+                onChange={(e) => setPrepTime(e.target.value)}
+                placeholder="15 minutes"
+              />
+              <Input
+                id="cook-time"
+                label="Cook Time"
+                type="text"
+                value={cookTime}
+                onChange={(e) => setCookTime(e.target.value)}
+                placeholder="30 minutes"
+              />
+              <Input
+                id="total-time"
+                label="Total Time"
+                type="text"
+                value={totalTime}
+                onChange={(e) => setTotalTime(e.target.value)}
+                placeholder="45 minutes"
+              />
+              <Input
+                id="servings"
+                label="Servings"
+                type="text"
+                value={servings}
+                onChange={(e) => setServings(e.target.value)}
+                placeholder="4"
               />
             </div>
-            <div>
-              <label
-                htmlFor="instructions"
-                className="block text-sm font-medium text-primary mb-2"
-              >
-                Instructions (one step per line)
-              </label>
-              <textarea
-                id="instructions"
-                value={instructions}
-                onChange={(e) => setInstructions(e.target.value)}
-                placeholder="Preheat oven to 350°F&#10;Mix dry ingredients&#10;Add wet ingredients"
-                rows={4}
-                className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="recipe-notes"
-                className="block text-sm font-medium text-primary mb-2"
-              >
-                Notes
-              </label>
-              <textarea
-                id="recipe-notes"
-                value={recipeNotes}
-                onChange={(e) => setRecipeNotes(e.target.value)}
-                placeholder="Personal notes, modifications, etc."
-                rows={2}
-                className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
-              />
-            </div>
+            <Textarea
+              id="ingredients"
+              label="Ingredients (one per line)"
+              value={ingredients}
+              onChange={(e) => setIngredients(e.target.value)}
+              placeholder="2 cups flour&#10;1 cup sugar&#10;2 eggs"
+              rows={4}
+            />
+            <Textarea
+              id="instructions"
+              label="Instructions (one step per line)"
+              value={instructions}
+              onChange={(e) => setInstructions(e.target.value)}
+              placeholder="Preheat oven to 350°F&#10;Mix dry ingredients&#10;Add wet ingredients"
+              rows={4}
+            />
+            <Textarea
+              id="recipe-notes"
+              label="Notes"
+              value={recipeNotes}
+              onChange={(e) => setRecipeNotes(e.target.value)}
+              placeholder="Personal notes, modifications, etc."
+              rows={2}
+            />
           </div>
         )}
 

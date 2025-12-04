@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
-import Button from "../ui/Button";
 
 interface MediaCastListProps {
   cast: string[];
@@ -9,45 +7,42 @@ interface MediaCastListProps {
 
 export function MediaCastList({
   cast,
-  initialDisplayCount = 8,
+  initialDisplayCount = 9,
 }: MediaCastListProps) {
-  const [showAll, setShowAll] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   if (cast.length === 0) return null;
 
-  const displayedCast = showAll ? cast : cast.slice(0, initialDisplayCount);
+  // Show first 9, then "See more" as 10th chip, or "See less" if expanded
+  const displayedCast = isExpanded ? cast : cast.slice(0, initialDisplayCount);
+  const hasMore = cast.length > initialDisplayCount;
 
   return (
-    <div className="pb-5">
-      <h3 className="text-sm font-medium text-primary mb-2.5 mt-0">Cast</h3>
+    <div>
+      <h4 className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium mb-2">
+        Cast
+      </h4>
       <div className="flex flex-wrap gap-2" role="list">
         {displayedCast.map((actor, index) => (
           <span
             key={index}
             role="listitem"
-            className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 cursor-default"
+            className="px-2.5 py-1 text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 cursor-default"
           >
             {actor}
           </span>
         ))}
+        {hasMore && (
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="px-2.5 py-1 text-xs bg-primary/10 dark:bg-primary/20 text-primary rounded-md border border-primary/30 hover:bg-primary/20 dark:hover:bg-primary/30 transition-colors duration-200 cursor-pointer font-medium"
+          >
+            {isExpanded
+              ? "See less"
+              : `See more (${cast.length - initialDisplayCount})`}
+          </button>
+        )}
       </div>
-      {cast.length > initialDisplayCount && (
-        <Button
-          onClick={() => setShowAll(!showAll)}
-          variant="subtle"
-          size="sm"
-          icon={
-            showAll ? (
-              <ChevronUp className="w-4 h-4" />
-            ) : (
-              <ChevronDown className="w-4 h-4" />
-            )
-          }
-          className="mt-3 mb-0"
-        >
-          {showAll ? "Show less" : `See all ${cast.length} actors`}
-        </Button>
-      )}
     </div>
   );
 }

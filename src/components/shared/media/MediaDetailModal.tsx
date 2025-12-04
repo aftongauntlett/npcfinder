@@ -163,27 +163,33 @@ export default function MediaDetailModal({
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200 shadow-lg"
+          className="absolute top-4 right-4 z-10 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
           aria-label="Close modal"
         >
-          <X className="w-5 h-5" />
+          <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
         </button>
 
-        {/* Content - Single Column with Sticky Sidebar */}
-        <div className="flex flex-col lg:flex-row gap-8 p-6 max-h-[85vh] overflow-y-auto">
-          {/* Poster Sidebar */}
-          <div className="flex-shrink-0 lg:sticky lg:top-0 lg:self-start space-y-4">
+        {/* Content - Two Column Layout with Compact Poster */}
+        <div className="flex flex-col lg:flex-row gap-6 p-6 max-h-[80vh] overflow-y-auto">
+          {/* Poster Sidebar - Smaller and Sticky */}
+          <div className="flex-shrink-0 lg:sticky lg:top-0 lg:self-start">
             <div className="group">
               <MediaPoster
                 src={posterUrl}
                 alt={`${title} poster`}
-                size="lg"
+                size="md"
                 aspectRatio="2/3"
                 className="mx-auto lg:mx-0 transition-transform duration-300 group-hover:scale-[1.02]"
               />
             </div>
+          </div>
 
-            {/* Action Buttons */}
+          {/* Main Content Column */}
+          <div className="flex-1 min-w-0 space-y-4">
+            {/* Header: Title, Metadata, Genres */}
+            <MediaHeader title={title} metadata={metadata} genres={genres} />
+
+            {/* Action Buttons - Horizontal Layout */}
             <MediaDetailActions
               status={status}
               mediaType={mediaType}
@@ -191,14 +197,6 @@ export default function MediaDetailModal({
               onRemove={onRemove}
               isInWatchlist={isInWatchlist}
             />
-          </div>
-
-          {/* Main Content Column */}
-          <div className="flex-1 min-w-0">
-            {/* Header: Title, Metadata, Genres */}
-            <div className="pb-5">
-              <MediaHeader title={title} metadata={metadata} genres={genres} />
-            </div>
 
             {/* Overview Section - includes description and additional content */}
             {(description || additionalContent) && (

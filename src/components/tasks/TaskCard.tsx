@@ -96,7 +96,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
           </span>
         )}
         {/* Action buttons */}
-        <ActionButtonGroup actions={actionButtons} size="sm" spacing="tight" />
+        <ActionButtonGroup actions={actionButtons} spacing="tight" />
       </div>
     );
   }
@@ -129,11 +129,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
               isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100"
             } transition-opacity`}
           >
-            <ActionButtonGroup
-              actions={actionButtons}
-              size="sm"
-              spacing="tight"
-            />
+            <ActionButtonGroup actions={actionButtons} spacing="tight" />
           </div>
         </div>
 

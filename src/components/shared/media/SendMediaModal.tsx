@@ -28,6 +28,9 @@ export interface MediaItem {
   isbn?: string; // for books
   categories?: string; // for books - comma-separated categories from Google Books API
   genre?: string | null; // for music - primary genre from iTunes API
+  track_duration?: number | null; // for music - track duration in milliseconds (for songs)
+  track_count?: number | null; // for music - number of tracks (for albums)
+  preview_url?: string | null; // for music - preview audio URL from iTunes
   // Game-specific fields (from RAWG API)
   slug?: string; // URL-friendly game identifier
   platforms?: string; // Comma-separated platform names

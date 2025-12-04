@@ -3,6 +3,7 @@ import { Search, Plus, Check, Film, Tv } from "lucide-react";
 import { searchMoviesAndTV } from "../../../utils/mediaSearchAdapters";
 import { MediaItem } from "../media/SendMediaModal";
 import Modal from "../ui/Modal";
+import Input from "../ui/Input";
 import { useTheme } from "../../../hooks/useTheme";
 import { formatReleaseDate } from "../../../utils/dateFormatting";
 
@@ -77,22 +78,14 @@ const SearchMovieModal: React.FC<SearchMovieModalProps> = ({
     <Modal isOpen={isOpen} onClose={onClose} title="Add Media" maxWidth="2xl">
       {/* Search Input */}
       <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search for movies or TV shows..."
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent"
-            style={
-              {
-                "--tw-ring-color": "var(--color-primary)",
-              } as React.CSSProperties
-            }
-            autoFocus
-          />
-        </div>
+        <Input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search for movies or TV shows..."
+          leftIcon={<Search className="w-5 h-5 text-gray-400" />}
+          autoFocus
+        />
       </div>
 
       {/* Results */}

@@ -9,7 +9,9 @@ import "react-datepicker/dist/react-datepicker.css";
 import "../../styles/datepicker.css";
 import Modal from "../shared/ui/Modal";
 import Button from "../shared/ui/Button";
-import CustomDropdown from "../ui/CustomDropdown";
+import Input from "../shared/ui/Input";
+import Textarea from "../shared/ui/Textarea";
+import Select from "../shared/ui/Select";
 import type { CreateTaskData } from "../../services/tasksService.types";
 import { useCreateTask } from "../../hooks/useTasksQueries";
 import { useUrlMetadata } from "../../hooks/useUrlMetadata";
@@ -349,31 +351,22 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               <Link className="w-4 h-4" />
               Quick Add from URL (Optional)
             </label>
-            <div className="relative">
-              <input
-                id="task-url"
-                type="url"
-                value={url}
-                onChange={(e) => void handleUrlChange(e.target.value)}
-                placeholder="Paste a recipe URL..."
-                className="block w-full rounded-lg border bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 px-3 py-2.5 pr-10 focus:outline-none focus:border-transparent transition-colors"
-                style={{ borderColor: lightenColor(themeColor, 0.6) }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = themeColor;
-                  e.target.style.boxShadow = `0 0 0 3px ${themeColor}33`;
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = lightenColor(themeColor, 0.6);
-                  e.target.style.boxShadow = "";
-                }}
-              />
-              {urlLoading && (
-                <Loader2
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 animate-spin"
-                  style={{ color: themeColor }}
-                />
-              )}
-            </div>
+            <Input
+              id="task-url"
+              type="url"
+              value={url}
+              onChange={(e) => void handleUrlChange(e.target.value)}
+              placeholder="Paste a recipe URL..."
+              leftIcon={<Link className="w-4 h-4" />}
+              rightIcon={
+                urlLoading ? (
+                  <Loader2
+                    className="w-5 h-5 animate-spin"
+                    style={{ color: themeColor }}
+                  />
+                ) : undefined
+              }
+            />
             {/* URL Feedback Message */}
             {urlFeedback && (
               <div
@@ -404,50 +397,30 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
         {/* Title - Hidden for job tracker and recipe since they have their own fields */}
         {boardType !== "job_tracker" && boardType !== "recipe" && (
-          <div>
-            <label
-              htmlFor="task-title"
-              className="block text-sm font-medium text-primary mb-2.5"
-            >
-              Task Title *
-            </label>
-            <input
-              id="task-title"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="What needs to be done?"
-              required
-              maxLength={200}
-              className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 px-3 py-2.5 focus:outline-none focus:border-transparent transition-colors"
-              onFocus={(e) =>
-                (e.target.style.boxShadow = `0 0 0 3px ${themeColor}33`)
-              }
-              onBlur={(e) => (e.target.style.boxShadow = "")}
-            />
-          </div>
+          <Input
+            id="task-title"
+            label="Task Title"
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="What needs to be done?"
+            required
+            maxLength={200}
+          />
         )}
 
         {/* Description - Hidden for job tracker (uses Notes field instead) */}
         {boardType !== "job_tracker" && (
-          <div>
-            <label
-              htmlFor="task-description"
-              className="block text-sm font-medium text-primary mb-2.5"
-            >
-              Description *
-            </label>
-            <textarea
-              id="task-description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Add more details..."
-              rows={3}
-              maxLength={1000}
-              required
-              className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 px-3 py-2.5 focus:outline-none  focus:border-transparent transition-colors"
-            />
-          </div>
+          <Textarea
+            id="task-description"
+            label="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Add more details..."
+            rows={3}
+            maxLength={1000}
+            required
+          />
         )}
 
         {/* Job Tracker Specific Fields */}
@@ -468,34 +441,22 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 <Link className="w-4 h-4" />
                 Job Posting URL (Optional)
               </label>
-              <div className="relative">
-                <input
-                  id="job-url"
-                  type="url"
-                  value={url}
-                  onChange={(e) => void handleUrlChange(e.target.value)}
-                  placeholder="Paste job posting URL to auto-fill details..."
-                  className="block w-full rounded-lg border bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 pr-10 focus:outline-none focus:ring-2 transition-colors"
-                  style={{
-                    borderColor: `${themeColor}60`,
-                    outlineColor: themeColor,
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = themeColor;
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = `${themeColor}60`;
-                  }}
-                />
-                {urlLoading && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <Input
+                id="job-url"
+                type="url"
+                value={url}
+                onChange={(e) => void handleUrlChange(e.target.value)}
+                placeholder="Paste job posting URL to auto-fill details..."
+                leftIcon={<Link className="w-4 h-4" />}
+                rightIcon={
+                  urlLoading ? (
                     <Loader2
                       className="w-4 h-4 animate-spin"
                       style={{ color: themeColor }}
                     />
-                  </div>
-                )}
-              </div>
+                  ) : undefined
+                }
+              />
               {/* URL Feedback Message */}
               {urlFeedback && (
                 <div
@@ -521,205 +482,100 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="company-name"
-                  className="block text-sm font-medium text-primary mb-2"
-                >
-                  Company Name *
-                </label>
-                <input
-                  id="company-name"
-                  type="text"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  placeholder="Company name"
-                  required
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 transition-colors"
-                  style={{
-                    outlineColor: themeColor,
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = themeColor;
-                    e.target.style.boxShadow = `0 0 0 2px ${themeColor}40`;
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = "";
-                    e.target.style.boxShadow = "";
-                  }}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="position"
-                  className="block text-sm font-medium text-primary mb-2"
-                >
-                  Position *
-                </label>
-                <input
-                  id="position"
-                  type="text"
-                  value={position}
-                  onChange={(e) => setPosition(e.target.value)}
-                  placeholder="Software Engineer"
-                  required
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 transition-colors"
-                  style={{
-                    outlineColor: themeColor,
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = themeColor;
-                    e.target.style.boxShadow = `0 0 0 2px ${themeColor}40`;
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = "";
-                    e.target.style.boxShadow = "";
-                  }}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="salary-range"
-                  className="block text-sm font-medium text-primary mb-2"
-                >
-                  Salary Range
-                </label>
-                <input
-                  id="salary-range"
-                  type="text"
-                  value={salaryRange}
-                  onChange={(e) => setSalaryRange(e.target.value)}
-                  placeholder="$100k - $150k"
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 transition-colors"
-                  style={{
-                    outlineColor: themeColor,
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = themeColor;
-                    e.target.style.boxShadow = `0 0 0 2px ${themeColor}40`;
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = "";
-                    e.target.style.boxShadow = "";
-                  }}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="location"
-                  className="block text-sm font-medium text-primary mb-2"
-                >
-                  Location
-                </label>
-                <input
-                  id="location"
-                  type="text"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="San Francisco, CA"
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 transition-colors"
-                  style={{
-                    outlineColor: themeColor,
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = themeColor;
-                    e.target.style.boxShadow = `0 0 0 2px ${themeColor}40`;
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = "";
-                    e.target.style.boxShadow = "";
-                  }}
-                />
-              </div>
-              <CustomDropdown
+              <Input
+                id="company-name"
+                label="Company Name"
+                type="text"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                placeholder="Company name"
+                required
+              />
+              <Input
+                id="position"
+                label="Position"
+                type="text"
+                value={position}
+                onChange={(e) => setPosition(e.target.value)}
+                placeholder="Software Engineer"
+                required
+              />
+              <Input
+                id="salary-range"
+                label="Salary Range"
+                type="text"
+                value={salaryRange}
+                onChange={(e) => setSalaryRange(e.target.value)}
+                placeholder="$100k - $150k"
+              />
+              <Input
+                id="location"
+                label="Location"
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="San Francisco, CA"
+              />
+              <Select
                 id="employment-type"
                 label="Employment Type"
                 value={employmentType}
-                onChange={setEmploymentType}
-                options={[
-                  "Full-time",
-                  "Part-time",
-                  "Contract",
-                  "Internship",
-                  "Remote",
-                ]}
+                onChange={(e) => setEmploymentType(e.target.value)}
                 placeholder="Select type"
-                themeColor={themeColor}
+                options={[
+                  { value: "Full-time", label: "Full-time" },
+                  { value: "Part-time", label: "Part-time" },
+                  { value: "Contract", label: "Contract" },
+                  { value: "Internship", label: "Internship" },
+                  { value: "Remote", label: "Remote" },
+                ]}
               />
-              <CustomDropdown
+              <Select
                 id="status"
                 label="Status"
                 value={status}
-                onChange={setStatus}
+                onChange={(e) => setStatus(e.target.value)}
                 options={[
-                  "Applied",
-                  "Phone Screen",
-                  "Interview - Round 1",
-                  "Interview - Round 2",
-                  "Interview - Round 3",
-                  "Offer Received",
-                  "Accepted",
-                  "Rejected",
-                  "Declined",
-                  "No Response",
+                  { value: "Applied", label: "Applied" },
+                  { value: "Phone Screen", label: "Phone Screen" },
+                  {
+                    value: "Interview - Round 1",
+                    label: "Interview - Round 1",
+                  },
+                  {
+                    value: "Interview - Round 2",
+                    label: "Interview - Round 2",
+                  },
+                  {
+                    value: "Interview - Round 3",
+                    label: "Interview - Round 3",
+                  },
+                  { value: "Offer Received", label: "Offer Received" },
+                  { value: "Accepted", label: "Accepted" },
+                  { value: "Rejected", label: "Rejected" },
+                  { value: "Declined", label: "Declined" },
+                  { value: "No Response", label: "No Response" },
                 ]}
-                themeColor={themeColor}
               />
             </div>
-            <div>
-              <label
-                htmlFor="job-description"
-                className="block text-sm font-medium text-primary mb-2"
-              >
-                Job Description
-              </label>
-              <textarea
-                id="job-description"
-                value={jobDescription}
-                onChange={(e) => setJobDescription(e.target.value)}
-                placeholder="Paste or type the full job description here..."
-                rows={8}
-                className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 transition-colors resize-y"
-                style={{
-                  outlineColor: themeColor,
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = themeColor;
-                  e.currentTarget.style.boxShadow = `0 0 0 2px ${themeColor}40`;
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "";
-                  e.currentTarget.style.boxShadow = "";
-                }}
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="job-notes"
-                className="block text-sm font-medium text-primary mb-2"
-              >
-                Notes
-              </label>
-              <textarea
-                id="job-notes"
-                value={jobNotes}
-                onChange={(e) => setJobNotes(e.target.value)}
-                placeholder="Interview notes, contacts, follow-ups, etc."
-                rows={8}
-                className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 transition-colors resize-y"
-                style={{
-                  outlineColor: themeColor,
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = themeColor;
-                  e.currentTarget.style.boxShadow = `0 0 0 2px ${themeColor}40`;
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "";
-                  e.currentTarget.style.boxShadow = "";
-                }}
-              />
-            </div>
+            <Textarea
+              id="job-description"
+              label="Job Description"
+              value={jobDescription}
+              onChange={(e) => setJobDescription(e.target.value)}
+              placeholder="Paste or type the full job description here..."
+              rows={8}
+              resize="vertical"
+            />
+            <Textarea
+              id="job-notes"
+              label="Notes"
+              value={jobNotes}
+              onChange={(e) => setJobNotes(e.target.value)}
+              placeholder="Interview notes, contacts, follow-ups, etc."
+              rows={8}
+              resize="vertical"
+            />
           </div>
         )}
 
@@ -730,151 +586,82 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               Recipe Details
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="recipe-name"
-                  className="block text-sm font-medium text-primary mb-2"
-                >
-                  Recipe Name
-                </label>
-                <input
-                  id="recipe-name"
-                  type="text"
-                  value={recipeName}
-                  onChange={(e) => setRecipeName(e.target.value)}
-                  placeholder="Chocolate Chip Cookies"
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none "
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="recipe-url"
-                  className="block text-sm font-medium text-primary mb-2"
-                >
-                  Source URL
-                </label>
-                <input
-                  id="recipe-url"
-                  type="url"
-                  value={recipeUrl}
-                  onChange={(e) => setRecipeUrl(e.target.value)}
-                  placeholder="https://recipe-site.com/..."
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none "
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="prep-time"
-                  className="block text-sm font-medium text-primary mb-2"
-                >
-                  Prep Time
-                </label>
-                <input
-                  id="prep-time"
-                  type="text"
-                  value={prepTime}
-                  onChange={(e) => setPrepTime(e.target.value)}
-                  placeholder="15 minutes"
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none "
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="cook-time"
-                  className="block text-sm font-medium text-primary mb-2"
-                >
-                  Cook Time
-                </label>
-                <input
-                  id="cook-time"
-                  type="text"
-                  value={cookTime}
-                  onChange={(e) => setCookTime(e.target.value)}
-                  placeholder="30 minutes"
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none "
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="total-time"
-                  className="block text-sm font-medium text-primary mb-2"
-                >
-                  Total Time
-                </label>
-                <input
-                  id="total-time"
-                  type="text"
-                  value={totalTime}
-                  onChange={(e) => setTotalTime(e.target.value)}
-                  placeholder="45 minutes"
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none "
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="servings"
-                  className="block text-sm font-medium text-primary mb-2"
-                >
-                  Servings
-                </label>
-                <input
-                  id="servings"
-                  type="text"
-                  value={servings}
-                  onChange={(e) => setServings(e.target.value)}
-                  placeholder="4"
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none "
-                />
-              </div>
-            </div>
-            <div>
-              <label
-                htmlFor="ingredients"
-                className="block text-sm font-medium text-primary mb-2"
-              >
-                Ingredients (one per line)
-              </label>
-              <textarea
-                id="ingredients"
-                value={ingredients}
-                onChange={(e) => setIngredients(e.target.value)}
-                placeholder="2 cups flour&#10;1 cup sugar&#10;2 eggs"
-                rows={4}
-                className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none "
+              <Input
+                id="recipe-name"
+                label="Recipe Name"
+                type="text"
+                value={recipeName}
+                onChange={(e) => setRecipeName(e.target.value)}
+                placeholder="Chocolate Chip Cookies"
+              />
+              <Input
+                id="recipe-url"
+                label="Source URL"
+                type="url"
+                value={recipeUrl}
+                onChange={(e) => setRecipeUrl(e.target.value)}
+                placeholder="https://recipe-site.com/..."
+              />
+              <Input
+                id="prep-time"
+                label="Prep Time"
+                type="text"
+                inputMode="numeric"
+                value={prepTime}
+                onChange={(e) => setPrepTime(e.target.value)}
+                placeholder="15 minutes"
+              />
+              <Input
+                id="cook-time"
+                label="Cook Time"
+                type="text"
+                inputMode="numeric"
+                value={cookTime}
+                onChange={(e) => setCookTime(e.target.value)}
+                placeholder="30 minutes"
+              />
+              <Input
+                id="total-time"
+                label="Total Time"
+                type="text"
+                inputMode="numeric"
+                value={totalTime}
+                onChange={(e) => setTotalTime(e.target.value)}
+                placeholder="45 minutes"
+              />
+              <Input
+                id="servings"
+                label="Servings"
+                type="text"
+                value={servings}
+                onChange={(e) => setServings(e.target.value)}
+                placeholder="4"
               />
             </div>
-            <div>
-              <label
-                htmlFor="instructions"
-                className="block text-sm font-medium text-primary mb-2"
-              >
-                Instructions (one step per line)
-              </label>
-              <textarea
-                id="instructions"
-                value={instructions}
-                onChange={(e) => setInstructions(e.target.value)}
-                placeholder="Preheat oven to 350°F&#10;Mix dry ingredients&#10;Add wet ingredients"
-                rows={4}
-                className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none "
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="recipe-notes"
-                className="block text-sm font-medium text-primary mb-2"
-              >
-                Notes
-              </label>
-              <textarea
-                id="recipe-notes"
-                value={recipeNotes}
-                onChange={(e) => setRecipeNotes(e.target.value)}
-                placeholder="Personal notes, modifications, etc."
-                rows={2}
-                className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 focus:outline-none "
-              />
-            </div>
+            <Textarea
+              id="ingredients"
+              label="Ingredients (one per line)"
+              value={ingredients}
+              onChange={(e) => setIngredients(e.target.value)}
+              placeholder="2 cups flour&#10;1 cup sugar&#10;2 eggs"
+              rows={4}
+            />
+            <Textarea
+              id="instructions"
+              label="Instructions (one step per line)"
+              value={instructions}
+              onChange={(e) => setInstructions(e.target.value)}
+              placeholder="Preheat oven to 350°F&#10;Mix dry ingredients&#10;Add wet ingredients"
+              rows={4}
+            />
+            <Textarea
+              id="recipe-notes"
+              label="Notes"
+              value={recipeNotes}
+              onChange={(e) => setRecipeNotes(e.target.value)}
+              placeholder="Personal notes, modifications, etc."
+              rows={2}
+            />
           </div>
         )}
 
@@ -1036,18 +823,17 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                     >
                       Repeat every (days)
                     </label>
-                    <input
+                    <Input
                       id="custom-days"
                       type="number"
-                      min="1"
-                      max="365"
+                      min={1}
+                      max={365}
                       value={repeatCustomDays}
                       onChange={(e) =>
                         setRepeatCustomDays(
                           Math.max(1, parseInt(e.target.value) || 1)
                         )
                       }
-                      className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white focus:outline-none "
                     />
                   </div>
                 )}

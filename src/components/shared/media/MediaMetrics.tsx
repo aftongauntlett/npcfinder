@@ -1,3 +1,5 @@
+import MetadataGrid, { type MetadataGridItem } from "./MetadataGrid";
+
 interface MediaMetricsProps {
   criticRatings?: {
     rottenTomatoes?: number;
@@ -9,85 +11,136 @@ interface MediaMetricsProps {
   className?: string;
 }
 
+/**
+ * Parse awards string and extract individual awards as chips
+ * Common patterns: "Won 1 Oscar. 10 wins & 39 nominations total"
+ */
+const parseAwards = (awardsText: string): string[] => {
+  const awards: string[] = [];
+
+  // Extract Oscar wins
+  const oscarMatch = awardsText.match(/Won (\d+) Oscar/i);
+  if (oscarMatch) {
+    const count = parseInt(oscarMatch[1]);
+    awards.push(count === 1 ? "Oscar Winner" : `${count} Oscars`);
+  }
+
+  // Extract nominated for Oscar
+  if (awardsText.match(/Nominated for (\d+) Oscar/i)) {
+    awards.push("Oscar Nominated");
+  }
+
+  // Extract other wins
+  const winsMatch = awardsText.match(/(\d+) wins?/i);
+  if (winsMatch && !oscarMatch) {
+    awards.push(`${winsMatch[1]} Wins`);
+  }
+
+  // Extract nominations
+  const nomsMatch = awardsText.match(/(\d+) nominations?/i);
+  if (nomsMatch) {
+    awards.push(`${nomsMatch[1]} Nominations`);
+  }
+
+  // Extract BAFTA
+  if (awardsText.match(/BAFTA/i)) {
+    awards.push("BAFTA");
+  }
+
+  // Extract Golden Globe
+  if (awardsText.match(/Golden Globe/i)) {
+    awards.push("Golden Globe");
+  }
+
+  return awards;
+};
+
+/**
+ * Get color styling for award chips
+ */
+const getAwardChipStyle = (award: string): string => {
+  if (award.includes("Oscar")) {
+    return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700";
+  }
+  if (award.includes("Golden Globe")) {
+    return "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700";
+  }
+  if (award.includes("BAFTA")) {
+    return "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700";
+  }
+  if (award.includes("Wins")) {
+    return "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-700";
+  }
+  if (award.includes("Nominations")) {
+    return "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700";
+  }
+  return "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700";
+};
+
 export default function MediaMetrics({
   criticRatings,
   awards,
   boxOffice,
   className = "",
 }: MediaMetricsProps) {
-  const hasAnyMetric = criticRatings || awards || boxOffice;
+  const items: MetadataGridItem[] = [];
 
-  if (!hasAnyMetric) return null;
+  // Add critic ratings
+  if (criticRatings?.rottenTomatoes) {
+    items.push({
+      label: "Rotten Tomatoes",
+      value: `${criticRatings.rottenTomatoes}%`,
+    });
+  }
+  if (criticRatings?.metacritic) {
+    items.push({
+      label: "Metacritic",
+      value: criticRatings.metacritic.toString(),
+    });
+  }
+  if (criticRatings?.imdb) {
+    items.push({
+      label: "IMDB",
+      value: `${criticRatings.imdb}/10`,
+    });
+  }
+
+  // Add box office
+  if (boxOffice) {
+    items.push({
+      label: "Box Office",
+      value: boxOffice,
+    });
+  }
+
+  const parsedAwards = awards ? parseAwards(awards) : [];
+  const hasRatings = items.length > 0;
+
+  if (!hasRatings && parsedAwards.length === 0) return null;
 
   return (
-    <div
-      className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-5 ${className}`}
-    >
-      {/* Critic Ratings */}
-      {criticRatings &&
-        (criticRatings.rottenTomatoes ||
-          criticRatings.metacritic ||
-          criticRatings.imdb) && (
-          <div>
-            <h4 className="text-sm font-medium text-primary mb-2.5 mt-0">
-              Critic Ratings
-            </h4>
-            <div className="space-y-2">
-              {criticRatings.rottenTomatoes && (
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    Rotten Tomatoes:
-                  </span>
-                  <span className="text-base font-semibold text-gray-900 dark:text-white">
-                    {criticRatings.rottenTomatoes}%
-                  </span>
-                </div>
-              )}
-              {criticRatings.metacritic && (
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    Metacritic:
-                  </span>
-                  <span className="text-base font-semibold text-gray-900 dark:text-white">
-                    {criticRatings.metacritic}
-                  </span>
-                </div>
-              )}
-              {criticRatings.imdb && (
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    IMDB:
-                  </span>
-                  <span className="text-base font-semibold text-gray-900 dark:text-white">
-                    {criticRatings.imdb}/10
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+    <div className={`space-y-3 ${className}`}>
+      {/* Critic Ratings and Box Office */}
+      {hasRatings && <MetadataGrid items={items} columns={3} />}
 
-      {/* Awards */}
-      {awards && (
+      {/* Awards as Chips */}
+      {parsedAwards.length > 0 && (
         <div>
-          <h4 className="text-sm font-medium text-primary mb-2.5 mt-0">
+          <h4 className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium mb-2">
             Awards
           </h4>
-          <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed m-0">
-            {awards}
-          </p>
-        </div>
-      )}
-
-      {/* Box Office */}
-      {boxOffice && (
-        <div>
-          <h4 className="text-sm font-medium text-primary mb-2.5 mt-0">
-            Box Office
-          </h4>
-          <p className="text-base font-semibold text-gray-900 dark:text-white m-0">
-            {boxOffice}
-          </p>
+          <div className="flex flex-wrap gap-2">
+            {parsedAwards.map((award, index) => (
+              <span
+                key={index}
+                className={`px-2.5 py-1 text-xs rounded-md border font-medium ${getAwardChipStyle(
+                  award
+                )}`}
+              >
+                {award}
+              </span>
+            ))}
+          </div>
         </div>
       )}
     </div>

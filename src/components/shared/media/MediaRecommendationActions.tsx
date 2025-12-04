@@ -119,7 +119,6 @@ function MediaRecommendationActions<T extends BaseRecommendation>({
           },
         ]}
         orientation="horizontal"
-        size="md"
         spacing="tight"
       />
     );
@@ -183,7 +182,6 @@ function MediaRecommendationActions<T extends BaseRecommendation>({
           },
         ]}
         orientation="horizontal"
-        size="md"
         spacing="tight"
       />
     </div>

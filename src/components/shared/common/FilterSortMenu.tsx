@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { SlidersHorizontal } from "lucide-react";
 import FilterSortSection from "./FilterSortSection";
+import Button from "../ui/Button";
 
 export interface FilterSortOption {
   id: string;
@@ -25,6 +26,7 @@ interface FilterSortMenuProps {
 /**
  * Combined filter and sort dropdown menu
  * Modern alternative to chips for scalable filtering/sorting
+ * Uses Dropdown component infrastructure with custom multi-section rendering
  */
 const FilterSortMenu: React.FC<FilterSortMenuProps> = ({
   sections,
@@ -33,41 +35,44 @@ const FilterSortMenu: React.FC<FilterSortMenuProps> = ({
   label = "Filters & Sort",
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
-  // Close on click outside
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        !triggerRef.current?.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
 
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
   }, [isOpen]);
 
-  // Close on Escape key
-  useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setIsOpen(false);
+  // Keyboard navigation
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isOpen) {
+      if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
+        e.preventDefault();
+        setIsOpen(true);
       }
-    };
-
-    if (isOpen) {
-      document.addEventListener("keydown", handleEscape);
+      return;
     }
 
-    return () => {
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [isOpen]);
+    if (e.key === "Escape") {
+      e.preventDefault();
+      setIsOpen(false);
+      triggerRef.current?.focus();
+    }
+  };
 
   const handleOptionClick = (
     section: FilterSortSection,
@@ -104,9 +109,8 @@ const FilterSortMenu: React.FC<FilterSortMenuProps> = ({
 
       onFilterChange(section.id, newValues);
     } else {
-      // Single select: replace the value and close menu
+      // Single select: replace the value
       onFilterChange(section.id, optionId);
-      setIsOpen(false);
     }
   };
 
@@ -119,24 +123,29 @@ const FilterSortMenu: React.FC<FilterSortMenuProps> = ({
   };
 
   return (
-    <div ref={menuRef} className="relative">
-      {/* Trigger Button - Icon + Text */}
-      <button
+    <div className="relative inline-block">
+      {/* Trigger Button */}
+      <Button
+        ref={triggerRef}
+        variant="subtle"
+        size="sm"
+        icon={<SlidersHorizontal className="w-4 h-4" />}
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-          isOpen
-            ? "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
-            : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-        }`}
+        onKeyDown={handleKeyDown}
         aria-label="Filter and sort"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
       >
-        <SlidersHorizontal className="w-4 h-4" />
-        <span>{label}</span>
-      </button>
+        {label}
+      </Button>
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute left-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 max-h-[400px] overflow-y-auto">
+        <div
+          ref={dropdownRef}
+          className="absolute left-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-dropdown max-h-[400px] overflow-y-auto"
+          role="listbox"
+        >
           {sections.map((section, sectionIndex) => (
             <div key={section.id}>
               <FilterSortSection

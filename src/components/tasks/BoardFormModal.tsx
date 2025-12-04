@@ -29,6 +29,8 @@ import {
 } from "lucide-react";
 import Modal from "../shared/ui/Modal";
 import Button from "../shared/ui/Button";
+import Input from "../shared/ui/Input";
+import Textarea from "../shared/ui/Textarea";
 import type { Board, CreateBoardData } from "../../services/tasksService.types";
 import {
   useCreateBoard,
@@ -367,7 +369,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
           >
             Board Name *
           </label>
-          <input
+          <Input
             id="board-name"
             type="text"
             value={name}
@@ -376,37 +378,13 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
             required
             maxLength={100}
             autoComplete="off"
-            className={`block w-full rounded-lg border ${
-              nameError
-                ? "border-red-500 dark:border-red-500"
-                : "border-gray-300 dark:border-gray-600"
-            } bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 px-3 py-2.5 focus:outline-none focus:ring-2 focus:border-transparent transition-colors
-            [&:-webkit-autofill]:!bg-white [&:-webkit-autofill]:dark:!bg-gray-700/50
-            [&:-webkit-autofill]:!text-gray-900 [&:-webkit-autofill]:dark:!text-white
-            [&:-webkit-autofill]:[-webkit-text-fill-color:rgb(17_24_39)] [&:-webkit-autofill]:dark:[-webkit-text-fill-color:rgb(255_255_255)]
-            [&:-webkit-autofill]:[-webkit-box-shadow:0_0_0_1000px_rgb(255_255_255)_inset] [&:-webkit-autofill]:dark:[-webkit-box-shadow:0_0_0_1000px_rgba(55_65_81_0.5)_inset]`}
-            style={
-              {
-                "--tw-ring-color": nameError ? "#ef4444" : themeColor,
-              } as React.CSSProperties
+            error={nameError}
+            helperText={
+              !nameError && isNameAutoFilled
+                ? "This name can be edited to anything you'd like"
+                : undefined
             }
-            onFocus={(e) => {
-              e.currentTarget.style.setProperty(
-                "--tw-ring-color",
-                nameError ? "#ef4444" : themeColor
-              );
-            }}
           />
-          {nameError && (
-            <p className="text-xs text-red-600 dark:text-red-400 mt-1.5">
-              {nameError}
-            </p>
-          )}
-          {!nameError && isNameAutoFilled && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
-              This name can be edited to anything you'd like
-            </p>
-          )}
         </div>
 
         {/* Description */}
@@ -417,22 +395,13 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
           >
             Description
           </label>
-          <textarea
+          <Textarea
             id="board-description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="What's this board for?"
             rows={3}
             maxLength={500}
-            className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 px-3 py-2.5 focus:outline-none focus:ring-2 focus:border-transparent transition-colors"
-            style={
-              {
-                "--tw-ring-color": themeColor,
-              } as React.CSSProperties
-            }
-            onFocus={(e) => {
-              e.currentTarget.style.setProperty("--tw-ring-color", themeColor);
-            }}
           />
         </div>
 
@@ -629,7 +598,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
                   <HexColorPicker color={color} onChange={setColor} />
                   {/* Hex input */}
                   <div className="mt-2">
-                    <input
+                    <Input
                       type="text"
                       value={color}
                       onChange={(e) => {
@@ -639,7 +608,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
                           setColor(value);
                         }
                       }}
-                      className="w-full px-2 py-1 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono"
+                      inputClassName="text-xs font-mono"
                       placeholder="#000000"
                       maxLength={7}
                     />

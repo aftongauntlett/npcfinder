@@ -26,18 +26,14 @@ interface JobTrackerTableProps {
   items: JobApplication[];
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
-  onStatusChange: (id: string, status: string) => void;
   onAdd: () => void;
-  statusOptions: string[];
 }
 
 export const JobTrackerTable: React.FC<JobTrackerTableProps> = ({
   items,
   onEdit,
   onDelete,
-  onStatusChange,
   onAdd,
-  statusOptions,
 }) => {
   const [activeSort, setActiveSort] = useState<string>("date-newest");
 
@@ -98,7 +94,7 @@ export const JobTrackerTable: React.FC<JobTrackerTableProps> = ({
     <div className="space-y-3">
       {/* Toolbar */}
       {sortedItems.length > 0 && (
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-nowrap items-center justify-between gap-3">
           <FilterSortMenu
             sections={filterSortSections}
             activeFilters={{ sort: activeSort }}
@@ -111,8 +107,7 @@ export const JobTrackerTable: React.FC<JobTrackerTableProps> = ({
             size="sm"
             icon={<Plus className="w-4 h-4" />}
           >
-            <span className="hidden sm:inline">Add</span>
-            <span className="sm:hidden">Add Item</span>
+            Add
           </Button>
         </div>
       )}
@@ -121,7 +116,7 @@ export const JobTrackerTable: React.FC<JobTrackerTableProps> = ({
       {sortedItems.length === 0 ? (
         <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center hover:border-gray-400 dark:hover:border-gray-500 transition-colors">
           <p className="text-gray-500 dark:text-gray-400">
-            No job applications yet. Click "Add Item" to get started.
+            No job applications yet. Click "Add" to get started.
           </p>
         </div>
       ) : (
@@ -142,10 +137,8 @@ export const JobTrackerTable: React.FC<JobTrackerTableProps> = ({
               statusHistory={item.status_history}
               jobDescription={item.job_description}
               notes={item.notes}
-              statusOptions={statusOptions}
               onEdit={onEdit}
               onDelete={onDelete}
-              onStatusChange={onStatusChange}
             />
           ))}
         </div>

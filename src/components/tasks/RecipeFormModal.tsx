@@ -7,6 +7,8 @@ import React, { useState, useEffect } from "react";
 import Modal from "../shared/ui/Modal";
 import Button from "../shared/ui/Button";
 import Input from "../shared/ui/Input";
+import Textarea from "../shared/ui/Textarea";
+import Select from "../shared/ui/Select";
 import { useCreateTask, useUpdateTask } from "../../hooks/useTasksQueries";
 import { useUrlMetadata } from "../../hooks/useUrlMetadata";
 import { Link, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
@@ -329,73 +331,35 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
         </div>
 
         {/* Description */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Description
-          </label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Brief description of the recipe..."
-            rows={2}
-            style={
-              {
-                "--tw-ring-color": themeColor,
-              } as React.CSSProperties
-            }
-            className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2"
-          />
-        </div>
+        <Textarea
+          label="Description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Brief description of the recipe..."
+          rows={2}
+        />
 
         {/* Category */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Category
-          </label>
-          <div className="relative">
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              style={
-                {
-                  "--tw-ring-color": themeColor,
-                } as React.CSSProperties
-              }
-              className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white appearance-none cursor-pointer focus:outline-none focus:ring-2 transition-all"
-            >
-              <option value="" className="text-gray-500">
-                Select a category...
-              </option>
-              <option value="Appetizer">Appetizer</option>
-              <option value="Breakfast">Breakfast</option>
-              <option value="Main">Main Course</option>
-              <option value="Side">Side Dish</option>
-              <option value="Dessert">Dessert</option>
-              <option value="Snack">Snack</option>
-              <option value="Beverage">Beverage</option>
-              <option value="Sauce">Sauce/Condiment</option>
-              <option value="Soup">Soup</option>
-              <option value="Salad">Salad</option>
-              <option value="Bread">Bread/Baked Goods</option>
-              <option value="Other">Other</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500 dark:text-gray-400">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </div>
-          </div>
-        </div>
+        <Select
+          label="Category"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          placeholder="Select a category..."
+          options={[
+            { value: "Appetizer", label: "Appetizer" },
+            { value: "Breakfast", label: "Breakfast" },
+            { value: "Main", label: "Main Course" },
+            { value: "Side", label: "Side Dish" },
+            { value: "Dessert", label: "Dessert" },
+            { value: "Snack", label: "Snack" },
+            { value: "Beverage", label: "Beverage" },
+            { value: "Sauce", label: "Sauce/Condiment" },
+            { value: "Soup", label: "Soup" },
+            { value: "Salad", label: "Salad" },
+            { value: "Bread", label: "Bread/Baked Goods" },
+            { value: "Other", label: "Other" },
+          ]}
+        />
 
         {/* Time Fields Row */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -448,67 +412,35 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
         </div>
 
         {/* Ingredients */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Ingredients
-          </label>
-          <textarea
-            value={ingredients}
-            onChange={(e) => setIngredients(e.target.value)}
-            placeholder="Enter each ingredient on a new line..."
-            rows={6}
-            style={
-              {
-                "--tw-ring-color": themeColor,
-              } as React.CSSProperties
-            }
-            className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 font-mono text-sm"
-          />
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            One ingredient per line
-          </p>
-        </div>
+        <Textarea
+          label="Ingredients"
+          value={ingredients}
+          onChange={(e) => setIngredients(e.target.value)}
+          placeholder="Enter each ingredient on a new line..."
+          rows={6}
+          helperText="One ingredient per line"
+          textareaClassName="font-mono text-sm"
+        />
 
         {/* Instructions */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Instructions
-          </label>
-          <textarea
-            value={instructions}
-            onChange={(e) => setInstructions(e.target.value)}
-            placeholder="Enter each step on a new line..."
-            rows={8}
-            style={
-              {
-                "--tw-ring-color": themeColor,
-              } as React.CSSProperties
-            }
-            className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 font-mono text-sm"
-          />
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            One step per line
-          </p>
-        </div>
+        <Textarea
+          label="Instructions"
+          value={instructions}
+          onChange={(e) => setInstructions(e.target.value)}
+          placeholder="Enter each step on a new line..."
+          rows={8}
+          helperText="One step per line"
+          textareaClassName="font-mono text-sm"
+        />
 
         {/* Notes */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Notes
-          </label>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Any additional notes or tips..."
-            rows={3}
-            style={
-              {
-                "--tw-ring-color": themeColor,
-              } as React.CSSProperties
-            }
-            className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2"
-          />
-        </div>
+        <Textarea
+          label="Notes"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Any additional notes or tips..."
+          rows={3}
+        />
 
         {/* Actions */}
         <div className="flex gap-3 pt-4">

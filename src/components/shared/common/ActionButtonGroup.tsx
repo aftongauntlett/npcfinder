@@ -1,4 +1,5 @@
 import React from "react";
+import Button from "../ui/Button";
 
 export interface ActionConfig {
   id: string;
@@ -10,29 +11,51 @@ export interface ActionConfig {
   tooltip?: string;
 }
 
+/**
+ * ActionButtonGroup - Renders a group of icon-only action buttons
+ *
+ * This component standardizes icon-only action buttons (edit, delete, etc.)
+ * across cards, lists, and other UI components. All buttons use size="icon"
+ * from the Button component for consistent icon-only styling.
+ *
+ * Note: This component does not expose a `size` prop because it only renders
+ * icon-only buttons at a fixed size. If you need different button sizes with
+ * text labels, use the Button component directly.
+ */
 interface ActionButtonGroupProps {
   actions: ActionConfig[];
   orientation?: "horizontal" | "vertical";
-  size?: "sm" | "md";
   spacing?: "tight" | "normal" | "loose";
   className?: string;
 }
 
-const variantClasses = {
-  default:
-    "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800",
-  danger:
-    "text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20",
-  success:
-    "text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20",
-  warning:
-    "text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20",
+/**
+ * Maps ActionConfig variants to Button component variants
+ */
+const getButtonVariant = (
+  variant: ActionConfig["variant"]
+): "subtle" | "danger" => {
+  if (variant === "danger") return "danger";
+  return "subtle";
+};
+
+/**
+ * Returns custom className for success/warning variants
+ * that need special color treatment beyond Button component defaults
+ */
+const getCustomClassName = (variant: ActionConfig["variant"]): string => {
+  if (variant === "success") {
+    return "hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20";
+  }
+  if (variant === "warning") {
+    return "hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20";
+  }
+  return "";
 };
 
 export default function ActionButtonGroup({
   actions,
   orientation = "horizontal",
-  size = "md",
   spacing = "normal",
   className = "",
 }: ActionButtonGroupProps) {
@@ -40,11 +63,6 @@ export default function ActionButtonGroup({
     tight: "gap-1",
     normal: "gap-2",
     loose: "gap-3",
-  };
-
-  const sizeClasses = {
-    sm: "p-1.5",
-    md: "p-2",
   };
 
   const containerClass =
@@ -55,23 +73,23 @@ export default function ActionButtonGroup({
       className={`${containerClass} ${spacingClasses[spacing]} ${className}`}
     >
       {actions.map((action) => {
-        const variant = action.variant || "default";
+        const customClass = getCustomClassName(action.variant);
 
         return (
-          <button
+          <Button
             key={action.id}
-            type="button"
             onClick={(e) => {
               e.stopPropagation();
               action.onClick();
             }}
             disabled={action.disabled}
+            variant={getButtonVariant(action.variant)}
+            size="icon"
+            icon={action.icon}
             title={action.tooltip || action.label}
             aria-label={action.label}
-            className={`${sizeClasses[size]} rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${variantClasses[variant]}`}
-          >
-            {action.icon}
-          </button>
+            className={customClass}
+          />
         );
       })}
     </div>

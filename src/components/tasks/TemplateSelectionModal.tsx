@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+import React from "react";
+import Modal from "../shared/ui/Modal";
 import type { TemplateType } from "../../utils/boardTemplates";
 
 interface TemplateSelectionModalProps {
@@ -12,27 +13,6 @@ const TemplateSelectionModal: React.FC<TemplateSelectionModalProps> = ({
   onClose,
   onSelectTemplate,
 }) => {
-  // Handle ESC key and body scroll
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener("keydown", handleEscape);
-      document.body.style.overflow = "hidden";
-    }
-
-    return () => {
-      document.removeEventListener("keydown", handleEscape);
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
-
   const templates = [
     {
       id: "markdown",
@@ -57,40 +37,34 @@ const TemplateSelectionModal: React.FC<TemplateSelectionModalProps> = ({
   ];
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
-      onClick={onClose}
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Choose a Board Template"
+      maxWidth="2xl"
     >
-      <div
-        className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full p-6 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 className="text-2xl font-bold text-primary mb-6 font-heading">
-          Choose a Board Template
-        </h2>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          Select from four predefined templates: Kanban, To-Do List, Job
-          Applications, or Recipes
-        </p>
+      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        Select from four predefined templates: Kanban, To-Do List, Job
+        Applications, or Recipes
+      </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {templates.map((template) => (
-            <button
-              key={template.id}
-              onClick={() => onSelectTemplate(template.id as TemplateType)}
-              className="p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary text-left transition-all duration-200 group flex flex-col items-start"
-            >
-              <div className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-primary mb-2 transition-colors">
-                {template.name}
-              </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400 flex-grow">
-                {template.desc}
-              </div>
-            </button>
-          ))}
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {templates.map((template) => (
+          <button
+            key={template.id}
+            onClick={() => onSelectTemplate(template.id as TemplateType)}
+            className="p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary text-left transition-all duration-200 group flex flex-col items-start"
+          >
+            <div className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-primary mb-2 transition-colors">
+              {template.name}
+            </div>
+            <div className="text-sm text-gray-600 dark:text-gray-400 flex-grow">
+              {template.desc}
+            </div>
+          </button>
+        ))}
       </div>
-    </div>
+    </Modal>
   );
 };
 

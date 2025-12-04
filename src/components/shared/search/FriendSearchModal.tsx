@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { X, Search, UserPlus, Users, Check } from "lucide-react";
+import { UserPlus, Users, Check } from "lucide-react";
 import {
   useUserSearch,
   useCreateConnection,
 } from "../../../hooks/useUserSearch";
 import Button from "../ui/Button";
+import Input from "../ui/Input";
+import Modal from "../ui/Modal";
 
 interface FriendSearchModalProps {
   isOpen: boolean;
@@ -42,54 +44,12 @@ export function FriendSearchModal({ isOpen, onClose }: FriendSearchModalProps) {
   );
   const createConnection = useCreateConnection();
 
-  // Focus trap and ESC key handler
+  // Focus search input when modal opens
   useEffect(() => {
-    if (!isOpen) return;
-
-    // Focus search input when modal opens
-    searchInputRef.current?.focus();
-
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
-    };
-
-    const handleTabKey = (e: KeyboardEvent) => {
-      if (e.key !== "Tab") return;
-
-      const focusableElements = modalRef.current?.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
-
-      if (!focusableElements || focusableElements.length === 0) return;
-
-      const firstElement = focusableElements[0] as HTMLElement;
-      const lastElement = focusableElements[
-        focusableElements.length - 1
-      ] as HTMLElement;
-
-      if (e.shiftKey && document.activeElement === firstElement) {
-        e.preventDefault();
-        lastElement.focus();
-      } else if (!e.shiftKey && document.activeElement === lastElement) {
-        e.preventDefault();
-        firstElement.focus();
-      }
-    };
-
-    document.addEventListener("keydown", handleEscape);
-    document.addEventListener("keydown", handleTabKey);
-
-    // Prevent body scroll
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.removeEventListener("keydown", handleEscape);
-      document.removeEventListener("keydown", handleTabKey);
-      document.body.style.overflow = "";
-    };
-  }, [isOpen, onClose]);
+    if (isOpen) {
+      searchInputRef.current?.focus();
+    }
+  }, [isOpen]);
 
   const handleConnect = async (userId: string) => {
     try {
@@ -99,65 +59,38 @@ export function FriendSearchModal({ isOpen, onClose }: FriendSearchModalProps) {
     }
   };
 
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
-  if (!isOpen) return null;
-
   const users = data?.users || [];
   const totalPages = Math.ceil((data?.totalCount || 0) / pageSize);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={handleBackdropClick}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="friend-search-title"
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Find Friends"
+      maxWidth="2xl"
     >
-      <div
-        ref={modalRef}
-        className="relative w-full max-w-2xl max-h-[90vh] bg-white dark:bg-gray-800 rounded-lg shadow-xl flex flex-col"
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-pink-500/10 rounded-lg">
-              <Users className="w-5 h-5 text-pink-500" />
-            </div>
-            <h2
-              id="friend-search-title"
-              className="text-xl font-semibold text-gray-900 dark:text-white"
-            >
-              Find Friends
-            </h2>
+      <div ref={modalRef} className="flex flex-col max-h-[70vh]">
+        {/* Icon decoration */}
+        <div className="flex items-center gap-3 pb-4">
+          <div className="p-2 bg-pink-500/10 rounded-lg">
+            <Users className="w-5 h-5 text-pink-500" />
           </div>
-          <Button
-            onClick={onClose}
-            variant="subtle"
-            size="icon"
-            icon={<X className="w-5 h-5" />}
-            aria-label="Close modal"
-          />
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Search and connect with other users
+          </p>
         </div>
 
         {/* Search Input */}
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              ref={searchInputRef}
-              type="text"
-              placeholder="Search by username..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-              aria-label="Search for users"
-            />
-          </div>
+        <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
+          \n{" "}
+          <Input
+            ref={searchInputRef}
+            type="text"
+            placeholder="Search by username..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            aria-label="Search for users"
+          />
         </div>
 
         {/* User List */}
@@ -256,7 +189,7 @@ export function FriendSearchModal({ isOpen, onClose }: FriendSearchModalProps) {
           </div>
         )}
       </div>
-    </div>
+    </Modal>
   );
 }
 
