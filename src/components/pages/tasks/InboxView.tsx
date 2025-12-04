@@ -5,11 +5,13 @@
  */
 
 import React, { useState, useMemo, useRef } from "react";
-import { ListChecks, Plus } from "lucide-react";
+import { ListChecks, Plus, Clock, Bell } from "lucide-react";
 import TaskCard from "../../tasks/TaskCard";
+import TimerWidget from "../../tasks/TimerWidget";
 import CreateTaskModal from "../../tasks/CreateTaskModal";
 import TaskDetailModal from "../../tasks/TaskDetailModal";
 import Button from "../../shared/ui/Button";
+import Chip from "../../shared/ui/Chip";
 import MediaEmptyState from "../../media/MediaEmptyState";
 import ConfirmationModal from "../../shared/ui/ConfirmationModal";
 import { Pagination } from "../../shared/common/Pagination";
@@ -21,9 +23,15 @@ import {
   useTasks,
   useUpdateTask,
   useDeleteTask,
+  useActiveTimers,
+  useUpcomingReminders,
 } from "../../../hooks/useTasksQueries";
 import type { Task } from "../../../services/tasksService.types";
 import { getNextDueDate } from "../../../utils/repeatableTaskHelpers";
+import {
+  formatReminderDate,
+  getReminderBadgeColor,
+} from "../../../utils/reminderHelpers";
 
 const InboxView: React.FC = () => {
   const { data: tasks = [], isLoading } = useTasks(
@@ -32,6 +40,8 @@ const InboxView: React.FC = () => {
       unassigned: true,
     }
   );
+  const { data: activeTimers = [] } = useActiveTimers();
+  const { data: upcomingReminders = [] } = useUpcomingReminders(7);
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -263,6 +273,77 @@ const InboxView: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 sm:px-6">
+      {/* Active Timers */}
+      {activeTimers.length > 0 && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              Active Timers ({activeTimers.length})
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {activeTimers.map((task) => (
+              <div
+                key={task.id}
+                className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800 hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => setSelectedTask(task)}
+              >
+                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3 truncate">
+                  {task.title}
+                </h3>
+                <TimerWidget task={task} compact={false} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Upcoming Reminders */}
+      {upcomingReminders.length > 0 && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <Bell className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              Upcoming Reminders ({upcomingReminders.length})
+            </h2>
+          </div>
+          <div className="space-y-2">
+            {upcomingReminders.map((task) => {
+              const badgeColors = getReminderBadgeColor(
+                task.reminder_date || ""
+              );
+              return (
+                <div
+                  key={task.id}
+                  className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+                  onClick={() => setSelectedTask(task)}
+                >
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                      {task.title}
+                    </h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {formatReminderDate(
+                        task.reminder_date || "",
+                        task.reminder_time
+                      )}
+                    </p>
+                  </div>
+                  <Chip
+                    variant="default"
+                    size="sm"
+                    className={`${badgeColors.bg} ${badgeColors.text} shrink-0`}
+                  >
+                    {task.reminder_sent_at ? "Sent" : "Pending"}
+                  </Chip>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div ref={listTopRef} className="flex items-center justify-between mb-4">
         {/* Sort Menu */}

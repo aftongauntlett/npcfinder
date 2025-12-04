@@ -48,6 +48,13 @@ const TEMPLATE_META = {
     emptyDescription:
       "Create a markdown-style to-do list with support for formatting and bullets.",
   },
+  grocery: {
+    icon: Plus,
+    title: "Grocery Lists",
+    emptyTitle: "No grocery lists yet",
+    emptyDescription:
+      "Create a grocery list to organize items by category and share with family.",
+  },
   job_tracker: {
     icon: Briefcase,
     title: "Job Applications",
@@ -91,9 +98,11 @@ const TemplateView: React.FC<TemplateViewProps> = ({
     TEMPLATE_META[templateType as keyof typeof TEMPLATE_META] ||
     TEMPLATE_META.kanban;
 
-  // Only kanban and markdown templates allow multiple boards
+  // Only kanban, markdown, and grocery templates allow multiple boards
   const allowsMultipleBoards =
-    templateType === "kanban" || templateType === "markdown";
+    templateType === "kanban" ||
+    templateType === "markdown" ||
+    templateType === "grocery";
 
   const handleDeleteBoard = () => {
     if (deletingBoard) {
@@ -225,23 +234,15 @@ const TemplateView: React.FC<TemplateViewProps> = ({
           icon={meta.icon}
           title={meta.emptyTitle}
           description={meta.emptyDescription}
-          onClick={
-            allowsMultipleBoards ? () => setShowCreateModal(true) : undefined
-          }
-          ariaLabel={
-            allowsMultipleBoards
-              ? `Create your first ${templateType} board`
-              : undefined
-          }
+          onClick={() => setShowCreateModal(true)}
+          ariaLabel={`Create your first ${templateType} board`}
         />
 
-        {allowsMultipleBoards && (
-          <BoardFormModal
-            isOpen={showCreateModal}
-            onClose={() => setShowCreateModal(false)}
-            preselectedTemplate={templateType}
-          />
-        )}
+        <BoardFormModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          preselectedTemplate={templateType}
+        />
       </div>
     );
   }
@@ -282,7 +283,11 @@ const TemplateView: React.FC<TemplateViewProps> = ({
         <RecipeListView
           boardId={board.id}
           onCreateTask={() => onCreateTask?.(board.id)}
-          onViewRecipe={(task) => onEditTask?.(task.id)}
+          onViewRecipe={(task) => {
+            if (onEditTask) {
+              onEditTask(task.id);
+            }
+          }}
           onDeleteTask={(taskId) => setDeletingTask(taskId)}
         />
 

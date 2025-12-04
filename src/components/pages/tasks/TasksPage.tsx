@@ -1,30 +1,38 @@
 /**
  * Tasks Page
  *
- * Features:
- * - Tasks: Unassigned tasks (no board)
+ * Tabbed view with:
+ * - Tasks: Unassigned tasks (inbox)
  * - Kanban: Kanban template boards
- * - Job Applications: Job tracker template boards
+ * - To-Do Lists: Markdown template boards
+ * - Grocery: Grocery template boards
  * - Recipes: Recipe template boards
+ * - Job Applications: Job tracker template boards
  */
 
 import React, { useState, useMemo } from "react";
 import {
   ListChecks,
   LayoutGrid,
-  Briefcase,
+  ShoppingCart,
   ChefHat,
-  ListTodo,
+  Briefcase,
 } from "lucide-react";
 import AppLayout from "../../layouts/AppLayout";
 import InboxView from "./InboxView";
 import TemplateView from "./TemplateView";
+import GroceryListView from "../../tasks/views/GroceryListView";
 import CreateTaskModal from "../../tasks/CreateTaskModal";
 import RecipeFormModal from "../../tasks/RecipeFormModal";
 import TaskDetailModal from "../../tasks/TaskDetailModal";
-import { useBoards, useTasks } from "../../../hooks/useTasksQueries";
+import {
+  useBoards,
+  useTasks,
+  useSharedBoards,
+} from "../../../hooks/useTasksQueries";
+import type { BoardWithStats } from "../../../services/tasksService.types";
 
-type ViewType = "tasks" | "todo" | "kanban" | "job_applications" | "recipes";
+type ViewType = "tasks" | "kanban" | "grocery" | "recipes" | "job_applications";
 
 const TasksPage: React.FC = () => {
   const [selectedView, setSelectedView] = useState<ViewType>("tasks");
@@ -37,25 +45,53 @@ const TasksPage: React.FC = () => {
   >();
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
 
-  const { data: boards = [] } = useBoards();
-  const { data: tasks = [] } = useTasks();
+  const { data: boards = [] } = useBoards() as { data: BoardWithStats[] };
+  const { data: sharedBoards = [] } = useSharedBoards() as {
+    data: BoardWithStats[];
+  };
+  const { data: tasks = [] } = useTasks(undefined, { unassigned: true });
 
   // Filter boards by template type
-  const todoBoards = useMemo(
-    () => boards.filter((b) => b.template_type === "markdown"),
-    [boards]
-  );
   const kanbanBoards = useMemo(
     () => boards.filter((b) => b.template_type === "kanban"),
+    [boards]
+  );
+
+  const groceryBoards = useMemo(
+    () => boards.filter((b) => b.template_type === "grocery"),
+    [boards]
+  );
+
+  const sharedGroceryBoards = useMemo(
+    () => sharedBoards.filter((b) => b.template_type === "grocery"),
+    [sharedBoards]
+  );
+
+  const recipeBoards = useMemo(
+    () => boards.filter((b) => b.template_type === "recipe"),
     [boards]
   );
   const jobBoards = useMemo(
     () => boards.filter((b) => b.template_type === "job_tracker"),
     [boards]
   );
-  const recipeBoards = useMemo(
-    () => boards.filter((b) => b.template_type === "recipe"),
-    [boards]
+
+  // Calculate task counts for each template type
+  const groceryTaskCount = useMemo(
+    () =>
+      groceryBoards.reduce((sum, board) => sum + (board.total_tasks || 0), 0),
+    [groceryBoards]
+  );
+
+  const recipeTaskCount = useMemo(
+    () =>
+      recipeBoards.reduce((sum, board) => sum + (board.total_tasks || 0), 0),
+    [recipeBoards]
+  );
+
+  const jobTaskCount = useMemo(
+    () => jobBoards.reduce((sum, board) => sum + (board.total_tasks || 0), 0),
+    [jobBoards]
   );
 
   // Find task being edited
@@ -75,32 +111,27 @@ const TasksPage: React.FC = () => {
     switch (selectedView) {
       case "tasks":
         return "Tasks";
-      case "todo":
-        return "To-Do Lists";
       case "kanban":
         return "Kanban";
-      case "job_applications":
-        return "Job Applications";
+      case "grocery":
+        return "Grocery";
       case "recipes":
         return "Recipes";
+      case "job_applications":
+        return "Job Applications";
       default:
         return "Tasks";
     }
   }, [selectedView]);
 
-  // Build tabs array with template-specific views
+  // Build tabs array
   const tabs = useMemo(() => {
     return [
       {
         id: "tasks",
         label: "Tasks",
         icon: ListChecks,
-      },
-      {
-        id: "todo",
-        label: "To-Do Lists",
-        icon: ListTodo,
-        badge: todoBoards.length > 0 ? todoBoards.length : undefined,
+        badge: tasks.length > 0 ? tasks.length : undefined,
       },
       {
         id: "kanban",
@@ -109,23 +140,30 @@ const TasksPage: React.FC = () => {
         badge: kanbanBoards.length > 0 ? kanbanBoards.length : undefined,
       },
       {
-        id: "job_applications",
-        label: "Job Applications",
-        icon: Briefcase,
-        badge: jobBoards.length > 0 ? jobBoards.length : undefined,
+        id: "grocery",
+        label: "Grocery",
+        icon: ShoppingCart,
+        badge: groceryTaskCount > 0 ? groceryTaskCount : undefined,
       },
       {
         id: "recipes",
         label: "Recipes",
         icon: ChefHat,
-        badge: recipeBoards.length > 0 ? recipeBoards.length : undefined,
+        badge: recipeTaskCount > 0 ? recipeTaskCount : undefined,
+      },
+      {
+        id: "job_applications",
+        label: "Job Applications",
+        icon: Briefcase,
+        badge: jobTaskCount > 0 ? jobTaskCount : undefined,
       },
     ];
   }, [
-    todoBoards.length,
+    tasks.length,
     kanbanBoards.length,
-    jobBoards.length,
-    recipeBoards.length,
+    groceryTaskCount,
+    recipeTaskCount,
+    jobTaskCount,
   ]);
 
   // Handle create task from board
@@ -148,7 +186,7 @@ const TasksPage: React.FC = () => {
   return (
     <AppLayout
       title={pageTitle}
-      description="Quick access to one-off tasks and to-dos. Use boards for organized projects and workflows."
+      description="Quick access to tasks and organized boards for different workflows."
       tabs={tabs}
       activeTab={selectedView}
       onTabChange={handleTabChange}
@@ -156,14 +194,6 @@ const TasksPage: React.FC = () => {
       {/* Content */}
       <div role="tabpanel" id={`${selectedView}-panel`}>
         {selectedView === "tasks" && <InboxView />}
-        {selectedView === "todo" && (
-          <TemplateView
-            templateType="markdown"
-            boards={todoBoards}
-            onCreateTask={handleCreateTask}
-            onEditTask={handleEditTask}
-          />
-        )}
         {selectedView === "kanban" && (
           <TemplateView
             templateType="kanban"
@@ -172,18 +202,65 @@ const TasksPage: React.FC = () => {
             onEditTask={handleEditTask}
           />
         )}
-        {selectedView === "job_applications" && (
-          <TemplateView
-            templateType="job_tracker"
-            boards={jobBoards}
-            onCreateTask={handleCreateTask}
-            onEditTask={handleEditTask}
-          />
+        {selectedView === "grocery" && (
+          <>
+            {groceryBoards.length === 0 && sharedGroceryBoards.length === 0 ? (
+              <TemplateView
+                templateType="grocery"
+                boards={groceryBoards}
+                onCreateTask={handleCreateTask}
+                onEditTask={handleEditTask}
+              />
+            ) : (
+              <div className="container mx-auto px-4 sm:px-6">
+                <div className="space-y-8">
+                  {/* Owned Boards */}
+                  {groceryBoards.length > 0 && (
+                    <div className="space-y-6">
+                      {groceryBoards.map((board) => (
+                        <GroceryListView
+                          key={board.id}
+                          board={board}
+                          onEditTask={handleEditTask}
+                          isReadOnly={false}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Shared Boards */}
+                  {sharedGroceryBoards.length > 0 && (
+                    <div className="space-y-6">
+                      <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                        Shared with Me
+                      </h2>
+                      {sharedGroceryBoards.map((board) => (
+                        <GroceryListView
+                          key={board.id}
+                          board={board}
+                          onEditTask={handleEditTask}
+                          isReadOnly={true}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
         )}
         {selectedView === "recipes" && (
           <TemplateView
             templateType="recipe"
             boards={recipeBoards}
+            onCreateTask={handleCreateTask}
+            onEditTask={handleEditTask}
+          />
+        )}
+        {selectedView === "job_applications" && (
+          <TemplateView
+            templateType="job_tracker"
+            boards={jobBoards}
             onCreateTask={handleCreateTask}
             onEditTask={handleEditTask}
           />
