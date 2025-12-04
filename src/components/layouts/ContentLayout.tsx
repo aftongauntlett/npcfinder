@@ -88,7 +88,7 @@ const ContentLayout: React.FC<ContentLayoutProps> = ({
           {/* Tabs */}
           {tabs && tabs.length > 0 && (
             <nav
-              className="flex gap-4 border-b border-gray-200 dark:border-gray-700 -mb-px"
+              className="flex gap-0 border-b border-gray-200 dark:border-gray-700 -mb-px"
               role="tablist"
               aria-label={`${title} sections`}
             >

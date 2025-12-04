@@ -232,7 +232,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
 
                 {/* Desktop Tabs */}
                 <nav
-                  className="hidden sm:flex gap-4 border-b border-gray-200 dark:border-gray-700 -mb-px overflow-x-auto"
+                  className="hidden sm:flex gap-0 border-b border-gray-200 dark:border-gray-700 -mb-px overflow-x-auto"
                   role="tablist"
                   aria-label={`${title} sections`}
                 >
