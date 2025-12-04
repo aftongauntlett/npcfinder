@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, Bell, AlertCircle } from "lucide-react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "../../styles/datepicker.css";
@@ -15,6 +15,7 @@ import Input from "../shared/ui/Input";
 import Textarea from "../shared/ui/Textarea";
 import Select from "../shared/ui/Select";
 import ConfirmationModal from "../shared/ui/ConfirmationModal";
+import TimerWidget from "./TimerWidget";
 import type { Task } from "../../services/tasksService.types";
 import type { StatusHistoryEntry } from "../../services/tasksService.types";
 import { getTemplate } from "../../utils/boardTemplates";
@@ -24,6 +25,7 @@ import {
   useDeleteTask,
 } from "../../hooks/useTasksQueries";
 import { PRIORITY_OPTIONS, STATUS_OPTIONS } from "../../utils/taskConstants";
+import { shouldShowUrgentAlert } from "../../utils/timerHelpers";
 
 interface TaskDetailModalProps {
   isOpen: boolean;
@@ -665,6 +667,43 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   calendarClassName="bg-white dark:bg-gray-800 border-2 border-gray-400 dark:border-gray-500 rounded-lg shadow-xl"
                   wrapperClassName="flex-1"
                 />
+              </div>
+            </div>
+          )}
+
+          {/* Timer Section */}
+          {task.timer_duration_minutes && (
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              {shouldShowUrgentAlert(task) && (
+                <div className="mb-3 flex items-center gap-2 px-3 py-2 rounded bg-red-100 dark:bg-red-900/20">
+                  <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                  <p className="text-sm font-medium text-red-700 dark:text-red-300">
+                    Timer completed - marked as urgent
+                  </p>
+                </div>
+              )}
+              <TimerWidget task={task} />
+            </div>
+          )}
+
+          {/* Reminder Section */}
+          {task.reminder_date && (
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <Bell className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                    Reminder
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {new Date(task.reminder_date).toLocaleString()}
+                  </p>
+                  {task.reminder_sent_at && (
+                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                      Sent: {new Date(task.reminder_sent_at).toLocaleString()}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           )}
