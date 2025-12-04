@@ -1,7 +1,7 @@
 /**
  * React Query hooks for the new simplified media_reviews system
  * Separate from the old reviews system - this uses the media_reviews table
- * with 1-10 ratings, edit tracking, and simpler structure
+ * with 1-5 ratings, edit tracking, and simpler structure
  */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";

@@ -163,7 +163,7 @@ export function MovieReviewForm({
                         {review.rating && (
                           <span className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
                             <Star className="w-3 h-3 text-yellow-500" />
-                            {review.rating}/10
+                            {review.rating}/5
                           </span>
                         )}
                       </div>

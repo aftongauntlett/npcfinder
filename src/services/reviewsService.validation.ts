@@ -14,7 +14,7 @@ export const CreateReviewSchema = z.object({
   external_id: z.string().min(1, "External ID is required"),
   media_type: MediaTypeEnum,
   title: z.string().min(1, "Title is required").max(500, "Title too long"),
-  rating: z.number().min(1).max(10).nullable().optional(),
+  rating: z.number().min(1).max(5).nullable().optional(),
   liked: z.boolean().nullable().optional(),
   review_text: z
     .string()
@@ -27,7 +27,7 @@ export const CreateReviewSchema = z.object({
 
 // Update Review Schema (all fields optional except what's being updated)
 export const UpdateReviewSchema = z.object({
-  rating: z.number().min(1).max(10).nullable().optional(),
+  rating: z.number().min(1).max(5).nullable().optional(),
   liked: z.boolean().nullable().optional(),
   review_text: z
     .string()
