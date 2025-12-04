@@ -124,6 +124,12 @@ const Modal: React.FC<ModalProps> = ({
                       {title}
                     </h2>
                   )}
+                  {/* Close Button - Standard Pattern
+                   * - Uses Button component with variant="subtle" size="icon"
+                   * - Icon: X from lucide-react with w-5 h-5
+                   * - Always includes aria-label for accessibility
+                   * - This pattern should be used for all modal close buttons
+                   */}
                   {showCloseButton && (
                     <Button
                       onClick={onClose}
