@@ -48,7 +48,15 @@ export interface UpdateMediaReviewData {
 // Simple validation schemas for this service's specific needs
 const MediaQuerySchema = z.object({
   externalId: z.string().min(1, "External ID is required"),
-  mediaType: z.enum(["movie", "tv", "song", "album", "book"]),
+  mediaType: z.enum([
+    "movie",
+    "tv",
+    "song",
+    "album",
+    "playlist",
+    "game",
+    "book",
+  ]),
 });
 
 /**

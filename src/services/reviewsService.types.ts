@@ -7,7 +7,7 @@ export interface MediaReview {
   id: string;
   user_id: string;
   external_id: string;
-  media_type: "movie" | "tv" | "song" | "album" | "book" | "game";
+  media_type: "movie" | "tv" | "song" | "album" | "playlist" | "game" | "book";
   title: string;
   rating: number | null; // 1-5
   liked: boolean | null; // true = thumbs up, false = thumbs down, null = neutral
@@ -25,7 +25,7 @@ export interface MediaReviewWithUser extends MediaReview {
 export interface CreateReviewData {
   user_id: string;
   external_id: string;
-  media_type: "movie" | "tv" | "song" | "album" | "book" | "game";
+  media_type: "movie" | "tv" | "song" | "album" | "playlist" | "game" | "book";
   title: string;
   rating?: number | null;
   liked?: boolean | null;
@@ -55,5 +55,7 @@ export function isValidRating(rating: number): boolean {
 export function isValidMediaType(
   type: string
 ): type is MediaReview["media_type"] {
-  return ["movie", "tv", "song", "album", "book", "game"].includes(type);
+  return ["movie", "tv", "song", "album", "playlist", "game", "book"].includes(
+    type
+  );
 }

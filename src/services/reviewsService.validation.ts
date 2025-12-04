@@ -6,7 +6,15 @@
 import { z } from "zod";
 
 // Valid media types in our system
-const MediaTypeEnum = z.enum(["movie", "tv", "song", "album", "book"]);
+const MediaTypeEnum = z.enum([
+  "movie",
+  "tv",
+  "song",
+  "album",
+  "playlist",
+  "game",
+  "book",
+]);
 
 // Create Review Schema
 export const CreateReviewSchema = z.object({
