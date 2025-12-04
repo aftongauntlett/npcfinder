@@ -46,6 +46,9 @@ export { default as MediaOverviewSection } from "./media/MediaOverviewSection";
 export { default as MediaUserNotes } from "./media/MediaUserNotes";
 export { default as MediaUserRating } from "./media/MediaUserRating";
 
+// Common Components - General purpose components
+export { Pagination } from "./common/Pagination";
+
 // Search Components - Search modal components
 export { default as SearchMovieModal } from "./search/SearchMovieModal";
 export { default as SearchBookModal } from "./search/SearchBookModal";

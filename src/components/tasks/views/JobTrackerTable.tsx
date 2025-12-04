@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { JobCard } from "../../shared/cards";
 import FilterSortMenu from "../../shared/common/FilterSortMenu";
 import type { FilterSortSection } from "../../shared/common/FilterSortMenu";
 import Button from "../../shared/ui/Button";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import type { StatusHistoryEntry } from "../../../services/tasksService.types";
 
 interface JobApplication {
@@ -36,8 +36,29 @@ export const JobTrackerTable: React.FC<JobTrackerTableProps> = ({
   onAdd,
 }) => {
   const [activeSort, setActiveSort] = useState<string>("date-newest");
+  const [statusFilters, setStatusFilters] = useState<string[]>(["all"]);
 
-  const sortedItems = [...items].sort((a, b) => {
+  // Extract unique statuses
+  const availableStatuses = useMemo(() => {
+    const statusSet = new Set<string>();
+    items.forEach((item) => {
+      if (item.status) {
+        statusSet.add(item.status);
+      }
+    });
+    return Array.from(statusSet).sort();
+  }, [items]);
+
+  // Filter items by status
+  const filteredItems = useMemo(() => {
+    if (statusFilters.includes("all") || statusFilters.length === 0) {
+      return items;
+    }
+    return items.filter((item) => statusFilters.includes(item.status));
+  }, [items, statusFilters]);
+
+  // Sort filtered items
+  const sortedItems = [...filteredItems].sort((a, b) => {
     switch (activeSort) {
       case "date-newest":
         return (
@@ -68,6 +89,18 @@ export const JobTrackerTable: React.FC<JobTrackerTableProps> = ({
 
   const filterSortSections: FilterSortSection[] = [
     {
+      id: "status",
+      title: "STATUS",
+      options: [
+        { id: "all", label: "All Statuses" },
+        ...availableStatuses.map((status) => ({
+          id: status,
+          label: status,
+        })),
+      ],
+      multiSelect: true,
+    },
+    {
       id: "sort",
       title: "SORT BY",
       options: [
@@ -84,9 +117,12 @@ export const JobTrackerTable: React.FC<JobTrackerTableProps> = ({
     },
   ];
 
-  const handleFilterChange = (_sectionId: string, value: string | string[]) => {
-    if (typeof value === "string") {
-      setActiveSort(value);
+  const handleFilterChange = (sectionId: string, value: string | string[]) => {
+    if (sectionId === "status") {
+      const statuses = Array.isArray(value) ? value : [value];
+      setStatusFilters(statuses);
+    } else if (sectionId === "sort") {
+      setActiveSort(value as string);
     }
   };
 
@@ -95,12 +131,30 @@ export const JobTrackerTable: React.FC<JobTrackerTableProps> = ({
       {/* Toolbar */}
       {sortedItems.length > 0 && (
         <div className="flex flex-nowrap items-center justify-between gap-3">
-          <FilterSortMenu
-            sections={filterSortSections}
-            activeFilters={{ sort: activeSort }}
-            onFilterChange={handleFilterChange}
-            label="Sort"
-          />
+          <div className="flex items-center gap-2">
+            <FilterSortMenu
+              sections={filterSortSections}
+              activeFilters={{
+                status: statusFilters,
+                sort: activeSort,
+              }}
+              onFilterChange={handleFilterChange}
+              label="Sort & Filter"
+            />
+
+            {/* Reset Filters Button */}
+            {!statusFilters.includes("all") && statusFilters.length > 0 && (
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<X className="w-4 h-4" />}
+                onClick={() => setStatusFilters(["all"])}
+              >
+                Reset Filters
+              </Button>
+            )}
+          </div>
+
           <Button
             onClick={onAdd}
             variant="action"

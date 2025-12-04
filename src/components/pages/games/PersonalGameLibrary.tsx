@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo } from "react";
-import { Gamepad2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Gamepad2 } from "lucide-react";
 import Button from "../../shared/ui/Button";
-import Chip from "../../shared/ui/Chip";
+import { Pagination } from "../../shared/common/Pagination";
 import MediaEmptyState from "../../media/MediaEmptyState";
 import MediaListItem from "../../media/MediaListItem";
 import { FilterSortSection } from "../../shared/common/FilterSortMenu";
@@ -188,8 +188,11 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
   const {
     items: paginatedItems,
     totalPages,
+    totalItems,
     currentPage,
     setCurrentPage,
+    itemsPerPage,
+    setItemsPerPage,
   } = useMediaFiltering({
     items: gameLibrary,
     filterFn,
@@ -332,32 +335,14 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
                   setActiveSort(value as SortType);
                 }
               },
+              onResetFilters: () => {
+                setGenreFilters(["all"]);
+              },
+              hasActiveFilters:
+                !genreFilters.includes("all") && genreFilters.length > 0,
             }}
             onAddClick={() => setShowSearchModal(true)}
           />
-
-          {/* Active Filter Chips */}
-          {!genreFilters.includes("all") && genreFilters.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {genreFilters.map((genre) => (
-                <Chip
-                  key={genre}
-                  variant="primary"
-                  size="sm"
-                  rounded="full"
-                  removable
-                  onRemove={() => {
-                    const newFilters = genreFilters.filter((g) => g !== genre);
-                    setGenreFilters(
-                      newFilters.length > 0 ? newFilters : ["all"]
-                    );
-                  }}
-                >
-                  {genre.charAt(0).toUpperCase() + genre.slice(1)}
-                </Chip>
-              ))}
-            </div>
-          )}
         </div>
       )}
 
@@ -423,31 +408,14 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
       )}
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-6">
-          <Button
-            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-            disabled={currentPage === 1}
-            variant="subtle"
-            size="sm"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <span className="text-sm text-gray-600 dark:text-gray-400">
-            Page {currentPage} of {totalPages}
-          </span>
-          <Button
-            onClick={() =>
-              setCurrentPage(Math.min(totalPages, currentPage + 1))
-            }
-            disabled={currentPage === totalPages}
-            variant="subtle"
-            size="sm"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-        </div>
-      )}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        itemsPerPage={itemsPerPage}
+        onPageChange={setCurrentPage}
+        onItemsPerPageChange={setItemsPerPage}
+      />
 
       {/* Search Modal */}
       {showSearchModal && (

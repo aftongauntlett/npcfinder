@@ -1,12 +1,6 @@
 import React, { useState, useRef, useMemo } from "react";
-import {
-  Check,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Music,
-} from "lucide-react";
-import Chip from "../../shared/ui/Chip";
+import { Music } from "lucide-react";
+import { Pagination } from "../../shared/common/Pagination";
 import { FilterSortSection } from "../../shared/common/FilterSortMenu";
 import { MediaItem } from "../../shared/media/SendMediaModal";
 import SearchMusicModal from "../../shared/search/SearchMusicModal";
@@ -56,8 +50,7 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
   const [musicToRecommend, setMusicToRecommend] =
     useState<MusicLibraryItem | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(25);
-  const [showItemsPerPageMenu, setShowItemsPerPageMenu] = useState(false);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const topRef = useRef<HTMLDivElement>(null);
 
   // Delete confirmation state
@@ -233,7 +226,6 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
   const handleItemsPerPageChange = (count: number) => {
     setItemsPerPage(count);
     setCurrentPage(1); // Reset to first page
-    setShowItemsPerPageMenu(false);
   };
 
   // Recommend music to friend
@@ -241,8 +233,6 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
     setMusicToRecommend(music);
     setShowSendModal(true);
   };
-
-  const itemsPerPageOptions = [10, 25, 50, 100];
 
   // Empty state props
   const emptyStateProps =
@@ -288,32 +278,14 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
                   setSortBy(value as SortType);
                 }
               },
+              onResetFilters: () => {
+                setGenreFilters(["all"]);
+              },
+              hasActiveFilters:
+                !genreFilters.includes("all") && genreFilters.length > 0,
             }}
             onAddClick={() => setShowSearchModal(true)}
           />
-
-          {/* Active Filter Chips */}
-          {!genreFilters.includes("all") && genreFilters.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {genreFilters.map((genre) => (
-                <Chip
-                  key={genre}
-                  variant="primary"
-                  size="sm"
-                  rounded="full"
-                  removable
-                  onRemove={() => {
-                    const newFilters = genreFilters.filter((g) => g !== genre);
-                    setGenreFilters(
-                      newFilters.length > 0 ? newFilters : ["all"]
-                    );
-                  }}
-                >
-                  {genre.charAt(0).toUpperCase() + genre.slice(1)}
-                </Chip>
-              ))}
-            </div>
-          )}
         </div>
       )}
 
@@ -361,78 +333,14 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
       )}
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
-          {/* Items per page selector */}
-          <div className="relative">
-            <Button
-              onClick={() => setShowItemsPerPageMenu(!showItemsPerPageMenu)}
-              variant="secondary"
-              size="sm"
-              icon={<ChevronDown className="w-4 h-4" />}
-              iconPosition="right"
-              aria-expanded={showItemsPerPageMenu}
-            >
-              <span>Show {itemsPerPage} items</span>
-            </Button>
-
-            {showItemsPerPageMenu && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setShowItemsPerPageMenu(false)}
-                />
-                <div className="absolute bottom-full left-0 mb-2 w-32 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-20 py-1 overflow-hidden">
-                  {itemsPerPageOptions.map((count) => (
-                    <Button
-                      key={count}
-                      onClick={() => handleItemsPerPageChange(count)}
-                      variant="subtle"
-                      size="sm"
-                      fullWidth
-                      className={`justify-start px-4 py-2 ${
-                        itemsPerPage === count
-                          ? "bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-semibold"
-                          : ""
-                      }`}
-                    >
-                      {itemsPerPage === count && (
-                        <Check className="w-4 h-4 inline-block mr-2 text-primary" />
-                      )}
-                      {count} items
-                    </Button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Page navigation */}
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              variant="subtle"
-              size="icon"
-              icon={<ChevronLeft className="w-5 h-5" />}
-              aria-label="Previous page"
-            />
-
-            <span className="text-sm text-gray-700 dark:text-gray-300 px-3">
-              Page {currentPage} of {totalPages}
-            </span>
-
-            <Button
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              variant="subtle"
-              size="icon"
-              icon={<ChevronRight className="w-5 h-5" />}
-              aria-label="Next page"
-            />
-          </div>
-        </div>
-      )}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={sortedMusic.length}
+        itemsPerPage={itemsPerPage}
+        onPageChange={handlePageChange}
+        onItemsPerPageChange={handleItemsPerPageChange}
+      />
 
       {/* Modals */}
       {selectedMusic && (

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal, RotateCcw } from "lucide-react";
 import FilterSortSection from "./FilterSortSection";
 import Button from "../ui/Button";
 
@@ -20,6 +20,8 @@ interface FilterSortMenuProps {
   sections: FilterSortSection[];
   activeFilters: Record<string, string | string[]>;
   onFilterChange: (sectionId: string, filterId: string | string[]) => void;
+  onResetFilters?: () => void;
+  hasActiveFilters?: boolean;
   label?: string;
 }
 
@@ -32,6 +34,8 @@ const FilterSortMenu: React.FC<FilterSortMenuProps> = ({
   sections,
   activeFilters,
   onFilterChange,
+  onResetFilters,
+  hasActiveFilters = false,
   label = "Filters & Sort",
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -123,45 +127,60 @@ const FilterSortMenu: React.FC<FilterSortMenuProps> = ({
   };
 
   return (
-    <div className="relative inline-block">
-      {/* Trigger Button */}
-      <Button
-        ref={triggerRef}
-        variant="subtle"
-        size="sm"
-        icon={<SlidersHorizontal className="w-4 h-4" />}
-        onClick={() => setIsOpen(!isOpen)}
-        onKeyDown={handleKeyDown}
-        aria-label="Filter and sort"
-        aria-haspopup="listbox"
-        aria-expanded={isOpen}
-      >
-        {label}
-      </Button>
-
-      {/* Dropdown Menu */}
-      {isOpen && (
-        <div
-          ref={dropdownRef}
-          className="absolute left-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-dropdown max-h-[400px] overflow-y-auto"
-          role="listbox"
+    <div className="flex items-center gap-2">
+      <div className="relative inline-block">
+        {/* Trigger Button */}
+        <Button
+          ref={triggerRef}
+          variant="subtle"
+          size="sm"
+          icon={<SlidersHorizontal className="w-4 h-4" />}
+          onClick={() => setIsOpen(!isOpen)}
+          onKeyDown={handleKeyDown}
+          aria-label="Filter and sort"
+          aria-haspopup="listbox"
+          aria-expanded={isOpen}
         >
-          {sections.map((section, sectionIndex) => (
-            <div key={section.id}>
-              <FilterSortSection
-                section={section}
-                activeFilters={activeFilters}
-                onOptionClick={handleOptionClick}
-                isOptionActive={isOptionActive}
-              />
+          {label}
+        </Button>
 
-              {/* Divider between sections */}
-              {sectionIndex < sections.length - 1 && (
-                <div className="my-2 border-t border-gray-200 dark:border-gray-700" />
-              )}
-            </div>
-          ))}
-        </div>
+        {/* Dropdown Menu */}
+        {isOpen && (
+          <div
+            ref={dropdownRef}
+            className="absolute left-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-dropdown max-h-[400px] overflow-y-auto"
+            role="listbox"
+          >
+            {sections.map((section, sectionIndex) => (
+              <div key={section.id}>
+                <FilterSortSection
+                  section={section}
+                  activeFilters={activeFilters}
+                  onOptionClick={handleOptionClick}
+                  isOptionActive={isOptionActive}
+                />
+
+                {/* Divider between sections */}
+                {sectionIndex < sections.length - 1 && (
+                  <div className="my-2 border-t border-gray-200 dark:border-gray-700" />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Reset Filters Button */}
+      {hasActiveFilters && onResetFilters && (
+        <Button
+          variant="subtle"
+          size="sm"
+          icon={<RotateCcw className="w-4 h-4" />}
+          onClick={onResetFilters}
+          aria-label="Reset filters"
+        >
+          Reset Filters
+        </Button>
       )}
     </div>
   );

@@ -4,7 +4,10 @@
  */
 
 import { Plus } from "lucide-react";
+import { useRef } from "react";
 import { useTasks } from "../../hooks/useTasksQueries";
+import { usePagination } from "../../hooks/usePagination";
+import { Pagination } from "../shared/common/Pagination";
 import type { Task } from "../../services/tasksService.types";
 import TaskCard from "./TaskCard";
 import Button from "../shared/ui/Button";
@@ -21,6 +24,7 @@ const SimpleListView: React.FC<SimpleListViewProps> = ({
   onEditTask,
 }) => {
   const { data: tasks = [] } = useTasks(boardId);
+  const listTopRef = useRef<HTMLDivElement>(null);
 
   // Sort tasks by display_order, then by created_at
   const sortedTasks = [...tasks].sort((a, b) => {
@@ -30,13 +34,22 @@ const SimpleListView: React.FC<SimpleListViewProps> = ({
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
+  // Pagination
+  const pagination = usePagination({
+    items: sortedTasks,
+    initialItemsPerPage: 10,
+  });
+
   return (
     <div className="w-full h-full flex flex-col">
       {/* Header with Add Button - only show when tasks exist */}
       {sortedTasks.length > 0 && (
-        <div className="flex items-center justify-between mb-4 px-2">
+        <div
+          ref={listTopRef}
+          className="flex items-center justify-between mb-4 px-2"
+        >
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Tasks ({tasks.length})
+            Tasks ({pagination.filteredItems.length})
           </h3>
           <Button
             onClick={() => onCreateTask()}
@@ -67,15 +80,35 @@ const SimpleListView: React.FC<SimpleListViewProps> = ({
             </div>
           </button>
         ) : (
-          <div className="space-y-2 px-2">
-            {sortedTasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                onClick={() => onEditTask(task)}
+          <>
+            <div className="space-y-2 px-2">
+              {pagination.paginatedItems.map((task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  onClick={() => onEditTask(task)}
+                />
+              ))}
+            </div>
+
+            {/* Pagination */}
+            <div className="mt-4 px-2">
+              <Pagination
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                totalItems={pagination.filteredItems.length}
+                itemsPerPage={pagination.itemsPerPage}
+                onPageChange={(page) => {
+                  pagination.goToPage(page);
+                  listTopRef.current?.scrollIntoView({ behavior: "smooth" });
+                }}
+                onItemsPerPageChange={(count) => {
+                  pagination.setItemsPerPage(count);
+                  listTopRef.current?.scrollIntoView({ behavior: "smooth" });
+                }}
               />
-            ))}
-          </div>
+            </div>
+          </>
         )}
       </div>
     </div>

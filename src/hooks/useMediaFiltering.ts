@@ -11,7 +11,7 @@ export function useMediaFiltering<T>({
   items,
   filterFn,
   sortFn,
-  initialItemsPerPage = 25,
+  initialItemsPerPage = 10,
 }: UseMediaFilteringOptions<T>) {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(initialItemsPerPage);

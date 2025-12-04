@@ -1,6 +1,7 @@
 import React, { useState, useRef, useMemo, useCallback } from "react";
-import { BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import Chip from "../../shared/ui/Chip";
+import { Pagination } from "../../shared/common/Pagination";
 import { MediaItem } from "../../shared/media/SendMediaModal";
 import SearchBookModal from "../../shared/search/SearchBookModal";
 import BookDetailModal from "./BookDetailModal";
@@ -43,9 +44,6 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
   const [filter] = useState<FilterType>(initialFilter);
   const [categoryFilters, setCategoryFilters] = useState<string[]>(["all"]);
   const [sortBy, setSortBy] = useState<SortType>("date-added");
-
-  // Pagination state
-  const [showItemsPerPageMenu, setShowItemsPerPageMenu] = useState(false);
 
   // Modal state
   const [showSearchModal, setShowSearchModal] = useState(false);
@@ -180,8 +178,6 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
     currentPage,
     totalPages,
     setCurrentPage,
-    hasNextPage,
-    hasPrevPage,
     itemsPerPage,
     setItemsPerPage,
   } = useMediaFiltering({
@@ -300,34 +296,14 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
                   setSortBy(value as SortType);
                 }
               },
+              onResetFilters: () => {
+                setCategoryFilters(["all"]);
+              },
+              hasActiveFilters:
+                !categoryFilters.includes("all") && categoryFilters.length > 0,
             }}
             onAddClick={() => setShowSearchModal(true)}
           />
-
-          {/* Active Filter Chips */}
-          {!categoryFilters.includes("all") && categoryFilters.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {categoryFilters.map((category) => (
-                <Chip
-                  key={category}
-                  variant="primary"
-                  size="sm"
-                  rounded="full"
-                  removable
-                  onRemove={() => {
-                    const newFilters = categoryFilters.filter(
-                      (c) => c !== category
-                    );
-                    setCategoryFilters(
-                      newFilters.length > 0 ? newFilters : ["all"]
-                    );
-                  }}
-                >
-                  {category.charAt(0).toUpperCase() + category.slice(1)}
-                </Chip>
-              ))}
-            </div>
-          )}
         </div>
       )}
 
@@ -389,76 +365,14 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
           </div>
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-              {/* Items per page */}
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <Button
-                    onClick={() =>
-                      setShowItemsPerPageMenu(!showItemsPerPageMenu)
-                    }
-                    variant="secondary"
-                    size="sm"
-                    aria-expanded={showItemsPerPageMenu}
-                  >
-                    {itemsPerPage}
-                  </Button>
-                  {showItemsPerPageMenu && (
-                    <div className="absolute bottom-full left-0 mb-2 w-24 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-20 py-1">
-                      {[10, 25, 50, 100].map((size) => (
-                        <Button
-                          key={size}
-                          onClick={() => {
-                            setItemsPerPage(size);
-                            setShowItemsPerPageMenu(false);
-                          }}
-                          variant="subtle"
-                          size="sm"
-                          fullWidth
-                          className={`justify-start px-3 py-2 ${
-                            itemsPerPage === size
-                              ? "bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-semibold"
-                              : ""
-                          }`}
-                        >
-                          {size}
-                        </Button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  per page ({totalItems} total)
-                </span>
-              </div>
-
-              {/* Page navigation */}
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <div className="flex items-center gap-1">
-                  <Button
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={!hasPrevPage}
-                    variant="subtle"
-                    size="icon"
-                    icon={<ChevronLeft className="w-4 h-4" />}
-                    aria-label="Previous page"
-                  />
-                  <Button
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={!hasNextPage}
-                    variant="subtle"
-                    size="icon"
-                    icon={<ChevronRight className="w-4 h-4" />}
-                    aria-label="Next page"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={setItemsPerPage}
+          />
         </>
       )}
 

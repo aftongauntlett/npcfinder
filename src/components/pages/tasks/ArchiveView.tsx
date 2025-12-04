@@ -4,21 +4,29 @@
  * Displays completed and archived tasks grouped by date
  */
 
-import React from "react";
+import React, { useMemo, useRef } from "react";
 import { Archive as ArchiveIcon, Inbox } from "lucide-react";
 import TaskCard from "../../tasks/TaskCard";
 import EmptyState from "../../shared/common/EmptyState";
+import { Pagination } from "../../shared/common/Pagination";
+import { usePagination } from "../../../hooks/usePagination";
 import { useArchivedTasks } from "../../../hooks/useTasksQueries";
 import { groupTasksByDate } from "../../../utils/taskHelpers";
-import { useMemo } from "react";
 
 const ArchiveView: React.FC = () => {
   const { data: archivedTasks = [], isLoading } = useArchivedTasks();
+  const listTopRef = useRef<HTMLDivElement>(null);
 
-  // Group tasks by completion date
+  // Pagination
+  const pagination = usePagination({
+    items: archivedTasks,
+    initialItemsPerPage: 10,
+  });
+
+  // Group paginated tasks by completion date
   const groupedTasks = useMemo(() => {
-    return groupTasksByDate(archivedTasks);
-  }, [archivedTasks]);
+    return groupTasksByDate(pagination.paginatedItems);
+  }, [pagination.paginatedItems]);
 
   if (isLoading) {
     return (
@@ -44,6 +52,7 @@ const ArchiveView: React.FC = () => {
 
   return (
     <div className="space-y-8">
+      <div ref={listTopRef} />
       {Object.entries(groupedTasks).map(([dateGroup, tasks]) => (
         <div key={dateGroup} className="space-y-3">
           <div className="flex items-center gap-2">
@@ -63,6 +72,22 @@ const ArchiveView: React.FC = () => {
           </div>
         </div>
       ))}
+
+      {/* Pagination */}
+      <Pagination
+        currentPage={pagination.currentPage}
+        totalPages={pagination.totalPages}
+        totalItems={pagination.filteredItems.length}
+        itemsPerPage={pagination.itemsPerPage}
+        onPageChange={(page) => {
+          pagination.goToPage(page);
+          listTopRef.current?.scrollIntoView({ behavior: "smooth" });
+        }}
+        onItemsPerPageChange={(count) => {
+          pagination.setItemsPerPage(count);
+          listTopRef.current?.scrollIntoView({ behavior: "smooth" });
+        }}
+      />
     </div>
   );
 };

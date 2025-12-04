@@ -4,13 +4,15 @@
  * Displays tasks with future due dates
  */
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useCallback } from "react";
 import { CalendarClock, Plus } from "lucide-react";
 import TaskCard from "../../tasks/TaskCard";
 import CreateTaskModal from "../../tasks/CreateTaskModal";
 import TaskDetailModal from "../../tasks/TaskDetailModal";
 import MediaEmptyState from "../../media/MediaEmptyState";
 import Button from "../../shared/ui/Button";
+import { Pagination } from "../../shared/common/Pagination";
+import { useGroupedPagination } from "../../../hooks/useGroupedPagination";
 import { useTasks } from "../../../hooks/useTasksQueries";
 import type { Task } from "../../../services/tasksService.types";
 
@@ -31,6 +33,7 @@ const UpcomingView: React.FC = () => {
   });
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const listTopRef = useRef<HTMLDivElement>(null);
 
   // Filter and sort upcoming tasks
   const upcomingTasks = useMemo(() => {
@@ -46,10 +49,10 @@ const UpcomingView: React.FC = () => {
       });
   }, [allTasks, tomorrow]);
 
-  // Group tasks by date
-  const tasksByDate = useMemo(() => {
+  // Group function for pagination
+  const groupByDate = useCallback((tasks: Task[]) => {
     const groups: Record<string, Task[]> = {};
-    upcomingTasks.forEach((task) => {
+    tasks.forEach((task) => {
       if (!task.due_date) return;
       const date = task.due_date;
       if (!groups[date]) {
@@ -58,7 +61,14 @@ const UpcomingView: React.FC = () => {
       groups[date].push(task);
     });
     return groups;
-  }, [upcomingTasks]);
+  }, []);
+
+  // Grouped pagination - paginate at date level to avoid fragmenting dates
+  const pagination = useGroupedPagination({
+    items: upcomingTasks,
+    groupFn: groupByDate,
+    initialItemsPerPage: 10,
+  });
 
   if (isLoading) {
     return (
@@ -112,7 +122,7 @@ const UpcomingView: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div ref={listTopRef} className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <CalendarClock className="w-6 h-6 text-gray-600 dark:text-gray-400" />
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -135,9 +145,9 @@ const UpcomingView: React.FC = () => {
 
       {/* Grouped Task List */}
       <div className="space-y-6">
-        {Object.entries(tasksByDate)
-          .sort(([a], [b]) => a.localeCompare(b))
-          .map(([date, tasks]) => (
+        {pagination.paginatedGroups
+          .sort((a, b) => a.id.localeCompare(b.id))
+          .map(({ id: date, tasks }) => (
             <div key={date}>
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
                 {formatDateHeader(date)}
@@ -152,6 +162,22 @@ const UpcomingView: React.FC = () => {
             </div>
           ))}
       </div>
+
+      {/* Pagination */}
+      <Pagination
+        currentPage={pagination.currentPage}
+        totalPages={pagination.totalPages}
+        totalItems={pagination.totalItems}
+        itemsPerPage={pagination.itemsPerPage}
+        onPageChange={(page) => {
+          pagination.goToPage(page);
+          listTopRef.current?.scrollIntoView({ behavior: "smooth" });
+        }}
+        onItemsPerPageChange={(count) => {
+          pagination.setItemsPerPage(count);
+          listTopRef.current?.scrollIntoView({ behavior: "smooth" });
+        }}
+      />
 
       {/* Modals */}
       {showCreateModal && (

@@ -4,7 +4,7 @@
  * Displays tasks that don't belong to any board
  */
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { ListChecks, Plus } from "lucide-react";
 import TaskCard from "../../tasks/TaskCard";
 import CreateTaskModal from "../../tasks/CreateTaskModal";
@@ -12,6 +12,8 @@ import TaskDetailModal from "../../tasks/TaskDetailModal";
 import Button from "../../shared/ui/Button";
 import MediaEmptyState from "../../media/MediaEmptyState";
 import ConfirmationModal from "../../shared/ui/ConfirmationModal";
+import { Pagination } from "../../shared/common/Pagination";
+import { usePagination } from "../../../hooks/usePagination";
 import FilterSortMenu, {
   FilterSortSection,
 } from "../../shared/common/FilterSortMenu";
@@ -42,6 +44,7 @@ const InboxView: React.FC = () => {
   });
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const listTopRef = useRef<HTMLDivElement>(null);
 
   // Filter/sort sections for FilterSortMenu
   const filterSortSections = useMemo((): FilterSortSection[] => {
@@ -94,6 +97,12 @@ const InboxView: React.FC = () => {
         );
     }
   }, [tasks, activeFilters.sort]);
+
+  // Pagination
+  const pagination = usePagination({
+    items: sortedTasks,
+    initialItemsPerPage: 10,
+  });
 
   const handleToggleComplete = (taskId: string) => {
     const task = tasks.find((t) => t.id === taskId);
@@ -194,21 +203,29 @@ const InboxView: React.FC = () => {
 
     if (!draggedTask || draggedTask.id === targetTask.id) return;
 
-    const draggedIndex = sortedTasks.findIndex((t) => t.id === draggedTask.id);
-    const targetIndex = sortedTasks.findIndex((t) => t.id === targetTask.id);
+    // Work with paginated items only
+    const draggedIndex = pagination.paginatedItems.findIndex(
+      (t) => t.id === draggedTask.id
+    );
+    const targetIndex = pagination.paginatedItems.findIndex(
+      (t) => t.id === targetTask.id
+    );
 
-    const reordered = [...sortedTasks];
+    const reordered = [...pagination.paginatedItems];
     reordered.splice(draggedIndex, 1);
 
     const insertIndex =
       draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
     reordered.splice(insertIndex, 0, draggedTask);
 
-    // Update display_order for ALL tasks to ensure consistency
+    // Calculate page offset for display_order
+    const pageOffset = (pagination.currentPage - 1) * pagination.itemsPerPage;
+
+    // Update display_order only for tasks on current page
     reordered.forEach((task, index) => {
       updateTask.mutate({
         taskId: task.id,
-        updates: { display_order: index },
+        updates: { display_order: pageOffset + index },
       });
     });
 
@@ -247,7 +264,7 @@ const InboxView: React.FC = () => {
   return (
     <div className="container mx-auto px-4 sm:px-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div ref={listTopRef} className="flex items-center justify-between mb-4">
         {/* Sort Menu */}
         <FilterSortMenu
           sections={filterSortSections}
@@ -271,53 +288,59 @@ const InboxView: React.FC = () => {
       {/* Task List */}
       <div className="space-y-3">
         {/* Drop zone for top position */}
-        {isCustomSort && draggedTask && sortedTasks.length > 0 && (
-          <div
-            onDragOver={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setDragOverId("__top__");
-            }}
-            onDragLeave={() => setDragOverId(null)}
-            onDrop={(e) => {
-              e.preventDefault();
-              setDragOverId(null);
-              if (!draggedTask) return;
+        {isCustomSort &&
+          draggedTask &&
+          pagination.paginatedItems.length > 0 && (
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setDragOverId("__top__");
+              }}
+              onDragLeave={() => setDragOverId(null)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOverId(null);
+                if (!draggedTask) return;
 
-              const draggedIndex = sortedTasks.findIndex(
-                (t) => t.id === draggedTask.id
-              );
+                const draggedIndex = pagination.paginatedItems.findIndex(
+                  (t) => t.id === draggedTask.id
+                );
 
-              if (draggedIndex === 0) return;
+                if (draggedIndex === 0) return;
 
-              const reordered = [...sortedTasks];
-              reordered.splice(draggedIndex, 1);
-              reordered.unshift(draggedTask);
+                const reordered = [...pagination.paginatedItems];
+                reordered.splice(draggedIndex, 1);
+                reordered.unshift(draggedTask);
 
-              // Update ALL tasks to ensure consistency
-              reordered.forEach((task, index) => {
-                updateTask.mutate({
-                  taskId: task.id,
-                  updates: { display_order: index },
+                // Calculate page offset for display_order
+                const pageOffset =
+                  (pagination.currentPage - 1) * pagination.itemsPerPage;
+
+                // Update only tasks on current page
+                reordered.forEach((task, index) => {
+                  updateTask.mutate({
+                    taskId: task.id,
+                    updates: { display_order: pageOffset + index },
+                  });
                 });
-              });
 
-              setDraggedTask(null);
-            }}
-            className={`h-8 flex items-center justify-center transition-all duration-200 -mb-2 ${
-              dragOverId === "__top__"
-                ? "bg-primary/10 border-2 border-dashed border-primary rounded-lg"
-                : "border-2 border-transparent"
-            }`}
-          >
-            {dragOverId === "__top__" && (
-              <span className="text-sm text-primary font-medium">
-                Drop here to move to top
-              </span>
-            )}
-          </div>
-        )}
-        {sortedTasks.map((task) => {
+                setDraggedTask(null);
+              }}
+              className={`h-8 flex items-center justify-center transition-all duration-200 -mb-2 ${
+                dragOverId === "__top__"
+                  ? "bg-primary/10 border-2 border-dashed border-primary rounded-lg"
+                  : "border-2 border-transparent"
+              }`}
+            >
+              {dragOverId === "__top__" && (
+                <span className="text-sm text-primary font-medium">
+                  Drop here to move to top
+                </span>
+              )}
+            </div>
+          )}
+        {pagination.paginatedItems.map((task) => {
           const isDragging = draggedTask?.id === task.id;
           const isDropTarget = dragOverId === task.id;
           return (
@@ -351,6 +374,22 @@ const InboxView: React.FC = () => {
           );
         })}
       </div>
+
+      {/* Pagination */}
+      <Pagination
+        currentPage={pagination.currentPage}
+        totalPages={pagination.totalPages}
+        totalItems={pagination.filteredItems.length}
+        itemsPerPage={pagination.itemsPerPage}
+        onPageChange={(page) => {
+          pagination.goToPage(page);
+          listTopRef.current?.scrollIntoView({ behavior: "smooth" });
+        }}
+        onItemsPerPageChange={(count) => {
+          pagination.setItemsPerPage(count);
+          listTopRef.current?.scrollIntoView({ behavior: "smooth" });
+        }}
+      />
 
       {/* Modals */}
       {showCreateModal && (

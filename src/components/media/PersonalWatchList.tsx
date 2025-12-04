@@ -1,17 +1,15 @@
 import React, { useState, useRef, useMemo, useCallback } from "react";
 import { Film } from "lucide-react";
-import Chip from "../shared/ui/Chip";
-import { getGenreColor } from "../../utils/genreColors";
 import {
   SearchMovieModal,
   SendMediaModal,
   MediaPageToolbar,
   type SortOption,
   type MediaItem,
+  Pagination,
 } from "@/components/shared";
 import MediaListItem from "./MediaListItem";
 import MediaEmptyState from "./MediaEmptyState";
-import WatchlistPagination from "./WatchlistPagination";
 import ConfirmationModal from "../shared/ui/ConfirmationModal";
 import { useMediaFiltering } from "../../hooks/useMediaFiltering";
 import { searchMoviesAndTV } from "../../utils/mediaSearchAdapters";
@@ -58,9 +56,6 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
     useState<MediaTypeFilter>("all");
   const [genreFilters, setGenreFilters] = useState<string[]>(["all"]);
   const [sortBy, setSortBy] = useState<SortType>("date-added");
-
-  // Pagination state
-  const [showItemsPerPageMenu, setShowItemsPerPageMenu] = useState(false);
 
   // Modal state (managed by custom hook)
   const {
@@ -152,8 +147,6 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
     currentPage,
     totalPages,
     setCurrentPage,
-    hasNextPage,
-    hasPrevPage,
     itemsPerPage,
     setItemsPerPage,
   } = useMediaFiltering({
@@ -299,69 +292,16 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
                   setSortBy(filterId as SortType);
                 }
               },
+              onResetFilters: () => {
+                setMediaTypeFilter("all");
+                setGenreFilters(["all"]);
+              },
+              hasActiveFilters:
+                mediaTypeFilter !== "all" ||
+                (!genreFilters.includes("all") && genreFilters.length > 0),
             }}
             onAddClick={() => setShowSearchModal(true)}
           />
-
-          {/* Active Filter Chips */}
-          {(mediaTypeFilter !== "all" ||
-            (!genreFilters.includes("all") && genreFilters.length > 0)) && (
-            <div className="flex flex-wrap items-center gap-2 mb-4">
-              {mediaTypeFilter !== "all" && (
-                <Chip
-                  variant="primary"
-                  size="sm"
-                  rounded="full"
-                  removable
-                  onRemove={() => setMediaTypeFilter("all")}
-                >
-                  {mediaTypeFilter === "movie" ? "Movies" : "TV Shows"}
-                </Chip>
-              )}
-
-              {!genreFilters.includes("all") && genreFilters.length > 0 && (
-                <>
-                  {genreFilters.map((genre) => (
-                    <span
-                      key={genre}
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full cursor-pointer hover:opacity-80 transition-opacity ${getGenreColor(
-                        genre
-                      )}`}
-                      onClick={() => {
-                        const newFilters = genreFilters.filter(
-                          (g) => g !== genre
-                        );
-                        setGenreFilters(
-                          newFilters.length > 0 ? newFilters : ["all"]
-                        );
-                      }}
-                    >
-                      {genre.charAt(0).toUpperCase() + genre.slice(1)}
-                      <button
-                        type="button"
-                        className="hover:opacity-70 transition-opacity"
-                        aria-label="Remove filter"
-                      >
-                        <svg
-                          className="w-3 h-3"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
-                    </span>
-                  ))}
-                </>
-              )}
-            </div>
-          )}
         </>
       )}
 
@@ -413,17 +353,13 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
           </div>
 
           {/* Pagination */}
-          <WatchlistPagination
+          <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
             totalItems={totalItems}
             itemsPerPage={itemsPerPage}
-            hasNextPage={hasNextPage}
-            hasPrevPage={hasPrevPage}
-            showItemsPerPageMenu={showItemsPerPageMenu}
             onPageChange={handlePageChange}
             onItemsPerPageChange={setItemsPerPage}
-            onToggleMenu={() => setShowItemsPerPageMenu(!showItemsPerPageMenu)}
           />
         </>
       )}

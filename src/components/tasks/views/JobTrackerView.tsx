@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useRef } from "react";
 import { JobTrackerTable } from "./JobTrackerTable";
+import { Pagination } from "../../shared/common/Pagination";
+import { usePagination } from "../../../hooks/usePagination";
 import { useTasks } from "../../../hooks/useTasksQueries";
 import type { Task } from "../../../services/tasksService.types";
 import type { StatusHistoryEntry } from "../../../services/tasksService.types";
@@ -20,6 +22,7 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
   onDeleteTask,
 }) => {
   const { data: tasks = [], isLoading } = useTasks(boardId);
+  const listTopRef = useRef<HTMLDivElement>(null);
 
   // Transform tasks to job applications
   const jobApplications = tasks.map((task) => ({
@@ -54,6 +57,12 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
       (task.item_data?.status_history as StatusHistoryEntry[]) || undefined,
   }));
 
+  // Pagination
+  const pagination = usePagination({
+    items: jobApplications,
+    initialItemsPerPage: 10,
+  });
+
   const handleDelete = (taskId: string) => {
     onDeleteTask?.(taskId);
   };
@@ -70,6 +79,7 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
 
   return (
     <div className="px-2 sm:px-0">
+      <div ref={listTopRef} />
       {jobApplications.length === 0 ? (
         <EmptyState
           icon={Briefcase}
@@ -81,15 +91,33 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
           }}
         />
       ) : (
-        <JobTrackerTable
-          items={jobApplications}
-          onEdit={(id) => {
-            const task = tasks.find((t) => t.id === id);
-            if (task) onEditTask(task);
-          }}
-          onDelete={handleDelete}
-          onAdd={onCreateTask}
-        />
+        <>
+          <JobTrackerTable
+            items={pagination.paginatedItems}
+            onEdit={(id) => {
+              const task = tasks.find((t) => t.id === id);
+              if (task) onEditTask(task);
+            }}
+            onDelete={handleDelete}
+            onAdd={onCreateTask}
+          />
+
+          {/* Pagination */}
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.filteredItems.length}
+            itemsPerPage={pagination.itemsPerPage}
+            onPageChange={(page) => {
+              pagination.goToPage(page);
+              listTopRef.current?.scrollIntoView({ behavior: "smooth" });
+            }}
+            onItemsPerPageChange={(count) => {
+              pagination.setItemsPerPage(count);
+              listTopRef.current?.scrollIntoView({ behavior: "smooth" });
+            }}
+          />
+        </>
       )}
     </div>
   );

@@ -233,7 +233,6 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
           {(category || genres) && (
             <GenreChips
               genres={category ? [category] : genres || ""}
-              maxVisible={2}
               size="sm"
             />
           )}

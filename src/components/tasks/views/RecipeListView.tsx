@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { Plus } from "lucide-react";
 import Button from "../../shared/ui/Button";
-import Chip from "../../shared/ui/Chip";
 import { RecipeCard } from "../../shared/cards";
+import { Pagination } from "../../shared/common/Pagination";
+import { usePagination } from "../../../hooks/usePagination";
 import FilterSortMenu from "../../shared/common/FilterSortMenu";
 import type { FilterSortSection } from "../../shared/common/FilterSortMenu";
 import { useTasks } from "../../../hooks/useTasksQueries";
@@ -24,6 +25,7 @@ export const RecipeListView: React.FC<RecipeListViewProps> = ({
   const { data: tasks = [], isLoading } = useTasks(boardId);
   const [activeSort, setActiveSort] = useState<string>("name-asc");
   const [categoryFilters, setCategoryFilters] = useState<string[]>(["all"]);
+  const listTopRef = useRef<HTMLDivElement>(null);
 
   // Extract unique categories from recipes
   const availableCategories = useMemo(() => {
@@ -77,6 +79,12 @@ export const RecipeListView: React.FC<RecipeListViewProps> = ({
       default:
         return 0;
     }
+  });
+
+  // Pagination
+  const pagination = usePagination({
+    items: sortedTasks,
+    initialItemsPerPage: 10,
   });
 
   const filterSortSections: FilterSortSection[] = useMemo(() => {
@@ -153,7 +161,7 @@ export const RecipeListView: React.FC<RecipeListViewProps> = ({
       ) : (
         <>
           {/* Toolbar */}
-          <div className="space-y-3">
+          <div ref={listTopRef} className="space-y-3">
             <div className="flex flex-nowrap items-center justify-between gap-3">
               <FilterSortMenu
                 sections={filterSortSections}
@@ -162,6 +170,12 @@ export const RecipeListView: React.FC<RecipeListViewProps> = ({
                   sort: activeSort,
                 }}
                 onFilterChange={handleFilterChange}
+                onResetFilters={() => {
+                  setCategoryFilters(["all"]);
+                }}
+                hasActiveFilters={
+                  !categoryFilters.includes("all") && categoryFilters.length > 0
+                }
                 label="Sort & Filter"
               />
               <Button
@@ -173,36 +187,11 @@ export const RecipeListView: React.FC<RecipeListViewProps> = ({
                 Add
               </Button>
             </div>
-
-            {/* Active Filter Chips */}
-            {!categoryFilters.includes("all") && categoryFilters.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {categoryFilters.map((category) => (
-                  <Chip
-                    key={category}
-                    variant="primary"
-                    size="sm"
-                    rounded="full"
-                    removable
-                    onRemove={() => {
-                      const newFilters = categoryFilters.filter(
-                        (c) => c !== category
-                      );
-                      setCategoryFilters(
-                        newFilters.length > 0 ? newFilters : ["all"]
-                      );
-                    }}
-                  >
-                    {category}
-                  </Chip>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Recipe List */}
           <div className="space-y-3">
-            {sortedTasks.map((task) => {
+            {pagination.paginatedItems.map((task) => {
               const recipeName =
                 (task.item_data?.recipe_name as string) ||
                 (task.item_data?.name as string) ||
@@ -259,6 +248,22 @@ export const RecipeListView: React.FC<RecipeListViewProps> = ({
               );
             })}
           </div>
+
+          {/* Pagination */}
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.filteredItems.length}
+            itemsPerPage={pagination.itemsPerPage}
+            onPageChange={(page) => {
+              pagination.goToPage(page);
+              listTopRef.current?.scrollIntoView({ behavior: "smooth" });
+            }}
+            onItemsPerPageChange={(count) => {
+              pagination.setItemsPerPage(count);
+              listTopRef.current?.scrollIntoView({ behavior: "smooth" });
+            }}
+          />
         </>
       )}
     </div>
