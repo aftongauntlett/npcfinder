@@ -19,6 +19,8 @@ import type {
   TaskFilters,
   BoardWithStats,
   ServiceResponse,
+  BoardShareWithUser,
+  SharedBoardData,
 } from "./tasksService.types";
 
 // =====================================================
@@ -516,6 +518,13 @@ export async function createTask(
         tags: taskData.tags || null,
         item_data: taskData.item_data || null,
         display_order: nextOrder,
+        is_repeatable: taskData.is_repeatable || null,
+        repeat_frequency: taskData.repeat_frequency || null,
+        repeat_custom_days: taskData.repeat_custom_days || null,
+        timer_duration_minutes: taskData.timer_duration_minutes || null,
+        is_urgent_after_timer: taskData.is_urgent_after_timer || null,
+        reminder_date: taskData.reminder_date || null,
+        reminder_time: taskData.reminder_time || null,
       })
       .select()
       .single();
@@ -748,6 +757,293 @@ export async function ensureStarterBoards(): Promise<
     return await getBoardsWithStats();
   } catch (error) {
     logger.error("Failed to ensure starter boards", error);
+    return { data: null, error: error as Error };
+  }
+}
+
+// =====================================================
+// TIMER OPERATIONS
+// =====================================================
+
+/**
+ * Start a timer for a task
+ */
+export async function startTaskTimer(
+  taskId: string,
+  durationMinutes: number,
+  isUrgentAfter = false
+): Promise<ServiceResponse<Task>> {
+  try {
+    const { data, error } = await supabase
+      .from("tasks")
+      .update({
+        timer_duration_minutes: durationMinutes,
+        timer_started_at: new Date().toISOString(),
+        is_urgent_after_timer: isUrgentAfter,
+      })
+      .eq("id", taskId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    logger.error(`Failed to start timer for task ${taskId}`, error);
+    return { data: null, error: error as Error };
+  }
+}
+
+/**
+ * Complete a task timer
+ */
+export async function completeTaskTimer(
+  taskId: string
+): Promise<ServiceResponse<Task>> {
+  try {
+    const { data, error } = await supabase
+      .from("tasks")
+      .update({
+        timer_completed_at: new Date().toISOString(),
+      })
+      .eq("id", taskId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    logger.error(`Failed to complete timer for task ${taskId}`, error);
+    return { data: null, error: error as Error };
+  }
+}
+
+/**
+ * Get all tasks with active timers
+ */
+export async function getActiveTimers(): Promise<ServiceResponse<Task[]>> {
+  try {
+    const { data, error } = await supabase
+      .from("tasks")
+      .select("*")
+      .not("timer_started_at", "is", null)
+      .is("timer_completed_at", null)
+      .order("timer_started_at", { ascending: true });
+
+    if (error) throw error;
+    return { data: data || [], error: null };
+  } catch (error) {
+    logger.error("Failed to fetch active timers", error);
+    return { data: null, error: error as Error };
+  }
+}
+
+// =====================================================
+// REMINDER OPERATIONS
+// =====================================================
+
+/**
+ * Get tasks with upcoming reminders
+ */
+export async function getUpcomingReminders(
+  daysAhead = 7
+): Promise<ServiceResponse<Task[]>> {
+  try {
+    const today = new Date();
+    const futureDate = new Date();
+    futureDate.setDate(today.getDate() + daysAhead);
+
+    const { data, error } = await supabase
+      .from("tasks")
+      .select("*")
+      .not("reminder_date", "is", null)
+      .gte("reminder_date", today.toISOString().split("T")[0])
+      .lte("reminder_date", futureDate.toISOString().split("T")[0])
+      .order("reminder_date", { ascending: true });
+
+    if (error) throw error;
+    return { data: data || [], error: null };
+  } catch (error) {
+    logger.error("Failed to fetch upcoming reminders", error);
+    return { data: null, error: error as Error };
+  }
+}
+
+/**
+ * Mark a reminder as sent
+ */
+export async function markReminderSent(
+  taskId: string
+): Promise<ServiceResponse<Task>> {
+  try {
+    const { data, error } = await supabase
+      .from("tasks")
+      .update({
+        reminder_sent_at: new Date().toISOString(),
+      })
+      .eq("id", taskId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    logger.error(`Failed to mark reminder sent for task ${taskId}`, error);
+    return { data: null, error: error as Error };
+  }
+}
+
+// =====================================================
+// BOARD SHARING OPERATIONS
+// =====================================================
+
+/**
+ * Share a board with specific users
+ */
+export async function shareBoard(
+  boardId: string,
+  userIds: string[],
+  canEdit = false
+): Promise<ServiceResponse<boolean>> {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
+    // Validate that users are connections
+    const { data: connections, error: connectionsError } = await supabase
+      .from("connections")
+      .select("friend_id")
+      .eq("user_id", user.id)
+      .in("friend_id", userIds);
+
+    if (connectionsError) throw connectionsError;
+
+    const connectedUserIds = connections?.map((c) => c.friend_id) || [];
+    const invalidUserIds = userIds.filter(
+      (id) => !connectedUserIds.includes(id)
+    );
+
+    if (invalidUserIds.length > 0) {
+      throw new Error("Can only share boards with connected users (friends)");
+    }
+
+    // Create shares
+    const shares = userIds.map((userId) => ({
+      board_id: boardId,
+      shared_by_user_id: user.id,
+      shared_with_user_id: userId,
+      can_edit: canEdit,
+    }));
+
+    const { error } = await supabase.from("board_shares").insert(shares);
+
+    if (error) throw error;
+    return { data: true, error: null };
+  } catch (error) {
+    logger.error(`Failed to share board ${boardId}`, error);
+    return { data: null, error: error as Error };
+  }
+}
+
+/**
+ * Remove board sharing for a specific user
+ */
+export async function unshareBoard(
+  boardId: string,
+  userId: string
+): Promise<ServiceResponse<boolean>> {
+  try {
+    const { error } = await supabase
+      .from("board_shares")
+      .delete()
+      .eq("board_id", boardId)
+      .eq("shared_with_user_id", userId);
+
+    if (error) throw error;
+    return { data: true, error: null };
+  } catch (error) {
+    logger.error(`Failed to unshare board ${boardId}`, error);
+    return { data: null, error: error as Error };
+  }
+}
+
+/**
+ * Get all users a board is shared with
+ */
+export async function getBoardShares(
+  boardId: string
+): Promise<ServiceResponse<BoardShareWithUser[]>> {
+  try {
+    const { data, error } = await supabase
+      .from("board_shares")
+      .select(
+        `
+        *,
+        shared_with_user:user_profiles!shared_with_user_id(user_id, display_name)
+      `
+      )
+      .eq("board_id", boardId);
+
+    if (error) throw error;
+    return { data: data || [], error: null };
+  } catch (error) {
+    logger.error(`Failed to fetch shares for board ${boardId}`, error);
+    return { data: null, error: error as Error };
+  }
+}
+
+/**
+ * Get boards shared with the current user
+ */
+export async function getSharedBoards(): Promise<
+  ServiceResponse<BoardWithStats[]>
+> {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
+    const { data, error } = await supabase
+      .from("board_shares")
+      .select(
+        `
+        *,
+        board:task_boards_with_stats(*)
+      `
+      )
+      .eq("shared_with_user_id", user.id);
+
+    if (error) throw error;
+
+    // Extract boards from the joined data
+    const boards =
+      data?.map((share: SharedBoardData) => share.board).filter(Boolean) || [];
+    return { data: boards, error: null };
+  } catch (error) {
+    logger.error("Failed to fetch shared boards", error);
+    return { data: null, error: error as Error };
+  }
+}
+
+/**
+ * Update sharing permission for a user
+ */
+export async function updateSharePermission(
+  shareId: string,
+  canEdit: boolean
+): Promise<ServiceResponse<boolean>> {
+  try {
+    const { error } = await supabase
+      .from("board_shares")
+      .update({ can_edit: canEdit })
+      .eq("id", shareId);
+
+    if (error) throw error;
+    return { data: true, error: null };
+  } catch (error) {
+    logger.error(`Failed to update share permission ${shareId}`, error);
     return { data: null, error: error as Error };
   }
 }

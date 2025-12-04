@@ -735,3 +735,258 @@ export function useArchiveTask() {
     },
   });
 }
+
+// =====================================================
+// TIMER HOOKS
+// =====================================================
+
+/**
+ * Get all active timers with polling
+ */
+export function useActiveTimers() {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: queryKeys.tasks.activeTimers(),
+    queryFn: async () => {
+      const { data, error } = await tasksService.getActiveTimers();
+      if (error) throw error;
+      return data || [];
+    },
+    refetchInterval: 30000, // Poll every 30 seconds
+    staleTime: 0, // Always fetch fresh data
+    enabled: !!user,
+  });
+}
+
+/**
+ * Start a task timer
+ */
+export function useStartTimer() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      taskId,
+      durationMinutes,
+      isUrgentAfter,
+    }: {
+      taskId: string;
+      durationMinutes: number;
+      isUrgentAfter?: boolean;
+    }) => {
+      const { data, error } = await tasksService.startTaskTimer(
+        taskId,
+        durationMinutes,
+        isUrgentAfter
+      );
+      if (error) throw error;
+      return data!;
+    },
+
+    onSuccess: (data) => {
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.tasks.activeTimers(),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.tasks.task(data.id),
+      });
+      if (data.board_id) {
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.tasks.boardTasks(data.board_id),
+        });
+      }
+    },
+  });
+}
+
+/**
+ * Complete a task timer
+ */
+export function useCompleteTimer() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (taskId: string) => {
+      const { data, error } = await tasksService.completeTaskTimer(taskId);
+      if (error) throw error;
+      return data!;
+    },
+
+    onSuccess: (data) => {
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.tasks.activeTimers(),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.tasks.task(data.id),
+      });
+      if (data.board_id) {
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.tasks.boardTasks(data.board_id),
+        });
+      }
+    },
+  });
+}
+
+// =====================================================
+// REMINDER HOOKS
+// =====================================================
+
+/**
+ * Get upcoming reminders
+ */
+export function useUpcomingReminders(daysAhead = 7) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: queryKeys.tasks.upcomingReminders(daysAhead),
+    queryFn: async () => {
+      const { data, error } = await tasksService.getUpcomingReminders(
+        daysAhead
+      );
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    enabled: !!user,
+  });
+}
+
+// =====================================================
+// BOARD SHARING HOOKS
+// =====================================================
+
+/**
+ * Share a board with users
+ */
+export function useShareBoard() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      boardId,
+      userIds,
+      canEdit,
+    }: {
+      boardId: string;
+      userIds: string[];
+      canEdit?: boolean;
+    }) => {
+      const { data, error } = await tasksService.shareBoard(
+        boardId,
+        userIds,
+        canEdit
+      );
+      if (error) throw error;
+      return data!;
+    },
+
+    onSuccess: (_data, variables) => {
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.tasks.boardShares(variables.boardId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.tasks.board(variables.boardId),
+      });
+    },
+  });
+}
+
+/**
+ * Remove board sharing for a user
+ */
+export function useUnshareBoard() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      boardId,
+      userId,
+    }: {
+      boardId: string;
+      userId: string;
+    }) => {
+      const { data, error } = await tasksService.unshareBoard(boardId, userId);
+      if (error) throw error;
+      return data!;
+    },
+
+    onSuccess: (_data, variables) => {
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.tasks.boardShares(variables.boardId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.tasks.board(variables.boardId),
+      });
+    },
+  });
+}
+
+/**
+ * Get board sharing information
+ */
+export function useBoardShares(boardId: string) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: queryKeys.tasks.boardShares(boardId),
+    queryFn: async () => {
+      const { data, error } = await tasksService.getBoardShares(boardId);
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 1000 * 60 * 5,
+    enabled: !!user && !!boardId,
+  });
+}
+
+/**
+ * Get boards shared with current user
+ */
+export function useSharedBoards() {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: queryKeys.tasks.sharedBoards(),
+    queryFn: async () => {
+      const { data, error } = await tasksService.getSharedBoards();
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 1000 * 60 * 5,
+    enabled: !!user,
+  });
+}
+
+/**
+ * Update sharing permission
+ */
+export function useUpdateSharePermission() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      shareId,
+      canEdit,
+      boardId: _boardId,
+    }: {
+      shareId: string;
+      canEdit: boolean;
+      boardId: string;
+    }) => {
+      const { data, error } = await tasksService.updateSharePermission(
+        shareId,
+        canEdit
+      );
+      if (error) throw error;
+      return data!;
+    },
+
+    onSuccess: (_data, variables) => {
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.tasks.boardShares(variables.boardId),
+      });
+    },
+  });
+}

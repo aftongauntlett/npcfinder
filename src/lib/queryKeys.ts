@@ -118,5 +118,11 @@ export const queryKeys = {
       [...queryKeys.tasks.all, "archived", userId] as const,
     tasksByStatus: (status: string, userId?: string) =>
       [...queryKeys.tasks.all, "by-status", status, userId] as const,
+    activeTimers: () => [...queryKeys.tasks.all, "active-timers"] as const,
+    upcomingReminders: (daysAhead: number) =>
+      [...queryKeys.tasks.all, "upcoming-reminders", daysAhead] as const,
+    boardShares: (boardId: string) =>
+      [...queryKeys.tasks.all, "board-shares", boardId] as const,
+    sharedBoards: () => [...queryKeys.tasks.all, "shared-boards"] as const,
   },
 };
