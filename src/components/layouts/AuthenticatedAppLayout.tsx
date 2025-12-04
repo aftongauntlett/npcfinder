@@ -62,7 +62,7 @@ const AuthenticatedAppLayout: React.FC<AuthenticatedAppLayoutProps> = ({
             {/* Games - consolidated single route */}
             <Route path="/games" element={<GamesPage />} />
 
-            {/* Tasks - accordion-style boards view */}
+            {/* Tasks - tabbed view with all templates */}
             <Route path="/tasks" element={<TasksPage />} />
 
             <Route

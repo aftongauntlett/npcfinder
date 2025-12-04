@@ -284,7 +284,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
                           <span>{tab.label}</span>
                           {tab.badge !== undefined && tab.badge > 0 && (
                             <span
-                              className="flex items-center justify-center w-5 h-5 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600"
+                              className="flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600"
                               aria-label={`${tab.badge} items`}
                             >
                               {tab.badge}
