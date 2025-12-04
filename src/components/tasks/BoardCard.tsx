@@ -4,7 +4,7 @@
  * Displays a board in accordion style with template-aware preview
  */
 
-import React from "react";
+import React, { useState } from "react";
 import {
   LayoutGrid,
   Briefcase,
@@ -26,10 +26,13 @@ import {
   Package,
   TrendingUp,
   Lightbulb,
+  Share2,
 } from "lucide-react";
 import AccordionCard from "../shared/common/AccordionCard";
+import ShareBoardModal from "./ShareBoardModal";
 import { useTheme } from "../../hooks/useTheme";
 import { lightenColor, darkenColor } from "../../styles/colorThemes";
+import { useBoardShares } from "../../hooks/useTasksQueries";
 import KanbanBoard from "./KanbanBoard";
 import SimpleListView from "./SimpleListView";
 import { JobTrackerView } from "./views/JobTrackerView";
@@ -89,6 +92,9 @@ const BoardCard: React.FC<BoardCardProps> = ({
   isStarter = false,
 }) => {
   const { themeColor } = useTheme();
+  const [showShareModal, setShowShareModal] = useState(false);
+  const { data: shares = [] } = useBoardShares(board.id);
+
   // Get the icon component
   const IconComponent =
     board.icon && ICON_MAP[board.icon] ? ICON_MAP[board.icon] : LayoutGrid;
@@ -121,6 +127,18 @@ const BoardCard: React.FC<BoardCardProps> = ({
           }}
         >
           Starter
+        </span>
+      )}
+      {shares.length > 0 && (
+        <span
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+          style={{
+            backgroundColor: lightenColor(themeColor, 0.85),
+            color: darkenColor(themeColor, 0.3),
+          }}
+        >
+          <Share2 className="w-3 h-3" />
+          {shares.length}
         </span>
       )}
     </div>
@@ -159,17 +177,28 @@ const BoardCard: React.FC<BoardCardProps> = ({
   );
 
   return (
-    <AccordionCard
-      icon={icon}
-      title={board.name}
-      subtitle={subtitle}
-      description={board.description || undefined}
-      expandedContent={expandedContent}
-      onEdit={onEdit}
-      onDelete={onDelete}
-      onOpenInTab={!isMobile ? onOpenInTab : undefined}
-      onClick={onClick}
-    />
+    <>
+      <AccordionCard
+        icon={icon}
+        title={board.name}
+        subtitle={subtitle}
+        description={board.description || undefined}
+        expandedContent={expandedContent}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onShare={() => setShowShareModal(true)}
+        onOpenInTab={!isMobile ? onOpenInTab : undefined}
+        onClick={onClick}
+      />
+
+      {/* Share Board Modal */}
+      <ShareBoardModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        boardId={board.id}
+        boardName={board.name}
+      />
+    </>
   );
 };
 

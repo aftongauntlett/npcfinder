@@ -6,7 +6,7 @@
  */
 
 import React, { useState, ReactNode } from "react";
-import { ChevronDown, Edit2, Trash2, ExternalLink } from "lucide-react";
+import { ChevronDown, Edit2, Trash2, ExternalLink, Share2 } from "lucide-react";
 import { motion } from "framer-motion";
 import Button from "../ui/Button";
 
@@ -27,6 +27,7 @@ interface AccordionCardProps {
   // Actions
   onEdit?: () => void;
   onDelete?: () => void;
+  onShare?: () => void;
   onOpenInTab?: () => void;
   onClick?: () => void;
 
@@ -45,6 +46,7 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
   expandedContent,
   onEdit,
   onDelete,
+  onShare,
   onOpenInTab,
   onClick,
   defaultExpanded = false,
@@ -69,7 +71,7 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
   return (
     <motion.div
       onClick={handleCardClick}
-      className={`relative bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 hover:border-white/20 hover:bg-gray-900/[0.04] dark:hover:bg-gray-900 transition-all duration-300 cursor-pointer group overflow-hidden ${className}`}
+      className={`relative bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-300 cursor-pointer group overflow-hidden ${className}`}
     >
       {/* Header */}
       <div className="p-4">
@@ -110,6 +112,19 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
                   icon={<ExternalLink className="w-4 h-4" />}
                   aria-label="Open in new tab"
                   title="Open in new tab"
+                  className="h-8 w-8"
+                />
+              )}
+              {onShare && (
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onShare();
+                  }}
+                  variant="subtle"
+                  size="icon"
+                  icon={<Share2 className="w-4 h-4" />}
+                  aria-label="Share"
                   className="h-8 w-8"
                 />
               )}

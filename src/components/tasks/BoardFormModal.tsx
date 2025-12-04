@@ -26,18 +26,21 @@ import {
   Package,
   TrendingUp,
   Lightbulb,
+  Share2,
 } from "lucide-react";
 import Modal from "../shared/ui/Modal";
 import Button from "../shared/ui/Button";
 import Input from "../shared/ui/Input";
 import Textarea from "../shared/ui/Textarea";
 import ConfirmationModal from "../shared/ui/ConfirmationModal";
+import ShareBoardModal from "./ShareBoardModal";
 import type { Board, CreateBoardData } from "../../services/tasksService.types";
 import {
   useCreateBoard,
   useUpdateBoard,
   useDeleteBoard,
   useBoards,
+  useBoardShares,
 } from "../../hooks/useTasksQueries";
 import { HexColorPicker } from "react-colorful";
 import { useTheme } from "../../hooks/useTheme";
@@ -88,12 +91,14 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
   const [showIconDropdown, setShowIconDropdown] = useState(false);
   const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [templateType, setTemplateType] = useState<string>("markdown");
   const [nameError, setNameError] = useState<string>("");
   const [isNameAutoFilled, setIsNameAutoFilled] = useState(false);
 
   const { themeColor } = useTheme();
   const { data: boards = [] } = useBoards();
+  const { data: shares = [] } = useBoardShares(board?.id || "");
   const iconDropdownRef = useRef<HTMLDivElement>(null);
   const colorPickerRef = useRef<HTMLDivElement>(null);
   const templateDropdownRef = useRef<HTMLDivElement>(null);
@@ -267,6 +272,8 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
     const boardType =
       templateType === "recipe"
         ? "list"
+        : templateType === "grocery"
+        ? "list"
         : templateType === "job_tracker"
         ? "job_tracker"
         : templateType === "markdown"
@@ -409,6 +416,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
                 <span>
                   {templateType === "markdown" && "To-Do List (Default)"}
                   {templateType === "kanban" && "Kanban Board"}
+                  {templateType === "grocery" && "Grocery List"}
                   {templateType === "job_tracker" && "Job Applications"}
                   {templateType === "recipe" && "Recipe Collection"}
                 </span>
@@ -424,6 +432,11 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
                       value: "markdown",
                       label: "To-Do List (Default)",
                       desc: "Markdown-style list with support for bold, bullets, and formatting",
+                    },
+                    {
+                      value: "grocery",
+                      label: "Grocery List",
+                      desc: "Simple grocery list with categories and purchase tracking",
                     },
                     {
                       value: "job_tracker",
@@ -624,6 +637,36 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
             </button>
           </div>
 
+          {/* Sharing Section - Only for grocery and existing boards */}
+          {board && (templateType === "grocery" || shares.length > 0) && (
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Share2 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      Sharing
+                    </h3>
+                    {shares.length > 0 && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Shared with {shares.length}{" "}
+                        {shares.length === 1 ? "person" : "people"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setShowShareModal(true)}
+                >
+                  Manage
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Actions */}
           <div className="flex justify-between gap-3 pt-4">
             {/* Delete Button (Edit Mode Only, except for starter boards) */}
@@ -687,6 +730,16 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
           confirmText="Delete Board"
           variant="danger"
           isLoading={deleteBoard.isPending}
+        />
+      )}
+
+      {/* Share Board Modal */}
+      {board && (
+        <ShareBoardModal
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          boardId={board.id}
+          boardName={board.name}
         />
       )}
     </>
