@@ -195,7 +195,7 @@ export async function getFriendsReviews(
 export async function getFriendsMediaReviews(
   externalId: string,
   mediaType: string
-): Promise<MediaReview[]> {
+): Promise<MediaReviewWithUser[]> {
   try {
     // Validate inputs
     const validated = MediaQuerySchema.parse({ externalId, mediaType });
@@ -241,12 +241,12 @@ export async function getFriendsMediaReviews(
         profiles?.map((p) => [p.user_id, p.display_name]) || []
       );
 
-      const reviews = data.map((review) => ({
+      const reviewsWithUsers: MediaReviewWithUser[] = data.map((review) => ({
         ...review,
         display_name: profileMap.get(review.user_id) || "Unknown User",
-      })) as MediaReview[];
+      }));
 
-      return reviews;
+      return reviewsWithUsers;
     }
 
     return [];

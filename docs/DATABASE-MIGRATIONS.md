@@ -102,9 +102,13 @@ Consolidated migrations are moved to `archive/` for historical reference. This i
 
 ### Forward-Only Migrations
 
-These migrations must be applied **after** the baseline migration. They add features required for bootstrap setup and user authentication.
+These migrations must be applied **after** the baseline migration. They add features required for bootstrap setup, user authentication, and ongoing feature development.
 
-#### 1. Allow Bootstrap Invite Creation
+#### Critical Migrations (Required for Bootstrap)
+
+These two migrations must be run immediately after the baseline to enable initial setup:
+
+##### 1. Allow Bootstrap Invite Creation
 
 **File**: `supabase/migrations/20251119000000_allow_bootstrap_invite_creation.sql`
 
@@ -118,7 +122,7 @@ These migrations must be applied **after** the baseline migration. They add feat
 
 **When to Run**: After baseline, before creating your first admin user
 
-#### 2. Add Auth User Trigger
+##### 2. Add Auth User Trigger
 
 **File**: `supabase/migrations/20251119000001_add_auth_user_trigger.sql`
 
@@ -134,6 +138,18 @@ These migrations must be applied **after** the baseline migration. They add feat
 **Why It's Critical**: Without this trigger, users can sign up but the app will fail with 406 errors (missing profile data).
 
 **When to Run**: After baseline, before first user signup
+
+#### Feature Migrations (December 2025)
+
+Additional migrations that add new features and improvements:
+
+- **`20251201000000_update_board_template_types.sql`** - Updated task board template types (removed grocery/notes/todo, added markdown as default)
+- **`20251202000000_add_repeatable_tasks.sql`** - Added repeatable/recurring task functionality
+- **`20251203000000_media_reviews_and_music_metadata.sql`** - Enhanced media reviews system and music metadata
+- **`20251204000000_add_tasks_enhancements.sql`** - Additional task system enhancements
+- **`20251204000001_fix_board_shares_foreign_key.sql`** - Fixed foreign key constraints on board_shares table
+- **`20251204000002_restrict_board_shares_update_to_owners.sql`** - Restricted board share updates to owners only
+- **`20251204000003_canonicalize_template_types.sql`** - Canonicalized task board template types
 
 ---
 
@@ -551,7 +567,11 @@ This will:
 
 ---
 
-**Last Updated**: November 19, 2025  
+**Last Updated**: December 4, 2025  
 **Baseline Migration**: `20250116000000_baseline_schema.sql` (consolidated fixes)  
-**Forward-Only Migrations**: 2 (bootstrap RLS + auth trigger)  
+**Forward-Only Migrations**: 9 total
+
+- 2 critical (bootstrap RLS + auth trigger)
+- 7 feature migrations (Dec 2025: board templates, repeatable tasks, media reviews, tasks enhancements, board shares fixes)
+
 **Archived Migrations**: 60 files in `supabase/migrations/archive/`
