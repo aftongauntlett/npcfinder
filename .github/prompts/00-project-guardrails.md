@@ -18,9 +18,9 @@
 - Never suggest running `db:reset:dev` or `db:push:prod` without explicit user confirmation
 - Never suggest dropping tables or columns without discussing data preservation
 - Always create new forward-only migrations for schema changes
-- Always test migrations on dev database first
+- Always test migrations on dev database first (`npm run db:reset:dev` to verify full chain)
 - Never suggest bypassing RLS policies or removing security constraints
-- The baseline migration (0001_baseline.sql) is the production source of truth - never modify it
-- Always use the diff workflow: make UI changes, then `npm run db:diff:dev` to generate migration SQL
-- Never make manual changes in the Supabase SQL editor
-- Use `--project-ref $SUPABASE_DEV_PROJECT_REF` or `--project-ref $SUPABASE_PROD_PROJECT_REF` for database commands to ensure dev/prod separation (npm scripts handle this automatically)
+- The baseline migration (`0001_baseline.sql`) is the production source of truth - never modify it
+- Always use the diff workflow: make UI changes in Supabase Dashboard, then `npm run db:diff:dev` to generate migration SQL
+- Never make manual schema changes in the Supabase SQL editor - always use the diff workflow
+- Use npm scripts (`db:push:dev`, `db:push:prod`, etc.) which auto-handle project refs - never suggest raw `npx supabase` commands

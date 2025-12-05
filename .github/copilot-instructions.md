@@ -48,7 +48,7 @@ Tests: add/adjust tests when behavior changes or is new/fragile. Ensure `typeche
 
 Commits: conventional-style messages, no emojis, small logical units. Prompt the user to commit if work is complete.
 
-When migrations are required: never edit old migrations; create a new one and use the CLI.
+When migrations are required: never edit old migrations; create a new one using the diff workflow.
 
 Database Operations (CRITICAL):
 
@@ -57,7 +57,7 @@ Database Operations (CRITICAL):
 - PROD database: `npm run db:push:prod` (has 7-second safety warning), `npm run db:migration:list:prod`
 - These scripts auto-link to the correct database and prevent dev/prod mixups
 - Never suggest `npx supabase db push` or `npx supabase link` directly
-- Migration order: 1) Baseline, 2) Bootstrap RLS, 3) Auth trigger
+- Migration workflow: 1) Make UI changes in Supabase Dashboard, 2) Run `npm run db:diff:dev`, 3) Create new migration with `npm run db:migration:new <name>`, 4) Copy diff SQL into migration file, 5) Test with `npm run db:reset:dev`
 
 When a Traycer plan is provided, follow 10-traycer-handoff.md. If anything is unclear, ask first; otherwise propose a minimal plan, then implement and summarize.
 

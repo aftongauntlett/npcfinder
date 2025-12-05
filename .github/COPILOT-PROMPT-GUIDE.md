@@ -132,7 +132,9 @@ Start with:
 
 ### Database Changes
 
-> "Need to add a `last_listened_at` column to `music_recommendations`. Create migration and update types."
+> "Need to add a `last_listened_at` column to `music_recommendations`. Create migration using diff workflow and update types."
+
+**Note**: Always use the diff workflow: make UI changes in Supabase Dashboard, run `npm run db:diff:dev`, create new migration, test with `npm run db:reset:dev`.
 
 ---
 
@@ -143,7 +145,7 @@ When you reference these topics, Copilot can pull from `15-project-context.md`:
 - **Auth flow**: invite-only, 30-day expiration, validateInviteCode → signUp → consumeInviteCode
 - **Privacy rules**: no public sharing, no social metrics, secure by default
 - **Theme system**: hex format `#RRGGBB` in `user_profiles.theme_color`
-- **Migrations**: never edit old ones, always create new
+- **Migrations**: single baseline (`0001_baseline.sql`), never edit it, always create new forward-only migrations using diff workflow
 - **Auto-connect**: disabled by design
 - **UX values**: calm, minimal, accessible-first
 

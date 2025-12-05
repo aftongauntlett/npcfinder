@@ -27,9 +27,10 @@ Use this to stay aligned with how the app works.
 
 ## Database / Supabase
 
-- Never modify or delete existing migrations — always add new
-- Use CLI for migrations (`supabase migration new ...` + `supabase db push`)
-- Production DB = source of truth
+- Single baseline migration (`0001_baseline.sql`) = production source of truth
+- Never modify baseline or existing migrations — always add new forward-only migrations
+- Use diff workflow: UI changes → `npm run db:diff:dev` → create migration → test with `db:reset:dev`
+- Test all migrations in dev database before applying to production
 
 ## Auto-Connect
 

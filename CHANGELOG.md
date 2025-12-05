@@ -51,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Separate Dev/Prod Databases:** Created dedicated development Supabase project for safe testing
 - **Database Migration System:** Consolidated schema into versioned migration file
-  - Created `20250116000000_baseline_schema.sql` with complete database structure
+  - Created `0001_baseline.sql` with complete database structure
   - Includes all tables, RLS policies, triggers, indexes, and views
   - NPM scripts for migration management: `db:push:dev`, `db:push:prod`, `db:migration:list`, etc.
 - **Development Workflow:** Clear separation between dev and production environments
@@ -67,8 +67,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Technical
 
-- Migration file: `20250116000000_baseline_schema.sql`
-- Tables: `user_profiles`, `invite_codes`, `invite_code_audit_log`, `connections`, `app_config`, `user_watchlist`, `user_watched_archive`, `movie_recommendations`, `music_library`, `music_recommendations`, `reading_list`, `book_recommendations`, `game_library`, `game_recommendations`, `task_boards`, `task_board_sections`, `tasks`
+- Migration file: `0001_baseline.sql`
+- Tables: `user_profiles`, `invite_codes`, `invite_code_audit_log`, `connections`, `app_config`, `user_watchlist`, `user_watched_archive`, `movie_recommendations`, `music_library`, `music_recommendations`, `reading_list`, `book_recommendations`, `game_library`, `game_recommendations`, `task_boards`, `task_board_sections`, `tasks`, `board_shares`, `media_reviews`
 - Full RLS policies, triggers, indexes, and views
 
 ---
@@ -98,7 +98,7 @@ Stable baseline release with core entertainment tracking features. This version 
 
 ### Database
 
-- Migration: `20250116000000_baseline_schema.sql`
+- Migration: `0001_baseline.sql`
 - Tables: `user_profiles`, `invite_codes`, `invite_code_audit_log`, `connections`, `app_config`, `user_watchlist`, `user_watched_archive`, `movie_recommendations`, `music_library`, `music_recommendations`, `reading_list`, `book_recommendations`, `game_library`, `game_recommendations`
 - Comprehensive RLS policies for user data isolation
 

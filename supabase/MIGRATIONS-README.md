@@ -129,7 +129,7 @@ See `docs/DATABASE-MIGRATIONS.md` for detailed migration workflow and best pract
 
 ⚠️ **NEVER edit the baseline migration**
 
-- `20250116000000_baseline_schema.sql` is the foundation
+- `0001_baseline.sql` is the foundation
 - Contains complete schema including tasks system (as of Nov 23, 2025)
 - If you need to change the schema, create a new forward-only migration
 - The baseline should only be modified when consolidating for a fresh database reset

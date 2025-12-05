@@ -49,7 +49,7 @@ supabase/migrations/
 
 Complete production database schema as of December 5, 2025, including:
 
-- **All tables**: user_profiles, connections, invite_codes, watchlists, recommendations (movie/music/book/game), libraries (music/game), reading_list, media_reviews, task system (task_boards, task_board_sections, tasks, board_templates, board_shares), and more
+- **All tables**: user_profiles, connections, invite_codes, watchlists, recommendations (movie/music/book/game), libraries (music/game), reading_list, media_reviews, task system (task_boards, task_board_sections, tasks, board_shares), and more
 - **All views**: With security_barrier enabled (movie_recommendations_with_users, music_recommendations_with_users, book_recommendations_with_users, game_recommendations_with_users, task_boards_with_stats, etc.)
 - **All functions**: is_admin, handle_new_user, batch_connect_users, is_bootstrap_allowed, update triggers, task timestamp triggers, etc.
 - **All triggers**: Admin protection, timestamp updates, status changes, auth user creation, etc.

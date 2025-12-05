@@ -30,7 +30,7 @@ npm install
 In Supabase dashboard:
 
 1. Click SQL Editor
-2. Copy contents of `supabase/migrations/20250116000000_baseline_schema.sql`
+2. Copy contents of `supabase/migrations/0001_baseline.sql`
 3. Run the migration
 4. This single migration contains the complete schema
 
