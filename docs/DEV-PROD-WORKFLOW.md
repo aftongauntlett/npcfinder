@@ -41,10 +41,13 @@ When you run `npm run dev` (Vite development mode), the app automatically uses t
 
 Apply the baseline migration to your dev database:
 
-1. Open Supabase Dashboard → Your Dev Project → SQL Editor
-2. Copy entire contents of `supabase/migrations/20250116000000_baseline_schema.sql`
-3. Paste and run
-4. Verify tables were created: Database → Tables
+```bash
+npm run db:push:dev
+```
+
+This applies the baseline (`0001_baseline.sql`) and any forward-only migrations.
+
+Verify tables were created: Supabase Dashboard → Database → Tables
 
 Your dev database now has the exact same schema as production.
 

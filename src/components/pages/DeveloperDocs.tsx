@@ -234,15 +234,16 @@ const DeveloperDocs: React.FC = () => {
                 <p className="text-gray-300 mt-4">
                   <strong>2. Run Migrations</strong>
                 </p>
-                <p className="text-gray-300">
-                  In the Supabase dashboard SQL Editor, run the baseline
-                  migration:
+                <p className="text-gray-300 mt-4">
+                  Apply migrations using the CLI:
                 </p>
                 <div className="bg-slate-900/60 border border-white/10 rounded-lg p-4 font-mono text-sm">
-                  <div className="text-gray-300">
-                    supabase/migrations/20250116000000_baseline_schema.sql
-                  </div>
+                  <div className="text-gray-300">npm run db:push:dev</div>
                 </div>
+                <p className="text-gray-300 text-sm mt-2">
+                  This applies the baseline (0001_baseline.sql) and all
+                  forward-only migrations.
+                </p>
 
                 <p className="text-gray-300 mt-4">
                   <strong>3. Configure Environment</strong>

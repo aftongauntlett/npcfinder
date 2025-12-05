@@ -20,6 +20,7 @@
 - Always create new forward-only migrations for schema changes
 - Always test migrations on dev database first
 - Never suggest bypassing RLS policies or removing security constraints
-- The baseline migration (20250116000000_baseline_schema.sql) is sacred - never modify it
-- Archived migrations in `supabase/migrations/archive/` are historical only - never reference them for new work
+- The baseline migration (0001_baseline.sql) is the production source of truth - never modify it
+- Always use the diff workflow: make UI changes, then `npm run db:diff:dev` to generate migration SQL
+- Never make manual changes in the Supabase SQL editor
 - Use `--project-ref $SUPABASE_DEV_PROJECT_REF` or `--project-ref $SUPABASE_PROD_PROJECT_REF` for database commands to ensure dev/prod separation (npm scripts handle this automatically)

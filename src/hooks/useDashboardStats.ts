@@ -183,7 +183,10 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
       .in("status", ["todo", "in_progress"])
       .gt("due_date", endOfDay.toISOString())
       .lte("due_date", nextWeek.toISOString()),
-    supabase.from("board_shares").select("id", { count: "exact", head: true }),
+    supabase
+      .from("board_shares")
+      .select("id", { count: "exact", head: true })
+      .eq("shared_with_user_id", user.id),
     jobBoardIds.length > 0
       ? supabase
           .from("tasks")

@@ -1,9 +1,9 @@
 # Database Migrations
 
-**Status**: Baseline + Forward-Only Migrations  
-**Last Reset**: November 16, 2025  
-**Last Consolidation**: November 23, 2025 (Tasks System)  
-**Current Baseline**: `20250116000000_baseline_schema.sql`
+**Status**: Single Baseline + Forward-Only Migrations  
+**Baseline Created**: December 5, 2025  
+**Current Baseline**: `0001_baseline.sql`  
+**Source**: Production database schema (pulled December 5, 2025)
 
 ---
 
@@ -13,21 +13,21 @@ This project uses **database migrations** to manage schema changes in a version-
 
 ### Migration Philosophy
 
-**Baseline + Forward-Only Approach**:
+**Single Baseline + Strict Forward-Only Approach**:
 
-- ✅ Single baseline migration contains the complete, correct schema
-- ✅ All old prototype migrations are archived (preserved for history)
-- ✅ Recently added features can be consolidated into baseline before production deployment
+- ✅ One authoritative baseline migration contains the complete production schema
+- ✅ All schema changes use `supabase db diff` workflow (never manual SQL editor changes)
 - ✅ All future changes are forward-only migrations (never edit existing migrations)
+- ✅ Development database can be reset freely to test migration chain
 - ✅ Migrations are tested in dev database before applying to production
 
 **Why This Approach**:
 
-- Clean starting point before real user data
-- Simplified migration chain (no replaying 60+ prototype migrations)
-- Historical record preserved in archive
-- Professional workflow for production database
-- Easy consolidation of development features into baseline
+- Production database is the source of truth
+- Clean, simple migration history starting from a known-good state
+- No historical baggage from prototype phase
+- Professional workflow for schema changes
+- Easy to verify migration chain with `db:reset:dev`
 
 ---
 
@@ -35,135 +35,157 @@ This project uses **database migrations** to manage schema changes in a version-
 
 ```
 supabase/migrations/
-├── 20250116000000_baseline_schema.sql              ← Complete schema (start here)
-├── 20251119000000_allow_bootstrap_invite_creation.sql  ← Bootstrap RLS policy
-├── 20251119000001_add_auth_user_trigger.sql            ← Auto-create user profiles
-├── archive/                                        ← Old prototype migrations (reference only)
-    ├── README.md
-    ├── 20241001000000_create_user_profiles.sql
-    ├── 20241002000000_create_recommendations.sql
-    └── ... (60+ archived files)
+├── 0001_baseline.sql              ← Complete production schema (start here)
+└── [future migrations]            ← Created as needed with db:diff workflow
 ```
 
-**Note**: Future migrations will appear as additional files (e.g., `20250120000000_add_user_preferences.sql`) after you create them.
+**Note**: Future migrations will appear as new files when you create them using the diff workflow.
 
 ### Baseline Migration
 
-**File**: `supabase/migrations/20250116000000_baseline_schema.sql`
+**File**: `supabase/migrations/0001_baseline.sql`
 
 **What It Contains**:
 
-- All tables (user_profiles, connections, invite_codes, watchlists, movie/music/book/game recommendations and libraries, reading_list, media_reviews, **tasks system**, etc.)
-- All views with security_barrier (movie_recommendations_with_users, music_recommendations_with_users, book_recommendations_with_users, game_recommendations_with_users, **task_boards_with_stats**)
-- All functions (is_admin, handle_new_user, batch_connect_users, update triggers, **task timestamp triggers**, etc.)
-- All triggers (admin protection, timestamp updates, status changes, etc.)
-- All RLS policies (security policies for every table)
-- All indexes (performance optimization)
-- All table/column comments (documentation)
+Complete production database schema as of December 5, 2025, including:
 
-**Consolidated Updates**:
+- **All tables**: user_profiles, connections, invite_codes, watchlists, recommendations (movie/music/book/game), libraries (music/game), reading_list, media_reviews, task system (task_boards, task_board_sections, tasks, board_templates, board_shares), and more
+- **All views**: With security_barrier enabled (movie_recommendations_with_users, music_recommendations_with_users, book_recommendations_with_users, game_recommendations_with_users, task_boards_with_stats, etc.)
+- **All functions**: is_admin, handle_new_user, batch_connect_users, is_bootstrap_allowed, update triggers, task timestamp triggers, etc.
+- **All triggers**: Admin protection, timestamp updates, status changes, auth user creation, etc.
+- **All RLS policies**: Security policies for every table
+- **All indexes**: Performance optimization
+- **All constraints**: Data integrity rules
+- **All table/column comments**: Documentation
 
-- Nov 17, 2025: Added `game_library.description_raw`, book `'listen'` type, `security_barrier` to views
-- **Nov 23, 2025: Consolidated tasks system** (3 tables: task_boards, task_board_sections, tasks)
-  - Template support: job_tracker, markdown, recipe, kanban, custom
-  - Flexible configuration: column_config, field_config, item_data
-  - Inbox tasks support (nullable board_id)
-  - Full RLS policies, triggers, indexes, and views
-  - Replaces 5 individual migrations (now archived)
-- **Dec 1, 2025: Updated board template types**
-  - Removed old templates: grocery, notes, todo
-  - Added markdown template as the new default
-  - Migration auto-converts old templates to markdown
+**Source**: Generated from production database using `supabase db pull`
 
-**Note**: This baseline was initially created from archived prototype migrations and has been tested in dev database. All known issues have been fixed and consolidated.
+**When to Use**:
 
-**Consolidation Workflow**:
-
-When preparing for a fresh production database deployment, recently added features can be consolidated into the baseline to keep the migration chain clean:
-
-1. **Before consolidation**: Baseline + 5 task migrations + 2 bootstrap migrations = 8 files
-2. **After consolidation**: Baseline (with tasks) + 2 bootstrap migrations = 3 files
-3. **Result**: Cleaner migration history, easier to understand and maintain
-
-Consolidated migrations are moved to `archive/` for historical reference. This is the recommended approach before deploying to a fresh production database.
-
-**When to Run**:
-
-- When setting up a new database (dev or prod)
+- Setting up a new database (development or production)
+- Resetting development database to clean state
 - Never on an existing database that already has data
-- If resetting database to clean state
 
-**How to Run**:
+**How to Apply**:
 
-1. Supabase Dashboard → SQL Editor
-2. Copy entire file contents
-3. Paste and execute
-4. Verify tables created: Database → Tables
+```bash
+# Development database
+npm run db:push:dev
 
-### Forward-Only Migrations
+# Production database (7-second safety warning)
+npm run db:push:prod
+```
 
-These migrations must be applied **after** the baseline migration. They add features required for bootstrap setup, user authentication, and ongoing feature development.
-
-#### Critical Migrations (Required for Bootstrap)
-
-These two migrations must be run immediately after the baseline to enable initial setup:
-
-##### 1. Allow Bootstrap Invite Creation
-
-**File**: `supabase/migrations/20251119000000_allow_bootstrap_invite_creation.sql`
-
-**Purpose**: Adds RLS policy to allow invite code creation when no users exist in the database.
-
-**What It Does**:
-
-- Creates `is_bootstrap_allowed()` function (returns true only when user count = 0)
-- Adds RLS policy allowing INSERT to `invite_codes` during bootstrap phase
-- Enables the bootstrap script (`npm run db:create-bootstrap-code`) to work
-
-**When to Run**: After baseline, before creating your first admin user
-
-##### 2. Add Auth User Trigger
-
-**File**: `supabase/migrations/20251119000001_add_auth_user_trigger.sql`
-
-**Purpose**: Auto-creates user profile when user signs up via Supabase Auth.
-
-**What It Does**:
-
-- Creates trigger `on_auth_user_created` on `auth.users` table
-- Calls `handle_new_user()` function after each signup
-- Automatically inserts row into `user_profiles` table
-- Ensures every authenticated user has a profile entry
-
-**Why It's Critical**: Without this trigger, users can sign up but the app will fail with 406 errors (missing profile data).
-
-**When to Run**: After baseline, before first user signup
-
-#### Feature Migrations (December 2025)
-
-Additional migrations that add new features and improvements:
-
-- **`20251201000000_update_board_template_types.sql`** - Updated task board template types (removed grocery/notes/todo, added markdown as default)
-- **`20251202000000_add_repeatable_tasks.sql`** - Added repeatable/recurring task functionality
-- **`20251203000000_media_reviews_and_music_metadata.sql`** - Enhanced media reviews system and music metadata
-- **`20251204000000_add_tasks_enhancements.sql`** - Additional task system enhancements
-- **`20251204000001_fix_board_shares_foreign_key.sql`** - Fixed foreign key constraints on board_shares table
-- **`20251204000002_restrict_board_shares_update_to_owners.sql`** - Restricted board share updates to owners only
-- **`20251204000003_canonicalize_template_types.sql`** - Canonicalized task board template types
+**IMPORTANT**: This file must never be edited. It represents the exact state of a healthy production database and serves as the authoritative baseline.
 
 ---
 
-### Archived Migrations
+## Creating New Migrations
 
-**Location**: `supabase/migrations/archive/`
+### The Diff Workflow (REQUIRED)
 
-**What They Are**: 60+ migrations from prototype phase (Oct 2024 - Jan 2025)
+**CRITICAL**: All schema changes must follow this workflow. Never make manual changes in the Supabase SQL editor.
 
-**Status**: Superseded by baseline migration
+#### Step-by-Step Process
 
-**Purpose**: Historical reference only
+1. **Make changes in Supabase Dashboard UI**
 
-**⚠️ NEVER run these on new databases** - they're already included in the baseline
+   - Navigate to Table Editor, Database settings, etc.
+   - Create/modify tables, columns, indexes, etc. using the UI
+   - These changes are applied directly to your database
+
+2. **Generate a diff of your changes**
+
+   ```bash
+   npm run db:diff:dev
+   ```
+
+   This compares your current database schema against the last migration and shows the SQL diff.
+
+3. **Review the generated SQL**
+
+   - Verify the SQL accurately reflects your intended changes
+   - Check for any unexpected alterations
+
+4. **Create a new migration file**
+
+   ```bash
+   npm run db:migration:new <descriptive_name>
+
+   # Examples:
+   npm run db:migration:new add_user_preferences_table
+   npm run db:migration:new add_email_notifications_column
+   npm run db:migration:new create_comments_table
+   ```
+
+5. **Copy the diff SQL into your new migration**
+
+   - Open the newly created migration file in `supabase/migrations/`
+   - Paste the SQL from the diff output
+   - Add any necessary comments
+
+6. **Test in development**
+
+   ```bash
+   # Reset dev database to clean state
+   npm run db:reset:dev
+
+   # This will:
+   # - Drop and recreate the database
+   # - Apply baseline migration
+   # - Apply all forward-only migrations (including your new one)
+   ```
+
+7. **Verify the migration works**
+
+   - Check that all tables/columns/indexes were created correctly
+   - Test affected application features
+   - Run your test suite: `npm run test`
+
+8. **Apply to production**
+   ```bash
+   npm run db:push:prod
+   ```
+   This has a 7-second safety warning before execution.
+
+### Why This Workflow?
+
+- **Version controlled**: All changes tracked in git
+- **Reproducible**: Anyone can recreate database state from migrations
+- **Testable**: Can verify migrations work on clean database
+- **Auditable**: Clear history of when and why schema changed
+- **Prevents drift**: Dev and prod databases stay in sync
+
+---
+
+## Forward-Only Migration Rules
+
+### What "Forward-Only" Means
+
+Once a migration file is created and committed to git:
+
+- ✅ **Can**: Apply it to databases that don't have it yet
+- ❌ **Cannot**: Edit the file
+- ❌ **Cannot**: Delete the file
+- ❌ **Cannot**: Rename the file
+- ❌ **Cannot**: Change the order
+
+### If You Need to Fix a Mistake
+
+Create a new migration that reverses or corrects the previous one:
+
+```bash
+# Wrong: Editing 0002_add_user_preferences.sql
+# Right: Creating 0003_fix_user_preferences.sql
+npm run db:migration:new fix_user_preferences
+```
+
+### Why No Rollbacks?
+
+- Migrations may have been applied to production
+- Data may have been created/modified based on the schema
+- Rolling back can cause data loss or corruption
+- Forward-only keeps a clear audit trail
 
 ---
 
@@ -245,7 +267,7 @@ Shows which migrations are pending vs. applied to the specified database.
 # Apply to DEVELOPMENT database (safe, no warning)
 npm run db:push:dev
 
-# Apply to PRODUCTION database (5-second warning)
+# Apply to PRODUCTION database (7-second warning)
 npm run db:push:prod
 ```
 
@@ -258,18 +280,24 @@ npm run db:push:prod
 npm run db:reset:dev
 ```
 
-**⚠️ This is DESTRUCTIVE** - only use on development database
+**⚠️ This is DESTRUCTIVE** - drops and recreates the entire database
+
+**Use Cases**:
+
+- Testing that migrations work from scratch
+- Cleaning up after failed experiments
+- Verifying migration order is correct
 
 **Never run on production** - this command is dev-only for safety
 
 ### Checking Schema Differences
 
 ```bash
-# See differences between database and migration files
+# See differences between current database and migration files
 npm run db:diff:dev
 ```
 
-Useful if you made manual changes in Supabase Dashboard and want to create a migration for them.
+Shows the SQL needed to bring migration files in sync with your current database state. Use this after making changes in the Supabase Dashboard UI to generate migration SQL.
 
 ---
 
@@ -394,159 +422,84 @@ Vercel automatically deploys the updated app that uses the new schema.
 
 ---
 
+---
+
 ## Safety Rules
 
 ### ✅ DO
 
 - **Always test in dev first** before applying to prod
-- **Create new migrations** for all schema changes
-- **Use idempotent SQL** (`IF NOT EXISTS`, `ON CONFLICT`, etc.)
+- **Use the diff workflow** for all schema changes (`db:diff:dev`)
+- **Never edit the baseline** (`0001_baseline.sql`) - it's the production source of truth
+- **Create new migrations** for all schema changes (forward-only)
+- **Use idempotent SQL** when possible (`IF NOT EXISTS`, `ON CONFLICT`, etc.)
 - **Include RLS policies** on all new tables
 - **Add indexes** for frequently queried columns
 - **Document complex changes** with comments in migration files
+- **Test migration chain** with `db:reset:dev` before applying to production
 - **Commit migrations to git** before applying to prod
 
 ### ❌ DON'T
 
 - **Don't edit existing migrations** - create new forward-only migrations
-- **Don't modify the baseline** (`20250116000000_baseline_schema.sql`) - it's sacred
-- **Don't run `db:reset:dev` on production** - it's dev-only for safety
+- **Don't make manual SQL editor changes** - always use the diff workflow
+- **Don't modify the baseline** - production is the source of truth
+- **Don't run `db:reset:dev` on production** - it's dev-only
 - **Don't skip dev testing** - always test before prod
-- **Don't make destructive changes** without backup plan
+- **Don't make destructive changes** without understanding impact
 - **Don't bypass RLS** or remove security constraints
-- **Don't reference archived migrations** for new work
-
----
-
-## Task Board Template Types
-
-### Canonical Template Types
-
-The `task_boards.template_type` column uses a CHECK constraint to enforce allowed values. The canonical set is:
-
-| Template Type | Description                                         |
-| ------------- | --------------------------------------------------- |
-| `job_tracker` | Job application tracking with status history        |
-| `markdown`    | Simple list-based tasks with markdown support       |
-| `recipe`      | Recipe management with ingredients/instructions     |
-| `kanban`      | Board with columns (To Do, In Progress, Done)       |
-| `grocery`     | Shopping list with categories and purchase tracking |
-| `custom`      | User-defined board with flexible configuration      |
-
-**Migration**: `20251204000003_canonicalize_template_types.sql`
-
-**Why This Matters**: Earlier migrations defined this constraint differently, which could cause schema drift between environments. The canonical migration ensures all databases use the same definition.
-
-**Removed Types**: `notes` and `todo` were converted to `markdown` in migration `20251201000000_update_board_template_types.sql`.
-
-**Type Safety**: The TypeScript type `TemplateType` in `src/services/tasksService.types.ts` matches this database constraint exactly.
-
----
-
-## The Baseline Migration
-
-### What Makes It Special
-
-**File**: `supabase/migrations/20250116000000_baseline_schema.sql`
-
-**Purpose**: Single source of truth for complete schema
-
-**When Created**: November 16, 2025 (database reset before real users)
-
-**What It Replaced**: 60+ prototype migrations from Oct 2024 - Jan 2025
-
-**Why It's Sacred**:
-
-- Represents clean starting point
-- New databases start from this baseline
-- Editing it would break new database setups
-- All future changes must be new migrations
-
-### Bootstrap Admin Setup
-
-After applying migrations to a fresh database, you need to create an admin invite code.
-
-**Step 1**: Apply all migrations in order
-
-```bash
-# Apply baseline + forward-only migrations to dev database
-npm run db:push:dev
-```
-
-This applies:
-
-1. `20250116000000_baseline_schema.sql` (complete schema)
-2. `20251119000000_allow_bootstrap_invite_creation.sql` (bootstrap RLS)
-3. `20251119000001_add_auth_user_trigger.sql` (auto-create profiles)
-
-**Step 2**: Create your admin invite code
-
-```bash
-npm run db:create-bootstrap-code
-```
-
-This will:
-
-- Prompt for your admin email address
-- Generate a secure invite code (e.g., `XKCD-2K4P-9MNQ-7HJR`)
-- Insert it into the database
-- Display the code for you to use during signup
-
-**Step 3**: Sign up with admin privileges
-
-1. Go to your app signup page
-2. Sign up with the email you provided
-3. Use the generated invite code
-4. You now have admin access!
-
-**Security Notes**:
-
-- Each deployment uses its own unique admin credentials
-- No credentials are stored in git repository
-- Invite code is single-use and tied to your email
-- You can create additional invite codes from the admin panel
 
 ---
 
 ## Troubleshooting
 
-### Issue: Application fails with "relation does not exist" errors
+### Issue: Migration fails to apply
 
-**Symptoms**: Errors like:
+**Symptoms**: Error when running `npm run db:push:dev` or `db:push:prod`
 
-- `relation "public.reading_list" does not exist`
-- `relation "public.book_recommendations" does not exist`
-- `relation "public.game_library" does not exist`
-- `relation "public.game_recommendations" does not exist`
-- `relation "public.music_library" does not exist`
-- `relation "public.media_reviews" does not exist`
+**Possible Causes**:
 
-**Cause**: You ran the incomplete baseline migration before it was fixed (Nov 16, 2025).
+1. Syntax error in SQL
+2. Conflicting constraint or index names
+3. Attempting to modify existing objects (use `IF NOT EXISTS`)
+4. RLS preventing the migration from running
 
-**Solution - Option 1** (Run missing migrations):
+**Solutions**:
 
-```bash
-# Apply the archived migrations for the missing tables
-# In Supabase Dashboard → SQL Editor, run these in order:
-# 1. 20251024201314_create_reading_list.sql
-# 2. 20251024201354_create_book_recommendations.sql
-# 3. 20251104001011_create_game_library.sql
-# 4. 20251104001052_create_game_recommendations.sql
-# 5. 20251102000000_create_music_library.sql
-# 6. 20251022000001_create_media_reviews.sql
-# 7. 20251023043630_fix_media_reviews_rating_constraint.sql
-```
+1. Review the migration SQL carefully
+2. Test SQL snippets in Supabase Dashboard SQL editor
+3. Check for naming conflicts with existing database objects
+4. Ensure migration uses idempotent patterns
 
-**Solution - Option 2** (Reset and re-run corrected baseline):
+### Issue: Dev and prod databases out of sync
+
+**Symptoms**: Application works in dev but fails in production
+
+**Cause**: Migrations not applied to production, or manual changes made in SQL editor
+
+**Solution**:
 
 ```bash
-# WARNING: This will delete all data
-# 1. In Supabase Dashboard → Database → drop all public tables
-# 2. Run the corrected baseline migration
-# 3. Use BOOTSTRAP_ADMIN_2025 to re-invite admin
+# Check which migrations are missing in prod
+npm run db:migration:list:prod
+
+# Apply missing migrations
+npm run db:push:prod
 ```
 
-**Prevention**: Always pull the latest migrations before setting up a new database.
+**Prevention**: Always use the diff workflow, never make manual SQL editor changes
+
+### Issue: Need to undo a migration
+
+**You Cannot**: Migrations are forward-only, no rollback support
+
+**Solution**: Create a new migration that reverses the change
+
+```bash
+npm run db:migration:new revert_previous_change
+```
+
+Then write SQL that undoes the previous migration (e.g., `DROP TABLE`, `DROP COLUMN`, etc.)
 
 ---
 
@@ -554,22 +507,22 @@ This will:
 
 **Quick Reference**:
 
-- See `supabase/migrations/README.md` for command quick reference
+- See `supabase/MIGRATIONS-README.md` for command quick reference
 - See `docs/DEV-PROD-WORKFLOW.md` for dev/prod setup
-- Check existing migrations for SQL examples
+- Check the baseline migration for SQL examples
 
 **Common Questions**:
 
-- "How do I create a migration?" → `npm run db:migration:new description`
+- "How do I create a migration?" → Use diff workflow: make UI changes, then `npm run db:diff:dev`
 - "How do I test safely?" → `npm run db:push:dev` (uses dev database)
-- "How do I apply to prod?" → `npm run db:push:prod` (has 5-second warning)
-- "I broke dev database" → `npm run db:reset:dev` (resets from migrations)
+- "How do I apply to prod?" → `npm run db:push:prod` (has 7-second warning)
+- "I broke dev database" → `npm run db:reset:dev` (rebuilds from migrations)
+- "Can I edit an existing migration?" → No, create a new forward-only migration
 
 ---
 
-**Last Updated**: December 4, 2025  
-**Baseline Migration**: `20250116000000_baseline_schema.sql` (consolidated fixes)  
-**Forward-Only Migrations**: 9 total
+**Last Updated**: December 5, 2025  
+**Baseline Migration**: `0001_baseline.sql` (from production, December 5, 2025)
 
 - 2 critical (bootstrap RLS + auth trigger)
 - 7 feature migrations (Dec 2025: board templates, repeatable tasks, media reviews, tasks enhancements, board shares fixes)

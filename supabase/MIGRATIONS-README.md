@@ -2,83 +2,82 @@
 
 This directory contains database schema migrations for the NPC Finder application.
 
-## Quick Reference
+## Current State
 
-### Current State
+**Single Baseline Migration**: `0001_baseline.sql`
 
-**Baseline Migration**: `20250116000000_baseline_schema.sql`
+- Complete, authoritative schema pulled from production database (December 5, 2025)
+- Single source of truth for all database structure
+- Includes all tables, views, functions, triggers, RLS policies, indexes, and constraints
+- Generated using `supabase db pull` from a healthy production database
 
-- Complete schema as of November 16, 2025
-- **Consolidated Tasks System** (Nov 23, 2025): All task management features now included in baseline
-- **Auto-Admin First User** (Nov 23, 2025): First user automatically granted admin privileges
-- Single source of truth for database structure
-- Includes all tables, views (with security_barrier), functions, triggers, RLS policies, indexes
+**All previous migrations have been consolidated into this baseline.**
 
-**Forward-Only Migrations**: 2 additional migrations required after baseline
+## Migration Philosophy
 
-1. `20251119000000_allow_bootstrap_invite_creation.sql` - Bootstrap RLS policy
-2. `20251119000001_add_auth_user_trigger.sql` - Auto-create user profiles on signup
+This project follows a **strict forward-only migration approach**:
 
-**Archived Migrations**: See `archive/` directory
+✅ **DO:**
 
-- Prototype phase migrations (Oct 2024 - Jan 2025)
-- Historical reference only
-- **Do not run these on new databases**
+- Use the baseline migration (`0001_baseline.sql`) as the foundation for all new databases
+- Create new migrations for all future schema changes using `supabase db diff`
+- Test migrations in development before applying to production
+- Reset your dev database freely using `npm run db:reset:dev`
 
-### Setup Instructions
+❌ **NEVER:**
 
-To set up a fresh database, apply migrations in order:
+- Edit existing migration files (including the baseline)
+- Make manual changes in the Supabase SQL editor
+- Skip migrations or apply them out of order
+- Delete or rename migration files
+
+## Setup Instructions
+
+### Fresh Database Setup
+
+To set up a new database (development or production):
 
 ```bash
-# Apply all migrations (baseline + forward-only)
+# Development database (safe to experiment)
 npm run db:push:dev
+
+# Production database (7-second safety warning)
+npm run db:push:prod
 ```
 
-This applies:
+This applies the baseline migration and all forward-only migrations in order.
 
-1. Baseline schema (all tables, views, functions, RLS policies)
-2. Bootstrap RLS policy (allows admin invite creation)
-3. Auth trigger (auto-creates user profiles on signup, first user gets admin)
+### Creating Your First Admin User
 
-Then create your first admin invite code:
+After pushing migrations to a fresh database:
 
 ```bash
+# Create bootstrap invite code
 npm run db:create-bootstrap-code
 ```
 
-**First user automatically becomes admin** - no manual SQL needed!
+The first user to sign up automatically receives admin privileges.
 
-### Known Issues (Resolved)
-
-**Previous Issue**: Original baseline migration (created Nov 16, 2025) was incomplete  
-**Resolution**: Baseline has been corrected and consolidated (Nov 23, 2025)
-
-**Previous Issue**: First user not automatically granted admin  
-**Resolution**: `handle_new_user()` function now auto-grants admin to first user (Nov 23, 2025)
-
-**If you have an existing database from before Nov 23, 2025**:
-
-- First user won't have admin (old bug)
-- Run `supabase/fix-admin-status.sql` to grant yourself admin
-- New databases don't need this fix
+## Working with Migrations
 
 ### Creating New Migrations
 
+**CRITICAL**: Never make manual changes in the Supabase SQL editor. Always use the diff workflow:
+
 ```bash
-# Create a new migration file
+# 1. Make your schema changes in Supabase Dashboard (tables/columns/etc)
+# 2. Generate a migration from the diff
+npm run db:diff:dev
+
+# 3. Review the generated SQL in the new migration file
+# 4. Create a properly named migration file
 npm run db:migration:new <descriptive_name>
 
-# Example
-npm run db:migration:new add_user_preferences_table
-```
-
-### Applying Migrations
-
-```bash
-# Test on development database (SAFE)
+# 5. Copy the SQL from the diff into your new migration file
+# 6. Test in development
 npm run db:push:dev
 
-# Apply to production database (5-second warning)
+# 7. After testing, apply to production
 npm run db:push:prod
 ```
 
@@ -92,12 +91,41 @@ npm run db:migration:list:dev
 npm run db:migration:list:prod
 ```
 
+### Resetting Development Database
+
+Safe to do at any time during development:
+
+```bash
+npm run db:reset:dev
+```
+
+This drops and recreates your dev database, then reapplies all migrations from scratch.
+
 ## Important Rules
 
 ⚠️ **NEVER edit existing migration files**
 
+- Editing breaks the migration chain and causes deployment failures
 - Always create new forward-only migrations
-- Editing old migrations breaks the migration chain
+
+⚠️ **NEVER make manual changes in SQL editor**
+
+- Use the dashboard UI to modify schema, then use `db:diff` to capture changes
+- Manual SQL changes won't be tracked in version control
+
+⚠️ **ALWAYS test in dev first**
+
+- Apply and test all migrations in development before production
+- Use `npm run db:reset:dev` to verify migrations work on a clean database
+
+⚠️ **Migrations are forward-only**
+
+- No rollback support
+- If you need to undo a change, create a new migration that reverses it
+
+## Additional Resources
+
+See `docs/DATABASE-MIGRATIONS.md` for detailed migration workflow and best practices.
 
 ⚠️ **NEVER edit the baseline migration**
 
