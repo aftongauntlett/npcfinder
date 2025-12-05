@@ -5,6 +5,13 @@
 - Prefer explicit, readable code over cleverness.
 - Choose the model appropriate to the task (Codex for complex code, Claude for reasoning, Grok for small tasks); do not escalate to a higher-tier model unless needed.
 
+## Terminal & Process Rules
+
+- **NEVER run tests in watch mode** - always use `npm test` (runs once), never `npm run test:watch`
+- **NEVER use `isBackground: true`** for test commands - they must exit when complete
+- Only use background processes for intentional servers (dev server, etc.) and explicitly tell the user
+- If starting a background process, provide the terminal ID so user can monitor/stop it
+
 ## Database & Migration Rules
 
 - Never suggest editing existing migration files in `supabase/migrations/`
