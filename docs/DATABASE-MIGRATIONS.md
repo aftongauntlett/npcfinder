@@ -402,6 +402,31 @@ Vercel automatically deploys the updated app that uses the new schema.
 
 ---
 
+## Task Board Template Types
+
+### Canonical Template Types
+
+The `task_boards.template_type` column uses a CHECK constraint to enforce allowed values. The canonical set is:
+
+| Template Type | Description                                         |
+| ------------- | --------------------------------------------------- |
+| `job_tracker` | Job application tracking with status history        |
+| `markdown`    | Simple list-based tasks with markdown support       |
+| `recipe`      | Recipe management with ingredients/instructions     |
+| `kanban`      | Board with columns (To Do, In Progress, Done)       |
+| `grocery`     | Shopping list with categories and purchase tracking |
+| `custom`      | User-defined board with flexible configuration      |
+
+**Migration**: `20251204000003_canonicalize_template_types.sql`
+
+**Why This Matters**: Earlier migrations defined this constraint differently, which could cause schema drift between environments. The canonical migration ensures all databases use the same definition.
+
+**Removed Types**: `notes` and `todo` were converted to `markdown` in migration `20251201000000_update_board_template_types.sql`.
+
+**Type Safety**: The TypeScript type `TemplateType` in `src/services/tasksService.types.ts` matches this database constraint exactly.
+
+---
+
 ## The Baseline Migration
 
 ### What Makes It Special

@@ -9,7 +9,8 @@ export type TemplateType =
   | "markdown"
   | "recipe"
   | "kanban"
-  | "grocery";
+  | "grocery"
+  | "custom";
 
 export type ViewType = "table" | "checklist" | "cards" | "kanban" | "list";
 
@@ -321,6 +322,15 @@ export const BOARD_TEMPLATES: Record<TemplateType, BoardTemplate> = {
   recipe: RECIPE_TEMPLATE,
   kanban: KANBAN_TEMPLATE,
   grocery: GROCERY_TEMPLATE,
+  custom: {
+    id: "custom",
+    name: "Custom Board",
+    description: "Blank board with flexible configuration",
+    icon: "Star",
+    emoji: "⭐",
+    defaultView: "kanban" as ViewType,
+    fields: [],
+  },
 };
 
 /**

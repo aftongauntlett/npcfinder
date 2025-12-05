@@ -57,6 +57,19 @@ export interface SharedBoardData {
 }
 
 /**
+ * Template Type
+ * Canonical set of supported board template types
+ * Must match database CHECK constraint on task_boards.template_type
+ */
+export type TemplateType =
+  | "job_tracker"
+  | "markdown"
+  | "recipe"
+  | "kanban"
+  | "grocery"
+  | "custom";
+
+/**
  * Grocery Category
  * Common grocery shopping categories
  */
@@ -80,7 +93,7 @@ export interface Board {
   color: string | null;
   is_public: boolean;
   board_type: string | null;
-  template_type?: string | null;
+  template_type?: TemplateType | null;
   field_config: Record<string, unknown> | null;
   display_order: number | null;
   created_at: string;
@@ -137,7 +150,7 @@ export interface CreateBoardData {
   color?: string;
   is_public?: boolean;
   board_type?: string;
-  template_type?: string;
+  template_type?: TemplateType;
   field_config?: Record<string, unknown>;
 }
 

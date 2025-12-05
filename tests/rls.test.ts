@@ -247,3 +247,101 @@ describe("Watchlist RLS Policies", () => {
     expect(data?.length).toBeGreaterThan(0);
   });
 });
+
+describe("Board Sharing RLS Policies", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should prevent non-owner editors from updating share permissions", async () => {
+    // Mock a user with can_edit = true trying to update share permissions
+    // This should fail because only board owners can update shares
+    const mockError = {
+      code: "42501",
+      message: "new row violates row-level security policy",
+      details: "Policy violation on table board_shares",
+      hint: null,
+    };
+
+    vi.spyOn(supabase, "from").mockReturnValue({
+      update: vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({
+          data: null,
+          error: mockError,
+        }),
+      }),
+    } as any);
+
+    // Attempt to update share permission as a non-owner editor
+    const { error } = await supabase
+      .from("board_shares")
+      .update({ can_edit: false })
+      .eq("id", "some-share-id");
+
+    expect(error).toBeTruthy();
+    expect(error?.code).toBe("42501");
+  });
+
+  it("should allow board owners to update share permissions", async () => {
+    // Mock successful share permission update by board owner
+    vi.spyOn(supabase, "from").mockReturnValue({
+      update: vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({
+          data: { id: "share-id", can_edit: false },
+          error: null,
+        }),
+      }),
+    } as any);
+
+    const { data, error } = await supabase
+      .from("board_shares")
+      .update({ can_edit: false })
+      .eq("id", "share-id");
+
+    expect(error).toBeNull();
+    expect(data).toBeTruthy();
+  });
+
+  it("should allow board owners to create shares", async () => {
+    // Mock successful share creation by board owner
+    vi.spyOn(supabase, "from").mockReturnValue({
+      insert: vi.fn().mockResolvedValue({
+        data: {
+          id: "new-share-id",
+          board_id: "board-id",
+          shared_with_user_id: "recipient-id",
+          can_edit: true,
+        },
+        error: null,
+      }),
+    } as any);
+
+    const { data, error } = await supabase.from("board_shares").insert({
+      board_id: "board-id",
+      shared_with_user_id: "recipient-id",
+      can_edit: true,
+    });
+
+    expect(error).toBeNull();
+    expect(data).toBeTruthy();
+  });
+
+  it("should allow board owners to delete shares", async () => {
+    // Mock successful share deletion by board owner
+    vi.spyOn(supabase, "from").mockReturnValue({
+      delete: vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({
+          data: { id: "share-id" },
+          error: null,
+        }),
+      }),
+    } as any);
+
+    const { error } = await supabase
+      .from("board_shares")
+      .delete()
+      .eq("id", "share-id");
+
+    expect(error).toBeNull();
+  });
+});

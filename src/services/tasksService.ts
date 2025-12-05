@@ -1065,6 +1065,10 @@ export async function getSharedBoards(): Promise<
 
 /**
  * Update sharing permission for a user
+ *
+ * @security Only board owners can update share permissions. RLS enforces this by checking
+ *           that the board_id belongs to a task_board owned by auth.uid(). Share recipients
+ *           (even those with can_edit = true) cannot modify share entries.
  */
 export async function updateSharePermission(
   shareId: string,

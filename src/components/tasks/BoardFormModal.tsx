@@ -92,7 +92,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
   const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
-  const [templateType, setTemplateType] = useState<string>("markdown");
+  const [templateType, setTemplateType] = useState<TemplateType>("markdown");
   const [nameError, setNameError] = useState<string>("");
   const [isNameAutoFilled, setIsNameAutoFilled] = useState(false);
 
@@ -214,7 +214,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
       setIconName(board.icon || "");
       setColor(board.color || themeColor);
       setIsPublic(board.is_public || false);
-      setTemplateType((board.template_type as string) || "kanban");
+      setTemplateType((board.template_type as TemplateType) || "kanban");
       setNameError("");
       setIsNameAutoFilled(false);
     } else {
@@ -235,13 +235,13 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
   }, [board, isOpen, generateUniqueBoardName, themeColor, preselectedTemplate]);
 
   // Handle template type change - auto-fill name and description
-  const handleTemplateChange = (newTemplateType: string) => {
+  const handleTemplateChange = (newTemplateType: TemplateType) => {
     setTemplateType(newTemplateType);
 
     // Don't auto-fill if editing existing board
     if (board) return;
 
-    const template = getTemplate(newTemplateType as TemplateType);
+    const template = getTemplate(newTemplateType);
     const uniqueName = generateUniqueBoardName(template.name);
 
     setName(uniqueName);
@@ -427,33 +427,35 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
 
               {showTemplateDropdown && (
                 <div className="absolute left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 max-h-[300px] overflow-y-auto">
-                  {[
-                    {
-                      value: "markdown",
-                      label: "To-Do List (Default)",
-                      desc: "Markdown-style list with support for bold, bullets, and formatting",
-                    },
-                    {
-                      value: "grocery",
-                      label: "Grocery List",
-                      desc: "Simple grocery list with categories and purchase tracking",
-                    },
-                    {
-                      value: "job_tracker",
-                      label: "Job Applications",
-                      desc: "Quick add via URL and track job applications with detailed fields",
-                    },
-                    {
-                      value: "recipe",
-                      label: "Recipe Collection",
-                      desc: "Quick add via URL and organize recipes with ingredients and instructions",
-                    },
-                    {
-                      value: "kanban",
-                      label: "Kanban Board",
-                      desc: "Drag-and-drop style board for organizing tasks in columns",
-                    },
-                  ].map((option) => (
+                  {(
+                    [
+                      {
+                        value: "markdown" as TemplateType,
+                        label: "To-Do List (Default)",
+                        desc: "Markdown-style list with support for bold, bullets, and formatting",
+                      },
+                      {
+                        value: "grocery" as TemplateType,
+                        label: "Grocery List",
+                        desc: "Simple grocery list with categories and purchase tracking",
+                      },
+                      {
+                        value: "job_tracker" as TemplateType,
+                        label: "Job Applications",
+                        desc: "Quick add via URL and track job applications with detailed fields",
+                      },
+                      {
+                        value: "recipe" as TemplateType,
+                        label: "Recipe Collection",
+                        desc: "Quick add via URL and organize recipes with ingredients and instructions",
+                      },
+                      {
+                        value: "kanban" as TemplateType,
+                        label: "Kanban Board",
+                        desc: "Drag-and-drop style board for organizing tasks in columns",
+                      },
+                    ] as const
+                  ).map((option) => (
                     <button
                       key={option.value}
                       type="button"
