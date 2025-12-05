@@ -5,8 +5,10 @@ import { supabase } from "../../../lib/supabase";
 import { getFriends } from "../../../lib/connections";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
+import Toast from "../../ui/Toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../../../lib/queryKeys";
+import { logger } from "@/lib/logger";
 import SendMediaModalSearchStep from "./SendMediaModalSearchStep";
 import SendMediaModalFriendsStep from "./SendMediaModalFriendsStep";
 import SendMediaModalDetailsStep from "./SendMediaModalDetailsStep";
@@ -116,6 +118,10 @@ export default function SendMediaModal({
   const [sending, setSending] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  // Toast notification state
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+
   // Check for existing recommendations when item is selected
   const checkExistingRecommendations = useCallback(
     async (item: MediaItem) => {
@@ -130,7 +136,10 @@ export default function SendMediaModal({
           .eq("external_id", item.external_id);
 
         if (error) {
-          console.error("Error checking existing recommendations:", error);
+          logger.error("Failed to check existing recommendations", {
+            error,
+            externalId: item.external_id,
+          });
           return;
         }
 
@@ -138,7 +147,7 @@ export default function SendMediaModal({
         const existingRecipients = new Set(data.map((rec) => rec.to_user_id));
         setFriendsWithExistingRec(existingRecipients);
       } catch (error) {
-        console.error("Error checking existing recommendations:", error);
+        logger.error("Failed to check existing recommendations", { error });
       }
     },
     [user, tableName]
@@ -156,13 +165,13 @@ export default function SendMediaModal({
       );
 
       if (friendsError) {
-        console.error("Error loading friends:", friendsError);
+        logger.error("Failed to load friends", { error: friendsError });
         setFriends([]);
       } else {
         setFriends(friendsList || []);
       }
     } catch (error) {
-      console.error("Error loading friends:", error);
+      logger.error("Failed to load friends", { error });
       setFriends([]);
     } finally {
       setLoadingFriends(false);
@@ -183,7 +192,7 @@ export default function SendMediaModal({
           const results = await searchFunction(searchQuery);
           setSearchResults(results);
         } catch (error) {
-          console.error("Search error:", error);
+          logger.error("Media search failed", { error, searchQuery });
           setSearchResults([]);
         } finally {
           setSearching(false);
@@ -375,11 +384,13 @@ export default function SendMediaModal({
 
       if (error) {
         if (error.message.includes("duplicate key")) {
-          alert(
+          setToastMessage(
             "You've already sent this recommendation to one or more of these friends."
           );
+          setShowToast(true);
         } else {
-          alert(`Failed to send recommendation: ${error.message}`);
+          setToastMessage(`Failed to send recommendation: ${error.message}`);
+          setShowToast(true);
         }
         setSending(false);
         return;
@@ -405,9 +416,13 @@ export default function SendMediaModal({
         handleClose();
       }, 1500);
     } catch (error) {
-      console.error("Error sending recommendations:", error);
+      logger.error("Failed to send recommendations", {
+        error,
+        recipientsCount: selectedFriends.size,
+      });
       setSending(false);
-      alert("Failed to send recommendation. Please try again.");
+      setToastMessage("Failed to send recommendation. Please try again.");
+      setShowToast(true);
     }
   };
 
@@ -494,6 +509,11 @@ export default function SendMediaModal({
             </Button>
           )}
         </div>
+      )}
+
+      {/* Toast Notification */}
+      {showToast && (
+        <Toast message={toastMessage} onClose={() => setShowToast(false)} />
       )}
     </Modal>
   );

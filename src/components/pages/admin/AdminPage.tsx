@@ -20,6 +20,8 @@ import StatCard from "../../shared/common/StatCard";
 import Button from "../../shared/ui/Button";
 import Input from "../../shared/ui/Input";
 import EmptyState from "../../shared/common/EmptyState";
+import Toast from "../../ui/Toast";
+import { logger } from "@/lib/logger";
 import { useAdmin } from "../../../contexts/AdminContext";
 import {
   useAdminStats,
@@ -74,6 +76,10 @@ const AdminPage: React.FC = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [intendedEmail, setIntendedEmail] = useState("");
 
+  // Toast notification state
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+
   // Queries
   const { data: stats, isLoading: statsLoading } = useAdminStats();
   const { data: usersData, isLoading: usersLoading } = useAdminUsers(
@@ -115,7 +121,8 @@ const AdminPage: React.FC = () => {
     (user: User) => {
       // Prevent demoting master admin
       if (user.is_admin && isMasterAdmin(user)) {
-        alert("Cannot remove admin privileges from Master Admin");
+        setToastMessage("Cannot remove admin privileges from Master Admin");
+        setShowToast(true);
         return;
       }
 
@@ -142,21 +149,24 @@ const AdminPage: React.FC = () => {
       setShowAdminToggleModal(false);
       setUserToToggle(null);
     } catch (error) {
-      console.error("Error toggling admin status:", error);
-      alert("An unexpected error occurred");
+      logger.error("Failed to toggle admin status", error);
+      setToastMessage("An unexpected error occurred");
+      setShowToast(true);
     }
   }, [userToToggle, toggleAdminMutation, refreshAdminStatus]);
 
   // Invite Code Handlers
   const handleCreateCode = useCallback(async () => {
     if (!intendedEmail.trim()) {
-      alert("Please enter an email address");
+      setToastMessage("Please enter an email address");
+      setShowToast(true);
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(intendedEmail)) {
-      alert("Please enter a valid email address");
+      setToastMessage("Please enter a valid email address");
+      setShowToast(true);
       return;
     }
 
@@ -175,8 +185,9 @@ const AdminPage: React.FC = () => {
         }, 5000);
       }
     } catch (error) {
-      console.error("Error creating code:", error);
-      alert("Failed to create invite code");
+      logger.error("Failed to create invite code", error);
+      setToastMessage("Failed to create invite code");
+      setShowToast(true);
     }
   }, [intendedEmail, createCodeMutation]);
 
@@ -193,8 +204,9 @@ const AdminPage: React.FC = () => {
       setShowRevokeModal(false);
       setCodeToRevoke(null);
     } catch (error) {
-      console.error("Error revoking code:", error);
-      alert("Failed to revoke invite code");
+      logger.error("Failed to revoke invite code", error);
+      setToastMessage("Failed to revoke invite code");
+      setShowToast(true);
     }
   }, [codeToRevoke, revokeMutation]);
 
@@ -204,8 +216,9 @@ const AdminPage: React.FC = () => {
       setCopiedCode(code);
       setTimeout(() => setCopiedCode(null), 2000);
     } catch (err) {
-      console.error("Failed to copy:", err);
-      alert("Failed to copy code");
+      logger.error("Failed to copy code", err);
+      setToastMessage("Failed to copy code");
+      setShowToast(true);
     }
   }, []);
 
@@ -216,8 +229,9 @@ const AdminPage: React.FC = () => {
       setCopiedCode(code);
       setTimeout(() => setCopiedCode(null), 2000);
     } catch (err) {
-      console.error("Failed to copy:", err);
-      alert("Failed to copy message");
+      logger.error("Failed to copy invite message", err);
+      setToastMessage("Failed to copy message");
+      setShowToast(true);
     }
   }, []);
 
@@ -873,14 +887,14 @@ const AdminPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+              <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
                 <div className="flex items-start gap-3">
-                  <RefreshCw className="w-5 h-5 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" />
+                  <RefreshCw className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                   <div>
-                    <h3 className="font-semibold text-purple-900 dark:text-purple-300 mb-1">
+                    <h3 className="font-semibold text-primary mb-1">
                       Auto-Expiring Codes
                     </h3>
-                    <p className="text-sm text-purple-800 dark:text-purple-400">
+                    <p className="text-sm text-primary/80">
                       Codes automatically expire after 30 days and can only be
                       used once. Delete unused codes to maintain security.
                     </p>
@@ -952,6 +966,11 @@ const AdminPage: React.FC = () => {
           variant="danger"
           isLoading={revokeMutation.isPending}
         />
+
+        {/* Toast Notification */}
+        {showToast && (
+          <Toast message={toastMessage} onClose={() => setShowToast(false)} />
+        )}
       </ContentLayout>
     </MainLayout>
   );
