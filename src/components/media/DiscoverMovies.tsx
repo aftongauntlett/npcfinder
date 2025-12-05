@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { TrendingUp, Star as StarIcon, Sparkles } from "lucide-react";
 import { SimilarMoviesCarousel } from "./SimilarMoviesCarousel";
+import { logger } from "@/lib/logger";
 import {
   fetchTrendingMedia,
   fetchPopularMedia,
@@ -30,7 +31,7 @@ export function DiscoverMovies() {
         setTrending(trendingData);
         setPopular(popularData);
       } catch (error) {
-        console.error("Error loading discover data:", error);
+        logger.error("Failed to load discover data", error);
       } finally {
         setLoading(false);
       }

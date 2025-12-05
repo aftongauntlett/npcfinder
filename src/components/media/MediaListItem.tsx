@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Calendar, Clock, RotateCcw, Check, Lightbulb } from "lucide-react";
 import { Book } from "@phosphor-icons/react";
 import { type MediaStatus } from "@/utils/mediaStatus";
+import { logger } from "@/lib/logger";
 import {
   AccordionListCard,
   GenreChips,
@@ -157,7 +158,7 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
           setDetails(info);
         })
         .catch((err) => {
-          console.error("Error loading media details:", err);
+          logger.error("Failed to load media details", err);
         })
         .finally(() => {
           setLoadingDetails(false);
@@ -176,7 +177,7 @@ const MediaListItem: React.FC<MediaListItemProps> = ({
       variant: "secondary" as const,
       ariaLabel: "Recommend to friends",
       className:
-        "!border-purple-400/50 dark:!border-purple-500/50 !bg-purple-50/50 dark:!bg-purple-950/30 !text-purple-600 dark:!text-purple-400 hover:!bg-purple-100/60 dark:hover:!bg-purple-900/40 hover:!border-purple-500/60 dark:hover:!border-purple-400/60",
+        "!border-primary/40 !bg-primary/10 !text-primary hover:!bg-primary/20 hover:!border-primary/60",
     });
   }
 

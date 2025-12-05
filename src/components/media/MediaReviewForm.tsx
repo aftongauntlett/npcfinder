@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import {
   Textarea,
   Button,
+  Input,
   StarRating,
   PrivacyToggle,
 } from "@/components/shared";
@@ -148,20 +149,13 @@ export function MediaReviewForm({
 
       {/* Watched Date */}
       <div>
-        <label
-          htmlFor="watched-at"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-        >
-          When did you watch this?{" "}
-          <span className="text-gray-500 text-xs">(optional)</span>
-        </label>
-        <input
+        <Input
           type="date"
           id="watched-at"
+          label="When did you watch this? (optional)"
           value={watchedAt}
           onChange={(e) => setWatchedAt(e.target.value)}
           max={new Date().toISOString().split("T")[0]}
-          className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
         />
       </div>
 

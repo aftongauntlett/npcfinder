@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Search, Plus, Loader } from "lucide-react";
 import FocusTrap from "focus-trap-react";
 import { UnifiedMediaCard, Button, Input, Modal } from "@/components/shared";
+import { logger } from "@/lib/logger";
 
 interface BrowseMediaModalProps {
   isOpen: boolean;
@@ -45,7 +46,7 @@ export function BrowseMediaModal({
       const results = await searchFunction(searchQuery);
       setSearchResults(results);
     } catch (error) {
-      console.error("Search error:", error);
+      logger.error("Media search failed", error);
     } finally {
       setLoading(false);
     }
@@ -58,7 +59,7 @@ export function BrowseMediaModal({
       // Remove from results after successful add
       setSearchResults((prev) => prev.filter((i) => i.id !== item.id));
     } catch (error) {
-      console.error("Error adding item:", error);
+      logger.error("Failed to add media item", error);
     } finally {
       setAddingIds((prev) => {
         const next = new Set(prev);

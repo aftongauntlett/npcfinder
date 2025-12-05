@@ -8,6 +8,7 @@ import {
   type MediaItem,
   Pagination,
 } from "@/components/shared";
+import { logger } from "@/lib/logger";
 import MediaListItem from "./MediaListItem";
 import MediaEmptyState from "./MediaEmptyState";
 import ConfirmationModal from "../shared/ui/ConfirmationModal";
@@ -221,7 +222,7 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
       setShowDeleteModal(false);
       setItemToDelete(null);
     } catch (error) {
-      console.error("Failed to delete from watchlist:", error);
+      logger.error("Failed to delete from watchlist", error);
       // Keep modal open so user sees the action failed
     }
   };

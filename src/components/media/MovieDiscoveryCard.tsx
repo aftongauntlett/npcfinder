@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { TrendingUp, Star, Film } from "lucide-react";
 import DiscoverySection from "./DiscoverySection";
+import { logger } from "@/lib/logger";
 import { useWatchlist } from "../../hooks/useWatchlistQueries";
 import { useAddToWatchlist } from "../../hooks/useWatchlistQueries";
 import { useTheme } from "../../hooks/useTheme";
@@ -105,7 +106,7 @@ const MovieDiscoveryCard: React.FC = () => {
           setSimilarMovies(data);
         }
       } catch (error) {
-        console.error(`Error loading ${section}:`, error);
+        logger.error(`Failed to load ${section} movies`, error);
       } finally {
         setLoadingSections((prev) => {
           const newSet = new Set(prev);

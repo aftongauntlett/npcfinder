@@ -6,6 +6,7 @@ import {
   Button,
   type MetadataItem,
 } from "@/components/shared";
+import { logger } from "@/lib/logger";
 import { SimilarMoviesCarousel } from "./SimilarMoviesCarousel";
 import {
   fetchDetailedMediaInfo,
@@ -128,7 +129,7 @@ export default function MovieDetailModal({
 
         setSimilarMovies(similar);
       } catch (err) {
-        console.error("Error loading movie details:", err);
+        logger.error("Failed to load movie details", err);
         setError("Failed to load details");
       } finally {
         setLoading(false);
@@ -154,7 +155,7 @@ export default function MovieDetailModal({
       setShowSavedMessage(true);
       setTimeout(() => setShowSavedMessage(false), 2000);
     } catch (err) {
-      console.error("Error saving review:", err);
+      logger.error("Failed to save review", err);
     } finally {
       setIsSaving(false);
     }
