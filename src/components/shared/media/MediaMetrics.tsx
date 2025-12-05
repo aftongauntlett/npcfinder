@@ -66,7 +66,7 @@ const getAwardChipStyle = (award: string): string => {
     return "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700";
   }
   if (award.includes("BAFTA")) {
-    return "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700";
+    return "bg-primary/10 text-primary border-primary/30";
   }
   if (award.includes("Wins")) {
     return "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-700";

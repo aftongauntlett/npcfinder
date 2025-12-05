@@ -26,6 +26,7 @@ import {
   useTasks,
   useBoardShares,
 } from "../../../hooks/useTasksQueries";
+import { useGroceryListFiltering } from "../../../hooks/useGroceryListFiltering";
 import type {
   BoardWithStats,
   Task,
@@ -54,50 +55,10 @@ const GroceryListView: React.FC<GroceryListViewProps> = ({
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
 
-  // Group items by category
-  const itemsByCategory = useMemo(() => {
-    const grouped = new Map<string, Task[]>();
-
-    GROCERY_CATEGORIES.forEach((cat) => {
-      grouped.set(cat, []);
-    });
-
-    tasks.forEach((task) => {
-      const category = (task.item_data?.category as string) || "Other";
-      const categoryTasks = grouped.get(category) || grouped.get("Other")!;
-      categoryTasks.push(task);
-    });
-
-    return grouped;
-  }, [tasks]);
-
-  // Separate purchased and need to buy
-  const needToBuy = useMemo(() => {
-    let items = tasks.filter((t) => t.status !== "done");
-
-    // Apply category filter
-    if (categoryFilters.length > 0 && !categoryFilters.includes("all")) {
-      items = items.filter((t) => {
-        const category = (t.item_data?.category as string) || "Other";
-        return categoryFilters.includes(category);
-      });
-    }
-
-    // Apply sorting
-    if (sortBy === "name") {
-      items = items.sort((a, b) => {
-        const nameA = (a.item_data?.item_name as string) || a.title || "";
-        const nameB = (b.item_data?.item_name as string) || b.title || "";
-        return nameA.localeCompare(nameB);
-      });
-    }
-
-    return items;
-  }, [tasks, categoryFilters, sortBy]);
-
-  const purchased = useMemo(
-    () => tasks.filter((t) => t.status === "done"),
-    [tasks]
+  // Extract filtering/grouping logic into dedicated hook
+  const { itemsByCategory, needToBuy, purchased } = useGroceryListFiltering(
+    tasks,
+    { categoryFilters, sortBy }
   );
 
   const handleAddItem = async (data: {
@@ -246,7 +207,7 @@ const GroceryListView: React.FC<GroceryListViewProps> = ({
                   size="sm"
                   onClick={() => setShowShareModal(true)}
                   icon={<Share2 className="w-4 h-4" />}
-                  className="!border-purple-400/50 dark:!border-purple-400/50 !bg-purple-100/10 dark:!bg-purple-500/10 !text-purple-600 dark:!text-purple-300 hover:!border-purple-500/70 dark:hover:!border-purple-400/70 hover:!bg-purple-200/20 dark:hover:!bg-purple-500/20"
+                  className="!border-primary/40 !bg-primary/10 !text-primary hover:!border-primary/60 hover:!bg-primary/20"
                 >
                   {shares.length > 0 ? `${shares.length}` : "Share"}
                 </Button>

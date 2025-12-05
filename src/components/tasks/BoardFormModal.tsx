@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { logger } from "@/lib/logger";
 import {
   Palette,
   ChevronDown,
@@ -300,7 +301,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
           onClose();
         })
         .catch((error) => {
-          console.error("Failed to save board:", error);
+          logger.error("Failed to update board", { error, boardId: board.id });
         });
     } else {
       void createBoard
@@ -309,7 +310,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
           onClose();
         })
         .catch((error) => {
-          console.error("Failed to save board:", error);
+          logger.error("Failed to create board", { error });
         });
     }
   };
@@ -323,7 +324,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
         onClose();
       })
       .catch((error) => {
-        console.error("Failed to delete board:", error);
+        logger.error("Failed to delete board", { error, boardId: board.id });
       });
   };
 
@@ -644,7 +645,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Share2 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  <Share2 className="w-5 h-5 text-primary" />
                   <div>
                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                       Sharing
