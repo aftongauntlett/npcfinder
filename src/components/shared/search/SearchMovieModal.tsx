@@ -5,6 +5,7 @@ import { MediaItem } from "../media/SendMediaModal";
 import Modal from "../ui/Modal";
 import Input from "../ui/Input";
 import { useTheme } from "../../../hooks/useTheme";
+import { logger } from "@/lib/logger";
 import { formatReleaseDate } from "../../../utils/dateFormatting";
 
 interface SearchMovieModalProps {
@@ -57,7 +58,7 @@ const SearchMovieModal: React.FC<SearchMovieModalProps> = ({
       const results = await searchMoviesAndTV(searchQuery);
       setSearchResults(results);
     } catch (error) {
-      console.error("Search error:", error);
+      logger.error("Movie search failed", { error, searchQuery });
       setSearchResults([]);
     } finally {
       setSearching(false);

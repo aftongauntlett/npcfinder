@@ -5,6 +5,7 @@ import { MediaItem } from "../media/SendMediaModal";
 import Modal from "../ui/Modal";
 import Input from "../ui/Input";
 import { useTheme } from "../../../hooks/useTheme";
+import { logger } from "@/lib/logger";
 import { formatReleaseDate } from "../../../utils/dateFormatting";
 
 interface SearchGameModalProps {
@@ -46,7 +47,7 @@ const SearchGameModal: React.FC<SearchGameModalProps> = ({
       const results = await searchGames(searchQuery);
       setSearchResults(results);
     } catch (error) {
-      console.error("Search error:", error);
+      logger.error("Game search failed", { error, searchQuery });
       setSearchResults([]);
     } finally {
       setSearching(false);

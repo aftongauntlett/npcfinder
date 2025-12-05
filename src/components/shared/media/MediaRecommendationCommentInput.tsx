@@ -1,4 +1,4 @@
-import Button from "../ui/Button";
+import { Button, Input } from "@/components/shared";
 
 interface MediaRecommendationCommentInputProps {
   value: string;
@@ -26,12 +26,12 @@ function MediaRecommendationCommentInput({
   return (
     <div className="mt-3 pl-20">
       <div className="flex flex-col gap-2">
-        <input
+        <Input
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none"
+          inputClassName="text-sm"
           onKeyDown={(e) => {
             if (e.key === "Enter") void onSave();
             if (e.key === "Escape") onCancel();

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Send, AlertCircle, CheckCircle } from "lucide-react";
 import { Button, Input, Textarea, Modal } from "@/components/shared";
+import { logger } from "@/lib/logger";
 
 interface FeedbackModalProps {
   isOpen: boolean;
@@ -65,7 +66,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose }) => {
       }, 2000);
     } catch (err) {
       setError("Failed to submit feedback. Please try again later.");
-      console.error("Error submitting feedback:", err);
+      logger.error("Failed to submit feedback", { error: err, name, email });
     } finally {
       setIsSubmitting(false);
     }

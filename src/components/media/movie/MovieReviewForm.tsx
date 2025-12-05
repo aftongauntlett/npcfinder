@@ -1,8 +1,11 @@
 import { Star, Check, Users as UsersIcon } from "lucide-react";
-import Button from "../../shared/ui/Button";
-import Accordion from "../../shared/common/Accordion";
-import StarRating from "../../shared/common/StarRating";
-import PrivacyToggle from "../../shared/common/PrivacyToggle";
+import {
+  Button,
+  Textarea,
+  Accordion,
+  StarRating,
+  PrivacyToggle,
+} from "@/components/shared";
 
 interface Review {
   id: string;
@@ -72,19 +75,13 @@ export function MovieReviewForm({
 
           {/* Review Text */}
           <div>
-            <label
-              htmlFor="review-text"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-            >
-              Your Thoughts
-            </label>
-            <textarea
+            <Textarea
               id="review-text"
+              label="Your Thoughts"
               value={reviewText}
               onChange={(e) => onReviewTextChange(e.target.value)}
               placeholder="Share your thoughts... (optional)"
               rows={8}
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary resize-none"
             />
           </div>
 

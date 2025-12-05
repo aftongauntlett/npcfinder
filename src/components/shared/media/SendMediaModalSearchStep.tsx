@@ -1,4 +1,5 @@
 import { Search } from "lucide-react";
+import { Input } from "@/components/shared";
 import type { MediaItem } from "./SendMediaModal";
 
 interface SendMediaModalSearchStepProps {
@@ -20,17 +21,14 @@ export default function SendMediaModalSearchStep({
 }: SendMediaModalSearchStepProps) {
   return (
     <div className="space-y-4">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder={searchPlaceholder}
-          className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          autoFocus
-        />
-      </div>
+      <Input
+        type="text"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        placeholder={searchPlaceholder}
+        leftIcon={<Search className="w-5 h-5" />}
+        autoFocus
+      />
 
       {searching && <p className="text-center text-gray-500">Searching...</p>}
 

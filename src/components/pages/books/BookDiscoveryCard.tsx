@@ -6,6 +6,8 @@ import {
   Star,
   BookOpen,
 } from "lucide-react";
+import { Button } from "@/components/shared";
+import { logger } from "@/lib/logger";
 import { SimilarBooksCarousel } from "./SimilarBooksCarousel";
 import { useReadingList } from "../../../hooks/useReadingListQueries";
 import { useAddToReadingList } from "../../../hooks/useReadingListQueries";
@@ -114,7 +116,7 @@ const BookDiscoveryCard: React.FC = () => {
           setSimilarBooks(data);
         }
       } catch (error) {
-        console.error(`Error loading ${section}:`, error);
+        logger.error(`Failed to load ${section} books`, error);
       } finally {
         setLoadingSections((prev) => {
           const newSet = new Set(prev);
@@ -205,10 +207,10 @@ const BookDiscoveryCard: React.FC = () => {
                 key={section.id}
                 className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm"
               >
-                <button
-                  type="button"
+                <Button
+                  variant="subtle"
                   onClick={() => void toggleSection(section.id)}
-                  className="w-full p-4 flex items-center justify-between gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+                  className="w-full p-4 flex items-center justify-between gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded-none"
                   aria-expanded={isExpanded}
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -234,7 +236,7 @@ const BookDiscoveryCard: React.FC = () => {
                   ) : (
                     <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
                   )}
-                </button>
+                </Button>
 
                 {isExpanded && (
                   <div className="border-t border-gray-200 dark:border-gray-700 p-4">

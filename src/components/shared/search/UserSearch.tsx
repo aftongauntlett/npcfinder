@@ -6,6 +6,7 @@ import {
 } from "../../../hooks/useUserSearch";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
+import { logger } from "@/lib/logger";
 
 /**
  * UserSearch Component
@@ -41,7 +42,7 @@ export function UserSearch() {
     try {
       await createConnection.mutateAsync(userId);
     } catch (error) {
-      console.error("Failed to connect:", error);
+      logger.error("Failed to connect to user", { error, userId });
     }
   };
 

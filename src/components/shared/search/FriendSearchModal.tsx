@@ -7,6 +7,7 @@ import {
 import Button from "../ui/Button";
 import Input from "../ui/Input";
 import Modal from "../ui/Modal";
+import { logger } from "@/lib/logger";
 
 interface FriendSearchModalProps {
   isOpen: boolean;
@@ -55,7 +56,7 @@ export function FriendSearchModal({ isOpen, onClose }: FriendSearchModalProps) {
     try {
       await createConnection.mutateAsync(userId);
     } catch (error) {
-      console.error("Failed to connect:", error);
+      logger.error("Failed to connect to user", { error, userId });
     }
   };
 

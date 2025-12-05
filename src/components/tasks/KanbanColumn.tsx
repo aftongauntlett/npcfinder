@@ -6,8 +6,7 @@
 import React, { useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import type { Task, BoardSection } from "../../services/tasksService.types";
-import Button from "../shared/ui/Button";
-import ConfirmationModal from "../shared/ui/ConfirmationModal";
+import { Button, Input, ConfirmationModal } from "../shared";
 import TaskCard from "./TaskCard";
 
 interface KanbanColumnProps {
@@ -87,14 +86,14 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
         {/* Column Header */}
         <div className="flex items-center justify-between mb-4">
           {isEditing ? (
-            <input
+            <Input
               type="text"
               value={editedName}
               onChange={(e) => setEditedName(e.target.value)}
               onBlur={handleRename}
               onKeyDown={handleKeyDown}
               autoFocus
-              className="flex-1 bg-white dark:bg-gray-800 border border-primary rounded px-2 py-1 text-gray-900 dark:text-white font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
+              inputClassName="font-semibold"
             />
           ) : (
             <>

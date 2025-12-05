@@ -1,5 +1,6 @@
 import React from "react";
 import { Plus } from "lucide-react";
+import { Button } from "@/components/shared";
 import type { BookItem } from "../../../utils/googleBooksDiscovery";
 import { formatReleaseYear } from "../../../utils/dateFormatting";
 
@@ -52,19 +53,20 @@ export const SimilarBooksCarousel: React.FC<SimilarBooksCarouselProps> = ({
                       </span>
                     </div>
                   ) : (
-                    <button
-                      type="button"
+                    <Button
+                      variant="subtle"
+                      size="icon"
                       onClick={(e) => {
                         e.stopPropagation();
                         onAddToReadingList(book);
                       }}
-                      className="absolute inset-0 bg-black/60 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+                      className="absolute inset-0 bg-black/60 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                       aria-label={`Add ${book.title} to reading list`}
                     >
                       <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
                         <Plus className="w-6 h-6 text-white" />
                       </div>
-                    </button>
+                    </Button>
                   )}
                 </div>
 

@@ -8,6 +8,7 @@ import {
   BookOpen,
   Gamepad2,
 } from "lucide-react";
+import { Textarea } from "@/components/shared";
 
 interface Friend {
   user_id: string;
@@ -162,7 +163,7 @@ export default function SendMediaModalDetailsStep({
                   style={{
                     borderColor: isSelected ? accentColor : undefined,
                   }}
-                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileHover={{ y: -2 }}
                   whileTap={{ scale: 0.98 }}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{
@@ -226,15 +227,13 @@ export default function SendMediaModalDetailsStep({
       )}
 
       <div className="pt-6">
-        <label className="block text-sm font-medium text-gray-400 dark:text-gray-400 mb-4 uppercase tracking-wider">
-          Message (Optional)
-        </label>
-        <textarea
+        <Textarea
+          label="Message (Optional)"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Add a note about why you're recommending this..."
-          className="w-full px-4 py-4 border border-gray-700/50 dark:border-gray-700/50 rounded-xl bg-gray-900/40 dark:bg-gray-900/40 text-gray-300 dark:text-gray-300 placeholder:text-gray-500 dark:placeholder:text-gray-500 resize-none focus:outline-none focus:border-gray-600 dark:focus:border-gray-600 focus:bg-gray-800/50 dark:focus:bg-gray-800/50 transition-all"
           rows={4}
+          textareaClassName="bg-gray-900/40 dark:bg-gray-900/40 text-gray-300 dark:text-gray-300 border-gray-700/50 dark:border-gray-700/50"
         />
       </div>
     </div>
