@@ -30,6 +30,7 @@ import {
   useTasks,
   useSharedBoards,
 } from "../../../hooks/useTasksQueries";
+import { useBoardTemplates } from "../../../hooks/useBoardTemplates";
 import type { BoardWithStats } from "../../../services/tasksService.types";
 
 type ViewType = "tasks" | "kanban" | "grocery" | "recipes" | "job_applications";
@@ -51,48 +52,17 @@ const TasksPage: React.FC = () => {
   };
   const { data: tasks = [] } = useTasks(undefined, { unassigned: true });
 
-  // Filter boards by template type
-  const kanbanBoards = useMemo(
-    () => boards.filter((b) => b.template_type === "kanban"),
-    [boards]
-  );
-
-  const groceryBoards = useMemo(
-    () => boards.filter((b) => b.template_type === "grocery"),
-    [boards]
-  );
-
-  const sharedGroceryBoards = useMemo(
-    () => sharedBoards.filter((b) => b.template_type === "grocery"),
-    [sharedBoards]
-  );
-
-  const recipeBoards = useMemo(
-    () => boards.filter((b) => b.template_type === "recipe"),
-    [boards]
-  );
-  const jobBoards = useMemo(
-    () => boards.filter((b) => b.template_type === "job_tracker"),
-    [boards]
-  );
-
-  // Calculate task counts for each template type
-  const groceryTaskCount = useMemo(
-    () =>
-      groceryBoards.reduce((sum, board) => sum + (board.total_tasks || 0), 0),
-    [groceryBoards]
-  );
-
-  const recipeTaskCount = useMemo(
-    () =>
-      recipeBoards.reduce((sum, board) => sum + (board.total_tasks || 0), 0),
-    [recipeBoards]
-  );
-
-  const jobTaskCount = useMemo(
-    () => jobBoards.reduce((sum, board) => sum + (board.total_tasks || 0), 0),
-    [jobBoards]
-  );
+  // Extract board filtering and task counts into dedicated hook
+  const {
+    kanbanBoards,
+    groceryBoards,
+    sharedGroceryBoards,
+    recipeBoards,
+    jobBoards,
+    groceryTaskCount,
+    recipeTaskCount,
+    jobTaskCount,
+  } = useBoardTemplates(boards, sharedBoards);
 
   // Find task being edited
   const editingTask = useMemo(() => {
@@ -192,7 +162,11 @@ const TasksPage: React.FC = () => {
       onTabChange={handleTabChange}
     >
       {/* Content */}
-      <div role="tabpanel" id={`${selectedView}-panel`}>
+      <div
+        role="tabpanel"
+        id={`${selectedView}-panel`}
+        aria-labelledby={selectedView}
+      >
         {selectedView === "tasks" && <InboxView />}
         {selectedView === "kanban" && (
           <TemplateView
