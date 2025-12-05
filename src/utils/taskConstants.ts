@@ -3,6 +3,8 @@
  * Defines task statuses, priorities, default sections, and limits
  */
 
+import type { GroceryCategory } from "../services/tasksService.types";
+
 // Task statuses
 export const TASK_STATUS = {
   TODO: "todo",
@@ -147,8 +149,9 @@ export const STATUS_OPTIONS = [
 
 /**
  * Grocery Categories
+ * Must match the GroceryCategory type definition in tasksService.types.ts
  */
-export const GROCERY_CATEGORIES = [
+export const GROCERY_CATEGORIES: readonly GroceryCategory[] = [
   "Produce",
   "Dairy",
   "Meat",
@@ -162,8 +165,16 @@ export const GROCERY_CATEGORIES = [
 
 /**
  * Category Colors for Grocery Items
+ * Keys must match GroceryCategory type definition
  */
-export const CATEGORY_COLORS = {
+export const CATEGORY_COLORS: Record<
+  GroceryCategory,
+  {
+    bg: string;
+    text: string;
+    border: string;
+  }
+> = {
   Produce: {
     bg: "bg-green-100 dark:bg-green-900/20",
     text: "text-green-700 dark:text-green-300",
@@ -232,3 +243,21 @@ export const REMINDER_TYPE = {
 } as const;
 
 export type ReminderType = (typeof REMINDER_TYPE)[keyof typeof REMINDER_TYPE];
+
+/**
+ * Board Type to Template Type Mapping
+ * Centralizes the logic for inferring template_type from board_type
+ * Used by createBoard and BoardFormModal to ensure consistency
+ */
+export function getBoardTemplateType(
+  boardType: string | null | undefined,
+  explicitTemplateType?: string | null
+): string {
+  // If explicit template type is provided, use it
+  if (explicitTemplateType) {
+    return explicitTemplateType;
+  }
+
+  // Default mapping: list -> markdown, everything else -> kanban
+  return boardType === "list" ? "markdown" : "kanban";
+}

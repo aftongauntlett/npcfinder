@@ -353,3 +353,25 @@ export function getAllTemplates(): BoardTemplate[] {
 export function getFeaturedTemplates(): BoardTemplate[] {
   return getAllTemplates();
 }
+
+/**
+ * Get board_type from template_type
+ * Centralizes the mapping logic used by createBoard and BoardFormModal
+ */
+export function getBoardTypeFromTemplate(templateType: TemplateType): string {
+  const template = BOARD_TEMPLATES[templateType];
+
+  // Map template defaultView to board_type
+  switch (template.defaultView) {
+    case "table":
+      return "job_tracker";
+    case "checklist":
+    case "list":
+      return "list";
+    case "cards":
+    case "kanban":
+      return "grid";
+    default:
+      return "grid";
+  }
+}

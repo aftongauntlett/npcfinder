@@ -45,7 +45,10 @@ import {
 } from "../../hooks/useTasksQueries";
 import { HexColorPicker } from "react-colorful";
 import { useTheme } from "../../hooks/useTheme";
-import { getTemplate } from "../../utils/boardTemplates";
+import {
+  getTemplate,
+  getBoardTypeFromTemplate,
+} from "../../utils/boardTemplates";
 import type { TemplateType } from "../../utils/boardTemplates";
 
 interface BoardFormModalProps {
@@ -269,17 +272,8 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
       return;
     }
 
-    // Determine board_type based on template
-    const boardType =
-      templateType === "recipe"
-        ? "list"
-        : templateType === "grocery"
-        ? "list"
-        : templateType === "job_tracker"
-        ? "job_tracker"
-        : templateType === "markdown"
-        ? "list"
-        : "grid";
+    // Determine board_type based on template using centralized helper
+    const boardType = getBoardTypeFromTemplate(templateType);
 
     const boardData: CreateBoardData = {
       name,

@@ -51,6 +51,8 @@ export const DashboardActivitySummary: React.FC<
   DashboardActivitySummaryProps
 > = ({ stats, statsLoading }) => {
   // Fetch tasks by template type
+  // Note: Only includes boards owned by the user, matching useDashboardStats behavior.
+  // Shared boards are shown in the "Shared" count but not in the aggregate totals.
   const { data: taskBoards } = useQuery({
     queryKey: queryKeys.tasks.boards(),
     queryFn: async () => {
@@ -73,10 +75,11 @@ export const DashboardActivitySummary: React.FC<
           ?.filter((b) => b.template_type === templateType)
           .map((b) => b.id) || []
       );
-    }, [templateType]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- taskBoards intentionally included to trigger recompute when boards change
+    }, [templateType, taskBoards]);
 
     return useQuery({
-      queryKey: ["tasks", "by-template", templateType, boardIds],
+      queryKey: queryKeys.tasks.byTemplate(templateType, boardIds),
       queryFn: async () => {
         if (boardIds.length === 0) return [];
 
@@ -165,7 +168,7 @@ export const DashboardActivitySummary: React.FC<
             Start organizing your tasks by creating your first board!
           </p>
           <a
-            href="/tasks"
+            href="/app/tasks"
             className="inline-block px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-lg transition-colors"
           >
             Go to Tasks

@@ -102,6 +102,8 @@ export const queryKeys = {
   },
 
   // Tasks
+  // Note: All task queries must start with queryKeys.tasks.all prefix
+  // to ensure proper invalidation when using queryClient.invalidateQueries
   tasks: {
     all: ["tasks"] as const,
     boards: () => [...queryKeys.tasks.all, "boards"] as const,
@@ -118,6 +120,8 @@ export const queryKeys = {
       [...queryKeys.tasks.all, "archived", userId] as const,
     tasksByStatus: (status: string, userId?: string) =>
       [...queryKeys.tasks.all, "by-status", status, userId] as const,
+    byTemplate: (templateType: string, boardIds: string[]) =>
+      [...queryKeys.tasks.all, "by-template", templateType, boardIds] as const,
     activeTimers: () => [...queryKeys.tasks.all, "active-timers"] as const,
     upcomingReminders: (daysAhead: number) =>
       [...queryKeys.tasks.all, "upcoming-reminders", daysAhead] as const,

@@ -9,6 +9,7 @@
 
 import { supabase } from "../lib/supabase";
 import { logger } from "../lib/logger";
+import { getBoardTemplateType } from "../utils/taskConstants";
 import type {
   Board,
   BoardSection,
@@ -115,8 +116,10 @@ export async function createBoard(
 
     // Create board
     const boardType = boardData.board_type || "kanban";
-    const templateType =
-      boardData.template_type || (boardType === "list" ? "markdown" : "kanban");
+    const templateType = getBoardTemplateType(
+      boardType,
+      boardData.template_type
+    );
 
     const { data, error } = await supabase
       .from("task_boards")
@@ -221,7 +224,26 @@ export async function reorderBoards(
       supabase.from("task_boards").update({ display_order: index }).eq("id", id)
     );
 
-    await Promise.all(updates);
+    const results = await Promise.all(updates);
+
+    // Check for individual errors
+    const failedIds: string[] = [];
+    const errors: unknown[] = [];
+    results.forEach((result, index) => {
+      if (result.error) {
+        failedIds.push(boardIds[index]);
+        errors.push(result.error);
+      }
+    });
+
+    if (errors.length > 0) {
+      logger.error(`Failed to reorder ${errors.length} board(s)`, {
+        failedIds,
+        errors,
+      });
+      throw new Error(`Failed to reorder ${errors.length} board(s)`);
+    }
+
     return { data: null, error: null };
   } catch (error) {
     logger.error("Failed to reorder boards", error);
@@ -337,7 +359,26 @@ export async function reorderSections(
         .eq("id", id)
     );
 
-    await Promise.all(updates);
+    const results = await Promise.all(updates);
+
+    // Check for individual errors
+    const failedIds: string[] = [];
+    const errors: unknown[] = [];
+    results.forEach((result, index) => {
+      if (result.error) {
+        failedIds.push(sectionIds[index]);
+        errors.push(result.error);
+      }
+    });
+
+    if (errors.length > 0) {
+      logger.error(`Failed to reorder ${errors.length} section(s)`, {
+        failedIds,
+        errors,
+      });
+      throw new Error(`Failed to reorder ${errors.length} section(s)`);
+    }
+
     return { data: null, error: null };
   } catch (error) {
     logger.error("Failed to reorder sections", error);
@@ -622,7 +663,26 @@ export async function reorderTasks(
       supabase.from("tasks").update({ display_order: index }).eq("id", id)
     );
 
-    await Promise.all(updates);
+    const results = await Promise.all(updates);
+
+    // Check for individual errors
+    const failedIds: string[] = [];
+    const errors: unknown[] = [];
+    results.forEach((result, index) => {
+      if (result.error) {
+        failedIds.push(taskIds[index]);
+        errors.push(result.error);
+      }
+    });
+
+    if (errors.length > 0) {
+      logger.error(`Failed to reorder ${errors.length} task(s)`, {
+        failedIds,
+        errors,
+      });
+      throw new Error(`Failed to reorder ${errors.length} task(s)`);
+    }
+
     return { data: null, error: null };
   } catch (error) {
     logger.error("Failed to reorder tasks", error);

@@ -181,6 +181,11 @@ export function useReorderBoards() {
       if (error) throw error;
     },
 
+    onError: (error) => {
+      console.error("Failed to reorder boards:", error);
+      // Note: Consider adding toast notification here for user feedback
+    },
+
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.tasks.boards(),
@@ -319,6 +324,11 @@ export function useReorderSections() {
     }) => {
       const { error } = await tasksService.reorderSections(sectionIds);
       if (error) throw error;
+    },
+
+    onError: (error) => {
+      console.error("Failed to reorder sections:", error);
+      // Note: Consider adding toast notification here for user feedback
     },
 
     onSuccess: (_data, { boardId: _boardId }) => {
@@ -612,6 +622,11 @@ export function useReorderTasks() {
     }) => {
       const { error } = await tasksService.reorderTasks(taskIds);
       if (error) throw error;
+    },
+
+    onError: (error) => {
+      console.error("Failed to reorder tasks:", error);
+      // Note: Consider adding toast notification here for user feedback
     },
 
     onSuccess: (_data, { boardId: _boardId }) => {

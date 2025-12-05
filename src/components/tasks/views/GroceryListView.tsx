@@ -70,6 +70,8 @@ const GroceryListView: React.FC<GroceryListViewProps> = ({
       notes?: string;
     };
   }) => {
+    if (isReadOnly) return;
+
     await createTask.mutateAsync({
       board_id: board.id,
       title: data.item_data.item_name,
@@ -88,7 +90,7 @@ const GroceryListView: React.FC<GroceryListViewProps> = ({
       notes?: string;
     };
   }) => {
-    if (!editingItem) return;
+    if (isReadOnly || !editingItem) return;
 
     await updateTask.mutateAsync({
       taskId: editingItem.id,
@@ -102,6 +104,8 @@ const GroceryListView: React.FC<GroceryListViewProps> = ({
   };
 
   const handleTogglePurchased = async (taskId: string) => {
+    if (isReadOnly) return;
+
     const task = tasks.find((t) => t.id === taskId);
     if (!task) return;
 
@@ -124,6 +128,8 @@ const GroceryListView: React.FC<GroceryListViewProps> = ({
   };
 
   const handleDeleteItem = async (taskId: string) => {
+    if (isReadOnly) return;
+
     await deleteTask.mutateAsync(taskId);
   };
 

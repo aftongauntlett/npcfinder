@@ -109,6 +109,9 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
   const bookRecsCount = bookRecsResult.count || 0;
 
   // Batch 2: Fetch task boards and parallel task counts
+  // Note: This query fetches only boards owned by the user.
+  // Shared boards are counted separately via sharedBoardsCount.
+  // The aggregate counts (totalBoards, totalTasks, completedTasks) include owned boards only.
   const { data: taskBoards, error: boardsError } = await supabase
     .from("task_boards_with_stats")
     .select("*")
@@ -124,13 +127,11 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
     0;
 
   // Prepare date ranges for task queries
-  const now = new Date().toISOString();
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date();
-  endOfDay.setHours(23, 59, 59, 999);
+  // Note: due_date is a DATE column, not TIMESTAMP, so use YYYY-MM-DD strings
+  const todayString = new Date().toISOString().split("T")[0];
   const nextWeek = new Date();
   nextWeek.setDate(nextWeek.getDate() + 7);
+  const nextWeekString = nextWeek.toISOString().split("T")[0];
 
   // Prepare board IDs for template-type queries
   const jobBoardIds =
@@ -168,21 +169,21 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
       .select("*", { count: "exact", head: true })
       .eq("user_id", user.id)
       .in("status", ["todo", "in_progress"])
-      .lt("due_date", now),
+      .lt("due_date", todayString),
+    // Aligned with tasksService.getTodayTasks - uses exact date match for today
     supabase
       .from("tasks")
       .select("*", { count: "exact", head: true })
       .eq("user_id", user.id)
       .in("status", ["todo", "in_progress"])
-      .gte("due_date", startOfDay.toISOString())
-      .lte("due_date", endOfDay.toISOString()),
+      .eq("due_date", todayString),
     supabase
       .from("tasks")
       .select("*", { count: "exact", head: true })
       .eq("user_id", user.id)
       .in("status", ["todo", "in_progress"])
-      .gt("due_date", endOfDay.toISOString())
-      .lte("due_date", nextWeek.toISOString()),
+      .gt("due_date", todayString)
+      .lte("due_date", nextWeekString),
     supabase
       .from("board_shares")
       .select("id", { count: "exact", head: true })
