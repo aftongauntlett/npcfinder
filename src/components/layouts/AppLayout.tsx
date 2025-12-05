@@ -221,7 +221,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
                                 : ""}
                             </span>
                             {isActive && (
-                              <Check className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                              <Check className="w-5 h-5 text-primary" />
                             )}
                           </button>
                         );
@@ -248,6 +248,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
                     return (
                       <div key={tab.id} className="flex items-center">
                         <motion.button
+                          id={tab.id}
                           ref={isActive ? activeTabRef : null}
                           type="button"
                           onClick={() => onTabChange?.(tab.id)}

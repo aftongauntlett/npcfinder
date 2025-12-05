@@ -6,6 +6,8 @@ import {
   Clapperboard,
   TvIcon,
 } from "lucide-react";
+import { Button } from "@/components/shared";
+import { logger } from "@/lib/logger";
 import {
   useMovieRecommendations,
   useFriendsWithMovieRecs,
@@ -158,7 +160,12 @@ export function DashboardRecommendations() {
         });
       }
     } catch (error) {
-      console.error("Error updating recommendation:", error);
+      logger.error("Failed to update recommendation", {
+        error,
+        recId,
+        status,
+        comment,
+      });
     }
   };
 
@@ -166,7 +173,7 @@ export function DashboardRecommendations() {
     try {
       await deleteRecMutation.mutateAsync(recId);
     } catch (error) {
-      console.error("Error deleting recommendation:", error);
+      logger.error("Failed to delete recommendation", { error, recId });
     }
   };
 
@@ -200,10 +207,10 @@ export function DashboardRecommendations() {
           key={friend.user_id}
           className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm"
         >
-          <button
-            type="button"
+          <Button
+            variant="subtle"
             onClick={() => toggleFriend(friend.user_id)}
-            className="w-full p-4 flex items-center justify-between gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+            className="w-full p-4 flex items-center justify-between gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded-none"
             aria-expanded={expandedFriends.has(friend.user_id)}
           >
             <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -227,7 +234,7 @@ export function DashboardRecommendations() {
             ) : (
               <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
             )}
-          </button>
+          </Button>
 
           {expandedFriends.has(friend.user_id) && (
             <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 p-4">

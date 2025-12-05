@@ -319,7 +319,7 @@ export const DashboardActivitySummary: React.FC<
               }
             >
               <div className="flex items-center gap-3">
-                <ListTodo className="w-5 h-5 text-purple-500 dark:text-purple-400 flex-shrink-0" />
+                <ListTodo className="w-5 h-5 text-primary flex-shrink-0" />
                 <div className="flex-1">
                   <h3 className="font-medium text-gray-900 dark:text-white">
                     To-Do Tasks
