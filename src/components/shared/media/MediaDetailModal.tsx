@@ -179,7 +179,7 @@ export default function MediaDetailModal({
                 alt={`${title} poster`}
                 size="md"
                 aspectRatio="2/3"
-                className="mx-auto lg:mx-0 transition-transform duration-300 group-hover:scale-[1.02]"
+                className="mx-auto lg:mx-0 transition-all duration-300 group-hover:shadow-2xl group-hover:-translate-y-0.5"
               />
             </div>
           </div>

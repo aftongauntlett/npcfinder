@@ -34,12 +34,11 @@ export const BoardIcon: React.FC<BoardIconProps> = ({
 
   return (
     <motion.div
-      className={`${sizeClasses[size]} flex items-center justify-center rounded-2xl border transition-all duration-300 ease-out relative overflow-hidden`}
+      className={`${sizeClasses[size]} flex items-center justify-center rounded-2xl border transition-all duration-300 ease-out relative overflow-hidden hover:shadow-lg hover:-translate-y-0.5`}
       style={{
         backgroundColor: `${color}15`,
         borderColor: `${color}30`,
       }}
-      whileHover={{ scale: 1.05 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -57,14 +56,9 @@ export const BoardIcon: React.FC<BoardIconProps> = ({
       />
 
       {/* Icon */}
-      <motion.div
-        animate={{
-          scale: isHovered ? 1.1 : 1,
-        }}
-        transition={{ duration: 0.3, ease: "easeOut" }}
-      >
+      <div>
         <Icon size={iconSizes[size]} style={{ color }} strokeWidth={2} />
-      </motion.div>
+      </div>
     </motion.div>
   );
 };

@@ -14,7 +14,7 @@ export function MoviePoster({ posterUrl, title, mediaType }: MoviePosterProps) {
       <img
         src={posterUrl.replace("w200", "w500")}
         alt={title}
-        className="w-full sm:w-56 h-auto rounded-lg shadow-xl transition-transform duration-300 hover:scale-105 cursor-pointer"
+        className="w-full sm:w-56 h-auto rounded-lg shadow-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl cursor-pointer"
       />
     );
   }

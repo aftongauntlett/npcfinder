@@ -43,8 +43,7 @@ export const BentoBoardCard: React.FC<BentoBoardCardProps> = ({
       onClick={handleClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="relative cursor-pointer group"
-      whileHover={{ scale: 1.02 }}
+      className="relative cursor-pointer group hover:-translate-y-0.5 transition-transform duration-200"
       animate={{
         scale: isClicked ? 0.95 : 1,
         opacity: isClicked ? 0.7 : 1,

@@ -282,7 +282,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
           >
             <h2 className="text-xl font-bold text-white dark:text-white mb-4 font-heading flex items-center gap-2">
               <motion.div
-                whileHover={{ scale: 1.1, rotate: 5 }}
+                whileHover={{ rotate: 5 }}
                 transition={{ type: "spring", stiffness: 400, damping: 20 }}
               >
                 <UserIcon className="w-5 h-5 text-primary group-hover:text-blue-500 transition-colors duration-300" />

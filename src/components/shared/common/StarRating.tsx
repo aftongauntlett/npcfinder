@@ -93,7 +93,7 @@ export default function StarRating({
               aria-label={`${value} star${value !== 1 ? "s" : ""}`}
               disabled={readonly}
               className={`${starSizes[size]} transition-all ${
-                readonly ? "cursor-default" : "cursor-pointer hover:scale-110"
+                readonly ? "cursor-default" : "cursor-pointer"
               }`}
               onClick={() => handleStarClick(value)}
               onMouseEnter={() => !readonly && setHoverRating(value)}
