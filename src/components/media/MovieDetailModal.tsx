@@ -148,7 +148,6 @@ export default function MovieDetailModal({
         title: item.title,
         review_text: reviewText || null,
         rating,
-        liked: null,
         is_public: isPublic,
       });
       setHasUnsavedChanges(false);

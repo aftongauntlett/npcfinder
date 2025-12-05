@@ -5,7 +5,7 @@
 
 import { z } from "zod";
 
-// Valid media types in our system
+// Valid media types in our system (must match migration constraint)
 const MediaTypeEnum = z.enum([
   "movie",
   "tv",
@@ -23,7 +23,6 @@ export const CreateReviewSchema = z.object({
   media_type: MediaTypeEnum,
   title: z.string().min(1, "Title is required").max(500, "Title too long"),
   rating: z.number().min(1).max(5).nullable().optional(),
-  liked: z.boolean().nullable().optional(),
   review_text: z
     .string()
     .max(2000, "Review text must be 2000 characters or less")
@@ -36,7 +35,6 @@ export const CreateReviewSchema = z.object({
 // Update Review Schema (all fields optional except what's being updated)
 export const UpdateReviewSchema = z.object({
   rating: z.number().min(1).max(5).nullable().optional(),
-  liked: z.boolean().nullable().optional(),
   review_text: z
     .string()
     .max(2000, "Review text must be 2000 characters or less")

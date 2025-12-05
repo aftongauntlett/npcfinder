@@ -86,48 +86,42 @@ export const getAdminStats = async (): Promise<AdminStats> => {
   const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  const { count: inviteCodesCount } = await supabase
-    .from("invite_codes")
-    .select("*", { count: "exact", head: true });
+  // Run all independent count queries concurrently
+  const [
+    { count: inviteCodesCount },
+    { count: watchlistCount },
+    { count: watchedCount },
+    { count: userCount },
+    { count: weekUsers },
+    { count: monthUsers },
+    { data: recentWatchlist },
+    { data: recentArchive },
+  ] = await Promise.all([
+    supabase.from("invite_codes").select("*", { count: "exact", head: true }),
+    supabase.from("user_watchlist").select("*", { count: "exact", head: true }),
+    supabase
+      .from("user_watched_archive")
+      .select("*", { count: "exact", head: true }),
+    supabase.from("user_profiles").select("*", { count: "exact", head: true }),
+    supabase
+      .from("user_profiles")
+      .select("*", { count: "exact", head: true })
+      .gte("created_at", oneWeekAgo.toISOString()),
+    supabase
+      .from("user_profiles")
+      .select("*", { count: "exact", head: true })
+      .gte("created_at", oneMonthAgo.toISOString()),
+    supabase
+      .from("user_watchlist")
+      .select("user_id")
+      .gte("added_at", thirtyDaysAgo.toISOString()),
+    supabase
+      .from("user_watched_archive")
+      .select("user_id")
+      .gte("watched_at", thirtyDaysAgo.toISOString()),
+  ]);
 
-  // Count watchlist items
-  const { count: watchlistCount } = await supabase
-    .from("user_watchlist")
-    .select("*", { count: "exact", head: true });
-
-  // Count watched archive items (these have ratings)
-  const { count: watchedCount } = await supabase
-    .from("user_watched_archive")
-    .select("*", { count: "exact", head: true });
-
-  // Get total users from user_profiles table
-  const { count: userCount } = await supabase
-    .from("user_profiles")
-    .select("*", { count: "exact", head: true });
-
-  // Get new users this week
-  const { count: weekUsers } = await supabase
-    .from("user_profiles")
-    .select("*", { count: "exact", head: true })
-    .gte("created_at", oneWeekAgo.toISOString());
-
-  // Get new users this month
-  const { count: monthUsers } = await supabase
-    .from("user_profiles")
-    .select("*", { count: "exact", head: true })
-    .gte("created_at", oneMonthAgo.toISOString());
-
-  // Get active users (users who have added items in last 30 days)
-  const { data: recentWatchlist } = await supabase
-    .from("user_watchlist")
-    .select("user_id")
-    .gte("added_at", thirtyDaysAgo.toISOString());
-
-  const { data: recentArchive } = await supabase
-    .from("user_watched_archive")
-    .select("user_id")
-    .gte("watched_at", thirtyDaysAgo.toISOString());
-
+  // Compute unique active users from combined datasets
   const activeUserIds = new Set([
     ...(recentWatchlist?.map((item) => item.user_id) || []),
     ...(recentArchive?.map((item) => item.user_id) || []),

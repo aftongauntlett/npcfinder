@@ -10,12 +10,13 @@ export interface MediaReview {
   media_type: "movie" | "tv" | "song" | "album" | "playlist" | "game" | "book";
   title: string;
   rating: number | null; // 1-5
-  liked: boolean | null; // true = thumbs up, false = thumbs down, null = neutral
   review_text: string | null;
   is_public: boolean;
   watched_at: string | null; // ISO timestamp
   created_at: string; // ISO timestamp
   updated_at: string; // ISO timestamp
+  is_edited: boolean;
+  edited_at: string | null;
 }
 
 export interface MediaReviewWithUser extends MediaReview {
@@ -28,7 +29,6 @@ export interface CreateReviewData {
   media_type: "movie" | "tv" | "song" | "album" | "playlist" | "game" | "book";
   title: string;
   rating?: number | null;
-  liked?: boolean | null;
   review_text?: string | null;
   is_public?: boolean;
   watched_at?: string | null;
@@ -36,7 +36,6 @@ export interface CreateReviewData {
 
 export interface UpdateReviewData {
   rating?: number | null;
-  liked?: boolean | null;
   review_text?: string | null;
   is_public?: boolean;
   watched_at?: string | null;

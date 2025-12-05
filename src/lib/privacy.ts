@@ -132,29 +132,24 @@ export function downloadDataAsJson(
  */
 export async function getUserDataSummary(userId: string) {
   try {
-    const [watchlist, archive, movieRecs, friends, suggestions] =
-      await Promise.all([
-        supabase
-          .from("user_watchlist")
-          .select("id", { count: "exact" })
-          .eq("user_id", userId),
-        supabase
-          .from("user_watched_archive")
-          .select("id", { count: "exact" })
-          .eq("user_id", userId),
-        supabase
-          .from("movie_recommendations")
-          .select("id", { count: "exact" })
-          .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`),
-        supabase
-          .from("connections")
-          .select("id", { count: "exact" })
-          .or(`user_id.eq.${userId},friend_id.eq.${userId}`),
-        supabase
-          .from("suggestions")
-          .select("id", { count: "exact" })
-          .eq("created_by", userId),
-      ]);
+    const [watchlist, archive, movieRecs, friends] = await Promise.all([
+      supabase
+        .from("user_watchlist")
+        .select("id", { count: "exact" })
+        .eq("user_id", userId),
+      supabase
+        .from("user_watched_archive")
+        .select("id", { count: "exact" })
+        .eq("user_id", userId),
+      supabase
+        .from("movie_recommendations")
+        .select("id", { count: "exact" })
+        .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`),
+      supabase
+        .from("connections")
+        .select("id", { count: "exact" })
+        .or(`user_id.eq.${userId},friend_id.eq.${userId}`),
+    ]);
 
     return {
       data: {
@@ -162,7 +157,6 @@ export async function getUserDataSummary(userId: string) {
         watched_count: archive.count || 0,
         recommendations_count: movieRecs.count || 0,
         friends_count: friends.count || 0,
-        suggestions_count: suggestions.count || 0,
       },
       error: null,
     };
@@ -188,11 +182,28 @@ export async function deleteUserAccount(userId: string) {
     await Promise.all([
       supabase.from("user_watchlist").delete().eq("user_id", userId),
       supabase.from("user_watched_archive").delete().eq("user_id", userId),
+      supabase.from("reading_list").delete().eq("user_id", userId),
+      supabase.from("music_library").delete().eq("user_id", userId),
+      supabase.from("game_library").delete().eq("user_id", userId),
+      supabase.from("media_reviews").delete().eq("user_id", userId),
       supabase
         .from("movie_recommendations")
         .delete()
         .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`),
-      supabase.from("suggestions").delete().eq("created_by", userId),
+      supabase
+        .from("music_recommendations")
+        .delete()
+        .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`),
+      supabase
+        .from("book_recommendations")
+        .delete()
+        .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`),
+      supabase
+        .from("game_recommendations")
+        .delete()
+        .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`),
+      supabase.from("tasks").delete().eq("user_id", userId),
+      supabase.from("task_boards").delete().eq("user_id", userId),
       supabase
         .from("connections")
         .delete()
@@ -236,8 +247,8 @@ export const DATA_WE_COLLECT = {
     watchlist: "Movies and TV shows you want to watch",
     watched_archive: "Movies and TV shows you've watched with ratings",
     notes: "Personal notes you add",
-    recommendations: "Recommendations you send and receive",
-    suggestions: "Recommendations you make to friends",
+    recommendations:
+      "Movie, music, book, and game recommendations you send and receive",
   },
   social: {
     friend_connections: "Who you're friends with in the app",

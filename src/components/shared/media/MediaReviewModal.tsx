@@ -87,7 +87,14 @@ export default function MediaReviewModal({
     try {
       await upsertMutation.mutateAsync({
         external_id: externalId,
-        media_type: mediaType,
+        media_type: mediaType as
+          | "movie"
+          | "tv"
+          | "song"
+          | "album"
+          | "playlist"
+          | "game"
+          | "book",
         title: title,
         rating,
         review_text: reviewText || null,

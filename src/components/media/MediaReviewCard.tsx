@@ -1,13 +1,5 @@
 import { useState } from "react";
-import {
-  Star,
-  ThumbsUp,
-  ThumbsDown,
-  Lock,
-  Unlock,
-  Edit2,
-  Trash2,
-} from "lucide-react";
+import { Star, Lock, Unlock, Edit2, Trash2 } from "lucide-react";
 import type { MediaReviewWithUser } from "../../services/reviewsService.types";
 import { Button } from "@/components/shared";
 
@@ -69,8 +61,7 @@ export function MediaReviewCard({
   const isLongReview = review.review_text && review.review_text.length > 200;
 
   // Check if there's any content to show
-  const hasContent =
-    review.rating || review.liked !== null || review.review_text;
+  const hasContent = review.rating || review.review_text;
 
   if (!hasContent) {
     return (
@@ -172,22 +163,7 @@ export function MediaReviewCard({
           </div>
         )}
 
-        {/* Like/Dislike */}
-        {review.liked !== null && (
-          <div className="flex items-center gap-1">
-            {review.liked ? (
-              <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
-                <ThumbsUp className="w-4 h-4" />
-                <span className="text-sm font-medium">Liked</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1 text-red-600 dark:text-red-400">
-                <ThumbsDown className="w-4 h-4" />
-                <span className="text-sm font-medium">Disliked</span>
-              </div>
-            )}
-          </div>
-        )}
+        {/* Like/Dislike removed - not in schema */}
       </div>
 
       {/* Review Text */}

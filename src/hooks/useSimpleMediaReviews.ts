@@ -11,9 +11,16 @@ import {
   upsertMediaReview,
   updateMediaReview,
   deleteMediaReview,
-  type CreateMediaReviewData,
-  type UpdateMediaReviewData,
-} from "../services/mediaReviewsService";
+} from "../services/reviewsService";
+import type {
+  MediaReview,
+  CreateReviewData,
+  UpdateReviewData,
+} from "../services/reviewsService.types";
+
+// Type for creating a review without user_id (auto-filled by service)
+type CreateMediaReviewData = Omit<CreateReviewData, "user_id">;
+type UpdateMediaReviewData = UpdateReviewData;
 
 /**
  * Hook to get current user's review for a specific media item
@@ -148,22 +155,13 @@ export function useToggleReviewPrivacy(externalId: string, mediaType: string) {
 /**
  * Hook to update just the like/dislike
  * Convenience wrapper for quick reactions
+ * DEPRECATED: Liked field removed from schema
  */
-export function useUpdateReviewLike(externalId: string, mediaType: string) {
-  const updateMutation = useUpdateMediaReview(externalId, mediaType);
-
+export function useUpdateReviewLike() {
   return useMutation({
-    mutationFn: async ({
-      reviewId,
-      liked,
-    }: {
-      reviewId: string;
-      liked: boolean | null;
-    }) => {
-      return updateMutation.mutateAsync({
-        reviewId,
-        updates: { liked },
-      });
+    mutationFn: async () => {
+      // Liked field removed from schema - this is now a no-op
+      return Promise.resolve({} as MediaReview);
     },
   });
 }

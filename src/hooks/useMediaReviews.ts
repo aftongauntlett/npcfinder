@@ -93,12 +93,13 @@ export function useCreateReview() {
         media_type: newReview.media_type,
         title: newReview.title,
         rating: newReview.rating ?? null,
-        liked: newReview.liked ?? null,
         review_text: newReview.review_text ?? null,
         is_public: newReview.is_public ?? true,
         watched_at: newReview.watched_at ?? null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        is_edited: false,
+        edited_at: null,
       };
 
       queryClient.setQueryData<MediaReview>(myReviewKey, optimisticReview);

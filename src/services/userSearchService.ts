@@ -74,40 +74,56 @@ export async function searchUsers({
 
   const myFriendIds = new Set(myConnections?.map((c) => c.friend_id) || []);
 
-  // For each user, calculate mutual friends count
-  const usersWithData = await Promise.all(
-    users.map(async (user) => {
-      const isConnected = myFriendIds.has(user.user_id);
+  // Collect all candidate user IDs from the paginated results
+  const candidateUserIds = users.map((user) => user.user_id);
 
-      // Get mutual friends count
-      let mutualCount = 0;
-      if (!isConnected) {
-        // Get this user's connections
-        const { data: theirConnections } = await supabase
-          .from("connections")
-          .select("friend_id")
-          .eq("user_id", user.user_id);
+  // Fetch all connections for all candidate users in a single query
+  const { data: allCandidateConnections, error: candidateConnectionsError } =
+    await supabase
+      .from("connections")
+      .select("user_id, friend_id")
+      .in("user_id", candidateUserIds);
 
-        if (theirConnections) {
-          const theirFriendIds = new Set(
-            theirConnections.map((c) => c.friend_id)
-          );
-          // Count intersection
-          mutualCount = [...myFriendIds].filter((id) =>
-            theirFriendIds.has(id)
-          ).length;
-        }
+  if (candidateConnectionsError) {
+    console.error(
+      "Error fetching candidate connections:",
+      candidateConnectionsError
+    );
+  }
+
+  // Build a mapping of user_id -> Set<friend_id> for O(1) lookups
+  const userConnectionsMap = new Map<string, Set<string>>();
+  for (const conn of allCandidateConnections || []) {
+    if (!userConnectionsMap.has(conn.user_id)) {
+      userConnectionsMap.set(conn.user_id, new Set());
+    }
+    userConnectionsMap.get(conn.user_id)!.add(conn.friend_id);
+  }
+
+  // Map results with precomputed connection data
+  const usersWithData = users.map((user) => {
+    const isConnected = myFriendIds.has(user.user_id);
+
+    // Calculate mutual friends count
+    let mutualCount = 0;
+    if (!isConnected) {
+      const theirFriendIds = userConnectionsMap.get(user.user_id);
+      if (theirFriendIds) {
+        // Count intersection between my friends and their friends
+        mutualCount = [...myFriendIds].filter((id) =>
+          theirFriendIds.has(id)
+        ).length;
       }
+    }
 
-      return {
-        user_id: user.user_id,
-        display_name: user.display_name,
-        profile_picture_url: user.profile_picture_url,
-        is_connected: isConnected,
-        mutual_friends_count: mutualCount,
-      };
-    })
-  );
+    return {
+      user_id: user.user_id,
+      display_name: user.display_name,
+      profile_picture_url: user.profile_picture_url,
+      is_connected: isConnected,
+      mutual_friends_count: mutualCount,
+    };
+  });
 
   return {
     users: usersWithData,
