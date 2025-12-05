@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from "react";
+import { logger } from "@/lib/logger";
 import Modal from "../shared/ui/Modal";
 import Button from "../shared/ui/Button";
 import Input from "../shared/ui/Input";
@@ -221,7 +222,10 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
           resetForm();
         })
         .catch((err) => {
-          console.error("Failed to update recipe:", err);
+          logger.error("Failed to update recipe", {
+            error: err,
+            taskId: task.id,
+          });
         });
     } else {
       // Create new task
@@ -240,7 +244,7 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
           resetForm();
         })
         .catch((err) => {
-          console.error("Failed to create recipe:", err);
+          logger.error("Failed to create recipe", { error: err, boardId });
         });
     }
   };

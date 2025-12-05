@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useEffect } from "react";
+import { logger } from "@/lib/logger";
 import Modal from "../shared/ui/Modal";
 import Button from "../shared/ui/Button";
 import Input from "../shared/ui/Input";
@@ -59,7 +60,10 @@ const MarkdownToDoModal: React.FC<MarkdownToDoModalProps> = ({
           resetForm();
         })
         .catch((err) => {
-          console.error("Failed to update to-do item:", err);
+          logger.error("Failed to update to-do item", {
+            error: err,
+            taskId: task.id,
+          });
         });
     } else {
       // Create new item
@@ -77,7 +81,7 @@ const MarkdownToDoModal: React.FC<MarkdownToDoModalProps> = ({
           resetForm();
         })
         .catch((err) => {
-          console.error("Failed to create to-do item:", err);
+          logger.error("Failed to create to-do item", { error: err, boardId });
         });
     }
   };

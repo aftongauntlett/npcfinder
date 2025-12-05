@@ -9,6 +9,7 @@ import { Trash2, Bell, AlertCircle } from "lucide-react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "../../styles/datepicker.css";
+import { logger } from "@/lib/logger";
 import Modal from "../shared/ui/Modal";
 import Button from "../shared/ui/Button";
 import Input from "../shared/ui/Input";
@@ -299,7 +300,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         onClose();
       })
       .catch((error) => {
-        console.error("Failed to update task:", error);
+        logger.error("Failed to update task", { error, taskId: task.id });
       });
   };
 
@@ -310,7 +311,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         onClose();
       })
       .catch((error: unknown) => {
-        console.error("Failed to delete task:", error);
+        logger.error("Failed to delete task", { error, taskId: task.id });
       });
   };
 

@@ -124,19 +124,15 @@ const TodayView: React.FC = () => {
           <MediaEmptyState
             icon={ListTodo}
             title="Your task list is empty"
-            description="You haven't added any tasks yet. Add tasks to start tracking what you're currently working on!"
-            onClick={() => {
-              if (boards.length === 0) {
-                // If no boards exist, user needs to create a board first
-                // We could redirect to Boards tab or show a message
-                alert(
-                  "Create a board first in the Boards tab to organize your tasks!"
-                );
-              } else {
-                setShowCreateModal(true);
-              }
-            }}
-            ariaLabel="Add your first task"
+            description={
+              boards.length === 0
+                ? "Create a board first in the Boards tab to organize your tasks!"
+                : "You haven't added any tasks yet. Add tasks to start tracking what you're currently working on!"
+            }
+            onClick={
+              boards.length > 0 ? () => setShowCreateModal(true) : undefined
+            }
+            ariaLabel={boards.length > 0 ? "Add your first task" : undefined}
           />
         </div>
 

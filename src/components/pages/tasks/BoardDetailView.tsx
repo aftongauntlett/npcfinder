@@ -84,13 +84,13 @@ const BoardDetailView: React.FC = () => {
           <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <button
+                <Button
+                  variant="subtle"
+                  size="icon"
                   onClick={() => void navigate("/app/tasks")}
-                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
                   aria-label="Back to tasks"
-                >
-                  <ArrowLeft className="w-6 h-6" />
-                </button>
+                  icon={<ArrowLeft className="w-6 h-6" />}
+                />
                 <div>
                   <div className="flex items-center gap-2">
                     {board.icon && (

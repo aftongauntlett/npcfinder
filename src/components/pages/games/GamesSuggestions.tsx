@@ -7,6 +7,7 @@ import {
   InlineRecommendationsLayout,
   type BaseRecommendation,
 } from "@/components/shared";
+import { logger } from "@/lib/logger";
 import { searchGames } from "../../../utils/mediaSearchAdapters";
 import ContentLayout from "../../layouts/ContentLayout";
 import MainLayout from "../../layouts/MainLayout";
@@ -125,7 +126,7 @@ const GamesSuggestions: React.FC<GamesSuggestionsProps> = ({
         });
       }
     } catch (error) {
-      console.error("Error updating recommendation:", error);
+      logger.error("Failed to update game recommendation", error);
     }
   };
 
@@ -136,7 +137,7 @@ const GamesSuggestions: React.FC<GamesSuggestionsProps> = ({
         note: senderComment,
       });
     } catch (error) {
-      console.error("Error updating sender comment:", error);
+      logger.error("Failed to update sender comment", error);
     }
   };
 
@@ -144,7 +145,7 @@ const GamesSuggestions: React.FC<GamesSuggestionsProps> = ({
     try {
       await deleteRecMutation.mutateAsync(recId);
     } catch (error) {
-      console.error("Error deleting recommendation:", error);
+      logger.error("Failed to delete game recommendation", error);
     }
   };
 

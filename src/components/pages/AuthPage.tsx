@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { signIn, signUp } from "../../lib/auth";
 import { Button, Input } from "@/components/shared";
+import { logger } from "@/lib/logger";
 
 /**
  * Authentication page with login and signup forms
@@ -101,14 +102,14 @@ const AuthPage: React.FC = () => {
       }
     } catch (err) {
       setError("An unexpected error occurred");
-      console.error("Auth error:", err);
+      logger.error("Authentication error", err);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 px-4">
       <div className="max-w-md w-full space-y-8">
         {/* Logo/Title */}
         <div className="text-center">
@@ -233,14 +234,15 @@ const AuthPage: React.FC = () => {
 
         {/* Back to Home Link */}
         <div className="text-center">
-          <button
+          <Button
             onClick={() => {
               void navigate("/");
             }}
-            className="text-sm text-gray-300 hover:text-white transition-colors underline"
+            variant="subtle"
+            className="text-sm text-gray-300 hover:text-white transition-colors"
           >
             ← Back to Home
-          </button>
+          </Button>
         </div>
       </div>
     </div>

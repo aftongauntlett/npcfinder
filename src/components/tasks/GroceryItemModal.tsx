@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useEffect } from "react";
+import { logger } from "@/lib/logger";
 import Modal from "../shared/ui/Modal";
 import Input from "../shared/ui/Input";
 import Textarea from "../shared/ui/Textarea";
@@ -33,6 +34,7 @@ interface GroceryItemModalProps {
 const GroceryItemModal: React.FC<GroceryItemModalProps> = ({
   isOpen,
   onClose,
+  boardId,
   item,
   onSubmit,
 }) => {
@@ -85,7 +87,7 @@ const GroceryItemModal: React.FC<GroceryItemModalProps> = ({
 
       onClose();
     } catch (error) {
-      console.error("Failed to save grocery item:", error);
+      logger.error("Failed to save grocery item", { error, itemName, boardId });
     } finally {
       setIsSubmitting(false);
     }

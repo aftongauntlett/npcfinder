@@ -7,6 +7,7 @@ import React, { useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "../../styles/datepicker.css";
+import { logger } from "@/lib/logger";
 import Modal from "../shared/ui/Modal";
 import Button from "../shared/ui/Button";
 import Input from "../shared/ui/Input";
@@ -331,7 +332,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         }, 100);
       })
       .catch((error) => {
-        console.error("Failed to create task:", error);
+        logger.error("Failed to create task", { error });
       });
   };
 

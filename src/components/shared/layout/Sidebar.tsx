@@ -19,6 +19,7 @@ import NavList, { type NavItem } from "./NavList";
 import { signOut } from "../../../lib/auth";
 import { BTN_PAD_DEFAULT } from "../../../styles/ui";
 import Button from "../ui/Button";
+import { logger } from "@/lib/logger";
 
 interface SidebarProps {
   currentUser: { id: string; email?: string } | null;
@@ -73,7 +74,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
     try {
       await signOut();
     } catch (error) {
-      console.error("Failed to sign out:", error);
+      logger.error("Failed to sign out", { error });
     } finally {
       setIsSigningOut(false);
       setShowSignOutModal(false);

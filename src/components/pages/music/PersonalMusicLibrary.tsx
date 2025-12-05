@@ -11,6 +11,7 @@ import SendMediaModal from "../../shared/media/SendMediaModal";
 import ConfirmationModal from "../../shared/ui/ConfirmationModal";
 import { MediaPageToolbar } from "../../shared/media/MediaPageToolbar";
 import { searchMusic } from "../../../utils/mediaSearchAdapters";
+import { logger } from "@/lib/logger";
 import {
   useMusicLibrary,
   useAddToLibrary,
@@ -101,7 +102,10 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
       setShowDeleteModal(false);
       setMusicToDelete(null);
     } catch (error) {
-      console.error("Failed to delete from music library:", error);
+      logger.error("Failed to delete music", {
+        error,
+        musicId: musicToDelete.id,
+      });
       // Keep modal open so user sees the action failed
     }
   };

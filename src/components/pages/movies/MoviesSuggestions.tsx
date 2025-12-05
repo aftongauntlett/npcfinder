@@ -7,6 +7,7 @@ import {
   InlineRecommendationsLayout,
   type BaseRecommendation,
 } from "@/components/shared";
+import { logger } from "@/lib/logger";
 import { searchMoviesAndTV } from "../../../utils/mediaSearchAdapters";
 import ContentLayout from "../../layouts/ContentLayout";
 import MainLayout from "../../layouts/MainLayout";
@@ -84,7 +85,7 @@ const MoviesSuggestions: React.FC<MoviesSuggestionsProps> = ({
         });
       }
     } catch (error) {
-      console.error("Error updating recommendation:", error);
+      logger.error("Failed to update movie recommendation", error);
     }
   };
 
@@ -95,7 +96,7 @@ const MoviesSuggestions: React.FC<MoviesSuggestionsProps> = ({
         note: senderComment,
       });
     } catch (error) {
-      console.error("Error updating sender comment:", error);
+      logger.error("Failed to update sender comment", error);
     }
   };
 
@@ -103,7 +104,7 @@ const MoviesSuggestions: React.FC<MoviesSuggestionsProps> = ({
     try {
       await deleteRecMutation.mutateAsync(recId);
     } catch (error) {
-      console.error("Error deleting recommendation:", error);
+      logger.error("Failed to delete movie recommendation", error);
     }
   };
 

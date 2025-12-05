@@ -7,6 +7,7 @@ import {
   InlineRecommendationsLayout,
   type BaseRecommendation,
 } from "@/components/shared";
+import { logger } from "@/lib/logger";
 import { searchMusic } from "../../../utils/mediaSearchAdapters";
 import ContentLayout from "../../layouts/ContentLayout";
 import MainLayout from "../../layouts/MainLayout";
@@ -118,7 +119,7 @@ const MusicSuggestions: React.FC<MusicSuggestionsProps> = ({
         status,
       });
     } catch (error) {
-      console.error("Error updating recommendation:", error);
+      logger.error("Failed to update music recommendation", error);
     }
   };
 
@@ -129,7 +130,7 @@ const MusicSuggestions: React.FC<MusicSuggestionsProps> = ({
         note: senderComment,
       });
     } catch (error) {
-      console.error("Error updating sender comment:", error);
+      logger.error("Failed to update sender comment", error);
     }
   };
 
@@ -137,7 +138,7 @@ const MusicSuggestions: React.FC<MusicSuggestionsProps> = ({
     try {
       await deleteRecMutation.mutateAsync(recId);
     } catch (error) {
-      console.error("Error deleting recommendation:", error);
+      logger.error("Failed to delete music recommendation", error);
     }
   };
 

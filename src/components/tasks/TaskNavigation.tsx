@@ -7,6 +7,7 @@
 
 import React, { useState } from "react";
 import { Inbox, Calendar, CalendarClock, Plus } from "lucide-react";
+import { logger } from "@/lib/logger";
 import Input from "../shared/ui/Input";
 import { useBoards, useCreateTask } from "../../hooks/useTasksQueries";
 
@@ -49,7 +50,10 @@ const TaskNavigation: React.FC<TaskNavigationProps> = ({
         }
       })
       .catch((error) => {
-        console.error("Failed to create quick task:", error);
+        logger.error("Failed to create quick task", {
+          error,
+          title: quickAddValue,
+        });
       });
   };
 

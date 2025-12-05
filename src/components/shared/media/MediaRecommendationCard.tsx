@@ -3,6 +3,7 @@ import ConfirmationModal from "../ui/ConfirmationModal";
 import MediaRecommendationCommentInput from "./MediaRecommendationCommentInput";
 import MediaRecommendationActions from "./MediaRecommendationActions";
 import type { BaseRecommendation } from "../types";
+import { logger } from "@/lib/logger";
 
 interface MediaRecommendationCardProps<T extends BaseRecommendation> {
   rec: T;
@@ -117,7 +118,7 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
       await onDelete(rec.id);
       setShowDeleteModal(false);
     } catch (error) {
-      console.error("Error deleting:", error);
+      logger.error("Failed to delete recommendation", { error, recId: rec.id });
       setIsDeleting(false);
     }
   };

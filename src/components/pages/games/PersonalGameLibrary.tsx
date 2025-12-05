@@ -11,6 +11,7 @@ import GameDetailModal from "./GameDetailModal";
 import Toast from "../../ui/Toast";
 import ConfirmationModal from "../../shared/ui/ConfirmationModal";
 import { useMediaFiltering } from "../../../hooks/useMediaFiltering";
+import { logger } from "@/lib/logger";
 import {
   searchGames,
   fetchGameDetails,
@@ -222,7 +223,7 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
       setShowToast(true);
       setShowSearchModal(false);
     } catch (error) {
-      console.error("Failed to add game:", error);
+      logger.error("Failed to add game", { error });
       setToastMessage(
         "Failed to add game. It might already be in your library."
       );
@@ -235,7 +236,10 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
     try {
       await togglePlayed.mutateAsync(game.id);
     } catch (error) {
-      console.error("Failed to toggle played status:", error);
+      logger.error("Failed to toggle played status", {
+        error,
+        gameId: game.id,
+      });
       setToastMessage("Failed to update game status");
       setShowToast(true);
     }
@@ -256,7 +260,7 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
       setShowDeleteModal(false);
       setGameToDelete(null);
     } catch (error) {
-      console.error("Failed to delete game:", error);
+      logger.error("Failed to delete game", { error, gameId: gameToDelete.id });
       setToastMessage("Failed to remove game");
       setShowToast(true);
     }

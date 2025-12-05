@@ -7,6 +7,7 @@ import {
   InlineRecommendationsLayout,
   type BaseRecommendation,
 } from "@/components/shared";
+import { logger } from "@/lib/logger";
 import { searchBooks } from "../../../utils/bookSearchAdapters";
 import ContentLayout from "../../layouts/ContentLayout";
 import MainLayout from "../../layouts/MainLayout";
@@ -138,7 +139,7 @@ const BooksSuggestions: React.FC<BooksSuggestionsProps> = ({
         });
       }
     } catch (error) {
-      console.error("Error updating recommendation:", error);
+      logger.error("Failed to update book recommendation", error);
     }
   };
 
@@ -149,7 +150,7 @@ const BooksSuggestions: React.FC<BooksSuggestionsProps> = ({
         note: senderComment,
       });
     } catch (error) {
-      console.error("Error updating sender comment:", error);
+      logger.error("Failed to update sender comment", error);
     }
   };
 
@@ -157,7 +158,7 @@ const BooksSuggestions: React.FC<BooksSuggestionsProps> = ({
     try {
       await deleteRecMutation.mutateAsync(recId);
     } catch (error) {
-      console.error("Error deleting recommendation:", error);
+      logger.error("Failed to delete book recommendation", error);
     }
   };
 

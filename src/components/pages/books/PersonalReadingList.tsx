@@ -11,6 +11,7 @@ import SendMediaModal from "../../shared/media/SendMediaModal";
 import ConfirmationModal from "../../shared/ui/ConfirmationModal";
 import { MediaPageToolbar } from "../../shared/media/MediaPageToolbar";
 import { useMediaFiltering } from "../../../hooks/useMediaFiltering";
+import { logger } from "@/lib/logger";
 import { searchBooks } from "../../../utils/bookSearchAdapters";
 import {
   useReadingList,
@@ -240,7 +241,7 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
       setShowDeleteModal(false);
       setBookToDelete(null);
     } catch (error) {
-      console.error("Failed to delete from reading list:", error);
+      logger.error("Failed to delete book", { error, bookId: bookToDelete.id });
       // Keep modal open so user sees the action failed
     }
   };

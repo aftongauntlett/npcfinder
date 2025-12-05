@@ -7,6 +7,7 @@ import {
   useUpsertMediaReview,
   useDeleteMediaReview,
 } from "@/hooks/useSimpleMediaReviews";
+import { logger } from "@/lib/logger";
 
 interface MediaReviewModalProps {
   isOpen: boolean;
@@ -110,7 +111,7 @@ export default function MediaReviewModal({
         onClose();
       }, 500);
     } catch (error) {
-      console.error("Error saving review:", error);
+      logger.error("Failed to save review", { error, externalId, mediaType });
     }
   };
 
@@ -124,7 +125,7 @@ export default function MediaReviewModal({
       setIsPublic(true);
       setHasUnsavedChanges(false);
     } catch (error) {
-      console.error("Error deleting review:", error);
+      logger.error("Failed to delete review", { error, reviewId: myReview.id });
     }
   };
 

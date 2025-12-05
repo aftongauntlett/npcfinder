@@ -7,6 +7,7 @@
 
 import React, { useState } from "react";
 import { Settings } from "lucide-react";
+import { Button } from "@/components/shared";
 import KanbanBoard from "../../tasks/KanbanBoard";
 import SimpleListView from "../../tasks/SimpleListView";
 import { JobTrackerView } from "../../tasks/views/JobTrackerView";
@@ -149,13 +150,14 @@ const BoardContentView: React.FC<BoardContentViewProps> = ({ boardId }) => {
     <div className="mx-auto px-6 max-w-[1600px] h-full flex flex-col">
       {/* Board Header with Edit Button */}
       <div className="flex items-center justify-end mb-4">
-        <button
+        <Button
+          variant="subtle"
+          size="sm"
           onClick={() => setShowEditModal(true)}
-          className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+          icon={<Settings className="w-4 h-4" />}
         >
-          <Settings className="w-4 h-4" />
           Edit Board
-        </button>
+        </Button>
       </div>
 
       {/* Board Content */}

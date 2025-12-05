@@ -6,6 +6,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Play, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { logger } from "@/lib/logger";
 import Button from "../shared/ui/Button";
 import type { Task } from "../../services/tasksService.types";
 import {
@@ -83,7 +84,7 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
         isUrgentAfter: task.is_urgent_after_timer || undefined,
       });
     } catch (error) {
-      console.error("Failed to start timer:", error);
+      logger.error("Failed to start timer", { error, taskId: task.id });
     }
   };
 
@@ -91,7 +92,7 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
     try {
       await completeTimer.mutateAsync(task.id);
     } catch (error) {
-      console.error("Failed to complete timer:", error);
+      logger.error("Failed to complete timer", { error, taskId: task.id });
     }
   };
 
