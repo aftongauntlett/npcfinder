@@ -518,13 +518,20 @@ export async function createTask(
         tags: taskData.tags || null,
         item_data: taskData.item_data || null,
         display_order: nextOrder,
+        // Repeatable task fields
         is_repeatable: taskData.is_repeatable || null,
         repeat_frequency: taskData.repeat_frequency || null,
         repeat_custom_days: taskData.repeat_custom_days || null,
+        last_completed_at: null, // Set by toggleTaskStatus when completing repeatable tasks
+        // Timer fields
         timer_duration_minutes: taskData.timer_duration_minutes || null,
+        timer_started_at: null, // Set by startTaskTimer
+        timer_completed_at: null, // Set by completeTaskTimer
         is_urgent_after_timer: taskData.is_urgent_after_timer || null,
+        // Reminder fields
         reminder_date: taskData.reminder_date || null,
         reminder_time: taskData.reminder_time || null,
+        reminder_sent_at: null, // Set by markReminderSent or backend reminder service
       })
       .select()
       .single();
@@ -625,25 +632,41 @@ export async function reorderTasks(
 
 /**
  * Toggle task status between todo and done
+ * For repeatable tasks, updates last_completed_at when marking as done
  */
 export async function toggleTaskStatus(
   taskId: string
 ): Promise<ServiceResponse<Task>> {
   try {
-    // First get current status
+    // First get current status and repeatable flag
     const { data: task } = await supabase
       .from("tasks")
-      .select("status")
+      .select("status, is_repeatable")
       .eq("id", taskId)
       .single();
 
     if (!task) throw new Error("Task not found");
 
     const newStatus = task.status === "done" ? "todo" : "done";
+    const now = new Date().toISOString();
+
+    // Prepare update payload
+    const updates: Partial<Task> = { status: newStatus };
+
+    // When marking as done, set completed_at and last_completed_at (for repeatable tasks)
+    if (newStatus === "done") {
+      updates.completed_at = now;
+      if (task.is_repeatable) {
+        updates.last_completed_at = now;
+      }
+    } else {
+      // When marking as todo again, clear completed_at
+      updates.completed_at = null;
+    }
 
     const { data, error } = await supabase
       .from("tasks")
-      .update({ status: newStatus })
+      .update(updates)
       .eq("id", taskId)
       .select()
       .single();
@@ -658,6 +681,7 @@ export async function toggleTaskStatus(
 
 /**
  * Archive a task
+ * Sets status to 'archived' and updates archived_at timestamp
  */
 export async function archiveTask(
   taskId: string
@@ -665,7 +689,10 @@ export async function archiveTask(
   try {
     const { data, error } = await supabase
       .from("tasks")
-      .update({ status: "archived" })
+      .update({
+        status: "archived",
+        archived_at: new Date().toISOString(),
+      })
       .eq("id", taskId)
       .select()
       .single();
@@ -767,6 +794,7 @@ export async function ensureStarterBoards(): Promise<
 
 /**
  * Start a timer for a task
+ * FIELD ISOLATION: Only touches timer_* fields, does not affect other task properties
  */
 export async function startTaskTimer(
   taskId: string,
@@ -779,6 +807,7 @@ export async function startTaskTimer(
       .update({
         timer_duration_minutes: durationMinutes,
         timer_started_at: new Date().toISOString(),
+        timer_completed_at: null, // Reset completion if restarting timer
         is_urgent_after_timer: isUrgentAfter,
       })
       .eq("id", taskId)
@@ -795,6 +824,7 @@ export async function startTaskTimer(
 
 /**
  * Complete a task timer
+ * FIELD ISOLATION: Only touches timer_completed_at, does not affect other task properties
  */
 export async function completeTaskTimer(
   taskId: string
@@ -870,6 +900,9 @@ export async function getUpcomingReminders(
 
 /**
  * Mark a reminder as sent
+ * FIELD ISOLATION: Only touches reminder_sent_at, does not affect other task properties
+ * NOTE: reminder_sent_at is typically set by a backend reminder service but can be manually
+ * triggered via this helper. Frontend does not currently auto-send reminders.
  */
 export async function markReminderSent(
   taskId: string
@@ -970,6 +1003,9 @@ export async function unshareBoard(
 
 /**
  * Get all users a board is shared with
+ * Note: After migration 20251204000001, shared_with_user_id references auth.users(id).
+ * We join to user_profiles where user_profiles.user_id = board_shares.shared_with_user_id.
+ * PostgREST infers this join since both columns reference the same auth.users(id).
  */
 export async function getBoardShares(
   boardId: string
