@@ -8,6 +8,7 @@
  */
 
 import { supabase } from "./supabase";
+import { logger } from "@/lib/logger";
 
 /**
  * Export all of a user's data
@@ -98,7 +99,7 @@ export async function exportUserData(userId: string) {
       error: null,
     };
   } catch (error) {
-    console.error("Export user data error:", error);
+    logger.error("Failed to export user data", { error });
     return {
       data: null,
       error:
@@ -161,7 +162,7 @@ export async function getUserDataSummary(userId: string) {
       error: null,
     };
   } catch (error) {
-    console.error("Get user data summary error:", error);
+    logger.error("Failed to get user data summary", { error });
     return {
       data: null,
       error:
@@ -220,7 +221,7 @@ export async function deleteUserAccount(userId: string) {
       error: null,
     };
   } catch (error) {
-    console.error("Delete user account error:", error);
+    logger.error("Failed to delete user account", { error });
     return {
       success: false,
       error:

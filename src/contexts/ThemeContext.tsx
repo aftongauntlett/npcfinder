@@ -4,6 +4,7 @@ import {
   DEFAULT_THEME_COLOR,
   createColorVariations,
 } from "../styles/colorThemes";
+import { logger } from "@/lib/logger";
 
 type ThemeOption = "light" | "dark" | "system";
 type ResolvedTheme = "light" | "dark";
@@ -33,7 +34,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
           }
         }
       } catch (error) {
-        console.error("Failed to load theme:", error);
+        logger.error("Failed to load theme from localStorage", { error });
       }
     };
     loadTheme();
@@ -95,7 +96,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     try {
       localStorage.setItem("theme", newTheme);
     } catch (error) {
-      console.error("Failed to save theme:", error);
+      logger.error("Failed to save theme to localStorage", { error, newTheme });
     }
   }, []);
 
@@ -106,7 +107,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       try {
         localStorage.setItem("themeColor", newColor);
       } catch (error) {
-        console.error("Failed to save theme color:", error);
+        logger.error("Failed to save theme color to localStorage", {
+          error,
+          newColor,
+        });
       }
     }
   }, []);

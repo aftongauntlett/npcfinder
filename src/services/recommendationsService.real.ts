@@ -2,6 +2,7 @@
 // Queries movie_recommendations and music_recommendations tables
 
 import { supabase } from "../lib/supabase";
+import { logger } from "@/lib/logger";
 import type {
   RecommendationFilters,
   FriendStats,
@@ -61,7 +62,7 @@ export async function getRecommendations(
   const { data, error } = await query;
 
   if (error) {
-    console.error("Error fetching recommendations:", error);
+    logger.error("Failed to fetch recommendations", { error });
     return [];
   }
 
@@ -185,7 +186,7 @@ export async function updateRecommendationStatus(
     .eq("id", recId);
 
   if (error) {
-    console.error("Error updating recommendation status:", error);
+    logger.error("Failed to update recommendation status", { error, recId });
     throw error;
   }
 }
@@ -204,7 +205,7 @@ export async function deleteRecommendation(
   const { error } = await supabase.from(tableName).delete().eq("id", recId);
 
   if (error) {
-    console.error("Error deleting recommendation:", error);
+    logger.error("Failed to delete recommendation", { error, recId });
     throw error;
   }
 }
@@ -227,7 +228,7 @@ export async function updateSenderNote(
     .eq("id", recId);
 
   if (error) {
-    console.error("Error updating sender note:", error);
+    logger.error("Failed to update sender note", { error, recId });
     throw error;
   }
 }
@@ -250,7 +251,7 @@ export async function updateRecipientNote(
     .eq("id", recId);
 
   if (error) {
-    console.error("Error updating recipient note:", error);
+    logger.error("Failed to update recipient note", { error, recId });
     throw error;
   }
 }
@@ -276,7 +277,7 @@ export async function markAllPendingAsOpened(
     .is("opened_at", null);
 
   if (error) {
-    console.error(`Error marking ${tableName} as opened:`, error);
+    logger.error("Failed to mark item as opened", { error, tableName });
     throw error;
   }
 }
@@ -298,7 +299,7 @@ export async function getWatchlist(): Promise<WatchlistItem[]> {
     .order("added_at", { ascending: false });
 
   if (error) {
-    console.error("Error fetching watchlist:", error);
+    logger.error("Failed to fetch watchlist", { error });
     throw error;
   }
 
@@ -327,7 +328,7 @@ export async function addToWatchlist(
     .single();
 
   if (error) {
-    console.error("Error adding to watchlist:", error);
+    logger.error("Failed to add to watchlist", { error });
     throw error;
   }
 
@@ -353,7 +354,7 @@ export async function toggleWatchlistWatched(id: string): Promise<void> {
     .single();
 
   if (fetchError) {
-    console.error("Error fetching watchlist item:", fetchError);
+    logger.error("Failed to fetch watchlist item", { error: fetchError, id });
     throw fetchError;
   }
 
@@ -369,7 +370,7 @@ export async function toggleWatchlistWatched(id: string): Promise<void> {
     .eq("user_id", user.id);
 
   if (error) {
-    console.error("Error toggling watched status:", error);
+    logger.error("Failed to toggle watched status", { error, id });
     throw error;
   }
 }
@@ -391,7 +392,7 @@ export async function deleteFromWatchlist(id: string): Promise<void> {
     .eq("user_id", user.id);
 
   if (error) {
-    console.error("Error deleting from watchlist:", error);
+    logger.error("Failed to delete from watchlist", { error, id });
     throw error;
   }
 }
@@ -421,7 +422,7 @@ export async function updateWatchlistItem(
     .single();
 
   if (error) {
-    console.error("Error updating watchlist item:", error);
+    logger.error("Failed to update watchlist item", { error, id });
     throw error;
   }
 
@@ -491,7 +492,7 @@ export async function getBookRecommendations(
   const { data, error } = await query;
 
   if (error) {
-    console.error("Error fetching book recommendations:", error);
+    logger.error("Failed to fetch book recommendations", { error });
     return [];
   }
 

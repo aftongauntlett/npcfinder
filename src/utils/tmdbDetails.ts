@@ -4,6 +4,7 @@
  */
 
 import { tmdbLimiter, omdbLimiter } from "./rateLimiter";
+import { logger } from "@/lib/logger";
 
 interface OMDBResponse {
   Title: string;
@@ -44,7 +45,7 @@ async function fetchOMDBData(
 ): Promise<Partial<OMDBResponse> | null> {
   const apiKey = import.meta.env.VITE_OMDB_API_KEY;
   if (!apiKey) {
-    console.warn("OMDB API key not configured");
+    logger.warn("OMDB API key not configured");
     return null;
   }
 
@@ -55,20 +56,20 @@ async function fetchOMDBData(
     const response = await omdbLimiter.add(() => fetch(url));
 
     if (!response.ok) {
-      console.error(`OMDB API error: ${response.status}`);
+      logger.error("OMDB API request failed", { status: response.status });
       return null;
     }
 
     const data: OMDBResponse = await response.json();
 
     if (data.Response === "False") {
-      console.warn(`OMDB: No data found for ${imdbId}`);
+      logger.warn("OMDB data not found", { imdbId });
       return null;
     }
 
     return data;
   } catch (error) {
-    console.error("Error fetching OMDB data:", error);
+    logger.error("Failed to fetch OMDB data", { error });
     return null;
   }
 }
@@ -130,7 +131,7 @@ export async function fetchDetailedMediaInfo(
 ): Promise<DetailedMediaInfo | null> {
   const apiKey = import.meta.env.VITE_TMDB_API_KEY;
   if (!apiKey) {
-    console.error("TMDB API key not configured");
+    logger.error("TMDB API key not configured");
     return null;
   }
 
@@ -275,7 +276,11 @@ export async function fetchDetailedMediaInfo(
       imdb_id: imdbId || null,
     };
   } catch (error) {
-    console.error("Error fetching detailed media info:", error);
+    logger.error("Failed to fetch detailed media info", {
+      error,
+      externalId,
+      mediaType,
+    });
     return null;
   }
 }
@@ -336,7 +341,7 @@ export async function fetchSimilarMedia(
 ): Promise<SimilarMediaItem[]> {
   const apiKey = import.meta.env.VITE_TMDB_API_KEY;
   if (!apiKey) {
-    console.error("TMDB API key not configured");
+    logger.error("TMDB API key not configured");
     return [];
   }
 
@@ -365,7 +370,11 @@ export async function fetchSimilarMedia(
       overview: item.overview || null,
     }));
   } catch (error) {
-    console.error("Error fetching similar media:", error);
+    logger.error("Failed to fetch similar media", {
+      error,
+      externalId,
+      mediaType,
+    });
     return [];
   }
 }
@@ -380,7 +389,7 @@ export async function fetchTrendingMedia(
 ): Promise<SimilarMediaItem[]> {
   const apiKey = import.meta.env.VITE_TMDB_API_KEY;
   if (!apiKey) {
-    console.error("TMDB API key not configured");
+    logger.error("TMDB API key not configured");
     return [];
   }
 
@@ -409,7 +418,11 @@ export async function fetchTrendingMedia(
       overview: item.overview || null,
     }));
   } catch (error) {
-    console.error("Error fetching trending media:", error);
+    logger.error("Failed to fetch trending media", {
+      error,
+      mediaType,
+      timeWindow,
+    });
     return [];
   }
 }
@@ -423,7 +436,7 @@ export async function fetchPopularMedia(
 ): Promise<SimilarMediaItem[]> {
   const apiKey = import.meta.env.VITE_TMDB_API_KEY;
   if (!apiKey) {
-    console.error("TMDB API key not configured");
+    logger.error("TMDB API key not configured");
     return [];
   }
 
@@ -452,7 +465,7 @@ export async function fetchPopularMedia(
       overview: item.overview || null,
     }));
   } catch (error) {
-    console.error("Error fetching popular media:", error);
+    logger.error("Failed to fetch popular media", { error, mediaType });
     return [];
   }
 }

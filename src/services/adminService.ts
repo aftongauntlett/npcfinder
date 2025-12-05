@@ -2,6 +2,7 @@
 // SECURITY: AdminContext gates route access, RLS enforces backend protection
 
 import { supabase } from "../lib/supabase";
+import { logger } from "@/lib/logger";
 
 // Verify current user has admin privileges before admin operations
 const verifyAdminAccess = async (): Promise<boolean> => {
@@ -30,7 +31,7 @@ const verifyAdminAccess = async (): Promise<boolean> => {
 
     return true;
   } catch (error) {
-    console.error("Error verifying admin access:", error);
+    logger.error("Failed to verify admin access", { error });
     return false;
   }
 };

@@ -1,6 +1,7 @@
 import { supabase } from "./supabase";
 import type { AuthError, Session, User } from "@supabase/supabase-js";
 import { validateInviteCode, consumeInviteCode } from "./inviteCodes";
+import { logger } from "@/lib/logger";
 
 /**
  * Authentication utilities
@@ -54,14 +55,17 @@ export const signUp = async (
     );
 
     if (consumeError) {
-      console.error("Failed to consume invite code:", consumeError);
+      logger.error("Failed to consume invite code", {
+        error: consumeError,
+        inviteCode,
+      });
       // Note: User is already created at this point
       // The code should still be marked as used via database trigger
     }
 
     return { data: data.user, error: null };
   } catch (error) {
-    console.error("Sign up error:", error);
+    logger.error("Sign up failed", { error, email });
     return { data: null, error: error as AuthError };
   }
 };
@@ -82,7 +86,7 @@ export const signIn = async (
     if (error) throw error;
     return { data: data.session, error: null };
   } catch (error) {
-    console.error("Sign in error:", error);
+    logger.error("Sign in failed", { error, email });
     return { data: null, error: error as AuthError };
   }
 };
@@ -96,7 +100,7 @@ export const signOut = async (): Promise<{ error: AuthError | null }> => {
     if (error) throw error;
     return { error: null };
   } catch (error) {
-    console.error("Sign out error:", error);
+    logger.error("Sign out failed", { error });
     return { error: error as AuthError };
   }
 };
@@ -122,7 +126,7 @@ export const getCurrentUser = async (): Promise<AuthResult<User>> => {
     if (error) throw error;
     return { data: user, error: null };
   } catch (error) {
-    console.error("Get current user error:", error);
+    logger.error("Failed to get current user", { error });
     return { data: null, error: error as AuthError };
   }
 };
@@ -139,7 +143,7 @@ export const getSession = async (): Promise<AuthResult<Session>> => {
     if (error) throw error;
     return { data: session, error: null };
   } catch (error) {
-    console.error("Get session error:", error);
+    logger.error("Failed to get session", { error });
     return { data: null, error: error as AuthError };
   }
 };

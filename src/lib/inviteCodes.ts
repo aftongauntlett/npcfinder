@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { logger } from "@/lib/logger";
 
 // Invite Code Management - Secure invite-only registration system
 
@@ -58,7 +59,7 @@ export const validateInviteCode = async (
     if (error) throw error;
     return { data: data as boolean, error: null };
   } catch (error) {
-    console.error("Validate invite code error:", error);
+    logger.error("Failed to validate invite code", { error });
     return { data: false, error: error as Error };
   }
 };
@@ -77,7 +78,7 @@ export const consumeInviteCode = async (
     if (error) throw error;
     return { data: data as boolean, error: null };
   } catch (error) {
-    console.error("Consume invite code error:", error);
+    logger.error("Failed to consume invite code", { error });
     return { data: false, error: error as Error };
   }
 };
@@ -115,7 +116,7 @@ export const createInviteCode = async (
     if (error) throw error;
     return { data: data as InviteCode, error: null };
   } catch (error) {
-    console.error("Create invite code error:", error);
+    logger.error("Failed to create invite code", { error });
     return { data: null, error: error as Error };
   }
 };
@@ -170,7 +171,7 @@ export const getAllInviteCodes = async (): Promise<
 
     return { data: codesWithEmails as InviteCode[], error: null };
   } catch (error) {
-    console.error("Get invite codes error:", error);
+    logger.error("Failed to get all invite codes", { error });
     return { data: null, error: error as Error };
   }
 };
@@ -199,7 +200,7 @@ export const getMyInviteCodes = async (): Promise<
     if (error) throw error;
     return { data: data as InviteCode[], error: null };
   } catch (error) {
-    console.error("Get my invite codes error:", error);
+    logger.error("Failed to get user's invite codes", { error });
     return { data: null, error: error as Error };
   }
 };
@@ -220,7 +221,7 @@ export const revokeInviteCode = async (
     if (error) throw error;
     return { data: true, error: null };
   } catch (error) {
-    console.error("Revoke invite code error:", error);
+    logger.error("Failed to revoke invite code", { error });
     return { data: false, error: error as Error };
   }
 };
@@ -261,7 +262,7 @@ export const batchCreateInviteCodes = async (
     if (error) throw error;
     return { data: data as InviteCode[], error: null };
   } catch (error) {
-    console.error("Batch create invite codes error:", error);
+    logger.error("Failed to batch create invite codes", { error });
     return { data: null, error: error as Error };
   }
 };

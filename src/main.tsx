@@ -5,6 +5,7 @@ import "./styles/theme.css";
 import "./index.css";
 import App from "./App";
 import { validateEnv } from "./lib/validateEnv";
+import { logger } from "./lib/logger";
 
 // Bootstrap function to initialize the app
 function bootstrap() {
@@ -12,7 +13,7 @@ function bootstrap() {
   try {
     validateEnv();
   } catch (error) {
-    console.error("Failed to start app:", error);
+    logger.error("Failed to start app due to invalid environment", { error });
     document.body.innerHTML = `
       <div style="display: flex; align-items: center; justify-content: center; height: 100vh; font-family: system-ui, sans-serif; text-align: center; padding: 20px;">
         <div>

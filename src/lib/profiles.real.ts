@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import type { PostgrestError } from "@supabase/supabase-js";
+import { logger } from "@/lib/logger";
 
 /**
  * User Profile utilities
@@ -54,7 +55,7 @@ export const getUserProfile = async (
 
     return { data, error: null };
   } catch (error) {
-    console.error("Get profile error:", error);
+    logger.error("Failed to get profile", { error, userId });
     return { data: null, error: error as PostgrestError };
   }
 };
@@ -104,7 +105,7 @@ export const upsertUserProfile = async (
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error("Upsert profile error:", error);
+    logger.error("Failed to upsert profile", { error, userId });
     return { data: null, error: error as PostgrestError };
   }
 };
@@ -127,7 +128,7 @@ export const updateUserProfile = async (
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error("Update profile error:", error);
+    logger.error("Failed to update profile", { error, userId });
     return { data: null, error: error as PostgrestError };
   }
 };

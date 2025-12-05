@@ -4,6 +4,7 @@
  */
 
 import { MediaItem } from "@/components/shared";
+import { logger } from "@/lib/logger";
 
 const GOOGLE_BOOKS_API_KEY = import.meta.env.VITE_GOOGLE_BOOKS_API_KEY;
 const GOOGLE_BOOKS_BASE_URL = "https://www.googleapis.com/books/v1/volumes";
@@ -59,7 +60,7 @@ export async function searchBooks(query: string): Promise<MediaItem[]> {
       convertGoogleBookToMediaItem(item)
     );
   } catch (error) {
-    console.error("Google Books search error:", error);
+    logger.error("Failed to search Google Books", { error, query });
     return [];
   }
 }
@@ -90,7 +91,7 @@ export async function searchBookByISBN(
 
     return convertGoogleBookToMediaItem(data.items[0]);
   } catch (error) {
-    console.error("Google Books ISBN search error:", error);
+    logger.error("Failed to search book by ISBN", { error, isbn });
     return null;
   }
 }

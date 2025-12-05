@@ -1,5 +1,6 @@
 import { MediaItem } from "@/components/shared";
 import { tmdbLimiter, itunesLimiter } from "./rateLimiter";
+import { logger } from "@/lib/logger";
 
 // iTunes API response types
 interface iTunesResult {
@@ -83,7 +84,7 @@ export async function searchMusic(query: string): Promise<MediaItem[]> {
 export async function searchMoviesAndTV(query: string): Promise<MediaItem[]> {
   const apiKey = import.meta.env.VITE_TMDB_API_KEY;
   if (!apiKey) {
-    console.error("TMDB API key not configured");
+    logger.error("TMDB API key not configured");
     return [];
   }
 
@@ -115,7 +116,7 @@ export async function searchMoviesAndTV(query: string): Promise<MediaItem[]> {
  */
 export function searchBooks(query: string): Promise<MediaItem[]> {
   // TODO: Implement with Google Books API
-  console.warn("Books search not yet implemented:", query);
+  logger.warn("Books search not yet implemented", { query });
   return Promise.resolve([]);
 }
 
@@ -161,7 +162,7 @@ interface RAWGResponse {
 export async function searchGames(query: string): Promise<MediaItem[]> {
   const apiKey = import.meta.env.VITE_RAWG_API_KEY;
   if (!apiKey) {
-    console.error("RAWG API key not configured");
+    logger.error("RAWG API key not configured");
     return [];
   }
 
@@ -197,7 +198,7 @@ export async function searchGames(query: string): Promise<MediaItem[]> {
       playtime: game.playtime,
     }));
   } catch (error) {
-    console.error("Failed to search games:", error);
+    logger.error("Failed to search games", { error, query });
     return [];
   }
 }
@@ -210,7 +211,7 @@ export async function fetchGameDetails(
 ): Promise<RAWGGameDetails | null> {
   const apiKey = import.meta.env.VITE_RAWG_API_KEY;
   if (!apiKey) {
-    console.error("RAWG API key not configured");
+    logger.error("RAWG API key not configured");
     return null;
   }
 
@@ -225,7 +226,7 @@ export async function fetchGameDetails(
     const data: RAWGGameDetails = await response.json();
     return data;
   } catch (error) {
-    console.error("Failed to fetch game details:", error);
+    logger.error("Failed to fetch game details", { error, gameId });
     return null;
   }
 }

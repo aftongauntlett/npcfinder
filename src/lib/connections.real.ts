@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import type { PostgrestError } from "@supabase/supabase-js";
+import { logger } from "@/lib/logger";
 
 /**
  * Real Supabase implementation for connections/friendships
@@ -56,7 +57,7 @@ export const getFriends = async (
 
     return { data: friends, error: null };
   } catch (error) {
-    console.error("Error loading friends:", error);
+    logger.error("Failed to load friends", { error });
     return { data: null, error: error as PostgrestError };
   }
 };
@@ -81,7 +82,7 @@ export const areConnected = async (
 
     return { data: (data?.length || 0) > 0, error: null };
   } catch (error) {
-    console.error("Error checking connection:", error);
+    logger.error("Failed to check connection status", { error });
     return { data: null, error: error as PostgrestError };
   }
 };

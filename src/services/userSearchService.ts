@@ -4,6 +4,7 @@
  */
 
 import { supabase } from "../lib/supabase";
+import { logger } from "@/lib/logger";
 
 export interface UserSearchResult {
   user_id: string;
@@ -69,7 +70,10 @@ export async function searchUsers({
     .eq("user_id", currentUserId);
 
   if (connectionsError) {
-    console.error("Error fetching connections:", connectionsError);
+    logger.error("Failed to fetch connections", {
+      error: connectionsError,
+      currentUserId,
+    });
   }
 
   const myFriendIds = new Set(myConnections?.map((c) => c.friend_id) || []);
@@ -85,10 +89,9 @@ export async function searchUsers({
       .in("user_id", candidateUserIds);
 
   if (candidateConnectionsError) {
-    console.error(
-      "Error fetching candidate connections:",
-      candidateConnectionsError
-    );
+    logger.error("Failed to fetch candidate connections", {
+      error: candidateConnectionsError,
+    });
   }
 
   // Build a mapping of user_id -> Set<friend_id> for O(1) lookups

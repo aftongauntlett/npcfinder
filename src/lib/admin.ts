@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { logger } from "@/lib/logger";
 
 // Admin utilities
 // SECURITY: AdminContext gates routes, RLS enforces DB-level protection
@@ -62,7 +63,7 @@ export const toggleUserAdminStatus = async (
 
     return { success: true };
   } catch (error) {
-    console.error("Error toggling admin status:", error);
+    logger.error("Failed to toggle admin status", { error });
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",

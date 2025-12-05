@@ -4,6 +4,7 @@
  */
 
 import { googleBooksLimiter } from "./rateLimiter";
+import { logger } from "@/lib/logger";
 
 export interface BookItem {
   external_id: string;
@@ -93,7 +94,7 @@ export async function fetchTrendingBooks(): Promise<BookItem[]> {
       const data = (await response.json()) as { items?: GoogleBooksVolume[] };
       return (data.items || []).map(convertToBookItem);
     } catch (error) {
-      console.error("Error fetching trending books:", error);
+      logger.error("Failed to fetch trending books", { error });
       return [];
     }
   });
@@ -117,7 +118,7 @@ export async function fetchPopularBooks(): Promise<BookItem[]> {
       const data = (await response.json()) as { items?: GoogleBooksVolume[] };
       return (data.items || []).map(convertToBookItem);
     } catch (error) {
-      console.error("Error fetching popular books:", error);
+      logger.error("Failed to fetch popular books", { error });
       return [];
     }
   });
@@ -151,7 +152,7 @@ export async function fetchSimilarBooks(
         (book: BookItem) => book.title.toLowerCase() !== bookTitle.toLowerCase()
       );
     } catch (error) {
-      console.error("Error fetching similar books:", error);
+      logger.error("Failed to fetch similar books", { error, bookTitle });
       return [];
     }
   });

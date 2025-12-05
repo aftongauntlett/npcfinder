@@ -2,6 +2,7 @@ import React, { createContext, useContext, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "./AuthContext";
 import { supabase } from "../lib/supabase";
+import { logger } from "@/lib/logger";
 
 interface AdminContextType {
   isAdmin: boolean;
@@ -47,12 +48,18 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
           user.id === adminUserId;
 
         if (error) {
-          console.warn("Failed to check admin status from database:", error);
+          logger.warn("Failed to check admin status from database", {
+            error,
+            userId: user.id,
+          });
         }
 
         return fallbackIsAdmin || false;
       } catch (error) {
-        console.error("Error checking admin status:", error);
+        logger.error("Failed to check admin status", {
+          error,
+          userId: user.id,
+        });
         return false;
       }
     },
