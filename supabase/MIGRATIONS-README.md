@@ -151,10 +151,9 @@ See `docs/DATABASE-MIGRATIONS.md` for detailed migration workflow and best pract
 
 ## Full Documentation
 
-For complete migration workflow, development setup, and best practices:
+For complete migration workflow and best practices:
 
-📖 **[Database Migrations Guide](../../docs/DATABASE-MIGRATIONS.md)**  
-📖 **[Dev/Prod Workflow](../../docs/DEV-PROD-WORKFLOW.md)**
+📖 **[Database Migrations Guide](../../docs/DATABASE-MIGRATIONS.md)**
 
 ## Emergency Procedures
 

@@ -18,8 +18,8 @@ This project uses **database migrations** to manage schema changes in a version-
 - ✅ One authoritative baseline migration contains the complete production schema
 - ✅ All schema changes use `supabase db diff` workflow (never manual SQL editor changes)
 - ✅ All future changes are forward-only migrations (never edit existing migrations)
-- ✅ Development database can be reset freely to test migration chain
-- ✅ Migrations are tested in dev database before applying to production
+- ✅ Migrations are applied directly to production database
+- ✅ Changes are made carefully in Supabase Dashboard UI and tested before running migrations
 
 **Why This Approach**:
 
@@ -27,7 +27,7 @@ This project uses **database migrations** to manage schema changes in a version-
 - Clean, simple migration history starting from a known-good state
 - No historical baggage from prototype phase
 - Professional workflow for schema changes
-- Easy to verify migration chain with `db:reset:dev`
+- Work directly in production with careful, tested changes
 
 ---
 
@@ -69,12 +69,11 @@ Complete production database schema as of December 5, 2025, including:
 **How to Apply**:
 
 ```bash
-# Development database
-npm run db:push:dev
-
-# Production database (7-second safety warning)
-npm run db:push:prod
+# Production database
+npm run db:push
 ```
+
+**Note**: This project works directly in production. There is no separate dev database or local database setup.
 
 **IMPORTANT**: This file must never be edited. It represents the exact state of a healthy production database and serves as the authoritative baseline.
 
@@ -97,7 +96,7 @@ npm run db:push:prod
 2. **Generate a diff of your changes**
 
    ```bash
-   npm run db:diff:dev
+   npm run db:diff
    ```
 
    This compares your current database schema against the last migration and shows the SQL diff.
@@ -124,17 +123,13 @@ npm run db:push:prod
    - Paste the SQL from the diff output
    - Add any necessary comments
 
-6. **Test in development**
+6. **Apply to production**
 
    ```bash
-   # Reset dev database to clean state
-   npm run db:reset:dev
-
-   # This will:
-   # - Drop and recreate the database
-   # - Apply baseline migration
-   # - Apply all forward-only migrations (including your new one)
+   npm run db:push
    ```
+
+   This will link to production and apply all pending migrations.
 
 7. **Verify the migration works**
 
@@ -142,11 +137,7 @@ npm run db:push:prod
    - Test affected application features
    - Run your test suite: `npm run test`
 
-8. **Apply to production**
-   ```bash
-   npm run db:push:prod
-   ```
-   This has a 7-second safety warning before execution.
+**Note**: This project works directly in production. There is no local or separate dev database. All changes are made carefully in the Supabase Dashboard and tested thoroughly before running migrations.
 
 ### Why This Workflow?
 
@@ -232,8 +223,6 @@ SUPABASE_PROD_PROJECT_REF=your-prod-project-ref
 
 Find project refs in: Supabase Dashboard → Project Settings → General → Reference ID
 
-**See full setup**: [DEV-PROD-WORKFLOW.md](DEV-PROD-WORKFLOW.md)
-
 ---
 
 ## Available Commands
@@ -252,49 +241,26 @@ npm run db:migration:new add_user_preferences_table
 ### Checking Migration Status
 
 ```bash
-# List migrations for dev database
-npm run db:migration:list:dev
-
-# List migrations for prod database
-npm run db:migration:list:prod
+# List migrations for production database
+npm run db:migration:list
 ```
 
-Shows which migrations are pending vs. applied to the specified database.
+Shows which migrations are pending vs. applied.
 
 ### Applying Migrations
 
 ```bash
-# Apply to DEVELOPMENT database (safe, no warning)
-npm run db:push:dev
-
-# Apply to PRODUCTION database (7-second warning)
-npm run db:push:prod
+# Apply to PRODUCTION database
+npm run db:push
 ```
 
-**Always test in dev first!**
-
-### Resetting Development Database
-
-```bash
-# Drop and recreate dev database from all migrations
-npm run db:reset:dev
-```
-
-**⚠️ This is DESTRUCTIVE** - drops and recreates the entire database
-
-**Use Cases**:
-
-- Testing that migrations work from scratch
-- Cleaning up after failed experiments
-- Verifying migration order is correct
-
-**Never run on production** - this command is dev-only for safety
+**Note**: This applies directly to production. Make changes carefully.
 
 ### Checking Schema Differences
 
 ```bash
 # See differences between current database and migration files
-npm run db:diff:dev
+npm run db:diff
 ```
 
 Shows the SQL needed to bring migration files in sync with your current database state. Use this after making changes in the Supabase Dashboard UI to generate migration SQL.
@@ -350,13 +316,13 @@ CREATE TRIGGER update_notification_settings_updated_at
   EXECUTE FUNCTION update_updated_at_column();
 ```
 
-**3. Test in Development Database**
+**3. Apply to Production Database**
 
 ```bash
-npm run db:push:dev
+npm run db:push
 ```
 
-Verify in Supabase Dashboard (dev project):
+Verify in Supabase Dashboard:
 
 - Table appears in Database → Tables
 - Columns are correct
@@ -364,7 +330,7 @@ Verify in Supabase Dashboard (dev project):
 
 **4. Test in Application**
 
-Run your app on localhost (uses dev database automatically):
+Run your app on localhost:
 
 ```bash
 npm run dev
@@ -384,9 +350,6 @@ If the migration has problems:
 ```bash
 # Create a new migration that fixes it
 npm run db:migration:new fix_notification_settings
-
-# Or reset dev database and fix the original migration
-npm run db:reset:dev
 ```
 
 **Never edit an already-applied migration** - create a new one instead.
@@ -398,21 +361,7 @@ git add supabase/migrations/YYYYMMDD_add_notification_settings.sql
 git commit -m "feat: add notification settings table"
 ```
 
-**7. Apply to Production**
-
-```bash
-npm run db:push:prod
-```
-
-You'll see:
-
-```
-⚠️  WARNING: Pushing to PRODUCTION database. Press Ctrl+C to cancel...
-```
-
-**5 seconds to abort** if you realize something's wrong.
-
-**8. Deploy Application Code**
+**7. Deploy Application Code**
 
 ```bash
 git push origin main
@@ -428,26 +377,25 @@ Vercel automatically deploys the updated app that uses the new schema.
 
 ### ✅ DO
 
-- **Always test in dev first** before applying to prod
-- **Use the diff workflow** for all schema changes (`db:diff:dev`)
+- **Make changes carefully** in Supabase Dashboard UI
+- **Use the diff workflow** for all schema changes (`db:diff`)
 - **Never edit the baseline** (`0001_baseline.sql`) - it's the production source of truth
 - **Create new migrations** for all schema changes (forward-only)
 - **Use idempotent SQL** when possible (`IF NOT EXISTS`, `ON CONFLICT`, etc.)
 - **Include RLS policies** on all new tables
 - **Add indexes** for frequently queried columns
 - **Document complex changes** with comments in migration files
-- **Test migration chain** with `db:reset:dev` before applying to production
-- **Commit migrations to git** before applying to prod
+- **Test thoroughly** in the application before running migrations
+- **Commit migrations to git** before applying
 
 ### ❌ DON'T
 
 - **Don't edit existing migrations** - create new forward-only migrations
 - **Don't make manual SQL editor changes** - always use the diff workflow
 - **Don't modify the baseline** - production is the source of truth
-- **Don't run `db:reset:dev` on production** - it's dev-only
-- **Don't skip dev testing** - always test before prod
 - **Don't make destructive changes** without understanding impact
 - **Don't bypass RLS** or remove security constraints
+- **Don't run `supabase start`** - we work directly in production
 
 ---
 
@@ -455,7 +403,7 @@ Vercel automatically deploys the updated app that uses the new schema.
 
 ### Issue: Migration fails to apply
 
-**Symptoms**: Error when running `npm run db:push:dev` or `db:push:prod`
+**Symptoms**: Error when running `npm run db:push`
 
 **Possible Causes**:
 
@@ -471,23 +419,14 @@ Vercel automatically deploys the updated app that uses the new schema.
 3. Check for naming conflicts with existing database objects
 4. Ensure migration uses idempotent patterns
 
-### Issue: Dev and prod databases out of sync
-
-**Symptoms**: Application works in dev but fails in production
-
-**Cause**: Migrations not applied to production, or manual changes made in SQL editor
+### Issue: Need to check migration status
 
 **Solution**:
 
 ```bash
-# Check which migrations are missing in prod
-npm run db:migration:list:prod
-
-# Apply missing migrations
-npm run db:push:prod
+# Check which migrations have been applied
+npm run db:migration:list
 ```
-
-**Prevention**: Always use the diff workflow, never make manual SQL editor changes
 
 ### Issue: Need to undo a migration
 
@@ -508,16 +447,15 @@ Then write SQL that undoes the previous migration (e.g., `DROP TABLE`, `DROP COL
 **Quick Reference**:
 
 - See `supabase/MIGRATIONS-README.md` for command quick reference
-- See `docs/DEV-PROD-WORKFLOW.md` for dev/prod setup
 - Check the baseline migration for SQL examples
 
 **Common Questions**:
 
-- "How do I create a migration?" → Use diff workflow: make UI changes, then `npm run db:diff:dev`
-- "How do I test safely?" → `npm run db:push:dev` (uses dev database)
-- "How do I apply to prod?" → `npm run db:push:prod` (has 7-second warning)
-- "I broke dev database" → `npm run db:reset:dev` (rebuilds from migrations)
+- "How do I create a migration?" → Use diff workflow: make UI changes, then `npm run db:diff`
+- "How do I apply migrations?" → `npm run db:push`
+- "How do I check migration status?" → `npm run db:migration:list`
 - "Can I edit an existing migration?" → No, create a new forward-only migration
+- "Do we have a local/dev database?" → No, we work directly in production
 
 ---
 

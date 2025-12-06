@@ -1,33 +1,72 @@
 # Invite System Quick Start
 
+## Overview
+
+NPC Finder uses a database-driven invite system with email validation. Admin status and all authorization checks are performed against the database, NOT JWT claims.
+
 ## How It Works
 
-1. Admin creates invite code for a specific email address
-2. Admin shares code with intended recipient
-3. Recipient signs up using code (must match the intended email)
-4. Code becomes invalid after use (one-time use)
+1. **Admin creates invite code** for a specific email address (required)
+2. **Admin shares code** with intended recipient
+3. **Recipient validates code** during signup (email must match)
+4. **Code is consumed** after successful account creation (one-time use)
 
-**Email Validation**: Invite codes are tied to specific email addresses. The signup email must match the intended email address specified when the code was created.
+**Critical:** Email validation happens at the database level. The signup email MUST exactly match the `intended_email` specified when the code was created.
 
 ## For Admins
+
+### Admin Authorization
+
+**Important:** Admin status is determined by the `is_admin` field in the `user_profiles` table, NOT by JWT claims.
+
+- Frontend queries the database to check admin status
+- RLS policies enforce database-level access control
+- No reliance on JWT claims for authorization
 
 ### Create Invite Codes
 
 1. Log in as admin
-2. Go to Admin Panel
+2. Go to Admin Panel (`/admin`)
 3. Click "Generate Invite Code"
-4. Enter the recipient's email address (required)
-5. Code automatically expires after 30 days
+4. **Required:** Enter recipient's exact email address
+5. Code automatically:
+   - Expires after 30 days
+   - Limited to 1 use (one-time only)
+   - Tied to the specified email
 6. Copy code and share with intended recipient
 
-**Important**: The email address you specify here must match the email used during signup. This prevents code sharing and ensures invites go to intended recipients.
+**Email Matching:** The code will ONLY work with the exact email address you specify. This prevents:
+
+- Code sharing between users
+- Unauthorized signups
+- Invite code abuse
 
 ### Manage Codes
 
-- View all codes (active and used)
-- See who used each code
-- Revoke unused codes
-- Check expiration dates
+View in Admin Panel:
+
+- All codes (active, used, expired)
+- Who used each code (user_id and email)
+- When codes were used
+- Expiration status
+
+Actions:
+
+- **Revoke** unused codes (permanently deletes from database)
+- **View audit log** of all code usage
+
+### Make Someone Admin
+
+Admin status must be set in the database:
+
+```sql
+-- Run in Supabase SQL Editor
+UPDATE user_profiles
+SET is_admin = true
+WHERE email = 'friend@example.com';
+```
+
+**Security:** Triggers prevent users from granting themselves admin privileges. Only existing admins can modify admin status (enforced at database level).
 
 ## For New Users
 
@@ -35,110 +74,224 @@
 
 1. Go to login page
 2. Click "Sign Up"
-3. Enter invite code
-4. **Important**: Use the email address the code was created for
-5. Create account (code validates email match)
-6. Code is marked as used
+3. Enter the invite code you received
+4. **Critical:** Use the EXACT email address the admin specified
+   - The code validates email at the database level
+   - Different email = code rejected
+   - Case-insensitive matching (lowercase)
+5. Complete signup
+6. Code is automatically marked as used
+
+### Email Validation Flow
+
+```
+User enters code + email
+  ↓
+Database function: validate_invite_code(code, email)
+  ↓
+Checks:
+  ✓ Code exists and is active
+  ✓ Code not expired (30 days)
+  ✓ Code not already used
+  ✓ Email matches intended_email (REQUIRED)
+  ↓
+Returns: true/false
+```
 
 ### No Valid Code?
 
-Ask an admin for an invite code. Make sure to provide your email address so they can create a code specifically for you.
+1. Contact an admin
+2. **Provide your email address** so they can create a code for you
+3. Use the EXACT email when signing up
 
-## Security
+## Security Model
 
-**Email-based validation:**
+### Database-Driven Authorization
 
-- Each code is tied to a specific email address
-- Signup email must match the intended recipient
-- Prevents code sharing and unauthorized access
+**Admin Checks:**
 
-**One-time use:**
+- Admin status read from `user_profiles.is_admin` field
+- Frontend queries database (not JWT claims)
+- RLS policies enforce access at database level
+- Triggers prevent privilege escalation
 
-- Each code works once
-- Automatically marked as consumed after use
+**Invite Code Validation:**
 
-**Expiration:**
+- Email validation enforced by database function
+- `intended_email` field is required (NOT NULL)
+- Email comparison is case-insensitive
+- Validation happens server-side (Supabase RPC)
 
-- All codes expire after 30 days
-- Expired codes cannot be used
+### Email-Based Validation
 
-**Admin only:**
-
-- Only admins can create codes
-- Regular users cannot generate invites
-
-**Authentication:**
-
-- Code validation is public (anonymous users can check validity)
-- Code consumption requires authentication (must be signed in to use)
-
-## Making Someone Admin
-
-Run in Supabase SQL Editor:
+**Required Field:**
 
 ```sql
-UPDATE user_profiles
-SET is_admin = true
-WHERE email = 'friend@example.com';
+intended_email TEXT NOT NULL  -- Cannot create code without email
 ```
+
+**Validation Logic:**
+
+```sql
+-- Code only valid if email matches exactly
+IF v_code.intended_email IS NOT NULL THEN
+  IF lower(trim(v_code.intended_email)) != lower(trim(user_email)) THEN
+    RETURN false;
+  END IF;
+END IF;
+```
+
+### One-Time Use
+
+**Enforced by:**
+
+- `max_uses` always set to 1
+- `current_uses` counter (0 or 1)
+- Row-level locking prevents race conditions
+- Audit log tracks all usage
+
+**Code Consumption:**
+
+```sql
+-- After successful signup
+UPDATE invite_codes SET
+  current_uses = current_uses + 1,
+  used_by = user_id,
+  used_at = NOW()
+WHERE code = code_value;
+```
+
+### Expiration
+
+**30-Day Automatic Expiration:**
+
+- Set on creation: `expires_at = NOW() + 30 days`
+- Checked during validation
+- Expired codes return `false` from validation
+
+### Rate Limiting
+
+**Client-Side Rate Limiting:**
+
+- 10 validation attempts per hour per email
+- Prevents brute-force enumeration
+- Implemented in application layer (`inviteCodeRateLimiter`)
+
+**Note:** Validation is currently allowed pre-authentication to support signup flow. Rate limiting is critical for security.
 
 ## Database Structure
 
 ```sql
-invite_codes (
-  code            -- Random string (XXX-XXX-XXX-XXX format)
-  created_by      -- Admin who created it
-  used_by         -- User who used it (null if unused)
-  used_at         -- When it was used
-  intended_email  -- Email address code is for (required)
-  expires_at      -- Expiration date (30 days from creation)
-  is_active       -- Can it still be used?
-  max_uses        -- Always 1 (one-time use)
-  current_uses    -- Number of times used (0 or 1)
-)
+CREATE TABLE invite_codes (
+  id              UUID PRIMARY KEY,
+  code            TEXT NOT NULL UNIQUE,        -- XXX-XXX-XXX-XXX format
+  created_by      UUID REFERENCES auth.users,  -- Admin who created it
+  used_by         UUID REFERENCES auth.users,  -- User who used it (null if unused)
+  used_at         TIMESTAMPTZ,                 -- When it was used
+  intended_email  TEXT NOT NULL,               -- Email that MUST be used (REQUIRED)
+  expires_at      TIMESTAMPTZ NOT NULL,        -- 30 days from creation
+  is_active       BOOLEAN DEFAULT true,        -- Can it still be used?
+  max_uses        INTEGER DEFAULT 1,           -- Always 1 (one-time use)
+  current_uses    INTEGER DEFAULT 0,           -- 0 or 1
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  notes           TEXT                         -- Optional admin notes
+);
+
+CREATE TABLE invite_code_audit_log (
+  id         UUID PRIMARY KEY,
+  code_id    UUID REFERENCES invite_codes,
+  used_by    UUID REFERENCES auth.users,
+  used_at    TIMESTAMPTZ DEFAULT NOW()
+);
 ```
 
-## Connecting Friends
+## Database Functions
 
-**Important**: The auto-connect feature has been disabled for scalability reasons.
+### `validate_invite_code(code_value, user_email)`
 
-New users are NOT automatically connected to existing users. For small friend groups, admins can manually connect everyone:
+**Purpose:** Validate code without consuming it
 
-```sql
--- Connect all existing users to each other (run in Supabase SQL Editor)
-SELECT batch_connect_users(ARRAY(SELECT id FROM auth.users));
-```
+**Parameters:**
 
-This is suitable for small groups (5-50 users). For larger groups, consider implementing:
+- `code_value`: The invite code (e.g., "ABC-DEF-GHI-JKL")
+- `user_email`: Email address attempting to use code (REQUIRED)
 
-- Friend requests
-- Networks/groups (Discord-style channels)
-- Selective connections based on shared interests
+**Returns:** `BOOLEAN`
+
+- `true`: Code valid and email matches
+- `false`: Code invalid, expired, used, or email mismatch
+
+**Security:**
+
+- Allows pre-authentication calls (for signup)
+- Rate limiting MUST be enforced client-side
+- Email matching enforced at database level
+
+### `consume_invite_code(code_value, user_id)`
+
+**Purpose:** Mark code as used after successful signup
+
+**Parameters:**
+
+- `code_value`: The invite code
+- `user_id`: Authenticated user's ID
+
+**Security:**
+
+- Requires authentication
+- Validates `user_id` matches `auth.uid()`
+- Uses row-level locking (prevents race conditions)
+- Updates `current_uses`, `used_by`, `used_at`
+- Creates audit log entry
 
 ## Troubleshooting
 
-**"Invalid invite code"**
+### "Invalid invite code"
 
-- Code might be used already
-- Code might be expired (30 days)
-- Code might be revoked
-- Typo in code
-- **Email mismatch**: Your signup email doesn't match the intended recipient
+**Possible causes:**
 
-**"Can't create codes"**
+1. ❌ Code already used (`current_uses >= max_uses`)
+2. ❌ Code expired (> 30 days old)
+3. ❌ Code revoked (`is_active = false`)
+4. ❌ Email mismatch (most common)
+5. ❌ Typo in code
 
-- You need admin privileges
-- Check `is_admin` in your user profile
+**Solution:**
 
-**"Code not working"**
+- Verify exact email matches the one admin specified
+- Contact admin for a new code if needed
 
-- Check if it expired (30 days from creation)
-- Check if it was revoked
-- Verify it wasn't already used
-- **Most common**: Verify your email matches the intended_email for that code
+### "Email validation failed"
 
-**"Email validation failed"**
+**Cause:** The code was created for a different email address.
 
-- The code was created for a different email address
-- Contact the admin to create a new code for your email
-- Use the exact email address the code was intended for
+**Solution:**
+
+1. Verify the email admin used when creating code
+2. Use that EXACT email during signup
+3. Contact admin if you need a new code for different email
+
+### "Can't create codes"
+
+**Cause:** Not an admin user.
+
+**Check:**
+
+```sql
+-- Run in Supabase SQL Editor
+SELECT is_admin FROM user_profiles WHERE email = 'your@email.com';
+```
+
+**Solution:** Ask an existing admin to update your profile.
+
+### "Admin check fails" or "403 errors"
+
+**Cause:** RLS policies not properly configured or admin status not set.
+
+**Check:**
+
+1. Verify `is_admin = true` in database
+2. Check browser console for detailed error logs
+3. Verify RLS policies include admin overrides
+
+**Remember:** Admin status comes from database, not JWT claims!

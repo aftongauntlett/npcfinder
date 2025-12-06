@@ -48,7 +48,7 @@ No public signup is available - this keeps the platform private and trusted.
 - **Database Isolation**: Each installation uses its own Supabase project
 - **Standard Security Model**: Not end-to-end encrypted; database admin can access data
 
-See [docs/PRIVACY-REALITY-CHECK.md](docs/PRIVACY-REALITY-CHECK.md) for full details.
+See the Privacy & Security section below for details.
 
 ## For Developers: Self-Hosting
 
@@ -90,16 +90,13 @@ Optional external APIs for media metadata (TMDB, Google Books, OMDB, iTunes). Se
 
 - **Authentication**: Supabase Auth with session management
 - **Database Security**: Row-Level Security (RLS) policies on all user tables
-- **Admin Protection**: Multi-layer authorization with database triggers
-- **Invite System**: Email-validated invite codes with expiration
+- **Admin Authorization**: Database-driven admin checks with RLS enforcement
+- **Admin Protection**: Multi-layer authorization with database triggers preventing privilege escalation
+- **Invite System**: Email-validated invite codes with 30-day expiration and one-time use
 - **XSS Protection**: All user content rendered as plain text
 - **Security Headers**: CSP, X-Frame-Options, and other protective headers
 
-For comprehensive security documentation, see:
-
-- [Security Review 2025](docs/SECURITY-REVIEW-2025.md) - Full security assessment
-- [Security Checklist](docs/SECURITY-CHECKLIST.md) - Ongoing maintenance tasks
-- [Rate Limiting Guide](docs/RATE-LIMITING-GUIDE.md) - Optional rate limiting implementation
+**Important**: Admin status is determined by the `is_admin` field in the `user_profiles` table, NOT by JWT claims. The frontend queries the database to check admin status, and RLS policies enforce database-level access control.
 
 ### Available Scripts
 
@@ -115,14 +112,11 @@ npm run db:migration:new # Create new database migration
 
 These guides are for developers who want to self-host or contribute to the project.
 
+- [Documentation Index](docs/README.md) - Complete documentation directory
 - [Self-Hosting Guide](docs/QUICK-START.md) - Complete setup and deployment
 - [API Setup](docs/API-SETUP.md) - Configure external APIs
 - [Database Migrations](docs/DATABASE-MIGRATIONS.md) - Schema management
-- [Dev/Prod Workflow](docs/DEV-PROD-WORKFLOW.md) - Safe database development workflow
 - [Invite System](docs/INVITE-SYSTEM-QUICKSTART.md) - User access control
-- [Testing Strategy](docs/TESTING-STRATEGY.md) - Writing and running tests
-- [Privacy & Security](docs/PRIVACY-REALITY-CHECK.md) - What is and isn't private
-- [Services Layer](src/services/README.md) - Business logic architecture
 
 ## Roadmap
 

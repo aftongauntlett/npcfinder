@@ -68,8 +68,6 @@ When running `npm run dev` (Vite development mode), the app will automatically u
 
 Find project refs in: Supabase Dashboard → Project Settings → General → Reference ID
 
-See [DEV-PROD-WORKFLOW.md](DEV-PROD-WORKFLOW.md) for complete setup and benefits.
-
 See [API-SETUP.md](API-SETUP.md) for complete API key setup (TMDB, Google Books, OMDB, iTunes).
 
 ### 4. Run Application
@@ -80,15 +78,19 @@ npm run dev
 
 ### 5. Create First Admin
 
-1. Sign up through the app
-2. In Supabase: SQL Editor
-3. Run:
+**Important:** Admin status is determined by the `is_admin` field in the `user_profiles` table, NOT by JWT claims. The frontend queries the database to check admin status.
+
+1. Sign up through the app (use any email)
+2. In Supabase Dashboard: SQL Editor
+3. Run this SQL to make yourself admin:
 
 ```sql
 UPDATE user_profiles
 SET is_admin = true
 WHERE email = 'your-email@example.com';
 ```
+
+4. Refresh the app - you should now have access to the Admin Panel
 
 ### 6. Generate Invite Codes
 
@@ -185,6 +187,6 @@ npm run lint         # Check code quality
 
 ## Next Steps
 
-- See [Database Migrations](DATABASE-MIGRATIONS.md) for schema updates
-- See [Testing Strategy](TESTING-STRATEGY.md) for adding tests
-- See [API Setup](API-SETUP.md) for API key details
+- Configure external APIs: [API Setup](API-SETUP.md)
+- Learn about database updates: [Database Migrations](DATABASE-MIGRATIONS.md)
+- Understand invite codes: [Invite System](INVITE-SYSTEM-QUICKSTART.md)
