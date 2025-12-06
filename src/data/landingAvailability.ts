@@ -56,12 +56,6 @@ export const availabilityDocLinks: DocLink[] = [
     description: "Learn how invite codes work and how to generate them",
   },
   {
-    label: "Privacy Reality Check",
-    href: "https://github.com/aftongauntlett/npcfinder/blob/main/docs/PRIVACY-REALITY-CHECK.md",
-    description:
-      "Understand what privacy means in this app (and what it doesn't)",
-  },
-  {
     label: "Quick Start Guide",
     href: "https://github.com/aftongauntlett/npcfinder/blob/main/docs/QUICK-START.md",
     description: "Set up your own instance from scratch",

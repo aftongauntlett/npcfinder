@@ -123,16 +123,20 @@ const AvailabilitySection = () => {
         </Accordion>
 
         <Accordion
-          title="Privacy Reality Check"
+          title="Privacy & Security"
           defaultOpen={false}
           index={1}
           idPrefix="availability"
         >
           <p className="mb-3">
-            NPC Finder uses Row-Level Security to protect your data from other
-            users. However, the database administrator has technical access to
-            the underlying data, similar to how Netflix or Spotify
-            administrators can access their platforms.
+            NPC Finder uses Row-Level Security (RLS) to protect your data from
+            other users.
+          </p>
+          <p className="mb-3">
+            However, the database administrator has technical access to the
+            underlying data, similar to how Netflix or Spotify administrators
+            can access their platforms. This is standard for most web
+            applications.
           </p>
           <p className="mb-3">
             End-to-end encryption for private messaging and journaling (like
@@ -141,15 +145,6 @@ const AvailabilitySection = () => {
             for sensitive communications, use a platform specifically built for
             that purpose.
           </p>
-          <a
-            href="https://github.com/aftongauntlett/npcfinder/blob/main/docs/PRIVACY-REALITY-CHECK.md"
-            style={{ color: LANDING_PEACH }}
-            className="hover:opacity-80 underline transition-opacity"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read the full privacy documentation →
-          </a>
         </Accordion>
 
         <Accordion

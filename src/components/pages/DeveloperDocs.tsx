@@ -443,15 +443,19 @@ const DeveloperDocs: React.FC = () => {
                   environment variables in your hosting platform's dashboard.
                 </p>
 
-                <a
-                  href="https://github.com/aftongauntlett/npcfinder/blob/main/docs/DEV-PROD-WORKFLOW.md"
-                  style={{ color: LANDING_PEACH }}
-                  className="hover:opacity-80 underline transition-opacity inline-block"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  View dev/prod workflow guide →
-                </a>
+                <p className="text-gray-300 mt-4">
+                  For deployment setup, see the{" "}
+                  <a
+                    href="https://github.com/aftongauntlett/npcfinder/blob/main/docs/QUICK-START.md"
+                    style={{ color: LANDING_PEACH }}
+                    className="hover:opacity-80 underline transition-opacity"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Quick Start Guide
+                  </a>
+                  .
+                </p>
               </div>
             </Accordion>
           </div>
@@ -597,34 +601,21 @@ const DeveloperDocs: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-8 flex flex-wrap gap-4">
-            <a
-              href="https://github.com/aftongauntlett/npcfinder/blob/main/docs/PRIVACY-REALITY-CHECK.md"
-              style={{ color: LANDING_PEACH }}
-              className="hover:opacity-80 underline transition-opacity"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Privacy Reality Check →
-            </a>
-            <a
-              href="https://github.com/aftongauntlett/npcfinder/blob/main/docs/SECURITY-REVIEW-2025.md"
-              style={{ color: LANDING_PEACH }}
-              className="hover:opacity-80 underline transition-opacity"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Security Review 2025 →
-            </a>
-            <a
-              href="https://github.com/aftongauntlett/npcfinder/blob/main/docs/SECURITY-CHECKLIST.md"
-              style={{ color: LANDING_PEACH }}
-              className="hover:opacity-80 underline transition-opacity"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Security Checklist →
-            </a>
+          <div className="mt-8">
+            <p className="text-gray-300">
+              <strong>Admin Authorization:</strong> Admin status is determined
+              by the{" "}
+              <code className="text-sm bg-slate-800 px-1.5 py-0.5 rounded">
+                is_admin
+              </code>{" "}
+              field in the{" "}
+              <code className="text-sm bg-slate-800 px-1.5 py-0.5 rounded">
+                user_profiles
+              </code>{" "}
+              table, not by JWT claims. The frontend queries the database to
+              check admin status, and RLS policies enforce database-level access
+              control.
+            </p>
           </div>
         </motion.section>
 
@@ -698,7 +689,7 @@ const DeveloperDocs: React.FC = () => {
             </a>
 
             <a
-              href="https://github.com/aftongauntlett/npcfinder/blob/main/docs/TESTING-STRATEGY.md"
+              href="https://github.com/aftongauntlett/npcfinder/blob/main/docs/INVITE-SYSTEM-QUICKSTART.md"
               target="_blank"
               rel="noopener noreferrer"
               className="bg-slate-800/40 border border-white/10 rounded-xl p-6 hover:bg-slate-800/60 transition-colors group"
@@ -707,44 +698,10 @@ const DeveloperDocs: React.FC = () => {
                 className="text-lg font-semibold mb-2 group-hover:text-white transition-colors"
                 style={{ color: LANDING_TEAL }}
               >
-                Testing Strategy
+                Invite System
               </h4>
               <p className="text-sm text-gray-400">
-                Writing and running tests for NPC Finder
-              </p>
-            </a>
-
-            <a
-              href="https://github.com/aftongauntlett/npcfinder/blob/main/docs/DEV-PROD-WORKFLOW.md"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-slate-800/40 border border-white/10 rounded-xl p-6 hover:bg-slate-800/60 transition-colors group"
-            >
-              <h4
-                className="text-lg font-semibold mb-2 group-hover:text-white transition-colors"
-                style={{ color: LANDING_PURPLE }}
-              >
-                Dev/Prod Workflow
-              </h4>
-              <p className="text-sm text-gray-400">
-                Safe database development workflow
-              </p>
-            </a>
-
-            <a
-              href="https://github.com/aftongauntlett/npcfinder/blob/main/docs/RATE-LIMITING-GUIDE.md"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-slate-800/40 border border-white/10 rounded-xl p-6 hover:bg-slate-800/60 transition-colors group"
-            >
-              <h4
-                className="text-lg font-semibold mb-2 group-hover:text-white transition-colors"
-                style={{ color: LANDING_PEACH }}
-              >
-                Rate Limiting Guide
-              </h4>
-              <p className="text-sm text-gray-400">
-                Optional rate limiting implementation
+                User access control and invite code management
               </p>
             </a>
           </div>
