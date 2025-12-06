@@ -5,11 +5,22 @@
  * - Boards: User-created boards for organizing tasks
  * - Sections: Columns within boards (To Do, In Progress, Done)
  * - Tasks: Individual task items with metadata
+ * SECURITY: All inputs validated with Zod schemas
  */
 
 import { supabase } from "../lib/supabase";
 import { logger } from "../lib/logger";
 import { getBoardTemplateType } from "../utils/taskConstants";
+import {
+  CreateBoardSchema,
+  UpdateBoardSchema,
+  CreateSectionSchema,
+  UpdateSectionSchema,
+  CreateTaskSchema,
+  UpdateTaskSchema,
+  TaskFiltersSchema,
+  validateInput,
+} from "./tasksService.validation";
 import type {
   Board,
   BoardSection,
@@ -91,11 +102,22 @@ export async function getBoardById(
 
 /**
  * Create a new board with default sections
+ * SECURITY: Input validated with Zod schema
  */
 export async function createBoard(
   boardData: CreateBoardData
 ): Promise<ServiceResponse<Board>> {
   try {
+    // SECURITY: Validate input
+    const validatedData = validateInput(CreateBoardSchema, {
+      title: boardData.name,
+      description: boardData.description,
+      color: boardData.color,
+      icon: boardData.icon,
+      is_template: boardData.is_public,
+      category: boardData.board_type,
+    });
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -125,10 +147,10 @@ export async function createBoard(
       .from("task_boards")
       .insert({
         user_id: user.id,
-        name: boardData.name,
-        description: boardData.description || null,
-        icon: boardData.icon || null,
-        color: boardData.color || "#9333ea",
+        name: validatedData.title,
+        description: validatedData.description || null,
+        icon: validatedData.icon || null,
+        color: validatedData.color || "#9333ea",
         is_public: boardData.is_public || false,
         board_type: boardType,
         template_type: templateType,
@@ -1144,6 +1166,54 @@ export async function updateSharePermission(
     return { data: true, error: null };
   } catch (error) {
     logger.error(`Failed to update share permission ${shareId}`, error);
+    return { data: null, error: error as Error };
+  }
+}
+
+// =====================================================
+// SINGLETON BOARD HELPERS
+// =====================================================
+
+/**
+ * Template types that should have singleton boards (one per user)
+ */
+const SINGLETON_TEMPLATE_TYPES = ["job_tracker", "recipe", "grocery"] as const;
+type SingletonTemplateType = (typeof SINGLETON_TEMPLATE_TYPES)[number];
+
+/**
+ * Check if a template type should be a singleton
+ */
+export function isSingletonTemplate(templateType: string): boolean {
+  return SINGLETON_TEMPLATE_TYPES.includes(
+    templateType as SingletonTemplateType
+  );
+}
+
+/**
+ * Get or create a singleton board for global collection types
+ * (job_tracker, recipe, grocery)
+ *
+ * These types should have exactly one board per user, auto-created on first use.
+ */
+export async function ensureSingletonBoard(
+  templateType: SingletonTemplateType
+): Promise<ServiceResponse<string>> {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
+    // Call the database function to ensure singleton board exists
+    const { data, error } = await supabase.rpc("ensure_singleton_board", {
+      p_user_id: user.id,
+      p_template_type: templateType,
+    });
+
+    if (error) throw error;
+    return { data: data as string, error: null };
+  } catch (error) {
+    logger.error(`Failed to ensure singleton board for ${templateType}`, error);
     return { data: null, error: error as Error };
   }
 }

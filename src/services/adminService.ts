@@ -12,19 +12,30 @@ const verifyAdminAccess = async (): Promise<boolean> => {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      console.warn("Admin operation attempted without authentication");
+      logger.warn("Admin operation attempted without authentication");
       return false;
     }
 
-    const { data: profile } = await supabase
+    const { data: profile, error } = await supabase
       .from("user_profiles")
       .select("is_admin")
       .eq("user_id", user.id)
       .single();
 
+    if (error) {
+      logger.error("Failed to fetch admin profile for verification", {
+        error,
+        code: error.code,
+        message: error.message,
+        userId: user.id,
+      });
+      return false;
+    }
+
     if (!profile?.is_admin) {
-      console.warn(
-        `Unauthorized admin operation attempted by user: ${user.id}`
+      logger.warn(
+        `Unauthorized admin operation attempted by user: ${user.id}`,
+        { isAdmin: profile?.is_admin }
       );
       return false;
     }
