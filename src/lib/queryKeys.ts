@@ -129,4 +129,8 @@ export const queryKeys = {
       [...queryKeys.tasks.all, "board-shares", boardId] as const,
     sharedBoards: () => [...queryKeys.tasks.all, "shared-boards"] as const,
   },
+
+  // Singleton boards for global collections
+  singletonBoard: (templateType: string) =>
+    ["singleton-board", templateType] as const,
 };

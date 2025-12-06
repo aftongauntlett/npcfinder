@@ -23,6 +23,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
   const queryClient = useQueryClient();
 
   // Use TanStack Query to check admin status (cached, deduplicated)
+  // SECURITY: Admin status determined ONLY by database, no fallback to environment variables
   const { data: isAdmin = false, isLoading } = useQuery({
     queryKey: ["admin-status", user?.id],
     queryFn: async () => {
@@ -36,29 +37,21 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
           .eq("user_id", user.id)
           .single();
 
-        if (!error && data) {
-          return data.is_admin || false;
-        }
-
-        // Fallback to environment variable only if database fails
-        const adminUserId = import.meta.env.VITE_ADMIN_USER_ID;
-        const fallbackIsAdmin =
-          adminUserId &&
-          adminUserId !== "your_user_id_here" &&
-          user.id === adminUserId;
-
         if (error) {
-          logger.warn("Failed to check admin status from database", {
-            error,
+          // SECURITY: Fail closed - if database check fails, treat as non-admin
+          logger.error("Admin check query failed", {
+            code: error.code,
             userId: user.id,
           });
+          return false;
         }
 
-        return fallbackIsAdmin || false;
+        return data?.is_admin || false;
       } catch (error) {
-        logger.error("Failed to check admin status", {
+        // SECURITY: Fail closed on any error
+        logger.error("Failed to check admin status, treating as non-admin", {
           error,
-          userId: user.id,
+          userId: user?.id,
         });
         return false;
       }
@@ -66,6 +59,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
     enabled: !!user, // Only run query when user exists
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
     gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    retry: 2, // Retry failed queries up to 2 times
+    retryDelay: 1000, // Wait 1 second between retries
   });
 
   // Function to manually refresh admin status (e.g., after toggling admin)

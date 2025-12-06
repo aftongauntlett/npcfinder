@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import { logger } from "@/lib/logger";
+import { inviteCodeRateLimiter } from "@/utils/rateLimiter";
 
 // Invite Code Management - Secure invite-only registration system
 
@@ -26,6 +27,7 @@ interface InviteCodeResult<T> {
 }
 
 // Generate cryptographically secure invite code (XXX-XXX-XXX-XXX format, no ambiguous chars)
+// SECURITY: Uses crypto.getRandomValues() instead of Math.random() for cryptographic security
 export const generateSecureCode = (): string => {
   const characters = "ABCDEFGHJKMNPQRTUVWXY23456789"; // No ambiguous chars (0, O, 1, I, L, S, Z)
   const segments = 4;
@@ -35,7 +37,10 @@ export const generateSecureCode = (): string => {
   for (let i = 0; i < segments; i++) {
     let segment = "";
     for (let j = 0; j < segmentLength; j++) {
-      const randomIndex = Math.floor(Math.random() * characters.length);
+      // Use cryptographically secure random number generator
+      const array = new Uint32Array(1);
+      crypto.getRandomValues(array);
+      const randomIndex = array[0] % characters.length;
       segment += characters[randomIndex];
     }
     code.push(segment);
@@ -46,17 +51,33 @@ export const generateSecureCode = (): string => {
 
 // Validate invite code without consuming it
 // SECURITY: Email parameter required - if code has intended_email, provided email must match
+// SECURITY: Rate limited to prevent brute force enumeration (10 attempts per hour)
 export const validateInviteCode = async (
   code: string,
   userEmail: string
 ): Promise<InviteCodeResult<boolean>> => {
   try {
+    // SECURITY: Check rate limit first
+    const rateLimitKey = `invite:${userEmail.toLowerCase()}`;
+    if (!inviteCodeRateLimiter.checkLimit(rateLimitKey)) {
+      const error = new Error(
+        "Too many invite code validation attempts. Please try again later."
+      );
+      throw error;
+    }
+
     const { data, error } = await supabase.rpc("validate_invite_code", {
       code_value: code.toUpperCase().trim(),
       user_email: userEmail.toLowerCase().trim(),
     });
 
     if (error) throw error;
+
+    // SECURITY: Reset rate limit on successful validation
+    if (data === true) {
+      inviteCodeRateLimiter.reset(rateLimitKey);
+    }
+
     return { data: data as boolean, error: null };
   } catch (error) {
     logger.error("Failed to validate invite code", { error });

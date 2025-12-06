@@ -2,11 +2,12 @@ import { supabase } from "./supabase";
 import type { AuthError, Session, User } from "@supabase/supabase-js";
 import { validateInviteCode, consumeInviteCode } from "./inviteCodes";
 import { logger } from "@/lib/logger";
+import { signInRateLimiter, signUpRateLimiter } from "@/utils/rateLimiter";
 
 /**
  * Authentication utilities
  * Handles user sign up, sign in, sign out, and session management
- * Now with invite-only security
+ * Now with invite-only security and rate limiting
  */
 
 interface AuthResult<T> {
@@ -17,6 +18,7 @@ interface AuthResult<T> {
 /**
  * Sign up a new user with invite code validation
  * SECURITY: Requires valid invite code for registration
+ * SECURITY: Rate limited to prevent abuse (3 attempts per hour per email)
  */
 export const signUp = async (
   email: string,
@@ -24,6 +26,16 @@ export const signUp = async (
   inviteCode: string
 ): Promise<AuthResult<User>> => {
   try {
+    // SECURITY: Check rate limit first
+    const rateLimitKey = `signup:${email.toLowerCase()}`;
+    if (!signUpRateLimiter.checkLimit(rateLimitKey)) {
+      const error = new Error(
+        "Too many signup attempts. Please try again later."
+      ) as AuthError;
+      error.name = "RateLimitError";
+      throw error;
+    }
+
     // Step 1: Validate invite code BEFORE creating account
     // Now includes email validation for extra security
     const { data: isValid, error: validateError } = await validateInviteCode(
@@ -63,6 +75,9 @@ export const signUp = async (
       // The code should still be marked as used via database trigger
     }
 
+    // SECURITY: Reset rate limit on successful signup
+    signUpRateLimiter.reset(rateLimitKey);
+
     return { data: data.user, error: null };
   } catch (error) {
     logger.error("Sign up failed", { error, email });
@@ -72,18 +87,33 @@ export const signUp = async (
 
 /**
  * Sign in existing user
+ * SECURITY: Rate limited to prevent brute force (5 attempts per 15 minutes per email)
  */
 export const signIn = async (
   email: string,
   password: string
 ): Promise<AuthResult<Session>> => {
   try {
+    // SECURITY: Check rate limit first
+    const rateLimitKey = `signin:${email.toLowerCase()}`;
+    if (!signInRateLimiter.checkLimit(rateLimitKey)) {
+      const error = new Error(
+        "Too many login attempts. Please try again in 15 minutes."
+      ) as AuthError;
+      error.name = "RateLimitError";
+      throw error;
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) throw error;
+
+    // SECURITY: Reset rate limit on successful login
+    signInRateLimiter.reset(rateLimitKey);
+
     return { data: data.session, error: null };
   } catch (error) {
     logger.error("Sign in failed", { error, email });
