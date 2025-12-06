@@ -48,16 +48,23 @@ Tests: add/adjust tests when behavior changes or is new/fragile. Ensure `typeche
 
 Commits: conventional-style messages, no emojis, small logical units. Prompt the user to commit if work is complete.
 
+Documentation: Do NOT create new documentation files or markdown summaries unless explicitly requested by the user. Update existing docs only when necessary to reflect code changes.
+
 When migrations are required: never edit old migrations; create a new one using the diff workflow.
 
 Database Operations (CRITICAL):
 
-- ALWAYS use npm scripts for database operations - never raw `npx supabase` commands
-- DEV database: `npm run db:push:dev`, `npm run db:reset:dev`, `npm run db:migration:list:dev`
-- PROD database: `npm run db:push:prod` (has 7-second safety warning), `npm run db:migration:list:prod`
-- These scripts auto-link to the correct database and prevent dev/prod mixups
-- Never suggest `npx supabase db push` or `npx supabase link` directly
-- Migration workflow: 1) Make UI changes in Supabase Dashboard, 2) Run `npm run db:diff:dev`, 3) Create new migration with `npm run db:migration:new <name>`, 4) Copy diff SQL into migration file, 5) Test with `npm run db:reset:dev`
+- This project works DIRECTLY in production (no local dev database)
+- NEVER suggest running `supabase start` or local database - laptop too slow
+- ALWAYS use npm scripts for database operations:
+  - `npm run db:push` - Apply migrations to production
+  - `npm run db:migration:list` - List applied migrations
+  - `npm run db:diff` - Generate diff of schema changes
+  - `npm run db:migration:new <name>` - Create new migration file
+  - `npm run db:pull` - Pull current schema from production
+- Migration workflow: 1) Make changes in Supabase Dashboard UI, 2) Run `npm run db:diff`, 3) Create new migration with `npm run db:migration:new <name>`, 4) Copy diff SQL into migration file, 5) Apply with `npm run db:push`
+- All scripts use VITE_SUPABASE_PROJECT_REF from .env.local
+- We work in production/live - no local dev database
 
 When a Traycer plan is provided, follow 10-traycer-handoff.md. If anything is unclear, ask first; otherwise propose a minimal plan, then implement and summarize.
 
