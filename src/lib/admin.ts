@@ -61,6 +61,18 @@ export const toggleUserAdminStatus = async (
       throw error;
     }
 
+    // Log admin action for audit trail (L2)
+    try {
+      await supabase.rpc("log_admin_action", {
+        p_action: makeAdmin ? "grant_admin_status" : "revoke_admin_status",
+        p_target_user_id: userId,
+        p_details: { makeAdmin },
+      });
+    } catch (logError) {
+      // Don't fail the operation if logging fails
+      logger.warn("Failed to log admin action", { error: logError });
+    }
+
     return { success: true };
   } catch (error) {
     logger.error("Failed to toggle admin status", { error });

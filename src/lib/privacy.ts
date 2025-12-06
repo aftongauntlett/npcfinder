@@ -176,10 +176,15 @@ export async function getUserDataSummary(userId: string) {
 /**
  * Delete all user data (account deletion)
  * WARNING: This is irreversible!
+ *
+ * SECURITY (M3): Now includes complete deletion of auth.users record
+ * via Edge Function with service role privileges for GDPR compliance.
  */
 export async function deleteUserAccount(userId: string) {
   try {
-    // Delete all user data in correct order (respecting foreign keys)
+    logger.info("Starting account deletion process", { userId });
+
+    // Step 1: Delete all user data in correct order (respecting foreign keys)
     await Promise.all([
       supabase.from("user_watchlist").delete().eq("user_id", userId),
       supabase.from("user_watched_archive").delete().eq("user_id", userId),
@@ -212,9 +217,36 @@ export async function deleteUserAccount(userId: string) {
       supabase.from("user_profiles").delete().eq("user_id", userId),
     ]);
 
-    // Note: Deleting auth user requires admin privileges
-    // This would need to be done via Supabase admin API or manually
-    // For now, we just delete all user data
+    logger.info("User data deleted, proceeding to delete auth user", {
+      userId,
+    });
+
+    // Step 2: Delete auth.users record via Edge Function
+    // This requires service role privileges and completes GDPR compliance
+    const { error: functionError } = await supabase.functions.invoke(
+      "delete-user",
+      {
+        headers: {
+          Authorization: `Bearer ${
+            (
+              await supabase.auth.getSession()
+            ).data.session?.access_token
+          }`,
+        },
+      }
+    );
+
+    if (functionError) {
+      logger.error("Failed to delete auth user via Edge Function", {
+        error: functionError,
+        userId,
+      });
+      throw new Error(
+        `Failed to complete account deletion: ${functionError.message}`
+      );
+    }
+
+    logger.info("Account deletion completed successfully", { userId });
 
     return {
       success: true,

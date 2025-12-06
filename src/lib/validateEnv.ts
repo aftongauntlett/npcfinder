@@ -7,7 +7,6 @@ const envSchema = z.object({
   VITE_TMDB_API_KEY: z.string().optional(),
   VITE_RAWG_API_KEY: z.string().optional(),
   VITE_GOOGLE_BOOKS_API_KEY: z.string().optional(),
-  VITE_ADMIN_USER_ID: z.string().uuid().optional(),
 });
 
 export type ValidatedEnv = z.infer<typeof envSchema>;

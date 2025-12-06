@@ -1076,26 +1076,47 @@ export async function unshareBoard(
 
 /**
  * Get all users a board is shared with
- * Note: After migration 20251204000001, shared_with_user_id references auth.users(id).
- * We join to user_profiles where user_profiles.user_id = board_shares.shared_with_user_id.
- * PostgREST infers this join since both columns reference the same auth.users(id).
+ * Note: board_shares.shared_with_user_id references auth.users(id).
+ * user_profiles.user_id also references auth.users(id).
+ * Since there's no direct FK between them, we fetch shares and profiles separately,
+ * then manually join them.
  */
 export async function getBoardShares(
   boardId: string
 ): Promise<ServiceResponse<BoardShareWithUser[]>> {
   try {
-    const { data, error } = await supabase
+    // Fetch board shares
+    const { data: shares, error: sharesError } = await supabase
       .from("board_shares")
-      .select(
-        `
-        *,
-        shared_with_user:user_profiles!shared_with_user_id(user_id, display_name)
-      `
-      )
+      .select("*")
       .eq("board_id", boardId);
 
-    if (error) throw error;
-    return { data: data || [], error: null };
+    if (sharesError) throw sharesError;
+    if (!shares || shares.length === 0) {
+      return { data: [], error: null };
+    }
+
+    // Fetch user profiles for all shared users
+    const userIds = shares.map((share) => share.shared_with_user_id);
+    const { data: profiles, error: profilesError } = await supabase
+      .from("user_profiles")
+      .select("user_id, display_name")
+      .in("user_id", userIds);
+
+    if (profilesError) throw profilesError;
+
+    // Create a map of user_id -> profile
+    const profileMap = new Map(
+      (profiles || []).map((p) => [p.user_id, p])
+    );
+
+    // Join shares with profiles
+    const sharesWithUsers = shares.map((share) => ({
+      ...share,
+      shared_with_user: profileMap.get(share.shared_with_user_id) || null,
+    }));
+
+    return { data: sharesWithUsers, error: null };
   } catch (error) {
     logger.error(`Failed to fetch shares for board ${boardId}`, error);
     return { data: null, error: error as Error };

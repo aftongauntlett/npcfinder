@@ -3,6 +3,164 @@
 -- Security: Uses is_admin() helper function for secure admin checks
 
 -- =============================================================================
+-- CLEANUP: Drop all old and new policies to ensure clean migration
+-- This handles partial migration scenarios
+-- =============================================================================
+
+-- TASK_BOARDS
+DROP POLICY IF EXISTS "Users can view their own boards" ON task_boards;
+DROP POLICY IF EXISTS "Users can create their own boards" ON task_boards;
+DROP POLICY IF EXISTS "Users can update their own boards" ON task_boards;
+DROP POLICY IF EXISTS "Users can delete their own boards" ON task_boards;
+DROP POLICY IF EXISTS "Users can view their own boards OR admins can view all" ON task_boards;
+DROP POLICY IF EXISTS "Users can update their own boards OR admins can update all" ON task_boards;
+DROP POLICY IF EXISTS "Users can delete their own boards OR admins can delete all" ON task_boards;
+
+-- TASK_BOARD_SECTIONS
+DROP POLICY IF EXISTS "Users can view sections of their boards" ON task_board_sections;
+DROP POLICY IF EXISTS "Users can create sections in their boards" ON task_board_sections;
+DROP POLICY IF EXISTS "Users can update sections in their boards" ON task_board_sections;
+DROP POLICY IF EXISTS "Users can delete sections from their boards" ON task_board_sections;
+DROP POLICY IF EXISTS "Users can view sections of their boards OR admins can view all" ON task_board_sections;
+DROP POLICY IF EXISTS "Users can update sections in their boards OR admins can update all" ON task_board_sections;
+DROP POLICY IF EXISTS "Users can delete sections from their boards OR admins can delete all" ON task_board_sections;
+
+-- TASKS
+DROP POLICY IF EXISTS "Users can view their own tasks" ON tasks;
+DROP POLICY IF EXISTS "Users can create their own tasks" ON tasks;
+DROP POLICY IF EXISTS "Users can update their own tasks" ON tasks;
+DROP POLICY IF EXISTS "Users can delete their own tasks" ON tasks;
+DROP POLICY IF EXISTS "Users can view their own tasks OR admins can view all" ON tasks;
+DROP POLICY IF EXISTS "Users can update their own tasks OR admins can update all" ON tasks;
+DROP POLICY IF EXISTS "Users can delete their own tasks OR admins can delete all" ON tasks;
+
+-- BOARD_SHARES
+DROP POLICY IF EXISTS "Users can view board shares" ON board_shares;
+DROP POLICY IF EXISTS "Board owners can create shares" ON board_shares;
+DROP POLICY IF EXISTS "Board owners can update shares" ON board_shares;
+DROP POLICY IF EXISTS "Board owners can delete shares" ON board_shares;
+DROP POLICY IF EXISTS "Users can view board shares OR admins can view all" ON board_shares;
+DROP POLICY IF EXISTS "Board owners can update shares OR admins can update all" ON board_shares;
+DROP POLICY IF EXISTS "Board owners can delete shares OR admins can delete all" ON board_shares;
+
+-- USER_WATCHLIST
+DROP POLICY IF EXISTS "Users can view their own watchlist" ON user_watchlist;
+DROP POLICY IF EXISTS "Users can add to their own watchlist" ON user_watchlist;
+DROP POLICY IF EXISTS "Users can update their own watchlist" ON user_watchlist;
+DROP POLICY IF EXISTS "Users can delete from their own watchlist" ON user_watchlist;
+DROP POLICY IF EXISTS "Users can view their own watchlist OR admins can view all" ON user_watchlist;
+DROP POLICY IF EXISTS "Users can update their own watchlist OR admins can update all" ON user_watchlist;
+DROP POLICY IF EXISTS "Users can delete from their own watchlist OR admins can delete all" ON user_watchlist;
+
+-- USER_WATCHED_ARCHIVE
+DROP POLICY IF EXISTS "Users can view own archive" ON user_watched_archive;
+DROP POLICY IF EXISTS "Users can insert into own archive" ON user_watched_archive;
+DROP POLICY IF EXISTS "Users can update own archive" ON user_watched_archive;
+DROP POLICY IF EXISTS "Users can delete from own archive" ON user_watched_archive;
+DROP POLICY IF EXISTS "Users can view own archive OR admins can view all" ON user_watched_archive;
+DROP POLICY IF EXISTS "Users can update own archive OR admins can update all" ON user_watched_archive;
+DROP POLICY IF EXISTS "Users can delete from own archive OR admins can delete all" ON user_watched_archive;
+
+-- READING_LIST
+DROP POLICY IF EXISTS "Users can view their own reading list" ON reading_list;
+DROP POLICY IF EXISTS "Users can add to their own reading list" ON reading_list;
+DROP POLICY IF EXISTS "Users can update their own reading list" ON reading_list;
+DROP POLICY IF EXISTS "Users can delete from their own reading list" ON reading_list;
+DROP POLICY IF EXISTS "Users can view their own reading list OR admins can view all" ON reading_list;
+DROP POLICY IF EXISTS "Users can update their own reading list OR admins can update all" ON reading_list;
+DROP POLICY IF EXISTS "Users can delete from their own reading list OR admins can delete all" ON reading_list;
+
+-- GAME_LIBRARY
+DROP POLICY IF EXISTS "Users can view own game library" ON game_library;
+DROP POLICY IF EXISTS "Users can insert own game library items" ON game_library;
+DROP POLICY IF EXISTS "Users can update own game library items" ON game_library;
+DROP POLICY IF EXISTS "Users can delete own game library items" ON game_library;
+DROP POLICY IF EXISTS "Users can view own game library OR admins can view all" ON game_library;
+DROP POLICY IF EXISTS "Users can update own game library items OR admins can update all" ON game_library;
+DROP POLICY IF EXISTS "Users can delete own game library items OR admins can delete all" ON game_library;
+
+-- MUSIC_LIBRARY
+DROP POLICY IF EXISTS "Users can view own music library" ON music_library;
+DROP POLICY IF EXISTS "Users can insert own music library items" ON music_library;
+DROP POLICY IF EXISTS "Users can update own music library items" ON music_library;
+DROP POLICY IF EXISTS "Users can delete own music library items" ON music_library;
+DROP POLICY IF EXISTS "Users can view own music library OR admins can view all" ON music_library;
+DROP POLICY IF EXISTS "Users can update own music library items OR admins can update all" ON music_library;
+DROP POLICY IF EXISTS "Users can delete own music library items OR admins can delete all" ON music_library;
+
+-- MEDIA_REVIEWS
+DROP POLICY IF EXISTS "Users can view their own reviews" ON media_reviews;
+DROP POLICY IF EXISTS "Users can view public reviews from friends" ON media_reviews;
+DROP POLICY IF EXISTS "Users can insert their own reviews" ON media_reviews;
+DROP POLICY IF EXISTS "Users can update their own reviews" ON media_reviews;
+DROP POLICY IF EXISTS "Users can delete their own reviews" ON media_reviews;
+DROP POLICY IF EXISTS "Users can view their own reviews OR admins can view all" ON media_reviews;
+DROP POLICY IF EXISTS "Users can update their own reviews OR admins can update all" ON media_reviews;
+DROP POLICY IF EXISTS "Users can delete their own reviews OR admins can delete all" ON media_reviews;
+
+-- RECOMMENDATIONS (all types)
+DROP POLICY IF EXISTS "Users can view recommendations sent to them" ON movie_recommendations;
+DROP POLICY IF EXISTS "Users can view recommendations they sent" ON movie_recommendations;
+DROP POLICY IF EXISTS "Users can send recommendations" ON movie_recommendations;
+DROP POLICY IF EXISTS "Recipients can update their recommendations" ON movie_recommendations;
+DROP POLICY IF EXISTS "Senders can update their notes" ON movie_recommendations;
+DROP POLICY IF EXISTS "Senders can delete recommendations they sent" ON movie_recommendations;
+DROP POLICY IF EXISTS "Users can view movie recommendations OR admins can view all" ON movie_recommendations;
+DROP POLICY IF EXISTS "Users can send movie recommendations" ON movie_recommendations;
+DROP POLICY IF EXISTS "Recipients can update movie recommendations OR admins can update all" ON movie_recommendations;
+DROP POLICY IF EXISTS "Senders can update movie notes OR admins can update all" ON movie_recommendations;
+DROP POLICY IF EXISTS "Senders can delete movie recommendations OR admins can delete all" ON movie_recommendations;
+
+DROP POLICY IF EXISTS "Users can view book recommendations sent to them" ON book_recommendations;
+DROP POLICY IF EXISTS "Users can view book recommendations they sent" ON book_recommendations;
+DROP POLICY IF EXISTS "Users can send book recommendations" ON book_recommendations;
+DROP POLICY IF EXISTS "Book recipients can update their recommendations" ON book_recommendations;
+DROP POLICY IF EXISTS "Book senders can update their notes" ON book_recommendations;
+DROP POLICY IF EXISTS "Book senders can delete recommendations they sent" ON book_recommendations;
+DROP POLICY IF EXISTS "Users can view book recommendations OR admins can view all" ON book_recommendations;
+DROP POLICY IF EXISTS "Users can send book recommendations" ON book_recommendations;
+DROP POLICY IF EXISTS "Book recipients can update recommendations OR admins can update all" ON book_recommendations;
+DROP POLICY IF EXISTS "Book senders can update notes OR admins can update all" ON book_recommendations;
+DROP POLICY IF EXISTS "Book senders can delete recommendations OR admins can delete all" ON book_recommendations;
+
+DROP POLICY IF EXISTS "Users can view game recommendations sent to them" ON game_recommendations;
+DROP POLICY IF EXISTS "Users can view game recommendations they sent" ON game_recommendations;
+DROP POLICY IF EXISTS "Users can send game recommendations" ON game_recommendations;
+DROP POLICY IF EXISTS "Game recipients can update their recommendations" ON game_recommendations;
+DROP POLICY IF EXISTS "Game senders can update their notes" ON game_recommendations;
+DROP POLICY IF EXISTS "Game senders can delete recommendations they sent" ON game_recommendations;
+DROP POLICY IF EXISTS "Users can view game recommendations OR admins can view all" ON game_recommendations;
+DROP POLICY IF EXISTS "Users can send game recommendations" ON game_recommendations;
+DROP POLICY IF EXISTS "Game recipients can update recommendations OR admins can update all" ON game_recommendations;
+DROP POLICY IF EXISTS "Game senders can update notes OR admins can update all" ON game_recommendations;
+DROP POLICY IF EXISTS "Game senders can delete recommendations OR admins can delete all" ON game_recommendations;
+
+DROP POLICY IF EXISTS "Users can view recommendations sent to them" ON music_recommendations;
+DROP POLICY IF EXISTS "Users can view recommendations they sent" ON music_recommendations;
+DROP POLICY IF EXISTS "Users can send recommendations" ON music_recommendations;
+DROP POLICY IF EXISTS "Recipients can update their recommendations" ON music_recommendations;
+DROP POLICY IF EXISTS "Senders can update their notes" ON music_recommendations;
+DROP POLICY IF EXISTS "Senders can delete recommendations they sent" ON music_recommendations;
+DROP POLICY IF EXISTS "Users can view music recommendations OR admins can view all" ON music_recommendations;
+DROP POLICY IF EXISTS "Users can send music recommendations" ON music_recommendations;
+DROP POLICY IF EXISTS "Recipients can update music recommendations OR admins can update all" ON music_recommendations;
+DROP POLICY IF EXISTS "Senders can update music notes OR admins can update all" ON music_recommendations;
+DROP POLICY IF EXISTS "Senders can delete music recommendations OR admins can delete all" ON music_recommendations;
+
+-- CONNECTIONS
+DROP POLICY IF EXISTS "Users can view their own connections" ON connections;
+DROP POLICY IF EXISTS "Users can create connections" ON connections;
+DROP POLICY IF EXISTS "Users can update their own connections" ON connections;
+DROP POLICY IF EXISTS "Users can delete their own connections" ON connections;
+DROP POLICY IF EXISTS "Users can view their own connections OR admins can view all" ON connections;
+DROP POLICY IF EXISTS "Users can update their own connections OR admins can update all" ON connections;
+DROP POLICY IF EXISTS "Users can delete their own connections OR admins can delete all" ON connections;
+
+-- USER_PROFILES
+DROP POLICY IF EXISTS "Users can update own profile" ON user_profiles;
+DROP POLICY IF EXISTS "Users can update own profile OR admins can update any" ON user_profiles;
+
+-- =============================================================================
 -- ADMIN OVERRIDE POLICIES
 -- All tables now include admin override logic so admins can access all rows
 -- =============================================================================
@@ -10,12 +168,6 @@
 -- -----------------------------------------------------------------------------
 -- TASK_BOARDS: Admin Override Policies
 -- -----------------------------------------------------------------------------
-
--- Drop existing policies that don't include admin override
-DROP POLICY IF EXISTS "Users can view their own boards" ON task_boards;
-DROP POLICY IF EXISTS "Users can create their own boards" ON task_boards;
-DROP POLICY IF EXISTS "Users can update their own boards" ON task_boards;
-DROP POLICY IF EXISTS "Users can delete their own boards" ON task_boards;
 
 -- Recreate with admin override
 CREATE POLICY "Users can view their own boards OR admins can view all" ON task_boards
@@ -38,11 +190,6 @@ CREATE POLICY "Users can delete their own boards OR admins can delete all" ON ta
 -- -----------------------------------------------------------------------------
 -- TASK_BOARD_SECTIONS: Admin Override Policies
 -- -----------------------------------------------------------------------------
-
-DROP POLICY IF EXISTS "Users can view sections of their boards" ON task_board_sections;
-DROP POLICY IF EXISTS "Users can create sections in their boards" ON task_board_sections;
-DROP POLICY IF EXISTS "Users can update sections in their boards" ON task_board_sections;
-DROP POLICY IF EXISTS "Users can delete sections from their boards" ON task_board_sections;
 
 CREATE POLICY "Users can view sections of their boards OR admins can view all" ON task_board_sections
   FOR SELECT TO authenticated
@@ -79,11 +226,6 @@ CREATE POLICY "Users can delete sections from their boards OR admins can delete 
 -- TASKS: Admin Override Policies
 -- -----------------------------------------------------------------------------
 
-DROP POLICY IF EXISTS "Users can view their own tasks" ON tasks;
-DROP POLICY IF EXISTS "Users can create their own tasks" ON tasks;
-DROP POLICY IF EXISTS "Users can update their own tasks" ON tasks;
-DROP POLICY IF EXISTS "Users can delete their own tasks" ON tasks;
-
 CREATE POLICY "Users can view their own tasks OR admins can view all" ON tasks
   FOR SELECT TO authenticated
   USING (auth.uid() = user_id OR public.is_admin(auth.uid()));
@@ -104,11 +246,6 @@ CREATE POLICY "Users can delete their own tasks OR admins can delete all" ON tas
 -- -----------------------------------------------------------------------------
 -- BOARD_SHARES: Admin Override Policies
 -- -----------------------------------------------------------------------------
-
-DROP POLICY IF EXISTS "Users can view board shares" ON board_shares;
-DROP POLICY IF EXISTS "Board owners can create shares" ON board_shares;
-DROP POLICY IF EXISTS "Board owners can update shares" ON board_shares;
-DROP POLICY IF EXISTS "Board owners can delete shares" ON board_shares;
 
 CREATE POLICY "Users can view board shares OR admins can view all" ON board_shares
   FOR SELECT
@@ -147,11 +284,6 @@ CREATE POLICY "Board owners can delete shares OR admins can delete all" ON board
 -- USER_WATCHLIST: Admin Override Policies
 -- -----------------------------------------------------------------------------
 
-DROP POLICY IF EXISTS "Users can view their own watchlist" ON user_watchlist;
-DROP POLICY IF EXISTS "Users can add to their own watchlist" ON user_watchlist;
-DROP POLICY IF EXISTS "Users can update their own watchlist" ON user_watchlist;
-DROP POLICY IF EXISTS "Users can delete from their own watchlist" ON user_watchlist;
-
 CREATE POLICY "Users can view their own watchlist OR admins can view all" ON user_watchlist
   FOR SELECT TO authenticated
   USING (auth.uid() = user_id OR public.is_admin(auth.uid()));
@@ -172,11 +304,6 @@ CREATE POLICY "Users can delete from their own watchlist OR admins can delete al
 -- -----------------------------------------------------------------------------
 -- USER_WATCHED_ARCHIVE: Admin Override Policies
 -- -----------------------------------------------------------------------------
-
-DROP POLICY IF EXISTS "Users can view own archive" ON user_watched_archive;
-DROP POLICY IF EXISTS "Users can insert into own archive" ON user_watched_archive;
-DROP POLICY IF EXISTS "Users can update own archive" ON user_watched_archive;
-DROP POLICY IF EXISTS "Users can delete from own archive" ON user_watched_archive;
 
 CREATE POLICY "Users can view own archive OR admins can view all" ON user_watched_archive
   FOR SELECT TO authenticated
@@ -199,11 +326,6 @@ CREATE POLICY "Users can delete from own archive OR admins can delete all" ON us
 -- READING_LIST: Admin Override Policies
 -- -----------------------------------------------------------------------------
 
-DROP POLICY IF EXISTS "Users can view their own reading list" ON reading_list;
-DROP POLICY IF EXISTS "Users can add to their own reading list" ON reading_list;
-DROP POLICY IF EXISTS "Users can update their own reading list" ON reading_list;
-DROP POLICY IF EXISTS "Users can delete from their own reading list" ON reading_list;
-
 CREATE POLICY "Users can view their own reading list OR admins can view all" ON reading_list
   FOR SELECT TO authenticated
   USING (auth.uid() = user_id OR public.is_admin(auth.uid()));
@@ -225,11 +347,6 @@ CREATE POLICY "Users can delete from their own reading list OR admins can delete
 -- GAME_LIBRARY: Admin Override Policies
 -- -----------------------------------------------------------------------------
 
-DROP POLICY IF EXISTS "Users can view own game library" ON game_library;
-DROP POLICY IF EXISTS "Users can insert own game library items" ON game_library;
-DROP POLICY IF EXISTS "Users can update own game library items" ON game_library;
-DROP POLICY IF EXISTS "Users can delete own game library items" ON game_library;
-
 CREATE POLICY "Users can view own game library OR admins can view all" ON game_library
   FOR SELECT TO authenticated
   USING (auth.uid() = user_id OR public.is_admin(auth.uid()));
@@ -250,11 +367,6 @@ CREATE POLICY "Users can delete own game library items OR admins can delete all"
 -- MUSIC_LIBRARY: Admin Override Policies
 -- -----------------------------------------------------------------------------
 
-DROP POLICY IF EXISTS "Users can view own music library" ON music_library;
-DROP POLICY IF EXISTS "Users can insert own music library items" ON music_library;
-DROP POLICY IF EXISTS "Users can update own music library items" ON music_library;
-DROP POLICY IF EXISTS "Users can delete own music library items" ON music_library;
-
 CREATE POLICY "Users can view own music library OR admins can view all" ON music_library
   FOR SELECT TO authenticated
   USING (auth.uid() = user_id OR public.is_admin(auth.uid()));
@@ -274,12 +386,6 @@ CREATE POLICY "Users can delete own music library items OR admins can delete all
 -- -----------------------------------------------------------------------------
 -- MEDIA_REVIEWS: Admin Override Policies
 -- -----------------------------------------------------------------------------
-
-DROP POLICY IF EXISTS "Users can view their own reviews" ON media_reviews;
-DROP POLICY IF EXISTS "Users can view public reviews from friends" ON media_reviews;
-DROP POLICY IF EXISTS "Users can insert their own reviews" ON media_reviews;
-DROP POLICY IF EXISTS "Users can update their own reviews" ON media_reviews;
-DROP POLICY IF EXISTS "Users can delete their own reviews" ON media_reviews;
 
 CREATE POLICY "Users can view their own reviews OR admins can view all" ON media_reviews
   FOR SELECT
@@ -309,13 +415,6 @@ CREATE POLICY "Users can delete their own reviews OR admins can delete all" ON m
 -- -----------------------------------------------------------------------------
 -- MOVIE_RECOMMENDATIONS: Admin Override Policies
 -- -----------------------------------------------------------------------------
-
-DROP POLICY IF EXISTS "Users can view recommendations sent to them" ON movie_recommendations;
-DROP POLICY IF EXISTS "Users can view recommendations they sent" ON movie_recommendations;
-DROP POLICY IF EXISTS "Users can send recommendations" ON movie_recommendations;
-DROP POLICY IF EXISTS "Recipients can update their recommendations" ON movie_recommendations;
-DROP POLICY IF EXISTS "Senders can update their notes" ON movie_recommendations;
-DROP POLICY IF EXISTS "Senders can delete recommendations they sent" ON movie_recommendations;
 
 CREATE POLICY "Users can view movie recommendations OR admins can view all" ON movie_recommendations
   FOR SELECT TO authenticated
@@ -347,13 +446,6 @@ CREATE POLICY "Senders can delete movie recommendations OR admins can delete all
 -- BOOK_RECOMMENDATIONS: Admin Override Policies
 -- -----------------------------------------------------------------------------
 
-DROP POLICY IF EXISTS "Users can view book recommendations sent to them" ON book_recommendations;
-DROP POLICY IF EXISTS "Users can view book recommendations they sent" ON book_recommendations;
-DROP POLICY IF EXISTS "Users can send book recommendations" ON book_recommendations;
-DROP POLICY IF EXISTS "Book recipients can update their recommendations" ON book_recommendations;
-DROP POLICY IF EXISTS "Book senders can update their notes" ON book_recommendations;
-DROP POLICY IF EXISTS "Book senders can delete recommendations they sent" ON book_recommendations;
-
 CREATE POLICY "Users can view book recommendations OR admins can view all" ON book_recommendations
   FOR SELECT TO authenticated
   USING (
@@ -383,13 +475,6 @@ CREATE POLICY "Book senders can delete recommendations OR admins can delete all"
 -- -----------------------------------------------------------------------------
 -- GAME_RECOMMENDATIONS: Admin Override Policies
 -- -----------------------------------------------------------------------------
-
-DROP POLICY IF EXISTS "Users can view game recommendations sent to them" ON game_recommendations;
-DROP POLICY IF EXISTS "Users can view game recommendations they sent" ON game_recommendations;
-DROP POLICY IF EXISTS "Users can send game recommendations" ON game_recommendations;
-DROP POLICY IF EXISTS "Game recipients can update their recommendations" ON game_recommendations;
-DROP POLICY IF EXISTS "Game senders can update their notes" ON game_recommendations;
-DROP POLICY IF EXISTS "Game senders can delete recommendations they sent" ON game_recommendations;
 
 CREATE POLICY "Users can view game recommendations OR admins can view all" ON game_recommendations
   FOR SELECT TO authenticated
@@ -421,13 +506,6 @@ CREATE POLICY "Game senders can delete recommendations OR admins can delete all"
 -- MUSIC_RECOMMENDATIONS: Admin Override Policies
 -- -----------------------------------------------------------------------------
 
-DROP POLICY IF EXISTS "Users can view recommendations sent to them" ON music_recommendations;
-DROP POLICY IF EXISTS "Users can view recommendations they sent" ON music_recommendations;
-DROP POLICY IF EXISTS "Users can send recommendations" ON music_recommendations;
-DROP POLICY IF EXISTS "Recipients can update their recommendations" ON music_recommendations;
-DROP POLICY IF EXISTS "Senders can update their notes" ON music_recommendations;
-DROP POLICY IF EXISTS "Senders can delete recommendations they sent" ON music_recommendations;
-
 CREATE POLICY "Users can view music recommendations OR admins can view all" ON music_recommendations
   FOR SELECT TO authenticated
   USING (
@@ -457,11 +535,6 @@ CREATE POLICY "Senders can delete music recommendations OR admins can delete all
 -- -----------------------------------------------------------------------------
 -- CONNECTIONS: Admin Override Policies
 -- -----------------------------------------------------------------------------
-
-DROP POLICY IF EXISTS "Users can view their own connections" ON connections;
-DROP POLICY IF EXISTS "Users can create connections" ON connections;
-DROP POLICY IF EXISTS "Users can update their own connections" ON connections;
-DROP POLICY IF EXISTS "Users can delete their own connections" ON connections;
 
 CREATE POLICY "Users can view their own connections OR admins can view all" ON connections
   FOR SELECT TO authenticated
@@ -500,8 +573,6 @@ CREATE POLICY "Users can delete their own connections OR admins can delete all" 
 -- USER_PROFILES: Admin Override Policy (already has "Anyone can view profiles")
 -- Keep existing policies, just ensure admin can update
 -- -----------------------------------------------------------------------------
-
-DROP POLICY IF EXISTS "Users can update own profile" ON user_profiles;
 
 CREATE POLICY "Users can update own profile OR admins can update any" ON user_profiles
   FOR UPDATE TO authenticated

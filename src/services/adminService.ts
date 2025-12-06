@@ -220,6 +220,18 @@ export const getUsers = async (
       })
     ) || [];
 
+  // Log admin action for audit trail (L2)
+  try {
+    await supabase.rpc("log_admin_action", {
+      p_action: "view_user_list",
+      p_target_user_id: null,
+      p_details: { page, perPage, searchTerm, totalUsers: count || 0 },
+    });
+  } catch (error) {
+    // Don't fail the operation if logging fails
+    logger.warn("Failed to log admin action", { error });
+  }
+
   return { users, totalPages };
 };
 

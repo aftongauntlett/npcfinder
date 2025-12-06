@@ -43,11 +43,6 @@ export const getSupabase = (): SupabaseClient => {
     supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
   }
 
-  // Debug logging
-  if (isDev) {
-    console.log("📊 Using database:", supabaseUrl);
-  }
-
   // Validate that environment variables are loaded
   if (!supabaseUrl || !supabaseKey) {
     // Check if we're in production

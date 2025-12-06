@@ -1,11 +1,37 @@
 /**
  * Centralized logger with dev-gated output
  * Gates console output based on DEV environment
- * SECURITY: Production logs are sanitized to prevent sensitive data exposure
+ * SECURITY (M4): Production logs sent to Sentry instead of console
+ * to prevent information disclosure via browser console
  */
+
+import * as Sentry from "@sentry/react";
 
 const isDev = import.meta.env.DEV;
 const isProd = import.meta.env.PROD;
+
+// Initialize Sentry in production
+if (isProd && import.meta.env.VITE_SENTRY_DSN) {
+  Sentry.init({
+    dsn: import.meta.env.VITE_SENTRY_DSN,
+    environment: "production",
+    // Sample 10% of transactions for performance monitoring
+    tracesSampleRate: 0.1,
+    // Don't capture breadcrumbs with sensitive data
+    beforeBreadcrumb(breadcrumb) {
+      // Filter out console breadcrumbs to avoid sensitive data
+      if (breadcrumb.category === "console") {
+        return null;
+      }
+      return breadcrumb;
+    },
+    // Additional sanitization before sending to Sentry
+    beforeSend(event, _hint) {
+      const sanitized = sanitizeForProduction(event);
+      return sanitized as Sentry.ErrorEvent;
+    },
+  });
+}
 
 /**
  * Sanitize data for production logging
@@ -28,7 +54,7 @@ function sanitizeForProduction(arg: unknown): unknown {
     return {
       name: arg.name,
       message: arg.message,
-      // Don't include stack trace in production
+      // Stack trace is included by Sentry but not logged to console
     };
   }
 
@@ -96,16 +122,34 @@ export const logger = {
 
   error: (...args: unknown[]) => {
     if (isDev) {
-      // In development, log everything
+      // In development, log everything to console
       console.error(...args);
     } else if (isProd) {
-      // In production, sanitize sensitive data
+      // In production, sanitize and send to Sentry
       const sanitized = args.map((arg) => sanitizeForProduction(arg));
-      console.error("[SANITIZED]", ...sanitized);
 
-      // TODO: Send to external error tracking service (e.g., Sentry)
-      // This would replace console.error in production
-      // Example: Sentry.captureException(new Error(JSON.stringify(sanitized)));
+      // Send to Sentry if configured
+      if (import.meta.env.VITE_SENTRY_DSN) {
+        // Create error object from arguments
+        const errorMessage =
+          sanitized
+            .map((arg) =>
+              typeof arg === "object" ? JSON.stringify(arg) : String(arg)
+            )
+            .join(" ") || "Unknown error";
+
+        Sentry.captureException(new Error(errorMessage), {
+          contexts: {
+            sanitizedArgs: {
+              args: sanitized,
+            },
+          },
+        });
+      } else {
+        // Fallback to console if Sentry not configured
+        // This ensures errors are not completely lost
+        console.error("[SANITIZED]", ...sanitized);
+      }
     }
   },
 };

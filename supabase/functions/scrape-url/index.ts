@@ -300,26 +300,39 @@ serve(async (req) => {
       metadata.title = extractTitle(html) || "Untitled";
     }
 
-    // Add debug info to response (remove this in production)
-    const debugInfo = {
-      version: "2.0",
-      jsonLdFound:
-        html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>/gi)
-          ?.length || 0,
-      hasJobPosting: !!metadata.jobPosting,
-      jobPostingData: metadata.jobPosting,
-      classificationReason:
-        metadata.jobPosting?.company && metadata.jobPosting?.position
-          ? "has company and position"
-          : `missing ${!metadata.jobPosting?.company ? "company" : ""}${
-              !metadata.jobPosting?.company && !metadata.jobPosting?.position
-                ? " and "
-                : ""
-            }${!metadata.jobPosting?.position ? "position" : ""}`,
-    };
-    console.log("[DEBUG] Final response:", { kind: metadata.kind, debugInfo });
+    // Debug info only in development (L3 - Security)
+    const isDev = Deno.env.get("ENVIRONMENT") === "development";
 
-    return new Response(JSON.stringify({ ...metadata, _debug: debugInfo }), {
+    if (isDev) {
+      const debugInfo = {
+        version: "2.0",
+        jsonLdFound:
+          html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>/gi)
+            ?.length || 0,
+        hasJobPosting: !!metadata.jobPosting,
+        jobPostingData: metadata.jobPosting,
+        classificationReason:
+          metadata.jobPosting?.company && metadata.jobPosting?.position
+            ? "has company and position"
+            : `missing ${!metadata.jobPosting?.company ? "company" : ""}${
+                !metadata.jobPosting?.company && !metadata.jobPosting?.position
+                  ? " and "
+                  : ""
+              }${!metadata.jobPosting?.position ? "position" : ""}`,
+      };
+      console.log("[DEBUG] Final response:", {
+        kind: metadata.kind,
+        debugInfo,
+      });
+
+      return new Response(JSON.stringify({ ...metadata, _debug: debugInfo }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    // Production response without debug info
+    return new Response(JSON.stringify(metadata), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });

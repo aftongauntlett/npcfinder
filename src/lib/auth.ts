@@ -18,7 +18,8 @@ interface AuthResult<T> {
 /**
  * Sign up a new user with invite code validation
  * SECURITY: Requires valid invite code for registration
- * SECURITY: Rate limited to prevent abuse (3 attempts per hour per email)
+ * SECURITY: Server-side rate limited to prevent abuse (3 attempts per hour per email)
+ * SECURITY: Client-side rate limiter provides UX optimization only
  */
 export const signUp = async (
   email: string,
@@ -26,7 +27,27 @@ export const signUp = async (
   inviteCode: string
 ): Promise<AuthResult<User>> => {
   try {
-    // SECURITY: Check rate limit first
+    // SECURITY: Check server-side rate limit first (authoritative)
+    const { data: rateLimitCheck, error: rateLimitError } = await supabase.rpc(
+      "check_signup_rate_limit",
+      { user_email: email }
+    );
+
+    if (rateLimitError) {
+      logger.error("Server-side rate limit check failed", {
+        error: rateLimitError,
+      });
+      // Fall back to client-side check if server check fails
+    } else if (rateLimitCheck && !rateLimitCheck.allowed) {
+      const error = new Error(
+        rateLimitCheck.error ||
+          "Too many signup attempts. Please try again later."
+      ) as AuthError;
+      error.name = "RateLimitError";
+      throw error;
+    }
+
+    // Client-side rate limiter (UX optimization - shows remaining attempts)
     const rateLimitKey = `signup:${email.toLowerCase()}`;
     if (!signUpRateLimiter.checkLimit(rateLimitKey)) {
       const error = new Error(
@@ -75,7 +96,17 @@ export const signUp = async (
       // The code should still be marked as used via database trigger
     }
 
-    // SECURITY: Reset rate limit on successful signup
+    // SECURITY: Reset rate limits on successful signup (both server and client)
+    try {
+      await supabase.rpc("reset_auth_rate_limit", {
+        user_email: email,
+        auth_type: "signup",
+      });
+    } catch (resetError) {
+      logger.warn("Failed to reset server-side rate limit", {
+        error: resetError,
+      });
+    }
     signUpRateLimiter.reset(rateLimitKey);
 
     return { data: data.user, error: null };
@@ -87,14 +118,35 @@ export const signUp = async (
 
 /**
  * Sign in existing user
- * SECURITY: Rate limited to prevent brute force (5 attempts per 15 minutes per email)
+ * SECURITY: Server-side rate limited to prevent brute force (5 attempts per 15 minutes per email)
+ * SECURITY: Client-side rate limiter provides UX optimization only
  */
 export const signIn = async (
   email: string,
   password: string
 ): Promise<AuthResult<Session>> => {
   try {
-    // SECURITY: Check rate limit first
+    // SECURITY: Check server-side rate limit first (authoritative)
+    const { data: rateLimitCheck, error: rateLimitError } = await supabase.rpc(
+      "check_signin_rate_limit",
+      { user_email: email }
+    );
+
+    if (rateLimitError) {
+      logger.error("Server-side rate limit check failed", {
+        error: rateLimitError,
+      });
+      // Fall back to client-side check if server check fails
+    } else if (rateLimitCheck && !rateLimitCheck.allowed) {
+      const error = new Error(
+        rateLimitCheck.error ||
+          "Too many login attempts. Please try again in 15 minutes."
+      ) as AuthError;
+      error.name = "RateLimitError";
+      throw error;
+    }
+
+    // Client-side rate limiter (UX optimization - shows remaining attempts)
     const rateLimitKey = `signin:${email.toLowerCase()}`;
     if (!signInRateLimiter.checkLimit(rateLimitKey)) {
       const error = new Error(
@@ -111,7 +163,17 @@ export const signIn = async (
 
     if (error) throw error;
 
-    // SECURITY: Reset rate limit on successful login
+    // SECURITY: Reset rate limits on successful login (both server and client)
+    try {
+      await supabase.rpc("reset_auth_rate_limit", {
+        user_email: email,
+        auth_type: "signin",
+      });
+    } catch (resetError) {
+      logger.warn("Failed to reset server-side rate limit", {
+        error: resetError,
+      });
+    }
     signInRateLimiter.reset(rateLimitKey);
 
     return { data: data.session, error: null };

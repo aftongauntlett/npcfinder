@@ -35,7 +35,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
           .from("user_profiles")
           .select("is_admin")
           .eq("user_id", user.id)
-          .single();
+          .maybeSingle();
 
         if (error) {
           // SECURITY: Fail closed - if database check fails, treat as non-admin
@@ -46,6 +46,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
           return false;
         }
 
+        // If no profile exists yet, treat as non-admin (fail closed)
         return data?.is_admin || false;
       } catch (error) {
         // SECURITY: Fail closed on any error
