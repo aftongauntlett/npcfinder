@@ -114,7 +114,9 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
   // Generate unique board name by checking for duplicates and adding number suffix
   const generateUniqueBoardName = useCallback(
     (baseName: string): string => {
-      const existingNames = boards.map((b) => b.name.toLowerCase());
+      const existingNames = boards
+        .filter((b) => b.name)
+        .map((b) => b.name.toLowerCase());
 
       // If base name doesn't exist, return it
       if (!existingNames.includes(baseName.toLowerCase())) {
@@ -140,14 +142,20 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
     }
 
     // Skip validation if editing the same board
-    if (board && boardName.toLowerCase() === board.name.toLowerCase()) {
+    if (
+      board &&
+      board.name &&
+      boardName.toLowerCase() === board.name.toLowerCase()
+    ) {
       return "";
     }
 
     // Check for duplicate names
     const isDuplicate = boards.some(
       (b) =>
-        b.name.toLowerCase() === boardName.toLowerCase() && b.id !== board?.id
+        b.name &&
+        b.name.toLowerCase() === boardName.toLowerCase() &&
+        b.id !== board?.id
     );
 
     if (isDuplicate) {

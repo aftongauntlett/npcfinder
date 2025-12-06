@@ -85,7 +85,7 @@ async function verifyAdminPolicies() {
     console.log("📋 Testing table access...\n");
 
     for (const table of tablesToTest) {
-      const { data, error, count } = await supabase
+      const { error, count } = await supabase
         .from(table)
         .select("*", { count: "exact", head: true });
 

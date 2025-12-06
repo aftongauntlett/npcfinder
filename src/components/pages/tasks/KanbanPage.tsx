@@ -43,7 +43,7 @@ const KanbanPage: React.FC = () => {
   }, [createTaskBoardId, boards]);
 
   // Handle create task from board
-  const handleCreateTask = (boardId: string, sectionId?: string) => {
+  const handleCreateTask = (boardId?: string, sectionId?: string) => {
     setCreateTaskBoardId(boardId);
     setCreateTaskSectionId(sectionId);
     setShowCreateTask(true);

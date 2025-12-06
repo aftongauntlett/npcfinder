@@ -2,8 +2,6 @@
 -- PostgreSQL database dump
 --
 
-\restrict nmL4HewpTZ2CsaTmt8ZvTkIFWsZdvz6Bkf1iImY291FEn284W87eLKtC0dwH86j
-
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.7 (Homebrew)
 
@@ -22,8 +20,7 @@ SET row_security = off;
 --
 -- Name: public; Type: SCHEMA; Schema: -; Owner: -
 --
-
-CREATE SCHEMA public;
+-- Note: Skipping CREATE SCHEMA public - Supabase already provides this
 
 
 --
@@ -4417,6 +4414,3 @@ ALTER TABLE public.user_watchlist ENABLE ROW LEVEL SECURITY;
 --
 -- PostgreSQL database dump complete
 --
-
-\unrestrict nmL4HewpTZ2CsaTmt8ZvTkIFWsZdvz6Bkf1iImY291FEn284W87eLKtC0dwH86j
-

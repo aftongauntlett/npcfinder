@@ -80,7 +80,7 @@ export const CreateTaskSchema = z.object({
     .optional(),
   sort_order: z.number().int().min(0).optional(),
   item_type: z.string().max(50, "Item type too long").nullable().optional(),
-  item_data: z.record(z.unknown()).nullable().optional(),
+  item_data: z.record(z.string(), z.unknown()).nullable().optional(),
   is_favorite: z.boolean().optional().default(false),
   reminder_at: z.string().datetime().nullable().optional(),
 });

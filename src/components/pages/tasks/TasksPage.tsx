@@ -31,6 +31,7 @@ import {
   useSharedBoards,
 } from "../../../hooks/useTasksQueries";
 import { useBoardTemplates } from "../../../hooks/useBoardTemplates";
+import { useAllSingletonBoards } from "../../../hooks/useSingletonBoard";
 import type { BoardWithStats } from "../../../services/tasksService.types";
 
 type ViewType = "tasks" | "kanban" | "grocery" | "recipes" | "job_applications";
@@ -51,6 +52,9 @@ const TasksPage: React.FC = () => {
     data: BoardWithStats[];
   };
   const { data: tasks = [] } = useTasks(undefined, { unassigned: true });
+
+  // Get singleton board IDs for job_tracker, recipe, and grocery
+  const { jobBoardId, recipeBoardId, groceryBoardId } = useAllSingletonBoards();
 
   // Extract board filtering and task counts into dedicated hook
   const {
@@ -137,8 +141,23 @@ const TasksPage: React.FC = () => {
   ]);
 
   // Handle create task from board
-  const handleCreateTask = (boardId: string, sectionId?: string) => {
-    setCreateTaskBoardId(boardId);
+  // For singleton types (job_tracker, recipe, grocery), boardId is optional and handled automatically
+  const handleCreateTask = (boardId?: string, sectionId?: string) => {
+    // Determine which board to use based on current view
+    let targetBoardId = boardId;
+
+    if (!targetBoardId) {
+      // Auto-assign singleton board based on current view
+      if (selectedView === "job_applications") {
+        targetBoardId = jobBoardId ?? undefined;
+      } else if (selectedView === "recipes") {
+        targetBoardId = recipeBoardId ?? undefined;
+      } else if (selectedView === "grocery") {
+        targetBoardId = groceryBoardId ?? undefined;
+      }
+    }
+
+    setCreateTaskBoardId(targetBoardId);
     setCreateTaskSectionId(sectionId);
     setShowCreateTask(true);
   };

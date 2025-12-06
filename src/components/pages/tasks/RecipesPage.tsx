@@ -10,18 +10,19 @@ import TemplateView from "./TemplateView";
 import RecipeFormModal from "../../tasks/RecipeFormModal";
 import TaskDetailModal from "../../tasks/TaskDetailModal";
 import { useBoards, useTasks } from "../../../hooks/useTasksQueries";
+import { useSingletonBoard } from "../../../hooks/useSingletonBoard";
 
 const RecipesPage: React.FC = () => {
   const [showCreateTask, setShowCreateTask] = useState(false);
-  const [createTaskBoardId, setCreateTaskBoardId] = useState<
-    string | undefined
-  >();
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
 
   const { data: boards = [] } = useBoards();
   const { data: tasks = [] } = useTasks();
 
-  // Filter boards by template type
+  // Get or create the singleton recipe board
+  const { data: recipeBoardId } = useSingletonBoard("recipe");
+
+  // Filter boards by template type (should only be one)
   const recipeBoards = useMemo(
     () => boards.filter((b) => b.template_type === "recipe"),
     [boards]
@@ -33,9 +34,8 @@ const RecipesPage: React.FC = () => {
     return tasks.find((t) => t.id === editingTaskId) || null;
   }, [editingTaskId, tasks]);
 
-  // Handle create task from board
-  const handleCreateTask = (boardId: string) => {
-    setCreateTaskBoardId(boardId);
+  // Handle create task - no longer needs boardId param since we use singleton
+  const handleCreateTask = () => {
     setShowCreateTask(true);
   };
 
@@ -57,14 +57,13 @@ const RecipesPage: React.FC = () => {
       />
 
       {/* Modals */}
-      {showCreateTask && (
+      {showCreateTask && recipeBoardId && (
         <RecipeFormModal
           isOpen={showCreateTask}
           onClose={() => {
             setShowCreateTask(false);
-            setCreateTaskBoardId(undefined);
           }}
-          boardId={createTaskBoardId!}
+          boardId={recipeBoardId}
         />
       )}
 

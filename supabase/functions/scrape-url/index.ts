@@ -102,10 +102,57 @@ serve(async (req) => {
     }
 
     // Validate URL format
+    let parsedUrl: URL;
     try {
-      new URL(url);
+      parsedUrl = new URL(url);
     } catch {
       throw new Error("Invalid URL format");
+    }
+
+    // SECURITY: SSRF Protection - Block private IP ranges and localhost
+    const hostname = parsedUrl.hostname.toLowerCase();
+
+    // Block localhost variations
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "0.0.0.0" ||
+      hostname === "::1" ||
+      hostname.endsWith(".local")
+    ) {
+      throw new Error("Access to localhost is not allowed");
+    }
+
+    // Block private IP ranges (IPv4)
+    const ipv4Regex = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+    const ipMatch = hostname.match(ipv4Regex);
+    if (ipMatch) {
+      const [, a, b, c, d] = ipMatch.map(Number);
+      // Check for private IP ranges
+      if (
+        a === 10 || // 10.0.0.0/8
+        (a === 172 && b >= 16 && b <= 31) || // 172.16.0.0/12
+        (a === 192 && b === 168) || // 192.168.0.0/16
+        (a === 169 && b === 254) || // 169.254.0.0/16 (link-local)
+        a === 127 // 127.0.0.0/8 (loopback)
+      ) {
+        throw new Error("Access to private IP addresses is not allowed");
+      }
+    }
+
+    // Block cloud metadata endpoints
+    const blockedHosts = [
+      "169.254.169.254", // AWS, Azure, GCP metadata
+      "metadata.google.internal",
+      "metadata.azure.internal",
+    ];
+    if (blockedHosts.includes(hostname)) {
+      throw new Error("Access to metadata endpoints is not allowed");
+    }
+
+    // Only allow http and https protocols
+    if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+      throw new Error("Only HTTP and HTTPS protocols are allowed");
     }
 
     // Special handling for Greenhouse URLs - try JSON API first
@@ -145,19 +192,35 @@ serve(async (req) => {
       }
     }
 
-    // Fetch the HTML content
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (compatible; NPCFinder/1.0; +https://npcfinder.com)",
-      },
-    });
+    // Fetch the HTML content with timeout
+    // SECURITY: Add 10-second timeout to prevent long-running requests
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch URL: ${response.statusText}`);
+    let html: string;
+    try {
+      const response = await fetch(url, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (compatible; NPCFinder/1.0; +https://npcfinder.com)",
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch URL: ${response.statusText}`);
+      }
+
+      html = await response.text();
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === "AbortError") {
+        throw new Error("Request timeout - URL took too long to respond");
+      }
+      throw error;
     }
-
-    const html = await response.text();
 
     // Extract metadata using DOM parsing and meta tags
     let metadata: ScrapedMetadata = {

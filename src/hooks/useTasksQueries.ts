@@ -1,12 +1,17 @@
 /**
  * TanStack Query hooks for Tasks
  * Provides optimistic updates with proper error handling and rollback
+ * SECURITY: Includes frontend ownership validation to complement RLS
  */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as tasksService from "../services/tasksService";
 import { queryKeys } from "../lib/queryKeys";
 import { useAuth } from "../contexts/AuthContext";
+import {
+  validateOwnership,
+  createOwnershipError,
+} from "../utils/ownershipHelpers";
 import type {
   Board,
   BoardSection,
@@ -52,20 +57,27 @@ export function useBoards() {
 
 /**
  * Get single board by ID
+ * SECURITY: Validates ownership before querying to prevent unnecessary database calls
  */
 export function useBoard(boardId: string) {
   const { user } = useAuth();
+  const { data: boards } = useBoards();
 
   return useQuery({
     queryKey: queryKeys.tasks.board(boardId),
     queryFn: async () => {
+      // SECURITY: Early ownership check
+      if (!validateOwnership(boardId, boards)) {
+        throw createOwnershipError("Board");
+      }
+
       const { data, error } = await tasksService.getBoardById(boardId);
       if (error) throw error;
       return data;
     },
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 30,
-    enabled: !!user && !!boardId,
+    enabled: !!user && !!boardId && !!boards,
   });
 }
 
@@ -952,7 +964,7 @@ export function useBoardShares(boardId: string) {
       return data || [];
     },
     staleTime: 1000 * 60 * 5,
-    enabled: !!user && !!boardId,
+    enabled: !!user && !!boardId && boardId.length > 0,
   });
 }
 
@@ -966,7 +978,11 @@ export function useSharedBoards() {
     queryKey: queryKeys.tasks.sharedBoards(),
     queryFn: async () => {
       const { data, error } = await tasksService.getSharedBoards();
-      if (error) throw error;
+      // Gracefully handle permission errors - board_shares may not be accessible
+      if (error) {
+        console.warn("Failed to fetch shared boards:", error);
+        return [];
+      }
       return data || [];
     },
     staleTime: 1000 * 60 * 5,

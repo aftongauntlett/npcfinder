@@ -11,16 +11,7 @@
 import { supabase } from "../lib/supabase";
 import { logger } from "../lib/logger";
 import { getBoardTemplateType } from "../utils/taskConstants";
-import {
-  CreateBoardSchema,
-  UpdateBoardSchema,
-  CreateSectionSchema,
-  UpdateSectionSchema,
-  CreateTaskSchema,
-  UpdateTaskSchema,
-  TaskFiltersSchema,
-  validateInput,
-} from "./tasksService.validation";
+import { CreateBoardSchema, validateInput } from "./tasksService.validation";
 import type {
   Board,
   BoardSection,

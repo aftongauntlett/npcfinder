@@ -28,7 +28,7 @@ import type { TemplateType } from "../../../utils/boardTemplates";
 interface TemplateViewProps {
   templateType: TemplateType;
   boards: BoardWithStats[];
-  onCreateTask?: (boardId: string, sectionId?: string) => void;
+  onCreateTask?: (boardId?: string, sectionId?: string) => void; // boardId now optional for singleton types
   onEditTask?: (taskId: string) => void;
 }
 
@@ -98,11 +98,10 @@ const TemplateView: React.FC<TemplateViewProps> = ({
     TEMPLATE_META[templateType as keyof typeof TEMPLATE_META] ||
     TEMPLATE_META.kanban;
 
-  // Only kanban, markdown, and grocery templates allow multiple boards
+  // Only kanban and markdown templates allow multiple boards
+  // job_tracker, recipe, and grocery are singleton (one per user, auto-created)
   const allowsMultipleBoards =
-    templateType === "kanban" ||
-    templateType === "markdown" ||
-    templateType === "grocery";
+    templateType === "kanban" || templateType === "markdown";
 
   const handleDeleteBoard = () => {
     if (deletingBoard) {
@@ -228,6 +227,21 @@ const TemplateView: React.FC<TemplateViewProps> = ({
   }, [boards, activeFilters.sort]);
 
   if (boards.length === 0) {
+    // For singleton types, board will be auto-created, so just show loading or empty content state
+    if (!allowsMultipleBoards) {
+      return (
+        <div className="container mx-auto px-4 sm:px-6">
+          <MediaEmptyState
+            icon={meta.icon}
+            title={meta.emptyTitle}
+            description={meta.emptyDescription}
+            ariaLabel={`${meta.title} - will be created automatically when you add your first item`}
+          />
+        </div>
+      );
+    }
+
+    // For multi-board types (kanban, markdown), show create board option
     return (
       <div className="container mx-auto px-4 sm:px-6">
         <MediaEmptyState
@@ -254,7 +268,7 @@ const TemplateView: React.FC<TemplateViewProps> = ({
       <div className="container mx-auto px-4 sm:px-6">
         <JobTrackerView
           boardId={board.id}
-          onCreateTask={() => onCreateTask?.(board.id)}
+          onCreateTask={() => onCreateTask?.()} // No boardId needed - singleton handled by parent
           onEditTask={(task) => onEditTask?.(task.id)}
           onDeleteTask={(taskId) => setDeletingTask(taskId)}
         />
@@ -282,7 +296,7 @@ const TemplateView: React.FC<TemplateViewProps> = ({
       <div className="container mx-auto px-4 sm:px-6">
         <RecipeListView
           boardId={board.id}
-          onCreateTask={() => onCreateTask?.(board.id)}
+          onCreateTask={() => onCreateTask?.()} // No boardId needed - singleton handled by parent
           onViewRecipe={(task) => {
             if (onEditTask) {
               onEditTask(task.id);
