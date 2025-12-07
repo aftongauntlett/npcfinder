@@ -68,6 +68,7 @@ const UpcomingView: React.FC = () => {
     items: upcomingTasks,
     groupFn: groupByDate,
     initialItemsPerPage: 10,
+    persistenceKey: "tasks-upcoming",
   });
 
   if (isLoading) {

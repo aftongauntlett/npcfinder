@@ -1,4 +1,10 @@
-import React, { useState, useRef, useMemo, useCallback } from "react";
+import React, {
+  useState,
+  useRef,
+  useMemo,
+  useCallback,
+  useEffect,
+} from "react";
 import { Film } from "lucide-react";
 import {
   SearchMovieModal,
@@ -23,6 +29,10 @@ import {
 } from "../../hooks/useWatchlistQueries";
 import type { WatchlistItem } from "../../services/recommendationsService.types";
 import { fetchDetailedMediaInfo } from "../../utils/tmdbDetails";
+import {
+  getPersistedFilters,
+  persistFilters,
+} from "../../utils/persistenceUtils";
 
 type FilterType = "all" | "to-watch" | "watched";
 type SortType = "date-added" | "title" | "year" | "rating";
@@ -51,12 +61,34 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
   const toggleWatched = useToggleWatchlistWatched();
   const deleteFromWatchlist = useDeleteFromWatchlist();
 
+  // Load persisted filter state
+  const persistenceKey = "watchlist";
+  const persistedFilters = getPersistedFilters(persistenceKey, {
+    mediaTypeFilter: "all",
+    genreFilters: ["all"],
+    sortBy: "date-added",
+  });
+
   // Filter state (controlled by tabs via prop)
   const [filter] = useState<FilterType>(initialFilter);
-  const [mediaTypeFilter, setMediaTypeFilter] =
-    useState<MediaTypeFilter>("all");
-  const [genreFilters, setGenreFilters] = useState<string[]>(["all"]);
-  const [sortBy, setSortBy] = useState<SortType>("date-added");
+  const [mediaTypeFilter, setMediaTypeFilter] = useState<MediaTypeFilter>(
+    persistedFilters.mediaTypeFilter as MediaTypeFilter
+  );
+  const [genreFilters, setGenreFilters] = useState<string[]>(
+    persistedFilters.genreFilters as string[]
+  );
+  const [sortBy, setSortBy] = useState<SortType>(
+    persistedFilters.sortBy as SortType
+  );
+
+  // Persist filter changes
+  useEffect(() => {
+    persistFilters(persistenceKey, {
+      mediaTypeFilter,
+      genreFilters,
+      sortBy,
+    });
+  }, [mediaTypeFilter, genreFilters, sortBy]);
 
   // Modal state (managed by custom hook)
   const {
@@ -154,6 +186,7 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
     items: watchList,
     filterFn,
     sortFn,
+    persistenceKey,
   });
 
   // Calculate counts for empty state logic

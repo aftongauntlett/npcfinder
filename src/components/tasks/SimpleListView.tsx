@@ -39,6 +39,7 @@ const SimpleListView: React.FC<SimpleListViewProps> = ({
   const pagination = usePagination({
     items: sortedTasks,
     initialItemsPerPage: 10,
+    persistenceKey: `tasks-simple-${boardId}`,
   });
 
   return (

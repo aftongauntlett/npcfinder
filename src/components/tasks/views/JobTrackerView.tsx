@@ -61,6 +61,7 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
   const pagination = usePagination({
     items: jobApplications,
     initialItemsPerPage: 10,
+    persistenceKey: "tasks-job-tracker",
   });
 
   const handleDelete = (taskId: string) => {

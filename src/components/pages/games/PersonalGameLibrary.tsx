@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Gamepad2 } from "lucide-react";
 import { Pagination } from "../../shared/common/Pagination";
 import { EmptyStateAddCard } from "../../shared";
@@ -24,6 +24,10 @@ import {
 } from "../../../hooks/useGameLibraryQueries";
 import type { GameLibraryItem } from "../../../hooks/useGameLibraryQueries";
 import type { MediaItem } from "../../shared/media/SendMediaModal";
+import {
+  getPersistedFilters,
+  persistFilters,
+} from "../../../utils/persistenceUtils";
 
 type FilterType = "all" | "to-play" | "played";
 type SortType = "date-added" | "name" | "year" | "rating";
@@ -49,9 +53,20 @@ interface PersonalGameLibraryProps {
 const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
   initialFilter = "all",
 }) => {
+  // Load persisted filter state
+  const persistenceKey = "gameLibrary";
+  const persistedFilters = getPersistedFilters(persistenceKey, {
+    genreFilters: ["all"],
+    sortBy: "date-added",
+  });
+
   const [filter] = useState<FilterType>(initialFilter);
-  const [activeSort, setActiveSort] = useState<SortType>("date-added");
-  const [genreFilters, setGenreFilters] = useState<string[]>(["all"]);
+  const [activeSort, setActiveSort] = useState<SortType>(
+    persistedFilters.sortBy as SortType
+  );
+  const [genreFilters, setGenreFilters] = useState<string[]>(
+    persistedFilters.genreFilters as string[]
+  );
 
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showRecommendModal, setShowRecommendModal] = useState(false);
@@ -67,6 +82,14 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
   const [gameToDelete, setGameToDelete] = useState<GameLibraryItem | null>(
     null
   );
+
+  // Persist filter changes
+  useEffect(() => {
+    persistFilters(persistenceKey, {
+      genreFilters,
+      sortBy: activeSort,
+    });
+  }, [genreFilters, activeSort]);
 
   // Fetch library
   const { data: gameLibrary = [], isLoading } = useGameLibrary();
@@ -197,6 +220,7 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
     items: gameLibrary,
     filterFn,
     sortFn,
+    persistenceKey,
   });
 
   // Handle add game from search

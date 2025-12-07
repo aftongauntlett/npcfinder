@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from "react";
+import React, { useState, useRef, useMemo, useEffect } from "react";
 import { Music } from "lucide-react";
 import { Pagination } from "../../shared/common/Pagination";
 import { FilterSortSection } from "../../shared/common/FilterSortMenu";
@@ -19,6 +19,10 @@ import {
   useDeleteFromLibrary,
 } from "../../../hooks/useMusicLibraryQueries";
 import type { MusicLibraryItem } from "../../../services/musicService.types";
+import {
+  getPersistedFilters,
+  persistFilters,
+} from "../../../utils/persistenceUtils";
 
 type FilterType = "all" | "listening" | "listened";
 type SortType = "date-added" | "title" | "artist" | "year" | "rating";
@@ -38,10 +42,22 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
   const toggleListened = useToggleListened();
   const deleteFromLibrary = useDeleteFromLibrary();
 
+  // Load persisted filter state
+  const persistenceKey = "musicLibrary";
+  const persistedFilters = getPersistedFilters(persistenceKey, {
+    genreFilters: ["all"],
+    sortBy: "date-added",
+    itemsPerPage: 10,
+  });
+
   // Filter is controlled by tabs (initialFilter prop), not by dropdown
   const [filter] = useState<FilterType>(initialFilter);
-  const [genreFilters, setGenreFilters] = useState<string[]>(["all"]);
-  const [sortBy, setSortBy] = useState<SortType>("date-added");
+  const [genreFilters, setGenreFilters] = useState<string[]>(
+    persistedFilters.genreFilters as string[]
+  );
+  const [sortBy, setSortBy] = useState<SortType>(
+    persistedFilters.sortBy as SortType
+  );
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
   const [selectedMusic, setSelectedMusic] = useState<MusicLibraryItem | null>(
@@ -50,7 +66,9 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
   const [musicToRecommend, setMusicToRecommend] =
     useState<MusicLibraryItem | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(
+    persistedFilters.itemsPerPage as number
+  );
   const topRef = useRef<HTMLDivElement>(null);
 
   // Delete confirmation state
@@ -58,6 +76,15 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
   const [musicToDelete, setMusicToDelete] = useState<MusicLibraryItem | null>(
     null
   );
+
+  // Persist filter changes
+  useEffect(() => {
+    persistFilters(persistenceKey, {
+      genreFilters,
+      sortBy,
+      itemsPerPage,
+    });
+  }, [genreFilters, sortBy, itemsPerPage]);
 
   // Add to library
   const handleAddToLibrary = (result: MediaItem) => {

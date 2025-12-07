@@ -1,10 +1,15 @@
 import { useMemo, useState, useEffect } from "react";
+import {
+  getPersistedPagination,
+  persistPagination,
+} from "../utils/persistenceUtils";
 
 export interface UseMediaFilteringOptions<T> {
   items: T[];
   filterFn: (item: T) => boolean;
   sortFn: (a: T, b: T) => number;
   initialItemsPerPage?: number;
+  persistenceKey?: string;
 }
 
 export function useMediaFiltering<T>({
@@ -12,9 +17,24 @@ export function useMediaFiltering<T>({
   filterFn,
   sortFn,
   initialItemsPerPage = 10,
+  persistenceKey,
 }: UseMediaFilteringOptions<T>) {
+  // Load persisted itemsPerPage if available
+  const persistedState = persistenceKey
+    ? getPersistedPagination(persistenceKey, initialItemsPerPage)
+    : null;
+
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(initialItemsPerPage);
+  const [itemsPerPage, setItemsPerPageState] = useState(
+    persistedState?.itemsPerPage || initialItemsPerPage
+  );
+
+  // Persist itemsPerPage changes
+  useEffect(() => {
+    if (persistenceKey) {
+      persistPagination(persistenceKey, { itemsPerPage });
+    }
+  }, [itemsPerPage, persistenceKey]);
 
   // Filter and sort items
   const filteredAndSortedItems = useMemo(() => {
@@ -40,6 +60,10 @@ export function useMediaFiltering<T>({
 
   const nextPage = () => goToPage(currentPage + 1);
   const prevPage = () => goToPage(currentPage - 1);
+
+  const setItemsPerPage = (count: number) => {
+    setItemsPerPageState(count);
+  };
 
   return {
     // Filtered and paginated results

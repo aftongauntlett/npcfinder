@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { Plus } from "lucide-react";
 import Button from "../../shared/ui/Button";
 import { RecipeCard } from "../../shared/cards";
@@ -9,6 +9,10 @@ import FilterSortMenu from "../../shared/common/FilterSortMenu";
 import type { FilterSortSection } from "../../shared/common/FilterSortMenu";
 import { useTasks } from "../../../hooks/useTasksQueries";
 import type { Task } from "../../../services/tasksService.types";
+import {
+  getPersistedFilters,
+  persistFilters,
+} from "../../../utils/persistenceUtils";
 
 interface RecipeListViewProps {
   boardId: string;
@@ -24,9 +28,29 @@ export const RecipeListView: React.FC<RecipeListViewProps> = ({
   onDeleteTask,
 }) => {
   const { data: tasks = [], isLoading } = useTasks(boardId);
-  const [activeSort, setActiveSort] = useState<string>("name-asc");
-  const [categoryFilters, setCategoryFilters] = useState<string[]>(["all"]);
+
+  // Load persisted filter state
+  const persistenceKey = "tasks-recipe-filters";
+  const persistedFilters = getPersistedFilters(persistenceKey, {
+    activeSort: "name-asc",
+    categoryFilters: ["all"],
+  });
+
+  const [activeSort, setActiveSort] = useState<string>(
+    persistedFilters.activeSort as string
+  );
+  const [categoryFilters, setCategoryFilters] = useState<string[]>(
+    persistedFilters.categoryFilters as string[]
+  );
   const listTopRef = useRef<HTMLDivElement>(null);
+
+  // Persist filter changes
+  useEffect(() => {
+    persistFilters(persistenceKey, {
+      activeSort,
+      categoryFilters,
+    });
+  }, [activeSort, categoryFilters]);
 
   // Extract unique categories from recipes
   const availableCategories = useMemo(() => {
@@ -86,6 +110,7 @@ export const RecipeListView: React.FC<RecipeListViewProps> = ({
   const pagination = usePagination({
     items: sortedTasks,
     initialItemsPerPage: 10,
+    persistenceKey: "tasks-recipe-list",
   });
 
   const filterSortSections: FilterSortSection[] = useMemo(() => {

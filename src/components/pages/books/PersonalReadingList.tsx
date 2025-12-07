@@ -1,4 +1,10 @@
-import React, { useState, useRef, useMemo, useCallback } from "react";
+import React, {
+  useState,
+  useRef,
+  useMemo,
+  useCallback,
+  useEffect,
+} from "react";
 import { BookOpen } from "lucide-react";
 import { Pagination } from "../../shared/common/Pagination";
 import { MediaItem } from "../../shared/media/SendMediaModal";
@@ -20,6 +26,10 @@ import {
   useDeleteFromReadingList,
 } from "../../../hooks/useReadingListQueries";
 import type { ReadingListItem } from "../../../services/booksService.types";
+import {
+  getPersistedFilters,
+  persistFilters,
+} from "../../../utils/persistenceUtils";
 
 type FilterType = "all" | "to-read" | "read";
 type SortType = "date-added" | "title" | "year" | "rating";
@@ -39,10 +49,29 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
   const toggleRead = useToggleReadingListRead();
   const deleteFromReadingList = useDeleteFromReadingList();
 
+  // Load persisted filter state
+  const persistenceKey = "readingList";
+  const persistedFilters = getPersistedFilters(persistenceKey, {
+    categoryFilters: ["all"],
+    sortBy: "date-added",
+  });
+
   // Filter state (controlled by tabs via prop)
   const [filter] = useState<FilterType>(initialFilter);
-  const [categoryFilters, setCategoryFilters] = useState<string[]>(["all"]);
-  const [sortBy, setSortBy] = useState<SortType>("date-added");
+  const [categoryFilters, setCategoryFilters] = useState<string[]>(
+    persistedFilters.categoryFilters as string[]
+  );
+  const [sortBy, setSortBy] = useState<SortType>(
+    persistedFilters.sortBy as SortType
+  );
+
+  // Persist filter changes
+  useEffect(() => {
+    persistFilters(persistenceKey, {
+      categoryFilters,
+      sortBy,
+    });
+  }, [categoryFilters, sortBy]);
 
   // Modal state
   const [showSearchModal, setShowSearchModal] = useState(false);
@@ -183,6 +212,7 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
     items: readingList,
     filterFn,
     sortFn,
+    persistenceKey,
   });
 
   // Calculate counts for empty state logic

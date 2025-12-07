@@ -1,10 +1,15 @@
 import { useState, useMemo, useEffect } from "react";
+import {
+  getPersistedPagination,
+  persistPagination,
+} from "../utils/persistenceUtils";
 
 interface UsePaginationOptions<T> {
   items: T[];
   initialItemsPerPage?: number;
   filterFn?: (item: T) => boolean;
   sortFn?: (a: T, b: T) => number;
+  persistenceKey?: string;
 }
 
 interface UsePaginationReturn<T> {
@@ -26,9 +31,24 @@ export function usePagination<T>({
   initialItemsPerPage = 10,
   filterFn,
   sortFn,
+  persistenceKey,
 }: UsePaginationOptions<T>): UsePaginationReturn<T> {
+  // Load persisted itemsPerPage if available
+  const persistedState = persistenceKey
+    ? getPersistedPagination(persistenceKey, initialItemsPerPage)
+    : null;
+
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPageState] = useState(initialItemsPerPage);
+  const [itemsPerPage, setItemsPerPageState] = useState(
+    persistedState?.itemsPerPage || initialItemsPerPage
+  );
+
+  // Persist itemsPerPage changes
+  useEffect(() => {
+    if (persistenceKey) {
+      persistPagination(persistenceKey, { itemsPerPage });
+    }
+  }, [itemsPerPage, persistenceKey]);
 
   // Apply filter and sort
   const filteredItems = useMemo(() => {

@@ -5,7 +5,7 @@
  * Similar to AnyList - simple, focused on groceries
  */
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Plus, Share2, Check } from "lucide-react";
 import Button from "../../shared/ui/Button";
 import Chip from "../../shared/ui/Chip";
@@ -31,6 +31,10 @@ import type {
   BoardWithStats,
   Task,
 } from "../../../services/tasksService.types";
+import {
+  getPersistedFilters,
+  persistFilters,
+} from "../../../utils/persistenceUtils";
 
 interface GroceryListViewProps {
   board: BoardWithStats;
@@ -46,8 +50,28 @@ const GroceryListView: React.FC<GroceryListViewProps> = ({
   const [showItemModal, setShowItemModal] = useState(false);
   const [editingItem, setEditingItem] = useState<Task | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
-  const [categoryFilters, setCategoryFilters] = useState<string[]>(["all"]);
-  const [sortBy, setSortBy] = useState<"category" | "name">("category");
+
+  // Load persisted filter state
+  const persistenceKey = "tasks-grocery-filters";
+  const persistedFilters = getPersistedFilters(persistenceKey, {
+    categoryFilters: ["all"],
+    sortBy: "category",
+  });
+
+  const [categoryFilters, setCategoryFilters] = useState<string[]>(
+    persistedFilters.categoryFilters as string[]
+  );
+  const [sortBy, setSortBy] = useState<"category" | "name">(
+    persistedFilters.sortBy as "category" | "name"
+  );
+
+  // Persist filter changes
+  useEffect(() => {
+    persistFilters(persistenceKey, {
+      categoryFilters,
+      sortBy,
+    });
+  }, [categoryFilters, sortBy]);
 
   const { data: tasks = [] } = useTasks(board.id);
   const { data: shares = [] } = useBoardShares(board.id);

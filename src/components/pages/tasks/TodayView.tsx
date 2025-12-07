@@ -52,6 +52,7 @@ const TodayView: React.FC = () => {
     items: todayTasks,
     groupFn: groupByBoard,
     initialItemsPerPage: 10,
+    persistenceKey: "tasks-today",
   });
 
   // Create a map of board IDs to board names

@@ -4,7 +4,7 @@
  * Displays tasks that don't belong to any board
  */
 
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { ListChecks, Plus, Clock, Bell } from "lucide-react";
 import TaskCard from "../../tasks/TaskCard";
 import TimerWidget from "../../tasks/TimerWidget";
@@ -32,6 +32,10 @@ import {
   formatReminderDate,
   getReminderBadgeColor,
 } from "../../../utils/reminderHelpers";
+import {
+  getPersistedFilters,
+  persistFilters,
+} from "../../../utils/persistenceUtils";
 
 const InboxView: React.FC = () => {
   const { data: tasks = [], isLoading } = useTasks(
@@ -47,11 +51,21 @@ const InboxView: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
-  const [activeFilters, setActiveFilters] = useState<
-    Record<string, string | string[]>
-  >({
+
+  // Load persisted filter state
+  const persistenceKey = "tasks-inbox-filters";
+  const persistedFilters = getPersistedFilters(persistenceKey, {
     sort: "custom",
   });
+
+  const [activeFilters, setActiveFilters] =
+    useState<Record<string, string | string[]>>(persistedFilters);
+
+  // Persist filter changes
+  useEffect(() => {
+    persistFilters(persistenceKey, activeFilters);
+  }, [activeFilters]);
+
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const listTopRef = useRef<HTMLDivElement>(null);
@@ -112,6 +126,7 @@ const InboxView: React.FC = () => {
   const pagination = usePagination({
     items: sortedTasks,
     initialItemsPerPage: 10,
+    persistenceKey: "tasks-inbox",
   });
 
   const handleToggleComplete = (taskId: string) => {

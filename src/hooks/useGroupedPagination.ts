@@ -1,4 +1,8 @@
 import { useState, useMemo, useEffect } from "react";
+import {
+  getPersistedPagination,
+  persistPagination,
+} from "../utils/persistenceUtils";
 
 interface TaskGroup<T> {
   id: string;
@@ -10,6 +14,7 @@ interface UseGroupedPaginationOptions<T> {
   items: T[];
   groupFn: (items: T[]) => Record<string, T[]>;
   initialItemsPerPage?: number;
+  persistenceKey?: string;
 }
 
 interface UseGroupedPaginationReturn<T> {
@@ -42,9 +47,24 @@ export function useGroupedPagination<T>({
   items,
   groupFn,
   initialItemsPerPage = 10,
+  persistenceKey,
 }: UseGroupedPaginationOptions<T>): UseGroupedPaginationReturn<T> {
+  // Load persisted itemsPerPage if available
+  const persistedState = persistenceKey
+    ? getPersistedPagination(persistenceKey, initialItemsPerPage)
+    : null;
+
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPageState] = useState(initialItemsPerPage);
+  const [itemsPerPage, setItemsPerPageState] = useState(
+    persistedState?.itemsPerPage || initialItemsPerPage
+  );
+
+  // Persist itemsPerPage changes
+  useEffect(() => {
+    if (persistenceKey) {
+      persistPagination(persistenceKey, { itemsPerPage });
+    }
+  }, [itemsPerPage, persistenceKey]);
 
   // Group all items first (full list)
   const allGroups = useMemo(() => {

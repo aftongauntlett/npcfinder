@@ -21,6 +21,7 @@ const ArchiveView: React.FC = () => {
   const pagination = usePagination({
     items: archivedTasks,
     initialItemsPerPage: 10,
+    persistenceKey: "tasks-archive",
   });
 
   // Group paginated tasks by completion date

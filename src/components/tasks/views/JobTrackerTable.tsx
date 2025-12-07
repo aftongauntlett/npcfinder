@@ -1,10 +1,14 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { JobCard } from "../../shared/cards";
 import FilterSortMenu from "../../shared/common/FilterSortMenu";
 import type { FilterSortSection } from "../../shared/common/FilterSortMenu";
 import Button from "../../shared/ui/Button";
-import { Plus, X } from "lucide-react";
+import { Plus, RotateCcw } from "lucide-react";
 import type { StatusHistoryEntry } from "../../../services/tasksService.types";
+import {
+  getPersistedFilters,
+  persistFilters,
+} from "../../../utils/persistenceUtils";
 
 interface JobApplication {
   id: string;
@@ -35,8 +39,27 @@ export const JobTrackerTable: React.FC<JobTrackerTableProps> = ({
   onDelete,
   onAdd,
 }) => {
-  const [activeSort, setActiveSort] = useState<string>("date-newest");
-  const [statusFilters, setStatusFilters] = useState<string[]>(["all"]);
+  // Load persisted filter state
+  const persistenceKey = "job-tracker-filters";
+  const persistedFilters = getPersistedFilters(persistenceKey, {
+    activeSort: "date-newest",
+    statusFilters: ["all"],
+  });
+
+  const [activeSort, setActiveSort] = useState<string>(
+    persistedFilters.activeSort as string
+  );
+  const [statusFilters, setStatusFilters] = useState<string[]>(
+    persistedFilters.statusFilters as string[]
+  );
+
+  // Persist filter changes
+  useEffect(() => {
+    persistFilters(persistenceKey, {
+      activeSort,
+      statusFilters,
+    });
+  }, [activeSort, statusFilters]);
 
   // Extract unique statuses
   const availableStatuses = useMemo(() => {
@@ -145,10 +168,11 @@ export const JobTrackerTable: React.FC<JobTrackerTableProps> = ({
             {/* Reset Filters Button */}
             {!statusFilters.includes("all") && statusFilters.length > 0 && (
               <Button
-                variant="secondary"
+                variant="subtle"
                 size="sm"
-                icon={<X className="w-4 h-4" />}
+                icon={<RotateCcw className="w-4 h-4" />}
                 onClick={() => setStatusFilters(["all"])}
+                aria-label="Reset filters"
               >
                 Reset Filters
               </Button>
