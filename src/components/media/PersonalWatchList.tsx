@@ -206,48 +206,57 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
       ? toWatchCount > 0
       : watchedCount > 0;
 
-  // Event handlers
-  const handleAddToWatchList = async (result: MediaItem) => {
-    const shouldMarkAsWatched = filter === "watched";
-    const mediaType = (result.media_type || "movie") as "movie" | "tv";
+  // Event handlers - wrapped in useCallback to prevent recreation
+  const handleAddToWatchList = useCallback(
+    async (result: MediaItem) => {
+      const shouldMarkAsWatched = filter === "watched";
+      const mediaType = (result.media_type || "movie") as "movie" | "tv";
 
-    // Fetch detailed info to get genres, director, cast, etc.
-    const detailedInfo = await fetchDetailedMediaInfo(
-      result.external_id,
-      mediaType
-    );
+      // Fetch detailed info to get genres, director, cast, etc.
+      const detailedInfo = await fetchDetailedMediaInfo(
+        result.external_id,
+        mediaType
+      );
 
-    void addToWatchlist.mutateAsync({
-      external_id: result.external_id,
-      title: result.title,
-      media_type: mediaType,
-      poster_url: result.poster_url,
-      release_date: result.release_date || null,
-      overview: result.description || null,
-      watched: shouldMarkAsWatched,
-      genres: detailedInfo?.genres || null,
-      director: detailedInfo?.director || null,
-      cast_members: detailedInfo?.cast || null,
-      vote_average: detailedInfo?.vote_average || null,
-      vote_count: detailedInfo?.vote_count || null,
-      runtime: detailedInfo?.runtime || null,
-    });
-    setShowSearchModal(false);
-  };
+      void addToWatchlist.mutateAsync({
+        external_id: result.external_id,
+        title: result.title,
+        media_type: mediaType,
+        poster_url: result.poster_url,
+        release_date: result.release_date || null,
+        overview: result.description || null,
+        watched: shouldMarkAsWatched,
+        genres: detailedInfo?.genres || null,
+        director: detailedInfo?.director || null,
+        cast_members: detailedInfo?.cast || null,
+        vote_average: detailedInfo?.vote_average || null,
+        vote_count: detailedInfo?.vote_count || null,
+        runtime: detailedInfo?.runtime || null,
+      });
+      setShowSearchModal(false);
+    },
+    [addToWatchlist, filter, setShowSearchModal]
+  );
 
-  const handleToggleWatched = (id: string | number) => {
-    void toggleWatched.mutateAsync(String(id));
-  };
+  const handleToggleWatched = useCallback(
+    (id: string | number) => {
+      void toggleWatched.mutateAsync(String(id));
+    },
+    [toggleWatched]
+  );
 
-  const handleRemoveFromWatchList = (id: string | number) => {
-    const item = watchList.find((item) => item.id === id);
-    if (!item) return;
+  const handleRemoveFromWatchList = useCallback(
+    (id: string | number) => {
+      const item = watchList.find((item) => item.id === id);
+      if (!item) return;
 
-    setItemToDelete(item);
-    setShowDeleteModal(true);
-  };
+      setItemToDelete(item);
+      setShowDeleteModal(true);
+    },
+    [watchList]
+  );
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = useCallback(async () => {
     if (!itemToDelete) return;
 
     try {
@@ -258,12 +267,15 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
       logger.error("Failed to delete from watchlist", error);
       // Keep modal open so user sees the action failed
     }
-  };
+  }, [itemToDelete, deleteFromWatchlist]);
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    topRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  const handlePageChange = useCallback(
+    (page: number) => {
+      setCurrentPage(page);
+      topRef.current?.scrollIntoView({ behavior: "smooth" });
+    },
+    [setCurrentPage]
+  );
 
   return (
     <div

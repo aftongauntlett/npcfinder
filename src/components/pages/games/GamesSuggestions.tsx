@@ -282,6 +282,7 @@ const GamesSuggestions: React.FC<GamesSuggestionsProps> = ({
             <img
               src={r.background_image}
               alt={r.title}
+              loading="lazy"
               className="w-full h-full object-cover"
             />
           ) : (
@@ -336,6 +337,7 @@ const GamesSuggestions: React.FC<GamesSuggestionsProps> = ({
             <img
               src={item.background_image}
               alt={item.title}
+              loading="lazy"
               className="w-20 h-20 rounded object-cover"
             />
           ) : (

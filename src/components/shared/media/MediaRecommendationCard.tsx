@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useCallback } from "react";
 import ConfirmationModal from "../ui/ConfirmationModal";
 import MediaRecommendationCommentInput from "./MediaRecommendationCommentInput";
 import MediaRecommendationActions from "./MediaRecommendationActions";
@@ -72,8 +72,10 @@ interface MediaRecommendationCardProps<T extends BaseRecommendation> {
  *   onStatusUpdate={handleStatusUpdate}
  *   onDelete={handleDelete}
  * />
+ *
+ * Memoized: Rendered in lists of 50+ recommendations, prevents rerenders when rec unchanged
  */
-function MediaRecommendationCard<T extends BaseRecommendation>({
+function MediaRecommendationCardComponent<T extends BaseRecommendation>({
   rec,
   index,
   isReceived,
@@ -94,23 +96,23 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleSaveComment = async () => {
+  const handleSaveComment = useCallback(async () => {
     await onStatusUpdate(rec.id, rec.status, commentText);
     setIsAddingComment(false);
-  };
+  }, [onStatusUpdate, rec.id, rec.status, commentText]);
 
-  const handleSaveSenderComment = async () => {
+  const handleSaveSenderComment = useCallback(async () => {
     if (onUpdateSenderComment) {
       await onUpdateSenderComment(rec.id, senderCommentText);
       setIsAddingSenderComment(false);
     }
-  };
+  }, [onUpdateSenderComment, rec.id, senderCommentText]);
 
-  const handleUnsend = () => {
+  const handleUnsend = useCallback(() => {
     setShowDeleteModal(true);
-  };
+  }, []);
 
-  const confirmUnsend = async () => {
+  const confirmUnsend = useCallback(async () => {
     if (isDeleting) return; // Prevent duplicate calls
 
     try {
@@ -121,7 +123,7 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
       logger.error("Failed to delete recommendation", { error, recId: rec.id });
       setIsDeleting(false);
     }
-  };
+  }, [isDeleting, onDelete, rec.id]);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 border border-gray-200 dark:border-gray-700 hover:shadow-md hover:bg-gray-100 dark:hover:bg-gray-900 transition-all duration-200">
@@ -266,6 +268,16 @@ function MediaRecommendationCard<T extends BaseRecommendation>({
   );
 }
 
-export default MediaRecommendationCard as <T extends BaseRecommendation>(
+// Memoize with custom comparison to prevent rerenders when rec unchanged
+const MemoizedMediaRecommendationCard = React.memo(
+  MediaRecommendationCardComponent,
+  (prevProps, nextProps) =>
+    prevProps.rec.id === nextProps.rec.id &&
+    prevProps.rec.status === nextProps.rec.status &&
+    prevProps.rec.comment === nextProps.rec.comment &&
+    prevProps.rec.sender_comment === nextProps.rec.sender_comment
+) as <T extends BaseRecommendation>(
   props: MediaRecommendationCardProps<T>
 ) => React.JSX.Element;
+
+export default MemoizedMediaRecommendationCard;

@@ -188,6 +188,7 @@ const BooksSuggestions: React.FC<BooksSuggestionsProps> = ({
             <img
               src={bookRec.thumbnail_url}
               alt={bookRec.title}
+              loading="lazy"
               className="w-12 h-16 rounded object-cover"
             />
           ) : (
@@ -251,6 +252,7 @@ const BooksSuggestions: React.FC<BooksSuggestionsProps> = ({
             <img
               src={bookRec.thumbnail_url}
               alt={bookRec.title}
+              loading="lazy"
               className="w-12 h-16 rounded object-cover"
             />
           ) : (

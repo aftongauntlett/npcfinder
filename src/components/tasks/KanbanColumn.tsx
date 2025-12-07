@@ -1,9 +1,11 @@
 /**
  * Kanban Column Component
  * Represents a single section/column in the Kanban board (now called "Grid")
+ *
+ * Memoized: Prevents rerenders when tasks array reference changes but content is same
  */
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import type { Task, BoardSection } from "../../services/tasksService.types";
 import { Button, Input, ConfirmationModal } from "../shared";
@@ -21,7 +23,7 @@ interface KanbanColumnProps {
   onDrop?: (targetSectionId: string, targetTaskId?: string) => void;
 }
 
-const KanbanColumn: React.FC<KanbanColumnProps> = ({
+const KanbanColumnComponent: React.FC<KanbanColumnProps> = ({
   section,
   tasks,
   onCreateTask,
@@ -37,39 +39,45 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
-  const handleRename = () => {
+  const handleRename = useCallback(() => {
     if (editedName.trim() && editedName !== section.name && onRenameSection) {
       onRenameSection(section.id, editedName.trim());
     }
     setIsEditing(false);
-  };
+  }, [editedName, section.name, section.id, onRenameSection]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleRename();
-    } else if (e.key === "Escape") {
-      setEditedName(section.name);
-      setIsEditing(false);
-    }
-  };
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter") {
+        handleRename();
+      } else if (e.key === "Escape") {
+        setEditedName(section.name);
+        setIsEditing(false);
+      }
+    },
+    [handleRename, section.name]
+  );
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(true);
-  };
+  }, []);
 
-  const handleDragLeave = () => {
+  const handleDragLeave = useCallback(() => {
     setDragOver(false);
-  };
+  }, []);
 
-  const handleDropOnColumn = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragOver(false);
-    if (onDrop) {
-      onDrop(section.id);
-    }
-  };
+  const handleDropOnColumn = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragOver(false);
+      if (onDrop) {
+        onDrop(section.id);
+      }
+    },
+    [onDrop, section.id]
+  );
 
   return (
     <div className="flex-1 min-w-[280px] sm:min-w-[320px] md:min-w-0 snap-start snap-always group">
@@ -203,4 +211,16 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
   );
 };
 
-export default KanbanColumn;
+// Memoize with custom comparison to prevent rerenders when tasks array reference changes but content is same
+export default React.memo(
+  KanbanColumnComponent,
+  (prevProps, nextProps) =>
+    prevProps.section.id === nextProps.section.id &&
+    prevProps.section.name === nextProps.section.name &&
+    prevProps.tasks.length === nextProps.tasks.length &&
+    prevProps.tasks.every(
+      (task, i) =>
+        task.id === nextProps.tasks[i]?.id &&
+        task.status === nextProps.tasks[i]?.status
+    )
+);

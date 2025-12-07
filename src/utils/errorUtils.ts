@@ -100,7 +100,6 @@ export function parseSupabaseError(error: unknown): ParsedError {
   }
 
   const supabaseError = error as SupabaseError;
-  const _errorMessage = supabaseError.message?.toLowerCase() || "";
   const errorCode = supabaseError.code;
 
   // Check for known error codes

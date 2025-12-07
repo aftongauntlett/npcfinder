@@ -255,6 +255,7 @@ const MusicSuggestions: React.FC<MusicSuggestionsProps> = ({
             <img
               src={r.poster_url}
               alt={r.title}
+              loading="lazy"
               className="w-12 h-12 rounded object-cover"
             />
           ) : (
@@ -317,6 +318,7 @@ const MusicSuggestions: React.FC<MusicSuggestionsProps> = ({
             <img
               src={musicRec.poster_url}
               alt={musicRec.title}
+              loading="lazy"
               className="w-12 h-12 rounded object-cover"
             />
           ) : (

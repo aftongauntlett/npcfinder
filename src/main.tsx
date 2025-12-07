@@ -65,17 +65,6 @@ function bootstrap() {
           // Retry up to 2 times if error is retryable
           return parsed.shouldRetry && failureCount < 2;
         },
-        onError: (error: unknown) => {
-          const parsed = parseSupabaseError(error);
-
-          // Don't show toast for auth errors (handled separately)
-          if (!parsed.isAuth && showError) {
-            showError(error, { duration: 5000, persistent: false });
-          }
-
-          // Log all query errors
-          logError(error, { component: "Query" });
-        },
       },
       mutations: {
         retry: false,

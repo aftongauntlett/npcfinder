@@ -14,6 +14,24 @@ export function MoviePoster({ posterUrl, title, mediaType }: MoviePosterProps) {
       <img
         src={posterUrl.replace("w200", "w500")}
         alt={title}
+        loading="lazy"
+        onError={(e) => {
+          // Replace with fallback icon if image fails to load
+          const target = e.target as HTMLImageElement;
+          target.style.display = "none";
+          target.parentElement?.classList.add(
+            "w-full",
+            "sm:w-56",
+            "h-80",
+            "bg-gray-200",
+            "dark:bg-gray-700",
+            "rounded-lg",
+            "flex",
+            "items-center",
+            "justify-center",
+            "shadow-xl"
+          );
+        }}
         className="w-full sm:w-56 h-auto rounded-lg shadow-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl cursor-pointer"
       />
     );

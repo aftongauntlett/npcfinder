@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { motion } from "framer-motion";
 import MediaPoster from "./MediaPoster";
 import StatusBadge from "../common/StatusBadge";
@@ -72,8 +72,10 @@ interface UnifiedMediaCardProps {
  *   showOverlay={false}
  *   onClick={handleClick}
  * />
+ *
+ * Memoized: Rendered in grids of 50+ cards, prevents rerenders when props unchanged
  */
-export default function UnifiedMediaCard({
+function UnifiedMediaCardComponent({
   id,
   title,
   subtitle,
@@ -86,16 +88,19 @@ export default function UnifiedMediaCard({
   showOverlay = true,
   className = "",
 }: UnifiedMediaCardProps) {
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     onClick(id);
-  };
+  }, [id, onClick]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      handleClick();
-    }
-  };
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        handleClick();
+      }
+    },
+    [handleClick]
+  );
 
   return (
     <SparkleEffect>
@@ -160,3 +165,14 @@ export default function UnifiedMediaCard({
     </SparkleEffect>
   );
 }
+
+// Memoize with custom comparison to prevent rerenders when props unchanged
+export default React.memo(
+  UnifiedMediaCardComponent,
+  (prevProps, nextProps) =>
+    prevProps.id === nextProps.id &&
+    prevProps.title === nextProps.title &&
+    prevProps.posterUrl === nextProps.posterUrl &&
+    prevProps.personalRating === nextProps.personalRating &&
+    prevProps.status === nextProps.status
+);

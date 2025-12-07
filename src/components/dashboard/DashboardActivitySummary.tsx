@@ -5,7 +5,7 @@
  * Shows key metrics in StatCards and activity overview by board type.
  */
 
-import React from "react";
+import React, { useCallback } from "react";
 import {
   AlertCircle,
   Calendar,
@@ -41,13 +41,51 @@ interface Task {
 }
 
 /**
+ * Custom hook to fetch tasks for a specific template type
+ * Extracted as top-level hook to follow Rules of Hooks
+ */
+function useTasksByTemplateType(
+  templateType: string,
+  taskBoards: Array<{ id: string; template_type: string }> | undefined
+) {
+  const boardIds = React.useMemo(() => {
+    return (
+      taskBoards
+        ?.filter((b) => b.template_type === templateType)
+        .map((b) => b.id) || []
+    );
+  }, [templateType, taskBoards]);
+
+  return useQuery({
+    queryKey: queryKeys.tasks.byTemplate(templateType, boardIds),
+    queryFn: async () => {
+      if (boardIds.length === 0) return [];
+
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("id, title, status, board_id, created_at")
+        .in("board_id", boardIds)
+        .neq("status", "archived")
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+      return (data || []) as Task[];
+    },
+    enabled: boardIds.length > 0,
+  });
+}
+
+/**
  * DashboardActivitySummary
  *
  * Displays task and board activity in two sections:
  * 1. Grid of StatCards showing key metrics (overdue, today, shared)
  * 2. Activity Overview with accordion cards for each board type
+ *
+ * Memoized: Multiple queries cause cascading rerenders, prevents rerenders when stats unchanged
  */
-export const DashboardActivitySummary: React.FC<
+const DashboardActivitySummaryComponent: React.FC<
   DashboardActivitySummaryProps
 > = ({ stats, statsLoading }) => {
   // Fetch tasks by template type
@@ -67,45 +105,29 @@ export const DashboardActivitySummary: React.FC<
     enabled: !!stats && !statsLoading,
   });
 
-  // Helper function to fetch tasks for a specific template type
-  const useTasksByTemplateType = (templateType: string) => {
-    const boardIds = React.useMemo(() => {
-      return (
-        taskBoards
-          ?.filter((b) => b.template_type === templateType)
-          .map((b) => b.id) || []
-      );
-      // eslint-disable-next-line react-hooks/exhaustive-deps -- taskBoards intentionally included to trigger recompute when boards change
-    }, [templateType, taskBoards]);
+  const { data: jobTasks = [] } = useTasksByTemplateType(
+    "job_tracker",
+    taskBoards
+  );
+  const { data: recipeTasks = [] } = useTasksByTemplateType(
+    "recipe",
+    taskBoards
+  );
+  const { data: groceryTasks = [] } = useTasksByTemplateType(
+    "grocery",
+    taskBoards
+  );
+  const { data: todoTasks = [] } = useTasksByTemplateType(
+    "markdown",
+    taskBoards
+  );
+  const { data: kanbanTasks = [] } = useTasksByTemplateType(
+    "kanban",
+    taskBoards
+  );
 
-    return useQuery({
-      queryKey: queryKeys.tasks.byTemplate(templateType, boardIds),
-      queryFn: async () => {
-        if (boardIds.length === 0) return [];
-
-        const { data, error } = await supabase
-          .from("tasks")
-          .select("id, title, status, board_id, created_at")
-          .in("board_id", boardIds)
-          .neq("status", "archived")
-          .order("created_at", { ascending: false })
-          .limit(5);
-
-        if (error) throw error;
-        return data || [];
-      },
-      enabled: boardIds.length > 0,
-    });
-  };
-
-  const { data: jobTasks = [] } = useTasksByTemplateType("job_tracker");
-  const { data: recipeTasks = [] } = useTasksByTemplateType("recipe");
-  const { data: groceryTasks = [] } = useTasksByTemplateType("grocery");
-  const { data: todoTasks = [] } = useTasksByTemplateType("markdown");
-  const { data: kanbanTasks = [] } = useTasksByTemplateType("kanban");
-
-  // Task list renderer
-  const renderTaskList = (tasks: Task[], emptyMessage: string) => {
+  // Task list renderer - memoized to prevent recreation on every render
+  const renderTaskList = useCallback((tasks: Task[], emptyMessage: string) => {
     if (tasks.length === 0) {
       return (
         <p className="text-sm text-gray-500 dark:text-gray-400 italic">
@@ -130,7 +152,8 @@ export const DashboardActivitySummary: React.FC<
         ))}
       </ul>
     );
-  };
+  }, []);
+
   if (statsLoading) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg p-12 shadow-sm">
@@ -384,3 +407,11 @@ export const DashboardActivitySummary: React.FC<
     </div>
   );
 };
+
+// Memoize to prevent rerenders when stats and statsLoading haven't changed
+export const DashboardActivitySummary = React.memo(
+  DashboardActivitySummaryComponent,
+  (prevProps, nextProps) =>
+    prevProps.stats === nextProps.stats &&
+    prevProps.statsLoading === nextProps.statsLoading
+);

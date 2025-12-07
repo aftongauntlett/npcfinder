@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   ChevronDown,
   ChevronRight,
@@ -51,6 +51,7 @@ interface CardRecommendation {
   overview?: string;
 }
 
+// Move outside component to avoid recreation on every render
 function mapToCardRec(rec: Recommendation): CardRecommendation {
   return {
     id: rec.id,
@@ -75,8 +76,10 @@ function mapToCardRec(rec: Recommendation): CardRecommendation {
  * DashboardRecommendations
  * Shows pending recommendations from friends on the dashboard
  * Reusable for movies, music, books, games (accepts mediaType)
+ *
+ * Memoized: Grouping logic and event handlers optimized to prevent unnecessary rerenders
  */
-export function DashboardRecommendations() {
+function DashboardRecommendationsComponent() {
   const [expandedFriends, setExpandedFriends] = useState<Set<string>>(
     new Set()
   );
@@ -128,7 +131,7 @@ export function DashboardRecommendations() {
     );
   }, [recommendations, userNameMap]);
 
-  const toggleFriend = (friendId: string) => {
+  const toggleFriend = useCallback((friendId: string) => {
     setExpandedFriends((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(friendId)) {
@@ -138,44 +141,46 @@ export function DashboardRecommendations() {
       }
       return newSet;
     });
-  };
+  }, []);
 
-  const updateRecommendationStatus = async (
-    recId: string,
-    status: string,
-    comment?: string
-  ) => {
-    try {
-      const dbStatus = status === "consumed" ? "watched" : status;
-      await updateStatusMutation.mutateAsync({
-        recId,
-        status: dbStatus,
-      });
-
-      // If comment is provided, update recipient's note
-      if (comment !== undefined) {
-        await updateRecipientNoteMutation.mutateAsync({
+  const updateRecommendationStatus = useCallback(
+    async (recId: string, status: string, comment?: string) => {
+      try {
+        const dbStatus = status === "consumed" ? "watched" : status;
+        await updateStatusMutation.mutateAsync({
           recId,
-          note: comment,
+          status: dbStatus,
+        });
+
+        // If comment is provided, update recipient's note
+        if (comment !== undefined) {
+          await updateRecipientNoteMutation.mutateAsync({
+            recId,
+            note: comment,
+          });
+        }
+      } catch (error) {
+        logger.error("Failed to update recommendation", {
+          error,
+          recId,
+          status,
+          comment,
         });
       }
-    } catch (error) {
-      logger.error("Failed to update recommendation", {
-        error,
-        recId,
-        status,
-        comment,
-      });
-    }
-  };
+    },
+    [updateStatusMutation, updateRecipientNoteMutation]
+  );
 
-  const deleteRecommendation = async (recId: string) => {
-    try {
-      await deleteRecMutation.mutateAsync(recId);
-    } catch (error) {
-      logger.error("Failed to delete recommendation", { error, recId });
-    }
-  };
+  const deleteRecommendation = useCallback(
+    async (recId: string) => {
+      try {
+        await deleteRecMutation.mutateAsync(recId);
+      } catch (error) {
+        logger.error("Failed to delete recommendation", { error, recId });
+      }
+    },
+    [deleteRecMutation]
+  );
 
   if (isLoading) {
     return (
@@ -270,6 +275,12 @@ export function DashboardRecommendations() {
                             <img
                               src={typed.poster_url}
                               alt={typed.title}
+                              loading="lazy"
+                              onError={(e) => {
+                                // Fallback to icon if image fails to load
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = "none";
+                              }}
                               className="w-12 h-16 rounded object-cover"
                             />
                           ) : (
@@ -323,3 +334,8 @@ export function DashboardRecommendations() {
     </div>
   );
 }
+
+// Memoize to prevent rerenders - no props, but internal state optimized with useCallback
+export const DashboardRecommendations = React.memo(
+  DashboardRecommendationsComponent
+);

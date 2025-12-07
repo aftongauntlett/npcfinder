@@ -1,7 +1,6 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion, useMotionValue, animate } from "framer-motion";
 import { LucideIcon } from "lucide-react";
-import { useEffect, useState } from "react";
 
 interface StatCardProps {
   title: string;
@@ -50,8 +49,10 @@ const colorClasses = {
  * Animated stat card with counting animation
  * Non-clickable, displays metrics with smooth number transitions
  * Hover to see alternative stat
+ *
+ * Memoized: Rendered in grid of 3 cards, prevents rerenders when count/hoverCount unchanged
  */
-export const StatCard: React.FC<StatCardProps> = ({
+const StatCardComponent: React.FC<StatCardProps> = ({
   title,
   count,
   hoverCount,
@@ -124,3 +125,15 @@ export const StatCard: React.FC<StatCardProps> = ({
     </motion.div>
   );
 };
+
+// Memoize with custom comparison to prevent rerenders when count and hoverCount haven't changed
+export const StatCard = React.memo(
+  StatCardComponent,
+  (prevProps, nextProps) =>
+    prevProps.count === nextProps.count &&
+    prevProps.hoverCount === nextProps.hoverCount &&
+    prevProps.title === nextProps.title &&
+    prevProps.accentColor === nextProps.accentColor &&
+    prevProps.label === nextProps.label &&
+    prevProps.hoverLabel === nextProps.hoverLabel
+);

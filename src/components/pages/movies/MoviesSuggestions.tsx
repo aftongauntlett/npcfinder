@@ -135,6 +135,7 @@ const MoviesSuggestions: React.FC<MoviesSuggestionsProps> = ({
             <img
               src={r.poster_url}
               alt={r.title}
+              loading="lazy"
               className="w-12 h-16 rounded object-cover"
             />
           ) : (
@@ -205,6 +206,7 @@ const MoviesSuggestions: React.FC<MoviesSuggestionsProps> = ({
             <img
               src={movieRec.poster_url}
               alt={movieRec.title}
+              loading="lazy"
               className="w-12 h-16 rounded object-cover"
             />
           ) : (

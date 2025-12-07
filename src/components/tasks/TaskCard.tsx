@@ -4,9 +4,11 @@
  * Reusable card component for displaying individual tasks in various contexts
  * Supports multiple variants: compact, detailed, and kanban
  * Features accordion-style expand/collapse for description
+ *
+ * Memoized: Rendered in lists of 50+ cards, prevents rerenders when task props unchanged
  */
 
-import React from "react";
+import React, { useMemo, useCallback } from "react";
 import { Calendar, Flag } from "@phosphor-icons/react";
 import ActionButtonGroup from "../shared/common/ActionButtonGroup";
 import AccordionCard from "../shared/common/AccordionCard";
@@ -32,7 +34,7 @@ interface TaskCardProps {
   draggable?: boolean;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({
+const TaskCardComponent: React.FC<TaskCardProps> = ({
   task,
   variant = "detailed",
   onToggleComplete,
@@ -46,38 +48,48 @@ const TaskCard: React.FC<TaskCardProps> = ({
   const severelyOverdue = isSevenDaysOverdue(task.due_date);
   const isMobile = useIsMobile();
 
-  const handleCardClick = (e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    // Don't toggle if clicking action buttons in dropdown
-    if (target.closest("[data-action-buttons]")) {
-      return;
-    }
+  const handleCardClick = useCallback(
+    (e: React.MouseEvent) => {
+      const target = e.target as HTMLElement;
+      // Don't toggle if clicking action buttons in dropdown
+      if (target.closest("[data-action-buttons]")) {
+        return;
+      }
 
-    // For non-detailed variants, trigger onClick callback
-    if (onClick && variant !== "detailed") {
-      onClick(task.id);
-    }
-  };
+      // For non-detailed variants, trigger onClick callback
+      if (onClick && variant !== "detailed") {
+        onClick(task.id);
+      }
+    },
+    [onClick, variant, task.id]
+  );
 
-  // Generate action buttons once for reuse
-  const actionButtons = generateTaskActions(task.id, {
-    onRemove,
-    onToggleComplete,
-    onSnooze,
-  });
+  // Generate action buttons once for reuse - memoized to prevent recreation
+  const actionButtons = useMemo(
+    () =>
+      generateTaskActions(task.id, {
+        onRemove,
+        onToggleComplete,
+        onSnooze,
+      }),
+    [task.id, onRemove, onToggleComplete, onSnooze]
+  );
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    const target = e.target as HTMLElement;
-    // Don't activate card if pressing Enter/Space on action buttons
-    if (target.closest("[data-action-buttons]")) {
-      return;
-    }
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      // Don't activate card if pressing Enter/Space on action buttons
+      if (target.closest("[data-action-buttons]")) {
+        return;
+      }
 
-    if (onClick && (e.key === "Enter" || e.key === " ")) {
-      e.preventDefault();
-      onClick(task.id);
-    }
-  };
+      if (onClick && (e.key === "Enter" || e.key === " ")) {
+        e.preventDefault();
+        onClick(task.id);
+      }
+    },
+    [onClick, task.id]
+  );
 
   // Compact variant - minimal for lists
   if (variant === "compact") {
@@ -251,4 +263,14 @@ const TaskCard: React.FC<TaskCardProps> = ({
   );
 };
 
-export default TaskCard;
+// Memoize with custom comparison to prevent rerenders when key task properties unchanged
+export default React.memo(
+  TaskCardComponent,
+  (prevProps, nextProps) =>
+    prevProps.task.id === nextProps.task.id &&
+    prevProps.task.status === nextProps.task.status &&
+    prevProps.task.title === nextProps.task.title &&
+    prevProps.task.due_date === nextProps.task.due_date &&
+    prevProps.task.priority === nextProps.task.priority &&
+    prevProps.variant === nextProps.variant
+);
