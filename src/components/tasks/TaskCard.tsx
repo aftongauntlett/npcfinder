@@ -66,13 +66,31 @@ const TaskCard: React.FC<TaskCardProps> = ({
     onSnooze,
   });
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    const target = e.target as HTMLElement;
+    // Don't activate card if pressing Enter/Space on action buttons
+    if (target.closest("[data-action-buttons]")) {
+      return;
+    }
+
+    if (onClick && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      onClick(task.id);
+    }
+  };
+
   // Compact variant - minimal for lists
   if (variant === "compact") {
     return (
       <div
         onClick={handleCardClick}
+        onKeyDown={handleKeyDown}
+        tabIndex={onClick ? 0 : undefined}
+        role={onClick ? "button" : undefined}
         className={`flex items-center gap-3 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors ${
-          onClick ? "cursor-pointer" : ""
+          onClick
+            ? "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+            : ""
         }`}
       >
         <span
@@ -106,8 +124,13 @@ const TaskCard: React.FC<TaskCardProps> = ({
     return (
       <div
         onClick={handleCardClick}
+        onKeyDown={handleKeyDown}
+        tabIndex={onClick ? 0 : undefined}
+        role={onClick ? "button" : undefined}
         className={`group bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-900/[0.04] dark:hover:bg-gray-900 p-4 ${
-          onClick ? "cursor-pointer" : ""
+          onClick
+            ? "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+            : ""
         } ${draggable ? "cursor-grab active:cursor-grabbing" : ""} ${
           overdue ? "border-l-4 border-l-red-500" : ""
         }`}

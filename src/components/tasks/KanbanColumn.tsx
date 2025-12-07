@@ -133,9 +133,13 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
           {tasks.length === 0 ? (
             <button
               onClick={onCreateTask}
-              className="w-full py-12 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary dark:hover:border-primary hover:bg-primary/5 dark:hover:bg-primary/10 transition-all group"
+              className="w-full py-12 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary dark:hover:border-primary hover:bg-primary/5 dark:hover:bg-primary/10 transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+              aria-label="Add your first task to this column"
             >
-              <Plus className="w-8 h-8 mx-auto text-gray-400 dark:text-gray-500 group-hover:text-primary mb-2" />
+              <Plus
+                className="w-8 h-8 mx-auto text-gray-400 dark:text-gray-500 group-hover:text-primary mb-2"
+                aria-hidden="true"
+              />
               <p className="text-sm text-gray-500 dark:text-gray-400 group-hover:text-primary">
                 Add your first task
               </p>
@@ -160,9 +164,13 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
               {/* Bottom Add Button */}
               <button
                 onClick={onCreateTask}
-                className="w-full py-3 mt-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary dark:hover:border-primary hover:bg-primary/5 dark:hover:bg-primary/10 transition-all flex items-center justify-center gap-2 group"
+                className="w-full py-3 mt-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary dark:hover:border-primary hover:bg-primary/5 dark:hover:bg-primary/10 transition-all flex items-center justify-center gap-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+                aria-label="Add task to this column"
               >
-                <Plus className="w-4 h-4 text-gray-400 group-hover:text-primary" />
+                <Plus
+                  className="w-4 h-4 text-gray-400 group-hover:text-primary"
+                  aria-hidden="true"
+                />
                 <span className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-primary">
                   Add task
                 </span>

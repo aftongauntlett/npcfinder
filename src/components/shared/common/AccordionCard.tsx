@@ -68,10 +68,30 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    const target = e.target as HTMLElement;
+    // Don't toggle if pressing Enter/Space on action buttons or chevron
+    if (target.closest("[data-action-buttons], [data-chevron]")) {
+      return;
+    }
+
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      if (onClick && !isExpanded) {
+        onClick();
+      } else {
+        setIsExpanded(!isExpanded);
+      }
+    }
+  };
+
   return (
     <motion.div
       onClick={handleCardClick}
-      className={`relative bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-300 cursor-pointer group overflow-hidden ${className}`}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      role="button"
+      className={`relative bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-300 cursor-pointer group overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${className}`}
     >
       {/* Header */}
       <div className="p-4">
@@ -158,6 +178,7 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
 
             {/* Chevron - rotates on expand */}
             <motion.div
+              data-chevron
               animate={{ rotate: isExpanded ? 180 : 0 }}
               transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
               onClick={(e) => {

@@ -71,11 +71,29 @@ const Chip: React.FC<ChipProps> = ({
   const baseClasses =
     "inline-flex items-center font-medium border transition-colors";
   const roundedClasses = rounded === "full" ? "rounded-full" : "rounded-md";
-  const clickableClasses = onClick ? "cursor-pointer hover:opacity-80" : "";
+  const clickableClasses = onClick
+    ? "cursor-pointer hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+    : "";
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    const target = e.target as HTMLElement;
+    // Don't activate chip if pressing Enter/Space on the remove button
+    if (target.closest("button")) {
+      return;
+    }
+
+    if (onClick && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      onClick();
+    }
+  };
 
   return (
     <span
       onClick={onClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={onClick ? 0 : undefined}
+      role={onClick ? "button" : undefined}
       className={`
         ${baseClasses}
         ${variantClasses[variant]}
@@ -99,6 +117,11 @@ const Chip: React.FC<ChipProps> = ({
           onClick={(e) => {
             e.stopPropagation();
             onRemove();
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.stopPropagation();
+            }
           }}
           className={`${sizeClasses[size].removeButton} flex-shrink-0 hover:opacity-70 transition-opacity`}
           aria-label="Remove"

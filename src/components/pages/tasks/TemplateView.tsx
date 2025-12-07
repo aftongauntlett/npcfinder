@@ -232,6 +232,7 @@ const TemplateView: React.FC<TemplateViewProps> = ({
       const Icon = meta.icon;
       return (
         <div className="container mx-auto px-4 sm:px-6">
+          <h2 className="sr-only">{meta.title}</h2>
           <div className="bg-gray-800/50 border-2 border-gray-700 rounded-xl px-16 py-20 text-center">
             <Icon className="w-16 h-16 mb-6 text-gray-400 mx-auto" />
             <h3 className="text-lg font-semibold text-white mb-3">
@@ -251,6 +252,7 @@ const TemplateView: React.FC<TemplateViewProps> = ({
     // For multi-board types (kanban, markdown), show create board option
     return (
       <div className="container mx-auto px-4 sm:px-6">
+        <h2 className="sr-only">{meta.title}</h2>
         <EmptyStateAddCard
           icon={meta.icon}
           title={meta.emptyTitle}
@@ -273,6 +275,7 @@ const TemplateView: React.FC<TemplateViewProps> = ({
     const board = sortedBoards[0]; // Use the first (and typically only) board
     return (
       <div className="container mx-auto px-4 sm:px-6">
+        <h2 className="sr-only">{meta.title}</h2>
         <JobTrackerView
           boardId={board.id}
           onCreateTask={() => onCreateTask?.()} // No boardId needed - singleton handled by parent
@@ -301,6 +304,7 @@ const TemplateView: React.FC<TemplateViewProps> = ({
     const board = sortedBoards[0]; // Use the first (and typically only) board
     return (
       <div className="container mx-auto px-4 sm:px-6">
+        <h2 className="sr-only">{meta.title}</h2>
         <RecipeListView
           boardId={board.id}
           onCreateTask={() => onCreateTask?.()} // No boardId needed - singleton handled by parent
@@ -332,6 +336,7 @@ const TemplateView: React.FC<TemplateViewProps> = ({
   // For kanban and markdown templates, show board cards
   return (
     <div className="container mx-auto px-4 sm:px-6">
+      <h2 className="sr-only">{meta.title}</h2>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         {/* Filter & Sort Menu */}

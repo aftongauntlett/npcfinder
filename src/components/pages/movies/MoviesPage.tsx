@@ -56,6 +56,11 @@ const MoviesPage: React.FC = () => {
         id={`${activeTab}-panel`}
         aria-labelledby={activeTab}
       >
+        <h2 className="sr-only">
+          {activeTab === "watching" && "Watching"}
+          {activeTab === "watched" && "Watched"}
+          {activeTab === "recommendations" && "Recommendations"}
+        </h2>
         {activeTab === "watching" && (
           <PersonalWatchList initialFilter="to-watch" />
         )}

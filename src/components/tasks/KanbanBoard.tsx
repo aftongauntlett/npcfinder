@@ -109,24 +109,28 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   }
 
   return (
-    <div className="flex gap-3 md:gap-4 overflow-x-auto pb-4 snap-x snap-mandatory md:snap-none scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
-      {sections.slice(0, 3).map((section) => {
-        const sectionTasks = tasksBySection[section.id] || [];
-        return (
-          <KanbanColumn
-            key={section.id}
-            section={section}
-            tasks={sectionTasks}
-            onCreateTask={() => onCreateTask(section.id)}
-            onEditTask={onEditTask}
-            onRenameSection={handleRenameSection}
-            onDeleteSection={undefined}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            onDrop={handleDrop}
-          />
-        );
-      })}
+    <div>
+      {/* Visually hidden h2 for proper heading hierarchy (h1 board title -> h2 board sections -> h3 column names) */}
+      <h2 className="sr-only">Board Sections</h2>
+      <div className="flex gap-3 md:gap-4 overflow-x-auto pb-4 snap-x snap-mandatory md:snap-none scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
+        {sections.slice(0, 3).map((section) => {
+          const sectionTasks = tasksBySection[section.id] || [];
+          return (
+            <KanbanColumn
+              key={section.id}
+              section={section}
+              tasks={sectionTasks}
+              onCreateTask={() => onCreateTask(section.id)}
+              onEditTask={onEditTask}
+              onRenameSection={handleRenameSection}
+              onDeleteSection={undefined}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              onDrop={handleDrop}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 };

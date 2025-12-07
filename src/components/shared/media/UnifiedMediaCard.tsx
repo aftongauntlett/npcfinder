@@ -104,7 +104,7 @@ export default function UnifiedMediaCard({
         tabIndex={0}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
-        className={`relative bg-white dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 shadow-md hover:shadow-xl hover:border-primary transition-all cursor-pointer ${className}`}
+        className={`relative bg-white dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 shadow-md hover:shadow-xl hover:border-primary transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${className}`}
         whileTap={{ scale: 0.98 }}
         aria-label={`View details for ${title}`}
       >

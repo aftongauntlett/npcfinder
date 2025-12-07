@@ -99,8 +99,35 @@ const AccordionListCard: React.FC<AccordionListCardProps> = ({
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    const target = e.target as HTMLElement;
+    // Don't toggle if pressing Enter/Space on action buttons, links, or inside expanded content
+    if (
+      target.closest("[data-action-buttons]") ||
+      target.closest("a") ||
+      target.closest("[data-expanded-content]")
+    ) {
+      return;
+    }
+
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      if (onClick && !isExpanded) {
+        onClick();
+      } else {
+        handleToggleExpand(!isExpanded);
+      }
+    }
+  };
+
   return (
-    <div onClick={handleCardClick}>
+    <div
+      onClick={handleCardClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      role="button"
+      className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+    >
       <Card
         variant="interactive"
         hover="none"

@@ -4,14 +4,20 @@
 [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/aftongauntlett/npcfinder)](https://github.com/aftongauntlett/npcfinder/commits/main)
 [![License](https://img.shields.io/badge/License-MIT-blue)](https://opensource.org/licenses/MIT)
 
-Your private life dashboard for tracking media, managing tasks, organizing recipes, and sharing with friends. Built for small, trusted groups who want control over their data.
+NPC Finder is built as a real production application, not a single-page demo. It includes:
 
-Open source, self-hostable, and designed with privacy as a core principle.
+- a normalized PostgreSQL schema with strict Row-Level Security
+- role-based admin enforcement backed by database policies
+- a Supabase-driven auth and invite system
+- a component architecture with shared UI primitives
+- React Query-based caching and data fetching
+- structured migrations and environment-specific workflows
+- accessibility-focused UI updates
+- automated testing with Vitest + RTL
+- a growing suite of domain modules (media, recommendations, tasks, recipes, jobs)
 
-Built with React 19, TypeScript, and Supabase with Row-Level Security.
-
-> **Live Site**: [npcfinder.com](https://npcfinder.com)  
-> **Documentation**: [docs/](docs/README.md)
+**Live Site**: [npcfinder.com](https://npcfinder.com)  
+**Documentation**: [docs/](docs/README.md)
 
 ## Features
 

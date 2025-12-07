@@ -35,7 +35,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
     <div
       className={`border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg transition-all group ${
         isClickable
-          ? "cursor-pointer hover:border-primary hover:bg-primary/5"
+          ? "cursor-pointer hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
           : ""
       } ${className}`}
       onClick={onAction}
@@ -60,6 +60,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
                 ? "text-gray-400 dark:text-gray-500 group-hover:text-primary"
                 : "text-gray-400 dark:text-gray-500"
             }`}
+            aria-hidden="true"
           />
         )}
         {title && (
