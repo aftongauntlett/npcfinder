@@ -6,10 +6,13 @@ import {
 
 interface UsePaginationOptions<T> {
   items: T[];
+  initialPage?: number;
   initialItemsPerPage?: number;
   filterFn?: (item: T) => boolean;
   sortFn?: (a: T, b: T) => number;
   persistenceKey?: string;
+  onPageChange?: (page: number) => void;
+  onItemsPerPageChange?: (perPage: number) => void;
 }
 
 interface UsePaginationReturn<T> {
@@ -28,17 +31,20 @@ interface UsePaginationReturn<T> {
 
 export function usePagination<T>({
   items,
+  initialPage = 1,
   initialItemsPerPage = 10,
   filterFn,
   sortFn,
   persistenceKey,
+  onPageChange,
+  onItemsPerPageChange,
 }: UsePaginationOptions<T>): UsePaginationReturn<T> {
   // Load persisted itemsPerPage if available
   const persistedState = persistenceKey
     ? getPersistedPagination(persistenceKey, initialItemsPerPage)
     : null;
 
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(initialPage);
   const [itemsPerPage, setItemsPerPageState] = useState(
     persistedState?.itemsPerPage || initialItemsPerPage
   );
@@ -90,22 +96,30 @@ export function usePagination<T>({
   const goToPage = (page: number) => {
     const validPage = Math.max(1, Math.min(page, totalPages));
     setCurrentPage(validPage);
+    onPageChange?.(validPage);
   };
 
   const nextPage = () => {
     if (hasNextPage) {
-      setCurrentPage((prev) => prev + 1);
+      const newPage = currentPage + 1;
+      setCurrentPage(newPage);
+      onPageChange?.(newPage);
     }
   };
 
   const prevPage = () => {
     if (hasPrevPage) {
-      setCurrentPage((prev) => prev - 1);
+      const newPage = currentPage - 1;
+      setCurrentPage(newPage);
+      onPageChange?.(newPage);
     }
   };
 
   const setItemsPerPage = (count: number) => {
     setItemsPerPageState(count);
+    setCurrentPage(1); // Reset to page 1 when changing items per page
+    onItemsPerPageChange?.(count);
+    onPageChange?.(1);
   };
 
   return {

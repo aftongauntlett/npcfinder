@@ -4,7 +4,13 @@
  * Displays tasks that don't belong to any board
  */
 
-import React, { useState, useMemo, useRef, useEffect } from "react";
+import React, {
+  useState,
+  useMemo,
+  useRef,
+  useEffect,
+  useCallback,
+} from "react";
 import { ListChecks, Plus, Clock, Bell } from "lucide-react";
 import TaskCard from "../../tasks/TaskCard";
 import TimerWidget from "../../tasks/TimerWidget";
@@ -129,52 +135,58 @@ const InboxView: React.FC = () => {
     persistenceKey: "tasks-inbox",
   });
 
-  const handleToggleComplete = (taskId: string) => {
-    const task = tasks.find((t) => t.id === taskId);
-    if (!task) return;
+  const handleToggleComplete = useCallback(
+    (taskId: string) => {
+      const task = tasks.find((t) => t.id === taskId);
+      if (!task) return;
 
-    // If task is repeatable and being marked complete
-    if (task.is_repeatable && task.status !== "done" && task.due_date) {
-      const nextDueDate = getNextDueDate(
-        task.due_date,
-        task.repeat_frequency || "weekly",
-        task.repeat_custom_days || undefined
-      );
+      // If task is repeatable and being marked complete
+      if (task.is_repeatable && task.status !== "done" && task.due_date) {
+        const nextDueDate = getNextDueDate(
+          task.due_date,
+          task.repeat_frequency || "weekly",
+          task.repeat_custom_days || undefined
+        );
+
+        updateTask.mutate({
+          taskId,
+          updates: {
+            status: "todo", // Keep status as todo
+            due_date: nextDueDate,
+            last_completed_at: new Date().toISOString(),
+          },
+        });
+      } else {
+        // Normal toggle for non-repeatable tasks
+        updateTask.mutate({
+          taskId,
+          updates: {
+            status: task.status === "done" ? "todo" : "done",
+          },
+        });
+      }
+    },
+    [tasks, updateTask]
+  );
+
+  const handleSnooze = useCallback(
+    (taskId: string) => {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
 
       updateTask.mutate({
         taskId,
         updates: {
-          status: "todo", // Keep status as todo
-          due_date: nextDueDate,
-          last_completed_at: new Date().toISOString(),
+          due_date: tomorrow.toISOString().split("T")[0],
         },
       });
-    } else {
-      // Normal toggle for non-repeatable tasks
-      updateTask.mutate({
-        taskId,
-        updates: {
-          status: task.status === "done" ? "todo" : "done",
-        },
-      });
-    }
-  };
+    },
+    [updateTask]
+  );
 
-  const handleSnooze = (taskId: string) => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    updateTask.mutate({
-      taskId,
-      updates: {
-        due_date: tomorrow.toISOString().split("T")[0],
-      },
-    });
-  };
-
-  const handleRemove = (taskId: string) => {
+  const handleRemove = useCallback((taskId: string) => {
     setTaskToDelete(taskId);
-  };
+  }, []);
 
   const confirmDelete = () => {
     if (taskToDelete) {

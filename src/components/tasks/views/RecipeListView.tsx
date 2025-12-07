@@ -5,6 +5,7 @@ import { RecipeCard } from "../../shared/cards";
 import { Pagination } from "../../shared/common/Pagination";
 import { EmptyStateAddCard } from "../../shared";
 import { usePagination } from "../../../hooks/usePagination";
+import { useUrlPaginationState } from "../../../hooks/useUrlPaginationState";
 import FilterSortMenu from "../../shared/common/FilterSortMenu";
 import type { FilterSortSection } from "../../shared/common/FilterSortMenu";
 import { useTasks } from "../../../hooks/useTasksQueries";
@@ -106,11 +107,17 @@ export const RecipeListView: React.FC<RecipeListViewProps> = ({
     }
   });
 
-  // Pagination
+  // URL-based pagination state
+  const { page, perPage, setPage, setPerPage } = useUrlPaginationState(1, 10);
+
+  // Pagination with URL state for bookmarkable pages
   const pagination = usePagination({
     items: sortedTasks,
-    initialItemsPerPage: 10,
+    initialPage: page,
+    initialItemsPerPage: perPage,
     persistenceKey: "tasks-recipe-list",
+    onPageChange: setPage,
+    onItemsPerPageChange: setPerPage,
   });
 
   const filterSortSections: FilterSortSection[] = useMemo(() => {

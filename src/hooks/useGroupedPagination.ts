@@ -13,8 +13,11 @@ interface TaskGroup<T> {
 interface UseGroupedPaginationOptions<T> {
   items: T[];
   groupFn: (items: T[]) => Record<string, T[]>;
+  initialPage?: number;
   initialItemsPerPage?: number;
   persistenceKey?: string;
+  onPageChange?: (page: number) => void;
+  onItemsPerPageChange?: (perPage: number) => void;
 }
 
 interface UseGroupedPaginationReturn<T> {
@@ -46,15 +49,18 @@ interface UseGroupedPaginationReturn<T> {
 export function useGroupedPagination<T>({
   items,
   groupFn,
+  initialPage = 1,
   initialItemsPerPage = 10,
   persistenceKey,
+  onPageChange,
+  onItemsPerPageChange,
 }: UseGroupedPaginationOptions<T>): UseGroupedPaginationReturn<T> {
   // Load persisted itemsPerPage if available
   const persistedState = persistenceKey
     ? getPersistedPagination(persistenceKey, initialItemsPerPage)
     : null;
 
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(initialPage);
   const [itemsPerPage, setItemsPerPageState] = useState(
     persistedState?.itemsPerPage || initialItemsPerPage
   );
@@ -122,22 +128,30 @@ export function useGroupedPagination<T>({
   const goToPage = (page: number) => {
     const validPage = Math.max(1, Math.min(page, totalPages));
     setCurrentPage(validPage);
+    onPageChange?.(validPage);
   };
 
   const nextPage = () => {
     if (hasNextPage) {
-      setCurrentPage((prev) => prev + 1);
+      const newPage = currentPage + 1;
+      setCurrentPage(newPage);
+      onPageChange?.(newPage);
     }
   };
 
   const prevPage = () => {
     if (hasPrevPage) {
-      setCurrentPage((prev) => prev - 1);
+      const newPage = currentPage - 1;
+      setCurrentPage(newPage);
+      onPageChange?.(newPage);
     }
   };
 
   const setItemsPerPage = (count: number) => {
     setItemsPerPageState(count);
+    setCurrentPage(1); // Reset to page 1 when changing items per page
+    onItemsPerPageChange?.(count);
+    onPageChange?.(1);
   };
 
   return {

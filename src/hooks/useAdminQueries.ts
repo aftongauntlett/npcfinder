@@ -15,7 +15,7 @@ export function useAdminStats() {
   return useQuery({
     queryKey: queryKeys.admin.stats(),
     queryFn: adminService.getAdminStats,
-    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+    staleTime: 1000 * 60 * 10, // Consider data fresh for 10 minutes (admin stats update infrequently)
   });
 }
 
@@ -68,7 +68,7 @@ export function useInviteCodes() {
       if (result.error) throw result.error;
       return result.data || [];
     },
-    staleTime: 1000 * 60, // Consider data fresh for 1 minute
+    staleTime: 1000 * 60 * 10, // Consider data fresh for 10 minutes (invite codes are relatively static until mutation)
   });
 }
 

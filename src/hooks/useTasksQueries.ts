@@ -1,9 +1,3 @@
-/**
- * TanStack Query hooks for Tasks
- * Provides optimistic updates with proper error handling and rollback
- * SECURITY: Includes frontend ownership validation to complement RLS
- */
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as tasksService from "../services/tasksService";
 import { queryKeys } from "../lib/queryKeys";
@@ -12,6 +6,7 @@ import {
   validateOwnership,
   createOwnershipError,
 } from "../utils/ownershipHelpers";
+import { invalidateBoardQueries } from "./taskQueryHelpers";
 import type {
   Board,
   BoardSection,
@@ -86,6 +81,7 @@ export function useBoard(boardId: string) {
  */
 export function useCreateBoard() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async (boardData: CreateBoardData) => {
@@ -95,13 +91,8 @@ export function useCreateBoard() {
     },
 
     onSuccess: (data) => {
-      void queryClient.invalidateQueries({
-        queryKey: ["tasks", "boards"],
-      });
-      // Also invalidate the specific board query for the newly created board
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.tasks.board(data.id),
-      });
+      // Use helper for consistent invalidation
+      invalidateBoardQueries(queryClient, data.id, user?.id);
     },
   });
 }
@@ -111,6 +102,7 @@ export function useCreateBoard() {
  */
 export function useUpdateBoard() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async ({
@@ -153,10 +145,9 @@ export function useUpdateBoard() {
       }
     },
 
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: ["tasks", "boards"],
-      });
+    onSuccess: (_data, { boardId }) => {
+      // Use helper for consistent invalidation
+      invalidateBoardQueries(queryClient, boardId, user?.id);
     },
   });
 }
@@ -166,6 +157,7 @@ export function useUpdateBoard() {
  */
 export function useDeleteBoard() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async (boardId: string) => {
@@ -173,10 +165,9 @@ export function useDeleteBoard() {
       if (error) throw error;
     },
 
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: ["tasks", "boards"],
-      });
+    onSuccess: (_data, boardId) => {
+      // Use helper for consistent invalidation
+      invalidateBoardQueries(queryClient, boardId, user?.id);
     },
   });
 }
@@ -186,6 +177,7 @@ export function useDeleteBoard() {
  */
 export function useReorderBoards() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async (boardIds: string[]) => {
@@ -199,8 +191,9 @@ export function useReorderBoards() {
     },
 
     onSuccess: () => {
+      // Invalidate board list to update board order
       void queryClient.invalidateQueries({
-        queryKey: ["tasks", "boards"],
+        queryKey: queryKeys.tasks.boards(user?.id),
       });
     },
   });
@@ -461,8 +454,9 @@ export function useCreateTask() {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.tasks.todayTasks(user?.id),
       });
+      // Invalidate board list to update task counts
       void queryClient.invalidateQueries({
-        queryKey: ["tasks", "boards"],
+        queryKey: queryKeys.tasks.boards(user?.id),
       });
     },
   });
@@ -548,8 +542,9 @@ export function useUpdateTask() {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.tasks.todayTasks(user?.id),
       });
+      // Invalidate board list to update task counts if status changed
       void queryClient.invalidateQueries({
-        queryKey: ["tasks", "boards"],
+        queryKey: queryKeys.tasks.boards(user?.id),
       });
     },
   });
@@ -569,24 +564,26 @@ export function useDeleteTask() {
     },
 
     onSuccess: () => {
+      // Invalidate all task-related queries to remove deleted task
       void queryClient.invalidateQueries({
         queryKey: queryKeys.tasks.all,
       });
       void queryClient.invalidateQueries({
         queryKey: queryKeys.tasks.todayTasks(user?.id),
       });
+      // Invalidate board list to update task counts
       void queryClient.invalidateQueries({
-        queryKey: ["tasks", "boards"],
+        queryKey: queryKeys.tasks.boards(user?.id),
       });
     },
   });
 }
-
 /**
  * Move task to different section (for drag and drop)
  */
 export function useMoveTask() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async ({
@@ -608,11 +605,13 @@ export function useMoveTask() {
     },
 
     onSuccess: (data) => {
+      // Invalidate board tasks to reflect moved task
       void queryClient.invalidateQueries({
         queryKey: queryKeys.tasks.boardTasks(data.board_id),
       });
+      // Invalidate board list to update task counts if section changed
       void queryClient.invalidateQueries({
-        queryKey: ["tasks", "boards"],
+        queryKey: queryKeys.tasks.boards(user?.id),
       });
     },
   });
@@ -719,14 +718,16 @@ export function useToggleTaskStatus() {
     },
 
     onSuccess: (data) => {
+      // Invalidate board tasks to reflect status change
       void queryClient.invalidateQueries({
         queryKey: queryKeys.tasks.boardTasks(data.board_id),
       });
       void queryClient.invalidateQueries({
         queryKey: queryKeys.tasks.todayTasks(user?.id),
       });
+      // Invalidate board list to update completed task counts
       void queryClient.invalidateQueries({
-        queryKey: ["tasks", "boards"],
+        queryKey: queryKeys.tasks.boards(user?.id),
       });
     },
   });
@@ -747,6 +748,7 @@ export function useArchiveTask() {
     },
 
     onSuccess: (data) => {
+      // Invalidate board tasks to remove archived task from view
       void queryClient.invalidateQueries({
         queryKey: queryKeys.tasks.boardTasks(data.board_id),
       });
@@ -756,8 +758,9 @@ export function useArchiveTask() {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.tasks.archivedTasks(user?.id),
       });
+      // Invalidate board list to update task counts
       void queryClient.invalidateQueries({
-        queryKey: ["tasks", "boards"],
+        queryKey: queryKeys.tasks.boards(user?.id),
       });
     },
   });

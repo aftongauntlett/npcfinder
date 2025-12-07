@@ -1182,6 +1182,163 @@ If you're unsure about component usage or design patterns, refer to:
 - Existing components in `src/components/shared/ui/`
 - Design tokens in `src/styles/designTokens.ts`
 - Theme utilities in `src/utils/themeUtils.ts`
+- Performance guide in `docs/PERFORMANCE.md`
 - This guide
 
 When in doubt, **maintain consistency** with existing well-designed components like Button and Modal.
+
+---
+
+## Performance Best Practices
+
+### When to Use Memoization
+
+**Rule:** Only memoize when dependencies change infrequently. Over-memoization can hurt performance.
+
+#### Filter and Sort Functions
+
+**CRITICAL:** Wrap `filterFn` and `sortFn` in `useCallback` when passing to pagination hooks (`usePagination`, `useMediaFiltering`, `useGroupedPagination`).
+
+```typescript
+// ✅ Good: Stable references
+const filterFn = useCallback(
+  (item: WatchlistItem) => {
+    if (filter === "to-watch" && item.watched) return false;
+    if (mediaTypeFilter !== "all" && item.media_type !== mediaTypeFilter) return false;
+    return true;
+  },
+  [filter, mediaTypeFilter] // Only recreate when filters change
+);
+
+const sortFn = useCallback(
+  (a: WatchlistItem, b: WatchlistItem) => {
+    switch (sortBy) {
+      case "title": return a.title.localeCompare(b.title);
+      case "date-added": return new Date(b.added_at) - new Date(a.added_at);
+      default: return 0;
+    }
+  },
+  [sortBy] // Only recreate when sort changes
+);
+
+const { items } = useMediaFiltering({
+  items: watchlist,
+  filterFn, // Stable reference prevents unnecessary recalculations
+  sortFn,   // Stable reference prevents unnecessary recalculations
+});
+```
+
+**Why:** Pagination hooks use `useMemo` internally. If `filterFn`/`sortFn` change on every render, `useMemo` dependencies change, triggering expensive recalculations.
+
+#### React.memo for Components
+
+**Use `React.memo` only for:**
+- Components rendering expensive content (charts, large tables)
+- Components receiving same props frequently
+- Components re-rendering due to parent, not own state
+
+```typescript
+// ✅ Good: Large list item component
+const TaskCard = React.memo(({ task, onUpdate }: TaskCardProps) => {
+  // Expensive rendering logic
+  return <div>...</div>;
+}, (prevProps, nextProps) => {
+  // Optional custom comparison
+  return prevProps.task.id === nextProps.task.id &&
+         prevProps.task.updated_at === nextProps.task.updated_at;
+});
+```
+
+**Don't memo:**
+- Simple functional components (<10 JSX elements)
+- Components rendering differently most of the time
+- Components with unstable props (inline functions)
+
+### Pagination vs Virtualization
+
+**Primary Strategy:** Use pagination for all lists.
+
+**When to Consider Virtualization:**
+- Profiling shows >100ms render times with 100+ items
+- Scroll performance <60fps
+- User reports lag on large datasets
+
+**Don't Use Virtualization:**
+- Pagination keeps lists <50 items
+- Render times <50ms
+- No user complaints
+
+**Pagination Hooks:**
+
+| Hook | Use Case |
+|------|----------|
+| `usePagination` | Simple lists with basic filtering |
+| `useMediaFiltering` | Movies, books, games, music with genre filtering |
+| `useGroupedPagination` | Grouped data (tasks by board, events by date) |
+
+**Example:**
+
+```typescript
+// Enable URL state for shareable/bookmarkable pagination
+const pagination = usePagination({
+  items: recipes,
+  filterFn,
+  sortFn,
+  initialItemsPerPage: 10,
+  persistenceKey: "tasks-recipe-list",
+  useUrlState: true, // Enables ?page=2&perPage=25 in URL
+});
+```
+
+### Memoization Examples
+
+#### ✅ Good: Memoized Expensive Computation
+
+```typescript
+const availableGenres = useMemo(() => {
+  const genreSet = new Set<string>();
+  watchList.forEach((item) => {
+    item.genres?.forEach((genre) => {
+      genreSet.add(genre.trim().toLowerCase());
+    });
+  });
+  return genreSet;
+}, [watchList]); // Only recompute when watchList changes
+```
+
+#### ❌ Bad: Unnecessary Memoization
+
+```typescript
+// Don't memoize simple computations
+const totalCount = useMemo(() => items.length, [items]); // Wasteful
+const totalCount = items.length; // Better
+```
+
+#### ✅ Good: Memoized Callback
+
+```typescript
+// Prevents recreation on every render
+const handlePageChange = useCallback(
+  (page: number) => {
+    pagination.goToPage(page);
+    topRef.current?.scrollIntoView({ behavior: "smooth" });
+  },
+  [pagination] // Only recreate when pagination changes
+);
+```
+
+### Performance Checklist
+
+Before deploying a new list/table component:
+
+- [ ] Used pagination hook (`usePagination`, `useMediaFiltering`, etc.)
+- [ ] Wrapped `filterFn` and `sortFn` in `useCallback`
+- [ ] Enabled `useUrlState: true` for shareable pages
+- [ ] Tested with 100+ items (use test data generators)
+- [ ] Profiled render times (<100ms target)
+- [ ] Verified scroll performance (60fps)
+- [ ] No unnecessary `React.memo` on simple components
+- [ ] No inline function props passed to memoized children
+
+**Reference:** See `docs/PERFORMANCE.md` for comprehensive performance guide.
+

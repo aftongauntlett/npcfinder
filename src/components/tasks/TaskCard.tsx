@@ -272,5 +272,10 @@ export default React.memo(
     prevProps.task.title === nextProps.task.title &&
     prevProps.task.due_date === nextProps.task.due_date &&
     prevProps.task.priority === nextProps.task.priority &&
-    prevProps.variant === nextProps.variant
+    prevProps.variant === nextProps.variant &&
+    prevProps.draggable === nextProps.draggable &&
+    prevProps.onToggleComplete === nextProps.onToggleComplete &&
+    prevProps.onSnooze === nextProps.onSnooze &&
+    prevProps.onRemove === nextProps.onRemove &&
+    prevProps.onClick === nextProps.onClick
 );

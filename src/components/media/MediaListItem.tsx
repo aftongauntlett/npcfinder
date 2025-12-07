@@ -419,5 +419,9 @@ export default React.memo(
     prevProps.title === nextProps.title &&
     prevProps.posterUrl === nextProps.posterUrl &&
     prevProps.isCompleted === nextProps.isCompleted &&
-    prevProps.personalRating === nextProps.personalRating
+    prevProps.personalRating === nextProps.personalRating &&
+    prevProps.onToggleComplete === nextProps.onToggleComplete &&
+    prevProps.onRecommend === nextProps.onRecommend &&
+    prevProps.onRemove === nextProps.onRemove &&
+    prevProps.onClick === nextProps.onClick
 );

@@ -5,7 +5,7 @@
  * Memoized: Drag handlers and section sorting optimized to prevent unnecessary rerenders
  */
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useRef } from "react";
 import { Plus } from "lucide-react";
 import {
   useBoardSections,
@@ -32,7 +32,7 @@ const KanbanBoardComponent: React.FC<KanbanBoardProps> = ({
   const { data: tasks = [] } = useTasks(boardId);
   const moveTask = useMoveTask();
   const updateSection = useUpdateSection();
-  const [draggedTask, setDraggedTask] = useState<Task | null>(null);
+  const draggedTaskRef = useRef<Task | null>(null);
 
   const handleRenameSection = useCallback(
     (sectionId: string, newName: string) => {
@@ -46,21 +46,29 @@ const KanbanBoardComponent: React.FC<KanbanBoardProps> = ({
   );
 
   const handleDragStart = useCallback((task: Task) => {
-    setDraggedTask(task);
+    draggedTaskRef.current = task;
   }, []);
 
   const handleDragEnd = useCallback(() => {
-    setDraggedTask(null);
+    // Don't clear draggedTask immediately - handleDrop needs it
+    // Schedule cleanup in case drop never happens (e.g., drag cancelled)
+    setTimeout(() => {
+      draggedTaskRef.current = null;
+    }, 100);
   }, []);
 
   const handleDrop = useCallback(
     (targetSectionId: string, targetTaskId?: string) => {
-      if (!draggedTask) return;
+      const draggedTask = draggedTaskRef.current;
+
+      if (!draggedTask) {
+        return;
+      }
 
       // If dropped on a specific task, calculate order
       if (targetTaskId) {
         const targetTask = tasks.find((t) => t.id === targetTaskId);
-        if (targetTask) {
+        if (targetTask && draggedTask.id !== targetTaskId) {
           void moveTask.mutateAsync({
             taskId: draggedTask.id,
             sectionId: targetTask.section_id || null,
@@ -68,12 +76,17 @@ const KanbanBoardComponent: React.FC<KanbanBoardProps> = ({
           });
         }
       } else {
-        // Dropped on section
-        if (draggedTask.section_id !== targetSectionId) {
-          const sectionTasks = tasks.filter(
-            (t) => t.section_id === targetSectionId
-          );
-          const newOrder = sectionTasks.length;
+        // Dropped on section (empty area or column background)
+        const sectionTasks = tasks.filter(
+          (t) => t.section_id === targetSectionId && t.id !== draggedTask.id
+        );
+        const newOrder = sectionTasks.length;
+
+        // Only move if changing sections or if this would change the order
+        if (
+          draggedTask.section_id !== targetSectionId ||
+          draggedTask.display_order !== newOrder
+        ) {
           void moveTask.mutateAsync({
             taskId: draggedTask.id,
             sectionId: targetSectionId,
@@ -81,9 +94,9 @@ const KanbanBoardComponent: React.FC<KanbanBoardProps> = ({
           });
         }
       }
-      setDraggedTask(null);
+      draggedTaskRef.current = null;
     },
-    [draggedTask, tasks, moveTask]
+    [tasks, moveTask]
   );
 
   // Group tasks by section - memoized to prevent recalculation on every render

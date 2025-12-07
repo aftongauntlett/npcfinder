@@ -38,6 +38,8 @@ const KanbanColumnComponent: React.FC<KanbanColumnProps> = ({
   const [editedName, setEditedName] = useState(section.name);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [dragOverTaskId, setDragOverTaskId] = useState<string | null>(null);
+  const [dragOverEmpty, setDragOverEmpty] = useState(false);
 
   const handleRename = useCallback(() => {
     if (editedName.trim() && editedName !== section.name && onRenameSection) {
@@ -65,6 +67,8 @@ const KanbanColumnComponent: React.FC<KanbanColumnProps> = ({
 
   const handleDragLeave = useCallback(() => {
     setDragOver(false);
+    setDragOverTaskId(null);
+    setDragOverEmpty(false);
   }, []);
 
   const handleDropOnColumn = useCallback(
@@ -72,6 +76,8 @@ const KanbanColumnComponent: React.FC<KanbanColumnProps> = ({
       e.preventDefault();
       e.stopPropagation();
       setDragOver(false);
+      setDragOverTaskId(null);
+      setDragOverEmpty(false);
       if (onDrop) {
         onDrop(section.id);
       }
@@ -86,9 +92,7 @@ const KanbanColumnComponent: React.FC<KanbanColumnProps> = ({
         onDragLeave={handleDragLeave}
         onDrop={handleDropOnColumn}
         className={`bg-gray-100 dark:bg-gray-700/50 rounded-lg p-3 sm:p-4 h-full min-h-[400px] flex flex-col transition-all duration-200 ${
-          dragOver
-            ? "bg-primary/5 dark:bg-primary/10 ring-2 ring-primary/30 dark:ring-primary/40"
-            : ""
+          dragOver ? "bg-primary/5 dark:bg-primary/10" : ""
         }`}
       >
         {/* Column Header */}
@@ -141,7 +145,29 @@ const KanbanColumnComponent: React.FC<KanbanColumnProps> = ({
           {tasks.length === 0 ? (
             <button
               onClick={onCreateTask}
-              className="w-full py-12 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary dark:hover:border-primary hover:bg-primary/5 dark:hover:bg-primary/10 transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setDragOverEmpty(true);
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setDragOverEmpty(false);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setDragOverEmpty(false);
+                if (onDrop) {
+                  onDrop(section.id);
+                }
+              }}
+              className={`w-full py-12 border-2 border-dashed rounded-lg transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+                dragOverEmpty
+                  ? "border-primary bg-primary/10 dark:bg-primary/20"
+                  : "border-gray-300 dark:border-gray-600 hover:border-primary dark:hover:border-primary hover:bg-primary/5 dark:hover:bg-primary/10"
+              }`}
               aria-label="Add your first task to this column"
             >
               <Plus
@@ -158,9 +184,37 @@ const KanbanColumnComponent: React.FC<KanbanColumnProps> = ({
                 <div
                   key={task.id}
                   draggable
-                  onDragStart={() => onDragStart?.(task)}
-                  onDragEnd={() => onDragEnd?.()}
-                  className="cursor-move transition-opacity duration-150 hover:opacity-80 active:opacity-50"
+                  onDragStart={() => {
+                    onDragStart?.(task);
+                    setDragOverTaskId(null);
+                  }}
+                  onDragEnd={() => {
+                    onDragEnd?.();
+                    setDragOverTaskId(null);
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setDragOverTaskId(task.id);
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setDragOverTaskId(null);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setDragOverTaskId(null);
+                    if (onDrop) {
+                      onDrop(section.id, task.id);
+                    }
+                  }}
+                  className={`cursor-move transition-all duration-150 hover:opacity-80 active:opacity-50 ${
+                    dragOverTaskId === task.id
+                      ? "ring-2 ring-primary/50 rounded-lg"
+                      : ""
+                  }`}
                 >
                   <TaskCard
                     task={task}
@@ -222,5 +276,12 @@ export default React.memo(
       (task, i) =>
         task.id === nextProps.tasks[i]?.id &&
         task.status === nextProps.tasks[i]?.status
-    )
+    ) &&
+    prevProps.onDragStart === nextProps.onDragStart &&
+    prevProps.onDragEnd === nextProps.onDragEnd &&
+    prevProps.onDrop === nextProps.onDrop &&
+    prevProps.onCreateTask === nextProps.onCreateTask &&
+    prevProps.onEditTask === nextProps.onEditTask &&
+    prevProps.onRenameSection === nextProps.onRenameSection &&
+    prevProps.onDeleteSection === nextProps.onDeleteSection
 );

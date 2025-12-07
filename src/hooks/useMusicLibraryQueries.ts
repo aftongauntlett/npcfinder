@@ -5,6 +5,8 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
+import { queryKeys } from "../lib/queryKeys";
+import { useAuth } from "../contexts/AuthContext";
 import type {
   MusicLibraryItem,
   AddToLibraryParams,
@@ -15,12 +17,11 @@ import type {
  * Get user's music library
  */
 export function useMusicLibrary() {
+  const { user } = useAuth();
+
   return useQuery({
-    queryKey: ["musicLibrary"],
+    queryKey: queryKeys.musicLibrary.list(user?.id),
     queryFn: async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
       const { data, error } = await supabase
@@ -32,6 +33,7 @@ export function useMusicLibrary() {
       if (error) throw error;
       return data as MusicLibraryItem[];
     },
+    enabled: !!user,
   });
 }
 
@@ -39,12 +41,11 @@ export function useMusicLibrary() {
  * Get quick stats for music library
  */
 export function useMusicLibraryStats() {
+  const { user } = useAuth();
+
   return useQuery({
-    queryKey: ["musicLibraryStats"],
+    queryKey: queryKeys.musicLibrary.stats(),
     queryFn: async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
       const { data, error } = await supabase
@@ -59,6 +60,7 @@ export function useMusicLibraryStats() {
 
       return { listening, listened, total: data.length };
     },
+    enabled: !!user,
   });
 }
 
@@ -99,8 +101,9 @@ export function useAddToLibrary() {
       return data;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["musicLibrary"] });
-      void queryClient.invalidateQueries({ queryKey: ["musicLibraryStats"] });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.musicLibrary.all,
+      });
     },
   });
 }
@@ -134,8 +137,9 @@ export function useToggleListened() {
       return data;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["musicLibrary"] });
-      void queryClient.invalidateQueries({ queryKey: ["musicLibraryStats"] });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.musicLibrary.all,
+      });
     },
   });
 }
@@ -156,11 +160,13 @@ export function useUpdateLibraryItem() {
         .single();
 
       if (error) throw error;
+      if (error) throw error;
       return data;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["musicLibrary"] });
-      void queryClient.invalidateQueries({ queryKey: ["musicLibraryStats"] });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.musicLibrary.all,
+      });
     },
   });
 }
@@ -181,8 +187,9 @@ export function useDeleteFromLibrary() {
       if (error) throw error;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["musicLibrary"] });
-      void queryClient.invalidateQueries({ queryKey: ["musicLibraryStats"] });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.musicLibrary.all,
+      });
     },
   });
 }
@@ -209,8 +216,9 @@ export function useUpdateMusicRating() {
       if (error) throw error;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["musicLibrary"] });
-      void queryClient.invalidateQueries({ queryKey: ["musicLibraryStats"] });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.musicLibrary.all,
+      });
     },
   });
 }
@@ -237,8 +245,9 @@ export function useUpdateMusicNotes() {
       if (error) throw error;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["musicLibrary"] });
-      void queryClient.invalidateQueries({ queryKey: ["musicLibraryStats"] });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.musicLibrary.all,
+      });
     },
   });
 }

@@ -2,6 +2,7 @@ import React, { useRef } from "react";
 import { JobTrackerTable } from "./JobTrackerTable";
 import { Pagination } from "../../shared/common/Pagination";
 import { usePagination } from "../../../hooks/usePagination";
+import { useUrlPaginationState } from "../../../hooks/useUrlPaginationState";
 import { useTasks } from "../../../hooks/useTasksQueries";
 import type { Task } from "../../../services/tasksService.types";
 import type { StatusHistoryEntry } from "../../../services/tasksService.types";
@@ -57,11 +58,17 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
       (task.item_data?.status_history as StatusHistoryEntry[]) || undefined,
   }));
 
-  // Pagination
+  // URL-based pagination state
+  const { page, perPage, setPage, setPerPage } = useUrlPaginationState(1, 10);
+
+  // Pagination with URL state for bookmarkable pages
   const pagination = usePagination({
     items: jobApplications,
-    initialItemsPerPage: 10,
+    initialPage: page,
+    initialItemsPerPage: perPage,
     persistenceKey: "tasks-job-tracker",
+    onPageChange: setPage,
+    onItemsPerPageChange: setPerPage,
   });
 
   const handleDelete = (taskId: string) => {

@@ -5,18 +5,19 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
+import { queryKeys } from "../lib/queryKeys";
+import { useAuth } from "../contexts/AuthContext";
 import type { ReadingListItem } from "../services/booksService.types";
 
 /**
  * Fetch user's reading list
  */
 export function useReadingList() {
+  const { user } = useAuth();
+
   return useQuery({
-    queryKey: ["reading-list"],
+    queryKey: queryKeys.readingList.list(user?.id),
     queryFn: async (): Promise<ReadingListItem[]> => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
       const { data, error } = await supabase
@@ -28,6 +29,7 @@ export function useReadingList() {
       if (error) throw error;
       return data || [];
     },
+    enabled: !!user,
   });
 }
 
@@ -71,7 +73,9 @@ export function useAddToReadingList() {
       return data;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["reading-list"] });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.readingList.all,
+      });
     },
   });
 }
@@ -102,7 +106,9 @@ export function useToggleReadingListRead() {
       if (updateError) throw updateError;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["reading-list"] });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.readingList.all,
+      });
     },
   });
 }
@@ -123,7 +129,9 @@ export function useDeleteFromReadingList() {
       if (error) throw error;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["reading-list"] });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.readingList.all,
+      });
     },
   });
 }
@@ -150,7 +158,9 @@ export function useUpdateBookRating() {
       if (error) throw error;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["reading-list"] });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.readingList.all,
+      });
     },
   });
 }
@@ -177,7 +187,9 @@ export function useUpdateBookNotes() {
       if (error) throw error;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["reading-list"] });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.readingList.all,
+      });
     },
   });
 }

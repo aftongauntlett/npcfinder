@@ -1,4 +1,14 @@
-import React from "react";
+import React, { useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "../../../contexts/AuthContext";
+import {
+  prefetchMoviesData,
+  prefetchTasksData,
+  prefetchBooksData,
+  prefetchGamesData,
+  prefetchMusicData,
+  debouncedPrefetch,
+} from "../../../utils/queryPrefetch";
 import { BTN_PAD_DEFAULT } from "../../../styles/ui";
 import type { UserRole } from "../../../contexts/AdminContext";
 
@@ -26,6 +36,32 @@ const NavList: React.FC<NavListProps> = ({
   role,
   onNavigate,
 }) => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  // Prefetch handlers for each section
+  const handlePrefetch = useCallback(
+    (itemId: string) => {
+      const userId = user?.id;
+      if (!userId) return;
+
+      const prefetchMap: Record<string, () => Promise<void>> = {
+        movies: () => prefetchMoviesData(queryClient, userId),
+        tasks: () => prefetchTasksData(queryClient, userId),
+        books: () => prefetchBooksData(queryClient, userId),
+        games: () => prefetchGamesData(queryClient, userId),
+        music: () => prefetchMusicData(queryClient, userId),
+      };
+
+      const prefetchFn = prefetchMap[itemId];
+      if (prefetchFn) {
+        const debounced = debouncedPrefetch(prefetchFn, 300);
+        debounced();
+      }
+    },
+    [queryClient, user?.id]
+  );
+
   // Check if user has access based on required role
   const hasAccess = (item: NavItem) => {
     if (!item.requiredRole) return true;
@@ -55,6 +91,7 @@ const NavList: React.FC<NavListProps> = ({
             <button
               type="button"
               onClick={() => onNavigate(item.path)}
+              onMouseEnter={() => handlePrefetch(item.id)}
               className={`w-full flex items-center gap-3 ${BTN_PAD_DEFAULT} rounded-lg transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
                 active
                   ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light font-medium"

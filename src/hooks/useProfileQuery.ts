@@ -11,7 +11,7 @@ import { useAuth } from "../contexts/AuthContext";
  * Query hook for fetching current user's profile
  *
  * Features:
- * - Automatic caching (5 minutes stale time)
+ * - Automatic caching (15 minutes stale time - profiles rarely change)
  * - Shared across components (Navigation, HomePage, Settings)
  * - Only fetches when user is authenticated
  * - Returns null data when loading to prevent flicker
@@ -27,7 +27,7 @@ export function useProfileQuery() {
       return data;
     },
     enabled: !!user?.id, // Only run query if user exists
-    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
-    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    staleTime: 15 * 60 * 1000, // Consider data fresh for 15 minutes (profiles rarely change)
+    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
   });
 }

@@ -19,6 +19,7 @@ import { logger } from "@/lib/logger";
 import MediaListItem from "./MediaListItem";
 import ConfirmationModal from "../shared/ui/ConfirmationModal";
 import { useMediaFiltering } from "../../hooks/useMediaFiltering";
+import { useUrlPaginationState } from "../../hooks/useUrlPaginationState";
 import { searchMoviesAndTV } from "../../utils/mediaSearchAdapters";
 import { useWatchlistModals } from "../../hooks/useWatchlistModals";
 import {
@@ -173,7 +174,10 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
     [sortBy]
   );
 
-  // Use the filtering hook
+  // URL-based pagination state
+  const { page, perPage, setPage, setPerPage } = useUrlPaginationState(1, 10);
+
+  // Use the filtering hook with URL state enabled for shareable pagination
   const {
     items: paginatedItems,
     totalItems,
@@ -186,7 +190,11 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
     items: watchList,
     filterFn,
     sortFn,
+    initialPage: page,
+    initialItemsPerPage: perPage,
     persistenceKey,
+    onPageChange: setPage,
+    onItemsPerPageChange: setPerPage,
   });
 
   // Calculate counts for empty state logic

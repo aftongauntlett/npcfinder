@@ -13,16 +13,14 @@ export function invalidateAllTaskQueries(
   queryClient: QueryClient,
   userId?: string
 ) {
+  // Invalidate all task queries using the base prefix
   void queryClient.invalidateQueries({
     queryKey: queryKeys.tasks.all,
   });
-  // Invalidate all boards queries (will match all user-specific variants)
-  void queryClient.invalidateQueries({
-    queryKey: ["tasks", "boards"],
-  });
+  // Specifically invalidate boards for this user
   if (userId) {
     void queryClient.invalidateQueries({
-      queryKey: queryKeys.tasks.todayTasks(userId),
+      queryKey: queryKeys.tasks.boards(userId),
     });
   }
 }
@@ -36,6 +34,10 @@ export function invalidateBoardQueries(
   userId?: string
 ) {
   if (boardId) {
+    // Invalidate specific board queries
+    void queryClient.invalidateQueries({
+      queryKey: queryKeys.tasks.board(boardId),
+    });
     void queryClient.invalidateQueries({
       queryKey: queryKeys.tasks.boardTasks(boardId),
     });
@@ -44,12 +46,11 @@ export function invalidateBoardQueries(
     });
   }
 
-  // Invalidate all boards queries (will match all user-specific variants)
-  void queryClient.invalidateQueries({
-    queryKey: ["tasks", "boards"],
-  });
-
+  // Invalidate boards list for this user
   if (userId) {
+    void queryClient.invalidateQueries({
+      queryKey: queryKeys.tasks.boards(userId),
+    });
     void queryClient.invalidateQueries({
       queryKey: queryKeys.tasks.todayTasks(userId),
     });

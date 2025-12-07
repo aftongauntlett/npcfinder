@@ -8,23 +8,29 @@ export interface UseMediaFilteringOptions<T> {
   items: T[];
   filterFn: (item: T) => boolean;
   sortFn: (a: T, b: T) => number;
+  initialPage?: number;
   initialItemsPerPage?: number;
   persistenceKey?: string;
+  onPageChange?: (page: number) => void;
+  onItemsPerPageChange?: (perPage: number) => void;
 }
 
 export function useMediaFiltering<T>({
   items,
   filterFn,
   sortFn,
+  initialPage = 1,
   initialItemsPerPage = 10,
   persistenceKey,
+  onPageChange,
+  onItemsPerPageChange,
 }: UseMediaFilteringOptions<T>) {
   // Load persisted itemsPerPage if available
   const persistedState = persistenceKey
     ? getPersistedPagination(persistenceKey, initialItemsPerPage)
     : null;
 
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(initialPage);
   const [itemsPerPage, setItemsPerPageState] = useState(
     persistedState?.itemsPerPage || initialItemsPerPage
   );
@@ -55,14 +61,31 @@ export function useMediaFiltering<T>({
   const goToPage = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
+      onPageChange?.(page);
     }
   };
 
-  const nextPage = () => goToPage(currentPage + 1);
-  const prevPage = () => goToPage(currentPage - 1);
+  const nextPage = () => {
+    if (currentPage < totalPages) {
+      const newPage = currentPage + 1;
+      setCurrentPage(newPage);
+      onPageChange?.(newPage);
+    }
+  };
+
+  const prevPage = () => {
+    if (currentPage > 1) {
+      const newPage = currentPage - 1;
+      setCurrentPage(newPage);
+      onPageChange?.(newPage);
+    }
+  };
 
   const setItemsPerPage = (count: number) => {
     setItemsPerPageState(count);
+    setCurrentPage(1); // Reset to page 1 when changing items per page
+    onItemsPerPageChange?.(count);
+    onPageChange?.(1);
   };
 
   return {
@@ -75,15 +98,12 @@ export function useMediaFiltering<T>({
     currentPage,
     totalPages,
     itemsPerPage,
-    startIndex: startIndex + 1,
-    endIndex: Math.min(endIndex, filteredAndSortedItems.length),
 
     // Pagination controls
-    setCurrentPage: goToPage,
-    setItemsPerPage,
+    goToPage,
     nextPage,
     prevPage,
-    hasNextPage: currentPage < totalPages,
-    hasPrevPage: currentPage > 1,
+    setItemsPerPage,
+    setCurrentPage,
   };
 }

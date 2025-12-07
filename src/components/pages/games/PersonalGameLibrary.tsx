@@ -11,6 +11,7 @@ import GameDetailModal from "./GameDetailModal";
 import Toast from "../../ui/Toast";
 import ConfirmationModal from "../../shared/ui/ConfirmationModal";
 import { useMediaFiltering } from "../../../hooks/useMediaFiltering";
+import { useUrlPaginationState } from "../../../hooks/useUrlPaginationState";
 import { logger } from "@/lib/logger";
 import {
   searchGames,
@@ -207,6 +208,9 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
     [activeSort]
   );
 
+  // URL-based pagination state
+  const { page, perPage, setPage, setPerPage } = useUrlPaginationState(1, 10);
+
   // Use the filtering hook
   const {
     items: paginatedItems,
@@ -220,7 +224,11 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
     items: gameLibrary,
     filterFn,
     sortFn,
+    initialPage: page,
+    initialItemsPerPage: perPage,
     persistenceKey,
+    onPageChange: setPage,
+    onItemsPerPageChange: setPerPage,
   });
 
   // Handle add game from search

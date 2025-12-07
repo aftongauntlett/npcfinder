@@ -135,4 +135,24 @@ export const queryKeys = {
   // Singleton boards for global collections
   singletonBoard: (templateType: string) =>
     ["singleton-board", templateType] as const,
+
+  // Reading List
+  readingList: {
+    all: ["reading-list"] as const,
+    list: (userId?: string) => [...queryKeys.readingList.all, userId] as const,
+  },
+
+  // Game Library
+  gameLibrary: {
+    all: ["game-library"] as const,
+    list: (userId?: string) => [...queryKeys.gameLibrary.all, userId] as const,
+    inLibrary: (externalId: string) => ["game-in-library", externalId] as const,
+  },
+
+  // Music Library
+  musicLibrary: {
+    all: ["musicLibrary"] as const,
+    list: (userId?: string) => [...queryKeys.musicLibrary.all, userId] as const,
+    stats: () => ["musicLibraryStats"] as const,
+  },
 };

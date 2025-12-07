@@ -64,51 +64,60 @@ const TodayView: React.FC = () => {
     return map;
   }, [boards]);
 
-  const handleToggleComplete = (taskId: string) => {
-    const task = todayTasks.find((t) => t.id === taskId);
-    if (!task) {
-      toggleStatus.mutate(taskId);
-      return;
-    }
+  const handleToggleComplete = useCallback(
+    (taskId: string) => {
+      const task = todayTasks.find((t) => t.id === taskId);
+      if (!task) {
+        toggleStatus.mutate(taskId);
+        return;
+      }
 
-    // If task is repeatable and being marked complete
-    if (task.is_repeatable && task.status !== "done" && task.due_date) {
-      const nextDueDate = getNextDueDate(
-        task.due_date,
-        task.repeat_frequency || "weekly",
-        task.repeat_custom_days || undefined
-      );
+      // If task is repeatable and being marked complete
+      if (task.is_repeatable && task.status !== "done" && task.due_date) {
+        const nextDueDate = getNextDueDate(
+          task.due_date,
+          task.repeat_frequency || "weekly",
+          task.repeat_custom_days || undefined
+        );
 
+        updateTask.mutate({
+          taskId,
+          updates: {
+            status: "todo",
+            due_date: nextDueDate,
+            last_completed_at: new Date().toISOString(),
+          },
+        });
+      } else {
+        toggleStatus.mutate(taskId);
+      }
+    },
+    [todayTasks, toggleStatus, updateTask]
+  );
+
+  const handleSnooze = useCallback(
+    (taskId: string) => {
+      // Snooze until tomorrow
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
       updateTask.mutate({
         taskId,
         updates: {
-          status: "todo",
-          due_date: nextDueDate,
-          last_completed_at: new Date().toISOString(),
+          due_date: tomorrow.toISOString().split("T")[0],
         },
       });
-    } else {
-      toggleStatus.mutate(taskId);
-    }
-  };
+    },
+    [updateTask]
+  );
 
-  const handleSnooze = (taskId: string) => {
-    // Snooze until tomorrow
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    updateTask.mutate({
-      taskId,
-      updates: {
-        due_date: tomorrow.toISOString().split("T")[0],
-      },
-    });
-  };
-
-  const handleRemove = (taskId: string) => {
-    if (confirm("Are you sure you want to delete this task?")) {
-      deleteTask.mutate(taskId);
-    }
-  };
+  const handleRemove = useCallback(
+    (taskId: string) => {
+      if (confirm("Are you sure you want to delete this task?")) {
+        deleteTask.mutate(taskId);
+      }
+    },
+    [deleteTask]
+  );
 
   if (isLoading) {
     return (

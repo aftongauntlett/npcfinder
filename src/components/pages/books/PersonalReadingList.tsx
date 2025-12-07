@@ -17,6 +17,7 @@ import SendMediaModal from "../../shared/media/SendMediaModal";
 import ConfirmationModal from "../../shared/ui/ConfirmationModal";
 import { MediaPageToolbar } from "../../shared/media/MediaPageToolbar";
 import { useMediaFiltering } from "../../../hooks/useMediaFiltering";
+import { useUrlPaginationState } from "../../../hooks/useUrlPaginationState";
 import { logger } from "@/lib/logger";
 import { searchBooks } from "../../../utils/bookSearchAdapters";
 import {
@@ -200,6 +201,9 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
   );
 
   // Use the filtering hook
+  // URL-based pagination state
+  const { page, perPage, setPage, setPerPage } = useUrlPaginationState(1, 10);
+
   const {
     items: paginatedItems,
     totalItems,
@@ -212,7 +216,11 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
     items: readingList,
     filterFn,
     sortFn,
+    initialPage: page,
+    initialItemsPerPage: perPage,
     persistenceKey,
+    onPageChange: setPage,
+    onItemsPerPageChange: setPerPage,
   });
 
   // Calculate counts for empty state logic

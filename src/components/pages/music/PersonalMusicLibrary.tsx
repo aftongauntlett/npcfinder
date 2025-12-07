@@ -1,4 +1,10 @@
-import React, { useState, useRef, useMemo, useEffect } from "react";
+import React, {
+  useState,
+  useRef,
+  useMemo,
+  useEffect,
+  useCallback,
+} from "react";
 import { Music } from "lucide-react";
 import { Pagination } from "../../shared/common/Pagination";
 import { FilterSortSection } from "../../shared/common/FilterSortMenu";
@@ -12,6 +18,8 @@ import ConfirmationModal from "../../shared/ui/ConfirmationModal";
 import { MediaPageToolbar } from "../../shared/media/MediaPageToolbar";
 import { searchMusic } from "../../../utils/mediaSearchAdapters";
 import { logger } from "@/lib/logger";
+import { usePagination } from "../../../hooks/usePagination";
+import { useUrlPaginationState } from "../../../hooks/useUrlPaginationState";
 import {
   useMusicLibrary,
   useAddToLibrary,
@@ -65,10 +73,6 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
   );
   const [musicToRecommend, setMusicToRecommend] =
     useState<MusicLibraryItem | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(
-    persistedFilters.itemsPerPage as number
-  );
   const topRef = useRef<HTMLDivElement>(null);
 
   // Delete confirmation state
@@ -77,14 +81,13 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
     null
   );
 
-  // Persist filter changes
+  // Persist filter changes (removed itemsPerPage - now handled by usePagination)
   useEffect(() => {
     persistFilters(persistenceKey, {
       genreFilters,
       sortBy,
-      itemsPerPage,
     });
-  }, [genreFilters, sortBy, itemsPerPage]);
+  }, [genreFilters, sortBy]);
 
   // Add to library
   const handleAddToLibrary = (result: MediaItem) => {
@@ -196,67 +199,86 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
     ];
   }, [availableGenres]);
 
-  // Filter music based on filter and genre
-  const filteredMusic = filteredByStatus.filter((music: MusicLibraryItem) => {
-    // Filter by genres (multiple selection support)
-    if (genreFilters.length === 0 || genreFilters.includes("all")) {
-      return true;
-    }
+  // Filter and sort functions (stable references for usePagination memoization)
+  const filterFn = useCallback(
+    (music: MusicLibraryItem) => {
+      // Filter by genres (multiple selection support)
+      if (genreFilters.length === 0 || genreFilters.includes("all")) {
+        return true;
+      }
 
-    // Music matches if it matches ANY of the selected genres
-    if (music.genre) {
-      const musicGenres = music.genre
-        .toLowerCase()
-        .split(",")
-        .map((g) => g.trim());
+      // Music matches if it matches ANY of the selected genres
+      if (music.genre) {
+        const musicGenres = music.genre
+          .toLowerCase()
+          .split(",")
+          .map((g) => g.trim());
 
-      return genreFilters.some((selectedGenre) =>
-        musicGenres.includes(selectedGenre)
-      );
-    }
+        return genreFilters.some((selectedGenre) =>
+          musicGenres.includes(selectedGenre)
+        );
+      }
 
-    return false;
+      return false;
+    },
+    [genreFilters]
+  );
+
+  const sortFn = useCallback(
+    (a: MusicLibraryItem, b: MusicLibraryItem) => {
+      switch (sortBy) {
+        case "date-added":
+          return (
+            new Date(b.created_at || "").getTime() -
+            new Date(a.created_at || "").getTime()
+          );
+        case "title":
+          return a.title.localeCompare(b.title);
+        case "artist":
+          return a.artist.localeCompare(b.artist);
+        case "year":
+          return (
+            (b.release_date ? new Date(b.release_date).getFullYear() : 0) -
+            (a.release_date ? new Date(a.release_date).getFullYear() : 0)
+          );
+        case "rating":
+          return (b.personal_rating || 0) - (a.personal_rating || 0);
+        default:
+          return 0;
+      }
+    },
+    [sortBy]
+  );
+
+  // URL-based pagination state
+  const { page, perPage, setPage, setPerPage } = useUrlPaginationState(1, 10);
+
+  // Use pagination hook with URL state for bookmarkable pages
+  const pagination = usePagination({
+    items: filteredByStatus,
+    filterFn,
+    sortFn,
+    initialPage: page,
+    initialItemsPerPage: perPage,
+    persistenceKey,
+    onPageChange: setPage,
+    onItemsPerPageChange: setPerPage,
   });
 
-  // Sort music
-  const sortedMusic = [...filteredMusic].sort((a, b) => {
-    switch (sortBy) {
-      case "date-added":
-        return (
-          new Date(b.created_at || "").getTime() -
-          new Date(a.created_at || "").getTime()
-        );
-      case "title":
-        return a.title.localeCompare(b.title);
-      case "artist":
-        return a.artist.localeCompare(b.artist);
-      case "year":
-        return (
-          (b.release_date ? new Date(b.release_date).getFullYear() : 0) -
-          (a.release_date ? new Date(a.release_date).getFullYear() : 0)
-        );
-      case "rating":
-        return (b.personal_rating || 0) - (a.personal_rating || 0);
-      default:
-        return 0;
-    }
-  });
+  const handlePageChange = useCallback(
+    (newPage: number) => {
+      pagination.goToPage(newPage);
+      topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    },
+    [pagination]
+  );
 
-  // Pagination
-  const totalPages = Math.ceil(sortedMusic.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentMusic = sortedMusic.slice(startIndex, endIndex);
-
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
-    topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
-  const handleItemsPerPageChange = (count: number) => {
-    setItemsPerPage(count);
-    setCurrentPage(1); // Reset to first page
-  };
+  const handleItemsPerPageChange = useCallback(
+    (count: number) => {
+      pagination.setItemsPerPage(count);
+    },
+    [pagination]
+  );
 
   // Recommend music to friend
   const handleRecommend = (music: MusicLibraryItem) => {
@@ -290,7 +312,7 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
       className="container mx-auto px-4 sm:px-6 space-y-4 sm:space-y-6"
     >
       {/* Action Bar - Only show when there's data */}
-      {sortedMusic.length > 0 && (
+      {pagination.filteredItems.length > 0 && (
         <div className="space-y-3">
           <MediaPageToolbar
             filterConfig={{
@@ -320,7 +342,7 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
       )}
 
       {/* List View */}
-      {currentMusic.length === 0 ? (
+      {pagination.paginatedItems.length === 0 ? (
         <EmptyStateAddCard
           icon={Music}
           title={emptyStateProps.title}
@@ -330,7 +352,7 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
         />
       ) : (
         <div className="space-y-2">
-          {currentMusic.map((music) => (
+          {pagination.paginatedItems.map((music: MusicLibraryItem) => (
             <MediaListItem
               key={music.id}
               id={music.id}
@@ -364,10 +386,10 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
 
       {/* Pagination */}
       <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalItems={sortedMusic.length}
-        itemsPerPage={itemsPerPage}
+        currentPage={pagination.currentPage}
+        totalPages={pagination.totalPages}
+        totalItems={pagination.filteredItems.length}
+        itemsPerPage={pagination.itemsPerPage}
         onPageChange={handlePageChange}
         onItemsPerPageChange={handleItemsPerPageChange}
       />

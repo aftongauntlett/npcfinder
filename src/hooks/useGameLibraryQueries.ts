@@ -5,6 +5,8 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
+import { queryKeys } from "../lib/queryKeys";
+import { useAuth } from "../contexts/AuthContext";
 import type { MediaItem } from "@/components/shared";
 
 export interface GameLibraryItem {
@@ -39,12 +41,11 @@ interface BatchAddResult {
  * Fetch user's game library
  */
 export function useGameLibrary() {
+  const { user } = useAuth();
+
   return useQuery({
-    queryKey: ["game-library"],
+    queryKey: queryKeys.gameLibrary.list(user?.id),
     queryFn: async (): Promise<GameLibraryItem[]> => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
       const { data, error } = await supabase
@@ -56,6 +57,7 @@ export function useGameLibrary() {
       if (error) throw error;
       return data || [];
     },
+    enabled: !!user,
   });
 }
 
@@ -95,7 +97,9 @@ export function useAddToGameLibrary() {
       return data;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["game-library"] });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.gameLibrary.all,
+      });
     },
   });
 }
@@ -126,7 +130,9 @@ export function useToggleGameLibraryPlayed() {
       if (updateError) throw updateError;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["game-library"] });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.gameLibrary.all,
+      });
     },
   });
 }
@@ -174,7 +180,9 @@ export function useUpdateGameRating() {
       if (error) throw error;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["game-library"] });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.gameLibrary.all,
+      });
     },
   });
 }
@@ -201,7 +209,9 @@ export function useUpdateGameNotes() {
       if (error) throw error;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["game-library"] });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.gameLibrary.all,
+      });
     },
   });
 }
@@ -267,7 +277,9 @@ export function useBatchAddToGameLibrary() {
       return { successful, duplicates, errors };
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["game-library"] });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.gameLibrary.all,
+      });
     },
   });
 }
@@ -277,7 +289,7 @@ export function useBatchAddToGameLibrary() {
  */
 export function useIsGameInLibrary(externalId: string) {
   return useQuery({
-    queryKey: ["game-in-library", externalId],
+    queryKey: queryKeys.gameLibrary.inLibrary(externalId),
     queryFn: async (): Promise<boolean> => {
       const {
         data: { user },

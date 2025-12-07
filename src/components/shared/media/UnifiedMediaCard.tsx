@@ -174,5 +174,6 @@ export default React.memo(
     prevProps.title === nextProps.title &&
     prevProps.posterUrl === nextProps.posterUrl &&
     prevProps.personalRating === nextProps.personalRating &&
-    prevProps.status === nextProps.status
+    prevProps.status === nextProps.status &&
+    prevProps.onClick === nextProps.onClick
 );
