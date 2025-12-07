@@ -45,6 +45,8 @@ interface MediaEmptyStateProps {
 }
 
 /**
+ * @deprecated This component is deprecated. Use EmptyStateAddCard from @/components/shared instead.
+ *
  * MediaEmptyState Component
  *
  * Unified empty state component for media pages (Movies, TV, Books, Games, Music).
@@ -58,6 +60,9 @@ interface MediaEmptyStateProps {
  * - Optional action buttons (pass actions array for multiple buttons)
  * - Hover states with smooth transitions (when clickable)
  *
+ * Replacement:
+ * Use EmptyStateAddCard from @/components/shared for all new empty states.
+ * This component will be removed in a future version.
  * @example
  * ```tsx
  * // Single clickable version (for simple cases)

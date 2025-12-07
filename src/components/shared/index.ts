@@ -48,6 +48,7 @@ export { default as MediaUserRating } from "./media/MediaUserRating";
 
 // Common Components - General purpose components
 export { Pagination } from "./common/Pagination";
+export { default as EmptyStateAddCard } from "./common/EmptyStateAddCard";
 
 // Search Components - Search modal components
 export { default as SearchMovieModal } from "./search/SearchMovieModal";

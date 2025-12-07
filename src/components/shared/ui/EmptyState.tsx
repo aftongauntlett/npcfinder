@@ -1,6 +1,12 @@
 /**
+ * @deprecated This component is deprecated. Use EmptyStateAddCard from @/components/shared instead.
+ *
  * Empty State Component
  * Reusable component for empty/placeholder states with dashed borders
+ *
+ * Replacement:
+ * Use EmptyStateAddCard from @/components/shared for all new empty states.
+ * This component will be removed in a future version.
  */
 
 import React from "react";
