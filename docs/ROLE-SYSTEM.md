@@ -81,6 +81,29 @@ CREATE POLICY "users_delete_own_or_admin_all" ON {table}
   );
 ```
 
+**⚠️ CRITICAL: user_profiles Circular Dependency**
+
+The `user_profiles` table is a special case and **MUST NOT** use the standard pattern above.
+
+**Why**: The `get_user_role()` and `is_admin()` functions read from `user_profiles`. If the SELECT policy on `user_profiles` calls these functions, it creates a circular dependency that causes query failures.
+
+**Solution**: The SELECT policy for `user_profiles` uses `USING (true)` to allow all authenticated users to view all profiles:
+
+```sql
+CREATE POLICY "Anyone can view profiles" ON user_profiles
+  FOR SELECT
+  TO authenticated
+  USING (true);
+```
+
+This is safe because:
+
+- Profile data is meant to be visible to other users (for connections, recommendations, etc.)
+- UPDATE and DELETE policies still enforce proper access control
+- Role integrity is protected by database triggers, not RLS policies
+
+**DO NOT** change the `user_profiles` SELECT policy to add role checks without understanding this constraint.
+
 ### Frontend Layer
 
 **AdminContext:**

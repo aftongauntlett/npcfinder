@@ -20,13 +20,37 @@ END;
 
 -- Step 4: Set super admin from app_config
 -- The super admin user is determined from the app_config table
-UPDATE user_profiles 
-SET role = 'super_admin'::user_role
-WHERE user_id = (
-  SELECT value::uuid 
+-- Only attempt if a valid UUID is configured
+DO $$
+DECLARE
+  super_admin_config text;
+  super_admin_id uuid;
+BEGIN
+  -- Get the config value
+  SELECT value INTO super_admin_config
   FROM app_config 
-  WHERE key = 'super_admin_user_id'
-);
+  WHERE key = 'super_admin_user_id';
+  
+  -- Only proceed if config exists and is not the placeholder
+  IF super_admin_config IS NOT NULL AND super_admin_config != 'PLACEHOLDER_SET_THIS_MANUALLY' THEN
+    BEGIN
+      -- Try to parse as UUID
+      super_admin_id := super_admin_config::uuid;
+      
+      -- Update the user's role
+      UPDATE user_profiles 
+      SET role = 'super_admin'::user_role
+      WHERE user_id = super_admin_id;
+      
+      RAISE NOTICE 'Super admin role assigned to user: %', super_admin_id;
+    EXCEPTION
+      WHEN OTHERS THEN
+        RAISE WARNING 'Could not set super admin from app_config: %', SQLERRM;
+    END;
+  ELSE
+    RAISE NOTICE 'Skipping super admin assignment - app_config not set or is placeholder';
+  END IF;
+END $$;
 
 -- Step 5: Make role non-nullable with default
 ALTER TABLE user_profiles 
@@ -37,6 +61,13 @@ ALTER TABLE user_profiles
 CREATE INDEX idx_user_profiles_role ON user_profiles(role);
 
 -- Step 7: Convert is_admin to a generated column for backward compatibility
+-- First, drop policies that depend on the is_admin column
+DROP POLICY IF EXISTS "Admins can create invite codes" ON invite_codes;
+DROP POLICY IF EXISTS "Admins can delete invite codes" ON invite_codes;
+DROP POLICY IF EXISTS "Admins can update invite codes" ON invite_codes;
+DROP POLICY IF EXISTS "Admins can read app config" ON app_config;
+DROP POLICY IF EXISTS "Admins can update app config" ON app_config;
+
 -- Drop the old is_admin column entirely
 ALTER TABLE user_profiles 
   DROP COLUMN is_admin;
@@ -45,6 +76,59 @@ ALTER TABLE user_profiles
 ALTER TABLE user_profiles 
   ADD COLUMN is_admin BOOLEAN 
   GENERATED ALWAYS AS (role IN ('admin', 'super_admin')) STORED;
+
+-- Recreate the policies using the new generated is_admin column
+-- Note: These will be updated to use get_user_role() in migration 20251207000006
+
+CREATE POLICY "Admins can create invite codes" ON invite_codes
+  FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM user_profiles
+      WHERE user_id = auth.uid()
+      AND is_admin = true
+    )
+  );
+
+CREATE POLICY "Admins can delete invite codes" ON invite_codes
+  FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_profiles
+      WHERE user_id = auth.uid()
+      AND is_admin = true
+    )
+  );
+
+CREATE POLICY "Admins can update invite codes" ON invite_codes
+  FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_profiles
+      WHERE user_id = auth.uid()
+      AND is_admin = true
+    )
+  );
+
+CREATE POLICY "Admins can read app config" ON app_config
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_profiles
+      WHERE user_id = auth.uid()
+      AND is_admin = true
+    )
+  );
+
+CREATE POLICY "Admins can update app config" ON app_config
+  FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_profiles
+      WHERE user_id = auth.uid()
+      AND is_admin = true
+    )
+  );
 
 -- Step 8: Create new helper function for getting user role
 CREATE OR REPLACE FUNCTION public.get_user_role(check_user_id uuid)

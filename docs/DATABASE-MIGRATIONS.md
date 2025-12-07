@@ -11,6 +11,15 @@
 
 This project uses **database migrations** to manage schema changes in a version-controlled, reproducible way.
 
+### ⚠️ Single Production Database Workflow
+
+**CRITICAL**: This project works DIRECTLY in production - there is no separate local dev database.
+
+- **Linked Project**: All `db:*` commands operate on the Supabase project linked via CLI
+- **Why**: Laptop is too slow for local Supabase development (`supabase start` not used)
+- **How**: Changes are made carefully in Supabase Dashboard UI, then captured via migrations
+- **Config**: Uses `VITE_SUPABASE_PROJECT_REF` from `.env.local` for linking
+
 ### Migration Philosophy
 
 **Single Baseline + Strict Forward-Only Approach**:
@@ -18,7 +27,7 @@ This project uses **database migrations** to manage schema changes in a version-
 - ✅ One authoritative baseline migration contains the complete production schema
 - ✅ All schema changes use `supabase db diff` workflow (never manual SQL editor changes)
 - ✅ All future changes are forward-only migrations (never edit existing migrations)
-- ✅ Migrations are applied directly to production database
+- ✅ Migrations are applied directly to production database via linked CLI
 - ✅ Changes are made carefully in Supabase Dashboard UI and tested before running migrations
 
 **Why This Approach**:
@@ -69,11 +78,12 @@ Complete production database schema as of December 5, 2025, including:
 **How to Apply**:
 
 ```bash
-# Production database
+# Linked production database (only target available)
 npm run db:push
 ```
 
-**Note**: This project works directly in production. There is no separate dev database or local database setup.
+**Note**: This project works directly in production via a linked Supabase CLI project.
+The `db:push` command applies all pending migrations to the linked project.
 
 **IMPORTANT**: This file must never be edited. It represents the exact state of a healthy production database and serves as the authoritative baseline.
 
@@ -137,15 +147,16 @@ npm run db:push
    - Test affected application features
    - Run your test suite: `npm run test`
 
-**Note**: This project works directly in production. There is no local or separate dev database. All changes are made carefully in the Supabase Dashboard and tested thoroughly before running migrations.
+**Note**: This project works directly in production via a linked Supabase CLI project.
+All changes are made carefully in the Supabase Dashboard UI and tested thoroughly before capturing as migrations.
 
 ### Why This Workflow?
 
 - **Version controlled**: All changes tracked in git
 - **Reproducible**: Anyone can recreate database state from migrations
-- **Testable**: Can verify migrations work on clean database
+- **Production-first**: Changes are applied via Dashboard UI, then captured for version control
 - **Auditable**: Clear history of when and why schema changed
-- **Prevents drift**: Dev and prod databases stay in sync
+- **No drift**: Migration files capture the exact state of production schema changes
 
 ---
 
@@ -177,51 +188,6 @@ npm run db:migration:new fix_user_preferences
 - Data may have been created/modified based on the schema
 - Rolling back can cause data loss or corruption
 - Forward-only keeps a clear audit trail
-
----
-
-## Dev vs Prod Databases
-
-### Two-Database Setup
-
-This project uses separate databases for development and production:
-
-**Development Database** (Testing):
-
-- Safe to experiment
-- Can reset freely
-- Your local work
-
-**Production Database** (Real Data):
-
-- Real user data
-- Protected by 5-second warning
-- Deploy only after testing
-
-### How It Works
-
-The app automatically switches based on environment:
-
-```javascript
-// In src/lib/supabase.ts
-if (import.meta.env.DEV && dev_env_vars_exist) {
-  → Use development database
-} else {
-  → Use production database
-}
-```
-
-**Vite Development Mode** (`npm run dev`): Uses dev database  
-**Production Build** (`npm run build` + deploy): Uses production database
-
-**CLI Tools** require project ref configuration in `.env.local`:
-
-```bash
-SUPABASE_DEV_PROJECT_REF=your-dev-project-ref
-SUPABASE_PROD_PROJECT_REF=your-prod-project-ref
-```
-
-Find project refs in: Supabase Dashboard → Project Settings → General → Reference ID
 
 ---
 
@@ -424,7 +390,7 @@ Vercel automatically deploys the updated app that uses the new schema.
 **Solution**:
 
 ```bash
-# Check which migrations have been applied
+# Check which migrations have been applied to linked production database
 npm run db:migration:list
 ```
 
@@ -459,10 +425,7 @@ Then write SQL that undoes the previous migration (e.g., `DROP TABLE`, `DROP COL
 
 ---
 
-**Last Updated**: December 5, 2025  
+**Last Updated**: December 7, 2025  
 **Baseline Migration**: `0001_baseline.sql` (from production, December 5, 2025)
-
-- 2 critical (bootstrap RLS + auth trigger)
-- 7 feature migrations (Dec 2025: board templates, repeatable tasks, media reviews, tasks enhancements, board shares fixes)
-
-**Archived Migrations**: 60 files in `supabase/migrations/archive/`
+**Active Migrations**: All post-baseline migrations in `supabase/migrations/` directory
+**Archived Migrations**: Not maintained in this repository (if they exist, they are in a separate location)

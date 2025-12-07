@@ -311,9 +311,9 @@ CREATE POLICY "users_select_reviews_or_admin_all" ON media_reviews
     (
       is_public = true AND
       EXISTS (
-        SELECT 1 FROM connections
-        WHERE (user_id_1 = auth.uid() AND user_id_2 = media_reviews.user_id AND status = 'accepted')
-           OR (user_id_2 = auth.uid() AND user_id_1 = media_reviews.user_id AND status = 'accepted')
+        SELECT 1 FROM connections c
+        WHERE (c.user_id = auth.uid() AND c.friend_id = media_reviews.user_id)
+           OR (c.friend_id = auth.uid() AND c.user_id = media_reviews.user_id)
       )
     )
   );
@@ -347,8 +347,8 @@ CREATE POLICY "users_select_recommendations_or_admin_all" ON movie_recommendatio
   FOR SELECT TO authenticated
   USING (
     public.get_user_role(auth.uid()) IN ('admin', 'super_admin') OR
-    auth.uid() = recipient_user_id OR
-    auth.uid() = sender_user_id
+    auth.uid() = to_user_id OR
+    auth.uid() = from_user_id
   );
 
 DROP POLICY IF EXISTS "Recipients can update movie recommendations OR admins can update all" ON movie_recommendations;
@@ -357,20 +357,20 @@ CREATE POLICY "users_update_recommendations_or_admin_all" ON movie_recommendatio
   FOR UPDATE TO authenticated
   USING (
     public.get_user_role(auth.uid()) IN ('admin', 'super_admin') OR
-    auth.uid() = recipient_user_id OR
-    auth.uid() = sender_user_id
+    auth.uid() = to_user_id OR
+    auth.uid() = from_user_id
   )
   WITH CHECK (
     public.get_user_role(auth.uid()) IN ('admin', 'super_admin') OR
-    auth.uid() = recipient_user_id OR
-    auth.uid() = sender_user_id
+    auth.uid() = to_user_id OR
+    auth.uid() = from_user_id
   );
 
 DROP POLICY IF EXISTS "Senders can delete movie recommendations OR admins can delete all" ON movie_recommendations;
 CREATE POLICY "senders_delete_or_admin_all" ON movie_recommendations
   FOR DELETE TO authenticated
   USING (
-    auth.uid() = sender_user_id 
+    auth.uid() = from_user_id 
     OR public.get_user_role(auth.uid()) IN ('admin', 'super_admin')
   );
 
@@ -383,8 +383,8 @@ CREATE POLICY "users_select_recommendations_or_admin_all" ON book_recommendation
   FOR SELECT TO authenticated
   USING (
     public.get_user_role(auth.uid()) IN ('admin', 'super_admin') OR
-    auth.uid() = recipient_user_id OR
-    auth.uid() = sender_user_id
+    auth.uid() = to_user_id OR
+    auth.uid() = from_user_id
   );
 
 DROP POLICY IF EXISTS "Book recipients can update recommendations OR admins can update all" ON book_recommendations;
@@ -393,20 +393,20 @@ CREATE POLICY "users_update_recommendations_or_admin_all" ON book_recommendation
   FOR UPDATE TO authenticated
   USING (
     public.get_user_role(auth.uid()) IN ('admin', 'super_admin') OR
-    auth.uid() = recipient_user_id OR
-    auth.uid() = sender_user_id
+    auth.uid() = to_user_id OR
+    auth.uid() = from_user_id
   )
   WITH CHECK (
     public.get_user_role(auth.uid()) IN ('admin', 'super_admin') OR
-    auth.uid() = recipient_user_id OR
-    auth.uid() = sender_user_id
+    auth.uid() = to_user_id OR
+    auth.uid() = from_user_id
   );
 
 DROP POLICY IF EXISTS "Book senders can delete recommendations OR admins can delete all" ON book_recommendations;
 CREATE POLICY "senders_delete_or_admin_all" ON book_recommendations
   FOR DELETE TO authenticated
   USING (
-    auth.uid() = sender_user_id 
+    auth.uid() = from_user_id 
     OR public.get_user_role(auth.uid()) IN ('admin', 'super_admin')
   );
 
@@ -419,8 +419,8 @@ CREATE POLICY "users_select_recommendations_or_admin_all" ON game_recommendation
   FOR SELECT TO authenticated
   USING (
     public.get_user_role(auth.uid()) IN ('admin', 'super_admin') OR
-    auth.uid() = recipient_user_id OR
-    auth.uid() = sender_user_id
+    auth.uid() = to_user_id OR
+    auth.uid() = from_user_id
   );
 
 DROP POLICY IF EXISTS "Game recipients can update recommendations OR admins can update all" ON game_recommendations;
@@ -429,20 +429,20 @@ CREATE POLICY "users_update_recommendations_or_admin_all" ON game_recommendation
   FOR UPDATE TO authenticated
   USING (
     public.get_user_role(auth.uid()) IN ('admin', 'super_admin') OR
-    auth.uid() = recipient_user_id OR
-    auth.uid() = sender_user_id
+    auth.uid() = to_user_id OR
+    auth.uid() = from_user_id
   )
   WITH CHECK (
     public.get_user_role(auth.uid()) IN ('admin', 'super_admin') OR
-    auth.uid() = recipient_user_id OR
-    auth.uid() = sender_user_id
+    auth.uid() = to_user_id OR
+    auth.uid() = from_user_id
   );
 
 DROP POLICY IF EXISTS "Game senders can delete recommendations OR admins can delete all" ON game_recommendations;
 CREATE POLICY "senders_delete_or_admin_all" ON game_recommendations
   FOR DELETE TO authenticated
   USING (
-    auth.uid() = sender_user_id 
+    auth.uid() = from_user_id 
     OR public.get_user_role(auth.uid()) IN ('admin', 'super_admin')
   );
 
@@ -455,8 +455,8 @@ CREATE POLICY "users_select_recommendations_or_admin_all" ON music_recommendatio
   FOR SELECT TO authenticated
   USING (
     public.get_user_role(auth.uid()) IN ('admin', 'super_admin') OR
-    auth.uid() = recipient_user_id OR
-    auth.uid() = sender_user_id
+    auth.uid() = to_user_id OR
+    auth.uid() = from_user_id
   );
 
 DROP POLICY IF EXISTS "Recipients can update music recommendations OR admins can update all" ON music_recommendations;
@@ -465,20 +465,20 @@ CREATE POLICY "users_update_recommendations_or_admin_all" ON music_recommendatio
   FOR UPDATE TO authenticated
   USING (
     public.get_user_role(auth.uid()) IN ('admin', 'super_admin') OR
-    auth.uid() = recipient_user_id OR
-    auth.uid() = sender_user_id
+    auth.uid() = to_user_id OR
+    auth.uid() = from_user_id
   )
   WITH CHECK (
     public.get_user_role(auth.uid()) IN ('admin', 'super_admin') OR
-    auth.uid() = recipient_user_id OR
-    auth.uid() = sender_user_id
+    auth.uid() = to_user_id OR
+    auth.uid() = from_user_id
   );
 
 DROP POLICY IF EXISTS "Senders can delete music recommendations OR admins can delete all" ON music_recommendations;
 CREATE POLICY "senders_delete_or_admin_all" ON music_recommendations
   FOR DELETE TO authenticated
   USING (
-    auth.uid() = sender_user_id 
+    auth.uid() = from_user_id 
     OR public.get_user_role(auth.uid()) IN ('admin', 'super_admin')
   );
 
@@ -491,8 +491,8 @@ CREATE POLICY "users_select_connections_or_admin_all" ON connections
   FOR SELECT TO authenticated
   USING (
     public.get_user_role(auth.uid()) IN ('admin', 'super_admin') OR
-    auth.uid() = user_id_1 OR
-    auth.uid() = user_id_2
+    auth.uid() = user_id OR
+    auth.uid() = friend_id
   );
 
 DROP POLICY IF EXISTS "Users can update their own connections OR admins can update all" ON connections;
@@ -500,13 +500,13 @@ CREATE POLICY "users_update_connections_or_admin_all" ON connections
   FOR UPDATE TO authenticated
   USING (
     public.get_user_role(auth.uid()) IN ('admin', 'super_admin') OR
-    auth.uid() = user_id_1 OR
-    auth.uid() = user_id_2
+    auth.uid() = user_id OR
+    auth.uid() = friend_id
   )
   WITH CHECK (
     public.get_user_role(auth.uid()) IN ('admin', 'super_admin') OR
-    auth.uid() = user_id_1 OR
-    auth.uid() = user_id_2
+    auth.uid() = user_id OR
+    auth.uid() = friend_id
   );
 
 DROP POLICY IF EXISTS "Users can delete their own connections OR admins can delete all" ON connections;
@@ -514,8 +514,8 @@ CREATE POLICY "users_delete_connections_or_admin_all" ON connections
   FOR DELETE TO authenticated
   USING (
     public.get_user_role(auth.uid()) IN ('admin', 'super_admin') OR
-    auth.uid() = user_id_1 OR
-    auth.uid() = user_id_2
+    auth.uid() = user_id OR
+    auth.uid() = friend_id
   );
 
 -- -----------------------------------------------------------------------------
@@ -614,16 +614,11 @@ CREATE POLICY "super_admins_can_delete_audit_logs" ON admin_audit_log
 
 -- -----------------------------------------------------------------------------
 -- RATE_LIMITS: Add admin policies
+-- NOTE: The SELECT policy is intentionally not recreated here due to column name issue
+-- It will be properly fixed in migration 20251207000008_fix_rate_limits_rls_identifier_column.sql
 -- -----------------------------------------------------------------------------
 
 DROP POLICY IF EXISTS "Users can view own rate limits" ON rate_limits;
-
-CREATE POLICY "users_view_own_or_admins_view_all" ON rate_limits
-  FOR SELECT TO authenticated
-  USING (
-    auth.uid()::text = identifier 
-    OR public.get_user_role(auth.uid()) IN ('admin', 'super_admin')
-  );
 
 -- Admins can reset rate limits by deleting records
 CREATE POLICY "admins_can_reset_rate_limits" ON rate_limits
