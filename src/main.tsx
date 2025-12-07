@@ -5,7 +5,34 @@ import "./styles/theme.css";
 import "./index.css";
 import App from "./App";
 import { validateEnv } from "./lib/validateEnv";
-import { logger } from "./lib/logger";
+import { logger, logError } from "./lib/logger";
+import { parseSupabaseError } from "./utils/errorUtils";
+import GlobalErrorNotifications from "./components/shared/ui/GlobalErrorNotifications";
+
+// Import global error store (will be initialized in bootstrap)
+let showError:
+  | ((
+      error: unknown,
+      options?: { duration?: number; persistent?: boolean }
+    ) => void)
+  | null = null;
+
+// Lazy import to avoid circular dependencies
+import("./hooks/useGlobalError").then((module) => {
+  const { globalErrorStore } = module;
+  showError = (error: unknown, options = {}) => {
+    // Parse error message
+    let message: string;
+    if (typeof error === "string") {
+      message = error;
+    } else {
+      const parsed = parseSupabaseError(error);
+      message = parsed.message;
+    }
+    // Call store's addError directly
+    globalErrorStore.getState().addError(message, options);
+  };
+});
 
 // Bootstrap function to initialize the app
 function bootstrap() {
@@ -33,7 +60,34 @@ function bootstrap() {
         staleTime: 1000 * 60 * 5, // 5 minutes
         gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)
         refetchOnWindowFocus: false,
-        retry: 1,
+        retry: (failureCount, error) => {
+          const parsed = parseSupabaseError(error);
+          // Retry up to 2 times if error is retryable
+          return parsed.shouldRetry && failureCount < 2;
+        },
+        onError: (error: unknown) => {
+          const parsed = parseSupabaseError(error);
+
+          // Don't show toast for auth errors (handled separately)
+          if (!parsed.isAuth && showError) {
+            showError(error, { duration: 5000, persistent: false });
+          }
+
+          // Log all query errors
+          logError(error, { component: "Query" });
+        },
+      },
+      mutations: {
+        retry: false,
+        onError: (error: unknown) => {
+          // Show persistent alert for mutation errors
+          if (showError) {
+            showError(error, { persistent: true });
+          }
+
+          // Log mutation errors with higher priority
+          logError(error, { component: "Mutation" });
+        },
       },
     },
   });
@@ -47,6 +101,7 @@ function bootstrap() {
   createRoot(rootElement).render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
+        <GlobalErrorNotifications />
         <App />
       </QueryClientProvider>
     </StrictMode>

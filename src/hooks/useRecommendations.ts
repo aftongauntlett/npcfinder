@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as recommendationsService from "../services/recommendationsService";
 import { queryKeys } from "../lib/queryKeys";
 import { useAuth } from "../contexts/AuthContext";
+import { logError } from "../lib/logger";
 import type { Recommendation } from "../services/recommendationsService.types";
 
 type MediaTypeKey = "movies-tv" | "music" | "books" | "games";
@@ -341,6 +342,12 @@ export function useUpdateStatus(mediaTypeKey: MediaTypeKey) {
         },
       });
     },
+    onError: (error) => {
+      logError(error, {
+        action: "update_recommendation_status",
+        component: "useUpdateStatus",
+      });
+    },
   });
 }
 
@@ -373,6 +380,12 @@ export function useDeleteRec(mediaTypeKey: MediaTypeKey) {
         },
       });
     },
+    onError: (error) => {
+      logError(error, {
+        action: "delete_recommendation",
+        component: "useDeleteRec",
+      });
+    },
   });
 }
 
@@ -399,6 +412,12 @@ export function useUpdateSenderNote(mediaTypeKey: MediaTypeKey) {
         },
       });
     },
+    onError: (error) => {
+      logError(error, {
+        action: "update_sender_note",
+        component: "useUpdateSenderNote",
+      });
+    },
   });
 }
 
@@ -423,6 +442,12 @@ export function useUpdateRecipientNote(mediaTypeKey: MediaTypeKey) {
           const key = query.queryKey;
           return key[0] === "recommendations" && key.includes(mediaTypeKey);
         },
+      });
+    },
+    onError: (error) => {
+      logError(error, {
+        action: "update_recipient_note",
+        component: "useUpdateRecipientNote",
       });
     },
   });
@@ -455,6 +480,12 @@ export function useMarkRecommendationsAsOpened(mediaTypeKey: MediaTypeKey) {
           const key = query.queryKey;
           return key[0] === "recommendations" && key.includes(mediaTypeKey);
         },
+      });
+    },
+    onError: (error) => {
+      logError(error, {
+        action: "mark_recommendations_opened",
+        component: "useMarkRecommendationsAsOpened",
       });
     },
   });

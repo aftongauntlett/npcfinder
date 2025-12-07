@@ -101,6 +101,83 @@ function sanitizeForProduction(arg: unknown): unknown {
   return arg;
 }
 
+/**
+ * Error logging context
+ */
+export interface ErrorContext {
+  action?: string;
+  component?: string;
+  userId?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Log error with context to Sentry
+ * @param error - Error object or message
+ * @param context - Additional context for debugging
+ */
+export function logError(error: unknown, context: ErrorContext = {}): void {
+  const { action, component, userId, ...extra } = context;
+
+  if (isProd && import.meta.env.VITE_SENTRY_DSN) {
+    // Create error object
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+
+    // Set Sentry context
+    if (userId) {
+      Sentry.setUser({ id: userId });
+    }
+
+    // Set tags for filtering in Sentry
+    const tags: Record<string, string> = {};
+    if (action) tags.action = action;
+    if (component) tags.component = component;
+
+    Sentry.captureException(errorObj, {
+      tags,
+      extra: sanitizeForProduction(extra) as Record<string, unknown>,
+    });
+  }
+
+  // Always log to console in dev
+  if (isDev) {
+    console.error(
+      "[Error]",
+      error,
+      context.action ? `[${context.action}]` : "",
+      context.component ? `[${context.component}]` : "",
+      extra
+    );
+  }
+}
+
+/**
+ * Add breadcrumb for tracking user actions
+ * @param message - Breadcrumb message
+ * @param category - Breadcrumb category (navigation, mutation, etc.)
+ * @param data - Additional data
+ */
+export function addBreadcrumb(
+  message: string,
+  category: string = "action",
+  data?: Record<string, unknown>
+): void {
+  if (isProd && import.meta.env.VITE_SENTRY_DSN) {
+    Sentry.addBreadcrumb({
+      message,
+      category,
+      level: "info",
+      data: data
+        ? (sanitizeForProduction(data) as Record<string, unknown>)
+        : undefined,
+    });
+  }
+
+  if (isDev) {
+    console.debug(`[Breadcrumb: ${category}]`, message, data);
+  }
+}
+
 export const logger = {
   debug: (...args: unknown[]) => {
     if (isDev) {

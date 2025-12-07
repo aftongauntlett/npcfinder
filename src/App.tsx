@@ -7,6 +7,7 @@ import AuthenticatedAppLayout from "./components/layouts/AuthenticatedAppLayout"
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { AdminProvider } from "./contexts/AdminContext";
+import ErrorBoundary from "./components/shared/ui/ErrorBoundary";
 
 // Authenticated App Wrapper
 const AuthenticatedApp: React.FC = () => {
@@ -36,7 +37,12 @@ const AuthenticatedApp: React.FC = () => {
         element={
           user ? (
             <AdminProvider>
-              <AuthenticatedAppLayout user={user} />
+              <ErrorBoundary
+                fallbackTitle="App Error"
+                fallbackMessage="The application encountered an error. Your data is safe. Please try again."
+              >
+                <AuthenticatedAppLayout user={user} />
+              </ErrorBoundary>
             </AdminProvider>
           ) : (
             <Navigate to="/login" replace />
@@ -53,25 +59,27 @@ const AuthenticatedApp: React.FC = () => {
 // Main App component
 const App: React.FC = () => {
   return (
-    <BrowserRouter>
-      <ThemeProvider>
-        <Routes>
-          {/* Public routes - NO AUTH REQUIRED */}
-          <Route path="/" element={<DemoLanding />} />
-          <Route path="/docs" element={<DeveloperDocs />} />
+    <ErrorBoundary>
+      <BrowserRouter>
+        <ThemeProvider>
+          <Routes>
+            {/* Public routes - NO AUTH REQUIRED */}
+            <Route path="/" element={<DemoLanding />} />
+            <Route path="/docs" element={<DeveloperDocs />} />
 
-          {/* All authenticated routes wrapped in AuthProvider */}
-          <Route
-            path="/*"
-            element={
-              <AuthProvider>
-                <AuthenticatedApp />
-              </AuthProvider>
-            }
-          />
-        </Routes>
-      </ThemeProvider>
-    </BrowserRouter>
+            {/* All authenticated routes wrapped in AuthProvider */}
+            <Route
+              path="/*"
+              element={
+                <AuthProvider>
+                  <AuthenticatedApp />
+                </AuthProvider>
+              }
+            />
+          </Routes>
+        </ThemeProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 };
 

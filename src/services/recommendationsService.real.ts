@@ -62,8 +62,11 @@ export async function getRecommendations(
   const { data, error } = await query;
 
   if (error) {
-    logger.error("Failed to fetch recommendations", { error });
-    return [];
+    logger.error("Failed to fetch recommendations", {
+      error,
+      action: "get_recommendations",
+    });
+    throw error;
   }
 
   return data || [];
@@ -492,8 +495,11 @@ export async function getBookRecommendations(
   const { data, error } = await query;
 
   if (error) {
-    logger.error("Failed to fetch book recommendations", { error });
-    return [];
+    logger.error("Failed to fetch book recommendations", {
+      error,
+      action: "get_book_recommendations",
+    });
+    throw error;
   }
 
   return data || [];
@@ -644,7 +650,16 @@ export async function getGameRecommendations(
 
   const { data, error } = await query;
 
-  if (error) throw error;
+  if (error) {
+    logger.error("Failed to fetch game recommendations", {
+      error,
+      action: "get_game_recommendations",
+      currentUserId,
+      direction: options.direction,
+      status: options.status,
+    });
+    throw error;
+  }
 
   return (data as GameRecommendationWithNames[]) || [];
 }
@@ -663,7 +678,15 @@ export async function getGameRecommendationsFromFriend(
     .eq("from_user_id", friendId)
     .order("created_at", { ascending: false });
 
-  if (error) throw error;
+  if (error) {
+    logger.error("Failed to fetch game recommendations from friend", {
+      error,
+      action: "get_game_recommendations_from_friend",
+      currentUserId,
+      friendId,
+    });
+    throw error;
+  }
 
   return (data as GameRecommendationWithNames[]) || [];
 }

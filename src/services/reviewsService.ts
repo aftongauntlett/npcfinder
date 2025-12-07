@@ -184,7 +184,7 @@ export async function getFriendsReviews(
     return reviewsWithUsers;
   } catch (error) {
     logger.error("Error fetching friends reviews:", error);
-    return []; // Return empty array on error instead of throwing
+    throw error;
   }
 }
 
@@ -252,8 +252,7 @@ export async function getFriendsMediaReviews(
     return [];
   } catch (error) {
     logger.error("Error fetching friends' media reviews:", error);
-    // Return empty array on error for non-critical data
-    return [];
+    throw error;
   }
 }
 
