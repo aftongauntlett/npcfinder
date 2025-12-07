@@ -17,11 +17,14 @@ NPC Finder uses a database-driven invite system with email validation. Admin sta
 
 ### Admin Authorization
 
-**Important:** Admin status is determined by the `is_admin` field in the `user_profiles` table, NOT by JWT claims.
+**Important:** Admin status is determined by the `role` field in the `user_profiles` table, NOT by JWT claims. The `is_admin` column exists as a generated column for backward compatibility.
 
-- Frontend queries the database to check admin status
-- RLS policies enforce database-level access control
+- Frontend queries the database to check admin status using the `role` field
+- RLS policies enforce database-level access control based on roles
 - No reliance on JWT claims for authorization
+- Roles: `user` (default), `admin`, `super_admin`
+
+See [ROLE-SYSTEM.md](ROLE-SYSTEM.md) for complete role system documentation.
 
 ### Create Invite Codes
 
@@ -62,11 +65,19 @@ Admin status must be set in the database:
 ```sql
 -- Run in Supabase SQL Editor
 UPDATE user_profiles
-SET is_admin = true
+SET role = 'admin'
 WHERE email = 'friend@example.com';
 ```
 
-**Security:** Triggers prevent users from granting themselves admin privileges. Only existing admins can modify admin status (enforced at database level).
+**Alternative:** Use the super admin configuration script:
+
+```bash
+npm run admin:configure
+```
+
+This script creates a super admin user with enhanced privileges (cannot be demoted by triggers).
+
+**Security:** Database triggers prevent users from granting themselves admin privileges. Only existing admins can modify admin status (enforced at database level). Super admin role is protected and cannot be changed except by other super admins.
 
 ## For New Users
 
@@ -279,7 +290,7 @@ CREATE TABLE invite_code_audit_log (
 
 ```sql
 -- Run in Supabase SQL Editor
-SELECT is_admin FROM user_profiles WHERE email = 'your@email.com';
+SELECT role, is_admin FROM user_profiles WHERE email = 'your@email.com';
 ```
 
 **Solution:** Ask an existing admin to update your profile.
@@ -290,8 +301,8 @@ SELECT is_admin FROM user_profiles WHERE email = 'your@email.com';
 
 **Check:**
 
-1. Verify `is_admin = true` in database
+1. Verify `role IN ('admin', 'super_admin')` in database
 2. Check browser console for detailed error logs
 3. Verify RLS policies include admin overrides
 
-**Remember:** Admin status comes from database, not JWT claims!
+**Remember:** Admin status comes from database `role` field, not JWT claims!

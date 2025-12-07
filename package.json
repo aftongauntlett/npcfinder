@@ -1,7 +1,7 @@
 {
   "name": "npc-finder",
   "private": true,
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Your personal dashboard for entertainment, music, games, tasks, and memories. Track, organize, and curate your life with flexible board-based task management.",
   "author": "Afton Gauntlett",
   "type": "module",

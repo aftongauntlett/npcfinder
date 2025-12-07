@@ -49,24 +49,7 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 
 Find these in: Supabase Dashboard > Settings > API
 
-**Optional: Development Database Setup**
-
-For safe database development, create a second Supabase project for development:
-
-1. Create another Supabase project (free tier allows multiple projects)
-2. Run the baseline migration on this dev project too
-3. Add dev credentials to `.env.local`:
-
-```bash
-VITE_SUPABASE_DEV_URL=your-dev-project-url
-VITE_SUPABASE_DEV_ANON_KEY=your-dev-anon-key
-SUPABASE_DEV_PROJECT_REF=your-dev-project-ref
-SUPABASE_PROD_PROJECT_REF=your-prod-project-ref
-```
-
-When running `npm run dev` (Vite development mode), the app will automatically use the dev database. This protects your production data during development.
-
-Find project refs in: Supabase Dashboard → Project Settings → General → Reference ID
+**Note**: This project works directly with production database via Supabase CLI. All database operations target the linked production project.
 
 See [API-SETUP.md](API-SETUP.md) for complete API key setup (TMDB, Google Books, OMDB, iTunes).
 
@@ -78,7 +61,7 @@ npm run dev
 
 ### 5. Create First Admin
 
-**Important:** Admin status is determined by the `is_admin` field in the `user_profiles` table, NOT by JWT claims. The frontend queries the database to check admin status.
+**Important:** Admin status is determined by the `role` field in the `user_profiles` table (with `is_admin` as a generated column for backward compatibility). The frontend queries the database to check admin status.
 
 1. Sign up through the app (use any email)
 2. In Supabase Dashboard: SQL Editor
@@ -86,11 +69,21 @@ npm run dev
 
 ```sql
 UPDATE user_profiles
-SET is_admin = true
+SET role = 'admin'
 WHERE email = 'your-email@example.com';
 ```
 
+**Alternative:** Use the super admin configuration script:
+
+```bash
+npm run admin:configure
+```
+
+This script will prompt you for an email and create a super admin user with enhanced privileges.
+
 4. Refresh the app - you should now have access to the Admin Panel
+
+**Note:** See [ROLE-SYSTEM.md](ROLE-SYSTEM.md) for complete role system documentation and details about `user`, `admin`, and `super_admin` roles.
 
 ### 6. Generate Invite Codes
 

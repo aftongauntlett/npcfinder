@@ -15,12 +15,12 @@
 ## Database & Migration Rules
 
 - Never suggest editing existing migration files in `supabase/migrations/`
-- Never suggest running `db:reset:dev` or `db:push:prod` without explicit user confirmation
+- Never suggest running `db:push` without explicit user confirmation
 - Never suggest dropping tables or columns without discussing data preservation
 - Always create new forward-only migrations for schema changes
-- Always test migrations on dev database first (`npm run db:reset:dev` to verify full chain)
+- Always test migrations carefully in Supabase Dashboard UI before capturing as migrations
 - Never suggest bypassing RLS policies or removing security constraints
 - The baseline migration (`0001_baseline.sql`) is the production source of truth - never modify it
-- Always use the diff workflow: make UI changes in Supabase Dashboard, then `npm run db:diff:dev` to generate migration SQL
+- Always use the diff workflow: make UI changes in Supabase Dashboard, then `npm run db:diff` to generate migration SQL
 - Never make manual schema changes in the Supabase SQL editor - always use the diff workflow
-- Use npm scripts (`db:push:dev`, `db:push:prod`, etc.) which auto-handle project refs - never suggest raw `npx supabase` commands
+- Use npm scripts (`db:push`, `db:diff`, etc.) which auto-handle project refs - never suggest raw `npx supabase` commands

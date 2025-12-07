@@ -54,8 +54,8 @@ When migrations are required: never edit old migrations; create a new one using 
 
 Database Operations (CRITICAL):
 
-- This project works DIRECTLY in production (no local dev database)
-- NEVER suggest running `supabase start` or local database - laptop too slow
+- This project works DIRECTLY with production database via linked Supabase CLI
+- NEVER suggest running `supabase start` or local database
 - ALWAYS use npm scripts for database operations:
   - `npm run db:push` - Apply migrations to production
   - `npm run db:migration:list` - List applied migrations
@@ -64,7 +64,6 @@ Database Operations (CRITICAL):
   - `npm run db:pull` - Pull current schema from production
 - Migration workflow: 1) Make changes in Supabase Dashboard UI, 2) Run `npm run db:diff`, 3) Create new migration with `npm run db:migration:new <name>`, 4) Copy diff SQL into migration file, 5) Apply with `npm run db:push`
 - All scripts use VITE_SUPABASE_PROJECT_REF from .env.local
-- We work in production/live - no local dev database
 
 When a Traycer plan is provided, follow 10-traycer-handoff.md. If anything is unclear, ask first; otherwise propose a minimal plan, then implement and summarize.
 

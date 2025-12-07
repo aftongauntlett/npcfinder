@@ -13,12 +13,11 @@ This project uses **database migrations** to manage schema changes in a version-
 
 ### ⚠️ Single Production Database Workflow
 
-**CRITICAL**: This project works DIRECTLY in production - there is no separate local dev database.
+**CRITICAL**: This project works DIRECTLY with production database via linked Supabase CLI.
 
 - **Linked Project**: All `db:*` commands operate on the Supabase project linked via CLI
-- **Why**: Laptop is too slow for local Supabase development (`supabase start` not used)
 - **How**: Changes are made carefully in Supabase Dashboard UI, then captured via migrations
-- **Config**: Uses `VITE_SUPABASE_PROJECT_REF` from `.env.local` for linking
+- **Config**: Uses `VITE_SUPABASE_PROJECT_REF` from `.env.local` for linking (the only project ref needed)
 
 ### Migration Philosophy
 
@@ -139,7 +138,7 @@ The `db:push` command applies all pending migrations to the linked project.
    npm run db:push
    ```
 
-   This will link to production and apply all pending migrations.
+   This will apply all pending migrations to the linked production database.
 
 7. **Verify the migration works**
 
@@ -147,7 +146,7 @@ The `db:push` command applies all pending migrations to the linked project.
    - Test affected application features
    - Run your test suite: `npm run test`
 
-**Note**: This project works directly in production via a linked Supabase CLI project.
+**Note**: This project works directly with production database via a linked Supabase CLI project.
 All changes are made carefully in the Supabase Dashboard UI and tested thoroughly before capturing as migrations.
 
 ### Why This Workflow?
@@ -207,7 +206,7 @@ npm run db:migration:new add_user_preferences_table
 ### Checking Migration Status
 
 ```bash
-# List migrations for production database
+# List applied migrations
 npm run db:migration:list
 ```
 
@@ -216,11 +215,11 @@ Shows which migrations are pending vs. applied.
 ### Applying Migrations
 
 ```bash
-# Apply to PRODUCTION database
+# Apply pending migrations to linked database
 npm run db:push
 ```
 
-**Note**: This applies directly to production. Make changes carefully.
+**Note**: This applies to the linked production database. Make changes carefully.
 
 ### Checking Schema Differences
 

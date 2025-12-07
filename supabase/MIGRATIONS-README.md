@@ -30,8 +30,8 @@ This project follows a **strict forward-only migration approach**:
 
 - Use the baseline migration (`0001_baseline.sql`) as the foundation for all new databases
 - Create new migrations for all future schema changes using `supabase db diff`
-- Test migrations in development before applying to production
-- Reset your dev database freely using `npm run db:reset:dev`
+- Test migrations carefully in Supabase Dashboard UI before capturing them
+- Make schema changes in Dashboard UI, then use `npm run db:diff` to generate migration SQL
 
 ❌ **NEVER:**
 
@@ -57,14 +57,27 @@ This applies the baseline migration and all forward-only migrations in order.
 
 ### Creating Your First Admin User
 
-After pushing migrations to a fresh database:
+After pushing migrations to a fresh database, you need to create an admin user:
+
+**Option 1: Using the super admin script (recommended)**
 
 ```bash
-# Create bootstrap invite code
-npm run db:create-bootstrap-code
+npm run admin:configure
 ```
 
-The first user to sign up automatically receives admin privileges.
+This creates a super admin user with enhanced privileges that cannot be demoted.
+
+**Option 2: Manual SQL update**
+
+Sign up through the app, then run in Supabase SQL Editor:
+
+```sql
+UPDATE user_profiles
+SET role = 'admin'
+WHERE email = 'your-email@example.com';
+```
+
+See `docs/ROLE-SYSTEM.md` and `docs/QUICK-START.md` for complete role system documentation.
 
 ## Working with Migrations
 
@@ -99,11 +112,6 @@ The migration file captures those changes for version control and reproducibilit
 # List applied migrations for linked production database
 npm run db:migration:list
 ```
-
-### ⚠️ No Local Database Reset
-
-**This project does not use a local development database.**
-All operations are performed directly on the linked production database via Supabase CLI.
 
 ## Important Rules
 

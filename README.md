@@ -96,7 +96,7 @@ Optional external APIs for media metadata (TMDB, Google Books, OMDB, iTunes). Se
 - **XSS Protection**: All user content rendered as plain text
 - **Security Headers**: CSP, X-Frame-Options, and other protective headers
 
-**Important**: Admin status is determined by the `is_admin` field in the `user_profiles` table, NOT by JWT claims. The frontend queries the database to check admin status, and RLS policies enforce database-level access control.
+**Important**: Admin status is determined by the `role` field in the `user_profiles` table (with `is_admin` as a generated column for backward compatibility). The frontend queries the database to check admin status, and RLS policies enforce database-level access control.
 
 ### Available Scripts
 

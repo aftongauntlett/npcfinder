@@ -7,63 +7,82 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Security - 2025-12-07
+## [1.2.0] - 2025-12-07
 
-**Comprehensive Security Audit Implementation**
+### Changed - Database & Admin System Overhaul
 
-#### Fixed - High Priority
+**Role-Based Permission System**
 
-- **H1:** Removed database URL logging from production console output
-- **H2:** Implemented server-side rate limiting to prevent client-side bypass attacks
+- Migrated from boolean `is_admin` to enum-based `role` system
+  - New roles: `user` (default), `admin`, `super_admin`
+  - `is_admin` column converted to generated column for backward compatibility
+  - Super admin role protected by database triggers (cannot be demoted)
+- Added helper functions: `get_user_role()`, `is_admin()`, `is_super_admin()`
+- Updated all RLS policies to use role-based checks
+- Added `npm run admin:configure` script for super admin setup
+
+**Database Workflow Simplification**
+
+- Consolidated to single production database workflow
+- Removed dev/prod database split (project works directly with production via CLI)
+- Updated all npm scripts: `db:push`, `db:diff`, `db:migration:new` (removed dev/prod variants)
+- Clarified migration workflow in documentation
+
+**RLS Policy Alignment**
+
+- Fixed circular dependency in `user_profiles` SELECT policy
+- Updated all table policies to use `get_user_role()` instead of `is_admin()`
+- Added admin override policies to all user data tables
+- Restricted `app_config` access to admins only
+- Added comprehensive policy documentation
+
+**Security Improvements**
+
+- Server-side rate limiting (10 attempts/hour, 60min block)
   - Added `rate_limits` table and `check_rate_limit()` function
-  - Rate limits: 10 attempts per hour, 60 minute block duration
-- **M1:** Secured invite code validation with server-side rate limiting
-
-#### Fixed - Medium Priority
-
-- **M2:** Created super admin configuration script (`npm run admin:configure`)
-- **M3:** Implemented complete account deletion with GDPR compliance
-  - Added `delete-user` Edge Function to remove auth.users records
-  - Updated privacy.ts to call Edge Function for full deletion
-- **M4:** Integrated Sentry for production error tracking
-  - Errors no longer exposed in browser console
-  - Added sanitization before sending to Sentry
-  - New environment variable: `VITE_SENTRY_DSN`
-- **M5:** Removed unused `VITE_ADMIN_USER_ID` environment variable
-
-#### Added - Defense in Depth
-
-- **L1:** Created server-side validation helper library
-  - `verifyOwnership()` - Check resource ownership
-  - `verifyConnection()` - Verify user connections
-  - `verifyAdminStatus()` - Early admin validation
-  - `verifyBoardAccess()` - Board access validation
-- **L2:** Implemented admin audit logging
-  - New `admin_audit_log` table tracks all admin actions
+  - Secured invite code validation with rate limiting
+- Admin audit logging for all admin actions
+  - New `admin_audit_log` table tracks admin operations
   - Logged actions: view user list, grant/revoke admin status
-- **L3:** Removed debug information from scrape-url Edge Function in production
-- **L4-L5:** Added CSP violation reporting Edge Function
+- Super admin protection triggers (cannot be demoted except by other super admins)
+- Secure invite validation with rate limiting
+- Complete account deletion with GDPR compliance
+  - Added `delete-user` Edge Function with service role privileges
+- Integrated Sentry for production error tracking
+  - Errors sanitized before sending to Sentry
+  - New environment variable: `VITE_SENTRY_DSN`
+- Removed database URL logging from production console output
+- Removed unused `VITE_ADMIN_USER_ID` environment variable
+- Added CSP violation reporting Edge Function
+- Created server-side validation helper library
 
-#### Database Migrations
+**Documentation Updates**
 
-- `20251207000001_add_rate_limiting.sql` - Server-side rate limiting infrastructure
-- `20251207000002_secure_invite_validation_rate_limit.sql` - Secure invite validation
-- `20251207000003_add_audit_logging.sql` - Admin audit trail
+- Updated all docs to reflect role-based system
+- Corrected database workflow documentation
+- Removed outdated dev/prod references from all documentation
+- Added comprehensive role system documentation
+- Updated `.env.example` to remove obsolete project refs
 
-#### Edge Functions
+### Technical
 
-- `delete-user` - Complete account deletion with service role privileges
-- `csp-report` - CSP violation logging endpoint
-
-#### Documentation
-
-- Added `docs/SECURITY-AUDIT-IMPLEMENTATION.md` - Full implementation guide
-- Added `docs/SECURITY-IMPLEMENTATION-SUMMARY.md` - Quick reference
-- Added `docs/SECURITY-MIGRATION-GUIDE.md` - Deployment guide
+- **Migrations**:
+  - `20251207000001_add_rate_limiting.sql` - Server-side rate limiting
+  - `20251207000002_secure_invite_validation_rate_limit.sql` - Secure invite validation
+  - `20251207000003_add_audit_logging.sql` - Admin audit logging
+  - `20251207000005_add_role_system.sql` - Role enum and migration
+  - `20251207000006_update_rls_for_roles.sql` - RLS policy updates
+  - `20251207000007_align_baseline_super_admin_trigger.sql` - Super admin protection
+  - `20251207000010_assert_role_system_dependencies.sql` - Dependency validation
+  - `20251207000012_document_user_profiles_rls_design.sql` - RLS documentation
+- **Edge Functions**:
+  - `delete-user` - Complete account deletion
+  - `csp-report` - CSP violation logging
+- **Scripts**: `configure-super-admin.js` for super admin setup
+- **Context**: `AdminContext` updated to use role-based checks
+- **Libraries**: `admin.ts` updated with role helper functions, server-side validation helpers
 
 **Security Grade Improvement:** B+ → A
-
-All critical and medium-severity security issues resolved. No breaking changes.
 
 ---
 

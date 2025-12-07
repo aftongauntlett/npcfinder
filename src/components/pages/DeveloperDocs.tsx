@@ -235,14 +235,14 @@ const DeveloperDocs: React.FC = () => {
                   <strong>2. Run Migrations</strong>
                 </p>
                 <p className="text-gray-300 mt-4">
-                  Apply migrations using the CLI:
+                  Apply migrations to your linked production database:
                 </p>
                 <div className="bg-slate-900/60 border border-white/10 rounded-lg p-4 font-mono text-sm">
-                  <div className="text-gray-300">npm run db:push:dev</div>
+                  <div className="text-gray-300">npm run db:push</div>
                 </div>
                 <p className="text-gray-300 text-sm mt-2">
                   This applies the baseline (0001_baseline.sql) and all
-                  forward-only migrations.
+                  forward-only migrations to the linked production database.
                 </p>
 
                 <p className="text-gray-300 mt-4">
@@ -349,10 +349,22 @@ const DeveloperDocs: React.FC = () => {
                 <div className="bg-slate-900/60 border border-white/10 rounded-lg p-4 font-mono text-sm overflow-x-auto">
                   <div className="text-gray-300">
                     <div>UPDATE user_profiles</div>
-                    <div>SET is_admin = true</div>
+                    <div>SET role = 'admin'</div>
                     <div>WHERE email = 'your-email@example.com';</div>
                   </div>
                 </div>
+                <p className="text-gray-300 text-sm mt-2">
+                  Note:{" "}
+                  <code className="text-xs bg-slate-800 px-1.5 py-0.5 rounded">
+                    is_admin
+                  </code>{" "}
+                  is now a generated column for backward compatibility.
+                  Alternatively, use{" "}
+                  <code className="text-xs bg-slate-800 px-1.5 py-0.5 rounded">
+                    npm run admin:configure
+                  </code>{" "}
+                  to set up a super admin.
+                </p>
 
                 <p className="text-gray-300 mt-4">
                   <strong>Generating Invite Codes:</strong>
