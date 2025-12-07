@@ -45,7 +45,7 @@ const USER_MENU_ITEMS: NavItem[] = [
     label: "Admin Panel",
     icon: ShieldCheck,
     path: "/app/admin",
-    adminOnly: true,
+    requiredRole: "admin",
   },
   {
     id: "settings",
@@ -58,7 +58,7 @@ const USER_MENU_ITEMS: NavItem[] = [
 const Sidebar: React.FC<SidebarProps> = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAdmin } = useAdmin();
+  const { role } = useAdmin();
   const { isCollapsed, isMobile, setIsCollapsed } = useSidebar();
 
   const [showSignOutModal, setShowSignOutModal] = useState(false);
@@ -174,7 +174,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
             items={NAV_ITEMS}
             currentPath={location.pathname}
             isCollapsed={isCollapsed}
-            isAdmin={isAdmin}
+            role={role}
             onNavigate={handleNavigation}
           />
         </nav>
@@ -186,7 +186,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
               items={USER_MENU_ITEMS}
               currentPath={location.pathname}
               isCollapsed={isCollapsed}
-              isAdmin={isAdmin}
+              role={role}
               onNavigate={handleNavigation}
             />
 

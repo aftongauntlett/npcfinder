@@ -18,12 +18,12 @@ const verifyAdminAccess = async (): Promise<boolean> => {
 
     const { data: profile, error } = await supabase
       .from("user_profiles")
-      .select("is_admin")
+      .select("role")
       .eq("user_id", user.id)
       .single();
 
     if (error) {
-      logger.error("Failed to fetch admin profile for verification", {
+      logger.error("Failed to fetch user role for verification", {
         error,
         code: error.code,
         message: error.message,
@@ -32,10 +32,12 @@ const verifyAdminAccess = async (): Promise<boolean> => {
       return false;
     }
 
-    if (!profile?.is_admin) {
+    const isAdmin = ["admin", "super_admin"].includes(profile?.role || "user");
+
+    if (!isAdmin) {
       logger.warn(
         `Unauthorized admin operation attempted by user: ${user.id}`,
-        { isAdmin: profile?.is_admin }
+        { role: profile?.role }
       );
       return false;
     }
@@ -63,6 +65,8 @@ export interface UserProfile {
   display_name: string;
   email?: string;
   bio?: string;
+  role: "user" | "admin" | "super_admin";
+  /** @deprecated Use role field instead */
   is_admin?: boolean;
   created_at: string;
   updated_at: string;
@@ -176,12 +180,9 @@ export const getUsers = async (
 
   let query = supabase
     .from("user_profiles")
-    .select(
-      "user_id, display_name, email, bio, is_admin, created_at, updated_at",
-      {
-        count: "exact",
-      }
-    );
+    .select("user_id, display_name, email, bio, role, created_at, updated_at", {
+      count: "exact",
+    });
 
   // Apply search filter if there's a search term
   if (searchTerm.trim()) {
@@ -206,7 +207,7 @@ export const getUsers = async (
         display_name?: string;
         email?: string;
         bio?: string;
-        is_admin?: boolean;
+        role?: "user" | "admin" | "super_admin";
         created_at: string;
         updated_at: string;
       }) => ({
@@ -214,7 +215,8 @@ export const getUsers = async (
         display_name: profile.display_name || "No Name Set",
         email: profile.email,
         bio: profile.bio,
-        is_admin: profile.is_admin || false,
+        role: profile.role || "user",
+        is_admin: ["admin", "super_admin"].includes(profile.role || "user"),
         created_at: profile.created_at,
         updated_at: profile.updated_at,
       })

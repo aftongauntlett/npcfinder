@@ -32,7 +32,7 @@ const UserMenuDropdown: React.FC<UserMenuDropdownProps> = ({
 
   // Filter items based on admin status
   const visibleItems = items.filter((item) =>
-    item.adminOnly ? isAdmin : true
+    item.requiredRole ? isAdmin : true
   );
 
   // Expanded state: dropdown above user button

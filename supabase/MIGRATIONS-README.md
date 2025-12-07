@@ -127,6 +127,31 @@ This drops and recreates your dev database, then reapplies all migrations from s
 
 See `docs/DATABASE-MIGRATIONS.md` for detailed migration workflow and best practices.
 
+## Recent Migrations
+
+### Role System Migration (December 7, 2025)
+
+**Migration: `20251207_add_role_system.sql`**
+
+- Adds `user_role` enum type with three values: `user`, `admin`, `super_admin`
+- Adds `role` column to `user_profiles` table
+- Migrates existing `is_admin` boolean data to new role system
+- Sets super admin from `app_config` table
+- Creates helper functions: `get_user_role()`, `is_super_admin()`
+- Updates triggers for role-based protection
+- Maintains backward compatibility with generated `is_admin` column
+
+**Migration: `20251207_update_rls_for_roles.sql`**
+
+- Updates all RLS policies to use `get_user_role()` instead of `is_admin()`
+- Adds missing admin override policies to several tables
+- Restricts `app_config` table access to admins only (security fix)
+- Updates policies on: tasks, boards, watchlists, libraries, reviews, recommendations, connections
+- Adds comprehensive admin policies for: invite codes, audit logs, rate limits
+- Implements consistent role-based access patterns across all tables
+
+**See:** `docs/ROLE-SYSTEM.md` for complete role system documentation
+
 ⚠️ **NEVER edit the baseline migration**
 
 - `0001_baseline.sql` is the foundation

@@ -132,7 +132,7 @@ export async function verifyAdminStatus(userId: string): Promise<boolean> {
   try {
     const { data, error } = await supabase
       .from("user_profiles")
-      .select("is_admin")
+      .select("role")
       .eq("user_id", userId)
       .single();
 
@@ -141,7 +141,7 @@ export async function verifyAdminStatus(userId: string): Promise<boolean> {
       return false;
     }
 
-    return data?.is_admin ?? false;
+    return ["admin", "super_admin"].includes(data?.role || "user");
   } catch (error) {
     logger.error("Admin status verification error", { error, userId });
     return false;

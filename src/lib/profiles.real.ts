@@ -14,7 +14,7 @@ export interface UserProfile {
   profile_picture_url: string | null;
   visible_cards?: string[]; // Array of card IDs to show on dashboard
   theme_color?: string; // User's chosen theme color (hex code)
-  is_admin?: boolean; // Admin privileges
+  role?: "user" | "admin" | "super_admin"; // User role
   created_at?: string;
   updated_at?: string;
 }
@@ -87,11 +87,8 @@ export const upsertUserProfile = async (
       updateData.theme_color = profileData.theme_color;
     }
 
-    // Only include is_admin if explicitly provided
-    // This prevents accidentally changing admin status when updating other fields
-    if (profileData.is_admin !== undefined) {
-      updateData.is_admin = profileData.is_admin;
-    }
+    // Note: role is managed by admin functions, not through profile updates
+    // Do not allow role changes through this function
 
     const { data, error } = await supabase
       .from("user_profiles")

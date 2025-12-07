@@ -4,8 +4,12 @@ import { useAuth } from "./AuthContext";
 import { supabase } from "../lib/supabase";
 import { logger } from "@/lib/logger";
 
+export type UserRole = "user" | "admin" | "super_admin";
+
 interface AdminContextType {
+  role: UserRole;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   isLoading: boolean;
   refreshAdminStatus: () => Promise<void>;
 }
@@ -14,7 +18,7 @@ const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 /**
  * AdminProvider with TanStack Query
- * Prevents duplicate queries by caching admin status check
+ * Prevents duplicate queries by caching role status check
  */
 export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -22,39 +26,39 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Use TanStack Query to check admin status (cached, deduplicated)
-  // SECURITY: Admin status determined ONLY by database, no fallback to environment variables
-  const { data: isAdmin = false, isLoading } = useQuery({
-    queryKey: ["admin-status", user?.id],
+  // Use TanStack Query to check role status (cached, deduplicated)
+  // SECURITY: Role determined ONLY by database, no fallback to environment variables
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ["user-role", user?.id],
     queryFn: async () => {
-      if (!user) return false;
+      if (!user) return null;
 
       try {
-        // Check database for admin status
+        // Check database for role
         const { data, error } = await supabase
           .from("user_profiles")
-          .select("is_admin")
+          .select("role")
           .eq("user_id", user.id)
           .maybeSingle();
 
         if (error) {
           // SECURITY: Fail closed - if database check fails, treat as non-admin
-          logger.error("Admin check query failed", {
+          logger.error("Role check query failed", {
             code: error.code,
             userId: user.id,
           });
-          return false;
+          return null;
         }
 
-        // If no profile exists yet, treat as non-admin (fail closed)
-        return data?.is_admin || false;
+        // If no profile exists yet, treat as regular user (fail closed)
+        return data;
       } catch (error) {
         // SECURITY: Fail closed on any error
-        logger.error("Failed to check admin status, treating as non-admin", {
+        logger.error("Failed to check user role, treating as regular user", {
           error,
           userId: user?.id,
         });
-        return false;
+        return null;
       }
     },
     enabled: !!user, // Only run query when user exists
@@ -64,19 +68,23 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
     retryDelay: 1000, // Wait 1 second between retries
   });
 
-  // Function to manually refresh admin status (e.g., after toggling admin)
+  const role: UserRole = (profile?.role as UserRole) || "user";
+  const isAdmin = ["admin", "super_admin"].includes(role);
+  const isSuperAdmin = role === "super_admin";
+
+  // Function to manually refresh role status (e.g., after toggling admin)
   const refreshAdminStatus = useMemo(
     () => async () => {
       await queryClient.invalidateQueries({
-        queryKey: ["admin-status", user?.id],
+        queryKey: ["user-role", user?.id],
       });
     },
     [queryClient, user?.id]
   );
 
   const value = useMemo(
-    () => ({ isAdmin, isLoading, refreshAdminStatus }),
-    [isAdmin, isLoading, refreshAdminStatus]
+    () => ({ role, isAdmin, isSuperAdmin, isLoading, refreshAdminStatus }),
+    [role, isAdmin, isSuperAdmin, isLoading, refreshAdminStatus]
   );
 
   return (

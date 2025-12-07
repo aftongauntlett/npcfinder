@@ -152,20 +152,20 @@ export function useRevokeInviteCode() {
 }
 
 /**
- * Mutation: Toggle admin status for a user
+ * Mutation: Update user role (admin/user)
  */
-export function useToggleAdminStatus() {
+export function useToggleUserRole() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({
       userId,
-      makeAdmin,
+      newRole,
     }: {
       userId: string;
-      makeAdmin: boolean;
+      newRole: "user" | "admin";
     }) => {
-      const result = await adminLib.toggleUserAdminStatus(userId, makeAdmin);
+      const result = await adminLib.updateUserRole(userId, newRole);
       if (!result.success) throw new Error(result.error);
       return result;
     },
@@ -174,4 +174,12 @@ export function useToggleAdminStatus() {
       void queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
     },
   });
+}
+
+/**
+ * @deprecated Use useToggleUserRole instead
+ * Mutation: Toggle admin status for a user (legacy function)
+ */
+export function useToggleAdminStatus() {
+  return useToggleUserRole();
 }

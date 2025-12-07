@@ -26,12 +26,13 @@ import { useAdmin } from "../../../contexts/AdminContext";
 import {
   useAdminStats,
   useAdminUsers,
-  useToggleAdminStatus,
+  useToggleUserRole,
   useInviteCodes,
   useCreateInviteCode,
   useRevokeInviteCode,
 } from "../../../hooks/useAdminQueries";
 import type { InviteCode } from "../../../lib/inviteCodes";
+import type { UserRole } from "../../../contexts/AdminContext";
 import { format } from "date-fns";
 
 interface User {
@@ -39,7 +40,7 @@ interface User {
   display_name: string;
   email?: string;
   bio?: string;
-  is_admin?: boolean;
+  role: UserRole;
   created_at: string;
   updated_at: string;
 }
@@ -48,19 +49,20 @@ interface User {
  * Consolidated Admin Page - User management, invite codes, and security
  */
 const AdminPage: React.FC = () => {
-  const { refreshAdminStatus } = useAdmin();
+  const { isSuperAdmin, refreshAdminStatus } = useAdmin();
 
   // User list pagination and search
   const [userSearch, setUserSearch] = useState<string>("");
   const [userPage, setUserPage] = useState<number>(0);
   const USERS_PER_PAGE = 5;
 
-  // Admin toggle modal state
-  const [showAdminToggleModal, setShowAdminToggleModal] = useState(false);
+  // Role toggle modal state
+  const [showRoleToggleModal, setShowRoleToggleModal] = useState(false);
   const [userToToggle, setUserToToggle] = useState<{
     id: string;
     name: string;
-    isAdmin: boolean;
+    currentRole: UserRole;
+    newRole: "user" | "admin";
   } | null>(null);
 
   // Invite code state
@@ -90,7 +92,7 @@ const AdminPage: React.FC = () => {
   const { data: codes = [], isLoading: codesLoading } = useInviteCodes();
 
   // Mutations
-  const toggleAdminMutation = useToggleAdminStatus();
+  const toggleRoleMutation = useToggleUserRole();
   const createCodeMutation = useCreateInviteCode();
   const revokeMutation = useRevokeInviteCode();
 
@@ -98,30 +100,28 @@ const AdminPage: React.FC = () => {
   const users = usersData?.users || [];
   const totalUserPages = usersData?.totalPages || 0;
 
-  // Identify master admin (first user created - bootstrap admin)
-  const masterAdminId =
-    users.length > 0
-      ? users.reduce((earliest, user) =>
-          new Date(user.created_at) < new Date(earliest.created_at)
-            ? user
-            : earliest
-        ).id
-      : null;
-
-  // Check if user is master admin (first user created)
-  const isMasterAdmin = useCallback(
+  // Check if user can be demoted based on role
+  const canDemoteUser = useCallback(
     (user: User) => {
-      return user.id === masterAdminId && user.is_admin;
+      // Super admin cannot be demoted
+      if (user.role === "super_admin") return false;
+      // Only super admin can demote other admins
+      if (user.role === "admin" && !isSuperAdmin) return false;
+      return true;
     },
-    [masterAdminId]
+    [isSuperAdmin]
   );
 
   // User Management Handlers
-  const handleToggleAdminClick = useCallback(
+  const handleToggleRoleClick = useCallback(
     (user: User) => {
-      // Prevent demoting master admin
-      if (user.is_admin && isMasterAdmin(user)) {
-        setToastMessage("Cannot remove admin privileges from Master Admin");
+      // Check if user can be demoted
+      if (!canDemoteUser(user)) {
+        const reason =
+          user.role === "super_admin"
+            ? "Cannot modify super admin role"
+            : "Only super admin can demote other admins";
+        setToastMessage(reason);
         setShowToast(true);
         return;
       }
@@ -129,31 +129,32 @@ const AdminPage: React.FC = () => {
       setUserToToggle({
         id: user.id,
         name: user.display_name,
-        isAdmin: user.is_admin || false,
+        currentRole: user.role,
+        newRole: user.role === "admin" ? "user" : "admin",
       });
-      setShowAdminToggleModal(true);
+      setShowRoleToggleModal(true);
     },
-    [isMasterAdmin]
+    [canDemoteUser]
   );
 
-  const confirmToggleAdmin = useCallback(async () => {
+  const confirmToggleRole = useCallback(async () => {
     if (!userToToggle) return;
 
     try {
-      await toggleAdminMutation.mutateAsync({
+      await toggleRoleMutation.mutateAsync({
         userId: userToToggle.id,
-        makeAdmin: !userToToggle.isAdmin,
+        newRole: userToToggle.newRole,
       });
 
       await refreshAdminStatus();
-      setShowAdminToggleModal(false);
+      setShowRoleToggleModal(false);
       setUserToToggle(null);
     } catch (error) {
       logger.error("Failed to toggle admin status", error);
       setToastMessage("An unexpected error occurred");
       setShowToast(true);
     }
-  }, [userToToggle, toggleAdminMutation, refreshAdminStatus]);
+  }, [userToToggle, toggleRoleMutation, refreshAdminStatus]);
 
   // Invite Code Handlers
   const handleCreateCode = useCallback(async () => {
@@ -425,35 +426,48 @@ const AdminPage: React.FC = () => {
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              {user.is_admin ? (
+                              {user.role === "super_admin" ? (
                                 <Button
-                                  onClick={() => handleToggleAdminClick(user)}
-                                  disabled={isMasterAdmin(user)}
+                                  disabled
                                   variant="primary"
                                   size="sm"
                                   className="gap-1.5"
-                                  aria-label={
-                                    isMasterAdmin(user)
-                                      ? "Master Admin cannot be demoted"
-                                      : "Click to remove admin"
-                                  }
-                                  title={
-                                    isMasterAdmin(user)
-                                      ? "Master Admin cannot be demoted"
-                                      : "Click to remove admin"
-                                  }
+                                  aria-label="Super Admin - cannot be demoted"
+                                  title="Super Admin - cannot be demoted"
                                 >
                                   <Shield
                                     className="w-3.5 h-3.5"
                                     aria-hidden="true"
                                   />
-                                  {isMasterAdmin(user)
-                                    ? "Master Admin"
-                                    : "Admin"}
+                                  Super Admin
+                                </Button>
+                              ) : user.role === "admin" ? (
+                                <Button
+                                  onClick={() => handleToggleRoleClick(user)}
+                                  disabled={!isSuperAdmin}
+                                  variant="primary"
+                                  size="sm"
+                                  className="gap-1.5"
+                                  aria-label={
+                                    !isSuperAdmin
+                                      ? "Only super admin can demote admins"
+                                      : "Click to remove admin privileges"
+                                  }
+                                  title={
+                                    !isSuperAdmin
+                                      ? "Only super admin can demote admins"
+                                      : "Click to remove admin privileges"
+                                  }
+                                >
+                                  <ShieldCheck
+                                    className="w-3.5 h-3.5"
+                                    aria-hidden="true"
+                                  />
+                                  Admin
                                 </Button>
                               ) : (
                                 <Button
-                                  onClick={() => handleToggleAdminClick(user)}
+                                  onClick={() => handleToggleRoleClick(user)}
                                   variant="subtle"
                                   size="sm"
                                   aria-label="Click to make admin"
@@ -508,30 +522,45 @@ const AdminPage: React.FC = () => {
                             Joined:{" "}
                             {new Date(user.created_at).toLocaleDateString()}
                           </div>
-                          {user.is_admin ? (
+                          {user.role === "super_admin" ? (
                             <Button
-                              onClick={() => handleToggleAdminClick(user)}
-                              disabled={isMasterAdmin(user)}
+                              disabled
+                              variant="primary"
+                              size="sm"
+                              className="gap-1.5"
+                              aria-label="Super Admin - cannot be demoted"
+                              title="Super Admin - cannot be demoted"
+                            >
+                              <Shield className="w-4 h-4" aria-hidden="true" />
+                              Super Admin
+                            </Button>
+                          ) : user.role === "admin" ? (
+                            <Button
+                              onClick={() => handleToggleRoleClick(user)}
+                              disabled={!isSuperAdmin}
                               variant="primary"
                               size="sm"
                               className="gap-1.5"
                               aria-label={
-                                isMasterAdmin(user)
-                                  ? "Master Admin cannot be demoted"
-                                  : "Click to remove admin"
+                                !isSuperAdmin
+                                  ? "Only super admin can demote admins"
+                                  : "Click to remove admin privileges"
                               }
                               title={
-                                isMasterAdmin(user)
-                                  ? "Master Admin cannot be demoted"
-                                  : "Click to remove admin"
+                                !isSuperAdmin
+                                  ? "Only super admin can demote admins"
+                                  : "Click to remove admin privileges"
                               }
                             >
-                              <Shield className="w-4 h-4" aria-hidden="true" />
-                              {isMasterAdmin(user) ? "Master Admin" : "Admin"}
+                              <ShieldCheck
+                                className="w-4 h-4"
+                                aria-hidden="true"
+                              />
+                              Admin
                             </Button>
                           ) : (
                             <Button
-                              onClick={() => handleToggleAdminClick(user)}
+                              onClick={() => handleToggleRoleClick(user)}
                               variant="subtle"
                               size="sm"
                               aria-label="Click to make admin"
@@ -921,30 +950,32 @@ const AdminPage: React.FC = () => {
           </section>
         </div>
 
-        {/* Admin Toggle Confirmation Modal */}
+        {/* Role Toggle Confirmation Modal */}
         <ConfirmationModal
-          isOpen={showAdminToggleModal}
+          isOpen={showRoleToggleModal}
           onClose={() => {
-            setShowAdminToggleModal(false);
+            setShowRoleToggleModal(false);
             setUserToToggle(null);
           }}
-          onConfirm={() => void confirmToggleAdmin()}
+          onConfirm={() => void confirmToggleRole()}
           title={
-            userToToggle?.isAdmin
-              ? "Remove Admin Privileges"
-              : "Grant Admin Privileges"
+            userToToggle?.newRole === "admin"
+              ? "Grant Admin Privileges"
+              : "Remove Admin Privileges"
           }
           message={
             userToToggle
-              ? userToToggle.isAdmin
-                ? `Are you sure you want to remove admin privileges from ${userToToggle.name}? They will no longer have access to the admin panel.`
-                : `Are you sure you want to grant admin privileges to ${userToToggle.name}? They will have full access to manage users and invite codes.`
+              ? userToToggle.newRole === "admin"
+                ? `Are you sure you want to grant admin privileges to ${userToToggle.name}? They will have full access to manage users and invite codes.`
+                : `Are you sure you want to remove admin privileges from ${userToToggle.name}? They will no longer have access to the admin panel.`
               : ""
           }
-          confirmText={userToToggle?.isAdmin ? "Remove Admin" : "Grant Admin"}
+          confirmText={
+            userToToggle?.newRole === "admin" ? "Grant Admin" : "Remove Admin"
+          }
           cancelText="Cancel"
           variant="danger"
-          isLoading={toggleAdminMutation.isPending}
+          isLoading={toggleRoleMutation.isPending}
         />
 
         {/* Revoke Code Confirmation Modal */}
