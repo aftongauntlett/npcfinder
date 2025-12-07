@@ -744,6 +744,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                   None
                 </button>
                 <DatePicker
+                  id="task-due-date"
                   selected={dueDate}
                   onChange={(date) => setDueDate(date)}
                   dateFormat="MMM d, yyyy"

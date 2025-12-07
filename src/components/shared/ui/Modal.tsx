@@ -13,6 +13,7 @@ interface ModalProps {
   showCloseButton?: boolean;
   closeOnBackdropClick?: boolean;
   showHeader?: boolean; // New prop to control header rendering
+  ariaLabelledby?: string; // Optional custom aria-labelledby for modals with custom headers
 }
 
 /**
@@ -40,6 +41,7 @@ const Modal: React.FC<ModalProps> = ({
   showCloseButton = true,
   closeOnBackdropClick = true,
   showHeader = true,
+  ariaLabelledby,
 }) => {
   const { isCollapsed, isMobile } = useSidebar();
 
@@ -111,7 +113,9 @@ const Modal: React.FC<ModalProps> = ({
               onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-modal="true"
-              aria-labelledby={title ? "modal-title" : undefined}
+              aria-labelledby={
+                ariaLabelledby || (title ? "modal-title" : undefined)
+              }
             >
               {/* Header - Only show if showHeader is true and (title or close button requested) */}
               {showHeader && (title || showCloseButton) && (

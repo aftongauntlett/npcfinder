@@ -46,6 +46,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       title=""
       maxWidth="md"
       showHeader={false}
+      ariaLabelledby="confirm-dialog-title"
     >
       <div className="p-6">
         <div className="flex items-start gap-4 mb-4">
@@ -62,10 +63,14 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                   ? "text-red-600 dark:text-red-400"
                   : "text-yellow-600 dark:text-yellow-400"
               }`}
+              aria-hidden="true"
             />
           </div>
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            <h3
+              id="confirm-dialog-title"
+              className="text-lg font-semibold text-gray-900 dark:text-white mb-2"
+            >
               {title}
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">

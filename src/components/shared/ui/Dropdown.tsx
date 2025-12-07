@@ -187,7 +187,10 @@ const Dropdown: React.FC<DropdownProps> = ({
                 {option.label}
               </span>
               {isSelected(option.id) && (
-                <Check className="w-4 h-4 text-primary flex-shrink-0" />
+                <Check
+                  className="w-4 h-4 text-primary flex-shrink-0"
+                  aria-hidden="true"
+                />
               )}
             </button>
           ))}

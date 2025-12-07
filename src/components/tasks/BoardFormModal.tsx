@@ -400,6 +400,10 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
             <div ref={templateDropdownRef} className="relative">
               <button
                 type="button"
+                role="combobox"
+                aria-expanded={showTemplateDropdown}
+                aria-controls="template-dropdown-menu"
+                aria-haspopup="listbox"
                 onClick={() =>
                   !preselectedTemplate &&
                   setShowTemplateDropdown(!showTemplateDropdown)
@@ -429,7 +433,11 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
               </button>
 
               {showTemplateDropdown && (
-                <div className="absolute left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 max-h-[300px] overflow-y-auto">
+                <div
+                  id="template-dropdown-menu"
+                  role="listbox"
+                  className="absolute left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 max-h-[300px] overflow-y-auto"
+                >
                   {(
                     [
                       {
@@ -462,6 +470,8 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
                     <button
                       key={option.value}
                       type="button"
+                      role="option"
+                      aria-selected={templateType === option.value}
                       onClick={() => {
                         handleTemplateChange(option.value);
                         setShowTemplateDropdown(false);
@@ -482,6 +492,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
+                            aria-hidden="true"
                           >
                             <path
                               strokeLinecap="round"
@@ -517,6 +528,10 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
               <div className="relative" ref={iconDropdownRef}>
                 <button
                   type="button"
+                  role="combobox"
+                  aria-expanded={showIconDropdown}
+                  aria-controls="icon-dropdown-menu"
+                  aria-haspopup="listbox"
                   onClick={() => setShowIconDropdown(!showIconDropdown)}
                   className="w-full flex items-center justify-between px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
                 >
@@ -536,9 +551,15 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
                   <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
                 </button>
                 {showIconDropdown && (
-                  <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  <div
+                    id="icon-dropdown-menu"
+                    role="listbox"
+                    className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                  >
                     <button
                       type="button"
+                      role="option"
+                      aria-selected={!iconName}
                       onClick={() => {
                         setIconName("");
                         setShowIconDropdown(false);
@@ -551,6 +572,8 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
                       <button
                         key={label}
                         type="button"
+                        role="option"
+                        aria-selected={iconName === label}
                         onClick={() => {
                           setIconName(label);
                           setShowIconDropdown(false);

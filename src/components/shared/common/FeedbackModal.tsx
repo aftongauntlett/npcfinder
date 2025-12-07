@@ -93,7 +93,10 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose }) => {
       {/* Content */}
       {success ? (
         <div className="flex flex-col items-center justify-center py-8 text-center">
-          <CheckCircle className="w-16 h-16 text-green-500 mb-4" />
+          <CheckCircle
+            className="w-16 h-16 text-green-500 mb-4"
+            aria-hidden="true"
+          />
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
             Thank you!
           </h3>

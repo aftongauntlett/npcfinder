@@ -38,7 +38,12 @@ const Toast: React.FC<ToastProps> = ({
 
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-slide-up">
-      <div className="bg-gray-900 dark:bg-gray-800 text-white rounded-lg shadow-2xl border border-gray-700 dark:border-gray-600 px-4 py-3 flex items-center gap-3 min-w-[320px] max-w-md">
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="bg-gray-900 dark:bg-gray-800 text-white rounded-lg shadow-2xl border border-gray-700 dark:border-gray-600 px-4 py-3 flex items-center gap-3 min-w-[320px] max-w-md"
+      >
         <span className="flex-1 text-sm font-medium">{message}</span>
         {action && (
           <Button

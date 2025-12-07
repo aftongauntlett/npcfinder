@@ -80,6 +80,7 @@ const SearchMovieModal: React.FC<SearchMovieModalProps> = ({
       {/* Search Input */}
       <div className="p-6 border-b border-gray-200 dark:border-gray-700">
         <Input
+          id="movie-search"
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}

@@ -281,58 +281,52 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
     >
       <form onSubmit={handleSubmit} className="p-6 space-y-5">
         {/* URL Input with Scraping */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Recipe URL (Optional)
-          </label>
-          <div className="relative">
-            <Input
-              type="url"
-              value={url}
-              onChange={(e) => void handleUrlChange(e.target.value)}
-              placeholder="Paste a recipe URL to auto-fill details..."
-              leftIcon={
-                urlLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Link className="w-4 h-4" />
-                )
-              }
-            />
-            {urlFeedback && (
-              <div
-                className={`mt-2 flex items-start gap-2 text-sm ${
-                  urlFeedback.type === "success"
-                    ? "text-green-600 dark:text-green-400"
-                    : urlFeedback.type === "warning"
-                    ? "text-yellow-600 dark:text-yellow-400"
-                    : "text-red-600 dark:text-red-400"
-                }`}
-              >
-                {urlFeedback.type === "success" ? (
-                  <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                ) : (
-                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                )}
-                <span>{urlFeedback.message}</span>
-              </div>
-            )}
-          </div>
+        <div className="relative">
+          <Input
+            id="recipe-url"
+            label="Recipe URL (Optional)"
+            type="url"
+            value={url}
+            onChange={(e) => void handleUrlChange(e.target.value)}
+            placeholder="Paste a recipe URL to auto-fill details..."
+            leftIcon={
+              urlLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Link className="w-4 h-4" />
+              )
+            }
+          />
+          {urlFeedback && (
+            <div
+              className={`mt-2 flex items-start gap-2 text-sm ${
+                urlFeedback.type === "success"
+                  ? "text-green-600 dark:text-green-400"
+                  : urlFeedback.type === "warning"
+                  ? "text-yellow-600 dark:text-yellow-400"
+                  : "text-red-600 dark:text-red-400"
+              }`}
+            >
+              {urlFeedback.type === "success" ? (
+                <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              ) : (
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              )}
+              <span>{urlFeedback.message}</span>
+            </div>
+          )}
         </div>
 
         {/* Recipe Name */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Recipe Name <span className="text-red-500">*</span>
-          </label>
-          <Input
-            type="text"
-            value={recipeName}
-            onChange={(e) => setRecipeName(e.target.value)}
-            placeholder="e.g., Chocolate Chip Cookies"
-            required
-          />
-        </div>
+        <Input
+          id="recipe-name"
+          label="Recipe Name"
+          type="text"
+          value={recipeName}
+          onChange={(e) => setRecipeName(e.target.value)}
+          placeholder="e.g., Chocolate Chip Cookies"
+          required
+        />
 
         {/* Description */}
         <Textarea
@@ -367,53 +361,41 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
 
         {/* Time Fields Row */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Prep Time
-            </label>
-            <Input
-              type="text"
-              value={prepTime}
-              onChange={(e) => setPrepTime(e.target.value)}
-              placeholder="15 mins"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Cook Time
-            </label>
-            <Input
-              type="text"
-              value={cookTime}
-              onChange={(e) => setCookTime(e.target.value)}
-              placeholder="30 mins"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Total Time
-            </label>
-            <Input
-              type="text"
-              value={totalTime}
-              onChange={(e) => setTotalTime(e.target.value)}
-              placeholder="45 mins"
-            />
-          </div>
+          <Input
+            id="prep-time"
+            label="Prep Time"
+            type="text"
+            value={prepTime}
+            onChange={(e) => setPrepTime(e.target.value)}
+            placeholder="15 mins"
+          />
+          <Input
+            id="cook-time"
+            label="Cook Time"
+            type="text"
+            value={cookTime}
+            onChange={(e) => setCookTime(e.target.value)}
+            placeholder="30 mins"
+          />
+          <Input
+            id="total-time"
+            label="Total Time"
+            type="text"
+            value={totalTime}
+            onChange={(e) => setTotalTime(e.target.value)}
+            placeholder="45 mins"
+          />
         </div>
 
         {/* Servings */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Servings
-          </label>
-          <Input
-            type="text"
-            value={servings}
-            onChange={(e) => setServings(e.target.value)}
-            placeholder="e.g., 4-6 servings"
-          />
-        </div>
+        <Input
+          id="servings"
+          label="Servings"
+          type="text"
+          value={servings}
+          onChange={(e) => setServings(e.target.value)}
+          placeholder="e.g., 4-6 servings"
+        />
 
         {/* Ingredients */}
         <Textarea
