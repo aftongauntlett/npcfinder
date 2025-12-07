@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import Button from "../../shared/ui/Button";
 import { RecipeCard } from "../../shared/cards";
 import { Pagination } from "../../shared/common/Pagination";
+import { EmptyStateAddCard } from "../../shared";
 import { usePagination } from "../../../hooks/usePagination";
 import FilterSortMenu from "../../shared/common/FilterSortMenu";
 import type { FilterSortSection } from "../../shared/common/FilterSortMenu";
@@ -143,21 +144,13 @@ export const RecipeListView: React.FC<RecipeListViewProps> = ({
     <div className="space-y-4 px-2 sm:px-0">
       {sortedTasks.length === 0 ? (
         /* Empty State Card */
-        <div
-          onClick={() => onCreateTask()}
-          className="flex flex-col items-center justify-center py-16 px-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-primary-500 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-all"
-        >
-          <div className="w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mb-4">
-            <Plus className="w-8 h-8 text-primary-600 dark:text-primary-400" />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-            Add Your First Recipe
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400 text-center max-w-sm">
-            Save and organize your favorite recipes. Paste a recipe URL or
-            manually enter details.
-          </p>
-        </div>
+        <EmptyStateAddCard
+          icon={Plus}
+          title="Add Your First Recipe"
+          description="Save and organize your favorite recipes. Paste a recipe URL or manually enter details."
+          onClick={onCreateTask}
+          ariaLabel="Add your first recipe"
+        />
       ) : (
         <>
           {/* Toolbar */}

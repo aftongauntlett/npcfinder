@@ -1,7 +1,7 @@
 import React from "react";
 import { User, ThumbsUp, ThumbsDown, ArrowLeft } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import MediaEmptyState from "../../media/MediaEmptyState";
+// MediaEmptyState removed - using inline static content for non-interactive empty state
 import type { BaseRecommendation, FriendSummary } from "../types";
 
 interface QuickStats {
@@ -136,11 +136,17 @@ export function MediaRecommendationsLayout<T extends BaseRecommendation>({
         </div>
 
         {friendsWithRecs.length === 0 ? (
-          <MediaEmptyState
-            icon={mediaIcon}
-            title={emptyMessage}
-            description={emptySubMessage}
-          />
+          <div className="bg-gray-800/50 border-2 border-gray-700 rounded-xl px-16 py-20 text-center">
+            {React.createElement(mediaIcon, {
+              className: "w-16 h-16 mb-6 text-gray-400 mx-auto",
+            })}
+            <h3 className="text-lg font-semibold text-white mb-3">
+              {emptyMessage}
+            </h3>
+            <p className="text-sm text-gray-400 max-w-md mx-auto">
+              {emptySubMessage}
+            </p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {friendsWithRecs.map((friend) => (

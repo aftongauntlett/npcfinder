@@ -8,7 +8,7 @@
 import React, { useState, useMemo } from "react";
 import { Plus, LayoutGrid, Briefcase, ChefHat, ListTodo } from "lucide-react";
 import Button from "../../shared/ui/Button";
-import MediaEmptyState from "../../media/MediaEmptyState";
+import { EmptyStateAddCard } from "../../shared";
 import BoardFormModal from "../../tasks/BoardFormModal";
 import BoardCard from "../../tasks/BoardCard";
 import { JobTrackerView } from "../../tasks/views/JobTrackerView";
@@ -227,16 +227,23 @@ const TemplateView: React.FC<TemplateViewProps> = ({
   }, [boards, activeFilters.sort]);
 
   if (boards.length === 0) {
-    // For singleton types, board will be auto-created, so just show loading or empty content state
+    // For singleton types, board will be auto-created, so just show static informational state
     if (!allowsMultipleBoards) {
+      const Icon = meta.icon;
       return (
         <div className="container mx-auto px-4 sm:px-6">
-          <MediaEmptyState
-            icon={meta.icon}
-            title={meta.emptyTitle}
-            description={meta.emptyDescription}
-            ariaLabel={`${meta.title} - will be created automatically when you add your first item`}
-          />
+          <div className="bg-gray-800/50 border-2 border-gray-700 rounded-xl px-16 py-20 text-center">
+            <Icon className="w-16 h-16 mb-6 text-gray-400 mx-auto" />
+            <h3 className="text-lg font-semibold text-white mb-3">
+              {meta.emptyTitle}
+            </h3>
+            <p className="text-sm text-gray-400 max-w-md mx-auto">
+              {meta.emptyDescription}
+            </p>
+            <p className="text-xs text-gray-500 mt-4">
+              Board will be created automatically when you add your first item
+            </p>
+          </div>
         </div>
       );
     }
@@ -244,7 +251,7 @@ const TemplateView: React.FC<TemplateViewProps> = ({
     // For multi-board types (kanban, markdown), show create board option
     return (
       <div className="container mx-auto px-4 sm:px-6">
-        <MediaEmptyState
+        <EmptyStateAddCard
           icon={meta.icon}
           title={meta.emptyTitle}
           description={meta.emptyDescription}

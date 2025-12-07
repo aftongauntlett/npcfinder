@@ -9,7 +9,7 @@ import { CalendarClock, Plus } from "lucide-react";
 import TaskCard from "../../tasks/TaskCard";
 import CreateTaskModal from "../../tasks/CreateTaskModal";
 import TaskDetailModal from "../../tasks/TaskDetailModal";
-import MediaEmptyState from "../../media/MediaEmptyState";
+import { EmptyStateAddCard } from "../../shared";
 import Button from "../../shared/ui/Button";
 import { Pagination } from "../../shared/common/Pagination";
 import { useGroupedPagination } from "../../../hooks/useGroupedPagination";
@@ -84,11 +84,12 @@ const UpcomingView: React.FC = () => {
     return (
       <>
         <div className="mt-6">
-          <MediaEmptyState
+          <EmptyStateAddCard
             icon={CalendarClock}
             title="No upcoming tasks"
             description="You don't have any tasks scheduled for the future. Add due dates to your tasks to see them here."
             onClick={() => setShowCreateModal(true)}
+            ariaLabel="Add a task with due date"
           />
         </div>
 

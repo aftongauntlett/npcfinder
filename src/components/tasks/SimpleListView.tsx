@@ -8,6 +8,7 @@ import { useRef } from "react";
 import { useTasks } from "../../hooks/useTasksQueries";
 import { usePagination } from "../../hooks/usePagination";
 import { Pagination } from "../shared/common/Pagination";
+import { EmptyStateAddCard } from "../shared";
 import type { Task } from "../../services/tasksService.types";
 import TaskCard from "./TaskCard";
 import Button from "../shared/ui/Button";
@@ -65,20 +66,14 @@ const SimpleListView: React.FC<SimpleListViewProps> = ({
       {/* Task List */}
       <div className="flex-1 flex flex-col">
         {sortedTasks.length === 0 ? (
-          <button
-            onClick={() => onCreateTask()}
-            className="flex-1 min-h-[400px] border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-12 text-center hover:border-primary hover:bg-primary/5 transition-all duration-200 cursor-pointer group"
-          >
-            <div className="flex flex-col items-center gap-3">
-              <Plus className="w-16 h-16 text-gray-400 dark:text-gray-500 group-hover:text-primary transition-colors" />
-              <p className="text-lg text-gray-600 dark:text-gray-400 font-medium group-hover:text-primary transition-colors">
-                No tasks yet
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-500 group-hover:text-primary transition-colors">
-                Click here to add your first task
-              </p>
-            </div>
-          </button>
+          <EmptyStateAddCard
+            icon={Plus}
+            title="No tasks yet"
+            description="Click here to add your first task"
+            onClick={onCreateTask}
+            ariaLabel="Add your first task"
+            className="min-h-[400px]"
+          />
         ) : (
           <>
             <div className="space-y-2 px-2">

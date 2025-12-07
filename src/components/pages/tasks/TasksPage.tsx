@@ -22,6 +22,7 @@ import AppLayout from "../../layouts/AppLayout";
 import InboxView from "./InboxView";
 import TemplateView from "./TemplateView";
 import GroceryListView from "../../tasks/views/GroceryListView";
+import { EmptyStateAddCard } from "../../shared";
 import CreateTaskModal from "../../tasks/CreateTaskModal";
 import RecipeFormModal from "../../tasks/RecipeFormModal";
 import TaskDetailModal from "../../tasks/TaskDetailModal";
@@ -198,6 +199,7 @@ const TasksPage: React.FC = () => {
         {selectedView === "grocery" && (
           <>
             {groceryBoards.length === 0 && sharedGroceryBoards.length === 0 ? (
+              // No boards at all - show TemplateView empty state
               <TemplateView
                 templateType="grocery"
                 boards={groceryBoards}
@@ -206,38 +208,51 @@ const TasksPage: React.FC = () => {
               />
             ) : (
               <div className="container mx-auto px-4 sm:px-6">
-                <div className="space-y-8">
-                  {/* Owned Boards */}
-                  {groceryBoards.length > 0 && (
-                    <div className="space-y-6">
-                      {groceryBoards.map((board) => (
-                        <GroceryListView
-                          key={board.id}
-                          board={board}
-                          onEditTask={handleEditTask}
-                          isReadOnly={false}
-                        />
-                      ))}
-                    </div>
-                  )}
+                {/* Check if ALL boards are empty */}
+                {groceryTaskCount === 0 ? (
+                  // All boards are empty - show single unified empty state
+                  <EmptyStateAddCard
+                    icon={ShoppingCart}
+                    title="No items yet"
+                    description="Add your first grocery item to get started"
+                    onClick={() => handleCreateTask()}
+                    ariaLabel="Add your first grocery item"
+                  />
+                ) : (
+                  // At least one board has items - show all boards
+                  <div className="space-y-8">
+                    {/* Owned Boards */}
+                    {groceryBoards.length > 0 && (
+                      <div className="space-y-6">
+                        {groceryBoards.map((board) => (
+                          <GroceryListView
+                            key={board.id}
+                            board={board}
+                            onEditTask={handleEditTask}
+                            isReadOnly={false}
+                          />
+                        ))}
+                      </div>
+                    )}
 
-                  {/* Shared Boards */}
-                  {sharedGroceryBoards.length > 0 && (
-                    <div className="space-y-6">
-                      <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                        Shared with Me
-                      </h2>
-                      {sharedGroceryBoards.map((board) => (
-                        <GroceryListView
-                          key={board.id}
-                          board={board}
-                          onEditTask={handleEditTask}
-                          isReadOnly={true}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
+                    {/* Shared Boards */}
+                    {sharedGroceryBoards.length > 0 && (
+                      <div className="space-y-6">
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                          Shared with Me
+                        </h2>
+                        {sharedGroceryBoards.map((board) => (
+                          <GroceryListView
+                            key={board.id}
+                            board={board}
+                            onEditTask={handleEditTask}
+                            isReadOnly={true}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </>

@@ -13,7 +13,7 @@ import {
 } from "../../hooks/useTasksQueries";
 import type { Task } from "../../services/tasksService.types";
 import KanbanColumn from "./KanbanColumn";
-import EmptyState from "../shared/ui/EmptyState";
+import { EmptyStateAddCard } from "../shared";
 
 interface KanbanBoardProps {
   boardId: string;
@@ -97,12 +97,12 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
   if (sections.length === 0) {
     return (
-      <EmptyState
+      <EmptyStateAddCard
         icon={Plus}
         title="No sections in this board yet"
         description="Add your first task to get started"
-        actionLabel="Add First Task"
-        onAction={() => onCreateTask()}
+        onClick={() => onCreateTask()}
+        ariaLabel="Add your first task to this board"
         className="min-h-[400px]"
       />
     );

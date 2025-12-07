@@ -6,7 +6,7 @@ import { useTasks } from "../../../hooks/useTasksQueries";
 import type { Task } from "../../../services/tasksService.types";
 import type { StatusHistoryEntry } from "../../../services/tasksService.types";
 import { Briefcase } from "lucide-react";
-import EmptyState from "../../shared/common/EmptyState";
+import { EmptyStateAddCard } from "../../shared";
 
 interface JobTrackerViewProps {
   boardId: string;
@@ -81,14 +81,12 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
     <div className="px-2 sm:px-0">
       <div ref={listTopRef} />
       {jobApplications.length === 0 ? (
-        <EmptyState
+        <EmptyStateAddCard
           icon={Briefcase}
           title="Add Your First Job Application"
           description="Track your job search progress. Paste a job posting URL or manually enter details."
-          action={{
-            label: "Add Job Application",
-            onClick: onCreateTask,
-          }}
+          onClick={onCreateTask}
+          ariaLabel="Add your first job application"
         />
       ) : (
         <>

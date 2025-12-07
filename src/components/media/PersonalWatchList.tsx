@@ -7,10 +7,10 @@ import {
   type SortOption,
   type MediaItem,
   Pagination,
+  EmptyStateAddCard,
 } from "@/components/shared";
 import { logger } from "@/lib/logger";
 import MediaListItem from "./MediaListItem";
-import MediaEmptyState from "./MediaEmptyState";
 import ConfirmationModal from "../shared/ui/ConfirmationModal";
 import { useMediaFiltering } from "../../hooks/useMediaFiltering";
 import { searchMoviesAndTV } from "../../utils/mediaSearchAdapters";
@@ -309,7 +309,7 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
       {/* Content: List or Empty State */}
       {!hasItemsForCurrentFilter ? (
         // Empty state when no items for current filter
-        <MediaEmptyState
+        <EmptyStateAddCard
           icon={Film}
           title="Your Movie & TV list is empty"
           description="You haven't added any movies or TV shows to your list yet. Add content to start tracking what you're currently watching!"

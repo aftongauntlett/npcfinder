@@ -5,7 +5,7 @@ import { FilterSortSection } from "../../shared/common/FilterSortMenu";
 import { MediaItem } from "../../shared/media/SendMediaModal";
 import SearchMusicModal from "../../shared/search/SearchMusicModal";
 import MusicDetailModal from "./MusicDetailModal";
-import MediaEmptyState from "../../media/MediaEmptyState";
+import { EmptyStateAddCard } from "../../shared";
 import MediaListItem from "../../media/MediaListItem";
 import SendMediaModal from "../../shared/media/SendMediaModal";
 import ConfirmationModal from "../../shared/ui/ConfirmationModal";
@@ -294,7 +294,7 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
 
       {/* List View */}
       {currentMusic.length === 0 ? (
-        <MediaEmptyState
+        <EmptyStateAddCard
           icon={Music}
           title={emptyStateProps.title}
           description={emptyStateProps.message}

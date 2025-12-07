@@ -9,7 +9,7 @@ import React, { useState, useMemo } from "react";
 import { Plus, Share2, Check } from "lucide-react";
 import Button from "../../shared/ui/Button";
 import Chip from "../../shared/ui/Chip";
-import MediaEmptyState from "../../media/MediaEmptyState";
+import { EmptyStateAddCard } from "../../shared";
 import ShareBoardModal from "../ShareBoardModal";
 import FilterSortMenu from "../../shared/common/FilterSortMenu";
 import type { FilterSortSection } from "../../shared/common/FilterSortMenu";
@@ -177,7 +177,7 @@ const GroceryListView: React.FC<GroceryListViewProps> = ({
     <div className="space-y-4 px-2 sm:px-0">
       {/* Empty State */}
       {!hasItems && (
-        <MediaEmptyState
+        <EmptyStateAddCard
           icon={Plus}
           title="No items yet"
           description="Add your first grocery item to get started"

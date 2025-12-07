@@ -9,7 +9,7 @@ import { Plus, ListTodo, SlidersHorizontal } from "lucide-react";
 import TaskCard from "../../tasks/TaskCard";
 import CreateTaskModal from "../../tasks/CreateTaskModal";
 import TaskDetailModal from "../../tasks/TaskDetailModal";
-import MediaEmptyState from "../../media/MediaEmptyState";
+import { EmptyStateAddCard } from "../../shared";
 import Button from "../../shared/ui/Button";
 import { Pagination } from "../../shared/common/Pagination";
 import { useGroupedPagination } from "../../../hooks/useGroupedPagination";
@@ -121,19 +121,25 @@ const TodayView: React.FC = () => {
     return (
       <>
         <div className="mt-6">
-          <MediaEmptyState
-            icon={ListTodo}
-            title="Your task list is empty"
-            description={
-              boards.length === 0
-                ? "Create a board first in the Boards tab to organize your tasks!"
-                : "You haven't added any tasks yet. Add tasks to start tracking what you're currently working on!"
-            }
-            onClick={
-              boards.length > 0 ? () => setShowCreateModal(true) : undefined
-            }
-            ariaLabel={boards.length > 0 ? "Add your first task" : undefined}
-          />
+          {boards.length > 0 ? (
+            <EmptyStateAddCard
+              icon={ListTodo}
+              title="Your task list is empty"
+              description="You haven't added any tasks yet. Add tasks to start tracking what you're currently working on!"
+              onClick={() => setShowCreateModal(true)}
+              ariaLabel="Add your first task"
+            />
+          ) : (
+            <div className="bg-gray-800/50 border-2 border-gray-700 rounded-xl px-16 py-20 text-center">
+              <ListTodo className="w-16 h-16 mb-6 text-gray-400 mx-auto" />
+              <h3 className="text-lg font-semibold text-white mb-3">
+                Your task list is empty
+              </h3>
+              <p className="text-sm text-gray-400 max-w-md mx-auto">
+                Create a board first in the Boards tab to organize your tasks!
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Modals */}

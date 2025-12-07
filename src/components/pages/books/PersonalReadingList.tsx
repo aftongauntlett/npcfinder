@@ -4,7 +4,7 @@ import { Pagination } from "../../shared/common/Pagination";
 import { MediaItem } from "../../shared/media/SendMediaModal";
 import SearchBookModal from "../../shared/search/SearchBookModal";
 import BookDetailModal from "./BookDetailModal";
-import MediaEmptyState from "../../media/MediaEmptyState";
+import { EmptyStateAddCard } from "../../shared";
 import MediaListItem from "../../media/MediaListItem";
 import { FilterSortSection } from "../../shared/common/FilterSortMenu";
 import SendMediaModal from "../../shared/media/SendMediaModal";
@@ -308,7 +308,7 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
 
       {/* Content: List or Empty State */}
       {!hasItemsForCurrentFilter ? (
-        <MediaEmptyState
+        <EmptyStateAddCard
           icon={BookOpen}
           title={emptyStateProps.title}
           description={emptyStateProps.message}

@@ -12,7 +12,7 @@ import CreateTaskModal from "../../tasks/CreateTaskModal";
 import TaskDetailModal from "../../tasks/TaskDetailModal";
 import Button from "../../shared/ui/Button";
 import Chip from "../../shared/ui/Chip";
-import MediaEmptyState from "../../media/MediaEmptyState";
+import { EmptyStateAddCard } from "../../shared";
 import ConfirmationModal from "../../shared/ui/ConfirmationModal";
 import { Pagination } from "../../shared/common/Pagination";
 import { usePagination } from "../../../hooks/usePagination";
@@ -255,7 +255,7 @@ const InboxView: React.FC = () => {
   if (tasks.length === 0) {
     return (
       <div className="container mx-auto px-4 sm:px-6">
-        <MediaEmptyState
+        <EmptyStateAddCard
           icon={ListChecks}
           title="No tasks yet"
           description="Create quick one-off tasks here, or organize larger projects in boards."

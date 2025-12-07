@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo } from "react";
 import { Gamepad2 } from "lucide-react";
 import { Pagination } from "../../shared/common/Pagination";
-import MediaEmptyState from "../../media/MediaEmptyState";
+import { EmptyStateAddCard } from "../../shared";
 import MediaListItem from "../../media/MediaListItem";
 import { FilterSortSection } from "../../shared/common/FilterSortMenu";
 import { MediaPageToolbar } from "../../shared/media/MediaPageToolbar";
@@ -292,7 +292,7 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
   if (gameLibrary.length === 0) {
     return (
       <div className="container mx-auto px-4 sm:px-6">
-        <MediaEmptyState
+        <EmptyStateAddCard
           icon={Gamepad2}
           title="Your Game list is empty"
           description="You haven't added any games to your list yet. Add games to start tracking what you're currently playing!"
@@ -351,7 +351,7 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
 
       {/* Game List */}
       {gameLibrary.length === 0 ? (
-        <MediaEmptyState
+        <EmptyStateAddCard
           icon={Gamepad2}
           title="Your Game list is empty"
           description="You haven't added any games to your list yet. Add games to start tracking what you're currently playing!"
@@ -359,7 +359,7 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
           ariaLabel="Add your first game"
         />
       ) : paginatedItems.length === 0 ? (
-        <MediaEmptyState
+        <EmptyStateAddCard
           icon={Gamepad2}
           title={
             filter === "to-play"
