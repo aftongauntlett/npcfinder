@@ -89,8 +89,12 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       "--color-text-on-primary",
       colorVariations.textOnPrimary
     );
-  }, [themeColor]);
 
+    // Force a repaint to ensure all components see the new CSS variables immediately
+    // This is necessary because Tailwind classes using var(--color-primary)
+    // don't automatically trigger React re-renders when CSS variables change
+    void root.offsetHeight; // Trigger reflow/repaint
+  }, [themeColor]);
   const changeTheme = useCallback((newTheme: ThemeOption) => {
     setTheme(newTheme);
     try {

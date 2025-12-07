@@ -106,7 +106,8 @@ export const queryKeys = {
   // to ensure proper invalidation when using queryClient.invalidateQueries
   tasks: {
     all: ["tasks"] as const,
-    boards: () => [...queryKeys.tasks.all, "boards"] as const,
+    boards: (userId?: string) =>
+      [...queryKeys.tasks.all, "boards", userId] as const,
     board: (boardId: string) =>
       [...queryKeys.tasks.all, "board", boardId] as const,
     boardSections: (boardId: string) =>
@@ -127,7 +128,8 @@ export const queryKeys = {
       [...queryKeys.tasks.all, "upcoming-reminders", daysAhead] as const,
     boardShares: (boardId: string) =>
       [...queryKeys.tasks.all, "board-shares", boardId] as const,
-    sharedBoards: () => [...queryKeys.tasks.all, "shared-boards"] as const,
+    sharedBoards: (userId?: string) =>
+      [...queryKeys.tasks.all, "shared-boards", userId] as const,
   },
 
   // Singleton boards for global collections

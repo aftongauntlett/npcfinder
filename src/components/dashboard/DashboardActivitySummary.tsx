@@ -54,7 +54,7 @@ export const DashboardActivitySummary: React.FC<
   // Note: Only includes boards owned by the user, matching useDashboardStats behavior.
   // Shared boards are shown in the "Shared" count but not in the aggregate totals.
   const { data: taskBoards } = useQuery({
-    queryKey: queryKeys.tasks.boards(),
+    queryKey: ["tasks", "boards"], // Use prefix pattern to avoid cache collisions between users
     queryFn: async () => {
       const { data, error } = await supabase
         .from("task_boards_with_stats")

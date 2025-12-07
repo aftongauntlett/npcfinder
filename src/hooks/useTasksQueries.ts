@@ -34,7 +34,7 @@ export function useBoards() {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: queryKeys.tasks.boards(),
+    queryKey: queryKeys.tasks.boards(user?.id),
     queryFn: async () => {
       const { data, error } = await tasksService.getBoardsWithStats();
       if (error) throw error;
@@ -96,7 +96,7 @@ export function useCreateBoard() {
 
     onSuccess: (data) => {
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.tasks.boards(),
+        queryKey: ["tasks", "boards"],
       });
       // Also invalidate the specific board query for the newly created board
       void queryClient.invalidateQueries({
@@ -155,7 +155,7 @@ export function useUpdateBoard() {
 
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.tasks.boards(),
+        queryKey: ["tasks", "boards"],
       });
     },
   });
@@ -175,7 +175,7 @@ export function useDeleteBoard() {
 
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.tasks.boards(),
+        queryKey: ["tasks", "boards"],
       });
     },
   });
@@ -200,7 +200,7 @@ export function useReorderBoards() {
 
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.tasks.boards(),
+        queryKey: ["tasks", "boards"],
       });
     },
   });
@@ -462,7 +462,7 @@ export function useCreateTask() {
         queryKey: queryKeys.tasks.todayTasks(user?.id),
       });
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.tasks.boards(),
+        queryKey: ["tasks", "boards"],
       });
     },
   });
@@ -549,7 +549,7 @@ export function useUpdateTask() {
         queryKey: queryKeys.tasks.todayTasks(user?.id),
       });
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.tasks.boards(),
+        queryKey: ["tasks", "boards"],
       });
     },
   });
@@ -576,7 +576,7 @@ export function useDeleteTask() {
         queryKey: queryKeys.tasks.todayTasks(user?.id),
       });
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.tasks.boards(),
+        queryKey: ["tasks", "boards"],
       });
     },
   });
@@ -612,7 +612,7 @@ export function useMoveTask() {
         queryKey: queryKeys.tasks.boardTasks(data.board_id),
       });
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.tasks.boards(),
+        queryKey: ["tasks", "boards"],
       });
     },
   });
@@ -726,7 +726,7 @@ export function useToggleTaskStatus() {
         queryKey: queryKeys.tasks.todayTasks(user?.id),
       });
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.tasks.boards(),
+        queryKey: ["tasks", "boards"],
       });
     },
   });
@@ -757,7 +757,7 @@ export function useArchiveTask() {
         queryKey: queryKeys.tasks.archivedTasks(user?.id),
       });
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.tasks.boards(),
+        queryKey: ["tasks", "boards"],
       });
     },
   });
@@ -975,7 +975,7 @@ export function useSharedBoards() {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: queryKeys.tasks.sharedBoards(),
+    queryKey: queryKeys.tasks.sharedBoards(user?.id),
     queryFn: async () => {
       const { data, error } = await tasksService.getSharedBoards();
       // Gracefully handle permission errors - board_shares may not be accessible

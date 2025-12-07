@@ -6,6 +6,7 @@ import React, {
   useMemo,
 } from "react";
 import type { User } from "@supabase/supabase-js";
+import { useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser, onAuthStateChange } from "../lib/auth";
 
 interface AuthContextValue {
@@ -30,24 +31,28 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     void checkUser();
 
     const { data: authListener } = onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setUser(session.user);
-      } else {
-        setUser(null);
+      const newUser = session?.user ?? null;
+      const userChanged = user?.id !== newUser?.id;
+
+      // Clear all cached queries when user changes (logout, login, or account switch)
+      if (userChanged && !loading) {
+        queryClient.clear();
       }
 
+      setUser(newUser);
       setLoading(false);
     });
 
     return () => {
       authListener?.subscription?.unsubscribe();
     };
-  }, []);
+  }, [user?.id, loading, queryClient]);
 
   const checkUser = async () => {
     try {

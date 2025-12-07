@@ -169,6 +169,9 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
     setIsSaving(true);
     setMessage(null);
 
+    // Apply theme color IMMEDIATELY before saving to ensure UI updates
+    changeThemeColor(profile.theme_color);
+
     try {
       // Use updateUserProfile instead of upsert since profile should already exist
       const { error } = await updateUserProfile(currentUser.id, profile);
@@ -178,7 +181,6 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
         logger.debug("Saving to localStorage (database table not set up yet)");
         // Save theme color to localStorage
         localStorage.setItem("themeColor", profile.theme_color);
-        changeThemeColor(profile.theme_color);
         setHasUnsavedChanges(false);
         setMessage({ type: "success", text: "Settings saved locally!" });
         // Navigate back to dashboard after successful save
@@ -193,8 +195,6 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
           queryKey: ["user-profile", currentUser.id],
         });
 
-        // Apply theme color immediately after save
-        changeThemeColor(profile.theme_color);
         setHasUnsavedChanges(false);
         setMessage({ type: "success", text: "Profile updated successfully!" });
         // Navigate back to dashboard after successful save
@@ -206,7 +206,6 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
       logger.error("Error saving profile:", error);
       // Fall back to localStorage
       localStorage.setItem("themeColor", profile.theme_color);
-      changeThemeColor(profile.theme_color);
       setHasUnsavedChanges(false);
       setMessage({ type: "success", text: "Settings saved locally!" });
       setTimeout(() => {

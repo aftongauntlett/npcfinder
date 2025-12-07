@@ -16,8 +16,9 @@ export function invalidateAllTaskQueries(
   void queryClient.invalidateQueries({
     queryKey: queryKeys.tasks.all,
   });
+  // Invalidate all boards queries (will match all user-specific variants)
   void queryClient.invalidateQueries({
-    queryKey: queryKeys.tasks.boards(),
+    queryKey: ["tasks", "boards"],
   });
   if (userId) {
     void queryClient.invalidateQueries({
@@ -43,8 +44,9 @@ export function invalidateBoardQueries(
     });
   }
 
+  // Invalidate all boards queries (will match all user-specific variants)
   void queryClient.invalidateQueries({
-    queryKey: queryKeys.tasks.boards(),
+    queryKey: ["tasks", "boards"],
   });
 
   if (userId) {
