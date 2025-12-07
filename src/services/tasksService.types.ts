@@ -194,6 +194,25 @@ export interface BoardWithStats extends Board {
   overdue_tasks: number;
 }
 
+/**
+ * Admin-specific type for board with user information
+ * Used in admin panel to view all users' boards
+ */
+export interface BoardWithStatsAdmin extends BoardWithStats {
+  user_email?: string;
+  user_display_name?: string;
+}
+
+/**
+ * Admin-specific type for task with user and board information
+ * Used in admin panel to view all users' tasks
+ */
+export interface TaskAdmin extends Task {
+  user_email?: string;
+  user_display_name?: string;
+  board_title?: string;
+}
+
 export interface ServiceResponse<T> {
   data: T | null;
   error: Error | null;

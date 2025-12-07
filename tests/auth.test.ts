@@ -18,6 +18,7 @@ vi.mock("../src/lib/supabase", () => ({
       getUser: vi.fn(),
       getSession: vi.fn(),
     },
+    rpc: vi.fn(),
   },
 }));
 
@@ -36,6 +37,12 @@ describe("auth", () => {
       const email = "newuser@example.com";
       const password = "SecurePass123!";
       const inviteCode = "ABC-DEF-GHI-JKL";
+
+      // Mock rate limit check (server-side)
+      (supabase.rpc as any).mockResolvedValueOnce({
+        data: { allowed: true },
+        error: null,
+      });
 
       // Mock successful invite validation
       vi.mocked(inviteCodes.validateInviteCode).mockResolvedValueOnce({
@@ -78,6 +85,12 @@ describe("auth", () => {
       const password = "SecurePass123!";
       const inviteCode = "INVALID-CODE";
 
+      // Mock rate limit check (server-side)
+      (supabase.rpc as any).mockResolvedValueOnce({
+        data: { allowed: true },
+        error: null,
+      });
+
       // Mock failed invite validation
       vi.mocked(inviteCodes.validateInviteCode).mockResolvedValueOnce({
         data: false,
@@ -96,6 +109,12 @@ describe("auth", () => {
       const password = "SecurePass123!";
       const inviteCode = "ABC-DEF-GHI-JKL";
 
+      // Mock rate limit check (server-side)
+      (supabase.rpc as any).mockResolvedValueOnce({
+        data: { allowed: true },
+        error: null,
+      });
+
       // Mock validation failure due to email mismatch
       vi.mocked(inviteCodes.validateInviteCode).mockResolvedValueOnce({
         data: false,
@@ -112,6 +131,12 @@ describe("auth", () => {
       const email = "newuser@example.com";
       const password = "SecurePass123!";
       const inviteCode = "ABC-DEF-GHI-JKL";
+
+      // Mock rate limit check (server-side)
+      (supabase.rpc as any).mockResolvedValueOnce({
+        data: { allowed: true },
+        error: null,
+      });
 
       // Mock successful invite validation
       vi.mocked(inviteCodes.validateInviteCode).mockResolvedValueOnce({
@@ -136,6 +161,12 @@ describe("auth", () => {
       const email = "newuser@example.com";
       const password = "SecurePass123!";
       const inviteCode = "ABC-DEF-GHI-JKL";
+
+      // Mock rate limit check (server-side)
+      (supabase.rpc as any).mockResolvedValueOnce({
+        data: { allowed: true },
+        error: null,
+      });
 
       // Mock successful invite validation
       vi.mocked(inviteCodes.validateInviteCode).mockResolvedValueOnce({
@@ -171,6 +202,12 @@ describe("auth", () => {
       const email = "user@example.com";
       const password = "Password123!";
 
+      // Mock rate limit check (server-side)
+      (supabase.rpc as any).mockResolvedValueOnce({
+        data: { allowed: true },
+        error: null,
+      });
+
       (supabase.auth.signInWithPassword as any).mockResolvedValueOnce({
         data: {
           user: { id: "user-123", email },
@@ -194,6 +231,12 @@ describe("auth", () => {
       const email = "user@example.com";
       const password = "WrongPassword";
 
+      // Mock rate limit check (server-side)
+      (supabase.rpc as any).mockResolvedValueOnce({
+        data: { allowed: true },
+        error: null,
+      });
+
       (supabase.auth.signInWithPassword as any).mockResolvedValueOnce({
         data: { user: null, session: null },
         error: { message: "Invalid login credentials" },
@@ -208,6 +251,12 @@ describe("auth", () => {
     it("should handle different email casing", async () => {
       const email = "User@Example.COM";
       const password = "Password123!";
+
+      // Mock rate limit check (server-side)
+      (supabase.rpc as any).mockResolvedValueOnce({
+        data: { allowed: true },
+        error: null,
+      });
 
       (supabase.auth.signInWithPassword as any).mockResolvedValueOnce({
         data: {
@@ -324,6 +373,12 @@ describe("auth", () => {
       const password = "Password123!";
       const inviteCode = "ABC-DEF-GHI-JKL";
 
+      // Mock rate limit check (server-side)
+      (supabase.rpc as any).mockResolvedValueOnce({
+        data: { allowed: true },
+        error: null,
+      });
+
       // signUp passes email as-is; validateInviteCode does the normalization
       vi.mocked(inviteCodes.validateInviteCode).mockResolvedValueOnce({
         data: true,
@@ -355,6 +410,12 @@ describe("auth", () => {
     it("should fail when invite code is empty", async () => {
       const email = "user@example.com";
       const password = "Password123!";
+
+      // Mock rate limit check (server-side)
+      (supabase.rpc as any).mockResolvedValueOnce({
+        data: { allowed: true },
+        error: null,
+      });
 
       // Mock validateInviteCode to handle empty string
       vi.mocked(inviteCodes.validateInviteCode).mockResolvedValueOnce({

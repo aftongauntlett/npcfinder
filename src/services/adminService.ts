@@ -311,3 +311,236 @@ export const getRecentActivity = async (): Promise<RecentActivity[]> => {
 
   return recentRecs || [];
 };
+
+// =====================================================
+// ADMIN TASK OPERATIONS
+// =====================================================
+
+/**
+ * Admin-specific type for board with user information
+ */
+export interface BoardWithStatsAdmin {
+  id: string;
+  user_id: string;
+  title: string;
+  description?: string;
+  is_singleton: boolean;
+  singleton_type?: string;
+  task_count?: number;
+  display_order?: number;
+  created_at: string;
+  updated_at: string;
+  // Admin-specific fields
+  user_email?: string;
+  user_display_name?: string;
+}
+
+/**
+ * Admin-specific type for task with user information
+ */
+export interface TaskAdmin {
+  id: string;
+  user_id: string;
+  board_id?: string;
+  section_id?: string;
+  title: string;
+  description?: string;
+  status: string;
+  priority?: string;
+  due_date?: string;
+  created_at: string;
+  updated_at: string;
+  // Admin-specific fields
+  user_email?: string;
+  user_display_name?: string;
+  board_title?: string;
+}
+
+/**
+ * Fetch all boards from all users (admin-only)
+ * SECURITY: Requires admin privileges. This intentionally bypasses user filtering.
+ * USAGE: Only for admin panel views, NOT for regular app usage.
+ */
+export const getAllBoardsAdmin = async (
+  page = 0,
+  perPage = 50
+): Promise<{
+  boards: BoardWithStatsAdmin[];
+  totalPages: number;
+}> => {
+  // Verify admin access
+  const hasAccess = await verifyAdminAccess();
+  if (!hasAccess) {
+    throw new Error("Unauthorized: Admin privileges required");
+  }
+
+  try {
+    // Get total count
+    const { count } = await supabase
+      .from("task_boards_with_stats")
+      .select("*", { count: "exact", head: true });
+
+    // Fetch boards with user information
+    const { data: boards, error } = await supabase
+      .from("task_boards_with_stats")
+      .select(
+        `
+        *,
+        user_profiles!task_boards_user_id_fkey (
+          display_name,
+          email
+        )
+      `
+      )
+      .order("created_at", { ascending: false })
+      .range(page * perPage, (page + 1) * perPage - 1);
+
+    if (error) throw error;
+
+    const boardsWithUserInfo: BoardWithStatsAdmin[] =
+      boards?.map(
+        (board: {
+          id: string;
+          user_id: string;
+          title: string;
+          description?: string;
+          is_singleton: boolean;
+          singleton_type?: string;
+          task_count?: number;
+          display_order?: number;
+          created_at: string;
+          updated_at: string;
+          user_profiles?: { display_name?: string; email?: string };
+        }) => ({
+          id: board.id,
+          user_id: board.user_id,
+          title: board.title,
+          description: board.description,
+          is_singleton: board.is_singleton,
+          singleton_type: board.singleton_type,
+          task_count: board.task_count,
+          display_order: board.display_order,
+          created_at: board.created_at,
+          updated_at: board.updated_at,
+          user_email: board.user_profiles?.email,
+          user_display_name: board.user_profiles?.display_name,
+        })
+      ) || [];
+
+    const totalPages = Math.ceil((count || 0) / perPage);
+
+    // Log admin action for audit trail
+    try {
+      await supabase.rpc("log_admin_action", {
+        p_action: "view_all_boards",
+        p_target_user_id: null,
+        p_details: { page, perPage, totalBoards: count || 0 },
+      });
+    } catch (logError) {
+      logger.warn("Failed to log admin action", { error: logError });
+    }
+
+    return { boards: boardsWithUserInfo, totalPages };
+  } catch (error) {
+    logger.error("Failed to fetch all boards for admin", { error });
+    throw error;
+  }
+};
+
+/**
+ * Fetch all tasks from all users (admin-only)
+ * SECURITY: Requires admin privileges. This intentionally bypasses user filtering.
+ * USAGE: Only for admin panel views, NOT for regular app usage.
+ */
+export const getAllTasksAdmin = async (
+  page = 0,
+  perPage = 100
+): Promise<{
+  tasks: TaskAdmin[];
+  totalPages: number;
+}> => {
+  // Verify admin access
+  const hasAccess = await verifyAdminAccess();
+  if (!hasAccess) {
+    throw new Error("Unauthorized: Admin privileges required");
+  }
+
+  try {
+    // Get total count
+    const { count } = await supabase
+      .from("tasks")
+      .select("*", { count: "exact", head: true });
+
+    // Fetch tasks with user and board information
+    const { data: tasks, error } = await supabase
+      .from("tasks")
+      .select(
+        `
+        *,
+        user_profiles!tasks_user_id_fkey (
+          display_name,
+          email
+        ),
+        task_boards!tasks_board_id_fkey (
+          title
+        )
+      `
+      )
+      .order("created_at", { ascending: false })
+      .range(page * perPage, (page + 1) * perPage - 1);
+
+    if (error) throw error;
+
+    const tasksWithUserInfo: TaskAdmin[] =
+      tasks?.map(
+        (task: {
+          id: string;
+          user_id: string;
+          board_id?: string;
+          section_id?: string;
+          title: string;
+          description?: string;
+          status: string;
+          priority?: string;
+          due_date?: string;
+          created_at: string;
+          updated_at: string;
+          user_profiles?: { display_name?: string; email?: string };
+          task_boards?: { title?: string };
+        }) => ({
+          id: task.id,
+          user_id: task.user_id,
+          board_id: task.board_id,
+          section_id: task.section_id,
+          title: task.title,
+          description: task.description,
+          status: task.status,
+          priority: task.priority,
+          due_date: task.due_date,
+          created_at: task.created_at,
+          updated_at: task.updated_at,
+          user_email: task.user_profiles?.email,
+          user_display_name: task.user_profiles?.display_name,
+          board_title: task.task_boards?.title,
+        })
+      ) || [];
+
+    const totalPages = Math.ceil((count || 0) / perPage);
+
+    // Log admin action for audit trail
+    try {
+      await supabase.rpc("log_admin_action", {
+        p_action: "view_all_tasks",
+        p_target_user_id: null,
+        p_details: { page, perPage, totalTasks: count || 0 },
+      });
+    } catch (logError) {
+      logger.warn("Failed to log admin action", { error: logError });
+    }
+
+    return { tasks: tasksWithUserInfo, totalPages };
+  } catch (error) {
+    logger.error("Failed to fetch all tasks for admin", { error });
+    throw error;
+  }
+};

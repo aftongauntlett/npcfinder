@@ -9,10 +9,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("../src/lib/supabase", () => ({
   supabase: {
     from: vi.fn(),
+    auth: {
+      getUser: vi.fn(),
+    },
   },
 }));
 
 import { supabase } from "../src/lib/supabase";
+import { getBoardsWithStats, getTasks } from "../src/services/tasksService";
 
 describe("Admin Privilege Protection", () => {
   beforeEach(() => {
@@ -343,5 +347,194 @@ describe("Board Sharing RLS Policies", () => {
       .eq("id", "share-id");
 
     expect(error).toBeNull();
+  });
+});
+
+describe("User Data Isolation", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should ensure admin users see only their own data in regular queries", async () => {
+    // Mock admin user authentication
+    const mockAdminUser = {
+      id: "admin-user-id",
+      email: "admin@example.com",
+    };
+
+    // Mock getUser to return admin user
+    vi.mocked(supabase.auth.getUser).mockResolvedValue({
+      data: { user: mockAdminUser },
+      error: null,
+    } as any);
+
+    // Mock query chain with both order calls
+    const mockOrder2 = vi.fn().mockResolvedValue({
+      data: [{ id: "board-1", user_id: "admin-user-id", title: "Admin Board" }],
+      error: null,
+    });
+
+    const mockOrder1 = vi.fn().mockReturnValue({
+      order: mockOrder2,
+    });
+
+    const mockEq = vi.fn().mockReturnValue({
+      order: mockOrder1,
+    });
+
+    const mockSelect = vi.fn().mockReturnValue({
+      eq: mockEq,
+    } as any);
+
+    vi.mocked(supabase.from).mockReturnValue({
+      select: mockSelect,
+    } as any);
+
+    // Call the actual service function
+    const result = await getBoardsWithStats();
+
+    // Verify auth was called
+    expect(supabase.auth.getUser).toHaveBeenCalled();
+
+    // Verify the query chain
+    expect(supabase.from).toHaveBeenCalledWith("task_boards_with_stats");
+    expect(mockSelect).toHaveBeenCalledWith("*");
+    expect(mockEq).toHaveBeenCalledWith("user_id", "admin-user-id");
+
+    // Verify the result
+    expect(result.data).toBeTruthy();
+    expect(result.data).toHaveLength(1);
+    expect(result.data![0].user_id).toBe("admin-user-id");
+  });
+
+  it("should ensure regular users cannot see other users' data", async () => {
+    // Mock regular user authentication
+    const mockUser = {
+      id: "user-a-id",
+      email: "usera@example.com",
+    };
+
+    // Mock getUser to return regular user
+    vi.mocked(supabase.auth.getUser).mockResolvedValue({
+      data: { user: mockUser },
+      error: null,
+    } as any);
+
+    // Mock query chain with both order calls
+    const mockOrder2 = vi.fn().mockResolvedValue({
+      data: [{ id: "task-1", user_id: "user-a-id", title: "User A Task" }],
+      error: null,
+    });
+
+    const mockOrder1 = vi.fn().mockReturnValue({
+      order: mockOrder2,
+    });
+
+    const mockEq = vi.fn().mockReturnValue({
+      order: mockOrder1,
+    });
+
+    const mockSelect = vi.fn().mockReturnValue({
+      eq: mockEq,
+    } as any);
+
+    vi.mocked(supabase.from).mockReturnValue({
+      select: mockSelect,
+    } as any);
+
+    // Call the actual service function
+    const result = await getTasks();
+
+    // Verify auth was called
+    expect(supabase.auth.getUser).toHaveBeenCalled();
+
+    // Verify the query chain
+    expect(supabase.from).toHaveBeenCalledWith("tasks");
+    expect(mockSelect).toHaveBeenCalledWith("*");
+    expect(mockEq).toHaveBeenCalledWith("user_id", "user-a-id");
+
+    // Verify the result
+    expect(result.data).toBeTruthy();
+    expect(result.data).toHaveLength(1);
+    expect(result.data![0].user_id).toBe("user-a-id");
+    // Verify that user B's data is not included
+    expect(result.data!.every((task) => task.user_id === "user-a-id")).toBe(
+      true
+    );
+  });
+
+  it("should throw error when user is not authenticated", async () => {
+    // Mock no authenticated user
+    vi.mocked(supabase.auth.getUser).mockResolvedValue({
+      data: { user: null },
+      error: { message: "Not authenticated" } as any,
+    } as any);
+
+    // Call the actual service function
+    const result = await getBoardsWithStats();
+
+    // Verify it returns an error
+    expect(result.error).toBeTruthy();
+    expect(result.error?.message).toContain("User not authenticated");
+    expect(result.data).toBeNull();
+  });
+
+  it("should verify user_id filter is applied before other filters", async () => {
+    const mockUser = {
+      id: "user-id",
+      email: "user@example.com",
+    };
+
+    vi.mocked(supabase.auth.getUser).mockResolvedValue({
+      data: { user: mockUser },
+      error: null,
+    } as any);
+
+    // Mock the final result that gets returned when awaited
+    const finalResult = {
+      data: [
+        {
+          id: "task-1",
+          user_id: "user-id",
+          status: "todo",
+          title: "Task 1",
+        },
+      ],
+      error: null,
+    };
+
+    // Create a chainable query object that supports .eq(), .order(), and is awaitable
+    const chainableQuery: any = {
+      eq: vi.fn(),
+      order: vi.fn(),
+      then: (resolve: any) => resolve(finalResult), // Make it awaitable
+    };
+
+    // Make .eq() and .order() return itself for chaining
+    chainableQuery.eq.mockReturnValue(chainableQuery);
+    chainableQuery.order.mockReturnValue(chainableQuery);
+
+    const mockEq = vi.fn().mockReturnValue(chainableQuery);
+
+    const mockSelect = vi.fn().mockReturnValue({
+      eq: mockEq,
+    });
+
+    vi.mocked(supabase.from).mockReturnValue({
+      select: mockSelect,
+    } as any);
+
+    // Call the actual service function with filters
+    const result = await getTasks(undefined, { status: "todo" });
+
+    // Verify auth was called
+    expect(supabase.auth.getUser).toHaveBeenCalled();
+
+    // Verify user_id filter was applied
+    expect(mockEq).toHaveBeenCalledWith("user_id", "user-id");
+
+    // Verify the result
+    expect(result.data).toBeTruthy();
+    expect(result.data![0].user_id).toBe("user-id");
   });
 });

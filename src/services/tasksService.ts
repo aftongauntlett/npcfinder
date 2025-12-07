@@ -32,12 +32,19 @@ import type {
 
 /**
  * Fetch all boards for the current user
+ * SECURITY: Explicitly filters by user_id for defense-in-depth
  */
 export async function getBoards(): Promise<ServiceResponse<Board[]>> {
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { data, error } = await supabase
       .from("task_boards")
       .select("*")
+      .eq("user_id", user.id)
       .order("display_order", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: false });
 
@@ -51,14 +58,21 @@ export async function getBoards(): Promise<ServiceResponse<Board[]>> {
 
 /**
  * Fetch all boards with stats (using view)
+ * SECURITY: Explicitly filters by user_id for defense-in-depth
  */
 export async function getBoardsWithStats(): Promise<
   ServiceResponse<BoardWithStats[]>
 > {
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { data, error } = await supabase
       .from("task_boards_with_stats")
       .select("*")
+      .eq("user_id", user.id)
       .order("display_order", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: false });
 
@@ -72,15 +86,22 @@ export async function getBoardsWithStats(): Promise<
 
 /**
  * Fetch a single board by ID
+ * SECURITY: Explicitly filters by user_id for defense-in-depth
  */
 export async function getBoardById(
   boardId: string
 ): Promise<ServiceResponse<Board>> {
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { data, error } = await supabase
       .from("task_boards")
       .select("*")
       .eq("id", boardId)
+      .eq("user_id", user.id)
       .single();
 
     if (error) throw error;
@@ -185,16 +206,23 @@ async function createDefaultSections(boardId: string): Promise<void> {
 
 /**
  * Update a board
+ * SECURITY: Explicitly filters by user_id for defense-in-depth
  */
 export async function updateBoard(
   boardId: string,
   updates: Partial<Board>
 ): Promise<ServiceResponse<Board>> {
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { data, error } = await supabase
       .from("task_boards")
       .update(updates)
       .eq("id", boardId)
+      .eq("user_id", user.id)
       .select()
       .single();
 
@@ -208,15 +236,22 @@ export async function updateBoard(
 
 /**
  * Delete a board (cascade deletes tasks and sections)
+ * SECURITY: Explicitly filters by user_id for defense-in-depth
  */
 export async function deleteBoard(
   boardId: string
 ): Promise<ServiceResponse<void>> {
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { error } = await supabase
       .from("task_boards")
       .delete()
-      .eq("id", boardId);
+      .eq("id", boardId)
+      .eq("user_id", user.id);
 
     if (error) throw error;
     return { data: null, error: null };
@@ -405,15 +440,22 @@ export async function reorderSections(
 
 /**
  * Fetch tasks with optional filters
+ * SECURITY: Explicitly filters by user_id for defense-in-depth
  */
 export async function getTasks(
   boardId?: string,
   filters?: TaskFilters
 ): Promise<ServiceResponse<Task[]>> {
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     let query = supabase
       .from("tasks")
       .select("*")
+      .eq("user_id", user.id)
       .order("display_order", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: false });
 
@@ -454,15 +496,22 @@ export async function getTasks(
 
 /**
  * Fetch a single task by ID
+ * SECURITY: Explicitly filters by user_id for defense-in-depth
  */
 export async function getTaskById(
   taskId: string
 ): Promise<ServiceResponse<Task>> {
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { data, error } = await supabase
       .from("tasks")
       .select("*")
       .eq("id", taskId)
+      .eq("user_id", user.id)
       .single();
 
     if (error) throw error;
@@ -475,14 +524,21 @@ export async function getTaskById(
 
 /**
  * Fetch tasks due today or overdue
+ * SECURITY: Explicitly filters by user_id for defense-in-depth
  */
 export async function getTodayTasks(): Promise<ServiceResponse<Task[]>> {
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const today = new Date().toISOString().split("T")[0];
 
     const { data, error } = await supabase
       .from("tasks")
       .select("*")
+      .eq("user_id", user.id)
       .lte("due_date", today)
       .in("status", ["todo", "in_progress"])
       .order("due_date", { ascending: true })
@@ -498,12 +554,19 @@ export async function getTodayTasks(): Promise<ServiceResponse<Task[]>> {
 
 /**
  * Fetch archived tasks
+ * SECURITY: Explicitly filters by user_id for defense-in-depth
  */
 export async function getArchivedTasks(): Promise<ServiceResponse<Task[]>> {
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { data, error } = await supabase
       .from("tasks")
       .select("*")
+      .eq("user_id", user.id)
       .eq("status", "archived")
       .order("archived_at", { ascending: false });
 
@@ -600,16 +663,23 @@ export async function createTask(
 
 /**
  * Update a task
+ * SECURITY: Explicitly filters by user_id for defense-in-depth
  */
 export async function updateTask(
   taskId: string,
   updates: Partial<Task>
 ): Promise<ServiceResponse<Task>> {
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { data, error } = await supabase
       .from("tasks")
       .update(updates)
       .eq("id", taskId)
+      .eq("user_id", user.id)
       .select()
       .single();
 
@@ -623,12 +693,22 @@ export async function updateTask(
 
 /**
  * Delete a task
+ * SECURITY: Explicitly filters by user_id for defense-in-depth
  */
 export async function deleteTask(
   taskId: string
 ): Promise<ServiceResponse<void>> {
   try {
-    const { error } = await supabase.from("tasks").delete().eq("id", taskId);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
+    const { error } = await supabase
+      .from("tasks")
+      .delete()
+      .eq("id", taskId)
+      .eq("user_id", user.id);
 
     if (error) throw error;
     return { data: null, error: null };
@@ -922,12 +1002,19 @@ export async function completeTaskTimer(
 
 /**
  * Get all tasks with active timers
+ * SECURITY: Explicitly filters by user_id for defense-in-depth
  */
 export async function getActiveTimers(): Promise<ServiceResponse<Task[]>> {
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { data, error } = await supabase
       .from("tasks")
       .select("*")
+      .eq("user_id", user.id)
       .not("timer_started_at", "is", null)
       .is("timer_completed_at", null)
       .order("timer_started_at", { ascending: true });
@@ -946,11 +1033,17 @@ export async function getActiveTimers(): Promise<ServiceResponse<Task[]>> {
 
 /**
  * Get tasks with upcoming reminders
+ * SECURITY: Explicitly filters by user_id for defense-in-depth
  */
 export async function getUpcomingReminders(
   daysAhead = 7
 ): Promise<ServiceResponse<Task[]>> {
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const today = new Date();
     const futureDate = new Date();
     futureDate.setDate(today.getDate() + daysAhead);
@@ -958,6 +1051,7 @@ export async function getUpcomingReminders(
     const { data, error } = await supabase
       .from("tasks")
       .select("*")
+      .eq("user_id", user.id)
       .not("reminder_date", "is", null)
       .gte("reminder_date", today.toISOString().split("T")[0])
       .lte("reminder_date", futureDate.toISOString().split("T")[0])
@@ -1106,9 +1200,7 @@ export async function getBoardShares(
     if (profilesError) throw profilesError;
 
     // Create a map of user_id -> profile
-    const profileMap = new Map(
-      (profiles || []).map((p) => [p.user_id, p])
-    );
+    const profileMap = new Map((profiles || []).map((p) => [p.user_id, p]));
 
     // Join shares with profiles
     const sharesWithUsers = shares.map((share) => ({
