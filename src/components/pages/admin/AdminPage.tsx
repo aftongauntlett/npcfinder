@@ -12,6 +12,7 @@ import {
   Shield,
   RefreshCw,
   Sparkles,
+  User,
 } from "lucide-react";
 import MainLayout from "../../layouts/MainLayout";
 import ContentLayout from "../../layouts/ContentLayout";
@@ -19,7 +20,6 @@ import ConfirmationModal from "../../shared/ui/ConfirmationModal";
 import StatCard from "../../shared/common/StatCard";
 import Button from "../../shared/ui/Button";
 import Input from "../../shared/ui/Input";
-import EmptyState from "../../shared/common/EmptyState";
 import Toast from "../../ui/Toast";
 import { logger } from "@/lib/logger";
 import { useAdmin } from "../../../contexts/AdminContext";
@@ -349,6 +349,12 @@ const AdminPage: React.FC = () => {
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                   User Management
                 </h2>
+                {process.env.NODE_ENV === "development" && (
+                  <div className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                    Debug: You are logged in as{" "}
+                    {isSuperAdmin ? "SUPER_ADMIN" : "ADMIN"}
+                  </div>
+                )}
               </div>
 
               {/* User Search */}
@@ -440,15 +446,17 @@ const AdminPage: React.FC = () => {
                                   disabled
                                   variant="primary"
                                   size="sm"
-                                  className="gap-1.5"
+                                  className="gap-1.5 whitespace-nowrap !bg-gradient-to-r !from-yellow-500 !to-amber-600 !text-white hover:!from-yellow-600 hover:!to-amber-700 cursor-not-allowed"
                                   aria-label="Super Admin - cannot be demoted"
                                   title="Super Admin - cannot be demoted"
                                 >
                                   <Shield
-                                    className="w-3.5 h-3.5"
+                                    className="w-3.5 h-3.5 flex-shrink-0"
                                     aria-hidden="true"
                                   />
-                                  Super Admin
+                                  <span className="flex-shrink-0">
+                                    Super Admin
+                                  </span>
                                 </Button>
                               ) : user.role === "admin" ? (
                                 <Button
@@ -456,7 +464,9 @@ const AdminPage: React.FC = () => {
                                   disabled={!isSuperAdmin}
                                   variant="primary"
                                   size="sm"
-                                  className="gap-1.5"
+                                  className={`gap-1.5 whitespace-nowrap !bg-gradient-to-r !from-green-500 !to-emerald-600 !text-white hover:!from-green-600 hover:!to-emerald-700 ${
+                                    !isSuperAdmin ? "cursor-not-allowed" : ""
+                                  }`}
                                   aria-label={
                                     !isSuperAdmin
                                       ? "Only super admin can demote admins"
@@ -469,20 +479,25 @@ const AdminPage: React.FC = () => {
                                   }
                                 >
                                   <ShieldCheck
-                                    className="w-3.5 h-3.5"
+                                    className="w-3.5 h-3.5 flex-shrink-0"
                                     aria-hidden="true"
                                   />
-                                  Admin
+                                  <span className="flex-shrink-0">Admin</span>
                                 </Button>
                               ) : (
                                 <Button
                                   onClick={() => handleToggleRoleClick(user)}
-                                  variant="subtle"
+                                  variant="primary"
                                   size="sm"
+                                  className="gap-1.5 whitespace-nowrap"
                                   aria-label="Click to make admin"
                                   title="Click to make admin"
                                 >
-                                  User
+                                  <User
+                                    className="w-3.5 h-3.5 flex-shrink-0"
+                                    aria-hidden="true"
+                                  />
+                                  <span className="flex-shrink-0">User</span>
                                 </Button>
                               )}
                             </td>
@@ -526,58 +541,71 @@ const AdminPage: React.FC = () => {
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                            Joined:{" "}
+                        <div className="flex items-start sm:items-center justify-between gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+                          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                             {new Date(user.created_at).toLocaleDateString()}
                           </div>
-                          {user.role === "super_admin" ? (
-                            <Button
-                              disabled
-                              variant="primary"
-                              size="sm"
-                              className="gap-1.5"
-                              aria-label="Super Admin - cannot be demoted"
-                              title="Super Admin - cannot be demoted"
-                            >
-                              <Shield className="w-4 h-4" aria-hidden="true" />
-                              Super Admin
-                            </Button>
-                          ) : user.role === "admin" ? (
-                            <Button
-                              onClick={() => handleToggleRoleClick(user)}
-                              disabled={!isSuperAdmin}
-                              variant="primary"
-                              size="sm"
-                              className="gap-1.5"
-                              aria-label={
-                                !isSuperAdmin
-                                  ? "Only super admin can demote admins"
-                                  : "Click to remove admin privileges"
-                              }
-                              title={
-                                !isSuperAdmin
-                                  ? "Only super admin can demote admins"
-                                  : "Click to remove admin privileges"
-                              }
-                            >
-                              <ShieldCheck
-                                className="w-4 h-4"
-                                aria-hidden="true"
-                              />
-                              Admin
-                            </Button>
-                          ) : (
-                            <Button
-                              onClick={() => handleToggleRoleClick(user)}
-                              variant="subtle"
-                              size="sm"
-                              aria-label="Click to make admin"
-                              title="Click to make admin"
-                            >
-                              User
-                            </Button>
-                          )}
+                          <div className="flex-shrink-0">
+                            {user.role === "super_admin" ? (
+                              <Button
+                                disabled
+                                variant="primary"
+                                size="sm"
+                                className="gap-1.5 whitespace-nowrap !bg-gradient-to-r !from-yellow-500 !to-amber-600 !text-white hover:!from-yellow-600 hover:!to-amber-700 cursor-not-allowed"
+                                aria-label="Super Admin - cannot be demoted"
+                                title="Super Admin - cannot be demoted"
+                              >
+                                <Shield
+                                  className="w-4 h-4 flex-shrink-0"
+                                  aria-hidden="true"
+                                />
+                                <span className="flex-shrink-0">
+                                  Super Admin
+                                </span>
+                              </Button>
+                            ) : user.role === "admin" ? (
+                              <Button
+                                onClick={() => handleToggleRoleClick(user)}
+                                disabled={!isSuperAdmin}
+                                variant="primary"
+                                size="sm"
+                                className={`gap-1.5 whitespace-nowrap !bg-gradient-to-r !from-green-500 !to-emerald-600 !text-white hover:!from-green-600 hover:!to-emerald-700 ${
+                                  !isSuperAdmin ? "cursor-not-allowed" : ""
+                                }`}
+                                aria-label={
+                                  !isSuperAdmin
+                                    ? "Only super admin can demote admins"
+                                    : "Click to remove admin privileges"
+                                }
+                                title={
+                                  !isSuperAdmin
+                                    ? "Only super admin can demote admins"
+                                    : "Click to remove admin privileges"
+                                }
+                              >
+                                <ShieldCheck
+                                  className="w-4 h-4 flex-shrink-0"
+                                  aria-hidden="true"
+                                />
+                                <span className="flex-shrink-0">Admin</span>
+                              </Button>
+                            ) : (
+                              <Button
+                                onClick={() => handleToggleRoleClick(user)}
+                                variant="primary"
+                                size="sm"
+                                className="gap-1.5 whitespace-nowrap"
+                                aria-label="Click to make admin"
+                                title="Click to make admin"
+                              >
+                                <User
+                                  className="w-4 h-4 flex-shrink-0"
+                                  aria-hidden="true"
+                                />
+                                <span className="flex-shrink-0">User</span>
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </motion.div>
                     ))}
@@ -674,6 +702,9 @@ const AdminPage: React.FC = () => {
                     variant="primary"
                     loading={isCreatingCode}
                     disabled={isCreatingCode || !intendedEmail.trim()}
+                    className={
+                      !intendedEmail.trim() ? "cursor-not-allowed" : ""
+                    }
                   >
                     Generate Code
                   </Button>
@@ -683,19 +714,9 @@ const AdminPage: React.FC = () => {
 
             {/* Codes List */}
             {codes.length === 0 ? (
-              <EmptyState
-                icon={UserPlus}
-                title="No invite codes yet"
-                description="Create your first invite code to get started"
-                action={
-                  !showCreateForm
-                    ? {
-                        label: "Create Code",
-                        onClick: () => setShowCreateForm(true),
-                      }
-                    : undefined
-                }
-              />
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                No invite codes created yet
+              </div>
             ) : (
               <>
                 {/* Desktop Table View */}
