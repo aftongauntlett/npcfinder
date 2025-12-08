@@ -25,14 +25,52 @@ import {
 } from "../../data/landingFuture";
 import { landingAvailability } from "../../data/landingAvailability";
 import { landingPrivacy } from "../../data/landingPrivacy";
+import { usePageMeta } from "../../hooks/usePageMeta";
+
+// Structured data for search engines (static, outside component)
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: "NPC Finder",
+  description:
+    "Your personal dashboard for entertainment, music, games, tasks, and memories.",
+  url: "https://npcfinder.com",
+  applicationCategory: "LifestyleApplication",
+  operatingSystem: "Web",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+  },
+  author: {
+    "@type": "Person",
+    name: "Afton Gauntlett",
+  },
+};
+
+// Static page meta options (stable reference)
+const pageMetaOptions = {
+  title: "Your Personal Dashboard",
+  description:
+    "Track, organize, and curate your entertainment, fitness, and life in one place.",
+  ogImage: "/og-image.png",
+  canonical: "https://npcfinder.com/",
+};
 
 /**
  * Public landing page for NPC Finder
  * Real product in development - open source and self-hostable
  */
 const DemoLanding: React.FC = () => {
+  usePageMeta(pageMetaOptions);
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
+      {/* Structured Data for Search Engines */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+
       {/* Skip Navigation */}
       <a
         href="#main-content"

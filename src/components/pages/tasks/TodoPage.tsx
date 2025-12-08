@@ -10,8 +10,19 @@ import TemplateView from "./TemplateView";
 import CreateTaskModal from "../../tasks/CreateTaskModal";
 import TaskDetailModal from "../../tasks/TaskDetailModal";
 import { useBoards, useTasks } from "../../../hooks/useTasksQueries";
+import { usePageMeta } from "../../../hooks/usePageMeta";
+
+// Static page meta options (stable reference)
+const pageMetaOptions = {
+  title: "To-Do Lists",
+  description:
+    "Simple, flexible lists for one-off tasks like packing, shopping, or quick checklists",
+  noIndex: true,
+};
 
 const TodoPage: React.FC = () => {
+  usePageMeta(pageMetaOptions);
+
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [createTaskBoardId, setCreateTaskBoardId] = useState<
     string | undefined

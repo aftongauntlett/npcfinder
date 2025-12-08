@@ -5,8 +5,17 @@ import MoviesSuggestions from "./MoviesSuggestions";
 import { useWatchlist } from "../../../hooks/useWatchlistQueries";
 import { useMovieStats } from "../../../hooks/useMovieQueries";
 import PersonalWatchList from "../../media/PersonalWatchList";
+import { usePageMeta } from "../../../hooks/usePageMeta";
 
 type TabId = "watching" | "watched" | "recommendations";
+
+// Static page meta options (stable reference)
+const pageMetaOptions = {
+  title: "Movies & TV",
+  description:
+    "Track what you're watching and discover new content from friends",
+  noIndex: true,
+};
 
 /**
  * Movies & TV Page
@@ -15,6 +24,8 @@ type TabId = "watching" | "watched" | "recommendations";
  * Uses unified AppLayout for consistent spacing and footer
  */
 const MoviesPage: React.FC = () => {
+  usePageMeta(pageMetaOptions);
+
   const [activeTab, setActiveTab] = useState<TabId>("watching");
 
   // Fetch data for badge counts

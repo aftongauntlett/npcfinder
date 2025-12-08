@@ -5,8 +5,16 @@ import PersonalReadingList from "./PersonalReadingList";
 import BooksSuggestions from "./BooksSuggestions";
 import { useReadingList } from "../../../hooks/useReadingListQueries";
 import { useBookStats } from "../../../hooks/useBookQueries";
+import { usePageMeta } from "../../../hooks/usePageMeta";
 
 type TabId = "reading" | "read" | "recommendations";
+
+// Static page meta options (stable reference)
+const pageMetaOptions = {
+  title: "Books",
+  description: "Track your reading list and discover new books",
+  noIndex: true,
+};
 
 /**
  * Books Page
@@ -15,6 +23,8 @@ type TabId = "reading" | "read" | "recommendations";
  * Uses unified AppLayout for consistent spacing and footer
  */
 const BooksPage: React.FC = () => {
+  usePageMeta(pageMetaOptions);
+
   const [activeTab, setActiveTab] = useState<TabId>("reading");
 
   // Fetch data for badge counts

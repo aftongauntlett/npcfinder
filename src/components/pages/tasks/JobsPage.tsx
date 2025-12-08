@@ -10,8 +10,18 @@ import TemplateView from "./TemplateView";
 import CreateTaskModal from "../../tasks/CreateTaskModal";
 import TaskDetailModal from "../../tasks/TaskDetailModal";
 import { useBoards, useTasks } from "../../../hooks/useTasksQueries";
+import { usePageMeta } from "../../../hooks/usePageMeta";
+
+// Static page meta options (stable reference)
+const pageMetaOptions = {
+  title: "Job Applications",
+  description: "Track your job search and application progress",
+  noIndex: true,
+};
 
 const JobsPage: React.FC = () => {
+  usePageMeta(pageMetaOptions);
+
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [createTaskBoardId, setCreateTaskBoardId] = useState<
     string | undefined

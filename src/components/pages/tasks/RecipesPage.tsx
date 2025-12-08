@@ -11,8 +11,18 @@ import RecipeFormModal from "../../tasks/RecipeFormModal";
 import TaskDetailModal from "../../tasks/TaskDetailModal";
 import { useBoards, useTasks } from "../../../hooks/useTasksQueries";
 import { useSingletonBoard } from "../../../hooks/useSingletonBoard";
+import { usePageMeta } from "../../../hooks/usePageMeta";
+
+// Static page meta options (stable reference)
+const pageMetaOptions = {
+  title: "Recipes",
+  description: "Save and organize your favorite recipes",
+  noIndex: true,
+};
 
 const RecipesPage: React.FC = () => {
+  usePageMeta(pageMetaOptions);
+
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
 

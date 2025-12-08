@@ -5,8 +5,16 @@ import PersonalGameLibrary from "./PersonalGameLibrary";
 import GamesSuggestions from "./GamesSuggestions";
 import { useGameLibrary } from "../../../hooks/useGameLibraryQueries";
 import { useGameStats } from "../../../hooks/useGameQueries";
+import { usePageMeta } from "../../../hooks/usePageMeta";
 
 type TabId = "playing" | "played" | "recommendations";
+
+// Static page meta options (stable reference)
+const pageMetaOptions = {
+  title: "Games",
+  description: "Track your game library and discover new titles",
+  noIndex: true,
+};
 
 /**
  * Games Page
@@ -15,6 +23,8 @@ type TabId = "playing" | "played" | "recommendations";
  * Uses unified AppLayout for consistent spacing and footer
  */
 const GamesPage: React.FC = () => {
+  usePageMeta(pageMetaOptions);
+
   const [activeTab, setActiveTab] = useState<TabId>("playing");
 
   // Fetch data for badge counts

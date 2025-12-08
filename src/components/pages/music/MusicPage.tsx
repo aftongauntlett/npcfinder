@@ -5,8 +5,16 @@ import PersonalMusicLibrary from "./PersonalMusicLibrary";
 import MusicSuggestions from "./MusicSuggestions";
 import { useMusicLibraryStats } from "../../../hooks/useMusicLibraryQueries";
 import { useMusicStats } from "../../../hooks/useMusicQueries";
+import { usePageMeta } from "../../../hooks/usePageMeta";
 
 type TabId = "listening" | "listened" | "recommendations";
+
+// Static page meta options (stable reference)
+const pageMetaOptions = {
+  title: "Music",
+  description: "Organize your music library and discover new albums",
+  noIndex: true,
+};
 
 /**
  * Music Page
@@ -15,6 +23,8 @@ type TabId = "listening" | "listened" | "recommendations";
  * Uses unified AppLayout for consistent spacing and footer
  */
 const MusicPage: React.FC = () => {
+  usePageMeta(pageMetaOptions);
+
   const [activeTab, setActiveTab] = useState<TabId>("listening");
 
   // Fetch data for badge counts

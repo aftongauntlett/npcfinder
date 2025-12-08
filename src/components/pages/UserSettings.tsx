@@ -14,6 +14,7 @@ import { cards } from "../../data/dashboardCards";
 import { DEFAULT_THEME_COLOR } from "../../styles/colorThemes";
 import { useTheme } from "../../hooks/useTheme";
 import { useNavigationBlock } from "../../hooks/useNavigationBlock";
+import { usePageMeta } from "../../hooks/usePageMeta";
 
 interface UserSettingsProps {
   currentUser: User;
@@ -31,7 +32,15 @@ interface Message {
   text: string;
 }
 
+// Static page meta options (stable reference)
+const pageMetaOptions = {
+  title: "Settings",
+  description: "Manage your profile, preferences, and account settings",
+  noIndex: true,
+};
+
 const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
+  usePageMeta(pageMetaOptions);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { changeThemeColor } = useTheme();

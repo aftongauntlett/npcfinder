@@ -20,12 +20,20 @@ import {
 import { useMarkMovieRecommendationsAsOpened } from "../../hooks/useMovieQueries";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../../lib/queryKeys";
+import { usePageMeta } from "../../hooks/usePageMeta";
 
 interface HomePageProps {
   user: User;
 }
 
 type TabId = "dashboard" | "friends" | "trending" | "recommendations";
+
+// Static page meta options (stable reference)
+const pageMetaOptions = {
+  title: "Dashboard",
+  description: "Your personal dashboard for everything that matters",
+  noIndex: true,
+};
 
 /**
  * Dashboard / Home Page
@@ -34,6 +42,8 @@ type TabId = "dashboard" | "friends" | "trending" | "recommendations";
  * Uses unified AppLayout for consistent spacing and footer
  */
 const HomePage: React.FC<HomePageProps> = () => {
+  usePageMeta(pageMetaOptions);
+
   const { changeThemeColor } = useTheme();
   const [activeTab, setActiveTab] = useState<TabId>("dashboard");
   const [showGettingStarted, setShowGettingStarted] = useState(() => {

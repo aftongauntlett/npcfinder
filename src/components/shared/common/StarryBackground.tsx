@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useTheme } from "../../../hooks/useTheme";
 
@@ -117,9 +117,21 @@ const stars = generateStars();
 
 const StarryBackground = React.memo(function StarryBackground() {
   const { resolvedTheme } = useTheme();
+  const [reducedMotion, setReducedMotion] = useState(false);
 
-  // Only show stars in dark mode
-  if (resolvedTheme !== "dark") {
+  // Check prefers-reduced-motion
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      setReducedMotion(e.matches);
+    };
+    setReducedMotion(mediaQuery.matches);
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  // Only show stars in dark mode AND if motion not reduced
+  if (resolvedTheme !== "dark" || reducedMotion) {
     return null;
   }
 

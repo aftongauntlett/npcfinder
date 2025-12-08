@@ -34,6 +34,7 @@ import {
 import type { InviteCode } from "../../../lib/inviteCodes";
 import type { UserRole } from "../../../contexts/AdminContext";
 import { format } from "date-fns";
+import { usePageMeta } from "../../../hooks/usePageMeta";
 
 interface User {
   id: string;
@@ -45,10 +46,18 @@ interface User {
   updated_at: string;
 }
 
+// Static page meta options (stable reference)
+const pageMetaOptions = {
+  title: "Admin Panel",
+  description: "Manage users, invite codes, and security settings",
+  noIndex: true,
+};
+
 /**
  * Consolidated Admin Page - User management, invite codes, and security
  */
 const AdminPage: React.FC = () => {
+  usePageMeta(pageMetaOptions);
   const { isSuperAdmin, refreshAdminStatus } = useAdmin();
 
   // User list pagination and search

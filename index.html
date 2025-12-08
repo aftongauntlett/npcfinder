@@ -10,6 +10,16 @@
     />
     <meta name="author" content="Afton Gauntlett" />
     <meta name="theme-color" content="#9333ea" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Preconnect to external APIs (establish early connections) -->
+    <link rel="preconnect" href="https://api.themoviedb.org" crossorigin />
+    <link rel="preconnect" href="https://api.rawg.io" crossorigin />
+    <link rel="preconnect" href="https://www.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://itunes.apple.com" crossorigin />
+
+    <!-- DNS prefetch for Supabase (faster DNS resolution) -->
+    <link rel="dns-prefetch" href="https://supabase.co" />
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -19,13 +29,25 @@
       rel="stylesheet"
     />
 
+    <!-- Canonical URL (will be overridden by usePageMeta on specific pages) -->
+    <link rel="canonical" href="https://npcfinder.com/" />
+
     <!-- Open Graph / Social Media -->
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="NPC Finder" />
     <meta property="og:title" content="NPC Finder - Your Personal Dashboard" />
     <meta
       property="og:description"
       content="Track, organize, and curate your entertainment, fitness, and life in one place."
     />
+    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:url" content="https://npcfinder.com/" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="NPC Finder - Your Personal Dashboard" />
+    <meta name="twitter:description" content="Track, organize, and curate your entertainment, fitness, and life in one place." />
+    <meta name="twitter:image" content="/og-image.png" />
 
     <title>NPC Finder</title>
   </head>

@@ -34,10 +34,20 @@ import {
 import { useBoardTemplates } from "../../../hooks/useBoardTemplates";
 import { useAllSingletonBoards } from "../../../hooks/useSingletonBoard";
 import type { BoardWithStats } from "../../../services/tasksService.types";
+import { usePageMeta } from "../../../hooks/usePageMeta";
 
 type ViewType = "tasks" | "kanban" | "grocery" | "recipes" | "job_applications";
 
+// Static page meta options (stable reference)
+const pageMetaOptions = {
+  title: "Tasks",
+  description: "Manage your tasks with flexible board-based organization",
+  noIndex: true,
+};
+
 const TasksPage: React.FC = () => {
+  usePageMeta(pageMetaOptions);
+
   const [selectedView, setSelectedView] = useState<ViewType>("tasks");
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [createTaskBoardId, setCreateTaskBoardId] = useState<

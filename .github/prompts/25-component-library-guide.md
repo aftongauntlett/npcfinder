@@ -1342,3 +1342,104 @@ Before deploying a new list/table component:
 
 **Reference:** See `docs/PERFORMANCE.md` for comprehensive performance guide.
 
+---
+
+## SEO and Meta Tags
+
+### Page Meta Hook
+
+Use `usePageMeta` hook to set page-specific titles, descriptions, and Open Graph tags for better SEO and shareability.
+
+**Location:** `src/hooks/usePageMeta.ts`
+
+**Import:**
+```typescript
+import { usePageMeta } from '@/hooks/usePageMeta';
+```
+
+**Usage:**
+```typescript
+const MyPage: React.FC = () => {
+  usePageMeta({
+    title: 'Page Title',
+    description: 'Page description for search engines and social sharing',
+    noIndex: true, // For authenticated pages (prevents search indexing)
+    ogImage: '/custom-og-image.png', // Optional: custom Open Graph image
+    canonical: 'https://npcfinder.com/page', // Optional: canonical URL
+  });
+  
+  return <div>...</div>;
+};
+```
+
+### Guidelines
+
+**Page Titles:**
+- Keep titles <60 characters (search engine display limit)
+- Be descriptive and unique per page
+- Don't include "NPC Finder" (automatically appended by hook)
+- Example: "Movies & TV" → displays as "Movies & TV | NPC Finder"
+
+**Descriptions:**
+- Keep descriptions <160 characters (search engine display limit)
+- Write for humans first, search engines second
+- Avoid keyword stuffing
+- Include primary value proposition
+- Example: "Track what you're watching and discover new content from friends"
+
+**Authenticated Pages:**
+- Always set `noIndex: true` for authenticated pages (dashboard, settings, user content)
+- Prevents search engines from indexing user-specific data
+- Example: All `/app/*` routes should use `noIndex: true`
+
+**Public Pages:**
+- Omit `noIndex` or set to `false` for public pages (landing, docs, etc.)
+- Add custom `ogImage` for better social media previews
+- Example: Landing page uses custom hero image for social sharing
+
+**Examples:**
+
+```typescript
+// ✅ CORRECT - Landing Page (Public)
+usePageMeta({
+  title: 'Your Personal Dashboard',
+  description: 'Track, organize, and curate your entertainment, fitness, and life in one place.',
+  ogImage: '/og-image.png', // Custom image for social sharing
+});
+
+// ✅ CORRECT - Dashboard (Authenticated)
+usePageMeta({
+  title: 'Dashboard',
+  description: 'Your personal dashboard for everything that matters',
+  noIndex: true, // Prevent search indexing
+});
+
+// ❌ WRONG - Title too long
+usePageMeta({
+  title: 'Movies, TV Shows, and Streaming Content Tracker - NPC Finder',
+  // Too long, "NPC Finder" is redundant (automatically appended)
+});
+
+// ❌ WRONG - Description too long
+usePageMeta({
+  title: 'Movies',
+  description: 'Track all your favorite movies and TV shows, discover new content from friends, get personalized recommendations based on your viewing history, and organize your watchlist with custom tags and ratings.',
+  // Too long (>160 chars), gets truncated in search results
+});
+
+// ❌ WRONG - Missing noIndex on authenticated page
+usePageMeta({
+  title: 'User Settings',
+  description: 'Manage your account settings',
+  // Missing noIndex: true - user settings should not be indexed
+});
+```
+
+**Impact:**
+- Better search engine indexing (proper titles/descriptions)
+- Improved social media previews (Open Graph tags)
+- Descriptive browser tabs (per-page titles)
+- Prevented indexing of user-specific content (`noIndex`)
+
+**Reference:** See `docs/LIGHTHOUSE-AUDIT.md` for comprehensive SEO audit and optimization details.
+

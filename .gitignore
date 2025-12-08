@@ -13,6 +13,11 @@ dist-ssr
 *.local
 coverage
 
+# Lighthouse reports
+*.report.html
+chromewebdata_*.report.html
+www.*.report.html
+
 # Supabase
 .temp/
 .branches/
