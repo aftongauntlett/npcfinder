@@ -42,8 +42,8 @@ export function useWatchlistViewModel({
     WATCHLIST_DEFAULT_FILTERS
   );
 
-  // Filter state
-  const [filter] = useState<FilterType>(initialFilter);
+  // Filter state - use prop directly instead of state since it changes between tabs
+  const filter = initialFilter;
   const [mediaTypeFilter, setMediaTypeFilter] = useState<MediaTypeFilter>(
     persistedFilters.mediaTypeFilter as MediaTypeFilter
   );

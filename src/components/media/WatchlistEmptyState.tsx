@@ -13,9 +13,9 @@ interface WatchlistEmptyStateProps {
 }
 
 const WatchlistEmptyState: React.FC<WatchlistEmptyStateProps> = ({
-  filter: _filter,
+  filter,
   mediaTypeFilter,
-  genreFilters: _genreFilters,
+  genreFilters,
   hasItemsForCurrentFilter,
   totalItems,
   onAddClick,
@@ -35,13 +35,26 @@ const WatchlistEmptyState: React.FC<WatchlistEmptyStateProps> = ({
 
   // Show message when filters yield no results
   if (totalItems === 0) {
+    const hasActiveFilters =
+      mediaTypeFilter !== "all" ||
+      (genreFilters.length > 0 && !genreFilters.includes("all"));
+
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500 dark:text-gray-400">
-          {mediaTypeFilter === "tv" && "No TV shows found"}
-          {mediaTypeFilter === "movie" && "No movies found"}
-          {mediaTypeFilter === "all" && "No items found"}
+        <p className="text-gray-500 dark:text-gray-400 text-lg mb-2">
+          {hasActiveFilters
+            ? "No movies match your filters"
+            : filter === "to-watch"
+            ? "No movies in your watching list"
+            : filter === "watched"
+            ? "No movies in your watched list"
+            : "No items found"}
         </p>
+        {hasActiveFilters && (
+          <p className="text-gray-400 dark:text-gray-500 text-sm">
+            Try adjusting your media type or genre filters
+          </p>
+        )}
       </div>
     );
   }
