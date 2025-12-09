@@ -195,13 +195,14 @@ export const getUsers = async (
   const { count } = await query;
   const totalPages = Math.ceil((count || 0) / perPage);
 
-  // Fetch paginated results
-  const { data: userProfiles } = await query
-    .order("created_at", { ascending: false })
-    .range(page * perPage, (page + 1) * perPage - 1);
+  // Fetch all results for proper sorting (we'll sort in memory)
+  // Note: We fetch all matching results, then sort by role, then paginate
+  const { data: allUserProfiles } = await query.order("created_at", {
+    ascending: false,
+  });
 
-  const users: UserProfile[] =
-    userProfiles?.map(
+  const allUsers: UserProfile[] =
+    allUserProfiles?.map(
       (profile: {
         user_id: string;
         display_name?: string;
@@ -221,6 +222,21 @@ export const getUsers = async (
         updated_at: profile.updated_at,
       })
     ) || [];
+
+  // Sort: super_admin first, then admin, then user
+  const roleOrder = { super_admin: 0, admin: 1, user: 2 };
+  allUsers.sort((a, b) => {
+    const aOrder = roleOrder[a.role] ?? 3;
+    const bOrder = roleOrder[b.role] ?? 3;
+    if (aOrder !== bOrder) return aOrder - bOrder;
+    // Within same role, sort by created_at (newest first)
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
+  // Paginate the sorted results
+  const startIdx = page * perPage;
+  const endIdx = (page + 1) * perPage;
+  const users = allUsers.slice(startIdx, endIdx);
 
   // Log admin action for audit trail (L2)
   try {

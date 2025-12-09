@@ -3,11 +3,8 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import type { User } from "@supabase/supabase-js";
 import { StarryBackground } from "@/components/shared";
 import PageContainer from "./PageContainer";
-import DevIndicator from "../dev/DevIndicator";
 import ProtectedAdminRoute from "./ProtectedAdminRoute";
 import { SidebarProvider } from "../../contexts/SidebarContext";
-import { useAdmin } from "../../contexts/AdminContext";
-
 // Lazy load authenticated components to avoid Supabase imports on landing page
 const HomePage = React.lazy(() => import("../pages/HomePage"));
 const Sidebar = React.lazy(() => import("../shared/layout/Sidebar"));
@@ -18,7 +15,6 @@ const GamesPage = React.lazy(() => import("../pages/games/GamesPage"));
 const TasksPage = React.lazy(() => import("../pages/tasks/TasksPage"));
 const UserSettings = React.lazy(() => import("../pages/UserSettings"));
 const AdminPage = React.lazy(() => import("../pages/admin/AdminPage"));
-
 interface AuthenticatedAppLayoutProps {
   user: User;
 }
@@ -30,8 +26,6 @@ interface AuthenticatedAppLayoutProps {
 const AuthenticatedAppLayout: React.FC<AuthenticatedAppLayoutProps> = ({
   user,
 }) => {
-  const { isAdmin: userIsAdmin } = useAdmin();
-
   return (
     <SidebarProvider>
       <PageContainer className="relative">
@@ -44,32 +38,23 @@ const AuthenticatedAppLayout: React.FC<AuthenticatedAppLayoutProps> = ({
           }
         >
           <Sidebar currentUser={user} />
-          <DevIndicator isAdmin={userIsAdmin} />
-
           {/* Main content - no top nav, sidebar handles everything */}
           <Routes>
             <Route path="/" element={<HomePage user={user} />} />
-
             {/* Movies & TV - consolidated single route */}
             <Route path="/movies" element={<MoviesPage />} />
-
             {/* Books - consolidated single route */}
             <Route path="/books" element={<BooksPage />} />
-
             {/* Music - consolidated single route */}
             <Route path="/music" element={<MusicPage />} />
-
             {/* Games - consolidated single route */}
             <Route path="/games" element={<GamesPage />} />
-
             {/* Tasks - tabbed view with all templates */}
             <Route path="/tasks" element={<TasksPage />} />
-
             <Route
               path="/settings"
               element={<UserSettings currentUser={user} />}
             />
-
             {/* Admin route */}
             <Route
               path="/admin"
@@ -79,7 +64,6 @@ const AuthenticatedAppLayout: React.FC<AuthenticatedAppLayoutProps> = ({
                 </ProtectedAdminRoute>
               }
             />
-
             {/* Catch all - redirect to app home */}
             <Route path="*" element={<Navigate to="/app" replace />} />
           </Routes>

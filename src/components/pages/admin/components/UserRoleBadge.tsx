@@ -1,6 +1,8 @@
 import React from "react";
-import { Shield, ShieldCheck, User } from "lucide-react";
-import Button from "../../../shared/ui/Button";
+import { ChevronDown } from "lucide-react";
+import Dropdown from "../../../shared/ui/Dropdown";
+import Chip from "../../../shared/ui/Chip";
+import type { DropdownOption } from "../../../shared/ui/Dropdown";
 import type { UserRole } from "../../../../contexts/AdminContext";
 
 interface UserRoleBadgeProps {
@@ -16,52 +18,60 @@ const UserRoleBadge: React.FC<UserRoleBadgeProps> = ({
   disabled,
   disabledReason,
 }) => {
+  // Super admin cannot be changed - show as chip
   if (role === "super_admin") {
     return (
-      <Button
-        disabled
-        variant="primary"
-        size="sm"
-        className="!bg-gradient-to-r !from-yellow-500 !to-amber-600 !text-white hover:!from-yellow-600 hover:!to-amber-700 cursor-not-allowed"
-        aria-label="Super Admin - cannot be demoted"
-        title="Super Admin - cannot be demoted"
-        icon={<Shield className="w-3.5 h-3.5" aria-hidden="true" />}
-      >
+      <Chip variant="warning" size="sm" rounded="full">
         Super Admin
-      </Button>
+      </Chip>
     );
   }
 
-  if (role === "admin") {
+  // For admin and user, show dropdown to change role
+  const options: DropdownOption[] = [
+    {
+      id: "user",
+      label: "User",
+    },
+    {
+      id: "admin",
+      label: "Admin",
+    },
+  ];
+
+  const displayLabel = role === "admin" ? "Admin" : "User";
+
+  const triggerContent = (
+    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+      {displayLabel}
+      <ChevronDown className="w-3.5 h-3.5 text-gray-500" aria-hidden="true" />
+    </div>
+  );
+
+  if (disabled) {
     return (
-      <Button
-        onClick={onClick}
-        disabled={disabled}
-        variant="primary"
-        size="sm"
-        className={`!bg-gradient-to-r !from-green-500 !to-emerald-600 !text-white hover:!from-green-600 hover:!to-emerald-700 ${
-          disabled ? "cursor-not-allowed" : ""
-        }`}
-        aria-label={disabledReason || "Click to remove admin privileges"}
-        title={disabledReason || "Click to remove admin privileges"}
-        icon={<ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />}
+      <span
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400"
+        title={disabledReason}
       >
-        Admin
-      </Button>
+        {displayLabel}
+      </span>
     );
   }
 
   return (
-    <Button
-      onClick={onClick}
-      variant="primary"
+    <Dropdown
+      trigger={triggerContent}
+      options={options}
+      value={role}
+      onChange={(value) => {
+        if (value !== role && onClick) {
+          onClick();
+        }
+      }}
       size="sm"
-      aria-label="Click to make admin"
-      title="Click to make admin"
-      icon={<User className="w-3.5 h-3.5" aria-hidden="true" />}
-    >
-      User
-    </Button>
+      align="right"
+    />
   );
 };
 

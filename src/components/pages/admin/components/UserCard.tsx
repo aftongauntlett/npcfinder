@@ -1,8 +1,47 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { Shield, ShieldPlus, User as UserIcon } from "lucide-react";
 import Card from "../../../shared/ui/Card";
+import Chip from "../../../shared/ui/Chip";
 import UserRoleBadge from "./UserRoleBadge";
 import type { UserRole } from "../../../../contexts/AdminContext";
+
+const UserRoleIcon: React.FC<{ role: UserRole }> = ({ role }) => {
+  const getIconAndColor = () => {
+    if (role === "super_admin") {
+      return {
+        icon: <ShieldPlus className="w-5 h-5" />,
+        gradient: "from-yellow-600 to-amber-700",
+      };
+    }
+    if (role === "admin") {
+      return {
+        icon: <Shield className="w-5 h-5" />,
+        gradient: "from-green-500 to-emerald-600",
+      };
+    }
+    return {
+      icon: <UserIcon className="w-5 h-5" />,
+      gradient: "from-green-500 to-emerald-600",
+    };
+  };
+
+  const { icon, gradient } = getIconAndColor();
+
+  return (
+    <motion.div
+      className={`flex-shrink-0 h-12 w-12 bg-gradient-to-br ${gradient} rounded-full flex items-center justify-center text-white`}
+      whileHover={{ rotate: 5 }}
+      transition={{
+        type: "spring",
+        stiffness: 400,
+        damping: 20,
+      }}
+    >
+      {icon}
+    </motion.div>
+  );
+};
 
 interface User {
   id: string;
@@ -33,34 +72,24 @@ const UserCard: React.FC<UserCardProps> = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
     >
-      <Card spacing="md" className="space-y-3">
+      <Card
+        spacing="sm"
+        className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+      >
         <div className="flex items-center gap-3">
-          <motion.div
-            className="flex-shrink-0 h-12 w-12 bg-gradient-to-br from-primary to-primary-dark rounded-full flex items-center justify-center"
-            whileHover={{ rotate: 5 }}
-            transition={{
-              type: "spring",
-              stiffness: 400,
-              damping: 20,
-            }}
-          >
-            <span className="text-base font-medium text-white">
-              {user.display_name.charAt(0).toUpperCase()}
-            </span>
-          </motion.div>
-          <div className="flex-1 min-w-0">
-            <div className="text-base font-medium text-gray-900 dark:text-white truncate">
-              {user.display_name}
+          <UserRoleIcon role={user.role} />
+          <div className="flex-1 min-w-0 flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                {user.display_name}
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                {user.email || "N/A"}
+              </div>
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
-              {user.email || "N/A"}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-start sm:items-center justify-between gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
-          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-            {new Date(user.created_at).toLocaleDateString()}
+            <Chip variant="default" size="sm" rounded="full">
+              {new Date(user.created_at).toLocaleDateString()}
+            </Chip>
           </div>
           <div className="flex-shrink-0">
             <UserRoleBadge

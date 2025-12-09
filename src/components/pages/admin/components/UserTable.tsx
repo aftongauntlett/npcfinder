@@ -1,7 +1,45 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { Shield, ShieldPlus, User as UserIcon } from "lucide-react";
 import UserRoleBadge from "./UserRoleBadge";
 import type { UserRole } from "../../../../contexts/AdminContext";
+
+const UserRoleIcon: React.FC<{ role: UserRole }> = ({ role }) => {
+  const getIconAndColor = () => {
+    if (role === "super_admin") {
+      return {
+        icon: <ShieldPlus className="w-5 h-5" />,
+        gradient: "from-yellow-600 to-amber-700",
+      };
+    }
+    if (role === "admin") {
+      return {
+        icon: <Shield className="w-5 h-5" />,
+        gradient: "from-green-500 to-emerald-600",
+      };
+    }
+    return {
+      icon: <UserIcon className="w-5 h-5" />,
+      gradient: "from-green-500 to-emerald-600",
+    };
+  };
+
+  const { icon, gradient } = getIconAndColor();
+
+  return (
+    <motion.div
+      className={`flex-shrink-0 h-10 w-10 bg-gradient-to-br ${gradient} rounded-full flex items-center justify-center text-white`}
+      whileHover={{ rotate: 5 }}
+      transition={{
+        type: "spring",
+        stiffness: 400,
+        damping: 20,
+      }}
+    >
+      {icon}
+    </motion.div>
+  );
+};
 
 interface User {
   id: string;
@@ -56,19 +94,7 @@ const UserTable: React.FC<UserTableProps> = ({
             >
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center">
-                  <motion.div
-                    className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-primary to-primary-dark rounded-full flex items-center justify-center"
-                    whileHover={{ rotate: 5 }}
-                    transition={{
-                      type: "spring",
-                      stiffness: 400,
-                      damping: 20,
-                    }}
-                  >
-                    <span className="text-sm font-medium text-white">
-                      {user.display_name.charAt(0).toUpperCase()}
-                    </span>
-                  </motion.div>
+                  <UserRoleIcon role={user.role} />
                   <div className="ml-4">
                     <div className="text-sm font-medium text-gray-900 dark:text-white">
                       {user.display_name}

@@ -6,10 +6,8 @@ import Toast from "../../ui/Toast";
 import { useAdmin } from "../../../contexts/AdminContext";
 import { usePageMeta } from "../../../hooks/usePageMeta";
 import { useAdminPageLogic } from "../../../hooks/useAdminPageLogic";
-import AdminStatsSection from "./sections/AdminStatsSection";
 import UserManagementSection from "./sections/UserManagementSection";
 import InviteCodeSection from "./sections/InviteCodeSection";
-import SecurityBestPracticesSection from "./sections/SecurityBestPracticesSection";
 
 // Static page meta options (stable reference)
 const pageMetaOptions = {
@@ -70,7 +68,6 @@ const AdminPage: React.FC = () => {
     codes,
 
     // Loading States
-    statsLoading,
     usersLoading,
     codesLoading,
     isCreatingCode,
@@ -82,10 +79,27 @@ const AdminPage: React.FC = () => {
 
   return (
     <MainLayout>
-      <ContentLayout title="Admin Panel">
+      <ContentLayout
+        title="Admin Panel"
+        description="Manage users and invite codes for your platform"
+      >
         <div className="space-y-8">
-          {/* Stats Overview */}
-          <AdminStatsSection stats={stats} isLoading={statsLoading} />
+          {/* Invite Code Management Section */}
+          <InviteCodeSection
+            codes={codes}
+            isLoading={codesLoading}
+            showCreateForm={showCreateForm}
+            onToggleCreateForm={setShowCreateForm}
+            onCreateCode={() => void handleCreateCode()}
+            onRevoke={handleRevokeCode}
+            onCopyCode={(code) => void copyCodeOnly(code)}
+            onCopyWithMessage={(code) => void copyCodeWithMessage(code)}
+            copiedCode={copiedCode}
+            newlyCreatedCodes={newlyCreatedCodes}
+            intendedEmail={intendedEmail}
+            onEmailChange={setIntendedEmail}
+            isCreating={isCreatingCode}
+          />
 
           {/* User Management Section - Only show when more than 1 user */}
           {showUserManagement && (
@@ -105,26 +119,6 @@ const AdminPage: React.FC = () => {
               isSuperAdmin={isSuperAdmin}
             />
           )}
-
-          {/* Invite Code Management Section */}
-          <InviteCodeSection
-            codes={codes}
-            isLoading={codesLoading}
-            showCreateForm={showCreateForm}
-            onToggleCreateForm={setShowCreateForm}
-            onCreateCode={() => void handleCreateCode()}
-            onRevoke={handleRevokeCode}
-            onCopyCode={(code) => void copyCodeOnly(code)}
-            onCopyWithMessage={(code) => void copyCodeWithMessage(code)}
-            copiedCode={copiedCode}
-            newlyCreatedCodes={newlyCreatedCodes}
-            intendedEmail={intendedEmail}
-            onEmailChange={setIntendedEmail}
-            isCreating={isCreatingCode}
-          />
-
-          {/* Security Best Practices Section */}
-          <SecurityBestPracticesSection />
         </div>
 
         {/* Role Toggle Confirmation Modal */}

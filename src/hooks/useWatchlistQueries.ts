@@ -69,12 +69,12 @@ export function useAddToWatchlist() {
           vote_average: newItem.vote_average || null,
           vote_count: newItem.vote_count || null,
           runtime: newItem.runtime || null,
-          watched: false,
+          watched: newItem.watched || false, // Use the watched value from newItem
           list_order: null,
           notes: newItem.notes || null,
           added_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-          watched_at: null,
+          watched_at: newItem.watched ? new Date().toISOString() : null, // Set watched_at if already watched
         };
 
         queryClient.setQueryData<WatchlistItem[]>(

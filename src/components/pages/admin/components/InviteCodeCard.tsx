@@ -1,9 +1,9 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { format } from "date-fns";
+import { Copy, Trash2 } from "lucide-react";
 import Card from "../../../shared/ui/Card";
+import Chip from "../../../shared/ui/Chip";
 import Button from "../../../shared/ui/Button";
-import InviteCodeStatusBadge from "./InviteCodeStatusBadge";
 import type { InviteCode } from "../../../../lib/inviteCodes";
 
 interface InviteCodeCardProps {
@@ -19,8 +19,6 @@ const InviteCodeCard: React.FC<InviteCodeCardProps> = ({
   code,
   onRevoke,
   onCopyCode,
-  onCopyWithMessage,
-  copiedCode,
   isNewlyCreated,
 }) => {
   return (
@@ -30,66 +28,43 @@ const InviteCodeCard: React.FC<InviteCodeCardProps> = ({
       transition={{ duration: 0.2 }}
     >
       <Card
-        spacing="md"
-        className={`space-y-3 ${
+        spacing="sm"
+        className={`${
           isNewlyCreated ? "ring-2 ring-green-500 dark:ring-green-400" : ""
         }`}
       >
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0 space-y-1">
-            <code className="block text-sm font-mono font-semibold text-gray-900 dark:text-white break-all">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <code className="text-base font-mono font-semibold text-gray-900 dark:text-white">
               {code.code}
             </code>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
               For: {code.intended_email || "Any"}
-            </div>
+            </span>
+            <Chip variant="success" size="sm" rounded="full">
+              Sent
+            </Chip>
           </div>
-          <div className="flex-shrink-0">
-            <InviteCodeStatusBadge code={code} />
+          <div className="flex items-center gap-1">
+            <Button
+              variant="subtle"
+              size="icon"
+              onClick={() => onCopyCode(code.code)}
+              aria-label="Copy invite code"
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              <Copy className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="subtle"
+              size="icon"
+              onClick={() => onRevoke(code.id, code.code)}
+              aria-label="Delete invite code"
+              className="text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
           </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2 text-sm pt-2 border-t border-gray-200 dark:border-gray-700">
-          <div>
-            <div className="text-gray-500 dark:text-gray-400">Uses</div>
-            <div className="font-medium text-gray-900 dark:text-white">
-              {code.current_uses} / {code.max_uses}
-            </div>
-          </div>
-          <div>
-            <div className="text-gray-500 dark:text-gray-400">Expires</div>
-            <div className="font-medium text-gray-900 dark:text-white">
-              {code.expires_at
-                ? format(new Date(code.expires_at), "MMM d, yyyy")
-                : "Never"}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-          <Button
-            onClick={() => onCopyCode(code.code)}
-            variant="subtle"
-            size="sm"
-            fullWidth
-          >
-            {copiedCode === code.code ? "Copied!" : "Copy"}
-          </Button>
-          <Button
-            onClick={() => onCopyWithMessage(code.code)}
-            variant="subtle"
-            size="sm"
-            fullWidth
-          >
-            Copy Msg
-          </Button>
-          <Button
-            onClick={() => onRevoke(code.id, code.code)}
-            variant="danger"
-            size="sm"
-          >
-            Delete
-          </Button>
         </div>
       </Card>
     </motion.div>

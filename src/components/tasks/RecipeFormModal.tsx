@@ -9,10 +9,16 @@ import Modal from "../shared/ui/Modal";
 import Button from "../shared/ui/Button";
 import Input from "../shared/ui/Input";
 import Textarea from "../shared/ui/Textarea";
-import Select from "../shared/ui/Select";
+import Dropdown from "../shared/ui/Dropdown";
 import { useCreateTask, useUpdateTask } from "../../hooks/useTasksQueries";
 import { useUrlMetadata } from "../../hooks/useUrlMetadata";
-import { Link, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  Link,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  ChevronDown,
+} from "lucide-react";
 import { useTheme } from "../../hooks/useTheme";
 import type { Task, CreateTaskData } from "../../services/tasksService.types";
 
@@ -338,26 +344,40 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
         />
 
         {/* Category */}
-        <Select
-          label="Category"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          placeholder="Select a category..."
-          options={[
-            { value: "Appetizer", label: "Appetizer" },
-            { value: "Breakfast", label: "Breakfast" },
-            { value: "Main", label: "Main Course" },
-            { value: "Side", label: "Side Dish" },
-            { value: "Dessert", label: "Dessert" },
-            { value: "Snack", label: "Snack" },
-            { value: "Beverage", label: "Beverage" },
-            { value: "Sauce", label: "Sauce/Condiment" },
-            { value: "Soup", label: "Soup" },
-            { value: "Salad", label: "Salad" },
-            { value: "Bread", label: "Bread/Baked Goods" },
-            { value: "Other", label: "Other" },
-          ]}
-        />
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Category
+          </label>
+          <Dropdown
+            trigger={
+              <div className="w-full flex items-center justify-between px-4 py-2.5 text-base bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white hover:border-gray-400 dark:hover:border-gray-500 transition-colors cursor-pointer">
+                <span
+                  className={category ? "" : "text-gray-500 dark:text-gray-400"}
+                >
+                  {category || "Select a category..."}
+                </span>
+                <ChevronDown className="w-4 h-4 text-gray-500" />
+              </div>
+            }
+            options={[
+              { id: "Appetizer", label: "Appetizer" },
+              { id: "Breakfast", label: "Breakfast" },
+              { id: "Main", label: "Main Course" },
+              { id: "Side", label: "Side Dish" },
+              { id: "Dessert", label: "Dessert" },
+              { id: "Snack", label: "Snack" },
+              { id: "Beverage", label: "Beverage" },
+              { id: "Sauce", label: "Sauce/Condiment" },
+              { id: "Soup", label: "Soup" },
+              { id: "Salad", label: "Salad" },
+              { id: "Bread", label: "Bread/Baked Goods" },
+              { id: "Other", label: "Other" },
+            ]}
+            value={category}
+            onChange={(value) => setCategory(value as string)}
+            dropdownClassName="w-full"
+          />
+        </div>
 
         {/* Time Fields Row */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

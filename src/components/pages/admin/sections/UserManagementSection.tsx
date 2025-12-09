@@ -3,7 +3,6 @@ import { Search } from "lucide-react";
 import Input from "../../../shared/ui/Input";
 import EmptyState from "../../../shared/common/EmptyState";
 import { Pagination } from "../../../shared/common/Pagination";
-import UserTable from "../components/UserTable";
 import UserCard from "../components/UserCard";
 import type { UserRole } from "../../../../contexts/AdminContext";
 
@@ -50,10 +49,13 @@ const UserManagementSection: React.FC<UserManagementSectionProps> = ({
 }) => {
   return (
     <section className="space-y-4">
-      <div>
+      <div className="flex items-center gap-2">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
           User Management
         </h2>
+        <span className="flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
+          {totalItems}
+        </span>
       </div>
 
       {/* User Search */}
@@ -65,7 +67,7 @@ const UserManagementSection: React.FC<UserManagementSectionProps> = ({
         leftIcon={<Search className="w-5 h-5" />}
       />
 
-      {/* Users Table */}
+      {/* Users List */}
       {isLoading ? (
         <div className="flex justify-center items-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 dark:border-gray-700 border-t-primary"></div>
@@ -78,16 +80,8 @@ const UserManagementSection: React.FC<UserManagementSectionProps> = ({
         />
       ) : (
         <>
-          {/* Desktop Table View */}
-          <UserTable
-            users={users}
-            onToggleRole={onToggleRole}
-            canDemoteUser={canDemoteUser}
-            isSuperAdmin={isSuperAdmin}
-          />
-
-          {/* Mobile Card View */}
-          <div className="md:hidden space-y-3">
+          {/* Card View for all screen sizes */}
+          <div className="space-y-3">
             {users.map((user) => (
               <UserCard
                 key={user.id}

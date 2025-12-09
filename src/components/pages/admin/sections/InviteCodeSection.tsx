@@ -1,9 +1,8 @@
 import React from "react";
-import { Sparkles, UserPlus } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import Button from "../../../shared/ui/Button";
 import Input from "../../../shared/ui/Input";
 import EmptyStateAddCard from "../../../shared/common/EmptyStateAddCard";
-import InviteCodeTable from "../components/InviteCodeTable";
 import InviteCodeCard from "../components/InviteCodeCard";
 import type { InviteCode } from "../../../../lib/inviteCodes";
 
@@ -48,11 +47,11 @@ const InviteCodeSection: React.FC<InviteCodeSectionProps> = ({
           <Button
             onClick={() => onToggleCreateForm(true)}
             variant="action"
-            icon={<Sparkles className="w-4 h-4" />}
+            icon={<UserPlus className="w-4 h-4" />}
             hideTextOnMobile
             aria-label="Create invite code"
           >
-            Create
+            Invite
           </Button>
         )}
       </div>
@@ -113,32 +112,19 @@ const InviteCodeSection: React.FC<InviteCodeSectionProps> = ({
           ariaLabel="Create invite code"
         />
       ) : (
-        <>
-          {/* Desktop Table View */}
-          <InviteCodeTable
-            codes={codes}
-            onRevoke={onRevoke}
-            onCopyCode={onCopyCode}
-            onCopyWithMessage={onCopyWithMessage}
-            copiedCode={copiedCode}
-            newlyCreatedCodes={newlyCreatedCodes}
-          />
-
-          {/* Mobile Card View */}
-          <div className="md:hidden space-y-3">
-            {codes.map((code) => (
-              <InviteCodeCard
-                key={code.id}
-                code={code}
-                onRevoke={onRevoke}
-                onCopyCode={onCopyCode}
-                onCopyWithMessage={onCopyWithMessage}
-                copiedCode={copiedCode}
-                isNewlyCreated={newlyCreatedCodes.has(code.code)}
-              />
-            ))}
-          </div>
-        </>
+        <div className="space-y-3">
+          {codes.map((code) => (
+            <InviteCodeCard
+              key={code.id}
+              code={code}
+              onRevoke={onRevoke}
+              onCopyCode={onCopyCode}
+              onCopyWithMessage={onCopyWithMessage}
+              copiedCode={copiedCode}
+              isNewlyCreated={newlyCreatedCodes.has(code.code)}
+            />
+          ))}
+        </div>
       )}
     </section>
   );

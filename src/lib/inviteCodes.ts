@@ -86,17 +86,28 @@ export const validateInviteCode = async (
 };
 
 // Consume invite code after successful user registration
+// UPDATED: Delete the code after it's been used instead of marking it
 export const consumeInviteCode = async (
   code: string,
   userId: string
 ): Promise<InviteCodeResult<boolean>> => {
   try {
+    // First, verify and mark the code as used
     const { data, error } = await supabase.rpc("consume_invite_code", {
       code_value: code.toUpperCase().trim(),
       user_id: userId,
     });
 
     if (error) throw error;
+
+    // If successful, delete the code (cleanup)
+    if (data === true) {
+      await supabase
+        .from("invite_codes")
+        .delete()
+        .eq("code", code.toUpperCase().trim());
+    }
+
     return { data: data as boolean, error: null };
   } catch (error) {
     logger.error("Failed to consume invite code", { error });
@@ -143,15 +154,17 @@ export const createInviteCode = async (
 };
 
 // Get all active invite codes (admin only)
+// UPDATED: Only return codes that haven't been used yet
 export const getAllInviteCodes = async (): Promise<
   InviteCodeResult<InviteCode[]>
 > => {
   try {
-    // First get all invite codes (only active ones - excludes old revoked codes)
+    // Only get active codes that haven't been used (used_by is null)
     const { data: codes, error: codesError } = await supabase
       .from("invite_codes")
       .select("*")
       .eq("is_active", true)
+      .is("used_by", null) // Only show codes that haven't been used
       .order("created_at", { ascending: false });
 
     if (codesError) throw codesError;

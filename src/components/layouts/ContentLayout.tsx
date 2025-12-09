@@ -49,7 +49,7 @@ const ContentLayout: React.FC<ContentLayoutProps> = ({
     <main
       id="main-content"
       tabIndex={-1}
-      className="min-h-screen focus:outline-none"
+      className="min-h-screen focus:outline-none flex flex-col"
     >
       {/* Mobile Header - Only visible on mobile */}
       <header className="md:hidden sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 z-40 mb-6">
@@ -126,7 +126,7 @@ const ContentLayout: React.FC<ContentLayoutProps> = ({
       </header>
 
       {/* Page Content */}
-      <div className="container mx-auto px-6 pb-8" role="main">
+      <div className="flex-1 container mx-auto px-6 pb-8" role="main">
         {children}
       </div>
 
