@@ -63,11 +63,6 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
     isDeleting,
   } = useWatchlistViewModel({ initialFilter });
 
-  const handleResetFilters = () => {
-    setMediaTypeFilter("all");
-    setGenreFilters(["all"]);
-  };
-
   return (
     <div
       ref={topRef}
@@ -83,7 +78,6 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
           onMediaTypeChange={setMediaTypeFilter}
           onGenresChange={setGenreFilters}
           onSortChange={setSortBy}
-          onResetFilters={handleResetFilters}
           onAddClick={() => setShowSearchModal(true)}
         />
       )}

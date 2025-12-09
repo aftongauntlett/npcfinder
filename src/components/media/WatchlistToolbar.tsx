@@ -14,7 +14,6 @@ interface WatchlistToolbarProps {
   onMediaTypeChange: (type: MediaTypeFilter) => void;
   onGenresChange: (genres: string[]) => void;
   onSortChange: (sort: WatchlistSortType) => void;
-  onResetFilters: () => void;
   onAddClick: () => void;
 }
 
@@ -26,7 +25,6 @@ const WatchlistToolbar: React.FC<WatchlistToolbarProps> = ({
   onMediaTypeChange,
   onGenresChange,
   onSortChange,
-  onResetFilters,
   onAddClick,
 }) => {
   const filterSections = getWatchlistFilterSections(availableGenres);
@@ -51,10 +49,6 @@ const WatchlistToolbar: React.FC<WatchlistToolbarProps> = ({
             onSortChange(filterId as WatchlistSortType);
           }
         },
-        onResetFilters,
-        hasActiveFilters:
-          mediaTypeFilter !== "all" ||
-          (!genreFilters.includes("all") && genreFilters.length > 0),
       }}
       onAddClick={onAddClick}
     />

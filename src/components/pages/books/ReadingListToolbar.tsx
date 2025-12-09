@@ -9,7 +9,6 @@ interface ReadingListToolbarProps {
   sortBy: ReadingListSortType;
   onCategoryChange: (categories: string[]) => void;
   onSortChange: (sort: ReadingListSortType) => void;
-  onResetFilters: () => void;
   onAddClick: () => void;
 }
 
@@ -19,7 +18,6 @@ const ReadingListToolbar: React.FC<ReadingListToolbarProps> = ({
   sortBy,
   onCategoryChange,
   onSortChange,
-  onResetFilters,
   onAddClick,
 }) => {
   const filterSections = getReadingListFilterSections(availableCategories);
@@ -42,9 +40,6 @@ const ReadingListToolbar: React.FC<ReadingListToolbarProps> = ({
               onSortChange(value as ReadingListSortType);
             }
           },
-          onResetFilters,
-          hasActiveFilters:
-            !categoryFilters.includes("all") && categoryFilters.length > 0,
         }}
         onAddClick={onAddClick}
       />

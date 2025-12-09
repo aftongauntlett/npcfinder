@@ -221,12 +221,6 @@ const GroceryListView: React.FC<GroceryListViewProps> = ({
                 sort: sortBy,
               }}
               onFilterChange={handleFilterChange}
-              onResetFilters={() => {
-                setCategoryFilters(["all"]);
-              }}
-              hasActiveFilters={
-                !categoryFilters.includes("all") && categoryFilters.length > 0
-              }
               label="Sort & Filter"
             />
             <div className="flex items-center gap-2">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Calendar, Clock, RotateCcw, Check, Lightbulb } from "lucide-react";
+import { Clock, RotateCcw, Check, Lightbulb } from "lucide-react";
 import { Book } from "@phosphor-icons/react";
 import { type MediaStatus } from "@/utils/mediaStatus";
 import { logger } from "@/lib/logger";
@@ -252,17 +252,24 @@ const MediaListItemComponent: React.FC<MediaListItemProps> = ({
           {subtitle && (
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               {subtitle}
+              {year && (
+                <>
+                  <span className="mx-2">•</span>
+                  <span>{year}</span>
+                </>
+              )}
             </p>
           )}
 
-          {/* Year and Runtime */}
+          {/* Year only (if no subtitle) */}
+          {!subtitle && year && (
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              {year}
+            </p>
+          )}
+
+          {/* Runtime */}
           <div className="flex items-center gap-2 mt-1 flex-wrap">
-            {year && (
-              <span className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                <Calendar className="w-3 h-3" />
-                {year}
-              </span>
-            )}
             {details && details.runtime && (
               <span className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 whitespace-nowrap">
                 <Clock className="w-3 h-3" />

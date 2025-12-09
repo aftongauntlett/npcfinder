@@ -330,11 +330,6 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
                   setSortBy(value as SortType);
                 }
               },
-              onResetFilters: () => {
-                setGenreFilters(["all"]);
-              },
-              hasActiveFilters:
-                !genreFilters.includes("all") && genreFilters.length > 0,
             }}
             onAddClick={() => setShowSearchModal(true)}
           />

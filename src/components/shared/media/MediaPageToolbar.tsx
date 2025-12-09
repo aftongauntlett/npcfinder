@@ -25,8 +25,6 @@ interface MenuFilterConfig {
   }>;
   activeFilters: Record<string, string | string[]>;
   onFilterChange: (sectionId: string, filterId: string | string[]) => void;
-  onResetFilters?: () => void;
-  hasActiveFilters?: boolean;
 }
 
 interface SortConfig {
@@ -115,8 +113,6 @@ export function MediaPageToolbar(props: MediaPageToolbarProps) {
             sections={filterConfig.sections}
             activeFilters={filterConfig.activeFilters}
             onFilterChange={filterConfig.onFilterChange}
-            onResetFilters={filterConfig.onResetFilters}
-            hasActiveFilters={filterConfig.hasActiveFilters}
           />
         )}
 

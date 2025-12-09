@@ -78,6 +78,7 @@ export { default as AccordionListCard } from "./common/AccordionListCard";
 export { default as EmptyState } from "./common/EmptyState";
 export { default as FilterSortMenu } from "./common/FilterSortMenu";
 export type { FilterSortSection } from "./common/FilterSortMenu";
+export { default as ActiveFilterChips } from "./common/ActiveFilterChips";
 export { default as PrivacyToggle } from "./common/PrivacyToggle";
 export { default as ActionButtonGroup } from "./common/ActionButtonGroup";
 export type { ActionConfig } from "./common/ActionButtonGroup";

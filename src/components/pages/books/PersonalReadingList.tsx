@@ -75,7 +75,6 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
           sortBy={sortBy}
           onCategoryChange={setCategoryFilters}
           onSortChange={setSortBy}
-          onResetFilters={() => setCategoryFilters(["all"])}
           onAddClick={() => setShowSearchModal(true)}
         />
       )}

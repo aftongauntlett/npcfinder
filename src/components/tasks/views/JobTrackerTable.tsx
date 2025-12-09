@@ -3,7 +3,7 @@ import { JobCard } from "../../shared/cards";
 import FilterSortMenu from "../../shared/common/FilterSortMenu";
 import type { FilterSortSection } from "../../shared/common/FilterSortMenu";
 import Button from "../../shared/ui/Button";
-import { Plus, RotateCcw } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { StatusHistoryEntry } from "../../../services/tasksService.types";
 import {
   getPersistedFilters,
@@ -154,30 +154,15 @@ export const JobTrackerTable: React.FC<JobTrackerTableProps> = ({
       {/* Toolbar */}
       {sortedItems.length > 0 && (
         <div className="flex flex-nowrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <FilterSortMenu
-              sections={filterSortSections}
-              activeFilters={{
-                status: statusFilters,
-                sort: activeSort,
-              }}
-              onFilterChange={handleFilterChange}
-              label="Sort & Filter"
-            />
-
-            {/* Reset Filters Button */}
-            {!statusFilters.includes("all") && statusFilters.length > 0 && (
-              <Button
-                variant="subtle"
-                size="sm"
-                icon={<RotateCcw className="w-4 h-4" />}
-                onClick={() => setStatusFilters(["all"])}
-                aria-label="Reset filters"
-              >
-                Reset Filters
-              </Button>
-            )}
-          </div>
+          <FilterSortMenu
+            sections={filterSortSections}
+            activeFilters={{
+              status: statusFilters,
+              sort: activeSort,
+            }}
+            onFilterChange={handleFilterChange}
+            label="Sort & Filter"
+          />
 
           <Button
             onClick={onAdd}

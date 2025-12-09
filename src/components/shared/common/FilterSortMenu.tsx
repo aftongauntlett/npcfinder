@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
-import { SlidersHorizontal, RotateCcw } from "lucide-react";
+import { SlidersHorizontal } from "lucide-react";
 import FilterSortSection from "./FilterSortSection";
+import ActiveFilterChips from "./ActiveFilterChips";
 import Button from "../ui/Button";
 
 export interface FilterSortOption {
@@ -20,8 +21,6 @@ interface FilterSortMenuProps {
   sections: FilterSortSection[];
   activeFilters: Record<string, string | string[]>;
   onFilterChange: (sectionId: string, filterId: string | string[]) => void;
-  onResetFilters?: () => void;
-  hasActiveFilters?: boolean;
   label?: string;
 }
 
@@ -34,8 +33,6 @@ const FilterSortMenu: React.FC<FilterSortMenuProps> = ({
   sections,
   activeFilters,
   onFilterChange,
-  onResetFilters,
-  hasActiveFilters = false,
   label = "Filters & Sort",
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -126,8 +123,27 @@ const FilterSortMenu: React.FC<FilterSortMenuProps> = ({
     return activeFilters[section.id] === optionId;
   };
 
+  const handleRemoveFilter = (sectionId: string, filterId: string) => {
+    const section = sections.find((s) => s.id === sectionId);
+    if (!section) return;
+
+    if (section.multiSelect) {
+      // Multi-select: remove the specific filter
+      const currentValues = Array.isArray(activeFilters[sectionId])
+        ? (activeFilters[sectionId] as string[])
+        : [];
+
+      const newValues = currentValues.filter((id) => id !== filterId);
+      // If nothing left, default to "all"
+      onFilterChange(sectionId, newValues.length === 0 ? ["all"] : newValues);
+    } else {
+      // Single select: reset to "all"
+      onFilterChange(sectionId, "all");
+    }
+  };
+
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 flex-wrap">
       <div className="relative inline-block">
         {/* Trigger Button */}
         <Button
@@ -170,18 +186,12 @@ const FilterSortMenu: React.FC<FilterSortMenuProps> = ({
         )}
       </div>
 
-      {/* Reset Filters Button */}
-      {hasActiveFilters && onResetFilters && (
-        <Button
-          variant="subtle"
-          size="sm"
-          icon={<RotateCcw className="w-4 h-4" />}
-          onClick={onResetFilters}
-          aria-label="Reset filters"
-        >
-          Reset Filters
-        </Button>
-      )}
+      {/* Active Filter Chips - inline on same row */}
+      <ActiveFilterChips
+        sections={sections}
+        activeFilters={activeFilters}
+        onRemoveFilter={handleRemoveFilter}
+      />
     </div>
   );
 };

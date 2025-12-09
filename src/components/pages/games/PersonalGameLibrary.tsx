@@ -123,7 +123,6 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
           activeSort={activeSort}
           onGenresChange={setGenreFilters}
           onSortChange={setActiveSort}
-          onResetFilters={() => setGenreFilters(["all"])}
           onAddClick={() => setShowSearchModal(true)}
         />
       )}

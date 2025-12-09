@@ -195,12 +195,6 @@ export const RecipeListView: React.FC<RecipeListViewProps> = ({
                   sort: activeSort,
                 }}
                 onFilterChange={handleFilterChange}
-                onResetFilters={() => {
-                  setCategoryFilters(["all"]);
-                }}
-                hasActiveFilters={
-                  !categoryFilters.includes("all") && categoryFilters.length > 0
-                }
                 label="Sort & Filter"
               />
               <Button

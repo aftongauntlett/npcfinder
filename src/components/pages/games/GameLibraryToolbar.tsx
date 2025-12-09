@@ -9,7 +9,6 @@ interface GameLibraryToolbarProps {
   activeSort: GameLibrarySortType;
   onGenresChange: (genres: string[]) => void;
   onSortChange: (sort: GameLibrarySortType) => void;
-  onResetFilters: () => void;
   onAddClick: () => void;
 }
 
@@ -19,7 +18,6 @@ const GameLibraryToolbar: React.FC<GameLibraryToolbarProps> = ({
   activeSort,
   onGenresChange,
   onSortChange,
-  onResetFilters,
   onAddClick,
 }) => {
   const filterSections = getGameLibraryFilterSections(availableGenres);
@@ -42,9 +40,6 @@ const GameLibraryToolbar: React.FC<GameLibraryToolbarProps> = ({
               onSortChange(value as GameLibrarySortType);
             }
           },
-          onResetFilters,
-          hasActiveFilters:
-            !genreFilters.includes("all") && genreFilters.length > 0,
         }}
         onAddClick={onAddClick}
       />
