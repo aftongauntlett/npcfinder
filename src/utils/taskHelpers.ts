@@ -328,3 +328,30 @@ export function validateTag(tag: string): { valid: boolean; error?: string } {
 
   return { valid: true };
 }
+
+// =====================================================
+// TEMPLATE DETECTION
+// =====================================================
+
+/**
+ * Check if a task is a job tracker task
+ * Detects based on presence of job-specific fields in item_data
+ */
+export function isJobTrackerTask(task: Task): boolean {
+  return (
+    task.item_data?.company_name !== undefined ||
+    task.item_data?.position !== undefined
+  );
+}
+
+/**
+ * Check if a task is a recipe task
+ * Detects based on presence of recipe-specific fields in item_data
+ */
+export function isRecipeTask(task: Task): boolean {
+  return (
+    task.item_data?.recipe_name !== undefined ||
+    task.item_data?.name !== undefined ||
+    task.item_data?.ingredients !== undefined
+  );
+}
