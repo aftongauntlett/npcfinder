@@ -92,6 +92,13 @@ describe("inviteCodes", () => {
     it("should successfully consume a valid invite code", async () => {
       (supabase.rpc as any).mockResolvedValueOnce(mockResponse(true));
 
+      // Mock the delete call that happens after successful consumption
+      (supabase.from as any).mockReturnValue({
+        delete: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+      });
+
       const result = await inviteCodes.consumeInviteCode(
         "ABC-DEF-GHI-JKL",
         "user-123"
@@ -205,9 +212,11 @@ describe("inviteCodes", () => {
       (supabase.from as any).mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({
-              data: mockCodes,
-              error: null,
+            is: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({
+                data: mockCodes,
+                error: null,
+              }),
             }),
           }),
         }),
@@ -218,9 +227,11 @@ describe("inviteCodes", () => {
         .mockReturnValueOnce({
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
-              order: vi.fn().mockResolvedValue({
-                data: mockCodes,
-                error: null,
+              is: vi.fn().mockReturnValue({
+                order: vi.fn().mockResolvedValue({
+                  data: mockCodes,
+                  error: null,
+                }),
               }),
             }),
           }),
