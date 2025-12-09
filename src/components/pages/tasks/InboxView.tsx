@@ -11,13 +11,12 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
-import { ListChecks, Plus, Clock, Bell } from "lucide-react";
+import { ListChecks, Plus, Clock } from "lucide-react";
 import TaskCard from "../../tasks/TaskCard";
 import TimerWidget from "../../tasks/TimerWidget";
 import CreateTaskModal from "../../tasks/CreateTaskModal";
 import TaskDetailModal from "../../tasks/TaskDetailModal";
 import Button from "../../shared/ui/Button";
-import Chip from "../../shared/ui/Chip";
 import { EmptyStateAddCard } from "../../shared";
 import ConfirmationModal from "../../shared/ui/ConfirmationModal";
 import { Pagination } from "../../shared/common/Pagination";
@@ -30,14 +29,9 @@ import {
   useUpdateTask,
   useDeleteTask,
   useActiveTimers,
-  useUpcomingReminders,
 } from "../../../hooks/useTasksQueries";
 import type { Task } from "../../../services/tasksService.types";
 import { getNextDueDate } from "../../../utils/repeatableTaskHelpers";
-import {
-  formatReminderDate,
-  getReminderBadgeColor,
-} from "../../../utils/reminderHelpers";
 import {
   getPersistedFilters,
   persistFilters,
@@ -51,7 +45,6 @@ const InboxView: React.FC = () => {
     }
   );
   const { data: activeTimers = [] } = useActiveTimers();
-  const { data: upcomingReminders = [] } = useUpcomingReminders(7);
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -144,8 +137,7 @@ const InboxView: React.FC = () => {
       if (task.is_repeatable && task.status !== "done" && task.due_date) {
         const nextDueDate = getNextDueDate(
           task.due_date,
-          task.repeat_frequency || "weekly",
-          task.repeat_custom_days || undefined
+          task.repeat_frequency || "weekly"
         );
 
         updateTask.mutate({
@@ -322,51 +314,6 @@ const InboxView: React.FC = () => {
                 <TimerWidget task={task} compact={false} />
               </div>
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* Upcoming Reminders */}
-      {upcomingReminders.length > 0 && (
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <Bell className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              Upcoming Reminders ({upcomingReminders.length})
-            </h2>
-          </div>
-          <div className="space-y-2">
-            {upcomingReminders.map((task) => {
-              const badgeColors = getReminderBadgeColor(
-                task.reminder_date || ""
-              );
-              return (
-                <div
-                  key={task.id}
-                  className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
-                  onClick={() => setSelectedTask(task)}
-                >
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                      {task.title}
-                    </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {formatReminderDate(
-                        task.reminder_date || "",
-                        task.reminder_time
-                      )}
-                    </p>
-                  </div>
-                  <Chip
-                    variant="default"
-                    size="sm"
-                    className={`${badgeColors.bg} ${badgeColors.text} shrink-0`}
-                  >
-                    {task.reminder_sent_at ? "Sent" : "Pending"}
-                  </Chip>
-                </div>
-              );
-            })}
           </div>
         </div>
       )}

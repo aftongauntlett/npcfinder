@@ -129,13 +129,11 @@ export function MediaPageToolbar(props: MediaPageToolbarProps) {
               id={selectId}
               value={sortConfig.activeSort}
               onChange={(e) => sortConfig.onSortChange(e.target.value)}
-            >
-              {sortConfig.options.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-            </Select>
+              options={sortConfig.options.map((option) => ({
+                value: option.id,
+                label: option.label,
+              }))}
+            />
           </div>
         )}
       </div>

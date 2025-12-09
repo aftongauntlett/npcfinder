@@ -14,11 +14,12 @@ import Modal from "../shared/ui/Modal";
 import Button from "../shared/ui/Button";
 import Input from "../shared/ui/Input";
 import Textarea from "../shared/ui/Textarea";
+import Select from "../shared/ui/Select";
 import ConfirmationModal from "../shared/ui/ConfirmationModal";
+import { useTheme } from "../../hooks/useTheme";
 import JobTaskSection from "./JobTaskSection";
 import RecipeTaskSection from "./RecipeTaskSection";
 import TaskTimerSection from "./TaskTimerSection";
-import TaskReminderSection from "./TaskReminderSection";
 import type { Task } from "../../services/tasksService.types";
 import {
   useTask,
@@ -57,13 +58,41 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     setPriority,
     dueDate,
     setDueDate,
-    tags,
-    setTags,
     buildBaseUpdates,
   } = useTaskFormState(task);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
+  const { themeColor } = useTheme();
+
+  // Repeatable task state
+  const [isRepeatable, setIsRepeatable] = useState(task.is_repeatable || false);
+  const [repeatFrequency, setRepeatFrequency] = useState<
+    "daily" | "weekly" | "biweekly" | "monthly" | "yearly"
+  >(
+    (task.repeat_frequency as
+      | "daily"
+      | "weekly"
+      | "biweekly"
+      | "monthly"
+      | "yearly") || "weekly"
+  );
+
+  // Timer state
+  const [hasTimer, setHasTimer] = useState(!!task.timer_duration_minutes);
+  const [timerDuration, setTimerDuration] = useState<number>(
+    task.timer_duration_minutes && task.timer_duration_minutes >= 60
+      ? Math.floor(task.timer_duration_minutes / 60)
+      : task.timer_duration_minutes || 30
+  );
+  const [timerUnit, setTimerUnit] = useState<"minutes" | "hours">(
+    task.timer_duration_minutes && task.timer_duration_minutes >= 60
+      ? "hours"
+      : "minutes"
+  );
+  const [isUrgentAfterTimer, setIsUrgentAfterTimer] = useState(
+    task.is_urgent_after_timer || false
+  );
 
   // Fetch existing tasks for duplicate detection (only for job tracker)
   const isJobTracker = isJobTrackerTask(task);
@@ -180,6 +209,14 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     const updates: Partial<Task> = {
       ...baseUpdates,
       item_data,
+      is_repeatable: isRepeatable || undefined,
+      repeat_frequency: isRepeatable ? repeatFrequency : null,
+      timer_duration_minutes: hasTimer
+        ? timerUnit === "hours"
+          ? timerDuration * 60
+          : timerDuration
+        : null,
+      is_urgent_after_timer: hasTimer ? isUrgentAfterTimer : null,
     };
 
     void updateTask
@@ -372,31 +409,190 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             </div>
           )}
 
-          {/* Timer Section */}
-          <TaskTimerSection task={task} />
-
-          {/* Reminder Section */}
-          <TaskReminderSection task={task} />
-
-          {/* Tags - Hidden for job tracker */}
+          {/* Repeatable Task & Timer Toggles - Hidden for job tracker */}
           {!isJobTracker && (
-            <div>
-              <label
-                htmlFor="task-tags"
-                className="block text-sm font-medium text-primary mb-2.5"
-              >
-                Tags
-              </label>
-              <Input
-                id="task-tags"
-                type="text"
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-                placeholder="work, urgent, personal"
-                helperText="Separate tags with commas"
-              />
+            <div className="space-y-4">
+              {/* Repeatable Task Section */}
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="relative flex-shrink-0 cursor-pointer"
+                    onClick={() => {
+                      const newValue = !isRepeatable;
+                      setIsRepeatable(newValue);
+                      if (newValue && !dueDate) {
+                        const tomorrow = new Date();
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        setDueDate(tomorrow);
+                      }
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isRepeatable}
+                      onChange={() => {}}
+                      className="sr-only peer"
+                      tabIndex={-1}
+                    />
+                    <div
+                      className="w-11 h-6 bg-gray-300 dark:bg-gray-600 rounded-full peer transition-colors"
+                      style={
+                        isRepeatable ? { backgroundColor: themeColor } : {}
+                      }
+                    ></div>
+                    <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                      Repeatable Task
+                    </span>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Auto-reschedules after completion
+                    </p>
+                  </div>
+                </div>
+
+                {/* Repeat Frequency - Show only if repeatable */}
+                {isRepeatable && (
+                  <div className="pt-2">
+                    <Select
+                      id="repeat-frequency-edit"
+                      label="Repeat Frequency"
+                      value={repeatFrequency}
+                      onChange={(e) =>
+                        setRepeatFrequency(
+                          e.target.value as
+                            | "daily"
+                            | "weekly"
+                            | "biweekly"
+                            | "monthly"
+                            | "yearly"
+                        )
+                      }
+                      options={[
+                        { value: "daily", label: "Daily" },
+                        { value: "weekly", label: "Weekly" },
+                        { value: "biweekly", label: "Bi-weekly" },
+                        { value: "monthly", label: "Monthly" },
+                        { value: "yearly", label: "Annually" },
+                      ]}
+                      size="sm"
+                    />
+                    {!dueDate && (
+                      <p className="text-xs text-red-500 dark:text-red-400 mt-1">
+                        ⚠️ Due date required for repeatable tasks
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Timer Section */}
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="relative flex-shrink-0 cursor-pointer"
+                    onClick={() => setHasTimer(!hasTimer)}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={hasTimer}
+                      onChange={() => {}}
+                      className="sr-only peer"
+                      tabIndex={-1}
+                    />
+                    <div
+                      className="w-11 h-6 bg-gray-300 dark:bg-gray-600 rounded-full peer transition-colors"
+                      style={hasTimer ? { backgroundColor: themeColor } : {}}
+                    ></div>
+                    <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                      Add Timer
+                    </span>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Set a countdown timer for this task
+                    </p>
+                  </div>
+                </div>
+
+                {/* Timer Duration - Show only if timer enabled */}
+                {hasTimer && (
+                  <div className="pt-2 space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Duration
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="number"
+                          min={1}
+                          max={timerUnit === "hours" ? 24 : 1440}
+                          value={timerDuration}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value) || 1;
+                            const max = timerUnit === "hours" ? 24 : 1440;
+                            setTimerDuration(Math.min(max, Math.max(1, val)));
+                          }}
+                          placeholder="30"
+                          className="hide-number-spinner flex-1 block rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                        />
+                        <div className="w-32">
+                          <Select
+                            id="timer-unit-edit"
+                            value={timerUnit}
+                            onChange={(e) => {
+                              setTimerUnit(
+                                e.target.value as "minutes" | "hours"
+                              );
+                              if (e.target.value === "hours") {
+                                setTimerDuration(
+                                  Math.min(24, Math.ceil(timerDuration / 60))
+                                );
+                              } else {
+                                setTimerDuration(
+                                  Math.min(1440, timerDuration * 60)
+                                );
+                              }
+                            }}
+                            options={[
+                              { value: "minutes", label: "Minutes" },
+                              { value: "hours", label: "Hours" },
+                            ]}
+                            size="md"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Urgent After Timer */}
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isUrgentAfterTimer}
+                        onChange={(e) =>
+                          setIsUrgentAfterTimer(e.target.checked)
+                        }
+                        className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 checked:bg-current focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 cursor-pointer"
+                        style={{
+                          accentColor: isUrgentAfterTimer
+                            ? themeColor
+                            : undefined,
+                        }}
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                        Mark as urgent when timer completes
+                      </span>
+                    </label>
+                  </div>
+                )}
+              </div>
             </div>
           )}
+
+          {/* Timer Section - Only shows if timer is running */}
+          <TaskTimerSection task={task} />
 
           {/* Actions */}
           <div className="flex gap-3 pt-4">

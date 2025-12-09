@@ -525,3 +525,15 @@ audio::-webkit-media-controls-time-remaining-display {
 .dark audio::-webkit-media-controls-time-remaining-display {
   color: #9ca3af;
 }
+
+/* Hide number input spinners */
+.hide-number-spinner::-webkit-outer-spin-button,
+.hide-number-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.hide-number-spinner[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}

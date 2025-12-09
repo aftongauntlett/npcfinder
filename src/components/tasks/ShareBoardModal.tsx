@@ -261,7 +261,7 @@ const ShareBoardModal: React.FC<ShareBoardModalProps> = ({
                   type="checkbox"
                   checked={canEdit}
                   onChange={(e) => setCanEdit(e.target.checked)}
-                  className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                  className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-primary focus:ring-2 focus:ring-primary/30"
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">
                   Allow editing

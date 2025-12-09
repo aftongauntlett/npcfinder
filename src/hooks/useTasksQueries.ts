@@ -863,26 +863,6 @@ export function useCompleteTimer() {
 // REMINDER HOOKS
 // =====================================================
 
-/**
- * Get upcoming reminders
- */
-export function useUpcomingReminders(daysAhead = 7) {
-  const { user } = useAuth();
-
-  return useQuery({
-    queryKey: queryKeys.tasks.upcomingReminders(daysAhead),
-    queryFn: async () => {
-      const { data, error } = await tasksService.getUpcomingReminders(
-        daysAhead
-      );
-      if (error) throw error;
-      return data || [];
-    },
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    enabled: !!user,
-  });
-}
-
 // =====================================================
 // BOARD SHARING HOOKS
 // =====================================================

@@ -226,27 +226,65 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
   );
 
   const expandedContent = (
-    <>
-      {/* Due Date */}
-      {/* TODO: Tags removed from UI but kept in DB - may add back later with better UX */}
-      {task.due_date ? (
-        <div className="flex items-center justify-end gap-3">
-          {/* Due Date - right aligned */}
-          {task.due_date && (
-            <span
-              className={`inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full flex-shrink-0 ${
-                overdue
-                  ? "bg-red-500/20 text-red-300 border border-red-500/30"
-                  : "bg-white/5 text-gray-300 border border-white/10"
-              }`}
-            >
-              <Calendar className="w-3 h-3" />
-              Due {formatDueDate(task.due_date)}
-            </span>
-          )}
+    <div className="space-y-3">
+      {/* Due Date and Status Row */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        {/* Status */}
+        {task.status && (
+          <span className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full flex-shrink-0 bg-white/5 text-gray-300 border border-white/10 capitalize">
+            {task.status === "todo"
+              ? "To Do"
+              : task.status === "in_progress"
+              ? "In Progress"
+              : task.status}
+          </span>
+        )}
+
+        {/* Due Date - right aligned */}
+        {task.due_date && (
+          <span
+            className={`inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full flex-shrink-0 ml-auto ${
+              overdue
+                ? "bg-red-500/20 text-red-300 border border-red-500/30"
+                : "bg-white/5 text-gray-300 border border-white/10"
+            }`}
+          >
+            <Calendar className="w-3 h-3" />
+            Due {formatDueDate(task.due_date)}
+          </span>
+        )}
+      </div>
+
+      {/* Repeatable Task Info */}
+      {task.is_repeatable && task.repeat_frequency && (
+        <div className="text-xs text-gray-400">
+          🔁 Repeats:{" "}
+          {task.repeat_frequency.charAt(0).toUpperCase() +
+            task.repeat_frequency.slice(1)}
         </div>
-      ) : null}
-    </>
+      )}
+
+      {/* Timer Info */}
+      {task.timer_duration_minutes && !task.timer_completed_at && (
+        <div className="text-xs text-gray-400">
+          ⏱️ Timer:{" "}
+          {task.timer_duration_minutes >= 60
+            ? `${Math.floor(task.timer_duration_minutes / 60)}h ${
+                task.timer_duration_minutes % 60
+              }m`
+            : `${task.timer_duration_minutes}m`}
+          {task.timer_started_at && " (Running)"}
+        </div>
+      )}
+
+      {/* Created/Updated timestamps */}
+      <div className="text-xs text-gray-500 dark:text-gray-600 pt-2 border-t border-gray-200 dark:border-gray-700">
+        Created {new Date(task.created_at).toLocaleDateString()}
+        {task.updated_at !== task.created_at && (
+          <> • Updated {new Date(task.updated_at).toLocaleDateString()}</>
+        )}
+      </div>
+    </div>
   );
 
   return (

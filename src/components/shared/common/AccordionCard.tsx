@@ -107,9 +107,13 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
 
             {/* Title and Subtitle */}
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-base text-white">{title}</h3>
+              <h3 className="font-bold text-base text-gray-900 dark:text-white">
+                {title}
+              </h3>
               {subtitle && (
-                <div className="text-sm text-gray-400 mt-0.5">{subtitle}</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                  {subtitle}
+                </div>
               )}
             </div>
           </div>

@@ -1,20 +1,50 @@
 /**
  * Task Timer Section Component
  * Presentational component for displaying timer information
+ * Automatically removes timer data when completed to clean up the UI
  */
 
-import React from "react";
+import React, { useEffect } from "react";
 import { AlertCircle } from "lucide-react";
 import TimerWidget from "./TimerWidget";
 import type { Task } from "../../services/tasksService.types";
-import { shouldShowUrgentAlert } from "../../utils/timerHelpers";
+import {
+  shouldShowUrgentAlert,
+  getTimerStatus,
+} from "../../utils/timerHelpers";
+import { TIMER_STATUS } from "../../utils/taskConstants";
+import { useUpdateTask } from "../../hooks/useTasksQueries";
 
 interface TaskTimerSectionProps {
   task: Task;
 }
 
 const TaskTimerSection: React.FC<TaskTimerSectionProps> = ({ task }) => {
+  const updateTask = useUpdateTask();
+  const timerStatus = getTimerStatus(task);
+
+  // Auto-remove timer data when completed to prevent showing completed timer UI
+  useEffect(() => {
+    if (timerStatus === TIMER_STATUS.COMPLETED && task.timer_duration_minutes) {
+      // Remove timer fields from task
+      void updateTask.mutateAsync({
+        taskId: task.id,
+        updates: {
+          timer_duration_minutes: null,
+          timer_started_at: null,
+          timer_completed_at: null,
+          is_urgent_after_timer: null,
+        },
+      });
+    }
+  }, [timerStatus, task.id, task.timer_duration_minutes, updateTask]);
+
   if (!task.timer_duration_minutes) {
+    return null;
+  }
+
+  // Don't show if completed (will be removed by useEffect)
+  if (timerStatus === TIMER_STATUS.COMPLETED) {
     return null;
   }
 

@@ -128,13 +128,11 @@ const GroceryItemModal: React.FC<GroceryItemModalProps> = ({
           onChange={(e) => setCategory(e.target.value)}
           required
           disabled={isSubmitting}
-        >
-          {GROCERY_CATEGORIES.map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
-            </option>
-          ))}
-        </Select>
+          options={GROCERY_CATEGORIES.map((cat) => ({
+            value: cat,
+            label: cat,
+          }))}
+        />
 
         {/* Quantity */}
         <Input

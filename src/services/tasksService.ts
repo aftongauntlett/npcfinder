@@ -645,10 +645,6 @@ export async function createTask(
         timer_started_at: null, // Set by startTaskTimer
         timer_completed_at: null, // Set by completeTaskTimer
         is_urgent_after_timer: taskData.is_urgent_after_timer || null,
-        // Reminder fields
-        reminder_date: taskData.reminder_date || null,
-        reminder_time: taskData.reminder_time || null,
-        reminder_sent_at: null, // Set by markReminderSent or backend reminder service
       })
       .select()
       .single();

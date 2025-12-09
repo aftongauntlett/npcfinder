@@ -129,7 +129,13 @@ export interface Task {
   updated_at: string;
   // Repeatable task fields
   is_repeatable: boolean | null;
-  repeat_frequency: "weekly" | "monthly" | "yearly" | "custom" | null;
+  repeat_frequency:
+    | "daily"
+    | "weekly"
+    | "biweekly"
+    | "monthly"
+    | "yearly"
+    | null;
   repeat_custom_days: number | null; // For custom frequency (days between repeats)
   last_completed_at: string | null; // Track when last completed for repeatable tasks
   // Timer fields
@@ -137,10 +143,6 @@ export interface Task {
   timer_started_at: string | null;
   timer_completed_at: string | null;
   is_urgent_after_timer: boolean | null;
-  // Reminder fields
-  reminder_date: string | null;
-  reminder_time: string | null;
-  reminder_sent_at: string | null;
 }
 
 export interface CreateBoardData {
@@ -170,12 +172,10 @@ export interface CreateTaskData {
   tags?: string[];
   item_data?: Record<string, unknown>;
   is_repeatable?: boolean;
-  repeat_frequency?: "weekly" | "monthly" | "yearly" | "custom";
+  repeat_frequency?: "daily" | "weekly" | "biweekly" | "monthly" | "yearly";
   repeat_custom_days?: number;
   timer_duration_minutes?: number;
   is_urgent_after_timer?: boolean;
-  reminder_date?: string;
-  reminder_time?: string;
 }
 
 export interface TaskFilters {

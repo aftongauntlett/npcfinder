@@ -68,19 +68,14 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   // Repeatable task fields
   const [isRepeatable, setIsRepeatable] = useState(false);
   const [repeatFrequency, setRepeatFrequency] = useState<
-    "weekly" | "monthly" | "yearly" | "custom"
+    "daily" | "weekly" | "biweekly" | "monthly" | "yearly"
   >("weekly");
-  const [repeatCustomDays, setRepeatCustomDays] = useState<number>(7);
 
   // Timer fields
   const [hasTimer, setHasTimer] = useState(false);
   const [timerDuration, setTimerDuration] = useState<number>(30);
+  const [timerUnit, setTimerUnit] = useState<"minutes" | "hours">("minutes");
   const [isUrgentAfterTimer, setIsUrgentAfterTimer] = useState(false);
-
-  // Reminder fields
-  const [hasReminder, setHasReminder] = useState(false);
-  const [reminderDate, setReminderDate] = useState<Date | null>(null);
-  const [reminderTime, setReminderTime] = useState<string>("09:00");
 
   // Job tracker specific fields
   const [companyName, setCompanyName] = useState("");
@@ -314,18 +309,14 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
       item_data,
       is_repeatable: isRepeatable || undefined,
       repeat_frequency: isRepeatable ? repeatFrequency : undefined,
-      repeat_custom_days:
-        isRepeatable && repeatFrequency === "custom"
-          ? repeatCustomDays
-          : undefined,
+      repeat_custom_days: undefined, // No longer using custom days
       // Timer fields
-      timer_duration_minutes: hasTimer ? timerDuration : undefined,
+      timer_duration_minutes: hasTimer
+        ? timerUnit === "hours"
+          ? timerDuration * 60
+          : timerDuration
+        : undefined,
       is_urgent_after_timer: hasTimer ? isUrgentAfterTimer : undefined,
-      // Reminder fields
-      reminder_date:
-        hasReminder && reminderDate && reminderTime
-          ? `${reminderDate.toISOString().split("T")[0]}T${reminderTime}:00`
-          : undefined,
     };
 
     void createTask
@@ -343,15 +334,11 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
           // Reset repeatable fields
           setIsRepeatable(false);
           setRepeatFrequency("weekly");
-          setRepeatCustomDays(7);
           // Reset timer fields
           setHasTimer(false);
           setTimerDuration(30);
+          setTimerUnit("minutes");
           setIsUrgentAfterTimer(false);
-          // Reset reminder fields
-          setHasReminder(false);
-          setReminderDate(null);
-          setReminderTime("09:00");
           // Reset job tracker fields
           setCompanyName("");
           setCompanyUrl("");
@@ -800,24 +787,29 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               </div>
             </div>
 
-            {/* Repeatable Task Toggle */}
-            <div>
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <div className="relative">
+            {/* Repeatable Task Section */}
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
+              <div className="flex items-center gap-3">
+                <div
+                  className="relative flex-shrink-0 cursor-pointer"
+                  onClick={() => {
+                    const newValue = !isRepeatable;
+                    setIsRepeatable(newValue);
+                    // If enabling repeatable and no due date, prompt user
+                    if (newValue && !dueDate) {
+                      // Set default to tomorrow
+                      const tomorrow = new Date();
+                      tomorrow.setDate(tomorrow.getDate() + 1);
+                      setDueDate(tomorrow);
+                    }
+                  }}
+                >
                   <input
                     type="checkbox"
                     checked={isRepeatable}
-                    onChange={(e) => {
-                      setIsRepeatable(e.target.checked);
-                      // If enabling repeatable and no due date, prompt user
-                      if (e.target.checked && !dueDate) {
-                        // Set default to tomorrow
-                        const tomorrow = new Date();
-                        tomorrow.setDate(tomorrow.getDate() + 1);
-                        setDueDate(tomorrow);
-                      }
-                    }}
+                    onChange={() => {}}
                     className="sr-only peer"
+                    tabIndex={-1}
                   />
                   <div
                     className="w-11 h-6 bg-gray-300 dark:bg-gray-600 rounded-full peer transition-colors"
@@ -825,7 +817,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                   ></div>
                   <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
                 </div>
-                <div>
+                <div className="flex-1">
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
                     Repeatable Task
                   </span>
@@ -833,92 +825,56 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                     Auto-reschedules after completion
                   </p>
                 </div>
-              </label>
+              </div>
+
+              {/* Repeat Frequency - Show only if repeatable */}
+              {isRepeatable && (
+                <div className="pt-2">
+                  <Select
+                    id="repeat-frequency"
+                    label="Repeat Frequency"
+                    value={repeatFrequency}
+                    onChange={(e) =>
+                      setRepeatFrequency(
+                        e.target.value as
+                          | "daily"
+                          | "weekly"
+                          | "biweekly"
+                          | "monthly"
+                          | "yearly"
+                      )
+                    }
+                    options={[
+                      { value: "daily", label: "Daily" },
+                      { value: "weekly", label: "Weekly" },
+                      { value: "biweekly", label: "Bi-weekly" },
+                      { value: "monthly", label: "Monthly" },
+                      { value: "yearly", label: "Annually" },
+                    ]}
+                    size="sm"
+                  />
+                  {!dueDate && (
+                    <p className="text-xs text-red-500 dark:text-red-400 mt-1">
+                      ⚠️ Due date required for repeatable tasks
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Repeat Frequency - Show only if repeatable */}
-            {isRepeatable && (
-              <div className="pl-14 space-y-3">
-                <label className="block text-sm font-medium text-primary mb-2.5">
-                  Repeat Frequency
-                  {!dueDate && (
-                    <span className="ml-2 text-xs text-red-500">
-                      (Due date required)
-                    </span>
-                  )}
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { value: "weekly", label: "Weekly" },
-                    { value: "monthly", label: "Monthly" },
-                    { value: "yearly", label: "Yearly" },
-                    { value: "custom", label: "Custom" },
-                  ].map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() =>
-                        setRepeatFrequency(
-                          option.value as
-                            | "weekly"
-                            | "monthly"
-                            | "yearly"
-                            | "custom"
-                        )
-                      }
-                      className="px-3 py-2 rounded-lg border-2 transition-all text-sm"
-                      style={
-                        repeatFrequency === option.value
-                          ? {
-                              borderColor: themeColor,
-                              backgroundColor: lightenColor(themeColor, 0.9),
-                              color: darkenColor(themeColor, 0.3),
-                            }
-                          : {
-                              borderColor: "",
-                            }
-                      }
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Custom Days Input */}
-                {repeatFrequency === "custom" && (
-                  <div>
-                    <label
-                      htmlFor="custom-days"
-                      className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5"
-                    >
-                      Repeat every (days)
-                    </label>
-                    <Input
-                      id="custom-days"
-                      type="number"
-                      min={1}
-                      max={365}
-                      value={repeatCustomDays}
-                      onChange={(e) =>
-                        setRepeatCustomDays(
-                          Math.max(1, parseInt(e.target.value) || 1)
-                        )
-                      }
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-
             {/* Timer Section */}
-            <div>
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <div className="relative">
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
+              <div className="flex items-center gap-3">
+                <div
+                  className="relative flex-shrink-0 cursor-pointer"
+                  onClick={() => setHasTimer(!hasTimer)}
+                >
                   <input
                     type="checkbox"
                     checked={hasTimer}
-                    onChange={(e) => setHasTimer(e.target.checked)}
+                    onChange={() => {}}
                     className="sr-only peer"
+                    tabIndex={-1}
                   />
                   <div
                     className="w-11 h-6 bg-gray-300 dark:bg-gray-600 rounded-full peer transition-colors"
@@ -926,7 +882,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                   ></div>
                   <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
                 </div>
-                <div>
+                <div className="flex-1">
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
                     Add Timer
                   </span>
@@ -934,113 +890,76 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                     Set a countdown timer for this task
                   </p>
                 </div>
-              </label>
-            </div>
-
-            {/* Timer Duration - Show only if timer enabled */}
-            {hasTimer && (
-              <div className="pl-14 space-y-3">
-                <div>
-                  <label
-                    htmlFor="timer-duration"
-                    className="block text-sm font-medium text-primary mb-2"
-                  >
-                    Duration (minutes)
-                  </label>
-                  <Input
-                    id="timer-duration"
-                    type="number"
-                    min={1}
-                    max={1440}
-                    value={timerDuration}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value) || 1;
-                      setTimerDuration(Math.min(1440, Math.max(1, val)));
-                    }}
-                    placeholder="30"
-                  />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Max 1440 minutes (24 hours)
-                  </p>
-                </div>
-
-                {/* Urgent After Timer */}
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isUrgentAfterTimer}
-                    onChange={(e) => setIsUrgentAfterTimer(e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 dark:border-gray-600"
-                    style={
-                      isUrgentAfterTimer ? { accentColor: themeColor } : {}
-                    }
-                  />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
-                    Mark as urgent when timer completes
-                  </span>
-                </label>
               </div>
-            )}
 
-            {/* Reminder Section */}
-            <div>
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <div className="relative">
-                  <input
-                    type="checkbox"
-                    checked={hasReminder}
-                    onChange={(e) => setHasReminder(e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div
-                    className="w-11 h-6 bg-gray-300 dark:bg-gray-600 rounded-full peer transition-colors"
-                    style={hasReminder ? { backgroundColor: themeColor } : {}}
-                  ></div>
-                  <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    Set Reminder
-                  </span>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Get notified at a specific date/time
-                  </p>
-                </div>
-              </label>
-            </div>
-
-            {/* Reminder Date/Time - Show only if reminder enabled */}
-            {hasReminder && (
-              <div className="pl-14 space-y-3">
-                <div>
-                  <label
-                    htmlFor="reminder-date"
-                    className="block text-sm font-medium text-primary mb-2"
-                  >
-                    Reminder Date & Time
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <DatePicker
-                      id="reminder-date"
-                      selected={reminderDate}
-                      onChange={(date) => setReminderDate(date)}
-                      dateFormat="MMM d, yyyy"
-                      placeholderText="Select date"
-                      minDate={new Date()}
-                      showPopperArrow={false}
-                      className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2.5 focus:outline-none transition-colors"
-                      calendarClassName="bg-white dark:bg-gray-800 border-2 rounded-lg shadow-xl"
-                    />
-                    <Input
-                      id="reminder-time"
-                      type="time"
-                      value={reminderTime}
-                      onChange={(e) => setReminderTime(e.target.value)}
-                    />
+              {/* Timer Duration - Show only if timer enabled */}
+              {hasTimer && (
+                <div className="pt-2 space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Duration
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        min={1}
+                        max={timerUnit === "hours" ? 24 : 1440}
+                        value={timerDuration}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value) || 1;
+                          const max = timerUnit === "hours" ? 24 : 1440;
+                          setTimerDuration(Math.min(max, Math.max(1, val)));
+                        }}
+                        placeholder="30"
+                        className="hide-number-spinner flex-1 block rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                      />
+                      <div className="w-32">
+                        <Select
+                          id="timer-unit"
+                          value={timerUnit}
+                          onChange={(e) => {
+                            setTimerUnit(e.target.value as "minutes" | "hours");
+                            // Convert duration when switching units
+                            if (e.target.value === "hours") {
+                              setTimerDuration(
+                                Math.min(24, Math.ceil(timerDuration / 60))
+                              );
+                            } else {
+                              setTimerDuration(
+                                Math.min(1440, timerDuration * 60)
+                              );
+                            }
+                          }}
+                          options={[
+                            { value: "minutes", label: "Minutes" },
+                            { value: "hours", label: "Hours" },
+                          ]}
+                          size="md"
+                        />
+                      </div>
+                    </div>
                   </div>
+
+                  {/* Urgent After Timer */}
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isUrgentAfterTimer}
+                      onChange={(e) => setIsUrgentAfterTimer(e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 checked:bg-current focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 cursor-pointer"
+                      style={{
+                        accentColor: isUrgentAfterTimer
+                          ? themeColor
+                          : undefined,
+                      }}
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      Mark as urgent when timer completes
+                    </span>
+                  </label>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
 

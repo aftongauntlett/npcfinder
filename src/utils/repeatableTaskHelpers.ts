@@ -7,25 +7,25 @@
  */
 export function getNextDueDate(
   currentDueDate: string,
-  frequency: "weekly" | "monthly" | "yearly" | "custom",
-  customDays?: number
+  frequency: "daily" | "weekly" | "biweekly" | "monthly" | "yearly"
 ): string {
   const current = new Date(currentDueDate);
 
   switch (frequency) {
+    case "daily":
+      current.setDate(current.getDate() + 1);
+      break;
     case "weekly":
       current.setDate(current.getDate() + 7);
+      break;
+    case "biweekly":
+      current.setDate(current.getDate() + 14);
       break;
     case "monthly":
       current.setMonth(current.getMonth() + 1);
       break;
     case "yearly":
       current.setFullYear(current.getFullYear() + 1);
-      break;
-    case "custom":
-      if (customDays) {
-        current.setDate(current.getDate() + customDays);
-      }
       break;
   }
 
