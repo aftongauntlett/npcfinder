@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import DemoLanding from "./components/pages/DemoLanding";
 import DeveloperDocs from "./components/pages/DeveloperDocs";
 import AuthPage from "./components/pages/AuthPage";
+import ForgotPassword from "./components/pages/ForgotPassword";
+import ResetPassword from "./components/pages/ResetPassword";
 import AuthenticatedAppLayout from "./components/layouts/AuthenticatedAppLayout";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
@@ -30,6 +32,10 @@ const AuthenticatedApp: React.FC = () => {
         path="/login"
         element={user ? <Navigate to="/app" replace /> : <AuthPage />}
       />
+
+      {/* Password reset pages (no auth required) */}
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* Protected app routes */}
       <Route

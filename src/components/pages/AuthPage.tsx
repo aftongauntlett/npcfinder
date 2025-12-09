@@ -209,6 +209,23 @@ const AuthPage: React.FC = () => {
             >
               {isLogin ? "Sign In" : "Create Account"}
             </Button>
+
+            {/* Forgot Password Link (only show on login) */}
+            {isLogin && (
+              <div className="text-center">
+                <Button
+                  type="button"
+                  onClick={() => {
+                    void navigate("/forgot-password");
+                  }}
+                  variant="subtle"
+                  size="sm"
+                  className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary"
+                >
+                  Forgot your password?
+                </Button>
+              </div>
+            )}
           </form>
 
           {/* Toggle Login/Signup */}

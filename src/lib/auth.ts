@@ -257,3 +257,47 @@ export const onAuthStateChange = (
 
   return supabase.auth.onAuthStateChange(callback);
 };
+
+/**
+ * Update user password
+ * User must be logged in to update their password
+ */
+export const updatePassword = async (
+  newPassword: string
+): Promise<{ error: AuthError | null }> => {
+  try {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (error) throw error;
+
+    logger.info("Password updated successfully");
+    return { error: null };
+  } catch (error) {
+    logger.error("Password update failed", { error });
+    return { error: error as AuthError };
+  }
+};
+
+/**
+ * Send password reset email
+ * No authentication required - just needs valid email
+ */
+export const sendPasswordResetEmail = async (
+  email: string
+): Promise<{ error: AuthError | null }> => {
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+
+    if (error) throw error;
+
+    logger.info("Password reset email sent", { email });
+    return { error: null };
+  } catch (error) {
+    logger.error("Failed to send password reset email", { error, email });
+    return { error: error as AuthError };
+  }
+};

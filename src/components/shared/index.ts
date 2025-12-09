@@ -21,6 +21,7 @@ export { default as Tooltip } from "./ui/Tooltip";
 export { AudioPlayer } from "./ui/AudioPlayer";
 export { default as ErrorBoundary } from "./ui/ErrorBoundary";
 export { default as GlobalErrorNotifications } from "./ui/GlobalErrorNotifications";
+export { SkeletonCard } from "./ui/SkeletonCard";
 
 // Media Components - Media-specific functionality
 export { default as MediaDetailModal } from "./media/MediaDetailModal";

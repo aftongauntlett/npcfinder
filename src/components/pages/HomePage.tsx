@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import type { User } from "@supabase/supabase-js";
 import AppLayout from "../layouts/AppLayout";
 import { DashboardContent } from "../dashboard/DashboardContent";
+import { SkeletonCard } from "@/components/shared";
 import { StatCard } from "../dashboard/StatCard";
 import { useProfileQuery } from "../../hooks/useProfileQuery";
 import { useDashboardStats } from "../../hooks/useDashboardStats";
@@ -136,48 +137,58 @@ const HomePage: React.FC<HomePageProps> = () => {
       onTabChange={(tabId) => handleTabChange(tabId as TabId)}
     >
       {/* Stats Grid - Only on Dashboard Tab */}
-      {activeTab === "dashboard" && (
-        <div className="container mx-auto px-4 sm:px-6 mb-4 sm:mb-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <StatCard
-              title="Movies"
-              count={stats?.moviesWatched || 0}
-              hoverCount={stats?.moviesToWatch || 0}
-              icon={Film}
-              accentColor="blue"
-              label={STATUS_MAP["watched"].label}
-              hoverLabel={STATUS_MAP["to-watch"].label}
-            />
-            <StatCard
-              title="Music"
-              count={stats?.musicCount || 0}
-              hoverCount={0}
-              icon={Music}
-              accentColor="emerald"
-              label={STATUS_MAP["to-listen"].label}
-              hoverLabel={STATUS_MAP["to-listen"].label}
-            />
-            <StatCard
-              title="Books"
-              count={stats?.booksRead || 0}
-              hoverCount={stats?.booksReading || 0}
-              icon={BookOpen}
-              accentColor="amber"
-              label={STATUS_MAP["read"].label}
-              hoverLabel={STATUS_MAP["to-read"].label}
-            />
-            <StatCard
-              title="Games"
-              count={stats?.gamesPlayed || 0}
-              hoverCount={stats?.gamesToPlay || 0}
-              icon={Gamepad2}
-              accentColor="purple"
-              label={STATUS_MAP["played"].label}
-              hoverLabel={STATUS_MAP["to-play"].label}
-            />
+      {activeTab === "dashboard" &&
+        (statsLoading ? (
+          <div className="container mx-auto px-4 sm:px-6 mb-4 sm:mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <SkeletonCard variant="stat" />
+              <SkeletonCard variant="stat" />
+              <SkeletonCard variant="stat" />
+              <SkeletonCard variant="stat" />
+            </div>
           </div>
-        </div>
-      )}
+        ) : stats ? (
+          <div className="container mx-auto px-4 sm:px-6 mb-4 sm:mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <StatCard
+                title="Movies"
+                count={stats?.moviesWatched || 0}
+                hoverCount={stats?.moviesToWatch || 0}
+                icon={Film}
+                accentColor="blue"
+                label={STATUS_MAP["watched"].label}
+                hoverLabel={STATUS_MAP["to-watch"].label}
+              />
+              <StatCard
+                title="Music"
+                count={stats?.musicCount || 0}
+                hoverCount={0}
+                icon={Music}
+                accentColor="emerald"
+                label={STATUS_MAP["to-listen"].label}
+                hoverLabel={STATUS_MAP["to-listen"].label}
+              />
+              <StatCard
+                title="Books"
+                count={stats?.booksRead || 0}
+                hoverCount={stats?.booksReading || 0}
+                icon={BookOpen}
+                accentColor="amber"
+                label={STATUS_MAP["read"].label}
+                hoverLabel={STATUS_MAP["to-read"].label}
+              />
+              <StatCard
+                title="Games"
+                count={stats?.gamesPlayed || 0}
+                hoverCount={stats?.gamesToPlay || 0}
+                icon={Gamepad2}
+                accentColor="purple"
+                label={STATUS_MAP["played"].label}
+                hoverLabel={STATUS_MAP["to-play"].label}
+              />
+            </div>
+          </div>
+        ) : null)}
 
       {/* Main Content - Activity/Trending/Find Friends */}
       <DashboardContent
