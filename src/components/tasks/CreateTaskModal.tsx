@@ -14,7 +14,7 @@ import Input from "../shared/ui/Input";
 import Textarea from "../shared/ui/Textarea";
 import Select from "../shared/ui/Select";
 import type { CreateTaskData } from "../../services/tasksService.types";
-import { useCreateTask } from "../../hooks/useTasksQueries";
+import { useCreateTask, useTasks } from "../../hooks/useTasksQueries";
 import { useUrlMetadata } from "../../hooks/useUrlMetadata";
 import { PRIORITY_OPTIONS } from "../../utils/taskConstants";
 import { Link, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
@@ -56,6 +56,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     type: "success" | "warning" | "error";
     message: string;
   } | null>(null);
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high" | null>(
@@ -105,6 +106,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
   const createTask = useCreateTask();
   const { fetchMetadata, loading: urlLoading } = useUrlMetadata();
+  const { data: existingTasks = [] } = useTasks(boardId || undefined);
 
   const handleUrlChange = async (value: string) => {
     setUrl(value);
@@ -208,11 +210,51 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setDuplicateError(null);
 
     // Auto-generate title for job tracker from company + position if not set
     let finalTitle = title;
     if (boardType === "job_tracker" && !title) {
       finalTitle = `${position || "Position"} at ${companyName || "Company"}`;
+    }
+
+    // Check for job duplicates
+    if (boardType === "job_tracker") {
+      const normalizeString = (str: string) => str.toLowerCase().trim();
+      const currentCompany = normalizeString(companyName);
+      const currentPosition = normalizeString(position);
+      const currentUrl = (companyUrl || url || "").trim();
+
+      for (const task of existingTasks) {
+        const taskCompany = normalizeString(
+          (task.item_data?.company_name as string) || ""
+        );
+        const taskPosition = normalizeString(
+          (task.item_data?.position as string) || ""
+        );
+        const taskUrl = ((task.item_data?.company_url as string) || "").trim();
+
+        // Check URL match
+        if (currentUrl && taskUrl && currentUrl === taskUrl) {
+          setDuplicateError("You've already applied for this role");
+          return;
+        }
+
+        // Check company + position match
+        if (
+          currentCompany &&
+          taskCompany &&
+          currentPosition &&
+          taskPosition &&
+          currentCompany === taskCompany &&
+          currentPosition === taskPosition
+        ) {
+          setDuplicateError(
+            `You already have an application for ${position} at ${companyName}`
+          );
+          return;
+        }
+      }
     }
 
     // Build item_data for template-specific boards
@@ -999,6 +1041,15 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Duplicate Error */}
+        {duplicateError && (
+          <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 mt-4">
+            <p className="text-sm text-red-800 dark:text-red-200">
+              {duplicateError}
+            </p>
           </div>
         )}
 

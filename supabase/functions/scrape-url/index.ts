@@ -435,10 +435,42 @@ function extractJobPosting(
           // Extract employment type (handle array or string)
           let employmentType: string | undefined;
           if (jobData.employmentType) {
+            const validTypes = [
+              "Full-time",
+              "Part-time",
+              "Contract",
+              "Temporary",
+              "Internship",
+              "FULL_TIME",
+              "PART_TIME",
+              "CONTRACT",
+              "TEMPORARY",
+              "INTERN",
+            ];
+            const typeMap: Record<string, string> = {
+              FULL_TIME: "Full-time",
+              PART_TIME: "Part-time",
+              CONTRACT: "Contract",
+              TEMPORARY: "Temporary",
+              INTERN: "Internship",
+            };
+
             if (Array.isArray(jobData.employmentType)) {
-              employmentType = jobData.employmentType.join(", ");
+              const mapped = jobData.employmentType
+                .map(
+                  (t: string) =>
+                    typeMap[t] || (validTypes.includes(t) ? t : null)
+                )
+                .filter(Boolean);
+              employmentType =
+                mapped.length > 0 ? mapped.join(", ") : undefined;
             } else {
-              employmentType = jobData.employmentType;
+              const mapped = typeMap[jobData.employmentType];
+              employmentType =
+                mapped ||
+                (validTypes.includes(jobData.employmentType)
+                  ? jobData.employmentType
+                  : undefined);
             }
           }
 
@@ -586,34 +618,45 @@ function extractSalary(salaryData: any): string | undefined {
     return undefined;
   }
 
-  // Handle simple value
-  if (salaryData.value) {
-    const currency = salaryData.currency || "$";
-    const unit = salaryData.unitText || "";
-    return `${currency}${salaryData.value}${unit ? " " + unit : ""}`;
-  }
+  // Ensure we always return a string, never an object
+  try {
+    // If salaryData is already a string, return it
+    if (typeof salaryData === "string") {
+      return salaryData;
+    }
 
-  // Handle min/max range
-  if (salaryData.minValue && salaryData.maxValue) {
-    const currency = salaryData.currency || "$";
-    const unit = salaryData.unitText || "";
-    return `${currency}${salaryData.minValue} - ${currency}${
-      salaryData.maxValue
-    }${unit ? " " + unit : ""}`;
-  }
+    // Handle simple value
+    if (salaryData.value) {
+      const currency = salaryData.currency || "$";
+      const unit = salaryData.unitText || "";
+      return `${currency}${salaryData.value}${unit ? " " + unit : ""}`;
+    }
 
-  // Handle just minValue or maxValue
-  if (salaryData.minValue) {
-    const currency = salaryData.currency || "$";
-    return `${currency}${salaryData.minValue}+`;
-  }
+    // Handle min/max range
+    if (salaryData.minValue && salaryData.maxValue) {
+      const currency = salaryData.currency || "$";
+      const unit = salaryData.unitText || "";
+      return `${currency}${salaryData.minValue} - ${currency}${
+        salaryData.maxValue
+      }${unit ? " " + unit : ""}`;
+    }
 
-  if (salaryData.maxValue) {
-    const currency = salaryData.currency || "$";
-    return `Up to ${currency}${salaryData.maxValue}`;
-  }
+    // Handle just minValue or maxValue
+    if (salaryData.minValue) {
+      const currency = salaryData.currency || "$";
+      return `${currency}${salaryData.minValue}+`;
+    }
 
-  return undefined;
+    if (salaryData.maxValue) {
+      const currency = salaryData.currency || "$";
+      return `Up to ${currency}${salaryData.maxValue}`;
+    }
+
+    return undefined;
+  } catch (error) {
+    console.error("Error extracting salary:", error);
+    return undefined;
+  }
 }
 
 function extractJobPostingFallback(
@@ -644,6 +687,12 @@ function extractJobPostingFallback(
   } else if (url.includes("lever.co")) {
     console.log("[DEBUG] Using Lever extractor");
     return extractLeverJob(html, metadata);
+  } else if (
+    url.includes("workatastartup.com") ||
+    url.includes("ycombinator.com")
+  ) {
+    console.log("[DEBUG] Using Y Combinator/Work at a Startup extractor");
+    return extractYCombinatorJob(html, metadata);
   }
 
   console.log("[DEBUG] Using generic fallback patterns");
@@ -854,10 +903,14 @@ function extractGreenhouseJob(
             TEMPORARY: "Temporary",
             INTERN: "Internship",
           };
-          jobPosting.employmentType = typeMap[meta.value] || meta.value;
-          console.log(
-            `[DEBUG] Employment type from JSON: ${jobPosting.employmentType}`
-          );
+          const mappedType = typeMap[meta.value];
+          if (mappedType) {
+            jobPosting.employmentType = mappedType;
+            console.log(
+              `[DEBUG] Employment type from JSON: ${jobPosting.employmentType}`
+            );
+          }
+          // Don't set employmentType if value is not in map
         }
       }
     }
@@ -1070,6 +1123,64 @@ function extractLeverJob(
   }
 
   return Object.keys(jobPosting).length > 0 ? jobPosting : undefined;
+}
+
+function extractYCombinatorJob(
+  html: string,
+  metadata: ScrapedMetadata
+): ScrapedMetadata["jobPosting"] | undefined {
+  const jobPosting: ScrapedMetadata["jobPosting"] = {};
+
+  try {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+
+    // Extract company from title (format: "Position at Company | Work at a Startup")
+    const titleMatch = metadata.title?.match(
+      /^(.+?)\s+at\s+(.+?)\s*[|\u2022]/i
+    );
+    if (titleMatch) {
+      jobPosting.position = titleMatch[1].trim();
+      jobPosting.company = titleMatch[2].trim();
+    }
+
+    // Extract salary - YC often has salary in a specific div
+    const salaryElement = doc.querySelector(
+      '[class*="salary"], [class*="compensation"]'
+    );
+    if (salaryElement?.textContent) {
+      jobPosting.salary = salaryElement.textContent.trim();
+    }
+
+    // Extract location
+    const locationElement = doc.querySelector('[class*="location"]');
+    if (locationElement?.textContent) {
+      jobPosting.location = locationElement.textContent.trim();
+    }
+
+    // Extract description - YC uses specific class names
+    const descElement = doc.querySelector(
+      '[class*="description"], [class*="job-description"], .prose'
+    );
+    if (descElement) {
+      const paragraphs = Array.from(descElement.querySelectorAll("p"))
+        .map((p) => p.textContent?.trim() || "")
+        .filter((text) => text.length > 20);
+
+      if (paragraphs.length > 0) {
+        let description = "";
+        for (const p of paragraphs.slice(0, 5)) {
+          if (description.length + p.length > 500) break;
+          description += p + "\n\n";
+        }
+        jobPosting.description = description.trim();
+      }
+    }
+
+    return Object.keys(jobPosting).length > 0 ? jobPosting : undefined;
+  } catch (error) {
+    console.error("⚠️ Error in YC job extraction:", error);
+    return undefined;
+  }
 }
 
 function extractRecipe(html: string): ScrapedMetadata["recipe"] | undefined {

@@ -98,9 +98,14 @@ export function applyJobMetadataToForm(
 
   if (salary) {
     // Ensure salary is a string, not an object
-    patch.salaryRange = typeof salary === "string" ? salary : String(salary);
-    patch.extractedFields++;
-    patch.fieldNames.push("salary");
+    if (typeof salary === "string") {
+      patch.salaryRange = salary;
+      patch.extractedFields++;
+      patch.fieldNames.push("salary");
+    } else if (salary && typeof salary === "object") {
+      // Log error but don't crash - just skip salary
+      console.error("Salary is an object, skipping:", salary);
+    }
   }
 
   if (jobLocation) {
@@ -109,14 +114,33 @@ export function applyJobMetadataToForm(
     patch.fieldNames.push("location");
   }
 
-  // Default to Full-time if no employment type provided
+  // Validate and normalize employment type only if provided
+  // Do not default to Full-time to avoid misrepresenting scraped data
   if (empType) {
-    patch.employmentType = empType;
-    patch.extractedFields++;
-    patch.fieldNames.push("type");
-  } else {
-    patch.employmentType = "Full-time";
+    const validTypes = [
+      "Full-time",
+      "Part-time",
+      "Contract",
+      "Temporary",
+      "Internship",
+    ];
+    const normalizedType = empType
+      .replace(/_/g, "-")
+      .replace(/([A-Z])/g, " $1")
+      .trim();
+
+    if (validTypes.includes(empType)) {
+      patch.employmentType = empType;
+      patch.extractedFields++;
+      patch.fieldNames.push("type");
+    } else if (validTypes.includes(normalizedType)) {
+      patch.employmentType = normalizedType;
+      patch.extractedFields++;
+      patch.fieldNames.push("type");
+    }
+    // If unrecognized employment type, leave it undefined rather than defaulting
   }
+  // If no employment type provided, leave undefined so user can choose
 
   if (jobDescription) {
     patch.description = jobDescription;

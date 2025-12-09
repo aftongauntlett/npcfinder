@@ -24,6 +24,7 @@ import {
   useTask,
   useUpdateTask,
   useDeleteTask,
+  useTasks,
 } from "../../hooks/useTasksQueries";
 import { PRIORITY_OPTIONS, STATUS_OPTIONS } from "../../utils/taskConstants";
 import { useTaskFormState } from "../../hooks/tasks/useTaskFormState";
@@ -62,6 +63,13 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   } = useTaskFormState(task);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
+
+  // Fetch existing tasks for duplicate detection (only for job tracker)
+  const isJobTracker = isJobTrackerTask(task);
+  const { data: existingTasks = [] } = useTasks(
+    isJobTracker ? task.board_id ?? undefined : undefined
+  );
 
   // Template-specific item_data builders
   const [jobItemDataBuilder, setJobItemDataBuilder] = useState<
@@ -76,8 +84,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
 
-  // Detect template type using helper functions
-  const isJobTracker = isJobTrackerTask(task);
+  // Detect template type using helper functions (declared earlier for useTasks hook)
   const isRecipe = isRecipeTask(task);
 
   // Callbacks to receive item_data builders from child sections
@@ -99,6 +106,59 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setDuplicateError(null);
+
+    // For job tracker tasks, check for duplicates before updating
+    // Mirrors the creation-time checks in CreateTaskModal
+    if (isJobTracker && jobItemDataBuilder) {
+      const jobData = jobItemDataBuilder();
+      const normalizeString = (str: string) => str.toLowerCase().trim();
+      const currentCompany = normalizeString(
+        (jobData.company_name as string) || ""
+      );
+      const currentPosition = normalizeString(
+        (jobData.position as string) || ""
+      );
+      const currentUrl = ((jobData.company_url as string) || "").trim();
+
+      for (const existingTask of existingTasks) {
+        // Skip comparing with the current task itself
+        if (existingTask.id === task.id) continue;
+
+        const taskCompany = normalizeString(
+          (existingTask.item_data?.company_name as string) || ""
+        );
+        const taskPosition = normalizeString(
+          (existingTask.item_data?.position as string) || ""
+        );
+        const taskUrl = (
+          (existingTask.item_data?.company_url as string) || ""
+        ).trim();
+
+        // Check URL match
+        if (currentUrl && taskUrl && currentUrl === taskUrl) {
+          setDuplicateError("You've already applied for this role");
+          return;
+        }
+
+        // Check company + position match
+        if (
+          currentCompany &&
+          taskCompany &&
+          currentPosition &&
+          taskPosition &&
+          currentCompany === taskCompany &&
+          currentPosition === taskPosition
+        ) {
+          setDuplicateError(
+            `You already have an application for ${
+              jobData.position as string
+            } at ${jobData.company_name as string}`
+          );
+          return;
+        }
+      }
+    }
 
     // Build base task updates
     const baseUpdates = buildBaseUpdates();
@@ -162,6 +222,14 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       >
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          {/* Duplicate Error */}
+          {duplicateError && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-800 font-medium">
+                {duplicateError}
+              </p>
+            </div>
+          )}
           {/* Title - Hidden for job tracker */}
           {!isJobTracker && (
             <Input

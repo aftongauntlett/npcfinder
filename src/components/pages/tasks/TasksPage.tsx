@@ -12,7 +12,7 @@
 
 import React, { useState, useMemo } from "react";
 import {
-  ListChecks,
+  ListTodo,
   LayoutGrid,
   ShoppingCart,
   ChefHat,
@@ -62,7 +62,12 @@ const TasksPage: React.FC = () => {
   const { data: sharedBoards = [] } = useSharedBoards() as {
     data: BoardWithStats[];
   };
-  const { data: tasks = [] } = useTasks(undefined, { unassigned: true });
+  // Fetch ALL tasks so we can find job tracker and recipe tasks for editing
+  const { data: allTasks = [] } = useTasks();
+  // Fetch unassigned tasks for the badge count
+  const { data: unassignedTasks = [] } = useTasks(undefined, {
+    unassigned: true,
+  });
 
   // Get singleton board IDs for job_tracker, recipe, and grocery
   const { jobBoardId, recipeBoardId, groceryBoardId } = useAllSingletonBoards();
@@ -82,8 +87,8 @@ const TasksPage: React.FC = () => {
   // Find task being edited
   const editingTask = useMemo(() => {
     if (!editingTaskId) return null;
-    return tasks.find((t) => t.id === editingTaskId) || null;
-  }, [editingTaskId, tasks]);
+    return allTasks.find((t) => t.id === editingTaskId) || null;
+  }, [editingTaskId, allTasks]);
 
   // Find board for create task modal
   const createTaskBoard = useMemo(() => {
@@ -115,8 +120,8 @@ const TasksPage: React.FC = () => {
       {
         id: "tasks",
         label: "Tasks",
-        icon: ListChecks,
-        badge: tasks.length > 0 ? tasks.length : undefined,
+        icon: ListTodo,
+        badge: unassignedTasks.length > 0 ? unassignedTasks.length : undefined,
       },
       {
         id: "kanban",
@@ -144,7 +149,7 @@ const TasksPage: React.FC = () => {
       },
     ];
   }, [
-    tasks.length,
+    unassignedTasks.length,
     kanbanBoards.length,
     groceryTaskCount,
     recipeTaskCount,

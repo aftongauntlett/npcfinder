@@ -10,7 +10,11 @@ import Button from "../shared/ui/Button";
 import Input from "../shared/ui/Input";
 import Textarea from "../shared/ui/Textarea";
 import Dropdown from "../shared/ui/Dropdown";
-import { useCreateTask, useUpdateTask } from "../../hooks/useTasksQueries";
+import {
+  useCreateTask,
+  useUpdateTask,
+  useTasks,
+} from "../../hooks/useTasksQueries";
 import { useUrlMetadata } from "../../hooks/useUrlMetadata";
 import {
   Link,
@@ -41,6 +45,7 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
     type: "success" | "warning" | "error";
     message: string;
   } | null>(null);
+  const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
 
   // Form fields
   const [recipeName, setRecipeName] = useState("");
@@ -57,6 +62,7 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const { fetchMetadata, loading: urlLoading } = useUrlMetadata();
+  const { data: existingTasks = [] } = useTasks(boardId);
 
   // Populate form when editing
   useEffect(() => {
@@ -193,6 +199,27 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setDuplicateWarning(null);
+
+    // Check for recipe duplicates (only for new recipes, not edits)
+    // Unlike the old warning-only approach, we now block duplicate recipe names
+    // to prevent accidental re-creation of existing recipes. Users must edit
+    // the existing recipe or choose a different name.
+    if (!task) {
+      const normalizedName = recipeName.toLowerCase().trim();
+      const existingRecipe = existingTasks.find(
+        (t) =>
+          ((t.item_data?.recipe_name as string) || "").toLowerCase().trim() ===
+          normalizedName
+      );
+
+      if (existingRecipe) {
+        setDuplicateWarning(
+          `A recipe with this name already exists. Please choose a different name or edit the existing recipe.`
+        );
+        return; // Block creation
+      }
+    }
 
     const item_data = {
       recipe_name: recipeName,
@@ -447,6 +474,15 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
           placeholder="Any additional notes or tips..."
           rows={3}
         />
+
+        {/* Duplicate Error (blocking) */}
+        {duplicateWarning && (
+          <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3">
+            <p className="text-sm text-red-800 dark:text-red-200 font-medium">
+              {duplicateWarning}
+            </p>
+          </div>
+        )}
 
         {/* Actions */}
         <div className="flex gap-3 pt-4">
