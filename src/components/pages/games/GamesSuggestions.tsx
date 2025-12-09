@@ -1,43 +1,22 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { Gamepad2 } from "lucide-react";
 import {
   SendMediaModal,
   MediaRecommendationCard,
   GroupedSentMediaCard,
   InlineRecommendationsLayout,
-  type BaseRecommendation,
 } from "@/components/shared";
 import { logger } from "@/lib/logger";
 import { searchGames } from "../../../utils/mediaSearchAdapters";
 import ContentLayout from "../../layouts/ContentLayout";
 import MainLayout from "../../layouts/MainLayout";
-import { useAuth } from "../../../contexts/AuthContext";
 import {
-  useFriendsWithGameRecs,
-  useGameStats,
-  useGameRecommendations,
   useUpdateGameRecommendationStatus,
   useDeleteGameRecommendation,
   useUpdateSenderNote,
   useUpdateRecipientNote,
 } from "../../../hooks/useGameQueries";
-
-// Extend BaseRecommendation with game-specific fields
-interface GameRecommendation extends BaseRecommendation {
-  name: string;
-  slug: string | null;
-  platforms: string | null;
-  genres: string | null;
-  released: string | null;
-  background_image: string | null;
-  rating: number | null;
-  metacritic: number | null;
-  playtime: number | null;
-  status: "pending" | "played" | "hit" | "miss";
-  played_at: string | null;
-  created_at: string;
-  sender_comment: string | null;
-}
+import { useGameRecommendationsData } from "../../../hooks/useGameRecommendationsData";
 
 /**
  * Games Suggestions Page
@@ -53,53 +32,19 @@ const GamesSuggestions: React.FC<GamesSuggestionsProps> = ({
   embedded = false,
 }) => {
   const [showSendModal, setShowSendModal] = useState(false);
-  const { user } = useAuth();
 
-  // TanStack Query hooks
-  const { data: friendsWithRecs = [], isLoading: friendsLoading } =
-    useFriendsWithGameRecs();
-  const { data: quickStats = { hits: 0, misses: 0, queue: 0, sent: 0 } } =
-    useGameStats();
-
-  // Fetch all recommendation types
-  const { data: hitsData = [] } = useGameRecommendations("hits");
-  const { data: missesData = [] } = useGameRecommendations("misses");
-  const { data: sentData = [] } = useGameRecommendations("sent");
-  const { data: pendingData = [] } = useGameRecommendations("queue");
-
-  const loading = friendsLoading;
-
-  // Create name lookup map from all data sources
-  const userNameMap = useMemo(() => {
-    const map = new Map<string, string>();
-
-    // Add senders from friends list
-    friendsWithRecs.forEach((friend) => {
-      map.set(friend.user_id, friend.display_name);
-    });
-
-    // Add names from all rec data
-    [...hitsData, ...missesData, ...pendingData].forEach((rec) => {
-      if (rec.sender_name && rec.from_user_id) {
-        map.set(rec.from_user_id, rec.sender_name);
-      }
-    });
-
-    // Add recipients from sent data
-    sentData.forEach((rec) => {
-      if (rec.recipient_name && rec.to_user_id) {
-        map.set(rec.to_user_id, rec.recipient_name);
-      }
-    });
-
-    return map;
-  }, [friendsWithRecs, hitsData, missesData, pendingData, sentData]);
-
-  // Filter out self from friends list
-  const filteredFriendsWithRecs = useMemo(() => {
-    if (!user) return friendsWithRecs;
-    return friendsWithRecs.filter((friend) => friend.user_id !== user.id);
-  }, [friendsWithRecs, user]);
+  // Use centralized data hook
+  const {
+    hits,
+    misses,
+    sent,
+    queue: _queue,
+    friendRecommendations,
+    friendsWithRecs,
+    quickStats,
+    userNameMap,
+    loading,
+  } = useGameRecommendationsData();
 
   // Mutations
   const updateStatusMutation = useUpdateGameRecommendationStatus();
@@ -149,119 +94,22 @@ const GamesSuggestions: React.FC<GamesSuggestionsProps> = ({
     }
   };
 
-  // Type guard to ensure name exists
-  function hasName<T extends { name?: string }>(
-    r: T
-  ): r is T & { name: string } {
-    return !!r.name;
-  }
-
-  // Transform data to GameRecommendation format
-  const hits = (hitsData || []).filter(hasName).map((rec) => ({
-    ...rec,
-    name: rec.name,
-    slug: rec.slug ?? null,
-    platforms: rec.platforms ?? null,
-    genres: rec.genres ?? null,
-    released: rec.released ?? null,
-    background_image: rec.background_image ?? null,
-    rating: rec.rating ?? null,
-    metacritic: rec.metacritic ?? null,
-    playtime: rec.playtime ?? null,
-    played_at: rec.played_at ?? null,
-    sent_message: rec.sent_message ?? null,
-    comment: rec.recipient_note ?? null,
-    sender_comment: rec.sender_note ?? null,
-    sender_note: rec.sender_note ?? null,
-    recipient_note: rec.recipient_note ?? null,
-    sent_at: rec.created_at,
-    status: (rec.status === "consumed"
-      ? "played"
-      : rec.status) as GameRecommendation["status"],
-  }));
-
-  const misses = (missesData || []).filter(hasName).map((rec) => ({
-    ...rec,
-    name: rec.name,
-    slug: rec.slug ?? null,
-    platforms: rec.platforms ?? null,
-    genres: rec.genres ?? null,
-    released: rec.released ?? null,
-    background_image: rec.background_image ?? null,
-    rating: rec.rating ?? null,
-    metacritic: rec.metacritic ?? null,
-    playtime: rec.playtime ?? null,
-    played_at: rec.played_at ?? null,
-    sent_message: rec.sent_message ?? null,
-    comment: rec.recipient_note ?? null,
-    sender_comment: rec.sender_note ?? null,
-    sender_note: rec.sender_note ?? null,
-    recipient_note: rec.recipient_note ?? null,
-    sent_at: rec.created_at,
-    status: (rec.status === "consumed"
-      ? "played"
-      : rec.status) as GameRecommendation["status"],
-  }));
-
-  const sent = (sentData || []).filter(hasName).map((rec) => ({
-    ...rec,
-    name: rec.name,
-    slug: rec.slug ?? null,
-    platforms: rec.platforms ?? null,
-    genres: rec.genres ?? null,
-    released: rec.released ?? null,
-    background_image: rec.background_image ?? null,
-    rating: rec.rating ?? null,
-    metacritic: rec.metacritic ?? null,
-    playtime: rec.playtime ?? null,
-    played_at: rec.played_at ?? null,
-    sent_message: rec.sent_message ?? null,
-    comment: rec.recipient_note ?? null,
-    sender_comment: rec.sender_note ?? null,
-    sender_note: rec.sender_note ?? null,
-    recipient_note: rec.recipient_note ?? null,
-    sent_at: rec.created_at,
-    status: (rec.status === "consumed"
-      ? "played"
-      : rec.status) as GameRecommendation["status"],
-  }));
-
-  // Build friend recommendations map from pending data
-  const friendRecommendations = new Map<string, GameRecommendation[]>();
-
-  // Transform pending data
-  const pendingRecs = (pendingData || []).filter(hasName).map((rec) => ({
-    ...rec,
-    name: rec.name,
-    slug: rec.slug ?? null,
-    platforms: rec.platforms ?? null,
-    genres: rec.genres ?? null,
-    released: rec.released ?? null,
-    background_image: rec.background_image ?? null,
-    rating: rec.rating ?? null,
-    metacritic: rec.metacritic ?? null,
-    playtime: rec.playtime ?? null,
-    played_at: rec.played_at ?? null,
-    sent_message: rec.sent_message ?? null,
-    comment: rec.recipient_note ?? null,
-    sender_comment: rec.sender_note ?? null,
-    sender_note: rec.sender_note ?? null,
-    recipient_note: rec.recipient_note ?? null,
-    sent_at: rec.created_at,
-    status: "pending" as const,
-  }));
-
-  // Group by sender
-  pendingRecs.forEach((rec) => {
-    const senderId = rec.from_user_id;
-    if (!friendRecommendations.has(senderId)) {
-      friendRecommendations.set(senderId, []);
-    }
-    friendRecommendations.get(senderId)!.push(rec);
-  });
-
   const renderRecommendationCard = (
-    rec: GameRecommendation,
+    rec: {
+      id: string;
+      title: string;
+      from_user_id: string;
+      to_user_id: string;
+      external_id: string;
+      status: string;
+      sent_message: string | null;
+      comment: string | null;
+      sender_comment: string | null;
+      sent_at: string;
+      background_image?: string | null;
+      platforms?: string | null;
+      released?: string | null;
+    },
     isReceived: boolean,
     index = 0
   ) => {
@@ -277,7 +125,7 @@ const GamesSuggestions: React.FC<GamesSuggestionsProps> = ({
         onStatusUpdate={updateRecommendationStatus}
         onDelete={deleteRecommendation}
         onUpdateSenderComment={updateSenderComment}
-        renderMediaArt={(r: GameRecommendation) => {
+        renderMediaArt={(r: typeof rec) => {
           return r.background_image ? (
             <img
               src={r.background_image}
@@ -291,7 +139,7 @@ const GamesSuggestions: React.FC<GamesSuggestionsProps> = ({
             </div>
           );
         }}
-        renderMediaInfo={(r: GameRecommendation) => {
+        renderMediaInfo={(r: typeof rec) => {
           return (
             <>
               <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
@@ -313,7 +161,21 @@ const GamesSuggestions: React.FC<GamesSuggestionsProps> = ({
   };
 
   const renderGroupedSentCard = (
-    mediaItem: GameRecommendation,
+    mediaItem: {
+      id: string;
+      title: string;
+      external_id: string;
+      status: string;
+      sent_message: string | null;
+      comment: string | null;
+      sender_comment: string | null;
+      sent_at: string;
+      from_user_id: string;
+      to_user_id: string;
+      background_image?: string | null;
+      platforms?: string | null;
+      released?: string | null;
+    },
     index: number
   ) => {
     // Find all sent items with the same external_id to get all recipients
@@ -375,7 +237,7 @@ const GamesSuggestions: React.FC<GamesSuggestionsProps> = ({
         emptyMessage="No game recommendations yet"
         emptySubMessage="When friends recommend games, they'll show up here"
         loading={loading}
-        friendsWithRecs={filteredFriendsWithRecs}
+        friendsWithRecs={friendsWithRecs}
         quickStats={quickStats}
         hits={hits}
         misses={misses}

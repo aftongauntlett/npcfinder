@@ -1,39 +1,16 @@
-import React, {
-  useState,
-  useRef,
-  useMemo,
-  useCallback,
-  useEffect,
-} from "react";
-import { BookOpen } from "lucide-react";
+import React, { useRef } from "react";
 import { Pagination } from "../../shared/common/Pagination";
-import { MediaItem } from "../../shared/media/SendMediaModal";
 import SearchBookModal from "../../shared/search/SearchBookModal";
 import BookDetailModal from "./BookDetailModal";
-import { EmptyStateAddCard } from "../../shared";
 import MediaListItem from "../../media/MediaListItem";
-import { FilterSortSection } from "../../shared/common/FilterSortMenu";
 import SendMediaModal from "../../shared/media/SendMediaModal";
 import ConfirmationModal from "../../shared/ui/ConfirmationModal";
-import { MediaPageToolbar } from "../../shared/media/MediaPageToolbar";
-import { useMediaFiltering } from "../../../hooks/useMediaFiltering";
-import { useUrlPaginationState } from "../../../hooks/useUrlPaginationState";
-import { logger } from "@/lib/logger";
 import { searchBooks } from "../../../utils/bookSearchAdapters";
-import {
-  useReadingList,
-  useAddToReadingList,
-  useToggleReadingListRead,
-  useDeleteFromReadingList,
-} from "../../../hooks/useReadingListQueries";
-import type { ReadingListItem } from "../../../services/booksService.types";
-import {
-  getPersistedFilters,
-  persistFilters,
-} from "../../../utils/persistenceUtils";
+import { useReadingListViewModel } from "../../../hooks/books/useReadingListViewModel";
+import ReadingListToolbar from "./ReadingListToolbar";
+import ReadingListEmptyState from "./ReadingListEmptyState";
 
 type FilterType = "all" | "to-read" | "read";
-type SortType = "date-added" | "title" | "year" | "rating";
 
 interface PersonalReadingListProps {
   initialFilter?: FilterType;
@@ -44,270 +21,46 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
   initialFilter = "all",
   embedded: _embedded = false,
 }) => {
-  // Data fetching
-  const { data: readingList = [] } = useReadingList();
-  const addToReadingList = useAddToReadingList();
-  const toggleRead = useToggleReadingListRead();
-  const deleteFromReadingList = useDeleteFromReadingList();
-
-  // Load persisted filter state
-  const persistenceKey = "readingList";
-  const persistedFilters = getPersistedFilters(persistenceKey, {
-    categoryFilters: ["all"],
-    sortBy: "date-added",
-  });
-
-  // Filter state (controlled by tabs via prop)
-  const [filter] = useState<FilterType>(initialFilter);
-  const [categoryFilters, setCategoryFilters] = useState<string[]>(
-    persistedFilters.categoryFilters as string[]
-  );
-  const [sortBy, setSortBy] = useState<SortType>(
-    persistedFilters.sortBy as SortType
-  );
-
-  // Persist filter changes
-  useEffect(() => {
-    persistFilters(persistenceKey, {
-      categoryFilters,
-      sortBy,
-    });
-  }, [categoryFilters, sortBy]);
-
-  // Modal state
-  const [showSearchModal, setShowSearchModal] = useState(false);
-  const [showSendModal, setShowSendModal] = useState(false);
-  const [selectedBook, setSelectedBook] = useState<ReadingListItem | null>(
-    null
-  );
-  const [bookToRecommend, setBookToRecommend] =
-    useState<ReadingListItem | null>(null);
-
-  // Delete confirmation state
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [bookToDelete, setBookToDelete] = useState<ReadingListItem | null>(
-    null
-  );
-
   // Ref for scroll-to-top
   const topRef = useRef<HTMLDivElement>(null);
 
-  // First, filter by read status to get the current view
-  const filteredByStatus = useMemo(() => {
-    if (filter === "to-read") return readingList.filter((b) => !b.read);
-    if (filter === "read") return readingList.filter((b) => b.read);
-    return readingList;
-  }, [readingList, filter]);
-
-  // Extract unique categories from the currently filtered books (by read status)
-  const availableCategories = useMemo(() => {
-    const categorySet = new Set<string>();
-    filteredByStatus.forEach((book) => {
-      if (book.categories) {
-        // Split by comma, slash, and/or ampersand, and trim whitespace
-        book.categories.split(/[,/&]/).forEach((category) => {
-          const trimmedCategory = category.trim().toLowerCase();
-          if (trimmedCategory) categorySet.add(trimmedCategory);
-        });
-      }
-    });
-    return categorySet;
-  }, [filteredByStatus]);
-
-  // Create filter & sort sections for FilterSortMenu
-  const filterSortSections = useMemo((): FilterSortSection[] => {
-    // Sort categories alphabetically
-    const sortedCategories = Array.from(availableCategories).sort();
-
-    const categoryOptions = [
-      { id: "all", label: "All Categories" },
-      ...sortedCategories.map((category) => ({
-        id: category,
-        label: category.charAt(0).toUpperCase() + category.slice(1),
-      })),
-    ];
-
-    return [
-      {
-        id: "category",
-        title: "Category",
-        multiSelect: true,
-        options: categoryOptions,
-      },
-      {
-        id: "sort",
-        title: "Sort By",
-        options: [
-          { id: "date-added", label: "Recently Added" },
-          { id: "title", label: "Title" },
-          { id: "year", label: "Publication Year" },
-          { id: "rating", label: "Your Rating" },
-        ],
-      },
-    ];
-  }, [availableCategories]);
-
-  // Define filter function (now includes category filter)
-  const filterFn = useCallback(
-    (book: ReadingListItem) => {
-      // Filter by read status
-      if (filter === "to-read" && book.read) return false;
-      if (filter === "read" && !book.read) return false;
-
-      // Filter by categories (multiple selection support)
-      if (categoryFilters.length === 0 || categoryFilters.includes("all")) {
-        return true;
-      }
-
-      // Book matches if it matches ANY of the selected categories
-      if (book.categories) {
-        const bookCategories = book.categories
-          .toLowerCase()
-          .split(/[,/&]/)
-          .map((c) => c.trim());
-        return categoryFilters.some((selectedCategory) =>
-          bookCategories.includes(selectedCategory)
-        );
-      }
-
-      return false;
-    },
-    [filter, categoryFilters]
-  );
-
-  // Sort function
-  const sortFn = useCallback(
-    (a: ReadingListItem, b: ReadingListItem) => {
-      switch (sortBy) {
-        case "date-added":
-          return (
-            new Date(b.added_at || "").getTime() -
-            new Date(a.added_at || "").getTime()
-          );
-        case "title":
-          return a.title.localeCompare(b.title);
-        case "year":
-          return (
-            (b.published_date ? new Date(b.published_date).getFullYear() : 0) -
-            (a.published_date ? new Date(a.published_date).getFullYear() : 0)
-          );
-        case "rating":
-          return (b.personal_rating || 0) - (a.personal_rating || 0);
-        default:
-          return 0;
-      }
-    },
-    [sortBy]
-  );
-
-  // Use the filtering hook
-  // URL-based pagination state
-  const { page, perPage, setPage, setPerPage } = useUrlPaginationState(1, 10);
-
+  // Use the view model hook
   const {
-    items: paginatedItems,
+    paginatedItems,
     totalItems,
     currentPage,
     totalPages,
-    setCurrentPage,
     itemsPerPage,
+    readingList,
+    availableCategories,
+    toReadCount: _toReadCount,
+    readCount: _readCount,
+    hasItemsForCurrentFilter,
+    filter,
+    categoryFilters,
+    sortBy,
+    setCategoryFilters,
+    setSortBy,
     setItemsPerPage,
-  } = useMediaFiltering({
-    items: readingList,
-    filterFn,
-    sortFn,
-    initialPage: page,
-    initialItemsPerPage: perPage,
-    persistenceKey,
-    onPageChange: setPage,
-    onItemsPerPageChange: setPerPage,
-  });
-
-  // Calculate counts for empty state logic
-  const toReadCount = useMemo(
-    () => readingList.filter((book) => !book.read).length,
-    [readingList]
-  );
-  const readCount = useMemo(
-    () => readingList.filter((book) => book.read).length,
-    [readingList]
-  );
-
-  const hasItemsForCurrentFilter =
-    filter === "all"
-      ? readingList.length > 0
-      : filter === "to-read"
-      ? toReadCount > 0
-      : readCount > 0;
-
-  // Event handlers
-  const handleAddToReadingList = (result: MediaItem) => {
-    const shouldMarkAsRead = filter === "read";
-
-    void addToReadingList.mutateAsync({
-      external_id: result.external_id,
-      title: result.title,
-      authors: result.authors || null,
-      thumbnail_url: result.poster_url,
-      published_date: result.release_date || null,
-      description: result.description || null,
-      isbn: result.isbn || null,
-      page_count: result.page_count || null,
-      categories: result.categories || null,
-      read: shouldMarkAsRead,
-    });
-    setShowSearchModal(false);
-  };
-
-  const handleToggleRead = (id: string | number) => {
-    void toggleRead.mutateAsync(String(id));
-  };
-
-  const handleRemove = (id: string | number) => {
-    const book = readingList.find((b) => b.id === String(id));
-    if (!book) return;
-
-    setBookToDelete(book);
-    setShowDeleteModal(true);
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!bookToDelete) return;
-
-    try {
-      await deleteFromReadingList.mutateAsync(bookToDelete.id);
-      setShowDeleteModal(false);
-      setBookToDelete(null);
-    } catch (error) {
-      logger.error("Failed to delete book", { error, bookId: bookToDelete.id });
-      // Keep modal open so user sees the action failed
-    }
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    topRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  // Empty state props
-  const emptyStateProps =
-    filter === "read"
-      ? {
-          title: "Your Reading list is empty",
-          message:
-            "You haven't added any books to your list yet. Add books to start tracking what you're currently reading!",
-        }
-      : filter === "to-read"
-      ? {
-          title: "Your Reading list is empty",
-          message:
-            "You haven't added any books to your list yet. Add books to start tracking what you're currently reading!",
-        }
-      : {
-          title: "Your Reading list is empty",
-          message:
-            "You haven't added any books to your list yet. Add books to start tracking what you're currently reading!",
-        };
+    showSearchModal,
+    setShowSearchModal,
+    showSendModal,
+    setShowSendModal,
+    selectedBook,
+    setSelectedBook,
+    bookToRecommend,
+    setBookToRecommend,
+    showDeleteModal,
+    setShowDeleteModal,
+    bookToDelete,
+    setBookToDelete,
+    handleAddToReadingList,
+    handleToggleRead,
+    handleRemove,
+    handleConfirmDelete,
+    handlePageChange,
+    isDeleting,
+  } = useReadingListViewModel({ initialFilter });
 
   return (
     <div
@@ -316,58 +69,29 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
     >
       {/* Controls Row: Filter/Sort + Actions */}
       {hasItemsForCurrentFilter && (
-        <div className="space-y-3 mb-6">
-          <MediaPageToolbar
-            filterConfig={{
-              type: "menu",
-              sections: filterSortSections,
-              activeFilters: {
-                category: categoryFilters,
-                sort: sortBy,
-              },
-              onFilterChange: (sectionId, value) => {
-                if (sectionId === "category") {
-                  const categories = Array.isArray(value) ? value : [value];
-                  setCategoryFilters(categories);
-                } else if (sectionId === "sort") {
-                  setSortBy(value as SortType);
-                }
-              },
-              onResetFilters: () => {
-                setCategoryFilters(["all"]);
-              },
-              hasActiveFilters:
-                !categoryFilters.includes("all") && categoryFilters.length > 0,
-            }}
-            onAddClick={() => setShowSearchModal(true)}
-          />
-        </div>
+        <ReadingListToolbar
+          availableCategories={availableCategories}
+          categoryFilters={categoryFilters}
+          sortBy={sortBy}
+          onCategoryChange={setCategoryFilters}
+          onSortChange={setSortBy}
+          onResetFilters={() => setCategoryFilters(["all"])}
+          onAddClick={() => setShowSearchModal(true)}
+        />
       )}
 
       {/* Content: List or Empty State */}
-      {!hasItemsForCurrentFilter ? (
-        <EmptyStateAddCard
-          icon={BookOpen}
-          title={emptyStateProps.title}
-          description={emptyStateProps.message}
-          onClick={() => setShowSearchModal(true)}
-          ariaLabel="Add books to your reading list"
-        />
-      ) : totalItems === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500 dark:text-gray-400">
-            No books found in selected{" "}
-            {categoryFilters.length === 1 && categoryFilters[0] !== "all"
-              ? categoryFilters[0]
-              : ""}{" "}
-            {categoryFilters.length > 1
-              ? `categories (${categoryFilters.join(", ")})`
-              : "categories"}
-          </p>
-        </div>
-      ) : (
+      <ReadingListEmptyState
+        filter={filter}
+        hasItemsForCurrentFilter={hasItemsForCurrentFilter}
+        totalItems={totalItems}
+        categoryFilters={categoryFilters}
+        onAddClick={() => setShowSearchModal(true)}
+      />
+
+      {/* List View */}
+      {hasItemsForCurrentFilter && totalItems > 0 && (
         <>
-          {/* List View */}
           <div className="space-y-4">
             {paginatedItems.map((book) => (
               <MediaListItem
@@ -407,7 +131,7 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
             totalPages={totalPages}
             totalItems={totalItems}
             itemsPerPage={itemsPerPage}
-            onPageChange={handlePageChange}
+            onPageChange={(page) => handlePageChange(page, topRef)}
             onItemsPerPageChange={setItemsPerPage}
           />
         </>
@@ -483,7 +207,7 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
         }
         confirmText="Remove"
         variant="danger"
-        isLoading={deleteFromReadingList.isPending}
+        isLoading={isDeleting}
       />
     </div>
   );

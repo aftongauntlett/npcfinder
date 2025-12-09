@@ -1,11 +1,10 @@
 import React from "react";
 import { motion } from "framer-motion";
 import {
-  GithubLogo,
-  ArrowSquareOut,
+  GithubLogoIcon,
   Lock,
   Question,
-  LinkedinLogo,
+  LinkedinLogoIcon,
   ArrowUp,
 } from "@phosphor-icons/react";
 import { StarryBackground } from "@/components/shared";
@@ -159,7 +158,7 @@ const DemoLanding: React.FC = () => {
               <LandingButton
                 href="https://github.com/aftongauntlett/npcfinder"
                 variant="ghost"
-                icon={<GithubLogo className="w-5 h-5" weight="duotone" />}
+                icon={<GithubLogoIcon className="w-5 h-5" weight="duotone" />}
               >
                 View Source
               </LandingButton>
@@ -485,7 +484,7 @@ const DemoLanding: React.FC = () => {
             <LandingButton
               href="https://github.com/aftongauntlett/npcfinder"
               variant="tertiary"
-              icon={<GithubLogo className="w-4 h-4" weight="duotone" />}
+              icon={<GithubLogoIcon className="w-4 h-4" weight="duotone" />}
             >
               View Source Code
             </LandingButton>
@@ -503,7 +502,17 @@ const DemoLanding: React.FC = () => {
       >
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-500">
-            <p>© 2025 NPC Finder • Built by Afton Gauntlett</p>
+            <p>
+              © 2025 NPC Finder • Built by{" "}
+              <a
+                href="https://aftongauntlett.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary-dark hover:text-primary underline transition-colors"
+              >
+                Afton Gauntlett
+              </a>
+            </p>
             <div className="flex items-center gap-4">
               <a
                 href="https://github.com/aftongauntlett"
@@ -512,7 +521,7 @@ const DemoLanding: React.FC = () => {
                 className="flex items-center gap-1.5 hover:text-gray-300 transition-colors"
                 aria-label="View GitHub profile"
               >
-                <GithubLogo className="w-4 h-4" weight="duotone" />
+                <GithubLogoIcon className="w-4 h-4" weight="duotone" />
                 <span className="hidden sm:inline">GitHub</span>
               </a>
               <a
@@ -522,19 +531,10 @@ const DemoLanding: React.FC = () => {
                 className="flex items-center gap-1.5 hover:text-gray-300 transition-colors"
                 aria-label="Connect on LinkedIn"
               >
-                <LinkedinLogo className="w-4 h-4" weight="duotone" />
+                <LinkedinLogoIcon className="w-4 h-4" weight="duotone" />
                 <span className="hidden sm:inline">LinkedIn</span>
               </a>
-              <a
-                href="https://aftongauntlett.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 hover:text-gray-300 transition-colors"
-                aria-label="View portfolio"
-              >
-                <ArrowSquareOut className="w-4 h-4" weight="duotone" />
-                <span className="hidden sm:inline">View Portfolio</span>
-              </a>
+
               <button
                 onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
                 className="flex items-center gap-1.5 hover:text-gray-300 transition-colors"

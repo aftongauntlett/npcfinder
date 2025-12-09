@@ -1,18 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
 import { Send } from "lucide-react";
 import { useAuth } from "../../../contexts/AuthContext";
-import { supabase } from "../../../lib/supabase";
 import { getFriends } from "../../../lib/connections";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
 import Toast from "../../ui/Toast";
-import { useQueryClient } from "@tanstack/react-query";
-import { queryKeys } from "../../../lib/queryKeys";
 import { logger } from "@/lib/logger";
 import SendMediaModalSearchStep from "./SendMediaModalSearchStep";
 import SendMediaModalFriendsStep from "./SendMediaModalFriendsStep";
 import SendMediaModalDetailsStep from "./SendMediaModalDetailsStep";
 import SendMediaModalSuccess from "./SendMediaModalSuccess";
+import { useSendMediaRecommendations } from "../../../hooks/media/useSendMediaRecommendations";
+import { useExistingMediaRecommendations } from "../../../hooks/media/useExistingMediaRecommendations";
 
 // Generic media item interface
 export interface MediaItem {
@@ -85,7 +84,8 @@ export default function SendMediaModal({
   preselectedItem,
 }: SendMediaModalProps) {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
+  const { sendRecommendations, isLoading: isSending } =
+    useSendMediaRecommendations(mediaType, tableName);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -122,36 +122,11 @@ export default function SendMediaModal({
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
-  // Check for existing recommendations when item is selected
-  const checkExistingRecommendations = useCallback(
-    async (item: MediaItem) => {
-      if (!user) return;
-
-      try {
-        // Query the recommendations table to find which friends already received this item
-        const { data, error } = await supabase
-          .from(tableName)
-          .select("to_user_id")
-          .eq("from_user_id", user.id)
-          .eq("external_id", item.external_id);
-
-        if (error) {
-          logger.error("Failed to check existing recommendations", {
-            error,
-            externalId: item.external_id,
-          });
-          return;
-        }
-
-        // Create set of friend IDs who already received this item
-        const existingRecipients = new Set(data.map((rec) => rec.to_user_id));
-        setFriendsWithExistingRec(existingRecipients);
-      } catch (error) {
-        logger.error("Failed to check existing recommendations", { error });
-      }
-    },
-    [user, tableName]
-  );
+  // Hook for checking existing recommendations
+  const { checkExisting } = useExistingMediaRecommendations({
+    tableName,
+    fromUserId: user?.id ?? null,
+  });
 
   // Load friends
   const loadFriends = useCallback(async () => {
@@ -214,10 +189,12 @@ export default function SendMediaModal({
   useEffect(() => {
     if (isOpen && preselectedItem) {
       setSelectedItem(preselectedItem);
-      void checkExistingRecommendations(preselectedItem);
+      void checkExisting(preselectedItem.external_id).then(
+        setFriendsWithExistingRec
+      );
       setStep("friends");
     }
-  }, [isOpen, preselectedItem, checkExistingRecommendations]);
+  }, [isOpen, preselectedItem, checkExisting]);
 
   // Reset modal state when closed
   useEffect(() => {
@@ -258,7 +235,7 @@ export default function SendMediaModal({
 
   const handleItemSelect = (item: MediaItem) => {
     setSelectedItem(item);
-    void checkExistingRecommendations(item);
+    void checkExisting(item.external_id).then(setFriendsWithExistingRec);
     setStep("friends");
   };
 
@@ -306,108 +283,17 @@ export default function SendMediaModal({
 
     setSending(true);
     try {
-      // Create recommendations for each selected friend
-      const recommendations = Array.from(selectedFriends).map((friendId) => {
-        // Books table has different column names - no media_type, uses thumbnail_url not poster_url
-        if (mediaType === "books") {
-          return {
-            from_user_id: user.id,
-            to_user_id: friendId,
-            external_id: selectedItem.external_id,
-            title: selectedItem.title,
-            authors: selectedItem.authors || null,
-            thumbnail_url: selectedItem.poster_url || null,
-            published_date: selectedItem.release_date || null,
-            description: selectedItem.description || null,
-            isbn: selectedItem.isbn || null,
-            page_count: selectedItem.page_count || null,
-            status: "pending",
-            recommendation_type: recommendationType || "read",
-            sent_message: message || null,
-          };
-        }
-
-        // Games table has different column names - no media_type, uses game-specific fields
-        if (mediaType === "games") {
-          return {
-            from_user_id: user.id,
-            to_user_id: friendId,
-            external_id: selectedItem.external_id,
-            slug: selectedItem.slug || "",
-            name: selectedItem.title,
-            released: selectedItem.release_date || null,
-            background_image: selectedItem.poster_url || null,
-            platforms: selectedItem.platforms || null,
-            genres: selectedItem.genres || null,
-            rating: selectedItem.rating || null,
-            metacritic: selectedItem.metacritic || null,
-            playtime: selectedItem.playtime || null,
-            status: "pending",
-            recommendation_type: recommendationType || "play",
-            sent_message: message || null,
-          };
-        }
-
-        const baseRecommendation = {
-          from_user_id: user.id,
-          to_user_id: friendId,
-          external_id: selectedItem.external_id,
-          title: selectedItem.title,
-          poster_url: selectedItem.poster_url,
-          media_type: selectedItem.media_type || "unknown",
-          status: "pending",
-          recommendation_type: recommendationType,
-          sent_message: message || null,
-        };
-
-        // Add media-type-specific fields
-        if (mediaType === "music") {
-          return {
-            ...baseRecommendation,
-            artist: selectedItem.subtitle || null,
-            album: null, // Could be extracted from media_type if needed
-            release_date: selectedItem.release_date || null,
-            preview_url: null, // Could add preview URL if available from API
-          };
-        } else if (mediaType === "movies") {
-          return {
-            ...baseRecommendation,
-            release_date: selectedItem.release_date || null,
-            overview: selectedItem.description || null,
-          };
-        }
-
-        return baseRecommendation;
+      await sendRecommendations({
+        selectedItem,
+        recipientIds: Array.from(selectedFriends),
+        recommendationType:
+          recommendationType || defaultRecommendationType || "",
+        message,
       });
-
-      const { error } = await supabase.from(tableName).insert(recommendations);
-
-      if (error) {
-        if (error.message.includes("duplicate key")) {
-          setToastMessage(
-            "You've already sent this recommendation to one or more of these friends."
-          );
-          setShowToast(true);
-        } else {
-          setToastMessage(`Failed to send recommendation: ${error.message}`);
-          setShowToast(true);
-        }
-        setSending(false);
-        return;
-      }
 
       // Show success message
       setSending(false);
       setShowSuccess(true);
-
-      // Invalidate recommendation queries to refresh lists
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.recommendations.all,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.dashboard.stats(),
-      });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.stats.all });
 
       // Wait a moment before closing
       setTimeout(() => {
@@ -416,12 +302,16 @@ export default function SendMediaModal({
         handleClose();
       }, 1500);
     } catch (error) {
+      const errorMessage: string =
+        error instanceof Error
+          ? error.message
+          : "Failed to send recommendation. Please try again.";
       logger.error("Failed to send recommendations", {
         error,
         recipientsCount: selectedFriends.size,
       });
       setSending(false);
-      setToastMessage("Failed to send recommendation. Please try again.");
+      setToastMessage(errorMessage);
       setShowToast(true);
     }
   };
@@ -501,11 +391,11 @@ export default function SendMediaModal({
             <Button
               variant="primary"
               onClick={() => void handleSend()}
-              disabled={sending}
-              loading={sending}
+              disabled={isSending || sending}
+              loading={isSending || sending}
               icon={<Send className="w-4 h-4" />}
             >
-              {sending ? "Sending..." : "Send"}
+              {isSending || sending ? "Sending..." : "Send"}
             </Button>
           )}
         </div>

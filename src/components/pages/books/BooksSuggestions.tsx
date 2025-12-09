@@ -1,41 +1,23 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { BookOpen } from "lucide-react";
 import {
   SendMediaModal,
   MediaRecommendationCard,
   GroupedSentMediaCard,
   InlineRecommendationsLayout,
-  type BaseRecommendation,
 } from "@/components/shared";
 import { logger } from "@/lib/logger";
 import { searchBooks } from "../../../utils/bookSearchAdapters";
 import ContentLayout from "../../layouts/ContentLayout";
 import MainLayout from "../../layouts/MainLayout";
-import { useAuth } from "../../../contexts/AuthContext";
 import BookDiscoveryCard from "./BookDiscoveryCard";
 import {
-  useFriendsWithBookRecs,
-  useBookStats,
-  useBookRecommendations,
   useUpdateBookRecommendationStatus,
   useDeleteBookRecommendation,
   useUpdateSenderNote,
   useUpdateRecipientNote,
 } from "../../../hooks/useBookQueries";
-
-// Extend BaseRecommendation with book-specific fields
-interface BookRecommendation extends BaseRecommendation {
-  authors: string | null;
-  published_date: string | null;
-  description: string | null;
-  thumbnail_url: string | null;
-  isbn: string | null;
-  page_count: number | null;
-  status: "pending" | "read" | "hit" | "miss";
-  read_at: string | null;
-  created_at: string;
-  sender_comment: string | null;
-}
+import { useBookRecommendationsData } from "../../../hooks/useBookRecommendationsData";
 
 /**
  * Books Suggestions Page
@@ -51,67 +33,19 @@ const BooksSuggestions: React.FC<BooksSuggestionsProps> = ({
   embedded = false,
 }) => {
   const [showSendModal, setShowSendModal] = useState(false);
-  const { user } = useAuth();
 
-  // TanStack Query hooks - these will be implemented when we create the database
-  const { data: friendsWithRecs = [], isLoading: friendsLoading } =
-    useFriendsWithBookRecs();
-  const { data: quickStats = { hits: 0, misses: 0, queue: 0, sent: 0 } } =
-    useBookStats();
-
-  // Fetch all recommendation types
-  const { data: hitsData = [] } = useBookRecommendations("hits");
-  const { data: missesData = [] } = useBookRecommendations("misses");
-  const { data: sentData = [] } = useBookRecommendations("sent");
-  const { data: pendingData = [] } = useBookRecommendations("queue");
-
-  const loading = friendsLoading;
-
-  // Create name lookup map from all data sources
-  const userNameMap = useMemo(() => {
-    const map = new Map<string, string>();
-
-    // Add senders from friends list
-    friendsWithRecs.forEach((friend) => {
-      map.set(friend.user_id, friend.display_name);
-    });
-
-    // Add names from hits data (sender_name)
-    hitsData.forEach((rec) => {
-      if (rec.sender_name && rec.from_user_id) {
-        map.set(rec.from_user_id, rec.sender_name);
-      }
-    });
-
-    // Add names from misses data (sender_name)
-    missesData.forEach((rec) => {
-      if (rec.sender_name && rec.from_user_id) {
-        map.set(rec.from_user_id, rec.sender_name);
-      }
-    });
-
-    // Add names from pending data (sender_name)
-    pendingData.forEach((rec) => {
-      if (rec.sender_name && rec.from_user_id) {
-        map.set(rec.from_user_id, rec.sender_name);
-      }
-    });
-
-    // Add recipients from sent data (recipient_name)
-    sentData.forEach((rec) => {
-      if (rec.recipient_name && rec.to_user_id) {
-        map.set(rec.to_user_id, rec.recipient_name);
-      }
-    });
-
-    return map;
-  }, [friendsWithRecs, hitsData, missesData, pendingData, sentData]);
-
-  // Filter out self from friends list
-  const filteredFriendsWithRecs = useMemo(() => {
-    if (!user) return friendsWithRecs;
-    return friendsWithRecs.filter((friend) => friend.user_id !== user.id);
-  }, [friendsWithRecs, user]);
+  // Use centralized data hook
+  const {
+    hits,
+    misses,
+    sent,
+    queue: _queue,
+    friendRecommendations,
+    friendsWithRecs,
+    quickStats,
+    userNameMap,
+    loading,
+  } = useBookRecommendationsData();
 
   // Mutations - these will be implemented when we create the database
   const updateStatusMutation = useUpdateBookRecommendationStatus();
@@ -163,7 +97,22 @@ const BooksSuggestions: React.FC<BooksSuggestionsProps> = ({
   };
 
   const renderRecommendationCard = (
-    rec: BookRecommendation,
+    rec: {
+      id: string;
+      title: string;
+      from_user_id: string;
+      to_user_id: string;
+      external_id: string;
+      status: string;
+      sent_message: string | null;
+      comment: string | null;
+      sender_comment: string | null;
+      sent_at: string;
+      thumbnail_url?: string | null;
+      authors?: string | null;
+      published_date?: string | null;
+      description?: string | null;
+    },
     isReceived: boolean,
     index = 0
   ) => {
@@ -227,7 +176,15 @@ const BooksSuggestions: React.FC<BooksSuggestionsProps> = ({
   };
 
   const renderGroupedSentCard = (
-    mediaItem: BookRecommendation,
+    mediaItem: {
+      id: string;
+      title: string;
+      external_id: string;
+      thumbnail_url?: string | null;
+      authors?: string | null;
+      published_date?: string | null;
+      description?: string | null;
+    },
     index: number
   ) => {
     // Find all sent items with the same external_id to get all recipients
@@ -290,95 +247,6 @@ const BooksSuggestions: React.FC<BooksSuggestionsProps> = ({
     );
   };
 
-  // Transform data for inline layout
-  const hits: BookRecommendation[] = (hitsData || []).map((rec) => ({
-    ...rec,
-    sent_message: rec.sent_message ?? null,
-    comment: rec.recipient_note ?? null,
-    sender_comment: rec.sender_note ?? null,
-    sent_at: rec.created_at,
-    thumbnail_url: rec.poster_url ?? null,
-    read_at: rec.watched_at ?? null,
-    consumed_at: rec.watched_at ?? null,
-    description: rec.overview ?? null,
-    published_date: rec.release_date ?? null,
-    authors: rec.artist ?? null,
-    isbn: null, // Not in base Recommendation
-    page_count: null, // Not in base Recommendation
-    poster_url: rec.poster_url ?? null,
-    status: "hit" as const,
-  }));
-
-  const misses: BookRecommendation[] = (missesData || []).map((rec) => ({
-    ...rec,
-    sent_message: rec.sent_message ?? null,
-    comment: rec.recipient_note ?? null,
-    sender_comment: rec.sender_note ?? null,
-    sent_at: rec.created_at,
-    thumbnail_url: rec.poster_url ?? null,
-    read_at: rec.watched_at ?? null,
-    consumed_at: rec.watched_at ?? null,
-    description: rec.overview ?? null,
-    published_date: rec.release_date ?? null,
-    authors: rec.artist ?? null,
-    isbn: null,
-    page_count: null,
-    poster_url: rec.poster_url ?? null,
-    status: "miss" as const,
-  }));
-
-  const sent: BookRecommendation[] = (sentData || []).map((rec) => ({
-    ...rec,
-    sent_message: rec.sent_message ?? null,
-    comment: rec.recipient_note ?? null,
-    sender_comment: rec.sender_note ?? null,
-    sent_at: rec.created_at,
-    thumbnail_url: rec.poster_url ?? null,
-    read_at: rec.watched_at ?? null,
-    consumed_at: rec.watched_at ?? null,
-    description: rec.overview ?? null,
-    published_date: rec.release_date ?? null,
-    authors: rec.artist ?? null,
-    isbn: null,
-    page_count: null,
-    poster_url: rec.poster_url ?? null,
-    status:
-      rec.status === "consumed" || rec.status === "watched"
-        ? "read"
-        : rec.status,
-  }));
-
-  // Build friend recommendations map from pending data
-  const friendRecommendations = new Map<string, BookRecommendation[]>();
-
-  // Transform pending data
-  const pendingRecs: BookRecommendation[] = (pendingData || []).map((rec) => ({
-    ...rec,
-    sent_message: rec.sent_message ?? null,
-    comment: rec.recipient_note ?? null,
-    sender_comment: rec.sender_note ?? null,
-    sent_at: rec.created_at,
-    thumbnail_url: rec.poster_url ?? null,
-    read_at: rec.watched_at ?? null,
-    consumed_at: rec.watched_at ?? null,
-    description: rec.overview ?? null,
-    published_date: rec.release_date ?? null,
-    authors: rec.artist ?? null,
-    isbn: null,
-    page_count: null,
-    poster_url: rec.poster_url ?? null,
-    status: "pending" as const,
-  }));
-
-  // Group by sender
-  pendingRecs.forEach((rec) => {
-    const senderId = rec.from_user_id;
-    if (!friendRecommendations.has(senderId)) {
-      friendRecommendations.set(senderId, []);
-    }
-    friendRecommendations.get(senderId)!.push(rec);
-  });
-
   const content = (
     <div className="container mx-auto px-4 sm:px-6">
       <div className="space-y-4 sm:space-y-6">
@@ -388,7 +256,7 @@ const BooksSuggestions: React.FC<BooksSuggestionsProps> = ({
           emptyMessage="No recommendations yet"
           emptySubMessage="When friends recommend books, they'll show up here"
           loading={loading}
-          friendsWithRecs={filteredFriendsWithRecs}
+          friendsWithRecs={friendsWithRecs}
           quickStats={quickStats}
           hits={hits}
           misses={misses}

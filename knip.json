@@ -1,0 +1,26 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["src/main.tsx", "src/App.tsx"],
+  "project": ["src/**/*.{ts,tsx}"],
+  "ignore": [
+    "**/*.test.{ts,tsx}",
+    "tests/**",
+    "scripts/**",
+    "supabase/functions/**"
+  ],
+  "ignoreDependencies": [
+    "recharts",
+    "@dnd-kit/core",
+    "@dnd-kit/sortable",
+    "@dnd-kit/utilities",
+    "dexie",
+    "metascraper",
+    "metascraper-author",
+    "metascraper-date",
+    "metascraper-description",
+    "metascraper-image",
+    "metascraper-title",
+    "metascraper-url"
+  ],
+  "ignoreExportsUsedInFile": true
+}

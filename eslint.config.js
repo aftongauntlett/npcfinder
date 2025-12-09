@@ -3,6 +3,7 @@ import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
+import unusedImports from "eslint-plugin-unused-imports";
 import { defineConfig, globalIgnores } from "eslint/config";
 
 export default defineConfig([
@@ -41,6 +42,9 @@ export default defineConfig([
   },
   {
     files: ["**/*.{ts,tsx}"],
+    plugins: {
+      "unused-imports": unusedImports,
+    },
     extends: [
       js.configs.recommended,
       ...tseslint.configs.recommended,
@@ -57,9 +61,16 @@ export default defineConfig([
       },
     },
     rules: {
-      "@typescript-eslint/no-unused-vars": [
+      "@typescript-eslint/no-unused-vars": "off",
+      "unused-imports/no-unused-imports": "error",
+      "unused-imports/no-unused-vars": [
         "warn",
-        { varsIgnorePattern: "^[A-Z_]", argsIgnorePattern: "^_" },
+        {
+          vars: "all",
+          varsIgnorePattern: "^[A-Z_]",
+          args: "after-used",
+          argsIgnorePattern: "^_",
+        },
       ],
       "@typescript-eslint/no-explicit-any": "warn",
       "react-refresh/only-export-components": [

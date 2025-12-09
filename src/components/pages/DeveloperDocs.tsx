@@ -1,11 +1,11 @@
 import React from "react";
 import { motion } from "framer-motion";
 import {
-  GithubLogo,
+  GithubLogoIcon,
   ArrowSquareOut,
   Lock,
   Question,
-  LinkedinLogo,
+  LinkedinLogoIcon,
   ArrowUp,
   ArrowLeft,
   Code,
@@ -723,7 +723,7 @@ const DeveloperDocs: React.FC = () => {
               <LandingButton
                 href="https://github.com/aftongauntlett/npcfinder"
                 variant="primary"
-                icon={<GithubLogo className="w-4 h-4" weight="duotone" />}
+                icon={<GithubLogoIcon className="w-4 h-4" weight="duotone" />}
               >
                 View on GitHub
               </LandingButton>
@@ -754,7 +754,7 @@ const DeveloperDocs: React.FC = () => {
                 className="flex items-center gap-1.5 hover:text-gray-300 transition-colors"
                 aria-label="View GitHub profile"
               >
-                <GithubLogo className="w-4 h-4" weight="duotone" />
+                <GithubLogoIcon className="w-4 h-4" weight="duotone" />
                 <span className="hidden sm:inline">GitHub</span>
               </a>
               <a
@@ -764,7 +764,7 @@ const DeveloperDocs: React.FC = () => {
                 className="flex items-center gap-1.5 hover:text-gray-300 transition-colors"
                 aria-label="Connect on LinkedIn"
               >
-                <LinkedinLogo className="w-4 h-4" weight="duotone" />
+                <LinkedinLogoIcon className="w-4 h-4" weight="duotone" />
                 <span className="hidden sm:inline">LinkedIn</span>
               </a>
               <a
