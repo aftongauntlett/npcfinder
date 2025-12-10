@@ -1,14 +1,12 @@
-import React, { useState, useMemo } from "react";
+import React, { useMemo } from "react";
 import { Music as MusicIcon } from "lucide-react";
 import {
-  SendMediaModal,
   MediaRecommendationCard,
   GroupedSentMediaCard,
   InlineRecommendationsLayout,
   type BaseRecommendation,
 } from "@/components/shared";
 import { logger } from "@/lib/logger";
-import { searchMusic } from "../../../utils/mediaSearchAdapters";
 import ContentLayout from "../../layouts/ContentLayout";
 import MainLayout from "../../layouts/MainLayout";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -54,7 +52,6 @@ interface MusicSuggestionsProps {
 const MusicSuggestions: React.FC<MusicSuggestionsProps> = ({
   embedded = false,
 }) => {
-  const [showSendModal, setShowSendModal] = useState(false);
   const { user } = useAuth();
 
   // TanStack Query hooks
@@ -375,25 +372,6 @@ const MusicSuggestions: React.FC<MusicSuggestionsProps> = ({
           renderGroupedSentCard={renderGroupedSentCard}
         />
       </div>
-
-      {/* Send Music Modal */}
-      <SendMediaModal
-        isOpen={showSendModal}
-        onClose={() => setShowSendModal(false)}
-        onSent={() => {
-          setShowSendModal(false);
-        }}
-        mediaType="music"
-        tableName="music_recommendations"
-        searchPlaceholder="Search for songs or albums..."
-        searchFunction={searchMusic}
-        recommendationTypes={[
-          { value: "listen", label: "Listen" },
-          { value: "watch", label: "Watch" },
-          { value: "study", label: "Study" },
-        ]}
-        defaultRecommendationType="listen"
-      />
     </div>
   );
 

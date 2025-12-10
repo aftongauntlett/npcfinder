@@ -1,7 +1,6 @@
 import React, { useRef } from "react";
 import { Pagination } from "../../shared/common/Pagination";
 import SearchBookModal from "../../shared/search/SearchBookModal";
-import BookDetailModal from "./BookDetailModal";
 import MediaListItem from "../../media/MediaListItem";
 import SendMediaModal from "../../shared/media/SendMediaModal";
 import ConfirmationModal from "../../shared/ui/ConfirmationModal";
@@ -46,8 +45,6 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
     setShowSearchModal,
     showSendModal,
     setShowSendModal,
-    selectedBook,
-    setSelectedBook,
     bookToRecommend,
     setBookToRecommend,
     showDeleteModal,
@@ -115,7 +112,6 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
                 isCompleted={book.read}
                 onToggleComplete={handleToggleRead}
                 onRemove={handleRemove}
-                onClick={() => setSelectedBook(book)}
                 onRecommend={() => {
                   setBookToRecommend(book);
                   setShowSendModal(true);
@@ -177,18 +173,6 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
             : undefined
         }
       />
-
-      {selectedBook && (
-        <BookDetailModal
-          book={selectedBook}
-          onClose={() => setSelectedBook(null)}
-          onToggleRead={() => handleToggleRead(selectedBook.id)}
-          onRemove={() => {
-            handleRemove(selectedBook.id);
-            setSelectedBook(null);
-          }}
-        />
-      )}
 
       {/* Delete Confirmation Modal */}
       <ConfirmationModal

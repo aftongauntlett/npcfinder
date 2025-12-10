@@ -1,14 +1,12 @@
-import React, { useState } from "react";
+import React from "react";
 import { Clapperboard, Tv as TvIcon } from "lucide-react";
 import {
-  SendMediaModal,
   MediaRecommendationCard,
   GroupedSentMediaCard,
   InlineRecommendationsLayout,
   type BaseRecommendation,
 } from "@/components/shared";
 import { logger } from "@/lib/logger";
-import { searchMoviesAndTV } from "../../../utils/mediaSearchAdapters";
 import ContentLayout from "../../layouts/ContentLayout";
 import MainLayout from "../../layouts/MainLayout";
 import {
@@ -45,8 +43,6 @@ interface MoviesSuggestionsProps {
 const MoviesSuggestions: React.FC<MoviesSuggestionsProps> = ({
   embedded = false,
 }) => {
-  const [showSendModal, setShowSendModal] = useState(false);
-
   // Use data transformation hook - returns fully-shaped data ready for rendering
   const {
     hits,
@@ -271,24 +267,6 @@ const MoviesSuggestions: React.FC<MoviesSuggestionsProps> = ({
 
         <MovieDiscoveryCard />
       </div>
-
-      {/* Send Movie/TV Modal */}
-      <SendMediaModal
-        isOpen={showSendModal}
-        onClose={() => setShowSendModal(false)}
-        onSent={() => {
-          setShowSendModal(false);
-        }}
-        mediaType="movies"
-        tableName="movie_recommendations"
-        searchPlaceholder="Search for movies or TV shows..."
-        searchFunction={searchMoviesAndTV}
-        recommendationTypes={[
-          { value: "watch", label: "Watch" },
-          { value: "rewatch", label: "Rewatch" },
-        ]}
-        defaultRecommendationType="watch"
-      />
     </div>
   );
 

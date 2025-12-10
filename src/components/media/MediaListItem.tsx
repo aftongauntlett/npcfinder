@@ -38,7 +38,6 @@ interface MediaListItemProps {
   onToggleComplete?: (id: string | number) => void;
   onRecommend?: (id: string | number) => void;
   onRemove?: (id: string | number) => void;
-  onClick?: (id: string | number) => void; // For opening detail modal/page
   description?: string; // For overview/description text
 
   // Music-specific props
@@ -118,13 +117,11 @@ const MediaListItemComponent: React.FC<MediaListItemProps> = ({
   onToggleComplete,
   onRecommend,
   onRemove,
-  onClick: _onClick, // Unused after removing edit button from accordion header
   description,
   mediaType,
   category,
   genres,
   externalId,
-  releaseDate: _releaseDate,
   artist,
   album,
   trackDuration,
@@ -429,6 +426,5 @@ export default React.memo(
     prevProps.personalRating === nextProps.personalRating &&
     prevProps.onToggleComplete === nextProps.onToggleComplete &&
     prevProps.onRecommend === nextProps.onRecommend &&
-    prevProps.onRemove === nextProps.onRemove &&
-    prevProps.onClick === nextProps.onClick
+    prevProps.onRemove === nextProps.onRemove
 );

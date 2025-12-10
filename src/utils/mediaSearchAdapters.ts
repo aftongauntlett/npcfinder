@@ -112,11 +112,13 @@ export async function searchMoviesAndTV(query: string): Promise<MediaItem[]> {
 }
 
 /**
- * Placeholder search function for Books (to be implemented with Google Books API or similar)
+ * Placeholder search function for Books
+ * Note: The actual implementation exists in utils/bookSearchAdapters.ts
+ * This function is kept for backwards compatibility but should not be used.
+ * Import searchBooks from '@/utils/bookSearchAdapters' instead.
  */
 export function searchBooks(query: string): Promise<MediaItem[]> {
-  // TODO: Implement with Google Books API
-  logger.warn("Books search not yet implemented", { query });
+  logger.warn("Deprecated: Use searchBooks from bookSearchAdapters.ts instead", { query });
   return Promise.resolve([]);
 }
 

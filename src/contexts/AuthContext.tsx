@@ -44,7 +44,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         previousUserIdRef.current = currentUser?.id;
       } catch {
         // Gracefully handle missing Supabase on public pages
-        console.log("Auth check skipped (likely on public page)");
         setUser(null);
         previousUserIdRef.current = undefined;
       } finally {

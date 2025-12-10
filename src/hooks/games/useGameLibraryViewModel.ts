@@ -53,7 +53,6 @@ export function useGameLibraryViewModel({
   // Modal and toast state
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showRecommendModal, setShowRecommendModal] = useState(false);
-  const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedGame, setSelectedGame] = useState<GameLibraryItem | null>(
     null
   );
@@ -285,8 +284,6 @@ export function useGameLibraryViewModel({
     setShowSearchModal,
     showRecommendModal,
     setShowRecommendModal,
-    showDetailModal,
-    setShowDetailModal,
     selectedGame,
     setSelectedGame,
     showDeleteModal,

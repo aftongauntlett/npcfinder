@@ -52,9 +52,6 @@ export function useReadingListViewModel({
   // Modal state
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
-  const [selectedBook, setSelectedBook] = useState<ReadingListItem | null>(
-    null
-  );
   const [bookToRecommend, setBookToRecommend] =
     useState<ReadingListItem | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -279,8 +276,6 @@ export function useReadingListViewModel({
     setShowSearchModal,
     showSendModal,
     setShowSendModal,
-    selectedBook,
-    setSelectedBook,
     bookToRecommend,
     setBookToRecommend,
     showDeleteModal,

@@ -1,13 +1,11 @@
-import React, { useState } from "react";
+import React from "react";
 import { BookOpen } from "lucide-react";
 import {
-  SendMediaModal,
   MediaRecommendationCard,
   GroupedSentMediaCard,
   InlineRecommendationsLayout,
 } from "@/components/shared";
 import { logger } from "@/lib/logger";
-import { searchBooks } from "../../../utils/bookSearchAdapters";
 import ContentLayout from "../../layouts/ContentLayout";
 import MainLayout from "../../layouts/MainLayout";
 import BookDiscoveryCard from "./BookDiscoveryCard";
@@ -32,8 +30,6 @@ interface BooksSuggestionsProps {
 const BooksSuggestions: React.FC<BooksSuggestionsProps> = ({
   embedded = false,
 }) => {
-  const [showSendModal, setShowSendModal] = useState(false);
-
   // Use centralized data hook
   const {
     hits,
@@ -268,24 +264,6 @@ const BooksSuggestions: React.FC<BooksSuggestionsProps> = ({
 
         <BookDiscoveryCard />
       </div>
-
-      {/* Send Book Modal */}
-      <SendMediaModal
-        isOpen={showSendModal}
-        onClose={() => setShowSendModal(false)}
-        onSent={() => {
-          setShowSendModal(false);
-        }}
-        mediaType="books"
-        tableName="book_recommendations"
-        searchPlaceholder="Search for books..."
-        searchFunction={searchBooks}
-        recommendationTypes={[
-          { value: "read", label: "Read" },
-          { value: "listen", label: "Listen" },
-        ]}
-        defaultRecommendationType="read"
-      />
     </div>
   );
 

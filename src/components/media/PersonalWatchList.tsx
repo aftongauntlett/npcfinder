@@ -15,12 +15,10 @@ type FilterType = "all" | "to-watch" | "watched";
 
 interface PersonalWatchListProps {
   initialFilter?: FilterType;
-  embedded?: boolean;
 }
 
 const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
   initialFilter = "all",
-  embedded: _embedded = false,
 }) => {
   // Ref for scroll-to-top
   const topRef = useRef<HTMLDivElement>(null);

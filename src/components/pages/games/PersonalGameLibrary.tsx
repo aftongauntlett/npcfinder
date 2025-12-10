@@ -5,7 +5,6 @@ import { EmptyStateAddCard } from "../../shared";
 import MediaListItem from "../../media/MediaListItem";
 import SendMediaModal from "../../shared/media/SendMediaModal";
 import SearchGameModal from "../../shared/search/SearchGameModal";
-import GameDetailModal from "./GameDetailModal";
 import Toast from "../../ui/Toast";
 import ConfirmationModal from "../../shared/ui/ConfirmationModal";
 import { searchGames } from "../../../utils/mediaSearchAdapters";
@@ -55,8 +54,6 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
     setShowSearchModal,
     showRecommendModal,
     setShowRecommendModal,
-    showDetailModal,
-    setShowDetailModal,
     selectedGame,
     setSelectedGame,
     showDeleteModal,
@@ -167,10 +164,6 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
               onToggleComplete={() => void handleTogglePlayed(game)}
               onRecommend={() => handleRecommendClick(game)}
               onRemove={() => void handleDelete(game)}
-              onClick={() => {
-                setSelectedGame(game);
-                setShowDetailModal(true);
-              }}
             />
           ))}
         </div>
@@ -233,27 +226,6 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
       {/* Success notification Toast (NOT for delete operations) */}
       {showToast && (
         <Toast message={toastMessage} onClose={() => setShowToast(false)} />
-      )}
-
-      {/* Game Detail Modal */}
-      {selectedGame && showDetailModal && (
-        <GameDetailModal
-          game={selectedGame}
-          onClose={() => {
-            setShowDetailModal(false);
-            setSelectedGame(null);
-          }}
-          onTogglePlayed={() => {
-            void handleTogglePlayed(selectedGame);
-            setShowDetailModal(false);
-            setSelectedGame(null);
-          }}
-          onRemove={() => {
-            void handleDelete(selectedGame);
-            setShowDetailModal(false);
-            setSelectedGame(null);
-          }}
-        />
       )}
 
       {/* Delete Confirmation Modal */}

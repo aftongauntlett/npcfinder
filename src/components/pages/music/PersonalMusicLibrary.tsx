@@ -10,7 +10,6 @@ import { Pagination } from "../../shared/common/Pagination";
 import { FilterSortSection } from "../../shared/common/FilterSortMenu";
 import { MediaItem } from "../../shared/media/SendMediaModal";
 import SearchMusicModal from "../../shared/search/SearchMusicModal";
-import MusicDetailModal from "./MusicDetailModal";
 import { EmptyStateAddCard } from "../../shared";
 import MediaListItem from "../../media/MediaListItem";
 import SendMediaModal from "../../shared/media/SendMediaModal";
@@ -68,9 +67,6 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
   );
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
-  const [selectedMusic, setSelectedMusic] = useState<MusicLibraryItem | null>(
-    null
-  );
   const [musicToRecommend, setMusicToRecommend] =
     useState<MusicLibraryItem | null>(null);
   const topRef = useRef<HTMLDivElement>(null);
@@ -370,7 +366,6 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
               previewUrl={music.preview_url || undefined}
               externalId={music.external_id}
               description={undefined}
-              onClick={() => setSelectedMusic(music)}
               onToggleComplete={() => handleToggleListened(music.id)}
               onRemove={() => handleRemove(music)}
               onRecommend={() => handleRecommend(music)}
@@ -390,21 +385,6 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
       />
 
       {/* Modals */}
-      {selectedMusic && (
-        <MusicDetailModal
-          music={selectedMusic}
-          onClose={() => setSelectedMusic(null)}
-          onToggleListened={() => {
-            handleToggleListened(selectedMusic.id);
-            setSelectedMusic(null);
-          }}
-          onRemove={() => {
-            handleRemove(selectedMusic);
-            setSelectedMusic(null);
-          }}
-        />
-      )}
-
       {showSearchModal && (
         <SearchMusicModal
           onClose={() => setShowSearchModal(false)}

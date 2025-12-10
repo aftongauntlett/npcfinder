@@ -1,13 +1,11 @@
-import React, { useState } from "react";
+import React from "react";
 import { Gamepad2 } from "lucide-react";
 import {
-  SendMediaModal,
   MediaRecommendationCard,
   GroupedSentMediaCard,
   InlineRecommendationsLayout,
 } from "@/components/shared";
 import { logger } from "@/lib/logger";
-import { searchGames } from "../../../utils/mediaSearchAdapters";
 import ContentLayout from "../../layouts/ContentLayout";
 import MainLayout from "../../layouts/MainLayout";
 import {
@@ -31,8 +29,6 @@ interface GamesSuggestionsProps {
 const GamesSuggestions: React.FC<GamesSuggestionsProps> = ({
   embedded = false,
 }) => {
-  const [showSendModal, setShowSendModal] = useState(false);
-
   // Use centralized data hook
   const {
     hits,
@@ -262,24 +258,6 @@ const GamesSuggestions: React.FC<GamesSuggestionsProps> = ({
             {content}
           </ContentLayout>
         </MainLayout>
-      )}
-
-      {/* Send Modal */}
-      {showSendModal && (
-        <SendMediaModal
-          isOpen={showSendModal}
-          onClose={() => setShowSendModal(false)}
-          onSent={() => setShowSendModal(false)}
-          mediaType="games"
-          tableName="game_recommendations"
-          searchPlaceholder="Search for games..."
-          searchFunction={searchGames}
-          recommendationTypes={[
-            { value: "play", label: "Play" },
-            { value: "replay", label: "Replay" },
-          ]}
-          defaultRecommendationType="play"
-        />
       )}
     </>
   );
