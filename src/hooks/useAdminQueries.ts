@@ -7,6 +7,7 @@ import * as adminService from "../services/adminService";
 import * as inviteCodesLib from "../lib/inviteCodes";
 import * as adminLib from "../lib/admin";
 import { queryKeys } from "../lib/queryKeys";
+import { parseSupabaseError } from "../utils/errorUtils";
 
 /**
  * Get admin dashboard statistics
@@ -14,7 +15,14 @@ import { queryKeys } from "../lib/queryKeys";
 export function useAdminStats() {
   return useQuery({
     queryKey: queryKeys.admin.stats(),
-    queryFn: adminService.getAdminStats,
+    queryFn: async () => {
+      try {
+        return await adminService.getAdminStats();
+      } catch (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
+    },
     staleTime: 1000 * 60 * 10, // Consider data fresh for 10 minutes (admin stats update infrequently)
   });
 }
@@ -29,7 +37,14 @@ export function useAdminUsers(
 ) {
   return useQuery({
     queryKey: queryKeys.admin.users(page, searchTerm),
-    queryFn: () => adminService.getUsers(page, perPage, searchTerm),
+    queryFn: async () => {
+      try {
+        return await adminService.getUsers(page, perPage, searchTerm);
+      } catch (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
+    },
     staleTime: 1000 * 60 * 2, // Consider data fresh for 2 minutes
     placeholderData: (previousData) => previousData, // Keep showing old data while loading new page
   });
@@ -41,7 +56,14 @@ export function useAdminUsers(
 export function usePopularMedia() {
   return useQuery({
     queryKey: queryKeys.admin.popularMedia(),
-    queryFn: adminService.getPopularMedia,
+    queryFn: async () => {
+      try {
+        return await adminService.getPopularMedia();
+      } catch (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
+    },
     staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
   });
 }
@@ -52,7 +74,14 @@ export function usePopularMedia() {
 export function useRecentActivity() {
   return useQuery({
     queryKey: queryKeys.admin.recentActivity(),
-    queryFn: adminService.getRecentActivity,
+    queryFn: async () => {
+      try {
+        return await adminService.getRecentActivity();
+      } catch (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
+    },
     staleTime: 1000 * 60 * 2, // Consider data fresh for 2 minutes
   });
 }
@@ -65,7 +94,10 @@ export function useInviteCodes() {
     queryKey: queryKeys.inviteCodes.list(),
     queryFn: async () => {
       const result = await inviteCodesLib.getAllInviteCodes();
-      if (result.error) throw result.error;
+      if (result.error) {
+        const parsedError = parseSupabaseError(result.error);
+        throw parsedError;
+      }
       return result.data || [];
     },
     staleTime: 1000 * 60 * 10, // Consider data fresh for 10 minutes (invite codes are relatively static until mutation)
@@ -82,7 +114,10 @@ export function useCreateInviteCode() {
   return useMutation({
     mutationFn: async (intendedEmail: string) => {
       const result = await inviteCodesLib.createInviteCode(intendedEmail);
-      if (result.error) throw result.error;
+      if (result.error) {
+        const parsedError = parseSupabaseError(result.error);
+        throw parsedError;
+      }
       return result.data;
     },
     onSuccess: () => {
@@ -118,7 +153,10 @@ export function useBatchCreateInviteCodes() {
         maxUses,
         expiresInDays
       );
-      if (result.error) throw result.error;
+      if (result.error) {
+        const parsedError = parseSupabaseError(result.error);
+        throw parsedError;
+      }
       return result.data;
     },
     onSuccess: () => {
@@ -139,7 +177,10 @@ export function useRevokeInviteCode() {
   return useMutation({
     mutationFn: async (codeId: string) => {
       const result = await inviteCodesLib.revokeInviteCode(codeId);
-      if (result.error) throw result.error;
+      if (result.error) {
+        const parsedError = parseSupabaseError(result.error);
+        throw parsedError;
+      }
       return result.data;
     },
     onSuccess: () => {
@@ -166,7 +207,12 @@ export function useToggleUserRole() {
       newRole: "user" | "admin";
     }) => {
       const result = await adminLib.updateUserRole(userId, newRole);
-      if (!result.success) throw new Error(result.error);
+      if (!result.success) {
+        // Parse as a generic error with the specific message
+        const error = { message: result.error || "Failed to update user role" };
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
       return result;
     },
     onSuccess: () => {

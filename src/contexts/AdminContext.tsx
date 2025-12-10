@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "./AuthContext";
 import { supabase } from "../lib/supabase";
 import { logger } from "@/lib/logger";
+import { parseSupabaseError } from "@/utils/errorUtils";
 
 export type UserRole = "user" | "admin" | "super_admin";
 
@@ -43,21 +44,38 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (error) {
           // SECURITY: Fail closed - if database check fails, treat as non-admin
+          // Parse the error for proper logging and categorization
+          const parsedError = parseSupabaseError(error);
           logger.error("Role check query failed", {
-            code: error.code,
+            code: parsedError.code,
+            type: parsedError.type,
             userId: user.id,
           });
-          return null;
+          
+          // For RLS/permission errors, fail closed silently
+          // For other errors, allow retry by throwing
+          if (parsedError.type === 'forbidden' || parsedError.type === 'auth') {
+            return null;
+          }
+          
+          throw parsedError;
         }
 
         // If no profile exists yet, treat as regular user (fail closed)
         return data;
       } catch (error) {
         // SECURITY: Fail closed on any error
+        const parsedError = parseSupabaseError(error);
         logger.error("Failed to check user role, treating as regular user", {
-          error,
+          error: parsedError,
           userId: user?.id,
         });
+        
+        // Only throw for network errors that should retry
+        if (parsedError.type === 'network') {
+          throw parsedError;
+        }
+        
         return null;
       }
     },

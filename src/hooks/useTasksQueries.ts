@@ -7,6 +7,7 @@ import {
   createOwnershipError,
 } from "../utils/ownershipHelpers";
 import { invalidateBoardQueries } from "./taskQueryHelpers";
+import { parseSupabaseError } from "../utils/errorUtils";
 import type {
   Board,
   BoardSection,
@@ -32,13 +33,19 @@ export function useBoards() {
     queryKey: queryKeys.tasks.boards(user?.id),
     queryFn: async () => {
       const { data, error } = await tasksService.getBoardsWithStats();
-      if (error) throw error;
+      if (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
 
       // Temporarily disabled auto-creation - uncomment to re-enable
       // if (!data || data.length === 0) {
       //   const { data: starterData, error: starterError } =
       //     await tasksService.ensureStarterBoards();
-      //   if (starterError) throw starterError;
+      //   if (starterError) {
+      //     const parsedError = parseSupabaseError(starterError);
+      //     throw parsedError;
+      //   }
       //   return starterData || [];
       // }
 
@@ -67,7 +74,10 @@ export function useBoard(boardId: string) {
       }
 
       const { data, error } = await tasksService.getBoardById(boardId);
-      if (error) throw error;
+      if (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
       return data;
     },
     staleTime: 1000 * 60 * 5,
@@ -86,7 +96,10 @@ export function useCreateBoard() {
   return useMutation({
     mutationFn: async (boardData: CreateBoardData) => {
       const { data, error } = await tasksService.createBoard(boardData);
-      if (error) throw error;
+      if (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
       return data!;
     },
 
@@ -113,7 +126,10 @@ export function useUpdateBoard() {
       updates: Partial<Board>;
     }) => {
       const { data, error } = await tasksService.updateBoard(boardId, updates);
-      if (error) throw error;
+      if (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
       return data!;
     },
 
@@ -162,7 +178,10 @@ export function useDeleteBoard() {
   return useMutation({
     mutationFn: async (boardId: string) => {
       const { error } = await tasksService.deleteBoard(boardId);
-      if (error) throw error;
+      if (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
     },
 
     onSuccess: (_data, boardId) => {
@@ -182,7 +201,10 @@ export function useReorderBoards() {
   return useMutation({
     mutationFn: async (boardIds: string[]) => {
       const { error } = await tasksService.reorderBoards(boardIds);
-      if (error) throw error;
+      if (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
     },
 
     onError: (error) => {
@@ -213,7 +235,10 @@ export function useBoardSections(boardId: string) {
     queryKey: queryKeys.tasks.boardSections(boardId),
     queryFn: async () => {
       const { data, error } = await tasksService.getBoardSections(boardId);
-      if (error) throw error;
+      if (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
       return data || [];
     },
     staleTime: 1000 * 60 * 5,
@@ -240,7 +265,10 @@ export function useCreateSection() {
         boardId,
         sectionData
       );
-      if (error) throw error;
+      if (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
       return data!;
     },
 
@@ -272,7 +300,10 @@ export function useUpdateSection() {
         sectionId,
         updates
       );
-      if (error) throw error;
+      if (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
       return data!;
     },
 
@@ -299,7 +330,10 @@ export function useDeleteSection() {
       boardId: string;
     }) => {
       const { error } = await tasksService.deleteSection(sectionId);
-      if (error) throw error;
+      if (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
     },
 
     onSuccess: (_data, { boardId: _boardId }) => {
@@ -328,7 +362,10 @@ export function useReorderSections() {
       boardId: string;
     }) => {
       const { error } = await tasksService.reorderSections(sectionIds);
-      if (error) throw error;
+      if (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
     },
 
     onError: (error) => {
@@ -358,7 +395,10 @@ export function useTask(taskId: string | null) {
     queryKey: queryKeys.tasks.task(taskId!),
     queryFn: async () => {
       const { data, error } = await tasksService.getTaskById(taskId!);
-      if (error) throw error;
+      if (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
       return data;
     },
     staleTime: 1000 * 60 * 5,
@@ -379,7 +419,10 @@ export function useTasks(boardId?: string, filters?: TaskFilters) {
       : [...queryKeys.tasks.boardTasks(null), { filters }],
     queryFn: async () => {
       const { data, error } = await tasksService.getTasks(boardId, filters);
-      if (error) throw error;
+      if (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
       return data || [];
     },
     staleTime: 1000 * 60 * 5,
@@ -398,7 +441,10 @@ export function useTodayTasks() {
     queryKey: queryKeys.tasks.todayTasks(user?.id),
     queryFn: async () => {
       const { data, error } = await tasksService.getTodayTasks();
-      if (error) throw error;
+      if (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
       return data || [];
     },
     staleTime: 1000 * 60 * 2, // Refresh more often for today's tasks
@@ -417,7 +463,10 @@ export function useArchivedTasks() {
     queryKey: queryKeys.tasks.archivedTasks(user?.id),
     queryFn: async () => {
       const { data, error } = await tasksService.getArchivedTasks();
-      if (error) throw error;
+      if (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
       return data || [];
     },
     staleTime: 1000 * 60 * 10, // Archive changes less frequently
@@ -437,7 +486,10 @@ export function useUnassignedTasksCount() {
     queryKey: [...queryKeys.tasks.boardTasks(null), { count: true }],
     queryFn: async () => {
       const { data, error } = await tasksService.getUnassignedTasksCount();
-      if (error) throw error;
+      if (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
       return data || 0;
     },
     staleTime: 1000 * 60 * 5,
@@ -456,7 +508,10 @@ export function useCreateTask() {
   return useMutation({
     mutationFn: async (taskData: CreateTaskData) => {
       const { data, error } = await tasksService.createTask(taskData);
-      if (error) throw error;
+      if (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
       return data!;
     },
 
@@ -498,7 +553,10 @@ export function useUpdateTask() {
       updates: Partial<Task>;
     }) => {
       const { data, error } = await tasksService.updateTask(taskId, updates);
-      if (error) throw error;
+      if (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
       return data!;
     },
 
@@ -580,7 +638,10 @@ export function useCompleteRepeatableTask() {
   return useMutation({
     mutationFn: async (taskId: string) => {
       const { data, error } = await tasksService.completeRepeatableTask(taskId);
-      if (error) throw error;
+      if (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
       return data!;
     },
 
@@ -612,7 +673,10 @@ export function useDeleteTask() {
   return useMutation({
     mutationFn: async (taskId: string) => {
       const { error } = await tasksService.deleteTask(taskId);
-      if (error) throw error;
+      if (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
       return taskId;
     },
 
@@ -663,7 +727,10 @@ export function useMoveTask() {
         sectionId,
         newOrder
       );
-      if (error) throw error;
+      if (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
       return data!;
     },
 
@@ -695,7 +762,10 @@ export function useReorderTasks() {
       boardId: string;
     }) => {
       const { error } = await tasksService.reorderTasks(taskIds);
-      if (error) throw error;
+      if (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
     },
 
     onError: (error) => {
@@ -721,7 +791,10 @@ export function useToggleTaskStatus() {
   return useMutation({
     mutationFn: async (taskId: string) => {
       const { data, error } = await tasksService.toggleTaskStatus(taskId);
-      if (error) throw error;
+      if (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
       return data!;
     },
 

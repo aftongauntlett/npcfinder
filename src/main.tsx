@@ -7,6 +7,7 @@ import App from "./App";
 import { validateEnv } from "./lib/validateEnv";
 import { logger, logError } from "./lib/logger";
 import { parseSupabaseError } from "./utils/errorUtils";
+import type { AppError } from "./types/errors";
 import GlobalErrorNotifications from "./components/shared/ui/GlobalErrorNotifications";
 
 // Import global error store (will be initialized in bootstrap)
@@ -21,13 +22,28 @@ let showError:
 import("./hooks/useGlobalError").then((module) => {
   const { globalErrorStore } = module;
   showError = (error: unknown, options = {}) => {
-    // Parse error message
+    // Parse error message - handle both raw errors and AppError types
     let message: string;
     if (typeof error === "string") {
       message = error;
+    } else if (error && typeof error === "object" && "type" in error) {
+      // Already a typed AppError
+      const appError = error as AppError;
+      message = appError.message;
+      logger.error("TanStack Query error (typed)", {
+        type: appError.type,
+        message: appError.message,
+        code: appError.code,
+      });
     } else {
+      // Parse unknown error
       const parsed = parseSupabaseError(error);
       message = parsed.message;
+      logger.error("TanStack Query error (parsed)", {
+        type: parsed.type,
+        message: parsed.message,
+        code: parsed.code,
+      });
     }
     // Call store's addError directly
     globalErrorStore.getState().addError(message, options);
@@ -61,9 +77,16 @@ function bootstrap() {
         gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)
         refetchOnWindowFocus: false,
         retry: (failureCount, error) => {
+          // Handle typed AppError
+          if (error && typeof error === "object" && "type" in error) {
+            const appError = error as AppError;
+            // Retry network errors up to 2 times
+            return appError.type === 'network' && failureCount < 2;
+          }
+          
+          // For untyped errors, parse and check
           const parsed = parseSupabaseError(error);
-          // Retry up to 2 times if error is retryable
-          return parsed.shouldRetry && failureCount < 2;
+          return parsed.type === 'network' && failureCount < 2;
         },
       },
       mutations: {

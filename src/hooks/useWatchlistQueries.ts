@@ -8,6 +8,7 @@ import { useMemo } from "react";
 import * as recommendationsService from "../services/recommendationsService";
 import { queryKeys } from "../lib/queryKeys";
 import { useAuth } from "../contexts/AuthContext";
+import { parseSupabaseError } from "../utils/errorUtils";
 import type {
   WatchlistItem,
   AddWatchlistItemData,
@@ -22,7 +23,14 @@ export function useWatchlist() {
 
   return useQuery({
     queryKey: queryKeys.watchlist.list(user?.id),
-    queryFn: () => recommendationsService.getWatchlist(),
+    queryFn: async () => {
+      try {
+        return await recommendationsService.getWatchlist();
+      } catch (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
+    },
     staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
     gcTime: 1000 * 60 * 30, // Keep in cache for 30 minutes (formerly cacheTime)
     enabled: !!user, // Only fetch if user is authenticated
@@ -38,8 +46,14 @@ export function useAddToWatchlist() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (itemData: AddWatchlistItemData) =>
-      recommendationsService.addToWatchlist(itemData),
+    mutationFn: async (itemData: AddWatchlistItemData) => {
+      try {
+        return await recommendationsService.addToWatchlist(itemData);
+      } catch (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
+    },
 
     // Optimistic update: Add item immediately to UI
     onMutate: async (newItem) => {
@@ -128,8 +142,14 @@ export function useToggleWatchlistWatched() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) =>
-      recommendationsService.toggleWatchlistWatched(id),
+    mutationFn: async (id: string) => {
+      try {
+        return await recommendationsService.toggleWatchlistWatched(id);
+      } catch (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
+    },
 
     // Optimistic update: Toggle watched status immediately
     onMutate: async (id) => {
@@ -192,8 +212,14 @@ export function useUpdateWatchlistNotes() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, notes }: { id: string; notes: string }) =>
-      recommendationsService.updateWatchlistItem(id, { notes }),
+    mutationFn: async ({ id, notes }: { id: string; notes: string }) => {
+      try {
+        return await recommendationsService.updateWatchlistItem(id, { notes });
+      } catch (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
+    },
 
     onMutate: async ({ id, notes }) => {
       await queryClient.cancelQueries({
@@ -246,7 +272,14 @@ export function useDeleteFromWatchlist() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => recommendationsService.deleteFromWatchlist(id),
+    mutationFn: async (id: string) => {
+      try {
+        return await recommendationsService.deleteFromWatchlist(id);
+      } catch (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
+    },
 
     // Optimistic update: Remove item immediately from UI
     onMutate: async (id) => {

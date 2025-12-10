@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { parseSupabaseError } from "@/utils/errorUtils";
+import type { AppError } from "@/types/errors";
 import { logger } from "@/lib/logger";
 
 /**
@@ -127,7 +128,7 @@ export function useGlobalError() {
 
   /**
    * Show error notification
-   * @param error - Error object or message string
+   * @param error - Error object, AppError, or message string
    * @param options - Notification options
    */
   const showError = (
@@ -135,15 +136,44 @@ export function useGlobalError() {
     options: { duration?: number; persistent?: boolean } = {}
   ) => {
     let message: string;
+    let shouldLog = true;
 
     if (typeof error === "string") {
       message = error;
+    } else if (error && typeof error === "object" && "type" in error) {
+      // Handle typed AppError
+      const appError = error as AppError;
+      message = appError.message;
+      
+      // Log with full error context
+      logger.error("Global error notification (typed)", {
+        type: appError.type,
+        message: appError.message,
+        code: appError.code,
+        details: appError.details,
+      });
+      shouldLog = false; // Already logged above
     } else {
+      // Parse unknown errors through our error parser
       const parsed = parseSupabaseError(error);
       message = parsed.message;
+      
+      // Log with full parsed context
+      logger.error("Global error notification (parsed)", {
+        type: parsed.type,
+        message: parsed.message,
+        code: parsed.code,
+        details: parsed.details,
+      });
+      shouldLog = false; // Already logged above
     }
 
     addError(message, options);
+    
+    // Log if we haven't already
+    if (shouldLog) {
+      logger.error("Global error notification", { message });
+    }
   };
 
   /**

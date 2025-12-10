@@ -22,13 +22,16 @@ interface SupabaseError {
   status?: number;
 }
 
+import type { AppError } from '@/types/errors';
+
 /**
  * Error severity levels
  */
 export type ErrorSeverity = "critical" | "high" | "medium" | "low";
 
 /**
- * Parsed error result
+ * Legacy ParsedError type for backward compatibility
+ * @deprecated Use AppError instead
  */
 export interface ParsedError {
   message: string;
@@ -85,11 +88,121 @@ const AUTH_ERROR_PATTERNS = [
 ];
 
 /**
- * Parse Supabase error into user-friendly format
- * @param error - The error object from Supabase
- * @returns Parsed error with friendly message and metadata
+ * RLS/Permission error patterns
  */
-export function parseSupabaseError(error: unknown): ParsedError {
+const RLS_ERROR_PATTERNS = [
+  "policy",
+  "row level security",
+  "rls",
+  "permission denied",
+  "insufficient privilege",
+];
+
+/**
+ * Parse Supabase error into typed AppError
+ * @param error - The error object from Supabase
+ * @returns Typed AppError with discriminated union
+ */
+export function parseSupabaseError(error: unknown): AppError {
+  if (!error) {
+    return {
+      type: 'unknown',
+      message: "An unknown error occurred",
+    };
+  }
+
+  const supabaseError = error as SupabaseError;
+  const errorCode = supabaseError.code;
+  const errorMessage = supabaseError.message?.toLowerCase() || "";
+
+  // Check for auth errors
+  if (isAuthErrorRaw(error)) {
+    return {
+      type: 'auth',
+      message: SUPABASE_ERROR_MESSAGES[errorCode || ""] || "Your session has expired. Please log in again",
+      code: errorCode,
+      details: supabaseError.details,
+      hint: supabaseError.hint,
+      shouldRedirectToLogin: true,
+    };
+  }
+
+  // Check for RLS/Permission errors
+  if (errorCode === "42501" || RLS_ERROR_PATTERNS.some(pattern => errorMessage.includes(pattern))) {
+    return {
+      type: 'forbidden',
+      message: SUPABASE_ERROR_MESSAGES[errorCode || ""] || "You don't have permission to perform this action",
+      code: errorCode,
+      details: supabaseError.details,
+      hint: supabaseError.hint,
+    };
+  }
+
+  // Check for validation/constraint errors
+  if (errorCode?.startsWith("23")) {
+    let constraint: string | undefined;
+    if (errorCode === "23505") constraint = "unique";
+    else if (errorCode === "23503") constraint = "foreign_key";
+    else if (errorCode === "23502") constraint = "not_null";
+    else if (errorCode === "23514") constraint = "check";
+
+    return {
+      type: 'validation',
+      message: SUPABASE_ERROR_MESSAGES[errorCode] || "Invalid data provided",
+      code: errorCode,
+      details: supabaseError.details,
+      hint: supabaseError.hint,
+      constraint,
+    };
+  }
+
+  // Check for not found errors
+  if (errorCode === "PGRST204" || errorMessage.includes("not found")) {
+    return {
+      type: 'not_found',
+      message: "The requested resource was not found",
+      code: errorCode,
+      details: supabaseError.details,
+    };
+  }
+
+  // Check for network errors
+  if (NETWORK_ERROR_PATTERNS.some(pattern => errorMessage.includes(pattern))) {
+    return {
+      type: 'network',
+      message: "Network error occurred. Please check your connection and try again",
+      code: errorCode,
+      details: supabaseError.details,
+      shouldRetry: true,
+    };
+  }
+
+  // Check for setup errors
+  if (isSetupErrorRaw(error)) {
+    return {
+      type: 'setup',
+      message: "Database setup required",
+      code: errorCode,
+      details: supabaseError.details,
+      hint: supabaseError.hint,
+    };
+  }
+
+  // Fallback to unknown error
+  return {
+    type: 'unknown',
+    message: supabaseError.message || "An error occurred",
+    code: errorCode,
+    details: supabaseError.details,
+    hint: supabaseError.hint,
+  };
+}
+
+/**
+ * Parse Supabase error into legacy format
+ * @deprecated Use parseSupabaseError instead, which returns AppError
+ */
+export function parseSupabaseErrorLegacy(error: unknown): ParsedError {
   if (!error) {
     return {
       message: "An unknown error occurred",
@@ -109,7 +222,7 @@ export function parseSupabaseError(error: unknown): ParsedError {
     "An error occurred";
 
   // Determine if auth error
-  const isAuth = isAuthError(error);
+  const isAuth = isAuthErrorRaw(error);
 
   // Determine if should retry
   const shouldRetry = shouldRetryError(error);
@@ -170,11 +283,11 @@ export function getErrorSeverity(error: unknown): ErrorSeverity {
 }
 
 /**
- * Check if error is authentication-related
+ * Check if error is authentication-related (raw check for internal use)
  * @param error - The error object
  * @returns True if auth error
  */
-export function isAuthError(error: unknown): boolean {
+function isAuthErrorRaw(error: unknown): boolean {
   if (!error) return false;
 
   const supabaseError = error as SupabaseError;
@@ -185,6 +298,16 @@ export function isAuthError(error: unknown): boolean {
     (pattern) =>
       errorMessage.includes(pattern.toLowerCase()) || errorCode === pattern
   );
+}
+
+/**
+ * Check if error is authentication-related
+ * @deprecated Use parseSupabaseError and check error.type === 'auth' instead
+ * @param error - The error object
+ * @returns True if auth error
+ */
+export function isAuthError(error: unknown): boolean {
+  return isAuthErrorRaw(error);
 }
 
 /**
@@ -223,11 +346,11 @@ export function shouldRetryError(error: unknown): boolean {
 }
 
 /**
- * Check if an error indicates the database needs setup
+ * Check if an error indicates the database needs setup (raw check for internal use)
  * @param error - The error object from Supabase
  * @returns True if this is a setup-related error
  */
-export function isSetupError(error: unknown): boolean {
+function isSetupErrorRaw(error: unknown): boolean {
   if (!error) return false;
 
   const supabaseError = error as SupabaseError;
@@ -245,6 +368,16 @@ export function isSetupError(error: unknown): boolean {
     : false;
 
   return hasSetupKeyword || hasSetupCode;
+}
+
+/**
+ * Check if an error indicates the database needs setup
+ * @deprecated Use parseSupabaseError and check error.type === 'setup' instead
+ * @param error - The error object from Supabase
+ * @returns True if this is a setup-related error
+ */
+export function isSetupError(error: unknown): boolean {
+  return isSetupErrorRaw(error);
 }
 
 /**
