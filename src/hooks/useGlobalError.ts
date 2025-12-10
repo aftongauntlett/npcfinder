@@ -40,58 +40,81 @@ const DEFAULT_DURATION = 5000;
  * Global error store using Zustand
  * Exported separately from the hook to allow non-React usage (e.g., in main.tsx)
  */
-export const globalErrorStore = create<GlobalErrorState>((set, get) => ({
-  errors: [],
+export const globalErrorStore = create<GlobalErrorState>((set, get) => {
+  // Map to track timeout IDs for each error
+  const timeoutMap = new Map<string, NodeJS.Timeout>();
 
-  addError: (message, options = {}) => {
-    const { duration = DEFAULT_DURATION, persistent = false } = options;
+  return {
+    errors: [],
 
-    const id = `error-${Date.now()}-${Math.random()}`;
-    const newError: ErrorNotification = {
-      id,
-      message,
-      persistent,
-      duration,
-      timestamp: Date.now(),
-    };
+    addError: (message, options = {}) => {
+      const { duration = DEFAULT_DURATION, persistent = false } = options;
 
-    set((state) => {
-      // Limit to MAX_ERRORS, remove oldest non-persistent
-      const errors = [...state.errors];
-      if (errors.length >= MAX_ERRORS) {
-        const nonPersistentIndex = errors.findIndex((e) => !e.persistent);
-        if (nonPersistentIndex >= 0) {
-          errors.splice(nonPersistentIndex, 1);
-        } else {
-          // All persistent, remove oldest
-          errors.shift();
+      const id = `error-${Date.now()}-${Math.random()}`;
+      const newError: ErrorNotification = {
+        id,
+        message,
+        persistent,
+        duration,
+        timestamp: Date.now(),
+      };
+
+      set((state) => {
+        // Limit to MAX_ERRORS, remove oldest non-persistent
+        const errors = [...state.errors];
+        if (errors.length >= MAX_ERRORS) {
+          const nonPersistentIndex = errors.findIndex((e) => !e.persistent);
+          if (nonPersistentIndex >= 0) {
+            errors.splice(nonPersistentIndex, 1);
+          } else {
+            // All persistent, remove oldest
+            errors.shift();
+          }
         }
+
+        return { errors: [...errors, newError] };
+      });
+
+      // Auto-dismiss non-persistent errors
+      if (!persistent) {
+        const timeoutId = setTimeout(() => {
+          // Remove the timeout ID from map after firing
+          timeoutMap.delete(id);
+          get().removeError(id);
+        }, duration);
+
+        // Store the timeout ID in the map
+        timeoutMap.set(id, timeoutId);
       }
 
-      return { errors: [...errors, newError] };
-    });
+      // Log to Sentry/logger
+      logger.error("Global error notification", { message, persistent, id });
+    },
 
-    // Auto-dismiss non-persistent errors
-    if (!persistent) {
-      setTimeout(() => {
-        get().removeError(id);
-      }, duration);
-    }
+    removeError: (id) => {
+      // Clear the timeout if it exists
+      const timeoutId = timeoutMap.get(id);
+      if (timeoutId !== undefined) {
+        clearTimeout(timeoutId);
+        timeoutMap.delete(id);
+      }
 
-    // Log to Sentry/logger
-    logger.error("Global error notification", { message, persistent, id });
-  },
+      set((state) => ({
+        errors: state.errors.filter((e) => e.id !== id),
+      }));
+    },
 
-  removeError: (id) => {
-    set((state) => ({
-      errors: state.errors.filter((e) => e.id !== id),
-    }));
-  },
+    clearAll: () => {
+      // Clear all pending timeouts
+      timeoutMap.forEach((timeoutId) => {
+        clearTimeout(timeoutId);
+      });
+      timeoutMap.clear();
 
-  clearAll: () => {
-    set({ errors: [] });
-  },
-}));
+      set({ errors: [] });
+    },
+  };
+});
 
 /**
  * Global error notification hook
