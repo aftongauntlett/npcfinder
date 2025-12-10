@@ -24,6 +24,9 @@ export { default as ProgressBar } from "./ui/ProgressBar";
 export { default as ErrorBoundary } from "./ui/ErrorBoundary";
 export { default as GlobalErrorNotifications } from "./ui/GlobalErrorNotifications";
 export { SkeletonCard } from "./ui/SkeletonCard";
+export { default as Tabs } from "./ui/Tabs";
+export type { Tab } from "./ui/Tabs";
+export { default as TabPanel } from "./ui/TabPanel";
 
 // Media Components - Media-specific functionality
 export { default as MediaDetailModal } from "./media/MediaDetailModal";

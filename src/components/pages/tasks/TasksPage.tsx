@@ -22,7 +22,7 @@ import AppLayout from "../../layouts/AppLayout";
 import InboxView from "./InboxView";
 import TemplateView from "./TemplateView";
 import GroceryListView from "../../tasks/views/GroceryListView";
-import { EmptyStateAddCard } from "../../shared";
+import { EmptyStateAddCard, TabPanel } from "../../shared";
 import CreateTaskModal from "../../tasks/CreateTaskModal";
 import KanbanTaskModal from "../../tasks/KanbanTaskModal";
 import RecipeFormModal from "../../tasks/RecipeFormModal";
@@ -197,10 +197,9 @@ const TasksPage: React.FC = () => {
       onTabChange={handleTabChange}
     >
       {/* Content */}
-      <div
-        role="tabpanel"
+      <TabPanel
         id={`${selectedView}-panel`}
-        aria-labelledby={selectedView}
+        tabId={`${selectedView}-tab`}
       >
         {selectedView === "tasks" && <InboxView />}
         {selectedView === "kanban" && (
@@ -288,7 +287,7 @@ const TasksPage: React.FC = () => {
             onEditTask={handleEditTask}
           />
         )}
-      </div>
+      </TabPanel>
 
       {/* Modals */}
       {showCreateTask &&

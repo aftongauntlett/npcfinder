@@ -6,6 +6,7 @@ import BooksSuggestions from "./BooksSuggestions";
 import { useReadingList } from "../../../hooks/useReadingListQueries";
 import { useBookStats } from "../../../hooks/useBookQueries";
 import { usePageMeta } from "../../../hooks/usePageMeta";
+import { TabPanel } from "@/components/shared";
 
 type TabId = "reading" | "read" | "recommendations";
 
@@ -66,17 +67,13 @@ const BooksPage: React.FC = () => {
       onTabChange={(tabId) => setActiveTab(tabId as TabId)}
     >
       {/* Tab Content */}
-      <div
-        role="tabpanel"
-        id={`${activeTab}-panel`}
-        aria-labelledby={activeTab}
-      >
+      <TabPanel id={`${activeTab}-panel`} tabId={`${activeTab}-tab`}>
         {activeTab === "reading" && (
           <PersonalReadingList initialFilter="to-read" />
         )}
         {activeTab === "read" && <PersonalReadingList initialFilter="read" />}
         {activeTab === "recommendations" && <BooksSuggestions embedded />}
-      </div>
+      </TabPanel>
     </AppLayout>
   );
 };

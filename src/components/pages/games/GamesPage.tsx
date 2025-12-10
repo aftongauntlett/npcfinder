@@ -6,6 +6,7 @@ import GamesSuggestions from "./GamesSuggestions";
 import { useGameLibrary } from "../../../hooks/useGameLibraryQueries";
 import { useGameStats } from "../../../hooks/useGameQueries";
 import { usePageMeta } from "../../../hooks/usePageMeta";
+import { TabPanel } from "@/components/shared";
 
 type TabId = "playing" | "played" | "recommendations";
 
@@ -61,11 +62,7 @@ const GamesPage: React.FC = () => {
       onTabChange={(tabId) => setActiveTab(tabId as TabId)}
     >
       {/* Tab Content */}
-      <div
-        role="tabpanel"
-        id={`${activeTab}-panel`}
-        aria-labelledby={activeTab}
-      >
+      <TabPanel id={`${activeTab}-panel`} tabId={`${activeTab}-tab`}>
         {activeTab === "playing" && (
           <PersonalGameLibrary initialFilter="to-play" />
         )}
@@ -73,7 +70,7 @@ const GamesPage: React.FC = () => {
           <PersonalGameLibrary initialFilter="played" />
         )}
         {activeTab === "recommendations" && <GamesSuggestions embedded />}
-      </div>
+      </TabPanel>
     </AppLayout>
   );
 };

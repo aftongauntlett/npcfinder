@@ -6,6 +6,7 @@ import { useWatchlist } from "../../../hooks/useWatchlistQueries";
 import { useMovieStats } from "../../../hooks/useMovieQueries";
 import PersonalWatchList from "../../media/PersonalWatchList";
 import { usePageMeta } from "../../../hooks/usePageMeta";
+import { TabPanel } from "@/components/shared";
 
 type TabId = "watching" | "watched" | "recommendations";
 
@@ -62,11 +63,7 @@ const MoviesPage: React.FC = () => {
       onTabChange={(tabId) => setActiveTab(tabId as TabId)}
     >
       {/* Tab Content */}
-      <div
-        role="tabpanel"
-        id={`${activeTab}-panel`}
-        aria-labelledby={activeTab}
-      >
+      <TabPanel id={`${activeTab}-panel`} tabId={`${activeTab}-tab`}>
         <h2 className="sr-only">
           {activeTab === "watching" && "Watching"}
           {activeTab === "watched" && "Watched"}
@@ -79,7 +76,7 @@ const MoviesPage: React.FC = () => {
           <PersonalWatchList initialFilter="watched" />
         )}
         {activeTab === "recommendations" && <MoviesSuggestions embedded />}
-      </div>
+      </TabPanel>
     </AppLayout>
   );
 };
