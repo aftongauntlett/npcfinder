@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import type { User } from "@supabase/supabase-js";
 import AppLayout from "../layouts/AppLayout";
 import { DashboardContent } from "../dashboard/DashboardContent";
@@ -48,7 +48,9 @@ const HomePage: React.FC<HomePageProps> = () => {
   const { changeThemeColor } = useTheme();
   const [activeTab, setActiveTab] = useState<TabId>("dashboard");
   const [showGettingStarted, setShowGettingStarted] = useState(() => {
-    return localStorage.getItem("hideGettingStarted") !== "true";
+    return typeof window !== "undefined"
+      ? localStorage.getItem("hideGettingStarted") !== "true"
+      : true;
   });
 
   const queryClient = useQueryClient();
@@ -56,17 +58,28 @@ const HomePage: React.FC<HomePageProps> = () => {
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
   const markAsOpened = useMarkMovieRecommendationsAsOpened();
 
+  // Memoize greeting computation
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 18) return "Good afternoon";
+    return "Good evening";
+  }, []);
+
   // Handle tab change
-  const handleTabChange = (tabId: TabId) => {
-    setActiveTab(tabId);
-    if (
-      tabId === "recommendations" &&
-      stats &&
-      stats.pendingRecommendations > 0
-    ) {
-      markAsOpened.mutate();
-    }
-  };
+  const handleTabChange = useCallback(
+    (tabId: TabId) => {
+      setActiveTab(tabId);
+      if (
+        tabId === "recommendations" &&
+        stats &&
+        stats.pendingRecommendations > 0
+      ) {
+        markAsOpened.mutate();
+      }
+    },
+    [stats, markAsOpened]
+  );
 
   // Refetch recommendations when tab becomes active
   useEffect(() => {
@@ -87,36 +100,33 @@ const HomePage: React.FC<HomePageProps> = () => {
   }, [profile?.theme_color, changeThemeColor]);
 
   const displayName = profile?.display_name || "there";
-  const greeting = (() => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Good morning";
-    if (hour < 18) return "Good afternoon";
-    return "Good evening";
-  })();
 
-  const tabs = [
-    {
-      id: "dashboard" as TabId,
-      label: "Dashboard",
-      icon: Clock,
-    },
-    {
-      id: "friends" as TabId,
-      label: "Find Friends",
-      icon: UserPlus,
-    },
-    {
-      id: "trending" as TabId,
-      label: "Trending",
-      icon: TrendingUpDown,
-    },
-    {
-      id: "recommendations" as TabId,
-      label: "Recommendations",
-      icon: Lightbulb,
-      badge: stats?.pendingRecommendations || 0,
-    },
-  ];
+  const tabs = useMemo(
+    () => [
+      {
+        id: "dashboard" as TabId,
+        label: "Dashboard",
+        icon: Clock,
+      },
+      {
+        id: "friends" as TabId,
+        label: "Find Friends",
+        icon: UserPlus,
+      },
+      {
+        id: "trending" as TabId,
+        label: "Trending",
+        icon: TrendingUpDown,
+      },
+      {
+        id: "recommendations" as TabId,
+        label: "Recommendations",
+        icon: Lightbulb,
+        badge: stats?.pendingRecommendations || 0,
+      },
+    ],
+    [stats?.pendingRecommendations]
+  );
 
   if (isLoading) {
     return (
