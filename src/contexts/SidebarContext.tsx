@@ -24,39 +24,56 @@ interface SidebarProviderProps {
 export const SidebarProvider: React.FC<SidebarProviderProps> = ({
   children,
 }) => {
-  // Get initial collapsed state from localStorage, default based on viewport
-  const getInitialCollapsed = () => {
-    const saved = localStorage.getItem("sidebar-collapsed");
-    if (saved !== null) {
-      return saved === "true";
-    }
-    // Default: collapsed on mobile, expanded on desktop
-    return typeof window !== "undefined" && window.innerWidth < 768;
-  };
+  // Initialize with safe defaults (no window/localStorage access during render)
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-  const [isCollapsed, setIsCollapsed] = useState(getInitialCollapsed);
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== "undefined" && window.innerWidth < 768
-  );
+  // Hydrate persisted state and initial viewport detection on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+
+      // Check localStorage for persisted state
+      const saved = localStorage.getItem("sidebar-collapsed");
+      if (saved !== null) {
+        setIsCollapsed(saved === "true");
+      } else {
+        // Default: collapsed on mobile, expanded on desktop
+        setIsCollapsed(mobile);
+      }
+    }
+  }, []);
 
   // Save collapsed state to localStorage
   useEffect(() => {
-    localStorage.setItem("sidebar-collapsed", isCollapsed.toString());
+    if (typeof window !== "undefined") {
+      localStorage.setItem("sidebar-collapsed", isCollapsed.toString());
+    }
   }, [isCollapsed]);
 
-  // Track mobile viewport and auto-collapse
+  // Track mobile viewport and auto-collapse (stable listener, no re-attachment)
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      if (mobile && !isCollapsed) {
-        setIsCollapsed(true);
+      
+      // Use functional update to derive latest isCollapsed without dependency
+      if (mobile) {
+        setIsCollapsed((currentCollapsed) => {
+          if (!currentCollapsed) {
+            return true;
+          }
+          return currentCollapsed;
+        });
       }
     };
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [isCollapsed]);
+  }, []);
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
