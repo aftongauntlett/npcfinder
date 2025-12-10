@@ -535,9 +535,9 @@ export function useUpdateTask() {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.tasks.task(data.id),
       });
-      // Invalidate all task queries to ensure UI updates everywhere
+      // Invalidate specific board tasks query
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.tasks.all,
+        queryKey: queryKeys.tasks.boardTasks(data.board_id),
       });
       void queryClient.invalidateQueries({
         queryKey: queryKeys.tasks.todayTasks(user?.id),
@@ -564,10 +564,13 @@ export function useCompleteRepeatableTask() {
       return data!;
     },
 
-    onSuccess: () => {
-      // Invalidate all task queries to update the UI
+    onSuccess: (data) => {
+      // Invalidate specific queries based on the rescheduled task
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.tasks.all,
+        queryKey: queryKeys.tasks.task(data.id),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.tasks.boardTasks(data.board_id),
       });
       void queryClient.invalidateQueries({
         queryKey: queryKeys.tasks.todayTasks(user?.id),
@@ -590,13 +593,24 @@ export function useDeleteTask() {
     mutationFn: async (taskId: string) => {
       const { error } = await tasksService.deleteTask(taskId);
       if (error) throw error;
+      return taskId;
     },
 
-    onSuccess: () => {
-      // Invalidate all task-related queries to remove deleted task
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.tasks.all,
-      });
+    onMutate: async (taskId) => {
+      // Capture task data before deletion to know which queries to invalidate
+      const task = queryClient.getQueryData<Task>(queryKeys.tasks.task(taskId));
+      return { task };
+    },
+
+    onSuccess: (_taskId, _variables, context) => {
+      const boardId = context?.task?.board_id;
+      
+      // Invalidate specific board tasks query
+      if (boardId !== undefined) {
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.tasks.boardTasks(boardId),
+        });
+      }
       void queryClient.invalidateQueries({
         queryKey: queryKeys.tasks.todayTasks(user?.id),
       });
@@ -872,11 +886,14 @@ export function useStartTimer() {
     onMutate: async ({ taskId, durationMinutes, isUrgentAfter, startTime }) => {
       const now = startTime || new Date().toISOString();
       
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: queryKeys.tasks.all });
-
-      // Snapshot previous value
+      // Get the task to know its board_id
       const previousTask = queryClient.getQueryData<Task>(queryKeys.tasks.task(taskId));
+      
+      // Cancel specific query refetches to prevent race conditions
+      await queryClient.cancelQueries({ queryKey: queryKeys.tasks.task(taskId) });
+      if (previousTask?.board_id !== undefined) {
+        await queryClient.cancelQueries({ queryKey: queryKeys.tasks.boardTasks(previousTask.board_id) });
+      }
 
       // Optimistically update single task query
       if (previousTask) {
@@ -916,7 +933,10 @@ export function useStartTimer() {
           queryKey: queryKeys.tasks.task(data.id),
         });
         void queryClient.invalidateQueries({
-          queryKey: queryKeys.tasks.all,
+          queryKey: queryKeys.tasks.boardTasks(data.board_id),
+        });
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.tasks.activeTimers(),
         });
       }
     },
@@ -943,11 +963,14 @@ export function useCompleteTimer() {
     onMutate: async (taskId) => {
       const now = new Date().toISOString();
       
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: queryKeys.tasks.all });
-
-      // Snapshot previous value
+      // Get the task to know its board_id
       const previousTask = queryClient.getQueryData<Task>(queryKeys.tasks.task(taskId));
+      
+      // Cancel specific query refetches to prevent race conditions
+      await queryClient.cancelQueries({ queryKey: queryKeys.tasks.task(taskId) });
+      if (previousTask?.board_id !== undefined) {
+        await queryClient.cancelQueries({ queryKey: queryKeys.tasks.boardTasks(previousTask.board_id) });
+      }
 
       // Optimistically update single task query
       if (previousTask) {
@@ -981,7 +1004,10 @@ export function useCompleteTimer() {
           queryKey: queryKeys.tasks.task(data.id),
         });
         void queryClient.invalidateQueries({
-          queryKey: queryKeys.tasks.all,
+          queryKey: queryKeys.tasks.boardTasks(data.board_id),
+        });
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.tasks.activeTimers(),
         });
       }
     },
@@ -1003,11 +1029,14 @@ export function useResetTimer() {
 
     // Optimistic update for instant UI feedback
     onMutate: async (taskId) => {
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: queryKeys.tasks.all });
-
-      // Snapshot previous value
+      // Get the task to know its board_id
       const previousTask = queryClient.getQueryData<Task>(queryKeys.tasks.task(taskId));
+      
+      // Cancel specific query refetches to prevent race conditions
+      await queryClient.cancelQueries({ queryKey: queryKeys.tasks.task(taskId) });
+      if (previousTask?.board_id !== undefined) {
+        await queryClient.cancelQueries({ queryKey: queryKeys.tasks.boardTasks(previousTask.board_id) });
+      }
 
       // Optimistically update single task query
       if (previousTask) {
@@ -1043,7 +1072,10 @@ export function useResetTimer() {
           queryKey: queryKeys.tasks.task(data.id),
         });
         void queryClient.invalidateQueries({
-          queryKey: queryKeys.tasks.all,
+          queryKey: queryKeys.tasks.boardTasks(data.board_id),
+        });
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.tasks.activeTimers(),
         });
       }
     },
