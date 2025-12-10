@@ -4,6 +4,11 @@ import FocusTrap from "focus-trap-react";
 import { useSidebar } from "../../../contexts/SidebarContext";
 import Button from "./Button";
 
+// Module-level counter to track the number of open modals
+let modalOpenCount = 0;
+// Store the original overflow style to restore it when all modals are closed
+let originalOverflowStyle = "";
+
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -45,25 +50,27 @@ const Modal: React.FC<ModalProps> = ({
 }) => {
   const { isCollapsed, isMobile } = useSidebar();
 
-  // Handle ESC key
+  // Handle body scroll lock with reference counting for nested modals
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) {
-        onClose();
-      }
-    };
-
     if (isOpen) {
-      document.addEventListener("keydown", handleEscape);
-      // Prevent body scroll when modal is open
-      document.body.style.overflow = "hidden";
+      // When the first modal opens, save the current overflow style
+      if (modalOpenCount === 0) {
+        originalOverflowStyle = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+      }
+      modalOpenCount++;
     }
 
     return () => {
-      document.removeEventListener("keydown", handleEscape);
-      document.body.style.overflow = "unset";
+      if (isOpen) {
+        modalOpenCount--;
+        // Only restore overflow when the last modal closes
+        if (modalOpenCount === 0) {
+          document.body.style.overflow = originalOverflowStyle;
+        }
+      }
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -103,9 +110,10 @@ const Modal: React.FC<ModalProps> = ({
           <FocusTrap
             focusTrapOptions={{
               initialFocus: false,
-              escapeDeactivates: false,
+              escapeDeactivates: true, // Let FocusTrap handle Escape key for consistency
               clickOutsideDeactivates: closeOnBackdropClick,
               returnFocusOnDeactivate: true,
+              onDeactivate: onClose, // Ensure modal closes when trap is deactivated
             }}
           >
             <div
