@@ -89,8 +89,6 @@ export interface Board {
   user_id: string;
   name: string;
   description: string | null;
-  icon: string | null;
-  color: string | null;
   is_public: boolean;
   board_type: string | null;
   template_type?: TemplateType | null;
@@ -148,8 +146,6 @@ export interface Task {
 export interface CreateBoardData {
   name: string;
   description?: string;
-  icon?: string;
-  color?: string;
   is_public?: boolean;
   board_type?: string;
   template_type?: TemplateType;

@@ -39,7 +39,7 @@ const GroceryItemCard: React.FC<GroceryItemCardProps> = ({
       notes?: string;
     }) || {};
 
-  const isPurchased = task.status === "done";
+  const isPurchased = !!task.completed_at;
   const category = itemData.category || "Other";
   const categoryColors =
     CATEGORY_COLORS[category as keyof typeof CATEGORY_COLORS] ||

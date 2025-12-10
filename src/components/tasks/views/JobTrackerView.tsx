@@ -45,15 +45,7 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
       (task.item_data?.date_applied as string) || task.created_at.split("T")[0],
     job_description: (task.item_data?.job_description as string) || undefined,
     notes: (task.item_data?.notes as string) || task.description || undefined,
-    status:
-      (task.item_data?.status as string) ||
-      (task.status === "todo"
-        ? "Applied"
-        : task.status === "in_progress"
-        ? "Phone Screen"
-        : task.status === "done"
-        ? "Accepted"
-        : "Applied"),
+    status: (task.item_data?.status as string) || "Applied",
     status_history:
       (task.item_data?.status_history as StatusHistoryEntry[]) || undefined,
   }));

@@ -5,29 +5,7 @@
  */
 
 import React, { useState } from "react";
-import {
-  LayoutGrid,
-  Briefcase,
-  ShoppingCart,
-  Heart,
-  BookOpen,
-  Home,
-  Dumbbell,
-  Plane,
-  DollarSign,
-  Code,
-  Music,
-  Camera,
-  Star,
-  Target,
-  CheckSquare,
-  Calendar,
-  Users,
-  Package,
-  TrendingUp,
-  Lightbulb,
-  Share2,
-} from "lucide-react";
+import { Share2 } from "lucide-react";
 import AccordionCard from "../shared/common/AccordionCard";
 import ShareBoardModal from "./ShareBoardModal";
 import { useTheme } from "../../hooks/useTheme";
@@ -39,32 +17,6 @@ import { JobTrackerView } from "./views/JobTrackerView";
 import { RecipeListView } from "./views/RecipeListView";
 import type { BoardWithStats } from "../../services/tasksService.types";
 import type { Task } from "../../services/tasksService.types";
-
-// Map icon labels to Lucide components
-const ICON_MAP: Record<
-  string,
-  React.ComponentType<{ className?: string; style?: React.CSSProperties }>
-> = {
-  Briefcase,
-  Shopping: ShoppingCart,
-  Health: Heart,
-  Reading: BookOpen,
-  Home,
-  Fitness: Dumbbell,
-  Travel: Plane,
-  Finance: DollarSign,
-  Development: Code,
-  Music,
-  Creative: Camera,
-  Favorites: Star,
-  Goals: Target,
-  Tasks: CheckSquare,
-  Events: Calendar,
-  Team: Users,
-  Projects: Package,
-  Growth: TrendingUp,
-  Ideas: Lightbulb,
-};
 
 interface BoardCardProps {
   board: BoardWithStats;
@@ -94,23 +46,6 @@ const BoardCard: React.FC<BoardCardProps> = ({
   const { themeColor } = useTheme();
   const [showShareModal, setShowShareModal] = useState(false);
   const { data: shares = [] } = useBoardShares(board.id);
-
-  // Get the icon component
-  const IconComponent =
-    board.icon && ICON_MAP[board.icon] ? ICON_MAP[board.icon] : LayoutGrid;
-
-  // Board icon with color
-  const icon = (
-    <div
-      className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
-      style={{ backgroundColor: `${board.color || themeColor}20` }}
-    >
-      <IconComponent
-        className="w-5 h-5"
-        style={{ color: board.color || themeColor }}
-      />
-    </div>
-  );
 
   // Subtitle showing task count and starter badge
   const subtitle = (
@@ -179,7 +114,6 @@ const BoardCard: React.FC<BoardCardProps> = ({
   return (
     <>
       <AccordionCard
-        icon={icon}
         title={board.name}
         subtitle={subtitle}
         description={board.description || undefined}

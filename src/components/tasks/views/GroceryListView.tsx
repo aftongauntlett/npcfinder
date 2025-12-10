@@ -133,11 +133,10 @@ const GroceryListView: React.FC<GroceryListViewProps> = ({
     const task = tasks.find((t) => t.id === taskId);
     if (!task) return;
 
-    const isPurchased = task.status === "done";
+    const isPurchased = !!task.completed_at;
     await updateTask.mutateAsync({
       taskId: task.id,
       updates: {
-        status: isPurchased ? "todo" : "done",
         completed_at: isPurchased ? null : new Date().toISOString(),
       },
     });

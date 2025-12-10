@@ -3,32 +3,9 @@
  * Simple modal for creating or editing task boards
  */
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { logger } from "@/lib/logger";
-import {
-  Palette,
-  ChevronDown,
-  Briefcase,
-  ShoppingCart,
-  Heart,
-  BookOpen,
-  Home,
-  Dumbbell,
-  Plane,
-  DollarSign,
-  Code,
-  Music,
-  Camera,
-  Star,
-  Target,
-  CheckSquare,
-  Calendar,
-  Users,
-  Package,
-  TrendingUp,
-  Lightbulb,
-  Share2,
-} from "lucide-react";
+import { Share2 } from "lucide-react";
 import Modal from "../shared/ui/Modal";
 import Button from "../shared/ui/Button";
 import Input from "../shared/ui/Input";
@@ -43,12 +20,8 @@ import {
   useBoards,
   useBoardShares,
 } from "../../hooks/useTasksQueries";
-import { HexColorPicker } from "react-colorful";
 import { useTheme } from "../../hooks/useTheme";
-import {
-  getTemplate,
-  getBoardTypeFromTemplate,
-} from "../../utils/boardTemplates";
+import { getBoardTypeFromTemplate } from "../../utils/boardTemplates";
 import type { TemplateType } from "../../utils/boardTemplates";
 
 interface BoardFormModalProps {
@@ -58,28 +31,6 @@ interface BoardFormModalProps {
   preselectedTemplate?: TemplateType; // Pre-select template type (for template-specific views)
 }
 
-const ICON_OPTIONS = [
-  { icon: Briefcase, label: "Briefcase" },
-  { icon: ShoppingCart, label: "Shopping" },
-  { icon: Heart, label: "Health" },
-  { icon: BookOpen, label: "Reading" },
-  { icon: Home, label: "Home" },
-  { icon: Dumbbell, label: "Fitness" },
-  { icon: Plane, label: "Travel" },
-  { icon: DollarSign, label: "Finance" },
-  { icon: Code, label: "Development" },
-  { icon: Music, label: "Music" },
-  { icon: Camera, label: "Creative" },
-  { icon: Star, label: "Favorites" },
-  { icon: Target, label: "Goals" },
-  { icon: CheckSquare, label: "Tasks" },
-  { icon: Calendar, label: "Events" },
-  { icon: Users, label: "Team" },
-  { icon: Package, label: "Projects" },
-  { icon: TrendingUp, label: "Growth" },
-  { icon: Lightbulb, label: "Ideas" },
-];
-
 const BoardFormModal: React.FC<BoardFormModalProps> = ({
   isOpen,
   onClose,
@@ -88,54 +39,21 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
 }) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [iconName, setIconName] = useState("");
-  const [color, setColor] = useState("");
   const [isPublic, setIsPublic] = useState(false);
-  const [showColorPicker, setShowColorPicker] = useState(false);
-  const [showIconDropdown, setShowIconDropdown] = useState(false);
-  const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
-  const [templateType, setTemplateType] = useState<TemplateType>("markdown");
   const [nameError, setNameError] = useState<string>("");
   const [isNameAutoFilled, setIsNameAutoFilled] = useState(false);
 
   const { themeColor } = useTheme();
   const { data: boards = [] } = useBoards();
   const { data: shares = [] } = useBoardShares(board?.id || "");
-  const iconDropdownRef = useRef<HTMLDivElement>(null);
-  const colorPickerRef = useRef<HTMLDivElement>(null);
-  const templateDropdownRef = useRef<HTMLDivElement>(null);
 
   const createBoard = useCreateBoard();
   const updateBoard = useUpdateBoard();
   const deleteBoard = useDeleteBoard();
 
-  // Generate unique board name by checking for duplicates and adding number suffix
-  const generateUniqueBoardName = useCallback(
-    (baseName: string): string => {
-      const existingNames = boards
-        .filter((b) => b.name)
-        .map((b) => b.name.toLowerCase());
-
-      // If base name doesn't exist, return it
-      if (!existingNames.includes(baseName.toLowerCase())) {
-        return baseName;
-      }
-
-      // Find the next available number
-      let counter = 2;
-      let uniqueName = `${baseName} ${counter}`;
-
-      while (existingNames.includes(uniqueName.toLowerCase())) {
-        counter++;
-        uniqueName = `${baseName} ${counter}`;
-      }
-
-      return uniqueName;
-    },
-    [boards]
-  ); // Validate board name for duplicates
+  // Validate board name for duplicates
   const validateBoardName = (boardName: string): string => {
     if (!boardName.trim()) {
       return "Board name is required";
@@ -165,102 +83,26 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
     return "";
   };
 
-  // Close icon dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        iconDropdownRef.current &&
-        !iconDropdownRef.current.contains(event.target as Node)
-      ) {
-        setShowIconDropdown(false);
-      }
-    };
 
-    if (showIconDropdown) {
-      document.addEventListener("mousedown", handleClickOutside);
-      return () =>
-        document.removeEventListener("mousedown", handleClickOutside);
-    }
-  }, [showIconDropdown]);
-
-  // Close color picker when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        colorPickerRef.current &&
-        !colorPickerRef.current.contains(event.target as Node)
-      ) {
-        setShowColorPicker(false);
-      }
-    };
-
-    if (showColorPicker) {
-      document.addEventListener("mousedown", handleClickOutside);
-      return () =>
-        document.removeEventListener("mousedown", handleClickOutside);
-    }
-  }, [showColorPicker]);
-
-  // Close template dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        templateDropdownRef.current &&
-        !templateDropdownRef.current.contains(event.target as Node)
-      ) {
-        setShowTemplateDropdown(false);
-      }
-    };
-
-    if (showTemplateDropdown) {
-      document.addEventListener("mousedown", handleClickOutside);
-      return () =>
-        document.removeEventListener("mousedown", handleClickOutside);
-    }
-  }, [showTemplateDropdown]);
   // Populate form when editing
   useEffect(() => {
     if (board) {
       setName(board.name);
       setDescription(board.description || "");
-      setIconName(board.icon || "");
-      setColor(board.color || themeColor);
       setIsPublic(board.is_public || false);
-      setTemplateType((board.template_type as TemplateType) || "kanban");
       setNameError("");
       setIsNameAutoFilled(false);
     } else {
-      // Reset form for new board - use preselected template or default
-      const defaultTemplate =
-        preselectedTemplate || ("markdown" as TemplateType);
-      const template = getTemplate(defaultTemplate);
-      const uniqueName = generateUniqueBoardName(template.name);
-      setName(uniqueName);
-      setDescription(template.description);
-      setIconName("");
-      setColor(themeColor);
+      // Reset form for new board
+      setName("");
+      setDescription("");
       setIsPublic(false);
-      setTemplateType(defaultTemplate);
       setNameError("");
-      setIsNameAutoFilled(true);
+      setIsNameAutoFilled(false);
     }
-  }, [board, isOpen, generateUniqueBoardName, themeColor, preselectedTemplate]);
+  }, [board, isOpen]);
 
-  // Handle template type change - auto-fill name and description
-  const handleTemplateChange = (newTemplateType: TemplateType) => {
-    setTemplateType(newTemplateType);
 
-    // Don't auto-fill if editing existing board
-    if (board) return;
-
-    const template = getTemplate(newTemplateType);
-    const uniqueName = generateUniqueBoardName(template.name);
-
-    setName(uniqueName);
-    setDescription(template.description);
-    setIsNameAutoFilled(true);
-    setNameError("");
-  };
 
   // Handle name change - clear auto-fill flag and validate
   const handleNameChange = (newName: string) => {
@@ -280,14 +122,14 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
       return;
     }
 
-    // Determine board_type based on template using centralized helper
-    const boardType = getBoardTypeFromTemplate(templateType);
+    // Determine board_type and template_type from preselectedTemplate
+    // For kanban/markdown, both board_type and template_type are inferred automatically
+    const boardType = preselectedTemplate ? getBoardTypeFromTemplate(preselectedTemplate) : "grid";
+    const templateType = preselectedTemplate || "kanban";
 
     const boardData: CreateBoardData = {
       name,
       description: description || undefined,
-      icon: iconName || undefined,
-      color,
       board_type: boardType,
       template_type: templateType,
       is_public: isPublic,
@@ -332,8 +174,6 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
 
   if (!isOpen) return null;
 
-  const selectedIcon = ICON_OPTIONS.find((opt) => opt.label === iconName);
-
   return (
     <>
       <Modal
@@ -349,7 +189,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
           <div>
             <label
               htmlFor="board-name"
-              className="block text-sm font-medium text-primary mb-2.5"
+              className="block text-sm font-bold text-primary mb-2.5"
             >
               Board Name *
             </label>
@@ -375,7 +215,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
           <div>
             <label
               htmlFor="board-description"
-              className="block text-sm font-medium text-primary mb-2.5"
+              className="block text-sm font-bold text-primary mb-2.5"
             >
               Description
             </label>
@@ -387,251 +227,6 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
               rows={3}
               maxLength={500}
             />
-          </div>
-
-          {/* Template Type Selection */}
-          <div>
-            <label
-              htmlFor="board-template"
-              className="block text-sm font-medium text-primary mb-2.5"
-            >
-              Board Template *
-            </label>
-            <div ref={templateDropdownRef} className="relative">
-              <button
-                type="button"
-                role="combobox"
-                aria-expanded={showTemplateDropdown}
-                aria-controls="template-dropdown-menu"
-                aria-haspopup="listbox"
-                onClick={() =>
-                  !preselectedTemplate &&
-                  setShowTemplateDropdown(!showTemplateDropdown)
-                }
-                disabled={!!preselectedTemplate || !!board}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-left focus:outline-none focus:ring-2 focus:border-transparent transition-colors ${
-                  preselectedTemplate || board
-                    ? "bg-gray-100 dark:bg-gray-800/50 cursor-not-allowed opacity-60"
-                    : "bg-white dark:bg-gray-700/50"
-                }`}
-                style={
-                  {
-                    "--tw-ring-color": themeColor,
-                  } as React.CSSProperties
-                }
-              >
-                <span>
-                  {templateType === "markdown" && "To-Do List (Default)"}
-                  {templateType === "kanban" && "Kanban Board"}
-                  {templateType === "grocery" && "Grocery List"}
-                  {templateType === "job_tracker" && "Job Applications"}
-                  {templateType === "recipe" && "Recipe Collection"}
-                </span>
-                {!preselectedTemplate && !board && (
-                  <ChevronDown className="w-4 h-4 text-gray-500" />
-                )}
-              </button>
-
-              {showTemplateDropdown && (
-                <div
-                  id="template-dropdown-menu"
-                  role="listbox"
-                  className="absolute left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 max-h-[300px] overflow-y-auto"
-                >
-                  {(
-                    [
-                      {
-                        value: "markdown" as TemplateType,
-                        label: "To-Do List (Default)",
-                        desc: "Markdown-style list with support for bold, bullets, and formatting",
-                      },
-                      {
-                        value: "grocery" as TemplateType,
-                        label: "Grocery List",
-                        desc: "Simple grocery list with categories and purchase tracking",
-                      },
-                      {
-                        value: "job_tracker" as TemplateType,
-                        label: "Job Applications",
-                        desc: "Quick add via URL and track job applications with detailed fields",
-                      },
-                      {
-                        value: "recipe" as TemplateType,
-                        label: "Recipe Collection",
-                        desc: "Quick add via URL and organize recipes with ingredients and instructions",
-                      },
-                      {
-                        value: "kanban" as TemplateType,
-                        label: "Kanban Board",
-                        desc: "Drag-and-drop style board for organizing tasks in columns",
-                      },
-                    ] as const
-                  ).map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      role="option"
-                      aria-selected={templateType === option.value}
-                      onClick={() => {
-                        handleTemplateChange(option.value);
-                        setShowTemplateDropdown(false);
-                      }}
-                      className={`w-full px-3 py-2 text-left transition-colors focus:outline-none bg-transparent ${
-                        templateType === option.value
-                          ? "bg-primary/10 text-primary"
-                          : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium">
-                          {option.label}
-                        </span>
-                        {templateType === option.value && (
-                          <svg
-                            className="w-4 h-4 text-primary"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            aria-hidden="true"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M5 13l4 4L19 7"
-                            />
-                          </svg>
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {option.desc}
-                      </p>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {preselectedTemplate || board
-                ? "Template type cannot be changed"
-                : "Choose how this board will display and organize items"}
-            </p>
-          </div>
-
-          {/* Icon & Color */}
-          <div>
-            <label className="block text-sm font-medium text-primary mb-2.5">
-              Icon & Color
-            </label>
-            <div className="grid grid-cols-[1fr,auto] gap-3">
-              {/* Icon Dropdown */}
-              <div className="relative" ref={iconDropdownRef}>
-                <button
-                  type="button"
-                  role="combobox"
-                  aria-expanded={showIconDropdown}
-                  aria-controls="icon-dropdown-menu"
-                  aria-haspopup="listbox"
-                  onClick={() => setShowIconDropdown(!showIconDropdown)}
-                  className="w-full flex items-center justify-between px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    {selectedIcon ? (
-                      <>
-                        <selectedIcon.icon
-                          className="w-5 h-5 flex-shrink-0"
-                          style={{ color }}
-                        />
-                        <span>{selectedIcon.label}</span>
-                      </>
-                    ) : (
-                      <span className="text-gray-500">Select an icon</span>
-                    )}
-                  </div>
-                  <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                </button>
-                {showIconDropdown && (
-                  <div
-                    id="icon-dropdown-menu"
-                    role="listbox"
-                    className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto"
-                  >
-                    <button
-                      type="button"
-                      role="option"
-                      aria-selected={!iconName}
-                      onClick={() => {
-                        setIconName("");
-                        setShowIconDropdown(false);
-                      }}
-                      className="w-full px-4 py-2 text-left bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                    >
-                      <span className="text-gray-500">No icon</span>
-                    </button>
-                    {ICON_OPTIONS.map(({ icon: Icon, label }) => (
-                      <button
-                        key={label}
-                        type="button"
-                        role="option"
-                        aria-selected={iconName === label}
-                        onClick={() => {
-                          setIconName(label);
-                          setShowIconDropdown(false);
-                        }}
-                        className="w-full px-4 py-2 text-left bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
-                      >
-                        <Icon
-                          className="w-5 h-5 flex-shrink-0"
-                          style={{ color }}
-                        />
-                        <span className="text-gray-900 dark:text-white">
-                          {label}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Color Picker Button */}
-              <div className="relative" ref={colorPickerRef}>
-                <button
-                  type="button"
-                  onClick={() => setShowColorPicker(!showColorPicker)}
-                  className="w-12 h-12 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 flex items-center justify-center hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
-                  aria-label="Pick icon color"
-                  title="Choose icon color"
-                >
-                  <Palette className="w-6 h-6" style={{ color }} />
-                </button>
-                {showColorPicker && (
-                  <div className="absolute right-0 bottom-full mb-2 z-20 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-xl p-3">
-                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Icon Color
-                    </p>
-                    {/* Color picker */}
-                    <HexColorPicker color={color} onChange={setColor} />
-                    {/* Hex input */}
-                    <div className="mt-2">
-                      <Input
-                        type="text"
-                        value={color}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          // Allow typing # and valid hex characters
-                          if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                            setColor(value);
-                          }
-                        }}
-                        inputClassName="text-xs font-mono"
-                        placeholder="#000000"
-                        maxLength={7}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
 
           {/* Privacy Toggle */}
@@ -666,7 +261,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
           </div>
 
           {/* Sharing Section - Only for grocery and existing boards */}
-          {board && (templateType === "grocery" || shares.length > 0) && (
+          {board && (board.template_type === "grocery" || shares.length > 0) && (
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">

@@ -259,6 +259,7 @@ export const RecipeListView: React.FC<RecipeListViewProps> = ({
                   instructions={instructionsList}
                   sourceUrl={sourceUrl}
                   notes={notes}
+                  task={task}
                   onEdit={() => onViewRecipe(task)}
                   onDelete={
                     onDeleteTask ? () => onDeleteTask(task.id) : undefined

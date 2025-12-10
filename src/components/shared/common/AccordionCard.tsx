@@ -56,8 +56,13 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
 
   const handleCardClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    // Don't toggle if clicking action buttons
-    if (target.closest("[data-action-buttons]")) {
+    // Don't toggle if clicking action buttons or links
+    if (target.closest("[data-action-buttons]") || target.closest("a")) {
+      return;
+    }
+
+    // Don't toggle if clicking inside expanded content area
+    if (target.closest("[data-expanded-content]")) {
       return;
     }
 
@@ -70,8 +75,12 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     const target = e.target as HTMLElement;
-    // Don't toggle if pressing Enter/Space on action buttons or chevron
-    if (target.closest("[data-action-buttons], [data-chevron]")) {
+    // Don't toggle if pressing Enter/Space on action buttons, links, or inside expanded content
+    if (
+      target.closest("[data-action-buttons]") ||
+      target.closest("a") ||
+      target.closest("[data-expanded-content]")
+    ) {
       return;
     }
 
@@ -91,27 +100,28 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
       onKeyDown={handleKeyDown}
       tabIndex={0}
       role="button"
-      className={`relative bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-300 cursor-pointer group overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${className}`}
+      className={`relative bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50/50 dark:hover:bg-gray-900/50 transition-all duration-200 cursor-pointer group overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${className}`}
     >
       {/* Header */}
       <div className="p-4">
         {/* Top Row */}
         <div className="flex items-start justify-between gap-3">
-          {/* Left: Icon/Badge, Title, Subtitle */}
+          {/* Left: Icon, Title, Subtitle, Metadata Chips */}
           <div className="flex-1 min-w-0 flex items-start gap-2">
-            {/* Icon or Priority Badge */}
+            {/* Icon */}
             {icon && <div className="flex-shrink-0">{icon}</div>}
-
-            {/* Metadata (priority badge) */}
-            {metadata && <div className="flex-shrink-0">{metadata}</div>}
 
             {/* Title and Subtitle */}
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-base text-gray-900 dark:text-white">
-                {title}
-              </h3>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-bold text-base text-gray-900 dark:text-white">
+                  {title}
+                </h3>
+                {/* Metadata chips (priority, status, etc.) - now on the right of title */}
+                {metadata && <div className="flex-shrink-0">{metadata}</div>}
+              </div>
               {subtitle && (
-                <div className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                   {subtitle}
                 </div>
               )}
@@ -200,7 +210,7 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
           descriptionPreview &&
           description &&
           description.trim().length > 0 && (
-            <p className="text-sm text-gray-400 line-clamp-2 leading-relaxed mt-2">
+            <p className="text-sm text-gray-400 line-clamp-2 leading-relaxed mt-1.5">
               {description}
             </p>
           )}
@@ -213,8 +223,8 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
-          className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700 pt-3"
-          onClick={(e) => e.stopPropagation()}
+          className="px-4 pb-4 pt-3"
+          data-expanded-content
         >
           {/* Full Description */}
           {description && description.trim().length > 0 && (

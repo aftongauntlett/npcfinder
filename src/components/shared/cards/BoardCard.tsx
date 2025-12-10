@@ -6,63 +6,14 @@
  */
 
 import React from "react";
-import {
-  LayoutGrid,
-  Briefcase,
-  ShoppingCart,
-  Heart,
-  BookOpen,
-  Home,
-  Dumbbell,
-  Plane,
-  DollarSign,
-  Code,
-  Music,
-  Camera,
-  Star,
-  Target,
-  CheckSquare,
-  Calendar,
-  Users,
-  Package,
-  TrendingUp,
-  Lightbulb,
-} from "lucide-react";
 import Chip from "../ui/Chip";
 import AccordionCard from "../common/AccordionCard";
-import { useTheme } from "@/hooks/useTheme";
 import KanbanBoard from "../../tasks/KanbanBoard";
 import SimpleListView from "../../tasks/SimpleListView";
 import { JobTrackerView } from "../../tasks/views/JobTrackerView";
 import { RecipeListView } from "../../tasks/views/RecipeListView";
 import type { BoardWithStats } from "@/services/tasksService.types";
 import type { Task } from "@/services/tasksService.types";
-
-// Map icon labels to Lucide components
-const ICON_MAP: Record<
-  string,
-  React.ComponentType<{ className?: string; style?: React.CSSProperties }>
-> = {
-  Briefcase,
-  Shopping: ShoppingCart,
-  Health: Heart,
-  Reading: BookOpen,
-  Home,
-  Fitness: Dumbbell,
-  Travel: Plane,
-  Finance: DollarSign,
-  Development: Code,
-  Music,
-  Creative: Camera,
-  Favorites: Star,
-  Goals: Target,
-  Tasks: CheckSquare,
-  Events: Calendar,
-  Team: Users,
-  Projects: Package,
-  Growth: TrendingUp,
-  Ideas: Lightbulb,
-};
 
 interface BoardCardProps {
   board: BoardWithStats;
@@ -88,24 +39,6 @@ const BoardCard: React.FC<BoardCardProps> = ({
   onDeleteTask,
   isStarter = false,
 }) => {
-  const { themeColor } = useTheme();
-
-  // Get the icon component
-  const IconComponent =
-    board.icon && ICON_MAP[board.icon] ? ICON_MAP[board.icon] : LayoutGrid;
-
-  // Board icon with color (use theme color or board color)
-  const boardColor = board.color || themeColor;
-
-  const icon = (
-    <div
-      className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
-      style={{ backgroundColor: `${boardColor}20` }}
-    >
-      <IconComponent className="w-5 h-5" style={{ color: boardColor }} />
-    </div>
-  );
-
   // Subtitle showing task count and starter badge
   const subtitle = (
     <div className="flex items-center gap-2">
@@ -156,7 +89,6 @@ const BoardCard: React.FC<BoardCardProps> = ({
     <AccordionCard
       title={board.name}
       subtitle={subtitle}
-      icon={icon}
       expandedContent={expandedContent}
       onClick={onClick}
       onEdit={onEdit}

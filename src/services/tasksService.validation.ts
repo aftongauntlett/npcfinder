@@ -19,8 +19,6 @@ export const CreateBoardSchema = z.object({
     .max(1000, "Board description too long")
     .nullable()
     .optional(),
-  color: z.string().max(50, "Color value too long").nullable().optional(),
-  icon: z.string().max(100, "Icon value too long").nullable().optional(),
   is_template: z.boolean().optional().default(false),
   category: z.string().max(100, "Category too long").nullable().optional(),
 });

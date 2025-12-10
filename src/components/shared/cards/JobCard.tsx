@@ -2,14 +2,7 @@ import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import AccordionListCard from "../common/AccordionListCard";
-import Chip from "../ui/Chip";
-import {
-  ExternalLink,
-  MapPin,
-  DollarSign,
-  Briefcase,
-  Calendar,
-} from "lucide-react";
+import { ExternalLink } from "lucide-react";
 
 interface JobCardProps {
   id: string;
@@ -86,10 +79,10 @@ const JobCard: React.FC<JobCardProps> = ({
 
   // Header content (always visible)
   const headerContent = (
-    <div className="space-y-2">
-      {/* Company Name with Link */}
-      <div className="flex items-center gap-2">
-        <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">
+    <div className="space-y-1.5">
+      {/* Title row with chips */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <h3 className="font-semibold text-gray-900 dark:text-white">
           {companyName}
         </h3>
         {companyUrl && (
@@ -97,61 +90,42 @@ const JobCard: React.FC<JobCardProps> = ({
             href={companyUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary hover:opacity-80 transition-opacity"
+            className="text-primary hover:opacity-80 transition-opacity flex-shrink-0"
             onClick={(e) => e.stopPropagation()}
             aria-label="Visit company website"
           >
             <ExternalLink className="w-3.5 h-3.5" />
           </a>
         )}
-      </div>
-
-      {/* Position Title */}
-      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-        {position}
-      </p>
-
-      {/* Metadata Chips - All left-aligned */}
-      <div className="flex flex-wrap items-center gap-2">
-        {locationType && (
-          <Chip variant="info" size="sm">
-            <span className="flex items-center gap-1">
-              {getLocationTypeIcon()} {locationType}
-            </span>
-          </Chip>
-        )}
         {employmentType && (
-          <Chip variant="primary" size="sm">
-            <span className="flex items-center gap-1">
-              <Briefcase className="w-3 h-3" />
-              {employmentType}
-            </span>
-          </Chip>
+          <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
+            {employmentType}
+          </span>
         )}
-        {salaryRange && (
-          <Chip variant="success" size="sm">
-            <span className="flex items-center gap-1">
-              <DollarSign className="w-3 h-3" />
-              {salaryRange}
-            </span>
-          </Chip>
+        {locationType && (
+          <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">
+            {getLocationTypeIcon()} {locationType}
+          </span>
         )}
         {location && (
-          <Chip variant="warning" size="sm">
-            <span className="flex items-center gap-1">
-              <MapPin className="w-3 h-3" />
-              {location}
-            </span>
-          </Chip>
+          <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400">
+            {location}
+          </span>
         )}
-        <Chip variant="info" size="sm">
-          {status}
-        </Chip>
-        <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-          <Calendar className="w-3 h-3" />
-          {formatDate(dateApplied)}
+        {salaryRange && (
+          <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+            {salaryRange}
+          </span>
+        )}
+        <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+          {status} - {formatDate(dateApplied)}
         </span>
       </div>
+
+      {/* One-line truncated position */}
+      <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-1">
+        {position}
+      </p>
     </div>
   );
 

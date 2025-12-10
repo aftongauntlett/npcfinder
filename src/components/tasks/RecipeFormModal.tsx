@@ -314,40 +314,57 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
     >
       <form onSubmit={handleSubmit} className="p-6 space-y-5">
         {/* URL Input with Scraping */}
-        <div className="relative">
+        <div
+          className="border rounded-lg p-3"
+          style={{
+            backgroundColor: `${themeColor}10`,
+            borderColor: `${themeColor}40`,
+          }}
+        >
+          <label
+            htmlFor="recipe-url"
+            className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200 mb-2"
+          >
+            <Link className="w-4 h-4" />
+            Recipe URL (Optional)
+          </label>
           <Input
             id="recipe-url"
-            label="Recipe URL (Optional)"
             type="url"
             value={url}
             onChange={(e) => void handleUrlChange(e.target.value)}
             placeholder="Paste a recipe URL to auto-fill details..."
-            leftIcon={
+            leftIcon={<Link className="w-4 h-4" />}
+            rightIcon={
               urlLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Link className="w-4 h-4" />
-              )
+                <Loader2
+                  className="w-4 h-4 animate-spin"
+                  style={{ color: themeColor }}
+                />
+              ) : undefined
             }
           />
           {urlFeedback && (
             <div
-              className={`mt-2 flex items-start gap-2 text-sm ${
+              className={`mt-2 flex items-start gap-2 text-xs px-2 py-1.5 rounded ${
                 urlFeedback.type === "success"
-                  ? "text-green-600 dark:text-green-400"
+                  ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300"
                   : urlFeedback.type === "warning"
-                  ? "text-yellow-600 dark:text-yellow-400"
-                  : "text-red-600 dark:text-red-400"
+                  ? "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300"
+                  : "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300"
               }`}
             >
               {urlFeedback.type === "success" ? (
-                <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
               ) : (
-                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <AlertCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
               )}
               <span>{urlFeedback.message}</span>
             </div>
           )}
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Or fill in the details manually below
+          </p>
         </div>
 
         {/* Recipe Name */}
@@ -372,7 +389,7 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
 
         {/* Category */}
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label className="block text-sm font-bold text-primary">
             Category
           </label>
           <Dropdown
@@ -452,7 +469,6 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
           placeholder="Enter each ingredient on a new line..."
           rows={6}
           helperText="One ingredient per line"
-          textareaClassName="font-mono text-sm"
         />
 
         {/* Instructions */}
@@ -463,7 +479,6 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
           placeholder="Enter each step on a new line..."
           rows={8}
           helperText="One step per line"
-          textareaClassName="font-mono text-sm"
         />
 
         {/* Notes */}

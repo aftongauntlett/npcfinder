@@ -54,7 +54,7 @@ export function useGroceryListFiltering(
 
   // Separate purchased and need to buy
   const needToBuy = useMemo(() => {
-    let items = tasks.filter((t) => t.status !== "done");
+    let items = tasks.filter((t) => !t.completed_at);
 
     // Apply category filter
     if (categoryFilters.length > 0 && !categoryFilters.includes("all")) {
@@ -77,7 +77,7 @@ export function useGroceryListFiltering(
   }, [tasks, categoryFilters, sortBy]);
 
   const purchased = useMemo(
-    () => tasks.filter((t) => t.status === "done"),
+    () => tasks.filter((t) => !!t.completed_at),
     [tasks]
   );
 

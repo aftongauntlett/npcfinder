@@ -19,7 +19,6 @@ import { useUrlMetadata } from "../../hooks/useUrlMetadata";
 import { PRIORITY_OPTIONS } from "../../utils/taskConstants";
 import { Link, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { useTheme } from "../../hooks/useTheme";
-import { lightenColor, darkenColor } from "../../styles/colorThemes";
 import {
   applyJobMetadataToForm,
   applyRecipeMetadataToForm,
@@ -86,11 +85,11 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   const [employmentType, setEmploymentType] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [jobNotes, setJobNotes] = useState("");
-  const [status, setStatus] = useState("Applied");
 
   // Recipe specific fields
   const [recipeName, setRecipeName] = useState("");
   const [recipeUrl, setRecipeUrl] = useState("");
+  const [category, setCategory] = useState("");
   const [ingredients, setIngredients] = useState("");
   const [instructions, setInstructions] = useState("");
   const [prepTime, setPrepTime] = useState("");
@@ -266,18 +265,12 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         date_applied: getLocalDateString(),
         job_description: jobDescription || "",
         notes: jobNotes || "",
-        status: status,
-        status_history: [
-          {
-            status: status,
-            date: getLocalDateString(),
-          },
-        ],
       };
     } else if (boardType === "recipe") {
       item_data = {
         recipe_name: recipeName || title,
         name: recipeName || title,
+        category: category || "",
         description: description || "",
         ingredients: ingredients ? ingredients.split("\n").filter(Boolean) : [],
         instructions: instructions
@@ -351,6 +344,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
           // Reset recipe fields
           setRecipeName("");
           setRecipeUrl("");
+          setCategory("");
           setIngredients("");
           setInstructions("");
           setPrepTime("");
@@ -391,33 +385,30 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         {/* Quick Add from URL - Only for recipe boards (job tracker has it integrated below) */}
         {boardType === "recipe" && (
           <div
-            className="rounded-lg p-4"
+            className="border rounded-lg p-3"
             style={{
-              backgroundColor: lightenColor(themeColor, 0.9),
-              borderWidth: "1px",
-              borderStyle: "solid",
-              borderColor: lightenColor(themeColor, 0.6),
+              backgroundColor: `${themeColor}10`,
+              borderColor: `${themeColor}40`,
             }}
           >
             <label
               htmlFor="task-url"
-              className="flex items-center gap-2 text-sm font-medium mb-2"
-              style={{ color: darkenColor(themeColor, 0.4) }}
+              className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200 mb-2"
             >
               <Link className="w-4 h-4" />
-              Quick Add from URL (Optional)
+              Recipe URL (Optional)
             </label>
             <Input
               id="task-url"
               type="url"
               value={url}
               onChange={(e) => void handleUrlChange(e.target.value)}
-              placeholder="Paste a recipe URL..."
+              placeholder="Paste a recipe URL to auto-fill details..."
               leftIcon={<Link className="w-4 h-4" />}
               rightIcon={
                 urlLoading ? (
                   <Loader2
-                    className="w-5 h-5 animate-spin"
+                    className="w-4 h-4 animate-spin"
                     style={{ color: themeColor }}
                   />
                 ) : undefined
@@ -442,11 +433,8 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 <span>{urlFeedback.message}</span>
               </div>
             )}
-            <p
-              className="text-xs mt-2"
-              style={{ color: darkenColor(themeColor, 0.3) }}
-            >
-              Auto-fills title and details as soon as you paste a link
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Or fill in the details manually below
             </p>
           </div>
         )}
@@ -572,48 +560,21 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="San Francisco, CA"
               />
-              <Select
-                id="employment-type"
-                label="Employment Type"
-                value={employmentType}
-                onChange={(e) => setEmploymentType(e.target.value)}
-                placeholder="Select type"
-                options={[
-                  { value: "Full-time", label: "Full-time" },
-                  { value: "Part-time", label: "Part-time" },
-                  { value: "Contract", label: "Contract" },
-                  { value: "Internship", label: "Internship" },
-                  { value: "Remote", label: "Remote" },
-                ]}
-              />
-              <Select
-                id="status"
-                label="Status"
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                options={[
-                  { value: "Applied", label: "Applied" },
-                  { value: "Phone Screen", label: "Phone Screen" },
-                  {
-                    value: "Interview - Round 1",
-                    label: "Interview - Round 1",
-                  },
-                  {
-                    value: "Interview - Round 2",
-                    label: "Interview - Round 2",
-                  },
-                  {
-                    value: "Interview - Round 3",
-                    label: "Interview - Round 3",
-                  },
-                  { value: "Offer Received", label: "Offer Received" },
-                  { value: "Accepted", label: "Accepted" },
-                  { value: "Rejected", label: "Rejected" },
-                  { value: "Declined", label: "Declined" },
-                  { value: "No Response", label: "No Response" },
-                ]}
-              />
             </div>
+            <Select
+              id="employment-type"
+              label="Employment Type"
+              value={employmentType}
+              onChange={(e) => setEmploymentType(e.target.value)}
+              placeholder="Select type"
+              options={[
+                { value: "Full-time", label: "Full-time" },
+                { value: "Part-time", label: "Part-time" },
+                { value: "Contract", label: "Contract" },
+                { value: "Internship", label: "Internship" },
+                { value: "Remote", label: "Remote" },
+              ]}
+            />
             <Textarea
               id="job-description"
               label="Job Description"
@@ -637,10 +598,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
         {/* Recipe Specific Fields */}
         {boardType === "recipe" && (
-          <div className="space-y-4 border border-gray-300 dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-800/30">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-              Recipe Details
-            </h3>
+          <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input
                 id="recipe-name"
@@ -649,14 +607,6 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 value={recipeName}
                 onChange={(e) => setRecipeName(e.target.value)}
                 placeholder="Chocolate Chip Cookies"
-              />
-              <Input
-                id="recipe-url"
-                label="Source URL"
-                type="url"
-                value={recipeUrl}
-                onChange={(e) => setRecipeUrl(e.target.value)}
-                placeholder="https://recipe-site.com/..."
               />
               <Input
                 id="prep-time"
@@ -694,6 +644,34 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 placeholder="4"
               />
             </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Select
+                id="category"
+                label="Category"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                placeholder="Select a category..."
+                options={[
+                  { value: "Main", label: "Main" },
+                  { value: "Side", label: "Side" },
+                  { value: "Dessert", label: "Dessert" },
+                  { value: "Appetizer", label: "Appetizer" },
+                  { value: "Breakfast", label: "Breakfast" },
+                  { value: "Soup", label: "Soup" },
+                  { value: "Salad", label: "Salad" },
+                  { value: "Snack", label: "Snack" },
+                  { value: "Beverage", label: "Beverage" },
+                ]}
+              />
+              <Input
+                id="recipe-url-2"
+                label="Source URL (Optional)"
+                type="url"
+                value={recipeUrl}
+                onChange={(e) => setRecipeUrl(e.target.value)}
+                placeholder="https://recipe-site.com/..."
+              />
+            </div>
             <Textarea
               id="ingredients"
               label="Ingredients (one per line)"
@@ -718,6 +696,113 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               placeholder="Personal notes, modifications, etc."
               rows={2}
             />
+
+            {/* Timer Section */}
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
+              <div className="flex items-center gap-3">
+                <div
+                  className="relative flex-shrink-0 cursor-pointer"
+                  onClick={() => setHasTimer(!hasTimer)}
+                >
+                  <input
+                    type="checkbox"
+                    checked={hasTimer}
+                    onChange={() => {}}
+                    className="sr-only peer"
+                    tabIndex={-1}
+                  />
+                  <div
+                    className="w-11 h-6 bg-gray-300 dark:bg-gray-600 rounded-full peer transition-colors"
+                    style={hasTimer ? { backgroundColor: themeColor } : {}}
+                  ></div>
+                  <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    Add Timer
+                  </span>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Set a countdown timer for this recipe
+                  </p>
+                </div>
+              </div>
+
+              {/* Timer Duration - Show only if timer enabled */}
+              {hasTimer && (
+                <div className="pt-2 space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Duration
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        min={1}
+                        max={timerUnit === "hours" ? 24 : 1440}
+                        value={timerDuration}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === "") {
+                            setTimerDuration(0);
+                            return;
+                          }
+                          const numVal = parseInt(val);
+                          const max = timerUnit === "hours" ? 24 : 1440;
+                          setTimerDuration(Math.min(max, numVal));
+                        }}
+                        onBlur={(e) => {
+                          const val = parseInt(e.target.value);
+                          if (isNaN(val) || val < 1) {
+                            setTimerDuration(1);
+                          }
+                        }}
+                        placeholder="30"
+                        className="hide-number-spinner flex-1 block rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                      />
+                      <div className="w-32">
+                        <Select
+                          id="timer-unit-recipe"
+                          value={timerUnit}
+                          onChange={(e) => {
+                            setTimerUnit(e.target.value as "minutes" | "hours");
+                            if (e.target.value === "hours") {
+                              setTimerDuration(
+                                Math.min(24, Math.ceil(timerDuration / 60))
+                              );
+                            } else {
+                              setTimerDuration(
+                                Math.min(1440, timerDuration * 60)
+                              );
+                            }
+                          }}
+                          options={[
+                            { value: "minutes", label: "Minutes" },
+                            { value: "hours", label: "Hours" },
+                          ]}
+                          size="sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Mark as Urgent */}
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isUrgentAfterTimer}
+                      onChange={(e) => setIsUrgentAfterTimer(e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 checked:bg-current focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 cursor-pointer"
+                      style={{
+                        accentColor: isUrgentAfterTimer ? themeColor : undefined,
+                      }}
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      Mark as urgent when timer completes
+                    </span>
+                  </label>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -727,7 +812,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
           <div className="space-y-5">
             {/* Priority */}
             <div>
-              <label className="block text-sm font-medium text-primary mb-2.5">
+              <label className="block text-sm font-bold text-primary mb-2.5">
                 Priority
               </label>
               <div className="grid grid-cols-3 gap-2">
@@ -756,9 +841,9 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
             <div>
               <label
                 htmlFor="task-due-date"
-                className="block text-sm font-medium text-primary mb-2.5"
+                className="block text-sm font-bold text-primary mb-2.5"
               >
-                Due Date
+                {isRepeatable ? "Date *" : "Due Date"}
               </label>
               <div className="flex gap-2">
                 <button
@@ -855,7 +940,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                   />
                   {!dueDate && (
                     <p className="text-xs text-red-500 dark:text-red-400 mt-1">
-                      ⚠️ Due date required for repeatable tasks
+                      ⚠️ Date required for repeatable tasks
                     </p>
                   )}
                 </div>
