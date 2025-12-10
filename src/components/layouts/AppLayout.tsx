@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { X, Menu, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import MainLayout from "./MainLayout";
@@ -13,6 +13,144 @@ interface Tab {
   panelId?: string; // Optional explicit panel ID for aria-controls
   closeable?: boolean; // Can this tab be closed?
 }
+
+/**
+ * MobileTabSelector - Memoized mobile tab dropdown component
+ * 
+ * Handles its own open/close state to avoid causing re-renders of parent layout.
+ * Uses proper tab ARIA semantics matching desktop implementation.
+ */
+interface MobileTabSelectorProps {
+  tabs: Tab[];
+  activeTabId: string | undefined;
+  onTabChange: (tabId: string) => void;
+}
+
+const MobileTabSelector = React.memo<MobileTabSelectorProps>(
+  ({ tabs, activeTabId, onTabChange }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    const handleTabClick = useCallback(
+      (tabId: string) => {
+        onTabChange(tabId);
+        setIsOpen(false);
+      },
+      [onTabChange]
+    );
+
+    const handleToggle = useCallback(() => {
+      setIsOpen((prev) => !prev);
+    }, []);
+
+    // Close mobile menu on click outside
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (
+          menuRef.current &&
+          !menuRef.current.contains(event.target as Node)
+        ) {
+          setIsOpen(false);
+        }
+      };
+
+      if (isOpen) {
+        document.addEventListener("mousedown", handleClickOutside);
+      }
+
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }, [isOpen]);
+
+    // Close on Escape key
+    useEffect(() => {
+      const handleEscape = (event: KeyboardEvent) => {
+        if (event.key === "Escape") {
+          setIsOpen(false);
+        }
+      };
+
+      if (isOpen) {
+        document.addEventListener("keydown", handleEscape);
+      }
+
+      return () => {
+        document.removeEventListener("keydown", handleEscape);
+      };
+    }, [isOpen]);
+
+    const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0];
+    const activeBadgeText =
+      activeTab?.badge !== undefined && activeTab.badge > 0
+        ? ` (${activeTab.badge})`
+        : "";
+
+    return (
+      <div ref={menuRef} className="sm:hidden mb-6 relative">
+        <button
+          onClick={handleToggle}
+          className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-base font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+            isOpen
+              ? "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
+              : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+          }`}
+          aria-label="Select tab"
+          aria-expanded={isOpen}
+        >
+          <span>
+            {activeTab?.label}
+            {activeBadgeText}
+          </span>
+          <Check
+            className={`w-5 h-5 transition-opacity ${
+              isOpen ? "opacity-100" : "opacity-0"
+            }`}
+          />
+        </button>
+
+        {/* Dropdown Menu with proper tab semantics */}
+        {isOpen && (
+          <div
+            className="absolute left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 max-h-[400px] overflow-y-auto"
+            role="tablist"
+            aria-label="Mobile tab navigation"
+          >
+            {tabs.map((tab) => {
+              const isActive = activeTabId === tab.id;
+              const panelId = tab.panelId || `${tab.id}-panel`;
+              const badgeText =
+                tab.badge !== undefined && tab.badge > 0
+                  ? ` (${tab.badge})`
+                  : "";
+
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabClick(tab.id)}
+                  className={`w-full flex items-center justify-between px-4 py-3 text-base transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                    isActive
+                      ? "bg-primary/10 text-primary font-medium"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  }`}
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-controls={panelId}
+                >
+                  <span>
+                    {tab.label}
+                    {badgeText}
+                  </span>
+                  {isActive && <Check className="w-5 h-5 text-primary" />}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+);
 
 interface AppLayoutProps {
   title: string;
@@ -47,8 +185,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   const activeTabRef = useRef<HTMLButtonElement>(null);
   const prevActiveTabRef = useRef<string | undefined>(activeTab);
   const { toggleSidebar } = useSidebar();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   // Scroll active tab into view and flash when it changes (especially for board tabs)
   useEffect(() => {
@@ -92,43 +228,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({
     // Focus will be handled by React re-render with updated tabIndex
   };
 
-  // Close mobile menu on click outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        mobileMenuRef.current &&
-        !mobileMenuRef.current.contains(event.target as Node)
-      ) {
-        setIsMobileMenuOpen(false);
-      }
-    };
-
-    if (isMobileMenuOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isMobileMenuOpen]);
-
-  // Close on Escape key
-  useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setIsMobileMenuOpen(false);
-      }
-    };
-
-    if (isMobileMenuOpen) {
-      document.addEventListener("keydown", handleEscape);
-    }
-
-    return () => {
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [isMobileMenuOpen]);
-
   return (
     <MainLayout>
       <main
@@ -166,69 +265,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({
             {/* Tabs Navigation */}
             {tabs && tabs.length > 0 && (
               <>
-                {/* Mobile Tab Dropdown - Matches FilterSortMenu style */}
-                <div ref={mobileMenuRef} className="sm:hidden mb-6 relative">
-                  <button
-                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-base font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                      isMobileMenuOpen
-                        ? "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
-                        : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-                    }`}
-                    aria-label="Select tab"
-                    aria-expanded={isMobileMenuOpen}
-                  >
-                    <span>
-                      {tabs.find((t) => t.id === activeTab)?.label ||
-                        tabs[0]?.label}
-                      {(() => {
-                        const tab =
-                          tabs.find((t) => t.id === activeTab) || tabs[0];
-                        return tab?.badge !== undefined && tab.badge > 0
-                          ? ` (${tab.badge})`
-                          : "";
-                      })()}
-                    </span>
-                    <Check
-                      className={`w-5 h-5 transition-opacity ${
-                        isMobileMenuOpen ? "opacity-100" : "opacity-0"
-                      }`}
-                    />
-                  </button>
-
-                  {/* Dropdown Menu */}
-                  {isMobileMenuOpen && (
-                    <div className="absolute left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 max-h-[400px] overflow-y-auto">
-                      {tabs.map((tab) => {
-                        const isActive = activeTab === tab.id;
-                        return (
-                          <button
-                            key={tab.id}
-                            onClick={() => {
-                              onTabChange?.(tab.id);
-                              setIsMobileMenuOpen(false);
-                            }}
-                            className={`w-full flex items-center justify-between px-4 py-3 text-base transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                              isActive
-                                ? "bg-primary/10 text-primary font-medium"
-                                : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                            }`}
-                          >
-                            <span>
-                              {tab.label}
-                              {tab.badge !== undefined && tab.badge > 0
-                                ? ` (${tab.badge})`
-                                : ""}
-                            </span>
-                            {isActive && (
-                              <Check className="w-5 h-5 text-primary" />
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+                {/* Mobile Tab Dropdown - Uses memoized component */}
+                <MobileTabSelector
+                  tabs={tabs}
+                  activeTabId={activeTab}
+                  onTabChange={onTabChange!}
+                />
 
                 {/* Desktop Tabs */}
                 <nav
