@@ -427,6 +427,26 @@ export function useArchivedTasks() {
 }
 
 /**
+ * Get count of unassigned tasks (inbox)
+ * Lightweight query that only fetches count, not full task data
+ */
+export function useUnassignedTasksCount() {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: [...queryKeys.tasks.boardTasks(null), { count: true }],
+    queryFn: async () => {
+      const { data, error } = await tasksService.getUnassignedTasksCount();
+      if (error) throw error;
+      return data || 0;
+    },
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 30,
+    enabled: !!user,
+  });
+}
+
+/**
  * Create a new task
  */
 export function useCreateTask() {

@@ -29,8 +29,9 @@ import RecipeFormModal from "../../tasks/RecipeFormModal";
 import TaskDetailModal from "../../tasks/TaskDetailModal";
 import {
   useBoards,
-  useTasks,
   useSharedBoards,
+  useTask,
+  useUnassignedTasksCount,
 } from "../../../hooks/useTasksQueries";
 import { useBoardTemplates } from "../../../hooks/useBoardTemplates";
 import { useAllSingletonBoards } from "../../../hooks/useSingletonBoard";
@@ -63,12 +64,10 @@ const TasksPage: React.FC = () => {
   const { data: sharedBoards = [] } = useSharedBoards() as {
     data: BoardWithStats[];
   };
-  // Fetch ALL tasks so we can find job tracker and recipe tasks for editing
-  const { data: allTasks = [] } = useTasks();
-  // Fetch unassigned tasks for the badge count
-  const { data: unassignedTasks = [] } = useTasks(undefined, {
-    unassigned: true,
-  });
+  // Fetch specific task when editing (lazy-loaded only when needed)
+  const { data: editingTask = null } = useTask(editingTaskId);
+  // Fetch unassigned tasks count for badge (lightweight count-only query)
+  const { data: unassignedTasksCount = 0 } = useUnassignedTasksCount();
 
   // Get singleton board IDs for job_tracker, recipe, and grocery
   const { jobBoardId, recipeBoardId, groceryBoardId } = useAllSingletonBoards();
@@ -84,12 +83,6 @@ const TasksPage: React.FC = () => {
     recipeTaskCount,
     jobTaskCount,
   } = useBoardTemplates(boards, sharedBoards);
-
-  // Find task being edited
-  const editingTask = useMemo(() => {
-    if (!editingTaskId) return null;
-    return allTasks.find((t) => t.id === editingTaskId) || null;
-  }, [editingTaskId, allTasks]);
 
   // Find board for the editing task
   const editingTaskBoard = useMemo(() => {
@@ -128,7 +121,7 @@ const TasksPage: React.FC = () => {
         id: "tasks",
         label: "Tasks",
         icon: ListTodo,
-        badge: unassignedTasks.length > 0 ? unassignedTasks.length : undefined,
+        badge: unassignedTasksCount > 0 ? unassignedTasksCount : undefined,
       },
       {
         id: "kanban",
@@ -156,7 +149,7 @@ const TasksPage: React.FC = () => {
       },
     ];
   }, [
-    unassignedTasks.length,
+    unassignedTasksCount,
     kanbanBoards.length,
     groceryTaskCount,
     recipeTaskCount,

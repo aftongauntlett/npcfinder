@@ -550,6 +550,33 @@ export async function getTodayTasks(): Promise<ServiceResponse<Task[]>> {
 }
 
 /**
+ * Get count of unassigned tasks (inbox)
+ * SECURITY: Explicitly filters by user_id for defense-in-depth
+ */
+export async function getUnassignedTasksCount(): Promise<
+  ServiceResponse<number>
+> {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
+    const { count, error } = await supabase
+      .from("tasks")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .is("board_id", null);
+
+    if (error) throw error;
+    return { data: count || 0, error: null };
+  } catch (error) {
+    logger.error("Failed to fetch unassigned tasks count", error);
+    return { data: null, error: error as Error };
+  }
+}
+
+/**
  * Fetch archived tasks
  * SECURITY: Explicitly filters by user_id for defense-in-depth
  */
