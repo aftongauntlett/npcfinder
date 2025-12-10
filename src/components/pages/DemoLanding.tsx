@@ -1,5 +1,5 @@
 import React from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   GithubLogoIcon,
   Lock,
@@ -62,6 +62,7 @@ const pageMetaOptions = {
  */
 const DemoLanding: React.FC = () => {
   usePageMeta(pageMetaOptions);
+  const prefersReducedMotion = useReducedMotion();
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
       {/* Structured Data for Search Engines */}
@@ -170,10 +171,10 @@ const DemoLanding: React.FC = () => {
         <motion.section
           id="features"
           className="max-w-7xl mx-auto px-6 py-32"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={prefersReducedMotion ? undefined : { opacity: 0 }}
+          whileInView={prefersReducedMotion ? undefined : { opacity: 1 }}
           viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
         >
           <div className="mb-16">
             <h3 className="text-4xl font-bold mb-3 tracking-tight">
@@ -203,10 +204,10 @@ const DemoLanding: React.FC = () => {
         {/* Why Privacy Matters Section */}
         <motion.section
           className="max-w-7xl mx-auto px-6 py-32"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={prefersReducedMotion ? undefined : { opacity: 0 }}
+          whileInView={prefersReducedMotion ? undefined : { opacity: 1 }}
           viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
         >
           <div className="mb-12">
             <h3 className="text-4xl font-bold mb-3 tracking-tight">
@@ -235,10 +236,10 @@ const DemoLanding: React.FC = () => {
         <motion.section
           id="technical-details"
           className="max-w-7xl mx-auto px-6 py-32"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={prefersReducedMotion ? undefined : { opacity: 0 }}
+          whileInView={prefersReducedMotion ? undefined : { opacity: 1 }}
           viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
         >
           <div className="mb-12">
             <h3 className="text-4xl font-bold mb-3 tracking-tight">
@@ -297,10 +298,10 @@ const DemoLanding: React.FC = () => {
         <motion.section
           id="roadmap"
           className="max-w-7xl mx-auto px-6 py-32"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={prefersReducedMotion ? undefined : { opacity: 0 }}
+          whileInView={prefersReducedMotion ? undefined : { opacity: 1 }}
           viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
         >
           <div className="mb-12">
             <h3 className="text-4xl font-bold mb-6 tracking-tight">
@@ -359,10 +360,10 @@ const DemoLanding: React.FC = () => {
         <motion.section
           id="availability"
           className="max-w-7xl mx-auto px-6 py-32"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={prefersReducedMotion ? undefined : { opacity: 0 }}
+          whileInView={prefersReducedMotion ? undefined : { opacity: 1 }}
           viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
         >
           <div className="mb-12">
             <h3 className="text-4xl font-bold mb-3 tracking-tight">
@@ -437,31 +438,15 @@ const DemoLanding: React.FC = () => {
               </div>
             </div>
           </div>
-
-          {/* Developer Documentation Link */}
-          <div className="mt-8">
-            <p className="text-gray-400">
-              For detailed setup instructions and developer documentation, visit
-              our{" "}
-              <a
-                href="/docs"
-                style={{ color: LANDING_PEACH }}
-                className="hover:opacity-80 underline transition-opacity"
-              >
-                Developer Guide
-              </a>
-              .
-            </p>
-          </div>
         </motion.section>
 
         {/* Open Source & Self-Hostable Section */}
         <motion.section
           className="max-w-4xl mx-auto px-6 py-32 text-center"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={prefersReducedMotion ? undefined : { opacity: 0 }}
+          whileInView={prefersReducedMotion ? undefined : { opacity: 1 }}
           viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
         >
           <h3 className="text-4xl font-bold mb-6 tracking-tight">
             Open Source & Self-Hostable
@@ -488,8 +473,11 @@ const DemoLanding: React.FC = () => {
             >
               View Source Code
             </LandingButton>
-            <LandingButton href="/docs" variant="primary">
-              Developer Setup Guide
+            <LandingButton 
+              href="https://github.com/aftongauntlett/npcfinder/blob/main/docs/QUICK-START.md"
+              variant="primary"
+            >
+              Setup Guide
             </LandingButton>
           </div>
         </motion.section>

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useTheme } from "../../../hooks/useTheme";
 
 const STAR_COUNT = 18;
 
@@ -21,7 +20,7 @@ interface StarProps {
   shadowColor?: string;
 }
 
-const Star: React.FC<StarProps> = ({
+const Star = React.memo<StarProps>(({
   x,
   y,
   size,
@@ -77,7 +76,7 @@ const Star: React.FC<StarProps> = ({
       },
     }}
   />
-);
+));
 
 interface StarData {
   key: number;
@@ -115,8 +114,11 @@ const generateStars = (): StarData[] => {
 // Generate stars once and reuse
 const stars = generateStars();
 
+/**
+ * StarryBackground - Animated starfield for dark mode UI
+ * Shows twinkling, drifting stars with reduced motion support
+ */
 const StarryBackground = React.memo(function StarryBackground() {
-  const { resolvedTheme } = useTheme();
   const [reducedMotion, setReducedMotion] = useState(false);
 
   // Check prefers-reduced-motion
@@ -130,8 +132,8 @@ const StarryBackground = React.memo(function StarryBackground() {
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
-  // Only show stars in dark mode AND if motion not reduced
-  if (resolvedTheme !== "dark" || reducedMotion) {
+  // Hide stars if user prefers reduced motion
+  if (reducedMotion) {
     return null;
   }
 

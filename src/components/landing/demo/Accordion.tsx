@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { CaretDown, type Icon } from "@phosphor-icons/react";
 import {
   LANDING_TEAL,
@@ -32,6 +32,7 @@ export default function Accordion({
 }: AccordionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [isHovered, setIsHovered] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
 
   // Brand colors for hover effect - memoize to prevent recalculation
   const hoverColor = useMemo(
@@ -94,15 +95,14 @@ export default function Accordion({
       <AnimatePresence initial={false}>
         {isOpen && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+            initial={prefersReducedMotion ? undefined : { height: 0, opacity: 0 }}
+            animate={prefersReducedMotion ? undefined : { height: "auto", opacity: 1 }}
+            exit={prefersReducedMotion ? undefined : { height: 0, opacity: 0 }}
+            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
             className="overflow-hidden"
             id={panelId}
             role="region"
             aria-labelledby={headerId}
-            style={{ willChange: "height, opacity" }}
           >
             <div className="px-5 pb-5 pt-4 text-gray-300 text-sm leading-relaxed border-t border-white/5">
               {items ? (

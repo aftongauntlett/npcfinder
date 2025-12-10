@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import type { Icon } from "@phosphor-icons/react";
 import { hexToRgb } from "../../../data/landingTheme";
 
@@ -29,9 +29,7 @@ export const FeatureBlock: React.FC<FeatureBlockProps> = ({
   }, [iconColor]);
 
   // Check for reduced motion preference
-  const prefersReducedMotion =
-    typeof window !== "undefined" &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const prefersReducedMotion = useReducedMotion();
 
   return (
     <article

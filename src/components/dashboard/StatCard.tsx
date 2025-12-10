@@ -103,9 +103,8 @@ const StatCardComponent: React.FC<StatCardProps> = ({
   return (
     <motion.div
       className={`group relative p-6 rounded-lg bg-white dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/30 ${colors.border} hover:shadow-lg ${colors.shadow} transition-all duration-300 text-center`}
-      initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
+      transition={{ duration: 0.3 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

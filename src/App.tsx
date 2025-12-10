@@ -1,7 +1,6 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import DemoLanding from "./components/pages/DemoLanding";
-import DeveloperDocs from "./components/pages/DeveloperDocs";
 import AuthPage from "./components/pages/AuthPage";
 import ForgotPassword from "./components/pages/ForgotPassword";
 import ResetPassword from "./components/pages/ResetPassword";
@@ -71,7 +70,6 @@ const App: React.FC = () => {
           <Routes>
             {/* Public routes - NO AUTH REQUIRED */}
             <Route path="/" element={<DemoLanding />} />
-            <Route path="/docs" element={<DeveloperDocs />} />
 
             {/* All authenticated routes wrapped in AuthProvider */}
             <Route

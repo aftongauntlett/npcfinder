@@ -95,7 +95,7 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
   };
 
   return (
-    <motion.div
+    <div
       onClick={handleCardClick}
       onKeyDown={handleKeyDown}
       tabIndex={0}
@@ -219,10 +219,8 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
       {/* Expanded Content */}
       {isExpanded && (
         <motion.div
-          initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.15 }}
+          transition={{ duration: 0.1 }}
           className="px-4 pb-4 pt-3"
           data-expanded-content
         >
@@ -237,7 +235,7 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
           {expandedContent}
         </motion.div>
       )}
-    </motion.div>
+    </div>
   );
 };
 

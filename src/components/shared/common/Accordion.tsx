@@ -104,7 +104,7 @@ export default function Accordion({
             transition={
               prefersReducedMotion
                 ? { duration: 0 }
-                : { duration: 0.2, ease: "easeInOut" }
+                : { duration: 0.15, ease: "easeInOut" }
             }
             className="overflow-hidden border-x border-b border-gray-200 dark:border-gray-700 rounded-b-lg"
           >

@@ -1,5 +1,5 @@
 import { useState, type ReactNode, type ElementType } from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import type { Icon } from "@phosphor-icons/react";
 
 interface ModernCardProps {
@@ -28,6 +28,7 @@ export default function ModernCard({
   const Component = as;
   const isInteractive = !!onClick;
   const [isHovered, setIsHovered] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
 
   return (
     <Component
@@ -36,14 +37,13 @@ export default function ModernCard({
         className={`relative bg-slate-800/40 border border-white/10 rounded-lg overflow-hidden transform-gpu ${
           isInteractive ? "cursor-pointer" : ""
         } ${variant === "compact" ? "p-4" : "p-5"}`}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        whileHover={{
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        whileHover={prefersReducedMotion ? undefined : {
           backgroundColor: "rgba(30, 41, 59, 0.6)",
           boxShadow: `0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), -4px 0 12px -2px ${iconColor}40`,
         }}
-        whileTap={isInteractive ? { scale: 0.98 } : undefined}
+        whileTap={isInteractive && !prefersReducedMotion ? { scale: 0.98 } : undefined}
         onClick={onClick}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -67,9 +67,8 @@ export default function ModernCard({
         <motion.div
           className="absolute left-0 top-0 bottom-0 w-1 origin-bottom"
           style={{ backgroundColor: iconColor }}
-          initial={{ scaleY: 0 }}
-          animate={{ scaleY: isHovered ? 1 : 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
+          animate={{ scaleY: prefersReducedMotion ? (isHovered ? 1 : 0) : (isHovered ? 1 : 0) }}
+          transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.3, ease: "easeOut" }}
         />
 
         {/* Content */}
@@ -84,8 +83,8 @@ export default function ModernCard({
               }}
             >
               <motion.div
-                whileHover={{ scale: 1.1 }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
+                whileHover={prefersReducedMotion ? undefined : { scale: 1.1 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
               >
                 <Icon
                   className="w-6 h-6"
