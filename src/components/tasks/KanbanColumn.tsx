@@ -273,9 +273,7 @@ export default React.memo(
     prevProps.section.name === nextProps.section.name &&
     prevProps.tasks.length === nextProps.tasks.length &&
     prevProps.tasks.every(
-      (task, i) =>
-        task.id === nextProps.tasks[i]?.id &&
-        task.status === nextProps.tasks[i]?.status
+      (task, i) => task.id === nextProps.tasks[i]?.id
     ) &&
     prevProps.onDragStart === nextProps.onDragStart &&
     prevProps.onDragEnd === nextProps.onDragEnd &&

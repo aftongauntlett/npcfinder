@@ -19,7 +19,8 @@ interface ToastProps {
     onClick: () => void;
   };
   onClose: () => void;
-  duration?: number;
+  duration?: number; // Use 0 or undefined to disable auto-dismiss (requires explicit close)
+  persistent?: boolean; // If true, requires explicit user acknowledgment
 }
 
 const Toast: React.FC<ToastProps> = ({
@@ -27,14 +28,20 @@ const Toast: React.FC<ToastProps> = ({
   action,
   onClose,
   duration = 5000,
+  persistent = false,
 }) => {
   useEffect(() => {
+    // Don't auto-dismiss persistent toasts
+    if (persistent || duration === 0) {
+      return;
+    }
+
     const timer = setTimeout(() => {
       onClose();
     }, duration);
 
     return () => clearTimeout(timer);
-  }, [duration, onClose]);
+  }, [duration, onClose, persistent]);
 
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-slide-up">

@@ -11,6 +11,7 @@
 import { supabase } from "../lib/supabase";
 import { logger } from "../lib/logger";
 import { getBoardTemplateType } from "../utils/taskConstants";
+import { getNextOccurrenceDate } from "../utils/taskHelpers";
 import { CreateBoardSchema, validateInput } from "./tasksService.validation";
 import type {
   Board,
@@ -124,8 +125,6 @@ export async function createBoard(
     const validatedData = validateInput(CreateBoardSchema, {
       title: boardData.name,
       description: boardData.description,
-      color: boardData.color,
-      icon: boardData.icon,
       is_template: boardData.is_public,
       category: boardData.board_type,
     });
@@ -161,8 +160,6 @@ export async function createBoard(
         user_id: user.id,
         name: validatedData.title,
         description: validatedData.description || null,
-        icon: validatedData.icon || null,
-        color: validatedData.color || "#9333ea",
         is_public: boardData.is_public || false,
         board_type: boardType,
         template_type: templateType,
@@ -715,6 +712,69 @@ export async function deleteTask(
 }
 
 /**
+ * Complete a repeatable task and reschedule it
+ * Marks the task as done and updates the date to the next occurrence
+ * 
+ * NOTE: This service method implements repeatable completion logic that differs from the
+ * client-side implementation in src/components/pages/tasks/InboxView.tsx.
+ * - This service: Uses getNextOccurrenceDate() from taskHelpers and returns ISO string
+ * - InboxView: Uses getNextDueDate() from repeatableTaskHelpers and returns YYYY-MM-DD
+ * 
+ * TODO: Standardize on a single source of truth for repeatable task completion behavior.
+ * Either migrate all client code to use this service method, or remove this service helper
+ * and keep the existing client-side approach. Ensure consistent use of date helpers and
+ * format (YYYY-MM-DD vs ISO strings) across the codebase.
+ */
+export async function completeRepeatableTask(
+  taskId: string
+): Promise<ServiceResponse<Task>> {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
+    // First, get the current task
+    const { data: task, error: fetchError } = await supabase
+      .from("tasks")
+      .select("*")
+      .eq("id", taskId)
+      .eq("user_id", user.id)
+      .single();
+
+    if (fetchError || !task) throw fetchError || new Error("Task not found");
+
+    if (!task.is_repeatable || !task.repeat_frequency || !task.due_date) {
+      throw new Error("Task is not repeatable");
+    }
+
+    // Calculate next occurrence
+    const nextDate = getNextOccurrenceDate(
+      task.due_date,
+      task.repeat_frequency as "daily" | "weekly" | "biweekly" | "monthly" | "yearly" | "custom"
+    );
+
+    // Update task: reset to todo status and update date to next occurrence
+    const { data, error } = await supabase
+      .from("tasks")
+      .update({
+        status: "todo",
+        due_date: nextDate.toISOString(),
+      })
+      .eq("id", taskId)
+      .eq("user_id", user.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    logger.error(`Failed to complete repeatable task ${taskId}`, error);
+    return { data: null, error: error as Error };
+  }
+}
+
+/**
  * Move task to a different section
  */
 export async function moveTask(
@@ -885,8 +945,6 @@ export async function createStarterBoards(): Promise<ServiceResponse<Board[]>> {
       {
         name: "Job Applications",
         description: "Track your job search and application progress",
-        icon: "Briefcase",
-        color: "#3b82f6",
         board_type: "job_tracker",
         template_type: "job_tracker",
         field_config: { starter: true },
@@ -894,8 +952,6 @@ export async function createStarterBoards(): Promise<ServiceResponse<Board[]>> {
       {
         name: "Recipe Collection",
         description: "Save and organize your favorite recipes",
-        icon: "ChefHat",
-        color: "#f59e0b",
         board_type: "list",
         template_type: "recipe",
         field_config: { starter: true },
@@ -944,18 +1000,21 @@ export async function ensureStarterBoards(): Promise<
 /**
  * Start a timer for a task
  * FIELD ISOLATION: Only touches timer_* fields, does not affect other task properties
+ * 
+ * @param startTime - Optional custom start time for resuming paused timers
  */
 export async function startTaskTimer(
   taskId: string,
   durationMinutes: number,
-  isUrgentAfter = false
+  isUrgentAfter = false,
+  startTime?: string
 ): Promise<ServiceResponse<Task>> {
   try {
     const { data, error } = await supabase
       .from("tasks")
       .update({
         timer_duration_minutes: durationMinutes,
-        timer_started_at: new Date().toISOString(),
+        timer_started_at: startTime || new Date().toISOString(),
         timer_completed_at: null, // Reset completion if restarting timer
         is_urgent_after_timer: isUrgentAfter,
       })
@@ -973,7 +1032,10 @@ export async function startTaskTimer(
 
 /**
  * Complete a task timer
- * FIELD ISOLATION: Only touches timer_completed_at, does not affect other task properties
+ * FIELD ISOLATION: Only touches timer_completed_at
+ * 
+ * This marks the timer as completed when it naturally expires.
+ * Pause is handled entirely in the frontend as local UI state.
  */
 export async function completeTaskTimer(
   taskId: string
@@ -992,6 +1054,31 @@ export async function completeTaskTimer(
     return { data, error: null };
   } catch (error) {
     logger.error(`Failed to complete timer for task ${taskId}`, error);
+    return { data: null, error: error as Error };
+  }
+}
+
+/**
+ * Reset task timer (clear all timer state)
+ */
+export async function resetTaskTimer(
+  taskId: string
+): Promise<ServiceResponse<Task>> {
+  try {
+    const { data, error } = await supabase
+      .from("tasks")
+      .update({
+        timer_started_at: null,
+        timer_completed_at: null,
+      })
+      .eq("id", taskId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    logger.error(`Failed to reset timer for task ${taskId}`, error);
     return { data: null, error: error as Error };
   }
 }

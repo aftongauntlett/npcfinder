@@ -45,17 +45,21 @@ export function formatTimerDuration(seconds: number): string {
 
 /**
  * Get the current status of a task timer
+ * 
+ * NOTE: Pause is now handled entirely in the frontend as local UI state.
+ * The database only tracks: timer_duration_minutes, timer_started_at, timer_completed_at
  */
 export function getTimerStatus(task: Task): TimerStatus {
   if (!task.timer_started_at) {
     return TIMER_STATUS.NOT_STARTED;
   }
 
+  // Check if timer has been marked as completed
   if (task.timer_completed_at) {
     return TIMER_STATUS.COMPLETED;
   }
 
-  // Check if timer has naturally expired
+  // Check if timer has naturally expired (reached zero)
   if (
     task.timer_duration_minutes &&
     calculateRemainingTime(

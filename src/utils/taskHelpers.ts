@@ -12,6 +12,10 @@ import {
   isThisWeek,
   isThisMonth,
   isYesterday,
+  addDays,
+  addWeeks,
+  addMonths,
+  addYears,
 } from "date-fns";
 import type { Task, BoardSection } from "../services/tasksService.types";
 import { PRIORITY_CONFIG, STATUS_CONFIG } from "./taskConstants";
@@ -354,4 +358,45 @@ export function isRecipeTask(task: Task): boolean {
     task.item_data?.name !== undefined ||
     task.item_data?.ingredients !== undefined
   );
+}
+
+// =====================================================
+// REPEATABLE TASK HELPERS
+// =====================================================
+
+/**
+ * Calculate the next occurrence date for a repeatable task
+ */
+export function getNextOccurrenceDate(
+  currentDate: string,
+  frequency: "daily" | "weekly" | "biweekly" | "monthly" | "yearly" | "custom"
+): Date {
+  const date = new Date(currentDate);
+
+  switch (frequency) {
+    case "daily":
+      return addDays(date, 1);
+    case "weekly":
+      return addWeeks(date, 1);
+    case "biweekly":
+      return addWeeks(date, 2);
+    case "monthly":
+      return addMonths(date, 1);
+    case "yearly":
+      return addYears(date, 1);
+    case "custom":
+      return addWeeks(date, 1); // Default to weekly for custom
+    default:
+      return addWeeks(date, 1);
+  }
+}
+
+/**
+ * Check if a repeatable task is overdue (past its date and not marked complete)
+ */
+export function isRepeatableTaskOverdue(task: Task): boolean {
+  if (!task.is_repeatable || !task.due_date || task.status === "done") {
+    return false;
+  }
+  return isOverdue(task.due_date);
 }

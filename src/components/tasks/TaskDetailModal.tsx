@@ -19,7 +19,6 @@ import ConfirmationModal from "../shared/ui/ConfirmationModal";
 import { useTheme } from "../../hooks/useTheme";
 import JobTaskSection from "./JobTaskSection";
 import RecipeTaskSection from "./RecipeTaskSection";
-import TaskTimerSection from "./TaskTimerSection";
 import type { Task } from "../../services/tasksService.types";
 import {
   useTask,
@@ -27,7 +26,7 @@ import {
   useDeleteTask,
   useTasks,
 } from "../../hooks/useTasksQueries";
-import { PRIORITY_OPTIONS, STATUS_OPTIONS } from "../../utils/taskConstants";
+import { PRIORITY_OPTIONS } from "../../utils/taskConstants";
 import { useTaskFormState } from "../../hooks/tasks/useTaskFormState";
 import { isJobTrackerTask, isRecipeTask } from "../../utils/taskHelpers";
 
@@ -52,8 +51,6 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     setTitle,
     description,
     setDescription,
-    status,
-    setStatus,
     priority,
     setPriority,
     dueDate,
@@ -209,7 +206,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     const updates: Partial<Task> = {
       ...baseUpdates,
       item_data,
-      is_repeatable: isRepeatable || undefined,
+      is_repeatable: isRepeatable,
       repeat_frequency: isRepeatable ? repeatFrequency : null,
       timer_duration_minutes: hasTimer
         ? timerUnit === "hours"
@@ -306,40 +303,21 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             <RecipeTaskSection
               task={task}
               onBuildItemData={handleRecipeItemDataBuilder}
+              hasTimer={hasTimer}
+              setHasTimer={setHasTimer}
+              timerDuration={timerDuration}
+              setTimerDuration={setTimerDuration}
+              timerUnit={timerUnit}
+              setTimerUnit={setTimerUnit}
+              isUrgentAfterTimer={isUrgentAfterTimer}
+              setIsUrgentAfterTimer={setIsUrgentAfterTimer}
             />
           )}
 
-          {/* Status - Hidden for job tracker */}
-          {!isJobTracker && (
+          {/* Priority - Hidden for job tracker and recipes */}
+          {!isJobTracker && !isRecipe && (
             <div>
-              <label className="block text-sm font-medium text-primary mb-2.5">
-                Status
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {STATUS_OPTIONS.filter((s) => s.value !== "archived").map(
-                  (option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => setStatus(option.value)}
-                      className={`px-3 py-2 rounded-lg border-2 transition-all text-sm ${
-                        status === option.value
-                          ? `${option.bg} ${option.color} border-current`
-                          : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300"
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  )
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Priority - Hidden for job tracker */}
-          {!isJobTracker && (
-            <div>
-              <label className="block text-sm font-medium text-primary mb-2.5">
+              <label className="block text-sm font-bold text-primary mb-2.5">
                 Priority
               </label>
               <div className="grid grid-cols-4 gap-2">
@@ -372,12 +350,12 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             </div>
           )}
 
-          {/* Due Date - Hidden for job tracker */}
-          {!isJobTracker && (
+          {/* Due Date - Hidden for job tracker and recipes */}
+          {!isJobTracker && !isRecipe && (
             <div>
               <label
                 htmlFor="task-due-date"
-                className="block text-sm font-medium text-primary mb-2.5"
+                className="block text-sm font-bold text-primary mb-2.5"
               >
                 Due Date
               </label>
@@ -409,8 +387,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             </div>
           )}
 
-          {/* Repeatable Task & Timer Toggles - Hidden for job tracker */}
-          {!isJobTracker && (
+          {/* Repeatable Task & Timer Toggles - Hidden for job tracker and recipes */}
+          {!isJobTracker && !isRecipe && (
             <div className="space-y-4">
               {/* Repeatable Task Section */}
               <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
@@ -480,7 +458,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     />
                     {!dueDate && (
                       <p className="text-xs text-red-500 dark:text-red-400 mt-1">
-                        ⚠️ Due date required for repeatable tasks
+                        ⚠️ Date required for repeatable tasks
                       </p>
                     )}
                   </div>
@@ -531,9 +509,22 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                           max={timerUnit === "hours" ? 24 : 1440}
                           value={timerDuration}
                           onChange={(e) => {
-                            const val = parseInt(e.target.value) || 1;
+                            const val = e.target.value;
+                            // Allow empty input for deletion
+                            if (val === "") {
+                              setTimerDuration(0);
+                              return;
+                            }
+                            const numVal = parseInt(val);
                             const max = timerUnit === "hours" ? 24 : 1440;
-                            setTimerDuration(Math.min(max, Math.max(1, val)));
+                            setTimerDuration(Math.min(max, numVal));
+                          }}
+                          onBlur={(e) => {
+                            // On blur, ensure we have a valid value
+                            const val = parseInt(e.target.value);
+                            if (isNaN(val) || val < 1) {
+                              setTimerDuration(1);
+                            }
                           }}
                           placeholder="30"
                           className="hide-number-spinner flex-1 block rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
@@ -590,9 +581,6 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
               </div>
             </div>
           )}
-
-          {/* Timer Section - Only shows if timer is running */}
-          <TaskTimerSection task={task} />
 
           {/* Actions */}
           <div className="flex gap-3 pt-4">

@@ -181,20 +181,6 @@ const JobTaskSection: React.FC<JobTaskSectionProps> = ({
           onChange={(e) => setPosition(e.target.value)}
           placeholder="Software Engineer"
         />
-      </div>
-
-      {/* Description (formerly Notes) - larger and supports markdown */}
-      <Textarea
-        id="job-description"
-        label="Description"
-        value={jobNotes}
-        onChange={(e) => setJobNotes(e.target.value)}
-        placeholder="**Role Overview**&#10;&#10;Key responsibilities:\n- Lead feature development\n- Collaborate with cross-functional teams\n- Mentor junior engineers"
-        rows={6}
-        helperText="Supports basic markdown: **bold**, - bullet lists"
-      />
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Input
           id="salary-range"
           label="Salary Range"
@@ -211,6 +197,9 @@ const JobTaskSection: React.FC<JobTaskSectionProps> = ({
           onChange={(e) => setLocation(e.target.value)}
           placeholder="San Francisco, CA"
         />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Select
           id="employment-type"
           label="Employment Type"
@@ -253,7 +242,7 @@ const JobTaskSection: React.FC<JobTaskSectionProps> = ({
           <div>
             <label
               htmlFor="status-date"
-              className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1.5"
+              className="block text-sm font-bold text-primary mb-1.5"
             >
               Applied Date
             </label>
@@ -282,6 +271,17 @@ const JobTaskSection: React.FC<JobTaskSectionProps> = ({
           </div>
         )}
       </div>
+
+      {/* Description - supports markdown */}
+      <Textarea
+        id="job-description"
+        label="Description"
+        value={jobNotes}
+        onChange={(e) => setJobNotes(e.target.value)}
+        placeholder="**Role Overview**&#10;&#10;Key responsibilities:&#10;- Lead feature development&#10;- Collaborate with cross-functional teams&#10;- Mentor junior engineers"
+        rows={6}
+        helperText="Supports basic markdown: **bold**, - bullet lists"
+      />
     </>
   );
 };

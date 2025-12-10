@@ -551,6 +551,35 @@ export function useUpdateTask() {
 }
 
 /**
+ * Complete a repeatable task and reschedule to next occurrence
+ */
+export function useCompleteRepeatableTask() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (taskId: string) => {
+      const { data, error } = await tasksService.completeRepeatableTask(taskId);
+      if (error) throw error;
+      return data!;
+    },
+
+    onSuccess: () => {
+      // Invalidate all task queries to update the UI
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.tasks.all,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.tasks.todayTasks(user?.id),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.tasks.boards(user?.id),
+      });
+    },
+  });
+}
+
+/**
  * Delete a task
  */
 export function useDeleteTask() {
@@ -790,7 +819,29 @@ export function useActiveTimers() {
 }
 
 /**
+ * Helper: Update task in all list caches
+ */
+function updateTaskInListCaches(
+  queryClient: ReturnType<typeof useQueryClient>,
+  taskId: string,
+  updater: (task: Task) => Task
+) {
+  // Update all possible task list queries
+  queryClient.setQueriesData<Task[]>(
+    { queryKey: queryKeys.tasks.all },
+    (oldTasks) => {
+      if (!oldTasks) return oldTasks;
+      // Ensure we're working with an array (list cache), not a single task
+      if (!Array.isArray(oldTasks)) return oldTasks;
+      return oldTasks.map((task) => (task.id === taskId ? updater(task) : task));
+    }
+  );
+}
+
+/**
  * Start a task timer
+ * 
+ * Supports both starting fresh and resuming from pause by accepting custom startTime.
  */
 export function useStartTimer() {
   const queryClient = useQueryClient();
@@ -800,30 +851,72 @@ export function useStartTimer() {
       taskId,
       durationMinutes,
       isUrgentAfter,
+      startTime,
     }: {
       taskId: string;
       durationMinutes: number;
       isUrgentAfter?: boolean;
+      startTime?: string;
     }) => {
       const { data, error } = await tasksService.startTaskTimer(
         taskId,
         durationMinutes,
-        isUrgentAfter
+        isUrgentAfter,
+        startTime
       );
       if (error) throw error;
       return data!;
     },
 
-    onSuccess: (data) => {
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.tasks.activeTimers(),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.tasks.task(data.id),
-      });
-      if (data.board_id) {
+    // Optimistic update for instant UI feedback
+    onMutate: async ({ taskId, durationMinutes, isUrgentAfter, startTime }) => {
+      const now = startTime || new Date().toISOString();
+      
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: queryKeys.tasks.all });
+
+      // Snapshot previous value
+      const previousTask = queryClient.getQueryData<Task>(queryKeys.tasks.task(taskId));
+
+      // Optimistically update single task query
+      if (previousTask) {
+        queryClient.setQueryData<Task>(queryKeys.tasks.task(taskId), {
+          ...previousTask,
+          timer_started_at: now,
+          timer_completed_at: null,
+          timer_duration_minutes: durationMinutes,
+          is_urgent_after_timer: isUrgentAfter || null,
+        });
+      }
+
+      // Optimistically update all task lists
+      updateTaskInListCaches(queryClient, taskId, (task) => ({
+        ...task,
+        timer_started_at: now,
+        timer_completed_at: null,
+        timer_duration_minutes: durationMinutes,
+        is_urgent_after_timer: isUrgentAfter || null,
+      }));
+
+      return { previousTask };
+    },
+
+    onError: (_err, { taskId }, context) => {
+      // Rollback on error
+      if (context?.previousTask) {
+        queryClient.setQueryData(queryKeys.tasks.task(taskId), context.previousTask);
+        updateTaskInListCaches(queryClient, taskId, () => context.previousTask!);
+      }
+    },
+
+    onSettled: (data) => {
+      // Refetch to ensure consistency
+      if (data) {
         void queryClient.invalidateQueries({
-          queryKey: queryKeys.tasks.boardTasks(data.board_id),
+          queryKey: queryKeys.tasks.task(data.id),
+        });
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.tasks.all,
         });
       }
     },
@@ -832,6 +925,9 @@ export function useStartTimer() {
 
 /**
  * Complete a task timer
+ * 
+ * Marks the timer as completed when it naturally expires.
+ * Pause is now handled entirely in the frontend as local UI state.
  */
 export function useCompleteTimer() {
   const queryClient = useQueryClient();
@@ -843,16 +939,111 @@ export function useCompleteTimer() {
       return data!;
     },
 
-    onSuccess: (data) => {
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.tasks.activeTimers(),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.tasks.task(data.id),
-      });
-      if (data.board_id) {
+    // Optimistic update for instant UI feedback
+    onMutate: async (taskId) => {
+      const now = new Date().toISOString();
+      
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: queryKeys.tasks.all });
+
+      // Snapshot previous value
+      const previousTask = queryClient.getQueryData<Task>(queryKeys.tasks.task(taskId));
+
+      // Optimistically update single task query
+      if (previousTask) {
+        queryClient.setQueryData<Task>(queryKeys.tasks.task(taskId), {
+          ...previousTask,
+          timer_completed_at: now,
+        });
+      }
+
+      // Optimistically update all task lists
+      updateTaskInListCaches(queryClient, taskId, (task) => ({
+        ...task,
+        timer_completed_at: now,
+      }));
+
+      return { previousTask };
+    },
+
+    onError: (_err, taskId, context) => {
+      // Rollback on error
+      if (context?.previousTask) {
+        queryClient.setQueryData(queryKeys.tasks.task(taskId), context.previousTask);
+        updateTaskInListCaches(queryClient, taskId, () => context.previousTask!);
+      }
+    },
+
+    onSettled: (data) => {
+      // Refetch to ensure consistency
+      if (data) {
         void queryClient.invalidateQueries({
-          queryKey: queryKeys.tasks.boardTasks(data.board_id),
+          queryKey: queryKeys.tasks.task(data.id),
+        });
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.tasks.all,
+        });
+      }
+    },
+  });
+}
+
+/**
+ * Reset a task timer
+ */
+export function useResetTimer() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (taskId: string) => {
+      const { data, error } = await tasksService.resetTaskTimer(taskId);
+      if (error) throw error;
+      return data!;
+    },
+
+    // Optimistic update for instant UI feedback
+    onMutate: async (taskId) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: queryKeys.tasks.all });
+
+      // Snapshot previous value
+      const previousTask = queryClient.getQueryData<Task>(queryKeys.tasks.task(taskId));
+
+      // Optimistically update single task query
+      if (previousTask) {
+        queryClient.setQueryData<Task>(queryKeys.tasks.task(taskId), {
+          ...previousTask,
+          timer_started_at: null,
+          timer_completed_at: null,
+        });
+      }
+
+      // Optimistically update all task lists
+      updateTaskInListCaches(queryClient, taskId, (task) => ({
+        ...task,
+        timer_started_at: null,
+        timer_completed_at: null,
+      }));
+
+      return { previousTask };
+    },
+
+    onError: (_err, taskId, context) => {
+      // Rollback on error
+      if (context?.previousTask) {
+        queryClient.setQueryData(queryKeys.tasks.task(taskId), context.previousTask);
+        updateTaskInListCaches(queryClient, taskId, () => context.previousTask!);
+      }
+    },
+
+    onSettled: (data) => {
+      // Refetch to ensure consistency
+      if (data) {
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.tasks.task(data.id),
+        });
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.tasks.all,
         });
       }
     },

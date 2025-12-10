@@ -7,6 +7,8 @@
 import React, { useState, useEffect } from "react";
 import Input from "../shared/ui/Input";
 import Textarea from "../shared/ui/Textarea";
+import Select from "../shared/ui/Select";
+import { useTheme } from "../../hooks/useTheme";
 import type { Task } from "../../services/tasksService.types";
 
 interface RecipeTaskSectionProps {
@@ -15,12 +17,29 @@ interface RecipeTaskSectionProps {
     builder: () => Record<string, unknown>,
     isValid: boolean
   ) => void;
+  hasTimer: boolean;
+  setHasTimer: (value: boolean) => void;
+  timerDuration: number;
+  setTimerDuration: (value: number) => void;
+  timerUnit: "minutes" | "hours";
+  setTimerUnit: (value: "minutes" | "hours") => void;
+  isUrgentAfterTimer: boolean;
+  setIsUrgentAfterTimer: (value: boolean) => void;
 }
 
 const RecipeTaskSection: React.FC<RecipeTaskSectionProps> = ({
   task,
   onBuildItemData,
+  hasTimer,
+  setHasTimer,
+  timerDuration,
+  setTimerDuration,
+  timerUnit,
+  setTimerUnit,
+  isUrgentAfterTimer,
+  setIsUrgentAfterTimer,
 }) => {
+  const { themeColor } = useTheme();
   // Recipe specific fields
   const [recipeName, setRecipeName] = useState(
     (task.item_data?.recipe_name as string) ||
@@ -117,10 +136,7 @@ const RecipeTaskSection: React.FC<RecipeTaskSectionProps> = ({
   ]);
 
   return (
-    <div className="space-y-4 border border-gray-300 dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-800/30">
-      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-        Recipe Details
-      </h3>
+    <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Input
           id="recipe-name"
@@ -187,6 +203,7 @@ const RecipeTaskSection: React.FC<RecipeTaskSectionProps> = ({
         placeholder="Preheat oven to 350°F&#10;Mix dry ingredients&#10;Add wet ingredients"
         rows={4}
       />
+      
       <Textarea
         id="recipe-notes"
         label="Notes"
@@ -195,6 +212,101 @@ const RecipeTaskSection: React.FC<RecipeTaskSectionProps> = ({
         placeholder="Personal notes, modifications, etc."
         rows={2}
       />
+      
+      {/* Timer Section */}
+      <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
+            <div className="flex items-center gap-3">
+              <div
+                className="relative flex-shrink-0 cursor-pointer"
+                onClick={() => setHasTimer(!hasTimer)}
+              >
+                <input
+                  type="checkbox"
+                  checked={hasTimer}
+                  onChange={() => {}}
+                  className="sr-only peer"
+                  tabIndex={-1}
+                />
+                <div
+                  className="w-11 h-6 bg-gray-300 dark:bg-gray-600 rounded-full peer transition-colors"
+                  style={hasTimer ? { backgroundColor: themeColor } : {}}
+                ></div>
+                <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
+              </div>
+              <div className="flex-1">
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  Add Timer
+                </span>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Set a countdown timer
+                </p>
+              </div>
+            </div>
+
+            {/* Timer Duration - Show only if timer enabled */}
+            {hasTimer && (
+              <div className="pt-2 space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Duration
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      min={1}
+                      max={timerUnit === "hours" ? 24 : 1440}
+                      value={timerDuration}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
+                        if (isNaN(val) || val < 1) {
+                          setTimerDuration(1);
+                          return;
+                        }
+                        const max = timerUnit === "hours" ? 24 : 1440;
+                        setTimerDuration(Math.min(max, val));
+                      }}
+                      placeholder="30"
+                      className="hide-number-spinner flex-1 block rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                    />
+                    <div className="w-32">
+                      <Select
+                        id="timer-unit-recipe"
+                        value={timerUnit}
+                        onChange={(e) => {
+                          setTimerUnit(e.target.value as "minutes" | "hours");
+                        }}
+                        options={[
+                          { value: "minutes", label: "Minutes" },
+                          { value: "hours", label: "Hours" },
+                        ]}
+                        size="sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mark as Urgent */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="urgent-after-timer-recipe"
+                    checked={isUrgentAfterTimer}
+                    onChange={(e) => setIsUrgentAfterTimer(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary/20"
+                    style={{
+                      accentColor: themeColor,
+                    }}
+                  />
+                  <label
+                    htmlFor="urgent-after-timer-recipe"
+                    className="text-sm text-gray-700 dark:text-gray-300"
+                  >
+                    Mark as urgent after timer expires
+                  </label>
+                </div>
+              </div>
+            )}
+      </div>
     </div>
   );
 };

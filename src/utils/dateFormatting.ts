@@ -3,6 +3,17 @@
  */
 
 /**
+ * Formats a date to "MMM d" format (e.g., "Dec 10")
+ * Used for Created/Updated timestamps and other compact date displays
+ */
+export function formatShortDate(date: Date | string): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  const month = d.toLocaleDateString("en-US", { month: "short" });
+  const day = d.getDate();
+  return `${month} ${day}`;
+}
+
+/**
  * Formats a release date from "YYYY-MM-DD" to "Month DDth, YYYY"
  * Example: "2025-04-30" → "April 30th, 2025"
  */
