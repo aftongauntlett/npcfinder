@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useContext,
   useMemo,
+  useRef,
 } from "react";
 import type { User } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
@@ -32,19 +33,38 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const queryClient = useQueryClient();
+  const previousUserIdRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
-    void checkUser();
+    // Check initial user state
+    const checkInitialUser = async () => {
+      try {
+        const { data: currentUser } = await getCurrentUser();
+        setUser(currentUser);
+        previousUserIdRef.current = currentUser?.id;
+      } catch {
+        // Gracefully handle missing Supabase on public pages
+        console.log("Auth check skipped (likely on public page)");
+        setUser(null);
+        previousUserIdRef.current = undefined;
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void checkInitialUser();
 
     const { data: authListener } = onAuthStateChange((_event, session) => {
       const newUser = session?.user ?? null;
-      const userChanged = user?.id !== newUser?.id;
+      const newUserId = newUser?.id;
+      const userChanged = previousUserIdRef.current !== newUserId;
 
       // Clear all cached queries when user changes (logout, login, or account switch)
-      if (userChanged && !loading) {
+      if (userChanged) {
         queryClient.clear();
       }
 
+      previousUserIdRef.current = newUserId;
       setUser(newUser);
       setLoading(false);
     });
@@ -52,20 +72,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => {
       authListener?.subscription?.unsubscribe();
     };
-  }, [user?.id, loading, queryClient]);
-
-  const checkUser = async () => {
-    try {
-      const { data: currentUser } = await getCurrentUser();
-      setUser(currentUser);
-    } catch {
-      // Gracefully handle missing Supabase on public pages
-      console.log("Auth check skipped (likely on public page)");
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [queryClient]);
 
   const value = useMemo(
     () => ({
