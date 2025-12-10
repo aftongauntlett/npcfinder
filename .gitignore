@@ -31,6 +31,11 @@ docs-private/
 # Copilot notes (AI-generated documentation)
 copilot-notes/
 
+# Copilot instructions and prompts (AI assistant configuration - private)
+.github/.copilot-instructions.md
+.github/copilot-instructions.md
+.github/prompts/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

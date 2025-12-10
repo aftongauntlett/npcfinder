@@ -172,7 +172,6 @@ const AuthPage: React.FC = () => {
                 disabled={loading}
                 required
                 maxLength={19}
-                inputClassName="font-mono"
                 helperText="🔒 This app is invite-only. Enter the code you received."
                 error={error && error.includes("invite") ? error : undefined}
               />

@@ -24,6 +24,7 @@ import TemplateView from "./TemplateView";
 import GroceryListView from "../../tasks/views/GroceryListView";
 import { EmptyStateAddCard } from "../../shared";
 import CreateTaskModal from "../../tasks/CreateTaskModal";
+import KanbanTaskModal from "../../tasks/KanbanTaskModal";
 import RecipeFormModal from "../../tasks/RecipeFormModal";
 import TaskDetailModal from "../../tasks/TaskDetailModal";
 import {
@@ -89,6 +90,12 @@ const TasksPage: React.FC = () => {
     if (!editingTaskId) return null;
     return allTasks.find((t) => t.id === editingTaskId) || null;
   }, [editingTaskId, allTasks]);
+
+  // Find board for the editing task
+  const editingTaskBoard = useMemo(() => {
+    if (!editingTask?.board_id) return null;
+    return boards.find((b) => b.id === editingTask.board_id) || null;
+  }, [editingTask, boards]);
 
   // Find board for create task modal
   const createTaskBoard = useMemo(() => {
@@ -302,6 +309,17 @@ const TasksPage: React.FC = () => {
             }}
             boardId={createTaskBoardId!}
           />
+        ) : createTaskBoard?.template_type === "kanban" ? (
+          <KanbanTaskModal
+            isOpen={showCreateTask}
+            onClose={() => {
+              setShowCreateTask(false);
+              setCreateTaskBoardId(undefined);
+              setCreateTaskSectionId(undefined);
+            }}
+            boardId={createTaskBoardId!}
+            sectionId={createTaskSectionId}
+          />
         ) : (
           <CreateTaskModal
             isOpen={showCreateTask}
@@ -318,13 +336,21 @@ const TasksPage: React.FC = () => {
           />
         ))}
 
-      {editingTask && (
-        <TaskDetailModal
-          task={editingTask}
-          isOpen={!!editingTask}
-          onClose={() => setEditingTaskId(null)}
-        />
-      )}
+      {editingTask &&
+        (editingTaskBoard?.template_type === "kanban" ? (
+          <KanbanTaskModal
+            isOpen={!!editingTask}
+            onClose={() => setEditingTaskId(null)}
+            boardId={editingTask.board_id!}
+            task={editingTask}
+          />
+        ) : (
+          <TaskDetailModal
+            task={editingTask}
+            isOpen={!!editingTask}
+            onClose={() => setEditingTaskId(null)}
+          />
+        ))}
     </AppLayout>
   );
 };

@@ -39,7 +39,6 @@ const CompactColorThemePicker: React.FC<CompactColorThemePickerProps> = ({
             }}
             placeholder="#9333ea"
             maxLength={7}
-            inputClassName="font-mono"
           />
         </div>
 
