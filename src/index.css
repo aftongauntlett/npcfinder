@@ -121,6 +121,25 @@ textarea::-moz-selection {
   color: white;
 }
 
+/* Autofill styling - prevent white background in dark mode */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px white inset !important;
+  -webkit-text-fill-color: #111827 !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus,
+.dark input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px rgb(55 65 81 / 0.5) inset !important;
+  -webkit-text-fill-color: #f9fafb !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 @layer utilities {
   /* Shimmer animation for sparkle effect */
   @keyframes shimmer {

@@ -1,5 +1,14 @@
+/**
+ * Audio Player Component
+ * 
+ * Refactored to use shared MediaTimeDisplay and ProgressBar components
+ * for consistent time-based UI patterns across the application.
+ */
+
 import { useEffect, useRef, useState } from "react";
 import { Play, Pause, Volume2, VolumeX } from "lucide-react";
+import MediaTimeDisplay from "./MediaTimeDisplay";
+import ProgressBar from "./ProgressBar";
 
 interface AudioPlayerProps {
   src: string;
@@ -12,10 +21,14 @@ export function AudioPlayer({ src, title: _title }: AudioPlayerProps) {
   const [isMuted, setIsMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(0.5); // Default to 50% volume
 
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
+
+    // Set default volume
+    audio.volume = volume;
 
     const updateTime = () => setCurrentTime(audio.currentTime);
     const updateDuration = () => setDuration(audio.duration);
@@ -30,7 +43,7 @@ export function AudioPlayer({ src, title: _title }: AudioPlayerProps) {
       audio.removeEventListener("loadedmetadata", updateDuration);
       audio.removeEventListener("ended", handleEnded);
     };
-  }, []);
+  }, [volume]);
 
   const togglePlay = () => {
     const audio = audioRef.current;
@@ -52,22 +65,28 @@ export function AudioPlayer({ src, title: _title }: AudioPlayerProps) {
     setIsMuted(!isMuted);
   };
 
-  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const newVolume = parseFloat(e.target.value);
+    audio.volume = newVolume;
+    setVolume(newVolume);
+    
+    // Unmute if volume is increased from 0
+    if (newVolume > 0 && isMuted) {
+      audio.muted = false;
+      setIsMuted(false);
+    }
+  };
+
+  const handleProgressClick = (percent: number) => {
     const audio = audioRef.current;
     if (!audio || !duration) return;
 
-    const rect = e.currentTarget.getBoundingClientRect();
-    const percent = (e.clientX - rect.left) / rect.width;
-    const newTime = percent * duration;
+    const newTime = (percent / 100) * duration;
     audio.currentTime = newTime;
     setCurrentTime(newTime);
-  };
-
-  const formatTime = (time: number) => {
-    if (!isFinite(time)) return "0:00";
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
   const progressPercent = duration ? (currentTime / duration) * 100 : 0;
@@ -77,7 +96,7 @@ export function AudioPlayer({ src, title: _title }: AudioPlayerProps) {
       {/* Play/Pause Button */}
       <button
         onClick={togglePlay}
-        className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-700/50 border border-gray-600/50 hover:border-primary/50 hover:bg-gray-700/70 transition-all duration-200 group"
+        className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-700/50 border border-gray-600/50 hover:border-primary/50 hover:bg-gray-700/70 transition-all duration-200 group flex-shrink-0"
         aria-label={isPlaying ? "Pause" : "Play"}
       >
         {isPlaying ? (
@@ -89,42 +108,50 @@ export function AudioPlayer({ src, title: _title }: AudioPlayerProps) {
 
       {/* Progress Bar */}
       <div className="flex-1 flex items-center gap-2">
-        <span className="text-xs text-gray-400 font-mono min-w-[2.5rem] text-right">
-          {formatTime(currentTime)}
-        </span>
-        <div
-          className="flex-1 h-1.5 bg-gray-700/50 rounded-full cursor-pointer group relative"
-          onClick={handleProgressClick}
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={duration}
-          aria-valuenow={currentTime}
-          aria-label="Audio progress"
-        >
-          <div
-            className="h-full bg-primary rounded-full transition-all duration-150 relative"
-            style={{ width: `${progressPercent}%` }}
-          >
-            <div className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 bg-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg shadow-primary/50" />
-          </div>
+        <MediaTimeDisplay seconds={currentTime} format="digital" size="sm" className="min-w-[2.5rem] text-right" />
+        <div className="flex-1">
+          <ProgressBar
+            progress={progressPercent}
+            onClick={handleProgressClick}
+            showThumb={true}
+            variant="primary"
+            size="sm"
+            ariaLabel="Audio progress"
+          />
         </div>
-        <span className="text-xs text-gray-400 font-mono min-w-[2.5rem]">
-          {formatTime(duration)}
-        </span>
+        <MediaTimeDisplay seconds={duration} format="digital" size="sm" className="min-w-[2.5rem]" />
       </div>
 
-      {/* Mute/Unmute Button */}
-      <button
-        onClick={toggleMute}
-        className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-700/50 border border-gray-600/50 hover:border-primary/50 hover:bg-gray-700/70 transition-all duration-200 group"
-        aria-label={isMuted ? "Unmute" : "Mute"}
-      >
-        {isMuted ? (
-          <VolumeX className="w-4 h-4 text-gray-300 group-hover:text-primary transition-colors" />
-        ) : (
-          <Volume2 className="w-4 h-4 text-gray-300 group-hover:text-primary transition-colors" />
-        )}
-      </button>
+      {/* Volume Control */}
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {/* Volume Slider */}
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          value={volume}
+          onChange={handleVolumeChange}
+          className="w-16 h-1.5 bg-gray-700/50 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
+          aria-label="Volume control"
+          style={{
+            background: `linear-gradient(to right, var(--color-primary) 0%, var(--color-primary) ${volume * 100}%, rgb(55 65 81 / 0.5) ${volume * 100}%, rgb(55 65 81 / 0.5) 100%)`,
+          }}
+        />
+        
+        {/* Mute/Unmute Button */}
+        <button
+          onClick={toggleMute}
+          className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-700/50 border border-gray-600/50 hover:border-primary/50 hover:bg-gray-700/70 transition-all duration-200 group"
+          aria-label={isMuted ? "Unmute" : "Mute"}
+        >
+          {isMuted ? (
+            <VolumeX className="w-4 h-4 text-gray-300 group-hover:text-primary transition-colors" />
+          ) : (
+            <Volume2 className="w-4 h-4 text-gray-300 group-hover:text-primary transition-colors" />
+          )}
+        </button>
+      </div>
 
       {/* Hidden Audio Element */}
       <audio ref={audioRef} src={src} preload="metadata">

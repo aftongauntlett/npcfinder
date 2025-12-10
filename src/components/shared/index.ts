@@ -19,6 +19,8 @@ export { default as ConfirmationModal } from "./ui/ConfirmationModal";
 export { default as Alert } from "./ui/Alert";
 export { default as Tooltip } from "./ui/Tooltip";
 export { AudioPlayer } from "./ui/AudioPlayer";
+export { default as MediaTimeDisplay } from "./ui/MediaTimeDisplay";
+export { default as ProgressBar } from "./ui/ProgressBar";
 export { default as ErrorBoundary } from "./ui/ErrorBoundary";
 export { default as GlobalErrorNotifications } from "./ui/GlobalErrorNotifications";
 export { SkeletonCard } from "./ui/SkeletonCard";
