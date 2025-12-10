@@ -4,6 +4,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMemo } from "react";
 import * as recommendationsService from "../services/recommendationsService";
 import { queryKeys } from "../lib/queryKeys";
 import { useAuth } from "../contexts/AuthContext";
@@ -300,17 +301,35 @@ export function useDeleteFromWatchlist() {
 
 /**
  * Check if item is in watchlist
+ * Uses cached watchlist data to avoid redundant Supabase calls
  */
 export function useIsInWatchlist(external_id: string | null) {
-  return useQuery({
-    queryKey: [...queryKeys.watchlist.all, "check", external_id],
-    queryFn: async () => {
-      if (!external_id) return false;
-      // Check if item exists in watchlist
-      const watchlist = await recommendationsService.getWatchlist();
-      return watchlist.some((item) => item.external_id === external_id);
-    },
-    enabled: !!external_id, // Only run query if external_id exists
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
+  const { data: watchlist = [], isLoading, error } = useWatchlist();
+
+  // Compute derived boolean by checking if external_id exists in the cached watchlist
+  const isInWatchlist = external_id
+    ? watchlist.some((item) => item.external_id === external_id)
+    : false;
+
+  return {
+    data: isInWatchlist,
+    isLoading,
+    error,
+  };
+}
+
+/**
+ * Get a Set of external IDs in the watchlist for efficient lookups
+ * Use this when checking many items to avoid repeated Array.prototype.some scans
+ * 
+ * @example
+ * const watchlistIds = useWatchlistIds();
+ * const isInWatchlist = watchlistIds.has(external_id);
+ */
+export function useWatchlistIds() {
+  const { data: watchlist = [] } = useWatchlist();
+
+  return useMemo(() => {
+    return new Set(watchlist.map((item) => item.external_id));
+  }, [watchlist]);
 }
