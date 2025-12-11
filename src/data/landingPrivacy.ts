@@ -1,8 +1,8 @@
 import {
-  ShieldCheck,
-  UserMinus,
-  EyeSlash,
-  Stack,
+  ShieldCheckIcon,
+  UserMinusIcon,
+  EyeSlashIcon,
+  StackIcon,
   type Icon,
 } from "@phosphor-icons/react";
 import {
@@ -31,28 +31,28 @@ export const landingPrivacy: PrivacyData = {
     "NPC Finder is built with privacy as a core principle, but it's important to understand what that means - and what it doesn't mean.",
   points: [
     {
-      icon: ShieldCheck,
+      icon: ShieldCheckIcon,
       iconColor: LANDING_TEAL,
       title: "Protected from Other Users",
       description:
         "PostgreSQL Row-Level Security ensures other users cannot access your private data - only you and connected friends.",
     },
     {
-      icon: UserMinus,
+      icon: UserMinusIcon,
       iconColor: LANDING_PEACH,
       title: "Invite-Only Access",
       description:
         "No public signup means no strangers. Only people with admin-generated invite codes can join.",
     },
     {
-      icon: EyeSlash,
+      icon: EyeSlashIcon,
       iconColor: LANDING_PURPLE,
       title: "No Tracking or Analytics",
       description:
         "No third-party tracking, no analytics scripts, no data mining. Your activity stays within the app.",
     },
     {
-      icon: Stack,
+      icon: StackIcon,
       iconColor: LANDING_BLUE,
       title: "Database Isolation",
       description:

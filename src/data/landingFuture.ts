@@ -25,9 +25,9 @@ export const landingFutureCategories: FutureCategory[] = [
           "Track productivity patterns, media consumption trends, and personal insights over time",
       },
       {
-        title: "Calendar Integration",
+        title: "Private Journals (E2E protected)",
         description:
-          "Sync tasks and meal plans with your calendar for better time management",
+          "End-to-end encrypted personal journals for private thoughts, reflections, and daily entries",
       },
     ],
   },
