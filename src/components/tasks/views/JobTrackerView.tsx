@@ -6,8 +6,9 @@ import { useUrlPaginationState } from "../../../hooks/useUrlPaginationState";
 import { useTasks } from "../../../hooks/useTasksQueries";
 import type { Task } from "../../../services/tasksService.types";
 import type { StatusHistoryEntry } from "../../../services/tasksService.types";
-import { Briefcase } from "lucide-react";
+import { Briefcase, Plus } from "lucide-react";
 import { EmptyStateAddCard, LocalSearchInput } from "../../shared";
+import Button from "../../shared/ui/Button";
 import FilterSortMenu from "../../shared/common/FilterSortMenu";
 import type { FilterSortSection } from "../../shared/common/FilterSortMenu";
 import {
@@ -226,7 +227,7 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
       ) : (
         <>
           {/* Header with Search */}
-          <div ref={listTopRef} className="flex items-center gap-3 mb-4">
+          <div ref={listTopRef} className="flex items-center justify-between gap-3 mb-4">
             <div className="flex-1 max-w-md">
               <LocalSearchInput
                 value={searchQuery}
@@ -245,6 +246,14 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
                 }
               />
             </div>
+            <Button
+              onClick={() => onCreateTask()}
+              variant="action"
+              size="sm"
+              icon={<Plus className="w-4 h-4" />}
+            >
+              Add
+            </Button>
           </div>
 
           <JobTrackerTable
@@ -254,8 +263,6 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
               if (task) onEditTask(task);
             }}
             onDelete={handleDelete}
-            onAdd={onCreateTask}
-            hideFilterSort
           />
 
           {/* Pagination */}

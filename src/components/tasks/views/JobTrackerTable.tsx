@@ -1,7 +1,5 @@
 import React from "react";
 import { JobCard } from "../../shared/cards";
-import Button from "../../shared/ui/Button";
-import { Plus } from "lucide-react";
 import type { StatusHistoryEntry } from "../../../services/tasksService.types";
 
 interface JobApplication {
@@ -24,33 +22,15 @@ interface JobTrackerTableProps {
   items: JobApplication[];
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
-  onAdd: () => void;
-  hideFilterSort?: boolean;
 }
 
 export const JobTrackerTable: React.FC<JobTrackerTableProps> = ({
   items,
   onEdit,
   onDelete,
-  onAdd,
-  hideFilterSort = false,
 }) => {
   return (
     <div className="space-y-3">
-      {/* Toolbar - Only show Add button if filter/sort is hidden */}
-      {hideFilterSort && items.length > 0 && (
-        <div className="flex justify-end">
-          <Button
-            onClick={onAdd}
-            variant="action"
-            size="sm"
-            icon={<Plus className="w-4 h-4" />}
-          >
-            Add
-          </Button>
-        </div>
-      )}
-
       {/* Empty State */}
       {items.length === 0 ? (
         <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center hover:border-gray-400 dark:hover:border-gray-500 transition-colors">

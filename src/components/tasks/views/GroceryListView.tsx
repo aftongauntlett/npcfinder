@@ -230,20 +230,22 @@ const GroceryListView: React.FC<GroceryListViewProps> = ({
         <>
           {/* Toolbar */}
           <div className="flex flex-nowrap items-center justify-between gap-3">
-            <FilterSortMenu
-              sections={filterSortSections}
-              activeFilters={{
-                category: categoryFilters,
-                sort: sortBy,
-              }}
-              onFilterChange={handleFilterChange}
-              label="Sort & Filter"
-            />
-            <div className="flex-1 max-w-xs">
+            <div className="flex-1 max-w-md">
               <LocalSearchInput
                 value={searchQuery}
                 onChange={setSearchQuery}
                 placeholder="Search Items..."
+                filterButton={
+                  <FilterSortMenu
+                    sections={filterSortSections}
+                    activeFilters={{
+                      category: categoryFilters,
+                      sort: sortBy,
+                    }}
+                    onFilterChange={handleFilterChange}
+                    label=""
+                  />
+                }
               />
             </div>
             <div className="flex items-center gap-2">
