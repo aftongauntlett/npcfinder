@@ -24,7 +24,6 @@ import type {
 
 /**
  * Get all boards for current user
- * Auto-creates starter boards on first use
  */
 export function useBoards() {
   const { user } = useAuth();
@@ -37,17 +36,6 @@ export function useBoards() {
         const parsedError = parseSupabaseError(error);
         throw parsedError;
       }
-
-      // Temporarily disabled auto-creation - uncomment to re-enable
-      // if (!data || data.length === 0) {
-      //   const { data: starterData, error: starterError } =
-      //     await tasksService.ensureStarterBoards();
-      //   if (starterError) {
-      //     const parsedError = parseSupabaseError(starterError);
-      //     throw parsedError;
-      //   }
-      //   return starterData || [];
-      // }
 
       return data || [];
     },
@@ -209,7 +197,6 @@ export function useReorderBoards() {
 
     onError: (error) => {
       console.error("Failed to reorder boards:", error);
-      // Note: Consider adding toast notification here for user feedback
     },
 
     onSuccess: () => {
@@ -370,7 +357,6 @@ export function useReorderSections() {
 
     onError: (error) => {
       console.error("Failed to reorder sections:", error);
-      // Note: Consider adding toast notification here for user feedback
     },
 
     onSuccess: (_data, { boardId: _boardId }) => {
@@ -770,7 +756,6 @@ export function useReorderTasks() {
 
     onError: (error) => {
       console.error("Failed to reorder tasks:", error);
-      // Note: Consider adding toast notification here for user feedback
     },
 
     onSuccess: (_data, { boardId: _boardId }) => {

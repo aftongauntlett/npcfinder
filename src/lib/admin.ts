@@ -104,11 +104,3 @@ export const updateUserRole = async (
     };
   }
 };
-
-// Legacy function for backward compatibility
-export const toggleUserAdminStatus = async (
-  userId: string,
-  makeAdmin: boolean
-): Promise<{ success: boolean; error?: string }> => {
-  return updateUserRole(userId, makeAdmin ? "admin" : "user");
-};

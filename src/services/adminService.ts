@@ -66,8 +66,6 @@ export interface UserProfile {
   email?: string;
   bio?: string;
   role: "user" | "admin" | "super_admin";
-  /** @deprecated Use role field instead */
-  is_admin?: boolean;
   created_at: string;
   updated_at: string;
 }

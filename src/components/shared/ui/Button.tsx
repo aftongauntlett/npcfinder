@@ -8,7 +8,6 @@ import { logger } from "../../../lib/logger";
  * - subtle: Minimal ghost style with light background
  * - danger: Pastel red for destructive actions (delete, remove, etc.)
  * - action: Prominent glass button for high-frequency actions (Add, Create, etc.)
- * - gradient: DEPRECATED - Use 'action' instead
  */
 
 type ButtonVariant =
@@ -16,8 +15,7 @@ type ButtonVariant =
   | "secondary"
   | "subtle"
   | "danger"
-  | "action"
-  | "gradient";
+  | "action";
 
 export type ButtonSize = "sm" | "md" | "lg" | "icon";
 
@@ -78,16 +76,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const isIconSize = size === "icon";
     const shouldUseIconStyling = isIconOnly || isIconSize;
 
-    // Handle deprecated gradient variant
-    const effectiveVariant = variant === "gradient" ? "action" : variant;
-
-    // Deprecation warning for gradient variant
-    if (variant === "gradient" && process.env.NODE_ENV === "development") {
-      logger.warn(
-        'Button: variant="gradient" is deprecated. Use variant="action" instead.'
-      );
-    }
-
     // Accessibility check
     if (isIconOnly && !ariaLabel && !props["aria-labelledby"]) {
       logger.warn(
@@ -109,7 +97,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       hideTextOnMobile ? "gap-0 sm:gap-2" : "gap-2", // No gap on mobile when text is hidden
       "font-medium",
       // Border and corners - minimal borders for modern look
-      effectiveVariant === "action" ? "rounded-lg border-0" : "rounded-lg",
+      variant === "action" ? "rounded-lg border-0" : "rounded-lg",
       // Smooth transitions
       "transition-all duration-300 ease-out",
       // Focus state - visible ring for accessibility
@@ -149,15 +137,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         "focus-visible:ring-red-500 dark:focus-visible:ring-red-400",
       ],
       action: [
-        "border-2 border-primary/40 bg-primary/5 dark:bg-primary-light/5 text-primary dark:text-primary-light shadow-md",
-        "glass-button hover-sheen hover-glow",
-        "hover:border-primary/60 dark:hover:border-primary-light/60 hover:shadow-lg",
-        "hover:bg-primary/15 dark:hover:bg-primary-light/15",
-        "hover:[backdrop-filter:blur(12px)_saturate(130%)]",
-        "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-      ],
-      gradient: [
-        // Deprecated - maps to action
         "border-2 border-primary/40 bg-primary/5 dark:bg-primary-light/5 text-primary dark:text-primary-light shadow-md",
         "glass-button hover-sheen hover-glow",
         "hover:border-primary/60 dark:hover:border-primary-light/60 hover:shadow-lg",
@@ -235,19 +214,19 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     // Theme color inline styles for primary/secondary/action
     const getThemeStyles = (): React.CSSProperties | undefined => {
-      if (effectiveVariant === "primary" || effectiveVariant === "secondary") {
+      if (variant === "primary" || variant === "secondary") {
         return {
           color:
-            effectiveVariant === "primary"
+            variant === "primary"
               ? "var(--color-text-on-primary)"
               : "var(--color-primary)",
-          borderColor: "var(--color-primary)",
           backgroundColor:
-            effectiveVariant === "primary" ? "var(--color-primary)" : undefined,
+            variant === "primary" ? "var(--color-primary)" : undefined,
+          borderColor: "var(--color-primary)",
           ["--hover-text-color" as string]: "var(--color-text-on-primary)",
         } as React.CSSProperties;
       }
-      if (effectiveVariant === "action") {
+      if (variant === "action") {
         return {
           borderColor: "var(--color-primary)",
           color: "var(--color-primary)",

@@ -70,8 +70,6 @@ export const getSupabase = (): SupabaseClient => {
   return supabaseInstance;
 };
 
-// Legacy export for backward compatibility
-// This will only initialize when actually accessed
 export const supabase = new Proxy({} as SupabaseClient, {
   get: (_target, prop) => {
     const client = getSupabase();

@@ -15,13 +15,7 @@ interface CustomAction {
   label?: string; // Optional - for icon-only buttons
   icon: ReactNode;
   onClick: () => void;
-  variant?:
-    | "primary"
-    | "secondary"
-    | "subtle"
-    | "danger"
-    | "action"
-    | "gradient";
+  variant?: "primary" | "secondary" | "subtle" | "danger" | "action";
   ariaLabel?: string;
   className?: string; // Custom className for styling overrides
 }

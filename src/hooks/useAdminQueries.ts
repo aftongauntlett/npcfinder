@@ -221,11 +221,3 @@ export function useToggleUserRole() {
     },
   });
 }
-
-/**
- * @deprecated Use useToggleUserRole instead
- * Mutation: Toggle admin status for a user (legacy function)
- */
-export function useToggleAdminStatus() {
-  return useToggleUserRole();
-}
