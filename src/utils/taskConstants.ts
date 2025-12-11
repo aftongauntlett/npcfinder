@@ -3,8 +3,6 @@
  * Defines task statuses, priorities, default sections, and limits
  */
 
-import type { GroceryCategory } from "../services/tasksService.types";
-
 // Task statuses
 export const TASK_STATUS = {
   TODO: "todo",
@@ -147,80 +145,7 @@ export const STATUS_OPTIONS = [
   { value: "archived" as const, ...STATUS_CONFIG.archived },
 ] as const;
 
-/**
- * Grocery Categories
- * Must match the GroceryCategory type definition in tasksService.types.ts
- */
-export const GROCERY_CATEGORIES: readonly GroceryCategory[] = [
-  "Produce",
-  "Dairy",
-  "Meat",
-  "Bakery",
-  "Pantry",
-  "Frozen",
-  "Beverages",
-  "Snacks",
-  "Other",
-] as const;
 
-/**
- * Category Colors for Grocery Items
- * Keys must match GroceryCategory type definition
- */
-export const CATEGORY_COLORS: Record<
-  GroceryCategory,
-  {
-    bg: string;
-    text: string;
-    border: string;
-  }
-> = {
-  Produce: {
-    bg: "bg-green-100 dark:bg-green-900/20",
-    text: "text-green-700 dark:text-green-300",
-    border: "border-green-300 dark:border-green-700",
-  },
-  Dairy: {
-    bg: "bg-blue-100 dark:bg-blue-900/20",
-    text: "text-blue-700 dark:text-blue-300",
-    border: "border-blue-300 dark:border-blue-700",
-  },
-  Meat: {
-    bg: "bg-red-100 dark:bg-red-900/20",
-    text: "text-red-700 dark:text-red-300",
-    border: "border-red-300 dark:border-red-700",
-  },
-  Bakery: {
-    bg: "bg-amber-100 dark:bg-amber-900/20",
-    text: "text-amber-700 dark:text-amber-300",
-    border: "border-amber-300 dark:border-amber-700",
-  },
-  Pantry: {
-    bg: "bg-yellow-100 dark:bg-yellow-900/20",
-    text: "text-yellow-700 dark:text-yellow-300",
-    border: "border-yellow-300 dark:border-yellow-700",
-  },
-  Frozen: {
-    bg: "bg-cyan-100 dark:bg-cyan-900/20",
-    text: "text-cyan-700 dark:text-cyan-300",
-    border: "border-cyan-300 dark:border-cyan-700",
-  },
-  Beverages: {
-    bg: "bg-purple-100 dark:bg-purple-900/20",
-    text: "text-purple-700 dark:text-purple-300",
-    border: "border-purple-300 dark:border-purple-700",
-  },
-  Snacks: {
-    bg: "bg-pink-100 dark:bg-pink-900/20",
-    text: "text-pink-700 dark:text-pink-300",
-    border: "border-pink-300 dark:border-pink-700",
-  },
-  Other: {
-    bg: "bg-gray-100 dark:bg-gray-900/20",
-    text: "text-gray-700 dark:text-gray-300",
-    border: "border-gray-300 dark:border-gray-700",
-  },
-} as const;
 
 /**
  * Timer Status Constants

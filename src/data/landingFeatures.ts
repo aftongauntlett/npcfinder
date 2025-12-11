@@ -68,7 +68,7 @@ export const landingFeatures: FeatureData[] = [
     title: "Recipe & Meal Planning",
     items: [
       "Save and organize your favorite recipes with ingredients, instructions, and cooking notes",
-      "Plan weekly meals and generate grocery lists automatically",
+      "Plan weekly meals and keep track of your cooking schedule",
       "Share recipes with friends and build a collaborative cookbook",
     ],
   },
@@ -78,7 +78,7 @@ export const landingFeatures: FeatureData[] = [
     title: "Personal Trackers",
     items: [
       "Kanban boards for task management with drag-and-drop, priorities, and due dates",
-      "Grocery lists with sharing capabilities for household coordination",
+      "Flexible task lists and checklists for any purpose",
       "Job application tracker to manage your job search pipeline",
       "Today view for quick access to due and overdue tasks",
     ],

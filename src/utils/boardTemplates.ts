@@ -9,7 +9,6 @@ export type TemplateType =
   | "markdown"
   | "recipe"
   | "kanban"
-  | "grocery"
   | "custom";
 
 export type ViewType = "table" | "checklist" | "cards" | "kanban" | "list";
@@ -262,58 +261,6 @@ export const KANBAN_TEMPLATE: BoardTemplate = {
 };
 
 /**
- * Grocery List Template
- */
-export const GROCERY_TEMPLATE: BoardTemplate = {
-  id: "grocery",
-  name: "Grocery List",
-  description: "Simple grocery list with categories and purchase tracking",
-  icon: "ShoppingCart",
-  emoji: "🛒",
-  defaultView: "list",
-  fields: [
-    {
-      id: "item_name",
-      label: "Item",
-      type: "text",
-      required: true,
-      placeholder: "Milk, eggs, bread...",
-    },
-    {
-      id: "category",
-      label: "Category",
-      type: "select",
-      required: true,
-      options: [
-        "Produce",
-        "Dairy",
-        "Meat",
-        "Bakery",
-        "Pantry",
-        "Frozen",
-        "Beverages",
-        "Snacks",
-        "Other",
-      ],
-      defaultValue: "Other",
-    },
-    {
-      id: "quantity",
-      label: "Quantity",
-      type: "text",
-      placeholder: "2 lbs, 1 gallon, etc.",
-    },
-    {
-      id: "notes",
-      label: "Notes",
-      type: "textarea",
-      placeholder: "Brand preferences, coupon info, etc.",
-    },
-  ],
-  statusOptions: ["Need to Buy", "Purchased"],
-};
-
-/**
  * All available templates
  */
 export const BOARD_TEMPLATES: Record<TemplateType, BoardTemplate> = {
@@ -321,7 +268,6 @@ export const BOARD_TEMPLATES: Record<TemplateType, BoardTemplate> = {
   markdown: MARKDOWN_TODO_TEMPLATE,
   recipe: RECIPE_TEMPLATE,
   kanban: KANBAN_TEMPLATE,
-  grocery: GROCERY_TEMPLATE,
   custom: {
     id: "custom",
     name: "Custom Board",

@@ -10,11 +10,8 @@ import type { BoardWithStats } from "../services/tasksService.types";
 
 export interface BoardTemplateGroups {
   kanbanBoards: BoardWithStats[];
-  groceryBoards: BoardWithStats[];
-  sharedGroceryBoards: BoardWithStats[];
   recipeBoards: BoardWithStats[];
   jobBoards: BoardWithStats[];
-  groceryTaskCount: number;
   recipeTaskCount: number;
   jobTaskCount: number;
 }
@@ -23,26 +20,14 @@ export interface BoardTemplateGroups {
  * Filter boards by template type and calculate task counts
  *
  * @param boards - Array of boards to filter
- * @param sharedBoards - Optional array of shared boards (used for grocery)
  * @returns Filtered board arrays and task counts
  */
 export function useBoardTemplates(
-  boards: BoardWithStats[],
-  sharedBoards?: BoardWithStats[]
+  boards: BoardWithStats[]
 ): BoardTemplateGroups {
   const kanbanBoards = useMemo(
     () => boards.filter((b) => b.template_type === "kanban"),
     [boards]
-  );
-
-  const groceryBoards = useMemo(
-    () => boards.filter((b) => b.template_type === "grocery"),
-    [boards]
-  );
-
-  const sharedGroceryBoards = useMemo(
-    () => (sharedBoards || []).filter((b) => b.template_type === "grocery"),
-    [sharedBoards]
   );
 
   const recipeBoards = useMemo(
@@ -56,12 +41,6 @@ export function useBoardTemplates(
   );
 
   // Calculate task counts for each template type
-  const groceryTaskCount = useMemo(
-    () =>
-      groceryBoards.reduce((sum, board) => sum + (board.total_tasks || 0), 0),
-    [groceryBoards]
-  );
-
   const recipeTaskCount = useMemo(
     () =>
       recipeBoards.reduce((sum, board) => sum + (board.total_tasks || 0), 0),
@@ -75,11 +54,8 @@ export function useBoardTemplates(
 
   return {
     kanbanBoards,
-    groceryBoards,
-    sharedGroceryBoards,
     recipeBoards,
     jobBoards,
-    groceryTaskCount,
     recipeTaskCount,
     jobTaskCount,
   };

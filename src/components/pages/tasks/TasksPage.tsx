@@ -4,8 +4,7 @@
  * Tabbed view with:
  * - Tasks: Unassigned tasks (inbox)
  * - Kanban: Kanban template boards
- * - To-Do Lists: Markdown template boards
- * - Grocery: Grocery template boards
+ * - Calendar: Calendar view of tasks with due dates
  * - Recipes: Recipe template boards
  * - Job Applications: Job tracker template boards
  */
@@ -14,22 +13,21 @@ import React, { useState, useMemo } from "react";
 import {
   ListTodo,
   LayoutGrid,
-  ShoppingCart,
   ChefHat,
   Briefcase,
+  Calendar,
 } from "lucide-react";
 import AppLayout from "../../layouts/AppLayout";
 import InboxView from "./InboxView";
 import TemplateView from "./TemplateView";
-import GroceryListView from "../../tasks/views/GroceryListView";
-import { EmptyStateAddCard, TabPanel } from "../../shared";
+import CalendarView from "../../tasks/views/CalendarView";
+import { TabPanel } from "../../shared";
 import CreateTaskModal from "../../tasks/CreateTaskModal";
 import KanbanTaskModal from "../../tasks/KanbanTaskModal";
 import RecipeFormModal from "../../tasks/RecipeFormModal";
 import TaskDetailModal from "../../tasks/TaskDetailModal";
 import {
   useBoards,
-  useSharedBoards,
   useTask,
   useUnassignedTasksCount,
 } from "../../../hooks/useTasksQueries";
@@ -38,7 +36,7 @@ import { useAllSingletonBoards } from "../../../hooks/useSingletonBoard";
 import type { BoardWithStats } from "../../../services/tasksService.types";
 import { usePageMeta } from "../../../hooks/usePageMeta";
 
-type ViewType = "tasks" | "kanban" | "grocery" | "recipes" | "job_applications";
+type ViewType = "tasks" | "kanban" | "calendar" | "recipes" | "job_applications";
 
 // Static page meta options (stable reference)
 const pageMetaOptions = {
@@ -59,30 +57,25 @@ const TasksPage: React.FC = () => {
     string | undefined
   >();
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(null);
 
   const { data: boards = [] } = useBoards() as { data: BoardWithStats[] };
-  const { data: sharedBoards = [] } = useSharedBoards() as {
-    data: BoardWithStats[];
-  };
   // Fetch specific task when editing (lazy-loaded only when needed)
   const { data: editingTask = null } = useTask(editingTaskId);
   // Fetch unassigned tasks count for badge (lightweight count-only query)
   const { data: unassignedTasksCount = 0 } = useUnassignedTasksCount();
 
-  // Get singleton board IDs for job_tracker, recipe, and grocery
-  const { jobBoardId, recipeBoardId, groceryBoardId } = useAllSingletonBoards();
+  // Get singleton board IDs for job_tracker and recipe
+  const { jobBoardId, recipeBoardId } = useAllSingletonBoards();
 
   // Extract board filtering and task counts into dedicated hook
   const {
     kanbanBoards,
-    groceryBoards,
-    sharedGroceryBoards,
     recipeBoards,
     jobBoards,
-    groceryTaskCount,
     recipeTaskCount,
     jobTaskCount,
-  } = useBoardTemplates(boards, sharedBoards);
+  } = useBoardTemplates(boards);
 
   // Find board for the editing task
   const editingTaskBoard = useMemo(() => {
@@ -103,8 +96,8 @@ const TasksPage: React.FC = () => {
         return "Tasks";
       case "kanban":
         return "Kanban";
-      case "grocery":
-        return "Grocery";
+      case "calendar":
+        return "Calendar";
       case "recipes":
         return "Recipes";
       case "job_applications":
@@ -130,10 +123,9 @@ const TasksPage: React.FC = () => {
         badge: kanbanBoards.length > 0 ? kanbanBoards.length : undefined,
       },
       {
-        id: "grocery",
-        label: "Grocery",
-        icon: ShoppingCart,
-        badge: groceryTaskCount > 0 ? groceryTaskCount : undefined,
+        id: "calendar",
+        label: "Calendar",
+        icon: Calendar,
       },
       {
         id: "recipes",
@@ -151,13 +143,12 @@ const TasksPage: React.FC = () => {
   }, [
     unassignedTasksCount,
     kanbanBoards.length,
-    groceryTaskCount,
     recipeTaskCount,
     jobTaskCount,
   ]);
 
   // Handle create task from board
-  // For singleton types (job_tracker, recipe, grocery), boardId is optional and handled automatically
+  // For singleton types (job_tracker, recipe), boardId is optional and handled automatically
   const handleCreateTask = (boardId?: string, sectionId?: string) => {
     // Determine which board to use based on current view
     let targetBoardId = boardId;
@@ -168,8 +159,6 @@ const TasksPage: React.FC = () => {
         targetBoardId = jobBoardId ?? undefined;
       } else if (selectedView === "recipes") {
         targetBoardId = recipeBoardId ?? undefined;
-      } else if (selectedView === "grocery") {
-        targetBoardId = groceryBoardId ?? undefined;
       }
     }
 
@@ -210,66 +199,17 @@ const TasksPage: React.FC = () => {
             onEditTask={handleEditTask}
           />
         )}
-        {selectedView === "grocery" && (
-          <>
-            {groceryBoards.length === 0 && sharedGroceryBoards.length === 0 ? (
-              // No boards at all - show TemplateView empty state
-              <TemplateView
-                templateType="grocery"
-                boards={groceryBoards}
-                onCreateTask={handleCreateTask}
-                onEditTask={handleEditTask}
-              />
-            ) : (
-              <div className="container mx-auto px-4 sm:px-6">
-                {/* Check if ALL boards are empty */}
-                {groceryTaskCount === 0 ? (
-                  // All boards are empty - show single unified empty state
-                  <EmptyStateAddCard
-                    icon={ShoppingCart}
-                    title="No items yet"
-                    description="Add your first grocery item to get started"
-                    onClick={() => handleCreateTask()}
-                    ariaLabel="Add your first grocery item"
-                  />
-                ) : (
-                  // At least one board has items - show all boards
-                  <div className="space-y-8">
-                    {/* Owned Boards */}
-                    {groceryBoards.length > 0 && (
-                      <div className="space-y-6">
-                        {groceryBoards.map((board) => (
-                          <GroceryListView
-                            key={board.id}
-                            board={board}
-                            onEditTask={handleEditTask}
-                            isReadOnly={false}
-                          />
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Shared Boards */}
-                    {sharedGroceryBoards.length > 0 && (
-                      <div className="space-y-6">
-                        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                          Shared with Me
-                        </h2>
-                        {sharedGroceryBoards.map((board) => (
-                          <GroceryListView
-                            key={board.id}
-                            board={board}
-                            onEditTask={handleEditTask}
-                            isReadOnly={true}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </>
+        {selectedView === "calendar" && (
+          <div className="container mx-auto px-4 sm:px-6">
+            <CalendarView 
+              onDayClick={(date) => {
+                setSelectedCalendarDate(date);
+                setCreateTaskBoardId(undefined);
+                setCreateTaskSectionId(undefined);
+                setShowCreateTask(true);
+              }}
+            />
+          </div>
         )}
         {selectedView === "recipes" && (
           <TemplateView
@@ -319,12 +259,14 @@ const TasksPage: React.FC = () => {
               setShowCreateTask(false);
               setCreateTaskBoardId(undefined);
               setCreateTaskSectionId(undefined);
+              setSelectedCalendarDate(null);
             }}
             boardId={createTaskBoardId}
             boardType={
               createTaskBoard?.board_type || createTaskBoard?.template_type
             }
             defaultSectionId={createTaskSectionId}
+            defaultDueDate={selectedCalendarDate}
           />
         ))}
 

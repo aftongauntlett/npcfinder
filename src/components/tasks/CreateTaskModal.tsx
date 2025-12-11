@@ -41,6 +41,7 @@ interface CreateTaskModalProps {
   boardId?: string | null;
   boardType?: string | null;
   defaultSectionId?: string;
+  defaultDueDate?: Date | null;
 }
 
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
@@ -49,6 +50,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   boardId,
   boardType,
   defaultSectionId,
+  defaultDueDate,
 }) => {
   const { themeColor } = useTheme();
   const [url, setUrl] = useState("");
@@ -62,7 +64,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   const [priority, setPriority] = useState<"low" | "medium" | "high" | null>(
     null
   );
-  const [dueDate, setDueDate] = useState<Date | null>(null);
+  const [dueDate, setDueDate] = useState<Date | null>(defaultDueDate || null);
 
   // Repeatable task fields
   const [isRepeatable, setIsRepeatable] = useState(false);

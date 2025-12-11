@@ -260,8 +260,8 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
             </button>
           </div>
 
-          {/* Sharing Section - Only for grocery and existing boards */}
-          {board && (board.template_type === "grocery" || shares.length > 0) && (
+          {/* Sharing Section - Only for existing boards with shares */}
+          {board && shares.length > 0 && (
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">

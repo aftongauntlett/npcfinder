@@ -48,13 +48,6 @@ const TEMPLATE_META = {
     emptyDescription:
       "Create a markdown-style to-do list with support for formatting and bullets.",
   },
-  grocery: {
-    icon: Plus,
-    title: "Grocery Lists",
-    emptyTitle: "No grocery lists yet",
-    emptyDescription:
-      "Create a grocery list to organize items by category and share with family.",
-  },
   job_tracker: {
     icon: Briefcase,
     title: "Job Applications",
@@ -100,7 +93,7 @@ const TemplateView: React.FC<TemplateViewProps> = ({
     TEMPLATE_META.kanban;
 
   // Only kanban and markdown templates allow multiple boards
-  // job_tracker, recipe, and grocery are singleton (one per user, auto-created)
+  // job_tracker and recipe are singleton (one per user, auto-created)
   const allowsMultipleBoards =
     templateType === "kanban" || templateType === "markdown";
 

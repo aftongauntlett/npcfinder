@@ -2,6 +2,7 @@ import React from "react";
 import { X } from "lucide-react";
 import { DashboardRecommendations } from "./DashboardRecommendations";
 import { UserSearch, Button } from "@/components/shared";
+import CalendarView from "../tasks/views/CalendarView";
 
 interface DashboardContentProps {
   activeTab: string;
@@ -27,9 +28,10 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({
       <div role="tabpanel" id={`${activeTab}-panel`}>
         {activeTab === "dashboard" && (
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-            <p className="text-gray-600 dark:text-gray-400">
-              Welcome to your dashboard! Use the cards above to track your media and the navigation menu to explore features.
-            </p>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+              Your Calendar
+            </h2>
+            <CalendarView readOnly={true} compact={true} />
           </div>
         )}
 

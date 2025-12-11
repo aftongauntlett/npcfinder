@@ -66,23 +66,7 @@ export type TemplateType =
   | "markdown"
   | "recipe"
   | "kanban"
-  | "grocery"
   | "custom";
-
-/**
- * Grocery Category
- * Common grocery shopping categories
- */
-export type GroceryCategory =
-  | "Produce"
-  | "Dairy"
-  | "Meat"
-  | "Bakery"
-  | "Pantry"
-  | "Frozen"
-  | "Beverages"
-  | "Snacks"
-  | "Other";
 
 export interface Board {
   id: string;
