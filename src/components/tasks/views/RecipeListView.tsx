@@ -204,20 +204,22 @@ export const RecipeListView: React.FC<RecipeListViewProps> = ({
           {/* Toolbar */}
           <div ref={listTopRef} className="space-y-3">
             <div className="flex flex-nowrap items-center justify-between gap-3">
-              <FilterSortMenu
-                sections={filterSortSections}
-                activeFilters={{
-                  category: categoryFilters,
-                  sort: activeSort,
-                }}
-                onFilterChange={handleFilterChange}
-                label="Sort & Filter"
-              />
-              <div className="flex-1 max-w-xs">
+              <div className="flex-1 max-w-md">
                 <LocalSearchInput
                   value={searchQuery}
                   onChange={setSearchQuery}
                   placeholder="Search Recipes..."
+                  filterButton={
+                    <FilterSortMenu
+                      sections={filterSortSections}
+                      activeFilters={{
+                        category: categoryFilters,
+                        sort: activeSort,
+                      }}
+                      onFilterChange={handleFilterChange}
+                      label=""
+                    />
+                  }
                 />
               </div>
               <Button

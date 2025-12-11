@@ -50,22 +50,21 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({
         {activeTab === "trending" && (
           <div className="space-y-6">
             {/* Recent Activity */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-12 shadow-sm">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-12 text-center">
+              <p className="text-gray-500 dark:text-gray-400">
                 Recent Activity
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 text-center">
-                No recent activity yet. Start by connecting with friends and
-                sharing recommendations!
+              </p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
+                No recent activity yet. Start by connecting with friends and sharing recommendations!
               </p>
             </div>
 
             {/* Trending Content */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-12 shadow-sm">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-12 text-center">
+              <p className="text-gray-500 dark:text-gray-400">
                 Trending Content
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 text-center">
+              </p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
                 Check back later to see what's popular with your friends!
               </p>
             </div>
@@ -73,8 +72,8 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({
         )}
       </div>
 
-      {/* Getting Started */}
-      {showGettingStarted && (
+      {/* Getting Started - Only show on Dashboard tab */}
+      {activeTab === "dashboard" && showGettingStarted && (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 relative mt-6">
           <Button
             onClick={() => {

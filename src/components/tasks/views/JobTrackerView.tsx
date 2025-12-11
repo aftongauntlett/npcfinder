@@ -1,4 +1,4 @@
-import React, { useRef, useState, useMemo } from "react";
+import React, { useRef, useState, useMemo, useEffect } from "react";
 import { JobTrackerTable } from "./JobTrackerTable";
 import { Pagination } from "../../shared/common/Pagination";
 import { usePagination } from "../../../hooks/usePagination";
@@ -8,6 +8,12 @@ import type { Task } from "../../../services/tasksService.types";
 import type { StatusHistoryEntry } from "../../../services/tasksService.types";
 import { Briefcase } from "lucide-react";
 import { EmptyStateAddCard, LocalSearchInput } from "../../shared";
+import FilterSortMenu from "../../shared/common/FilterSortMenu";
+import type { FilterSortSection } from "../../shared/common/FilterSortMenu";
+import {
+  getPersistedFilters,
+  persistFilters,
+} from "../../../utils/persistenceUtils";
 
 interface JobTrackerViewProps {
   boardId: string;
@@ -25,6 +31,28 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
   const { data: tasks = [], isLoading } = useTasks(boardId);
   const listTopRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
+
+  // Load persisted filter state
+  const persistenceKey = "job-tracker-filters";
+  const persistedFilters = getPersistedFilters(persistenceKey, {
+    activeSort: "date-newest",
+    statusFilters: ["all"],
+  });
+
+  const [activeSort, setActiveSort] = useState<string>(
+    persistedFilters.activeSort as string
+  );
+  const [statusFilters, setStatusFilters] = useState<string[]>(
+    persistedFilters.statusFilters as string[]
+  );
+
+  // Persist filter changes
+  useEffect(() => {
+    persistFilters(persistenceKey, {
+      activeSort,
+      statusFilters,
+    });
+  }, [activeSort, statusFilters]);
 
   // Transform tasks to job applications
   const jobApplications = tasks.map((task) => ({
@@ -51,17 +79,112 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
       (task.item_data?.status_history as StatusHistoryEntry[]) || undefined,
   }));
 
-  // Filter by search query
-  const filteredJobApplications = useMemo(() => {
-    if (!searchQuery.trim()) return jobApplications;
+  // Extract unique statuses
+  const availableStatuses = useMemo(() => {
+    const statusSet = new Set<string>();
+    jobApplications.forEach((item) => {
+      if (item.status) {
+        statusSet.add(item.status);
+      }
+    });
+    return Array.from(statusSet).sort();
+  }, [jobApplications]);
+
+  // Filter by status first
+  const statusFilteredJobs = useMemo(() => {
+    if (statusFilters.includes("all") || statusFilters.length === 0) {
+      return jobApplications;
+    }
+    return jobApplications.filter((item) => statusFilters.includes(item.status));
+  }, [jobApplications, statusFilters]);
+
+  // Then filter by search query
+  const searchFilteredJobs = useMemo(() => {
+    if (!searchQuery.trim()) return statusFilteredJobs;
 
     const query = searchQuery.toLowerCase();
-    return jobApplications.filter((job) => {
+    return statusFilteredJobs.filter((job) => {
       const matchesCompany = job.company_name.toLowerCase().includes(query);
       const matchesPosition = job.position.toLowerCase().includes(query);
       return matchesCompany || matchesPosition;
     });
-  }, [jobApplications, searchQuery]);
+  }, [statusFilteredJobs, searchQuery]);
+
+  // Finally sort
+  const filteredJobApplications = useMemo(() => {
+    const sorted = [...searchFilteredJobs];
+    switch (activeSort) {
+      case "date-newest":
+        return sorted.sort(
+          (a, b) =>
+            new Date(b.date_applied).getTime() -
+            new Date(a.date_applied).getTime()
+        );
+      case "date-oldest":
+        return sorted.sort(
+          (a, b) =>
+            new Date(a.date_applied).getTime() -
+            new Date(b.date_applied).getTime()
+        );
+      case "company-asc":
+        return sorted.sort((a, b) => a.company_name.localeCompare(b.company_name));
+      case "company-desc":
+        return sorted.sort((a, b) => b.company_name.localeCompare(a.company_name));
+      case "position-asc":
+        return sorted.sort((a, b) => (a.position || "").localeCompare(b.position || ""));
+      case "position-desc":
+        return sorted.sort((a, b) => (b.position || "").localeCompare(a.position || ""));
+      case "status-asc":
+        return sorted.sort((a, b) => a.status.localeCompare(b.status));
+      case "status-desc":
+        return sorted.sort((a, b) => b.status.localeCompare(a.status));
+      default:
+        return sorted;
+    }
+  }, [searchFilteredJobs, activeSort]);
+
+  // Filter sections for FilterSortMenu
+  const filterSortSections: FilterSortSection[] = useMemo(
+    () => [
+      {
+        id: "status",
+        title: "STATUS",
+        options: [
+          { id: "all", label: "All Statuses" },
+          ...availableStatuses.map((status) => ({
+            id: status,
+            label: status,
+          })),
+        ],
+        multiSelect: true,
+      },
+      {
+        id: "sort",
+        title: "SORT BY",
+        options: [
+          { id: "date-newest", label: "Date (Newest)" },
+          { id: "date-oldest", label: "Date (Oldest)" },
+          { id: "company-asc", label: "Company (A-Z)" },
+          { id: "company-desc", label: "Company (Z-A)" },
+          { id: "position-asc", label: "Position (A-Z)" },
+          { id: "position-desc", label: "Position (Z-A)" },
+          { id: "status-asc", label: "Status (A-Z)" },
+          { id: "status-desc", label: "Status (Z-A)" },
+        ],
+        multiSelect: false,
+      },
+    ],
+    [availableStatuses]
+  );
+
+  const handleFilterChange = (sectionId: string, value: string | string[]) => {
+    if (sectionId === "status") {
+      const statuses = Array.isArray(value) ? value : [value];
+      setStatusFilters(statuses);
+    } else if (sectionId === "sort") {
+      setActiveSort(value as string);
+    }
+  };
 
   // URL-based pagination state
   const { page, perPage, setPage, setPerPage } = useUrlPaginationState(1, 10);
@@ -92,7 +215,6 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
 
   return (
     <div className="px-2 sm:px-0">
-      <div ref={listTopRef} />
       {jobApplications.length === 0 ? (
         <EmptyStateAddCard
           icon={Briefcase}
@@ -103,13 +225,26 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
         />
       ) : (
         <>
-          {/* Search Input */}
-          <div className="mb-4 max-w-xs">
-            <LocalSearchInput
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Search Jobs..."
-            />
+          {/* Header with Search */}
+          <div ref={listTopRef} className="flex items-center gap-3 mb-4">
+            <div className="flex-1 max-w-md">
+              <LocalSearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Search Jobs..."
+                filterButton={
+                  <FilterSortMenu
+                    sections={filterSortSections}
+                    activeFilters={{
+                      status: statusFilters,
+                      sort: activeSort,
+                    }}
+                    onFilterChange={handleFilterChange}
+                    label=""
+                  />
+                }
+              />
+            </div>
           </div>
 
           <JobTrackerTable
@@ -120,6 +255,7 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
             }}
             onDelete={handleDelete}
             onAdd={onCreateTask}
+            hideFilterSort
           />
 
           {/* Pagination */}
