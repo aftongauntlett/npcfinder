@@ -115,14 +115,10 @@ export const JOB_TRACKER_TEMPLATE: BoardTemplate = {
   ],
   statusOptions: [
     "Applied",
-    "Phone Screen",
-    "Interview - Round 1",
-    "Interview - Round 2",
-    "Interview - Round 3",
-    "Offer Received",
-    "Rejected",
     "No Response",
+    "Interview",
     "Accepted",
+    "Rejected",
     "Declined",
   ],
 };

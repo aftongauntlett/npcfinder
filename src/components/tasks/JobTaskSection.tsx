@@ -69,14 +69,10 @@ const JobTaskSection: React.FC<JobTaskSectionProps> = ({
   const jobTrackerTemplate = getTemplate("job_tracker");
   const jobStatusOptions = jobTrackerTemplate?.statusOptions || [
     "Applied",
-    "Phone Screen",
-    "Interview - Round 1",
-    "Interview - Round 2",
-    "Interview - Round 3",
-    "Offer Received",
-    "Rejected",
     "No Response",
+    "Interview",
     "Accepted",
+    "Rejected",
     "Declined",
   ];
 
@@ -222,8 +218,6 @@ const JobTaskSection: React.FC<JobTaskSectionProps> = ({
             { value: "Full-time", label: "Full-time" },
             { value: "Part-time", label: "Part-time" },
             { value: "Contract", label: "Contract" },
-            { value: "Internship", label: "Internship" },
-            { value: "Remote", label: "Remote" },
           ]}
         />
         <Input
@@ -283,6 +277,17 @@ const JobTaskSection: React.FC<JobTaskSectionProps> = ({
           </div>
         )}
       </div>
+
+      {/* Notes - supports markdown */}
+      <Textarea
+        id="job-notes"
+        label="Notes"
+        value={jobNotes}
+        onChange={(e) => setJobNotes(e.target.value)}
+        placeholder="Interview notes, contacts, follow-ups, etc."
+        rows={4}
+        helperText="Supports basic markdown: **bold**, - bullet lists"
+      />
 
       {/* Description - supports markdown */}
       <Textarea

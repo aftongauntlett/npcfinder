@@ -36,8 +36,9 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
   // Load persisted filter state
   const persistenceKey = "job-tracker-filters";
   const persistedFilters = getPersistedFilters(persistenceKey, {
-    activeSort: "date-newest",
+    activeSort: "date-applied-newest",
     statusFilters: ["all"],
+    locationFilters: ["all"],
   });
 
   const [activeSort, setActiveSort] = useState<string>(
@@ -46,14 +47,18 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
   const [statusFilters, setStatusFilters] = useState<string[]>(
     persistedFilters.statusFilters as string[]
   );
+  const [locationFilters, setLocationFilters] = useState<string[]>(
+    persistedFilters.locationFilters as string[]
+  );
 
   // Persist filter changes
   useEffect(() => {
     persistFilters(persistenceKey, {
       activeSort,
       statusFilters,
+      locationFilters,
     });
-  }, [activeSort, statusFilters]);
+  }, [activeSort, statusFilters, locationFilters]);
 
   // Transform tasks to job applications
   const jobApplications = tasks.map((task) => ({
@@ -91,6 +96,17 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
     return Array.from(statusSet).sort();
   }, [jobApplications]);
 
+  // Extract unique location types
+  const availableLocationTypes = useMemo(() => {
+    const locationSet = new Set<string>();
+    jobApplications.forEach((item) => {
+      if (item.location_type) {
+        locationSet.add(item.location_type);
+      }
+    });
+    return Array.from(locationSet).sort();
+  }, [jobApplications]);
+
   // Filter by status first
   const statusFilteredJobs = useMemo(() => {
     if (statusFilters.includes("all") || statusFilters.length === 0) {
@@ -99,46 +115,48 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
     return jobApplications.filter((item) => statusFilters.includes(item.status));
   }, [jobApplications, statusFilters]);
 
+  // Then filter by location type
+  const locationFilteredJobs = useMemo(() => {
+    if (locationFilters.includes("all") || locationFilters.length === 0) {
+      return statusFilteredJobs;
+    }
+    return statusFilteredJobs.filter((item) => 
+      item.location_type && locationFilters.includes(item.location_type)
+    );
+  }, [statusFilteredJobs, locationFilters]);
+
   // Then filter by search query
   const searchFilteredJobs = useMemo(() => {
-    if (!searchQuery.trim()) return statusFilteredJobs;
+    if (!searchQuery.trim()) return locationFilteredJobs;
 
     const query = searchQuery.toLowerCase();
-    return statusFilteredJobs.filter((job) => {
+    return locationFilteredJobs.filter((job) => {
       const matchesCompany = job.company_name.toLowerCase().includes(query);
       const matchesPosition = job.position.toLowerCase().includes(query);
       return matchesCompany || matchesPosition;
     });
-  }, [statusFilteredJobs, searchQuery]);
+  }, [locationFilteredJobs, searchQuery]);
 
   // Finally sort
   const filteredJobApplications = useMemo(() => {
     const sorted = [...searchFilteredJobs];
     switch (activeSort) {
-      case "date-newest":
+      case "date-applied-newest":
         return sorted.sort(
           (a, b) =>
             new Date(b.date_applied).getTime() -
             new Date(a.date_applied).getTime()
         );
-      case "date-oldest":
+      case "date-applied-oldest":
         return sorted.sort(
           (a, b) =>
             new Date(a.date_applied).getTime() -
             new Date(b.date_applied).getTime()
         );
-      case "company-asc":
+      case "name-asc":
         return sorted.sort((a, b) => a.company_name.localeCompare(b.company_name));
-      case "company-desc":
+      case "name-desc":
         return sorted.sort((a, b) => b.company_name.localeCompare(a.company_name));
-      case "position-asc":
-        return sorted.sort((a, b) => (a.position || "").localeCompare(b.position || ""));
-      case "position-desc":
-        return sorted.sort((a, b) => (b.position || "").localeCompare(a.position || ""));
-      case "status-asc":
-        return sorted.sort((a, b) => a.status.localeCompare(b.status));
-      case "status-desc":
-        return sorted.sort((a, b) => b.status.localeCompare(a.status));
       default:
         return sorted;
     }
@@ -160,28 +178,39 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
         multiSelect: true,
       },
       {
+        id: "location",
+        title: "LOCATION",
+        options: [
+          { id: "all", label: "All Locations" },
+          ...availableLocationTypes.map((locationType) => ({
+            id: locationType,
+            label: locationType,
+          })),
+        ],
+        multiSelect: true,
+      },
+      {
         id: "sort",
         title: "SORT BY",
         options: [
-          { id: "date-newest", label: "Date (Newest)" },
-          { id: "date-oldest", label: "Date (Oldest)" },
-          { id: "company-asc", label: "Company (A-Z)" },
-          { id: "company-desc", label: "Company (Z-A)" },
-          { id: "position-asc", label: "Position (A-Z)" },
-          { id: "position-desc", label: "Position (Z-A)" },
-          { id: "status-asc", label: "Status (A-Z)" },
-          { id: "status-desc", label: "Status (Z-A)" },
+          { id: "date-applied-newest", label: "Date Applied (Newest)" },
+          { id: "date-applied-oldest", label: "Date Applied (Oldest)" },
+          { id: "name-asc", label: "Name (A-Z)" },
+          { id: "name-desc", label: "Name (Z-A)" },
         ],
         multiSelect: false,
       },
     ],
-    [availableStatuses]
+    [availableStatuses, availableLocationTypes]
   );
 
   const handleFilterChange = (sectionId: string, value: string | string[]) => {
     if (sectionId === "status") {
       const statuses = Array.isArray(value) ? value : [value];
       setStatusFilters(statuses);
+    } else if (sectionId === "location") {
+      const locations = Array.isArray(value) ? value : [value];
+      setLocationFilters(locations);
     } else if (sectionId === "sort") {
       setActiveSort(value as string);
     }
@@ -254,6 +283,7 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
               filterSortSections={filterSortSections}
               activeFilters={{
                 status: statusFilters,
+                location: locationFilters,
                 sort: activeSort,
               }}
               onFilterChange={handleFilterChange}

@@ -71,10 +71,10 @@ const JobCard: React.FC<JobCardProps> = ({
   // Header content (always visible)
   const headerContent = (
     <div className="space-y-1.5">
-      {/* Title row with chips */}
+      {/* Title row with company name: job title and chips */}
       <div className="flex items-center gap-2 flex-wrap">
-        <h3 className="font-semibold text-gray-900 dark:text-white">
-          {companyName}
+        <h3 className="text-gray-900 dark:text-white">
+          <span className="font-semibold">{companyName}:</span> {position}
         </h3>
         {companyUrl && (
           <a
@@ -111,14 +111,13 @@ const JobCard: React.FC<JobCardProps> = ({
             {salaryRange}
           </span>
         )}
-        <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-          {status} - {formatDate(dateApplied)}
-        </span>
       </div>
 
-      {/* One-line truncated position */}
-      <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-1">
-        {position}
+      {/* Status and date subtitle */}
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        {status === "Applied" 
+          ? `Applied • ${formatDate(dateApplied)}`
+          : `${status} • Updated ${formatDate(dateApplied)}`}
       </p>
     </div>
   );

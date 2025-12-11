@@ -574,8 +574,6 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 { value: "Full-time", label: "Full-time" },
                 { value: "Part-time", label: "Part-time" },
                 { value: "Contract", label: "Contract" },
-                { value: "Internship", label: "Internship" },
-                { value: "Remote", label: "Remote" },
               ]}
             />
             <Textarea
