@@ -3,7 +3,7 @@ import { Plus } from "lucide-react";
 import Button from "../../shared/ui/Button";
 import { RecipeCard } from "../../shared/cards";
 import { Pagination } from "../../shared/common/Pagination";
-import { EmptyStateAddCard } from "../../shared";
+import { EmptyStateAddCard, LocalSearchInput } from "../../shared";
 import { usePagination } from "../../../hooks/usePagination";
 import { useUrlPaginationState } from "../../../hooks/useUrlPaginationState";
 import FilterSortMenu from "../../shared/common/FilterSortMenu";
@@ -43,6 +43,7 @@ export const RecipeListView: React.FC<RecipeListViewProps> = ({
   const [categoryFilters, setCategoryFilters] = useState<string[]>(
     persistedFilters.categoryFilters as string[]
   );
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const listTopRef = useRef<HTMLDivElement>(null);
 
   // Persist filter changes
@@ -67,15 +68,30 @@ export const RecipeListView: React.FC<RecipeListViewProps> = ({
 
   // Filter tasks by category
   const filteredTasks = useMemo(() => {
-    if (categoryFilters.length === 0 || categoryFilters.includes("all")) {
-      return tasks;
+    let filtered = tasks;
+
+    // Filter by category
+    if (!(categoryFilters.length === 0 || categoryFilters.includes("all"))) {
+      filtered = filtered.filter((task) => {
+        const category = task.item_data?.category as string | undefined;
+        return category && categoryFilters.includes(category);
+      });
     }
 
-    return tasks.filter((task) => {
-      const category = task.item_data?.category as string | undefined;
-      return category && categoryFilters.includes(category);
-    });
-  }, [tasks, categoryFilters]);
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((task) => {
+        const recipeName =
+          (task.item_data?.recipe_name as string) ||
+          (task.item_data?.name as string) ||
+          task.title;
+        return recipeName.toLowerCase().includes(query);
+      });
+    }
+
+    return filtered;
+  }, [tasks, categoryFilters, searchQuery]);
 
   const sortedTasks = [...filteredTasks].sort((a, b) => {
     const aName =
@@ -197,6 +213,13 @@ export const RecipeListView: React.FC<RecipeListViewProps> = ({
                 onFilterChange={handleFilterChange}
                 label="Sort & Filter"
               />
+              <div className="flex-1 max-w-xs">
+                <LocalSearchInput
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  placeholder="Search Recipes..."
+                />
+              </div>
               <Button
                 onClick={() => onCreateTask()}
                 variant="action"

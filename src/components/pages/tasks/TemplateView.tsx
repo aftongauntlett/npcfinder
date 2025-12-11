@@ -8,7 +8,7 @@
 import React, { useState, useMemo } from "react";
 import { Plus, LayoutGrid, Briefcase, ChefHat, ListTodo } from "lucide-react";
 import Button from "../../shared/ui/Button";
-import { EmptyStateAddCard } from "../../shared";
+import { EmptyStateAddCard, LocalSearchInput } from "../../shared";
 import BoardFormModal from "../../tasks/BoardFormModal";
 import BoardCard from "../../tasks/BoardCard";
 import { JobTrackerView } from "../../tasks/views/JobTrackerView";
@@ -91,6 +91,7 @@ const TemplateView: React.FC<TemplateViewProps> = ({
   >({
     sort: "custom",
   });
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [draggedBoard, setDraggedBoard] = useState<BoardWithStats | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
 
@@ -159,12 +160,12 @@ const TemplateView: React.FC<TemplateViewProps> = ({
 
     if (!draggedBoard || draggedBoard.id === targetBoard.id) return;
 
-    const draggedIndex = sortedBoards.findIndex(
+    const draggedIndex = filteredBoards.findIndex(
       (b) => b.id === draggedBoard.id
     );
-    const targetIndex = sortedBoards.findIndex((b) => b.id === targetBoard.id);
+    const targetIndex = filteredBoards.findIndex((b) => b.id === targetBoard.id);
 
-    const reordered = [...sortedBoards];
+    const reordered = [...filteredBoards];
     reordered.splice(draggedIndex, 1);
 
     const insertIndex =
@@ -226,6 +227,16 @@ const TemplateView: React.FC<TemplateViewProps> = ({
     }
   }, [boards, activeFilters.sort]);
 
+  // Filter by search query
+  const filteredBoards = useMemo(() => {
+    if (!searchQuery.trim()) return sortedBoards;
+
+    const query = searchQuery.toLowerCase();
+    return sortedBoards.filter((board) =>
+      board.name.toLowerCase().includes(query)
+    );
+  }, [sortedBoards, searchQuery]);
+
   if (boards.length === 0) {
     // For singleton types, board will be auto-created, so just show static informational state
     if (!allowsMultipleBoards) {
@@ -272,7 +283,7 @@ const TemplateView: React.FC<TemplateViewProps> = ({
 
   // For job_tracker and recipe templates, show the list view directly (no board cards)
   if (templateType === "job_tracker" && boards.length > 0) {
-    const board = sortedBoards[0]; // Use the first (and typically only) board
+    const board = filteredBoards[0]; // Use the first (and typically only) board
     return (
       <div className="container mx-auto px-4 sm:px-6">
         <h2 className="sr-only">{meta.title}</h2>
@@ -301,7 +312,7 @@ const TemplateView: React.FC<TemplateViewProps> = ({
   }
 
   if (templateType === "recipe" && boards.length > 0) {
-    const board = sortedBoards[0]; // Use the first (and typically only) board
+    const board = filteredBoards[0]; // Use the first (and typically only) board
     return (
       <div className="container mx-auto px-4 sm:px-6">
         <h2 className="sr-only">{meta.title}</h2>
@@ -338,16 +349,25 @@ const TemplateView: React.FC<TemplateViewProps> = ({
     <div className="container mx-auto px-4 sm:px-6">
       <h2 className="sr-only">{meta.title}</h2>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        {/* Filter & Sort Menu */}
-        <FilterSortMenu
-          sections={filterSortSections}
-          activeFilters={activeFilters}
-          onFilterChange={(sectionId, value) => {
-            setActiveFilters({ ...activeFilters, [sectionId]: value });
-          }}
-          label="Sort"
-        />
+      <div className="flex items-center justify-between gap-3 mb-4">
+        {/* Search Input with Filter Button */}
+        <div className="flex-1 max-w-md">
+          <LocalSearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search Boards..."
+            filterButton={
+              <FilterSortMenu
+                sections={filterSortSections}
+                activeFilters={activeFilters}
+                onFilterChange={(sectionId, value) => {
+                  setActiveFilters({ ...activeFilters, [sectionId]: value });
+                }}
+                label=""
+              />
+            }
+          />
+        </div>
 
         {allowsMultipleBoards && (
           <Button
@@ -364,7 +384,7 @@ const TemplateView: React.FC<TemplateViewProps> = ({
       {/* Boards List */}
       <div className="space-y-3">
         {/* Drop zone for top position */}
-        {isCustomSort && draggedBoard && sortedBoards.length > 0 && (
+        {isCustomSort && draggedBoard && filteredBoards.length > 0 && (
           <div
             onDragOver={(e) => {
               e.preventDefault();
@@ -377,13 +397,13 @@ const TemplateView: React.FC<TemplateViewProps> = ({
               setDragOverId(null);
               if (!draggedBoard) return;
 
-              const draggedIndex = sortedBoards.findIndex(
+              const draggedIndex = filteredBoards.findIndex(
                 (b) => b.id === draggedBoard.id
               );
 
               if (draggedIndex === 0) return;
 
-              const reordered = [...sortedBoards];
+              const reordered = [...filteredBoards];
               reordered.splice(draggedIndex, 1);
               reordered.unshift(draggedBoard);
 
@@ -410,7 +430,7 @@ const TemplateView: React.FC<TemplateViewProps> = ({
             )}
           </div>
         )}
-        {sortedBoards.map((board) => {
+        {filteredBoards.map((board) => {
           const isStarter = board.field_config?.starter === true;
           const isDragging = draggedBoard?.id === board.id;
           const isDropTarget = dragOverId === board.id;

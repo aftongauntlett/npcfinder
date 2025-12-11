@@ -11,9 +11,11 @@ interface WatchlistToolbarProps {
   mediaTypeFilter: MediaTypeFilter;
   genreFilters: string[];
   sortBy: WatchlistSortType;
+  searchQuery: string;
   onMediaTypeChange: (type: MediaTypeFilter) => void;
   onGenresChange: (genres: string[]) => void;
   onSortChange: (sort: WatchlistSortType) => void;
+  onSearchChange: (query: string) => void;
   onAddClick: () => void;
 }
 
@@ -22,9 +24,11 @@ const WatchlistToolbar: React.FC<WatchlistToolbarProps> = ({
   mediaTypeFilter,
   genreFilters,
   sortBy,
+  searchQuery,
   onMediaTypeChange,
   onGenresChange,
   onSortChange,
+  onSearchChange,
   onAddClick,
 }) => {
   const filterSections = getWatchlistFilterSections(availableGenres);
@@ -49,6 +53,11 @@ const WatchlistToolbar: React.FC<WatchlistToolbarProps> = ({
             onSortChange(filterId as WatchlistSortType);
           }
         },
+      }}
+      searchConfig={{
+        value: searchQuery,
+        onChange: onSearchChange,
+        placeholder: "Search Movies and TV Shows...",
       }}
       onAddClick={onAddClick}
     />

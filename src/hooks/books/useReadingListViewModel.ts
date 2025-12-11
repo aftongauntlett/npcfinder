@@ -48,6 +48,8 @@ export function useReadingListViewModel({
   const [sortBy, setSortBy] = useState<ReadingListSortType>(
     persistedFilters.sortBy as ReadingListSortType
   );
+  // searchQuery is intentionally not persisted - resets on each visit for fresh search experience
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Modal state
   const [showSearchModal, setShowSearchModal] = useState(false);
@@ -98,23 +100,31 @@ export function useReadingListViewModel({
 
       // Filter by categories (multiple selection support)
       if (categoryFilters.length === 0 || categoryFilters.includes("all")) {
-        return true;
-      }
-
-      // Book matches if it matches ANY of the selected categories
-      if (book.categories) {
+        // Continue to search filter
+      } else if (book.categories) {
         const bookCategories = book.categories
           .toLowerCase()
           .split(/[,/&]/)
           .map((c) => c.trim());
-        return categoryFilters.some((selectedCategory) =>
+        const hasMatch = categoryFilters.some((selectedCategory) =>
           bookCategories.includes(selectedCategory)
         );
+        if (!hasMatch) return false;
+      } else {
+        return false;
       }
 
-      return false;
+      // Filter by search query (search title and author)
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        const matchesTitle = book.title.toLowerCase().includes(query);
+        const matchesAuthor = book.authors?.toLowerCase().includes(query) || false;
+        if (!matchesTitle && !matchesAuthor) return false;
+      }
+
+      return true;
     },
-    [filter, categoryFilters]
+    [filter, categoryFilters, searchQuery]
   );
 
   // Sort function
@@ -261,10 +271,12 @@ export function useReadingListViewModel({
     filter,
     categoryFilters,
     sortBy,
+    searchQuery,
 
     // Filter setters
     setCategoryFilters,
     setSortBy,
+    setSearchQuery,
 
     // Pagination
     setCurrentPage,

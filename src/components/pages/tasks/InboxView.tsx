@@ -16,7 +16,7 @@ import TaskCard from "../../tasks/TaskCard";
 import CreateTaskModal from "../../tasks/CreateTaskModal";
 import TaskDetailModal from "../../tasks/TaskDetailModal";
 import Button from "../../shared/ui/Button";
-import { EmptyStateAddCard } from "../../shared";
+import { EmptyStateAddCard, LocalSearchInput } from "../../shared";
 import ConfirmationModal from "../../shared/ui/ConfirmationModal";
 import { Pagination } from "../../shared/common/Pagination";
 import { usePagination } from "../../../hooks/usePagination";
@@ -56,6 +56,7 @@ const InboxView: React.FC = () => {
 
   const [activeFilters, setActiveFilters] =
     useState<Record<string, string | string[]>>(persistedFilters);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Persist filter changes
   useEffect(() => {
@@ -118,9 +119,21 @@ const InboxView: React.FC = () => {
     }
   }, [tasks, activeFilters.sort]);
 
+  // Filter by search query
+  const filteredTasks = useMemo(() => {
+    if (!searchQuery.trim()) return sortedTasks;
+
+    const query = searchQuery.toLowerCase();
+    return sortedTasks.filter((task) => {
+      const matchesTitle = task.title.toLowerCase().includes(query);
+      const matchesDescription = task.description?.toLowerCase().includes(query) || false;
+      return matchesTitle || matchesDescription;
+    });
+  }, [sortedTasks, searchQuery]);
+
   // Pagination
   const pagination = usePagination({
-    items: sortedTasks,
+    items: filteredTasks,
     initialItemsPerPage: 10,
     persistenceKey: "tasks-inbox",
   });
@@ -290,16 +303,25 @@ const InboxView: React.FC = () => {
   return (
     <div className="container mx-auto px-4 sm:px-6">
       {/* Header */}
-      <div ref={listTopRef} className="flex items-center justify-between mb-4">
-        {/* Sort Menu */}
-        <FilterSortMenu
-          sections={filterSortSections}
-          activeFilters={activeFilters}
-          onFilterChange={(sectionId, value) => {
-            setActiveFilters({ ...activeFilters, [sectionId]: value });
-          }}
-          label="Sort"
-        />
+      <div ref={listTopRef} className="flex items-center justify-between gap-3 mb-4">
+        {/* Search Input with Filter Button */}
+        <div className="flex-1 max-w-md">
+          <LocalSearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search Tasks..."
+            filterButton={
+              <FilterSortMenu
+                sections={filterSortSections}
+                activeFilters={activeFilters}
+                onFilterChange={(sectionId, value) => {
+                  setActiveFilters({ ...activeFilters, [sectionId]: value });
+                }}
+                label=""
+              />
+            }
+          />
+        </div>
 
         <Button
           onClick={() => setShowCreateModal(true)}

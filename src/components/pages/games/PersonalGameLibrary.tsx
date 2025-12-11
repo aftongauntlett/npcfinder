@@ -46,8 +46,10 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
     filter,
     activeSort,
     genreFilters,
+    searchQuery,
     setActiveSort,
     setGenreFilters,
+    setSearchQuery,
     setCurrentPage,
     setItemsPerPage,
     showSearchModal,
@@ -118,8 +120,10 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
           availableGenres={availableGenres}
           genreFilters={genreFilters}
           activeSort={activeSort}
+          searchQuery={searchQuery}
           onGenresChange={setGenreFilters}
           onSortChange={setActiveSort}
+          onSearchChange={setSearchQuery}
           onAddClick={() => setShowSearchModal(true)}
         />
       )}

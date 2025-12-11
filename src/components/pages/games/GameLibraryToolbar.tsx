@@ -7,8 +7,10 @@ interface GameLibraryToolbarProps {
   availableGenres: Set<string>;
   genreFilters: string[];
   activeSort: GameLibrarySortType;
+  searchQuery: string;
   onGenresChange: (genres: string[]) => void;
   onSortChange: (sort: GameLibrarySortType) => void;
+  onSearchChange: (query: string) => void;
   onAddClick: () => void;
 }
 
@@ -16,8 +18,10 @@ const GameLibraryToolbar: React.FC<GameLibraryToolbarProps> = ({
   availableGenres,
   genreFilters,
   activeSort,
+  searchQuery,
   onGenresChange,
   onSortChange,
+  onSearchChange,
   onAddClick,
 }) => {
   const filterSections = getGameLibraryFilterSections(availableGenres);
@@ -40,6 +44,11 @@ const GameLibraryToolbar: React.FC<GameLibraryToolbarProps> = ({
               onSortChange(value as GameLibrarySortType);
             }
           },
+        }}
+        searchConfig={{
+          value: searchQuery,
+          onChange: onSearchChange,
+          placeholder: "Search Games...",
         }}
         onAddClick={onAddClick}
       />

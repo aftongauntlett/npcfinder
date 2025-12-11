@@ -38,8 +38,10 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
     filter,
     categoryFilters,
     sortBy,
+    searchQuery,
     setCategoryFilters,
     setSortBy,
+    setSearchQuery,
     setItemsPerPage,
     showSearchModal,
     setShowSearchModal,
@@ -70,8 +72,10 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
           availableCategories={availableCategories}
           categoryFilters={categoryFilters}
           sortBy={sortBy}
+          searchQuery={searchQuery}
           onCategoryChange={setCategoryFilters}
           onSortChange={setSortBy}
+          onSearchChange={setSearchQuery}
           onAddClick={() => setShowSearchModal(true)}
         />
       )}

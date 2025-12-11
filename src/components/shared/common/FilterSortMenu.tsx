@@ -1,8 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { SlidersHorizontal } from "lucide-react";
 import FilterSortSection from "./FilterSortSection";
-import ActiveFilterChips from "./ActiveFilterChips";
-import Button from "../ui/Button";
 
 export interface FilterSortOption {
   id: string;
@@ -123,75 +121,50 @@ const FilterSortMenu: React.FC<FilterSortMenuProps> = ({
     return activeFilters[section.id] === optionId;
   };
 
-  const handleRemoveFilter = (sectionId: string, filterId: string) => {
-    const section = sections.find((s) => s.id === sectionId);
-    if (!section) return;
-
-    if (section.multiSelect) {
-      // Multi-select: remove the specific filter
-      const currentValues = Array.isArray(activeFilters[sectionId])
-        ? (activeFilters[sectionId] as string[])
-        : [];
-
-      const newValues = currentValues.filter((id) => id !== filterId);
-      // If nothing left, default to "all"
-      onFilterChange(sectionId, newValues.length === 0 ? ["all"] : newValues);
-    } else {
-      // Single select: reset to "all"
-      onFilterChange(sectionId, "all");
-    }
-  };
-
   return (
-    <div className="flex items-center gap-2 flex-wrap">
-      <div className="relative inline-block">
-        {/* Trigger Button */}
-        <Button
-          ref={triggerRef}
-          variant="subtle"
-          size="sm"
-          icon={<SlidersHorizontal className="w-4 h-4" />}
-          onClick={() => setIsOpen(!isOpen)}
-          onKeyDown={handleKeyDown}
-          aria-label="Filter and sort"
-          aria-haspopup="listbox"
-          aria-expanded={isOpen}
+    <div className="relative inline-block">
+      {/* Trigger Button */}
+      <button
+        ref={triggerRef}
+        onClick={() => setIsOpen(!isOpen)}
+        onKeyDown={handleKeyDown}
+        aria-label={label || "Filter and sort"}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        className="inline-flex items-center justify-center w-8 h-8 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        type="button"
+      >
+        <SlidersHorizontal 
+          className={`w-4 h-4 transition-colors ${
+            isOpen ? "text-theme-primary" : "text-gray-400"
+          }`} 
+        />
+      </button>
+
+      {/* Dropdown Menu */}
+      {isOpen && (
+        <div
+          ref={dropdownRef}
+          className="absolute left-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-dropdown max-h-[400px] overflow-y-auto"
+          role="listbox"
         >
-          {label}
-        </Button>
+          {sections.map((section, sectionIndex) => (
+            <div key={section.id}>
+              <FilterSortSection
+                section={section}
+                activeFilters={activeFilters}
+                onOptionClick={handleOptionClick}
+                isOptionActive={isOptionActive}
+              />
 
-        {/* Dropdown Menu */}
-        {isOpen && (
-          <div
-            ref={dropdownRef}
-            className="absolute left-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-dropdown max-h-[400px] overflow-y-auto"
-            role="listbox"
-          >
-            {sections.map((section, sectionIndex) => (
-              <div key={section.id}>
-                <FilterSortSection
-                  section={section}
-                  activeFilters={activeFilters}
-                  onOptionClick={handleOptionClick}
-                  isOptionActive={isOptionActive}
-                />
-
-                {/* Divider between sections */}
-                {sectionIndex < sections.length - 1 && (
-                  <div className="my-2 border-t border-gray-200 dark:border-gray-700" />
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Active Filter Chips - inline on same row */}
-      <ActiveFilterChips
-        sections={sections}
-        activeFilters={activeFilters}
-        onRemoveFilter={handleRemoveFilter}
-      />
+              {/* Divider between sections */}
+              {sectionIndex < sections.length - 1 && (
+                <div className="my-2 border-t border-gray-200 dark:border-gray-700" />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

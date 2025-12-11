@@ -39,9 +39,11 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
     mediaTypeFilter,
     genreFilters,
     sortBy,
+    searchQuery,
     setMediaTypeFilter,
     setGenreFilters,
     setSortBy,
+    setSearchQuery,
     setItemsPerPage,
     showSearchModal,
     setShowSearchModal,
@@ -73,9 +75,11 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
           mediaTypeFilter={mediaTypeFilter}
           genreFilters={genreFilters}
           sortBy={sortBy}
+          searchQuery={searchQuery}
           onMediaTypeChange={setMediaTypeFilter}
           onGenresChange={setGenreFilters}
           onSortChange={setSortBy}
+          onSearchChange={setSearchQuery}
           onAddClick={() => setShowSearchModal(true)}
         />
       )}

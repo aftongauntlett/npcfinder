@@ -9,7 +9,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Plus, Share2, Check } from "lucide-react";
 import Button from "../../shared/ui/Button";
 import Chip from "../../shared/ui/Chip";
-import { EmptyStateAddCard } from "../../shared";
+import { EmptyStateAddCard, LocalSearchInput } from "../../shared";
 import ShareBoardModal from "../ShareBoardModal";
 import FilterSortMenu from "../../shared/common/FilterSortMenu";
 import type { FilterSortSection } from "../../shared/common/FilterSortMenu";
@@ -64,6 +64,8 @@ const GroceryListView: React.FC<GroceryListViewProps> = ({
   const [sortBy, setSortBy] = useState<"category" | "name">(
     persistedFilters.sortBy as "category" | "name"
   );
+  // searchQuery is intentionally not persisted - resets on each visit for fresh search experience
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Persist filter changes
   useEffect(() => {
@@ -79,9 +81,24 @@ const GroceryListView: React.FC<GroceryListViewProps> = ({
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
 
+  // Filter tasks by search query
+  const filteredTasks = useMemo(() => {
+    if (!searchQuery.trim()) return tasks;
+
+    const query = searchQuery.toLowerCase();
+    return tasks.filter((task) => {
+      const matchesName = task.title.toLowerCase().includes(query);
+      const matchesCategory =
+        (typeof task.item_data?.category === "string" &&
+          task.item_data.category.toLowerCase().includes(query)) ||
+        false;
+      return matchesName || matchesCategory;
+    });
+  }, [tasks, searchQuery]);
+
   // Extract filtering/grouping logic into dedicated hook
   const { itemsByCategory, needToBuy, purchased } = useGroceryListFiltering(
-    tasks,
+    filteredTasks,
     { categoryFilters, sortBy }
   );
 
@@ -222,6 +239,13 @@ const GroceryListView: React.FC<GroceryListViewProps> = ({
               onFilterChange={handleFilterChange}
               label="Sort & Filter"
             />
+            <div className="flex-1 max-w-xs">
+              <LocalSearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Search Items..."
+              />
+            </div>
             <div className="flex items-center gap-2">
               {/* Share Button */}
               {!isReadOnly && (

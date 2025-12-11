@@ -1,19 +1,8 @@
-import { Plus, SlidersHorizontal } from "lucide-react";
-import { useId, useState, useRef, useEffect } from "react";
+import { Plus } from "lucide-react";
 import Button from "../ui/Button";
-import Select from "../ui/Select";
 import FilterSortMenu from "../common/FilterSortMenu";
-import MediaTypeFilters from "../../media/MediaTypeFilters";
-import type { FilterOption } from "../../media/MediaTypeFilters";
-import type { SortOption } from "../types";
-
-interface ChipFilterConfig {
-  type: "chips";
-  options: FilterOption[];
-  activeFilter: string;
-  onFilterChange: (value: string) => void;
-  renderAsPopover?: boolean;
-}
+import LocalSearchInput from "../common/LocalSearchInput";
+import ActiveFilterChips from "../common/ActiveFilterChips";
 
 interface MenuFilterConfig {
   type: "menu";
@@ -27,114 +16,69 @@ interface MenuFilterConfig {
   onFilterChange: (sectionId: string, filterId: string | string[]) => void;
 }
 
-interface SortConfig {
-  options: SortOption[];
-  activeSort: string;
-  onSortChange: (value: string) => void;
+interface SearchConfig {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
 }
 
-type MediaPageToolbarProps =
-  | {
-      filterConfig?: ChipFilterConfig | null;
-      sortConfig: SortConfig;
-      onAddClick: () => void;
-    }
-  | {
-      filterConfig: MenuFilterConfig;
-      sortConfig?: never;
-      onAddClick: () => void;
-    };
+interface MediaPageToolbarProps {
+  filterConfig?: MenuFilterConfig;
+  searchConfig?: SearchConfig;
+  onAddClick: () => void;
+}
 
 export function MediaPageToolbar(props: MediaPageToolbarProps) {
-  const { filterConfig, onAddClick } = props;
-  const sortConfig = "sortConfig" in props ? props.sortConfig : undefined;
-  const selectId = useId();
-  const [showPopover, setShowPopover] = useState(false);
-  const popoverRef = useRef<HTMLDivElement>(null);
+  const { filterConfig, onAddClick, searchConfig } = props;
 
-  // Close popover when clicking outside
-  useEffect(() => {
-    if (!showPopover) return;
+  const handleRemoveFilter = (sectionId: string, filterId: string) => {
+    if (!filterConfig) return;
+    
+    const section = filterConfig.sections.find((s) => s.id === sectionId);
+    if (!section) return;
 
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        popoverRef.current &&
-        !popoverRef.current.contains(event.target as Node)
-      ) {
-        setShowPopover(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showPopover]);
+    if (section.multiSelect) {
+      const currentValues = Array.isArray(filterConfig.activeFilters[sectionId])
+        ? (filterConfig.activeFilters[sectionId] as string[])
+        : [];
+      const newValues = currentValues.filter((id) => id !== filterId);
+      filterConfig.onFilterChange(sectionId, newValues.length === 0 ? ["all"] : newValues);
+    } else {
+      filterConfig.onFilterChange(sectionId, "all");
+    }
+  };
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-      <div className="flex items-center gap-3 flex-1">
-        {filterConfig?.type === "chips" && !filterConfig.renderAsPopover && (
-          <MediaTypeFilters
-            activeFilter={filterConfig.activeFilter}
-            onFilterChange={filterConfig.onFilterChange}
-            filters={filterConfig.options}
-          />
-        )}
-
-        {filterConfig?.type === "chips" && filterConfig.renderAsPopover && (
-          <div className="relative" ref={popoverRef}>
-            <Button
-              onClick={() => setShowPopover(!showPopover)}
-              variant="secondary"
-              size="md"
-              icon={<SlidersHorizontal className="w-4 h-4" />}
-              aria-expanded={showPopover}
-              aria-haspopup="true"
-            >
-              Filters
-            </Button>
-
-            {showPopover && (
-              <div className="absolute top-full left-0 mt-2 p-4 bg-surface border-2 border-primary/20 rounded-lg shadow-xl z-20 min-w-[200px]">
-                <MediaTypeFilters
-                  activeFilter={filterConfig.activeFilter}
-                  onFilterChange={(value) => {
-                    filterConfig.onFilterChange(value);
-                    setShowPopover(false);
-                  }}
-                  filters={filterConfig.options}
-                />
-              </div>
-            )}
-          </div>
-        )}
-
-        {filterConfig?.type === "menu" && (
-          <FilterSortMenu
-            sections={filterConfig.sections}
-            activeFilters={filterConfig.activeFilters}
-            onFilterChange={filterConfig.onFilterChange}
-          />
-        )}
-
-        {/* Sort dropdown for pages without menu filters */}
-        {(!filterConfig || filterConfig.type === "chips") && sortConfig && (
-          <div className="flex items-center gap-2">
-            <label
-              htmlFor={selectId}
-              className="text-sm font-medium text-secondary"
-            >
-              Sort by:
-            </label>
-            <Select
-              id={selectId}
-              value={sortConfig.activeSort}
-              onChange={(e) => sortConfig.onSortChange(e.target.value)}
-              options={sortConfig.options.map((option) => ({
-                value: option.id,
-                label: option.label,
-              }))}
+    <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+      <div className="flex items-center gap-3 flex-1 min-w-0 flex-wrap">
+        {/* Search with Filter Button */}
+        {searchConfig && (
+          <div className="w-[420px] max-w-full">
+            <LocalSearchInput
+              value={searchConfig.value}
+              onChange={searchConfig.onChange}
+              placeholder={searchConfig.placeholder || "Search..."}
+              filterButton={
+                filterConfig?.type === "menu" ? (
+                  <FilterSortMenu
+                    sections={filterConfig.sections}
+                    activeFilters={filterConfig.activeFilters}
+                    onFilterChange={filterConfig.onFilterChange}
+                    label=""
+                  />
+                ) : undefined
+              }
             />
           </div>
+        )}
+
+        {/* Active Filter Chips */}
+        {filterConfig?.type === "menu" && (
+          <ActiveFilterChips
+            sections={filterConfig.sections}
+            activeFilters={filterConfig.activeFilters}
+            onRemoveFilter={handleRemoveFilter}
+          />
         )}
       </div>
 

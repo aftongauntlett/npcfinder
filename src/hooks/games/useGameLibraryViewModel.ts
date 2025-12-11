@@ -49,6 +49,8 @@ export function useGameLibraryViewModel({
   const [genreFilters, setGenreFilters] = useState<string[]>(
     persistedFilters.genreFilters as string[]
   );
+  // searchQuery is intentionally not persisted - resets on each visit for fresh search experience
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Modal and toast state
   const [showSearchModal, setShowSearchModal] = useState(false);
@@ -101,22 +103,30 @@ export function useGameLibraryViewModel({
 
       // Filter by genres (multiple selection support)
       if (genreFilters.length === 0 || genreFilters.includes("all")) {
-        return true;
-      }
-
-      if (game.genres) {
+        // Continue to search filter
+      } else if (game.genres) {
         const gameGenres = game.genres
           .toLowerCase()
           .split(",")
           .map((g) => g.trim());
-        return genreFilters.some((selectedGenre) =>
+        const hasMatch = genreFilters.some((selectedGenre) =>
           gameGenres.includes(selectedGenre)
         );
+        if (!hasMatch) return false;
+      } else {
+        return false;
       }
 
-      return false;
+      // Filter by search query
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        const matchesName = game.name.toLowerCase().includes(query);
+        if (!matchesName) return false;
+      }
+
+      return true;
     },
-    [filter, genreFilters]
+    [filter, genreFilters, searchQuery]
   );
 
   // Define sort function
@@ -269,10 +279,12 @@ export function useGameLibraryViewModel({
     filter,
     activeSort,
     genreFilters,
+    searchQuery,
 
     // Filter setters
     setActiveSort,
     setGenreFilters,
+    setSearchQuery,
 
     // Pagination
     setCurrentPage,

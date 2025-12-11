@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useMemo } from "react";
 import { JobTrackerTable } from "./JobTrackerTable";
 import { Pagination } from "../../shared/common/Pagination";
 import { usePagination } from "../../../hooks/usePagination";
@@ -7,7 +7,7 @@ import { useTasks } from "../../../hooks/useTasksQueries";
 import type { Task } from "../../../services/tasksService.types";
 import type { StatusHistoryEntry } from "../../../services/tasksService.types";
 import { Briefcase } from "lucide-react";
-import { EmptyStateAddCard } from "../../shared";
+import { EmptyStateAddCard, LocalSearchInput } from "../../shared";
 
 interface JobTrackerViewProps {
   boardId: string;
@@ -24,6 +24,7 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
 }) => {
   const { data: tasks = [], isLoading } = useTasks(boardId);
   const listTopRef = useRef<HTMLDivElement>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Transform tasks to job applications
   const jobApplications = tasks.map((task) => ({
@@ -50,12 +51,24 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
       (task.item_data?.status_history as StatusHistoryEntry[]) || undefined,
   }));
 
+  // Filter by search query
+  const filteredJobApplications = useMemo(() => {
+    if (!searchQuery.trim()) return jobApplications;
+
+    const query = searchQuery.toLowerCase();
+    return jobApplications.filter((job) => {
+      const matchesCompany = job.company_name.toLowerCase().includes(query);
+      const matchesPosition = job.position.toLowerCase().includes(query);
+      return matchesCompany || matchesPosition;
+    });
+  }, [jobApplications, searchQuery]);
+
   // URL-based pagination state
   const { page, perPage, setPage, setPerPage } = useUrlPaginationState(1, 10);
 
   // Pagination with URL state for bookmarkable pages
   const pagination = usePagination({
-    items: jobApplications,
+    items: filteredJobApplications,
     initialPage: page,
     initialItemsPerPage: perPage,
     persistenceKey: "tasks-job-tracker",
@@ -90,6 +103,15 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
         />
       ) : (
         <>
+          {/* Search Input */}
+          <div className="mb-4 max-w-xs">
+            <LocalSearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search Jobs..."
+            />
+          </div>
+
           <JobTrackerTable
             items={pagination.paginatedItems}
             onEdit={(id) => {

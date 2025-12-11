@@ -65,6 +65,8 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
   const [sortBy, setSortBy] = useState<SortType>(
     persistedFilters.sortBy as SortType
   );
+  // searchQuery is intentionally not persisted - resets on each visit for fresh search experience
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
   const [musicToRecommend, setMusicToRecommend] =
@@ -200,24 +202,32 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
     (music: MusicLibraryItem) => {
       // Filter by genres (multiple selection support)
       if (genreFilters.length === 0 || genreFilters.includes("all")) {
-        return true;
-      }
-
-      // Music matches if it matches ANY of the selected genres
-      if (music.genre) {
+        // Continue to search filter
+      } else if (music.genre) {
         const musicGenres = music.genre
           .toLowerCase()
           .split(",")
           .map((g) => g.trim());
 
-        return genreFilters.some((selectedGenre) =>
+        const hasMatch = genreFilters.some((selectedGenre) =>
           musicGenres.includes(selectedGenre)
         );
+        if (!hasMatch) return false;
+      } else {
+        return false;
       }
 
-      return false;
+      // Filter by search query (search title and artist)
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        const matchesTitle = music.title.toLowerCase().includes(query);
+        const matchesArtist = music.artist.toLowerCase().includes(query);
+        if (!matchesTitle && !matchesArtist) return false;
+      }
+
+      return true;
     },
-    [genreFilters]
+    [genreFilters, searchQuery]
   );
 
   const sortFn = useCallback(
@@ -326,6 +336,11 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
                   setSortBy(value as SortType);
                 }
               },
+            }}
+            searchConfig={{
+              value: searchQuery,
+              onChange: setSearchQuery,
+              placeholder: "Search Music...",
             }}
             onAddClick={() => setShowSearchModal(true)}
           />

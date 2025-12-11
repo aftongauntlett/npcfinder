@@ -53,6 +53,8 @@ export function useWatchlistViewModel({
   const [sortBy, setSortBy] = useState<WatchlistSortType>(
     persistedFilters.sortBy as WatchlistSortType
   );
+  // searchQuery is intentionally not persisted - resets on each visit for fresh search experience
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Modal state
   const [showSearchModal, setShowSearchModal] = useState(false);
@@ -108,9 +110,16 @@ export function useWatchlistViewModel({
         if (!hasMatchingGenre) return false;
       }
 
+      // Filter by search query
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        const matchesTitle = item.title.toLowerCase().includes(query);
+        if (!matchesTitle) return false;
+      }
+
       return true;
     },
-    [filter, mediaTypeFilter, genreFilters]
+    [filter, mediaTypeFilter, genreFilters, searchQuery]
   );
 
   // Sort function based on current sort state
@@ -268,11 +277,13 @@ export function useWatchlistViewModel({
     mediaTypeFilter,
     genreFilters,
     sortBy,
+    searchQuery,
 
     // Filter setters
     setMediaTypeFilter,
     setGenreFilters,
     setSortBy,
+    setSearchQuery,
 
     // Pagination
     setCurrentPage,

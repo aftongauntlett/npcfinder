@@ -7,8 +7,10 @@ interface ReadingListToolbarProps {
   availableCategories: Set<string>;
   categoryFilters: string[];
   sortBy: ReadingListSortType;
+  searchQuery: string;
   onCategoryChange: (categories: string[]) => void;
   onSortChange: (sort: ReadingListSortType) => void;
+  onSearchChange: (query: string) => void;
   onAddClick: () => void;
 }
 
@@ -16,8 +18,10 @@ const ReadingListToolbar: React.FC<ReadingListToolbarProps> = ({
   availableCategories,
   categoryFilters,
   sortBy,
+  searchQuery,
   onCategoryChange,
   onSortChange,
+  onSearchChange,
   onAddClick,
 }) => {
   const filterSections = getReadingListFilterSections(availableCategories);
@@ -40,6 +44,11 @@ const ReadingListToolbar: React.FC<ReadingListToolbarProps> = ({
               onSortChange(value as ReadingListSortType);
             }
           },
+        }}
+        searchConfig={{
+          value: searchQuery,
+          onChange: onSearchChange,
+          placeholder: "Search Books...",
         }}
         onAddClick={onAddClick}
       />
