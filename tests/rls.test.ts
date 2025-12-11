@@ -370,7 +370,7 @@ describe("User Data Isolation", () => {
 
     // Mock query chain with both order calls
     const mockOrder2 = vi.fn().mockResolvedValue({
-      data: [{ id: "board-1", user_id: "admin-user-id", title: "Admin Board" }],
+      data: [{ id: "board-1", user_id: "admin-user-id", name: "Admin Board" }],
       error: null,
     });
 

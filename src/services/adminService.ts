@@ -3,6 +3,7 @@
 
 import { supabase } from "../lib/supabase";
 import { logger } from "@/lib/logger";
+import type { BoardWithStats } from "./tasksService.types";
 
 // Verify current user has admin privileges before admin operations
 const verifyAdminAccess = async (): Promise<boolean> => {
@@ -334,19 +335,9 @@ export const getRecentActivity = async (): Promise<RecentActivity[]> => {
 
 /**
  * Admin-specific type for board with user information
+ * Extends BoardWithStats with admin-only fields
  */
-export interface BoardWithStatsAdmin {
-  id: string;
-  user_id: string;
-  title: string;
-  description?: string;
-  is_singleton: boolean;
-  singleton_type?: string;
-  task_count?: number;
-  display_order?: number;
-  created_at: string;
-  updated_at: string;
-  // Admin-specific fields
+export interface BoardWithStatsAdmin extends BoardWithStats {
   user_email?: string;
   user_display_name?: string;
 }
@@ -415,29 +406,10 @@ export const getAllBoardsAdmin = async (
 
     const boardsWithUserInfo: BoardWithStatsAdmin[] =
       boards?.map(
-        (board: {
-          id: string;
-          user_id: string;
-          title: string;
-          description?: string;
-          is_singleton: boolean;
-          singleton_type?: string;
-          task_count?: number;
-          display_order?: number;
-          created_at: string;
-          updated_at: string;
+        (board: BoardWithStats & {
           user_profiles?: { display_name?: string; email?: string };
         }) => ({
-          id: board.id,
-          user_id: board.user_id,
-          title: board.title,
-          description: board.description,
-          is_singleton: board.is_singleton,
-          singleton_type: board.singleton_type,
-          task_count: board.task_count,
-          display_order: board.display_order,
-          created_at: board.created_at,
-          updated_at: board.updated_at,
+          ...board,
           user_email: board.user_profiles?.email,
           user_display_name: board.user_profiles?.display_name,
         })

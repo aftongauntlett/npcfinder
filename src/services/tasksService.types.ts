@@ -178,10 +178,12 @@ export interface TaskFilters {
 }
 
 export interface BoardWithStats extends Board {
+  section_count: number;
   total_tasks: number;
   completed_tasks: number;
   pending_tasks: number;
   overdue_tasks: number;
+  most_recent_task_created_at: string | null;
 }
 
 /**
