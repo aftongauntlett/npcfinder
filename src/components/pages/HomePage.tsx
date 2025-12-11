@@ -204,8 +204,6 @@ const HomePage: React.FC<HomePageProps> = () => {
       <DashboardContent
         activeTab={activeTab}
         handleTabChange={(tabId) => handleTabChange(tabId as TabId)}
-        stats={stats}
-        statsLoading={statsLoading}
         showGettingStarted={showGettingStarted}
         setShowGettingStarted={setShowGettingStarted}
       />

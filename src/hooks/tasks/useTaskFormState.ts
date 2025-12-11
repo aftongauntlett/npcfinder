@@ -1,6 +1,6 @@
 /**
  * Task Form State Hook
- * Manages generic task form fields (title, description, priority, due date, tags)
+ * Manages generic task form fields (title, description, priority, due date)
  * Provides an updates builder for the base Task object
  */
 
@@ -20,8 +20,6 @@ export interface UseTaskFormStateReturn {
   setPriority: (priority: TaskPriorityValue) => void;
   dueDate: Date | null;
   setDueDate: (date: Date | null) => void;
-  tags: string;
-  setTags: (tags: string) => void;
 
   // Builder function for base task updates
   buildBaseUpdates: () => Partial<Task>;
@@ -34,7 +32,6 @@ export function useTaskFormState(task: Task): UseTaskFormStateReturn {
   const [dueDate, setDueDate] = useState<Date | null>(
     task.due_date ? new Date(task.due_date) : null
   );
-  const [tags, setTags] = useState(task.tags?.join(", ") || "");
 
   // Update form when task changes (including when fresh data is fetched)
   useEffect(() => {
@@ -42,7 +39,6 @@ export function useTaskFormState(task: Task): UseTaskFormStateReturn {
     setDescription(task.description || "");
     setPriority(task.priority);
     setDueDate(task.due_date ? new Date(task.due_date) : null);
-    setTags(task.tags?.join(", ") || "");
   }, [task]);
 
   const buildBaseUpdates = (): Partial<Task> => ({
@@ -50,12 +46,6 @@ export function useTaskFormState(task: Task): UseTaskFormStateReturn {
     description: description || null,
     priority: priority || null,
     due_date: dueDate ? dueDate.toISOString().split("T")[0] : null,
-    tags: tags
-      ? tags
-          .split(",")
-          .map((t) => t.trim())
-          .filter(Boolean)
-      : null,
   });
 
   return {
@@ -67,8 +57,6 @@ export function useTaskFormState(task: Task): UseTaskFormStateReturn {
     setPriority,
     dueDate,
     setDueDate,
-    tags,
-    setTags,
     buildBaseUpdates,
   };
 }

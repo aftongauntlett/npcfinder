@@ -1,15 +1,11 @@
 import React from "react";
 import { X } from "lucide-react";
-import { useDashboardStats } from "../../hooks/useDashboardStats";
 import { DashboardRecommendations } from "./DashboardRecommendations";
-import { DashboardActivitySummary } from "./DashboardActivitySummary";
 import { UserSearch, Button } from "@/components/shared";
 
 interface DashboardContentProps {
   activeTab: string;
   handleTabChange: (tabId: string) => void;
-  stats: ReturnType<typeof useDashboardStats>["data"];
-  statsLoading: boolean;
   showGettingStarted: boolean;
   setShowGettingStarted: (show: boolean) => void;
 }
@@ -22,8 +18,6 @@ interface DashboardContentProps {
  */
 export const DashboardContent: React.FC<DashboardContentProps> = ({
   activeTab,
-  stats,
-  statsLoading,
   showGettingStarted,
   setShowGettingStarted,
 }) => {
@@ -32,7 +26,11 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({
       {/* Tab Panels */}
       <div role="tabpanel" id={`${activeTab}-panel`}>
         {activeTab === "dashboard" && (
-          <DashboardActivitySummary stats={stats} statsLoading={statsLoading} />
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+            <p className="text-gray-600 dark:text-gray-400">
+              Welcome to your dashboard! Use the cards above to track your media and the navigation menu to explore features.
+            </p>
+          </div>
         )}
 
         {activeTab === "friends" && (

@@ -64,11 +64,6 @@ export const CreateTaskSchema = z.object({
   status: z.enum(["todo", "in_progress", "done", "archived"]).default("todo"),
   priority: z.enum(["low", "medium", "high"]).nullable().optional(),
   due_date: z.string().datetime().nullable().optional(),
-  tags: z
-    .array(z.string().max(50))
-    .max(20, "Too many tags")
-    .nullable()
-    .optional(),
   board_id: z.string().uuid("Invalid board ID").nullable().optional(),
   section_id: z.string().uuid("Invalid section ID").nullable().optional(),
   parent_task_id: z
@@ -98,7 +93,6 @@ export const TaskFiltersSchema = z.object({
   section_id: z.string().uuid("Invalid section ID").optional(),
   is_favorite: z.boolean().optional(),
   search: z.string().max(200, "Search query too long").optional(),
-  tags: z.array(z.string().max(50)).optional(),
   due_before: z.string().datetime().optional(),
   due_after: z.string().datetime().optional(),
 });

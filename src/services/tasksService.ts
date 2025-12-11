@@ -471,9 +471,6 @@ export async function getTasks(
     if (filters?.priority) {
       query = query.eq("priority", filters.priority);
     }
-    if (filters?.tags && filters.tags.length > 0) {
-      query = query.overlaps("tags", filters.tags);
-    }
     if (filters?.dueBefore) {
       query = query.lte("due_date", filters.dueBefore);
     }
@@ -656,13 +653,11 @@ export async function createTask(
         status: taskData.status || "todo",
         priority: taskData.priority || null,
         due_date: taskData.due_date || null,
-        tags: taskData.tags || null,
         item_data: taskData.item_data || null,
         display_order: nextOrder,
         // Repeatable task fields
         is_repeatable: taskData.is_repeatable || null,
         repeat_frequency: taskData.repeat_frequency || null,
-        repeat_custom_days: taskData.repeat_custom_days || null,
         last_completed_at: null, // Set by toggleTaskStatus when completing repeatable tasks
         // Timer fields
         timer_duration_minutes: taskData.timer_duration_minutes || null,
@@ -1054,71 +1049,6 @@ export async function getActiveTimers(): Promise<ServiceResponse<Task[]>> {
     return { data: data || [], error: null };
   } catch (error) {
     logger.error("Failed to fetch active timers", error);
-    return { data: null, error: error as Error };
-  }
-}
-
-// =====================================================
-// REMINDER OPERATIONS
-// =====================================================
-
-/**
- * Get tasks with upcoming reminders
- * SECURITY: Explicitly filters by user_id for defense-in-depth
- */
-export async function getUpcomingReminders(
-  daysAhead = 7
-): Promise<ServiceResponse<Task[]>> {
-  try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
-
-    const today = new Date();
-    const futureDate = new Date();
-    futureDate.setDate(today.getDate() + daysAhead);
-
-    const { data, error } = await supabase
-      .from("tasks")
-      .select("*")
-      .eq("user_id", user.id)
-      .not("reminder_date", "is", null)
-      .gte("reminder_date", today.toISOString().split("T")[0])
-      .lte("reminder_date", futureDate.toISOString().split("T")[0])
-      .order("reminder_date", { ascending: true });
-
-    if (error) throw error;
-    return { data: data || [], error: null };
-  } catch (error) {
-    logger.error("Failed to fetch upcoming reminders", error);
-    return { data: null, error: error as Error };
-  }
-}
-
-/**
- * Mark a reminder as sent
- * FIELD ISOLATION: Only touches reminder_sent_at, does not affect other task properties
- * NOTE: reminder_sent_at is typically set by a backend reminder service but can be manually
- * triggered via this helper. Frontend does not currently auto-send reminders.
- */
-export async function markReminderSent(
-  taskId: string
-): Promise<ServiceResponse<Task>> {
-  try {
-    const { data, error } = await supabase
-      .from("tasks")
-      .update({
-        reminder_sent_at: new Date().toISOString(),
-      })
-      .eq("id", taskId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return { data, error: null };
-  } catch (error) {
-    logger.error(`Failed to mark reminder sent for task ${taskId}`, error);
     return { data: null, error: error as Error };
   }
 }

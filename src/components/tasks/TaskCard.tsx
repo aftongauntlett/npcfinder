@@ -186,8 +186,6 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
               {getTaskPriorityLabel(task.priority)}
             </span>
           )}
-
-          {/* TODO: Tags hidden from UI but kept in DB - may add back later with better UX */}
         </div>
       </div>
     );

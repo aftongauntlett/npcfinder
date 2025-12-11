@@ -1,15 +1,14 @@
--- Migration: Remove icon and color columns from task_boards
--- Purpose: Board types are auto-inferred from template_type, no need for user-specified icons/colors
+-- Migration: Remove column_config from task_boards table
+-- Purpose: Field is defined in schema but never read or written in TypeScript code
 -- Date: 2024-12-10
 
--- First, drop the view that depends on these columns
+-- First, drop the view that depends on this column
 DROP VIEW IF EXISTS task_boards_with_stats;
 
--- Drop icon and color columns from task_boards
-ALTER TABLE task_boards DROP COLUMN IF EXISTS icon;
-ALTER TABLE task_boards DROP COLUMN IF EXISTS color;
+-- Drop the column_config column from task_boards
+ALTER TABLE task_boards DROP COLUMN IF EXISTS column_config;
 
--- Recreate the view without icon and color columns
+-- Recreate the view without column_config
 CREATE OR REPLACE VIEW task_boards_with_stats 
 WITH (security_invoker = true)
 AS
@@ -20,7 +19,6 @@ AS
     tb.is_public,
     tb.board_type,
     tb.template_type,
-    tb.column_config,
     tb.field_config,
     tb.display_order,
     tb.created_at,
@@ -37,4 +35,5 @@ AS
 COMMENT ON VIEW task_boards_with_stats IS 'Board view with aggregated task statistics';
 
 -- Add comment explaining the change
-COMMENT ON TABLE task_boards IS 'User-created task boards for organizing tasks. Board appearance is now determined automatically by template_type rather than user-specified icon/color.';
+COMMENT ON TABLE task_boards IS 'User-created task boards for organizing tasks. Board configuration is handled through field_config.';
+

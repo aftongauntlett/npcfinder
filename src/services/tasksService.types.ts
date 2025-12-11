@@ -114,11 +114,9 @@ export interface Task {
   section_id: string | null;
   title: string;
   description: string | null;
-  icon?: string | null;
   status: "todo" | "in_progress" | "done" | "archived";
   priority: "low" | "medium" | "high" | "urgent" | null;
   due_date: string | null; // ISO date string (YYYY-MM-DD)
-  tags: string[] | null;
   item_data?: Record<string, unknown> | null;
   display_order: number | null;
   completed_at: string | null;
@@ -134,7 +132,6 @@ export interface Task {
     | "monthly"
     | "yearly"
     | null;
-  repeat_custom_days: number | null; // For custom frequency (days between repeats)
   last_completed_at: string | null; // Track when last completed for repeatable tasks
   // Timer fields
   timer_duration_minutes: number | null;
@@ -165,11 +162,9 @@ export interface CreateTaskData {
   status?: Task["status"];
   priority?: Task["priority"];
   due_date?: string;
-  tags?: string[];
   item_data?: Record<string, unknown>;
   is_repeatable?: boolean;
   repeat_frequency?: "daily" | "weekly" | "biweekly" | "monthly" | "yearly";
-  repeat_custom_days?: number;
   timer_duration_minutes?: number;
   is_urgent_after_timer?: boolean;
 }
@@ -177,7 +172,6 @@ export interface CreateTaskData {
 export interface TaskFilters {
   status?: Task["status"];
   priority?: Task["priority"];
-  tags?: string[];
   dueBefore?: string;
   dueAfter?: string;
   unassigned?: boolean; // Filter for tasks with null board_id

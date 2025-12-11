@@ -62,7 +62,6 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     null
   );
   const [dueDate, setDueDate] = useState<Date | null>(null);
-  const [tags, setTags] = useState(""); // Keep for DB, but hidden from UI
 
   // Repeatable task fields
   const [isRepeatable, setIsRepeatable] = useState(false);
@@ -293,16 +292,9 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
       description: description || undefined,
       priority: priority || undefined,
       due_date: dueDate ? dueDate.toISOString().split("T")[0] : undefined,
-      tags: tags
-        ? tags
-            .split(",")
-            .map((t) => t.trim())
-            .filter(Boolean)
-        : undefined,
       item_data,
       is_repeatable: isRepeatable || undefined,
       repeat_frequency: isRepeatable ? repeatFrequency : undefined,
-      repeat_custom_days: undefined, // No longer using custom days
       // Timer fields
       timer_duration_minutes: hasTimer
         ? timerUnit === "hours"
@@ -323,7 +315,6 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
           setDescription("");
           setPriority(null);
           setDueDate(null);
-          setTags(""); // Keep resetting for DB consistency
           // Reset repeatable fields
           setIsRepeatable(false);
           setRepeatFrequency("weekly");
@@ -807,7 +798,6 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         )}
 
         {/* Optional Fields - Hidden for job tracker */}
-        {/* TODO: Tags field removed from UI but kept in DB - may add back later with better UX */}
         {boardType !== "job_tracker" && (
           <div className="space-y-5">
             {/* Priority */}
