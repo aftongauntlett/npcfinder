@@ -5,9 +5,11 @@
  * 
  * Refactored to use shared MediaTimeDisplay and ProgressBar components
  * for consistent time-based UI patterns across the application.
+ * 
+ * Performance: Uses IntersectionObserver to pause updates when off-screen
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Play, Pause, RotateCcw, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import { logger } from "@/lib/logger";
 import Toast from "../ui/Toast";
@@ -24,6 +26,7 @@ import {
 } from "../../utils/timerHelpers";
 import { TIMER_STATUS } from "../../utils/taskConstants";
 import { useStartTimer, useCompleteTimer } from "../../hooks/useTasksQueries";
+import { usePerformanceMonitor } from "../../hooks/usePerformanceMonitor";
 
 interface TimerWidgetProps {
   task: Task;
@@ -38,12 +41,34 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [progress, setProgress] = useState(0);
   const [showToast, setShowToast] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const timerRef = useRef<HTMLDivElement>(null);
 
   const startTimer = useStartTimer();
   const completeTimer = useCompleteTimer();
 
   const timerStatus = getTimerStatus(task);
   const showUrgentAlert = shouldShowUrgentAlert(task);
+
+  usePerformanceMonitor({ componentName: "TimerWidget", threshold: 60 });
+
+  // Use IntersectionObserver to detect if timer is visible
+  useEffect(() => {
+    if (!timerRef.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(timerRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
   // Update countdown every second
   // Note: completeTimer is intentionally not in dependencies to avoid infinite loops
@@ -59,7 +84,8 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
       timerStatus === TIMER_STATUS.RUNNING &&
       task.timer_started_at &&
       task.timer_duration_minutes &&
-      !isPaused // Only run countdown if not paused locally
+      !isPaused && // Only run countdown if not paused locally
+      isVisible // Only update when visible
     ) {
       const updateTimer = () => {
         const remaining = calculateRemainingTime(
@@ -80,6 +106,8 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
         }
       };
 
+      // Intentionally "catch up" the countdown when widget re-enters viewport
+      // This ensures timers that expired while hidden are immediately detected
       updateTimer(); // Initial update
       const interval = setInterval(updateTimer, 1000);
 
@@ -103,6 +131,7 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
     task.id,
     isPaused,
     pausedRemainingSeconds,
+    isVisible,
   ]);
 
   const handleStart = async () => {
@@ -267,7 +296,7 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
   // Full version for detail views
   return (
     <>
-      <div className="space-y-3">
+      <div ref={timerRef} className="space-y-3">
         <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
           Timer
         </h4>

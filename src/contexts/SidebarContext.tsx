@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { debounce } from "@/utils/debounce";
 
 interface SidebarContextType {
   isCollapsed: boolean;
@@ -71,8 +72,30 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({
       }
     };
 
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    // Debounce resize handler
+    const debouncedHandleResize = debounce(handleResize, 150);
+
+    // Use matchMedia for mobile breakpoint detection
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const handleMediaChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      const mobile = e.matches;
+      setIsMobile(mobile);
+      if (mobile) {
+        setIsCollapsed(true);
+      }
+    };
+
+    // Set initial state
+    handleMediaChange(mediaQuery);
+
+    // Listen for media query changes (more efficient than resize)
+    mediaQuery.addEventListener("change", handleMediaChange);
+    window.addEventListener("resize", debouncedHandleResize);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleMediaChange);
+      window.removeEventListener("resize", debouncedHandleResize);
+    };
   }, []);
 
   const toggleSidebar = () => {

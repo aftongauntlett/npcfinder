@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from "react";
+import { usePerformanceMonitor } from "../../../hooks/usePerformanceMonitor";
 
 const Header: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(
     new Date().toLocaleTimeString()
   );
 
+  usePerformanceMonitor({ componentName: "Header", threshold: 5 });
+
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date().toLocaleTimeString());
-    }, 1000);
+    }, 60000); // Update every minute instead of every second
 
     return () => clearInterval(interval);
   }, []);

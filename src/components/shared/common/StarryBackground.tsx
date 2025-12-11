@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useDevToolsDetection } from "../../../hooks/useDevToolsDetection";
+import { usePerformanceMonitor } from "../../../hooks/usePerformanceMonitor";
 
 const STAR_COUNT = 18;
 
@@ -120,6 +122,9 @@ const stars = generateStars();
  */
 const StarryBackground = React.memo(function StarryBackground() {
   const [reducedMotion, setReducedMotion] = useState(false);
+  const shouldPauseAnimations = useDevToolsDetection();
+
+  usePerformanceMonitor({ componentName: "StarryBackground", threshold: 5 });
 
   // Check prefers-reduced-motion
   useEffect(() => {
@@ -132,8 +137,8 @@ const StarryBackground = React.memo(function StarryBackground() {
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
-  // Hide stars if user prefers reduced motion
-  if (reducedMotion) {
+  // Hide stars if user prefers reduced motion or DevTools is open
+  if (reducedMotion || shouldPauseAnimations) {
     return null;
   }
 

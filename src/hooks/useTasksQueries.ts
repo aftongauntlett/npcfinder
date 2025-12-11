@@ -904,8 +904,9 @@ export function useActiveTimers() {
       if (error) throw error;
       return data || [];
     },
-    refetchInterval: 30000, // Poll every 30 seconds
-    staleTime: 0, // Always fetch fresh data
+    refetchInterval: 300000, // Poll every 5 minutes instead of 30 seconds
+    staleTime: 60000, // Consider data fresh for 1 minute
+    refetchOnWindowFocus: false, // Prevent refetch when switching to/from DevTools
     enabled: !!user,
   });
 }

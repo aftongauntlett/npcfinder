@@ -1,5 +1,6 @@
 import { ReactNode, useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { debounce } from "@/utils/debounce";
 
 interface TooltipProps {
   content: ReactNode;
@@ -24,54 +25,58 @@ export default function Tooltip({
     if (!isVisible || !triggerRef.current || !tooltipRef.current) return;
 
     const updatePosition = () => {
-      const triggerRect = triggerRef.current?.getBoundingClientRect();
-      const tooltipRect = tooltipRef.current?.getBoundingClientRect();
+      requestAnimationFrame(() => {
+        const triggerRect = triggerRef.current?.getBoundingClientRect();
+        const tooltipRect = tooltipRef.current?.getBoundingClientRect();
 
-      if (!triggerRect || !tooltipRect) return;
+        if (!triggerRect || !tooltipRect) return;
 
-      let x = 0;
-      let y = 0;
-      let finalPosition = position;
+        let x = 0;
+        let y = 0;
+        let finalPosition = position;
 
-      // Check if tooltip fits on the right, otherwise use bottom
-      if (position === "right") {
-        const spaceOnRight = window.innerWidth - triggerRect.right;
-        if (spaceOnRight < tooltipRect.width + 16) {
-          // Not enough space on right, use bottom
-          finalPosition = "bottom";
+        // Check if tooltip fits on the right, otherwise use bottom
+        if (position === "right") {
+          const spaceOnRight = window.innerWidth - triggerRect.right;
+          if (spaceOnRight < tooltipRect.width + 16) {
+            // Not enough space on right, use bottom
+            finalPosition = "bottom";
+          }
         }
-      }
 
-      switch (finalPosition) {
-        case "top":
-          x = triggerRect.left + triggerRect.width / 2;
-          y = triggerRect.top - 4;
-          break;
-        case "bottom":
-          x = triggerRect.left + triggerRect.width / 2;
-          y = triggerRect.bottom + 4;
-          break;
-        case "left":
-          x = triggerRect.left - 4;
-          y = triggerRect.top + triggerRect.height / 2;
-          break;
-        case "right":
-          x = triggerRect.right + 4;
-          y = triggerRect.top;
-          break;
-      }
+        switch (finalPosition) {
+          case "top":
+            x = triggerRect.left + triggerRect.width / 2;
+            y = triggerRect.top - 4;
+            break;
+          case "bottom":
+            x = triggerRect.left + triggerRect.width / 2;
+            y = triggerRect.bottom + 4;
+            break;
+          case "left":
+            x = triggerRect.left - 4;
+            y = triggerRect.top + triggerRect.height / 2;
+            break;
+          case "right":
+            x = triggerRect.right + 4;
+            y = triggerRect.top;
+            break;
+        }
 
-      setActualPosition(finalPosition);
-      setTooltipPosition({ x, y });
+        setActualPosition(finalPosition);
+        setTooltipPosition({ x, y });
+      });
     };
 
-    updatePosition();
-    window.addEventListener("scroll", updatePosition, true);
-    window.addEventListener("resize", updatePosition);
+    const debouncedUpdatePosition = debounce(updatePosition, 100);
+
+    updatePosition(); // Initial update
+    window.addEventListener("scroll", debouncedUpdatePosition, true);
+    window.addEventListener("resize", debouncedUpdatePosition);
 
     return () => {
-      window.removeEventListener("scroll", updatePosition, true);
-      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", debouncedUpdatePosition, true);
+      window.removeEventListener("resize", debouncedUpdatePosition);
     };
   }, [isVisible, position]);
 

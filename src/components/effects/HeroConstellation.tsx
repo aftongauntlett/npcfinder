@@ -7,6 +7,9 @@ import {
   LANDING_BLUE,
   withOpacity,
 } from "../../data/landingTheme";
+import { useDevToolsDetection } from "../../hooks/useDevToolsDetection";
+import { debounce } from "../../utils/debounce";
+import { usePerformanceMonitor } from "../../hooks/usePerformanceMonitor";
 
 interface HeroConstellationProps {
   width?: number;
@@ -79,6 +82,9 @@ export default function HeroConstellation({
   const animationFrameRef = useRef<number | undefined>(undefined);
   const rotationRef = useRef(0);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const shouldPauseAnimations = useDevToolsDetection();
+
+  usePerformanceMonitor({ componentName: "HeroConstellation", threshold: 5 });
 
   // Mouse position tracking with Framer Motion
   const mouseX = useMotionValue(-1000);
@@ -104,7 +110,9 @@ export default function HeroConstellation({
   // Update canvas bounding rect (Comment 2)
   const updateRect = useCallback(() => {
     if (canvasRef.current) {
-      canvasRectRef.current = canvasRef.current.getBoundingClientRect();
+      requestAnimationFrame(() => {
+        canvasRectRef.current = canvasRef.current?.getBoundingClientRect() || null;
+      });
     }
   }, []);
 
@@ -279,7 +287,6 @@ export default function HeroConstellation({
     },
     [safeNodeCount]
   );
-
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -297,17 +304,25 @@ export default function HeroConstellation({
     const dpr = window.devicePixelRatio || 1;
     canvas.width = width * dpr;
     canvas.height = height * dpr;
-    ctx.scale(dpr, dpr);
-
     // Store canvas bounding rect for mouse coordinate conversion (Comment 2)
     updateRect();
 
-    // Add window listeners for resize/scroll to update rect (Comment 2)
-    window.addEventListener("resize", updateRect);
-    window.addEventListener("scroll", updateRect, true); // Use capture for scroll
+    // Debounced version for resize events
+    const debouncedUpdateRect = debounce(updateRect, 200);
+
+    // Use ResizeObserver for canvas element instead of global resize listener
+    const resizeObserver = new ResizeObserver(() => {
+      debouncedUpdateRect();
+    });
+
+    if (canvas) {
+      resizeObserver.observe(canvas);
+    }
+
+    // Add pointer event listeners if motion is enabled (Comment 3)ture for scroll
 
     // Add pointer event listeners if motion is enabled (Comment 3)
-    if (!reducedMotion) {
+    if (!reducedMotion && !shouldPauseAnimations) {
       canvas.addEventListener("pointermove", handlePointerMove);
       canvas.addEventListener("pointerleave", handlePointerLeave);
       canvas.addEventListener("pointercancel", handlePointerCancel);
@@ -360,8 +375,8 @@ export default function HeroConstellation({
 
     nodesRef.current = nodes;
 
-    // Static render for reduced motion
-    if (reducedMotion) {
+    // Static render for reduced motion or DevTools open
+    if (reducedMotion || shouldPauseAnimations) {
       renderStatic(ctx, width, height);
       return;
     }
@@ -571,8 +586,13 @@ export default function HeroConstellation({
       // Restore context state
       ctx.restore();
 
-      // Continue animation loop
-      animationFrameRef.current = requestAnimationFrame(animate);
+      // Continue animation loop only if not paused
+      if (!shouldPauseAnimations) {
+        animationFrameRef.current = requestAnimationFrame(animate);
+      } else {
+        // DevTools opened during animation - render static frame
+        renderStatic(ctx, width, height);
+      }
     };
 
     animationFrameRef.current = requestAnimationFrame(animate);
@@ -588,9 +608,8 @@ export default function HeroConstellation({
         canvas.removeEventListener("pointerleave", handlePointerLeave);
         canvas.removeEventListener("pointercancel", handlePointerCancel);
       }
-      // Remove window listeners (Comment 2)
-      window.removeEventListener("resize", updateRect);
-      window.removeEventListener("scroll", updateRect, true);
+      // Disconnect ResizeObserver
+      resizeObserver.disconnect();
     };
   }, [
     width,
@@ -598,6 +617,7 @@ export default function HeroConstellation({
     safeNodeCount,
     animationSpeed,
     reducedMotion,
+    shouldPauseAnimations,
     renderStatic,
     handlePointerMove,
     handlePointerLeave,

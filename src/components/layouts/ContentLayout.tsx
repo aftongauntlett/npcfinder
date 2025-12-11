@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Menu } from "lucide-react";
 import { useSidebar } from "../../contexts/SidebarContext";
 import { Button, Footer } from "@/components/shared";
+import { debounce } from "@/utils/debounce";
 
 interface Tab {
   id: string;
@@ -35,14 +36,18 @@ const ContentLayout: React.FC<ContentLayoutProps> = ({
   const { toggleSidebar } = useSidebar();
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // Track scroll position for header background
+  // Track scroll position for header background with debouncing
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 0);
+      requestAnimationFrame(() => {
+        setIsScrolled(window.scrollY > 0);
+      });
     };
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    const debouncedHandleScroll = debounce(handleScroll, 150);
+
+    window.addEventListener("scroll", debouncedHandleScroll);
+    return () => window.removeEventListener("scroll", debouncedHandleScroll);
   }, []);
 
   return (
