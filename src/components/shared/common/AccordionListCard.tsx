@@ -35,6 +35,7 @@ interface AccordionListCardProps {
 
   // State
   defaultExpanded?: boolean;
+  isExpanded?: boolean; // Controlled expansion state
   className?: string;
   onExpandChange?: (isExpanded: boolean) => void; // Callback when expand state changes
 }
@@ -64,13 +65,20 @@ const AccordionListCard: React.FC<AccordionListCardProps> = ({
   onClick,
   customActions,
   defaultExpanded = false,
+  isExpanded: controlledExpanded,
   className = "",
   onExpandChange,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+  const [internalExpanded, setInternalExpanded] = useState(defaultExpanded);
+
+  // Use controlled mode if isExpanded is provided
+  const isControlled = controlledExpanded !== undefined;
+  const isExpanded = isControlled ? controlledExpanded : internalExpanded;
 
   const handleToggleExpand = (newState: boolean) => {
-    setIsExpanded(newState);
+    if (!isControlled) {
+      setInternalExpanded(newState);
+    }
     onExpandChange?.(newState);
   };
 

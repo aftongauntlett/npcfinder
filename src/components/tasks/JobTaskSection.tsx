@@ -16,6 +16,7 @@ import type {
   StatusHistoryEntry,
 } from "../../services/tasksService.types";
 import { getTemplate } from "../../utils/boardTemplates";
+import { detectLocationTypeFromLocationText } from "../../utils/locationTypeDetection";
 
 interface JobTaskSectionProps {
   task: Task;
@@ -44,6 +45,9 @@ const JobTaskSection: React.FC<JobTaskSectionProps> = ({
   );
   const [location, setLocation] = useState(
     (task.item_data?.location as string) || ""
+  );
+  const [locationType, setLocationType] = useState<"Remote" | "Hybrid" | "In-Office">(
+    (task.item_data?.location_type as "Remote" | "Hybrid" | "In-Office") || "In-Office"
   );
   const [employmentType, setEmploymentType] = useState(
     (task.item_data?.employment_type as string) || ""
@@ -83,6 +87,7 @@ const JobTaskSection: React.FC<JobTaskSectionProps> = ({
     setPosition((task.item_data?.position as string) || "");
     setSalaryRange((task.item_data?.salary_range as string) || "");
     setLocation((task.item_data?.location as string) || "");
+    setLocationType((task.item_data?.location_type as "Remote" | "Hybrid" | "In-Office") || "In-Office");
     setEmploymentType((task.item_data?.employment_type as string) || "");
     setJobNotes((task.item_data?.notes as string) || "");
     const currentJobStatus = (task.item_data?.status as string) || "Applied";
@@ -138,6 +143,7 @@ const JobTaskSection: React.FC<JobTaskSectionProps> = ({
         position: position,
         salary_range: salaryRange,
         location: location,
+        location_type: locationType,
         employment_type: employmentType,
         notes: jobNotes,
         status: jobStatus,
@@ -154,6 +160,7 @@ const JobTaskSection: React.FC<JobTaskSectionProps> = ({
     position,
     salaryRange,
     location,
+    locationType,
     employmentType,
     jobNotes,
     jobStatus,
@@ -194,7 +201,12 @@ const JobTaskSection: React.FC<JobTaskSectionProps> = ({
           label="Location"
           type="text"
           value={location}
-          onChange={(e) => setLocation(e.target.value)}
+          onChange={(e) => {
+            const newLocation = e.target.value;
+            setLocation(newLocation);
+            // Auto-detect location type from manual entry
+            setLocationType(detectLocationTypeFromLocationText(newLocation));
+          }}
           placeholder="San Francisco, CA"
         />
       </div>

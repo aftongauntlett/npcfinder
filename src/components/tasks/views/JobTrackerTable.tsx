@@ -22,12 +22,16 @@ interface JobTrackerTableProps {
   items: JobApplication[];
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
+  collapseKey: number; // Key for forcing accordion collapse
+  onExpandChange?: (id: string, isExpanded: boolean) => void; // Track expansion changes
 }
 
 export const JobTrackerTable: React.FC<JobTrackerTableProps> = ({
   items,
   onEdit,
   onDelete,
+  collapseKey,
+  onExpandChange,
 }) => {
   return (
     <div className="space-y-3">
@@ -42,7 +46,7 @@ export const JobTrackerTable: React.FC<JobTrackerTableProps> = ({
         <div className="space-y-3">
           {items.map((item) => (
             <JobCard
-              key={item.id}
+              key={`${item.id}-${collapseKey}`}
               id={item.id}
               companyName={item.company_name}
               companyUrl={item.company_url}
@@ -58,6 +62,7 @@ export const JobTrackerTable: React.FC<JobTrackerTableProps> = ({
               notes={item.notes}
               onEdit={onEdit}
               onDelete={onDelete}
+              onExpandChange={(isExpanded) => onExpandChange?.(item.id, isExpanded)}
             />
           ))}
         </div>

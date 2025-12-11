@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Gamepad2 } from "lucide-react";
 import { Pagination } from "../../shared/common/Pagination";
 import { EmptyStateAddCard } from "../../shared";
@@ -34,6 +34,27 @@ interface PersonalGameLibraryProps {
 const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
   initialFilter = "all",
 }) => {
+  // Collapse state
+  const [collapseKey, setCollapseKey] = useState(0);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+
+  const handleCollapseAll = () => {
+    setCollapseKey((prev) => prev + 1);
+    setExpandedItems(new Set());
+  };
+
+  const handleExpandChange = (id: string, isExpanded: boolean) => {
+    setExpandedItems((prev) => {
+      const newSet = new Set(prev);
+      if (isExpanded) {
+        newSet.add(id);
+      } else {
+        newSet.delete(id);
+      }
+      return newSet;
+    });
+  };
+
   // Use the view model hook
   const {
     gameLibrary,
@@ -125,6 +146,8 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
           onSortChange={setActiveSort}
           onSearchChange={setSearchQuery}
           onAddClick={() => setShowSearchModal(true)}
+          onCollapseAll={handleCollapseAll}
+          hasExpandedItems={expandedItems.size > 0}
         />
       )}
 
@@ -151,7 +174,7 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
         <div className="space-y-2 max-w-full overflow-hidden">
           {paginatedItems.map((game) => (
             <MediaListItem
-              key={game.id}
+              key={`${game.id}-${collapseKey}`}
               id={game.id}
               title={game.name}
               subtitle={undefined}
@@ -168,6 +191,7 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
               onToggleComplete={() => void handleTogglePlayed(game)}
               onRecommend={() => handleRecommendClick(game)}
               onRemove={() => void handleDelete(game)}
+              onExpandChange={(isExpanded) => handleExpandChange(game.id, isExpanded)}
             />
           ))}
         </div>

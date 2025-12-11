@@ -6,10 +6,8 @@ import { useUrlPaginationState } from "../../../hooks/useUrlPaginationState";
 import { useTasks } from "../../../hooks/useTasksQueries";
 import type { Task } from "../../../services/tasksService.types";
 import type { StatusHistoryEntry } from "../../../services/tasksService.types";
-import { Briefcase, Plus } from "lucide-react";
-import { EmptyStateAddCard, LocalSearchInput } from "../../shared";
-import Button from "../../shared/ui/Button";
-import FilterSortMenu from "../../shared/common/FilterSortMenu";
+import { Briefcase } from "lucide-react";
+import { EmptyStateAddCard, AccordionToolbar } from "../../shared";
 import type { FilterSortSection } from "../../shared/common/FilterSortMenu";
 import {
   getPersistedFilters,
@@ -32,6 +30,8 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
   const { data: tasks = [], isLoading } = useTasks(boardId);
   const listTopRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [collapseKey, setCollapseKey] = useState(0);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
   // Load persisted filter state
   const persistenceKey = "job-tracker-filters";
@@ -187,6 +187,25 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
     }
   };
 
+  // Collapse all handler - increments key to force re-render with default collapsed state
+  const handleCollapseAll = () => {
+    setCollapseKey(prev => prev + 1);
+    setExpandedItems(new Set()); // Clear all expanded items
+  };
+
+  // Track expansion changes
+  const handleExpandChange = (id: string, isExpanded: boolean) => {
+    setExpandedItems(prev => {
+      const newSet = new Set(prev);
+      if (isExpanded) {
+        newSet.add(id);
+      } else {
+        newSet.delete(id);
+      }
+      return newSet;
+    });
+  };
+
   // URL-based pagination state
   const { page, perPage, setPage, setPerPage } = useUrlPaginationState(1, 10);
 
@@ -226,34 +245,23 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
         />
       ) : (
         <>
-          {/* Header with Search */}
-          <div ref={listTopRef} className="flex items-center justify-between gap-3 mb-4">
-            <div className="flex-1 max-w-md">
-              <LocalSearchInput
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder="Search Jobs..."
-                filterButton={
-                  <FilterSortMenu
-                    sections={filterSortSections}
-                    activeFilters={{
-                      status: statusFilters,
-                      sort: activeSort,
-                    }}
-                    onFilterChange={handleFilterChange}
-                    label=""
-                  />
-                }
-              />
-            </div>
-            <Button
-              onClick={() => onCreateTask()}
-              variant="action"
-              size="sm"
-              icon={<Plus className="w-4 h-4" />}
-            >
-              Add
-            </Button>
+          {/* Toolbar with Search, Collapse All, and Add Button */}
+          <div ref={listTopRef}>
+            <AccordionToolbar
+              searchValue={searchQuery}
+              onSearchChange={setSearchQuery}
+              searchPlaceholder="Search Jobs..."
+              filterSortSections={filterSortSections}
+              activeFilters={{
+                status: statusFilters,
+                sort: activeSort,
+              }}
+              onFilterChange={handleFilterChange}
+              onCollapseAll={handleCollapseAll}
+              hasExpandedItems={expandedItems.size > 0}
+              onActionClick={onCreateTask}
+              actionLabel="Add"
+            />
           </div>
 
           <JobTrackerTable
@@ -263,6 +271,8 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
               if (task) onEditTask(task);
             }}
             onDelete={handleDelete}
+            collapseKey={collapseKey}
+            onExpandChange={handleExpandChange}
           />
 
           {/* Pagination */}

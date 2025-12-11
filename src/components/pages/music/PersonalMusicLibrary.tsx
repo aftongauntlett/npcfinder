@@ -43,6 +43,27 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
   initialFilter = "all",
   embedded: _embedded = false,
 }) => {
+  // Collapse state
+  const [collapseKey, setCollapseKey] = useState(0);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+
+  const handleCollapseAll = () => {
+    setCollapseKey((prev) => prev + 1);
+    setExpandedItems(new Set());
+  };
+
+  const handleExpandChange = (id: string, isExpanded: boolean) => {
+    setExpandedItems((prev) => {
+      const newSet = new Set(prev);
+      if (isExpanded) {
+        newSet.add(id);
+      } else {
+        newSet.delete(id);
+      }
+      return newSet;
+    });
+  };
+
   // Fetch music library from database
   const { data: musicLibrary = [] } = useMusicLibrary();
   const addToLibrary = useAddToLibrary();
@@ -315,7 +336,7 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
   return (
     <div
       ref={topRef}
-      className="container mx-auto px-4 sm:px-6 space-y-4 sm:space-y-6"
+      className="container mx-auto px-4 sm:px-6"
     >
       {/* Action Bar - Only show when there's data */}
       {pagination.filteredItems.length > 0 && (
@@ -343,6 +364,8 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
               placeholder: "Search Music...",
             }}
             onAddClick={() => setShowSearchModal(true)}
+            onCollapseAll={handleCollapseAll}
+            hasExpandedItems={expandedItems.size > 0}
           />
         </div>
       )}
@@ -360,7 +383,7 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
         <div className="space-y-2">
           {pagination.paginatedItems.map((music: MusicLibraryItem) => (
             <MediaListItem
-              key={music.id}
+              key={`${music.id}-${collapseKey}`}
               id={music.id}
               title={music.title}
               subtitle={music.artist}
@@ -384,6 +407,7 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
               onToggleComplete={() => handleToggleListened(music.id)}
               onRemove={() => handleRemove(music)}
               onRecommend={() => handleRecommend(music)}
+              onExpandChange={(isExpanded) => handleExpandChange(music.id, isExpanded)}
             />
           ))}
         </div>

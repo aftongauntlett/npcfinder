@@ -24,6 +24,7 @@ import {
   applyRecipeMetadataToForm,
   applyGenericMetadataToForm,
 } from "../../utils/metadataFormHelpers";
+import { detectLocationTypeFromLocationText } from "../../utils/locationTypeDetection";
 
 // Helper to get local date in YYYY-MM-DD format (not UTC)
 const getLocalDateString = () => {
@@ -81,6 +82,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   const [position, setPosition] = useState("");
   const [salaryRange, setSalaryRange] = useState("");
   const [location, setLocation] = useState("");
+  const [locationType, setLocationType] = useState<"Remote" | "Hybrid" | "In-Office">("In-Office");
   const [employmentType, setEmploymentType] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [jobNotes, setJobNotes] = useState("");
@@ -121,6 +123,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
           if (patch.companyUrl) setCompanyUrl(patch.companyUrl);
           if (patch.salaryRange) setSalaryRange(patch.salaryRange);
           if (patch.location) setLocation(patch.location);
+          if (patch.locationType) setLocationType(patch.locationType);
           if (patch.employmentType) setEmploymentType(patch.employmentType);
           if (patch.description) setDescription(patch.description);
 
@@ -260,6 +263,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         position: position || finalTitle,
         salary_range: salaryRange || "",
         location: location || "",
+        location_type: locationType,
         employment_type: employmentType || "",
         date_applied: getLocalDateString(),
         job_description: jobDescription || "",
@@ -329,6 +333,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
           setPosition("");
           setSalaryRange("");
           setLocation("");
+          setLocationType("In-Office");
           setEmploymentType("");
           setJobDescription("");
           setJobNotes("");
@@ -548,7 +553,12 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 label="Location"
                 type="text"
                 value={location}
-                onChange={(e) => setLocation(e.target.value)}
+                onChange={(e) => {
+                  const newLocation = e.target.value;
+                  setLocation(newLocation);
+                  // Auto-detect location type from manual entry
+                  setLocationType(detectLocationTypeFromLocationText(newLocation));
+                }}
                 placeholder="San Francisco, CA"
               />
             </div>

@@ -554,10 +554,12 @@ export function useUpdateTask() {
 
       let boardId: string | null | undefined;
       for (const [, tasks] of boardTasks) {
-        const task = tasks?.find((t) => t.id === taskId);
-        if (task) {
-          boardId = task.board_id;
-          break;
+        if (Array.isArray(tasks)) {
+          const task = tasks.find((t) => t.id === taskId);
+          if (task) {
+            boardId = task.board_id;
+            break;
+          }
         }
       }
 
@@ -791,10 +793,12 @@ export function useToggleTaskStatus() {
 
       let boardId: string | null | undefined;
       for (const [, tasks] of boardTasks) {
-        const task = tasks?.find((t) => t.id === taskId);
-        if (task) {
-          boardId = task.board_id;
-          break;
+        if (Array.isArray(tasks)) {
+          const task = tasks.find((t) => t.id === taskId);
+          if (task) {
+            boardId = task.board_id;
+            break;
+          }
         }
       }
 

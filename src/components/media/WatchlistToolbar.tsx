@@ -17,6 +17,8 @@ interface WatchlistToolbarProps {
   onSortChange: (sort: WatchlistSortType) => void;
   onSearchChange: (query: string) => void;
   onAddClick: () => void;
+  onCollapseAll?: () => void;
+  hasExpandedItems?: boolean;
 }
 
 const WatchlistToolbar: React.FC<WatchlistToolbarProps> = ({
@@ -30,6 +32,8 @@ const WatchlistToolbar: React.FC<WatchlistToolbarProps> = ({
   onSortChange,
   onSearchChange,
   onAddClick,
+  onCollapseAll,
+  hasExpandedItems,
 }) => {
   const filterSections = getWatchlistFilterSections(availableGenres);
 
@@ -60,6 +64,8 @@ const WatchlistToolbar: React.FC<WatchlistToolbarProps> = ({
         placeholder: "Search Movies and TV Shows...",
       }}
       onAddClick={onAddClick}
+      onCollapseAll={onCollapseAll}
+      hasExpandedItems={hasExpandedItems}
     />
   );
 };

@@ -58,6 +58,9 @@ interface MediaListItemProps {
   publisher?: string;
   isbn?: string;
   pageCount?: number;
+
+  // Expansion tracking
+  onExpandChange?: (isExpanded: boolean) => void;
 }
 
 /**
@@ -135,12 +138,19 @@ const MediaListItemComponent: React.FC<MediaListItemProps> = ({
   publisher,
   isbn,
   pageCount,
+  onExpandChange,
 }) => {
   // State for detailed info
   const [details, setDetails] = useState<DetailedMediaInfo | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+
+  // Notify parent when expansion changes
+  useEffect(() => {
+    onExpandChange?.(isExpanded);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isExpanded]);
 
   // Fetch detailed info when accordion expands (only for movies/TV)
   useEffect(() => {

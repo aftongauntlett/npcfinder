@@ -21,6 +21,7 @@ interface RecipeCardProps {
   task?: Task;
   onEdit?: () => void;
   onDelete?: () => void;
+  onExpandChange?: (isExpanded: boolean) => void; // Track expansion changes
   compact?: boolean;
 }
 
@@ -43,6 +44,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
   task,
   onEdit,
   onDelete,
+  onExpandChange,
   compact = false,
 }) => {
   // Track completed instructions for cooking mode
@@ -421,6 +423,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
       onEdit={onEdit}
       onDelete={onDelete}
       expandedContent={expandedContent}
+      onExpandChange={onExpandChange}
     >
       {headerContent}
     </AccordionListCard>

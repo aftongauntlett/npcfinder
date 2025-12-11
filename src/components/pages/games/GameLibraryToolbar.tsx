@@ -12,6 +12,8 @@ interface GameLibraryToolbarProps {
   onSortChange: (sort: GameLibrarySortType) => void;
   onSearchChange: (query: string) => void;
   onAddClick: () => void;
+  onCollapseAll?: () => void;
+  hasExpandedItems?: boolean;
 }
 
 const GameLibraryToolbar: React.FC<GameLibraryToolbarProps> = ({
@@ -23,6 +25,8 @@ const GameLibraryToolbar: React.FC<GameLibraryToolbarProps> = ({
   onSortChange,
   onSearchChange,
   onAddClick,
+  onCollapseAll,
+  hasExpandedItems,
 }) => {
   const filterSections = getGameLibraryFilterSections(availableGenres);
 
@@ -51,6 +55,8 @@ const GameLibraryToolbar: React.FC<GameLibraryToolbarProps> = ({
           placeholder: "Search Games...",
         }}
         onAddClick={onAddClick}
+        onCollapseAll={onCollapseAll}
+        hasExpandedItems={hasExpandedItems}
       />
     </div>
   );

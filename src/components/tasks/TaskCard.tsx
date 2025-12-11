@@ -37,6 +37,7 @@ interface TaskCardProps {
   onRemove?: (taskId: string) => void;
   onClick?: (taskId: string) => void;
   draggable?: boolean;
+  onExpandChange?: (isExpanded: boolean) => void;
 }
 
 const TaskCardComponent: React.FC<TaskCardProps> = ({
@@ -47,6 +48,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
   onRemove,
   onClick,
   draggable = false,
+  onExpandChange,
 }) => {
   const overdue = isOverdue(task.due_date);
   const repeatableOverdue = isRepeatableTaskOverdue(task);
@@ -381,6 +383,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
       onDelete={() => onRemove?.(task.id)}
       expandedContent={expandedContent}
       onClick={isMobile && onClick ? () => onClick(task.id) : undefined}
+      onExpandChange={onExpandChange}
     >
       {headerContent}
     </AccordionListCard>

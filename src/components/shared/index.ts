@@ -81,6 +81,7 @@ export { default as StatusBadge } from "./common/StatusBadge";
 export { default as GenreChips } from "./common/GenreChips";
 export { default as Accordion } from "./common/Accordion";
 export { default as AccordionListCard } from "./common/AccordionListCard";
+export { default as AccordionToolbar } from "./common/AccordionToolbar";
 export { default as EmptyState } from "./common/EmptyState";
 export { default as FilterSortMenu } from "./common/FilterSortMenu";
 export type { FilterSortSection } from "./common/FilterSortMenu";

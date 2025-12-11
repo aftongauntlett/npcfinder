@@ -1,12 +1,10 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { Plus } from "lucide-react";
-import Button from "../../shared/ui/Button";
 import { RecipeCard } from "../../shared/cards";
 import { Pagination } from "../../shared/common/Pagination";
-import { EmptyStateAddCard, LocalSearchInput } from "../../shared";
+import { EmptyStateAddCard, AccordionToolbar } from "../../shared";
 import { usePagination } from "../../../hooks/usePagination";
 import { useUrlPaginationState } from "../../../hooks/useUrlPaginationState";
-import FilterSortMenu from "../../shared/common/FilterSortMenu";
 import type { FilterSortSection } from "../../shared/common/FilterSortMenu";
 import { useTasks } from "../../../hooks/useTasksQueries";
 import type { Task } from "../../../services/tasksService.types";
@@ -44,6 +42,8 @@ export const RecipeListView: React.FC<RecipeListViewProps> = ({
     persistedFilters.categoryFilters as string[]
   );
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [collapseKey, setCollapseKey] = useState(0);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const listTopRef = useRef<HTMLDivElement>(null);
 
   // Persist filter changes
@@ -178,6 +178,24 @@ export const RecipeListView: React.FC<RecipeListViewProps> = ({
     }
   };
 
+  const handleCollapseAll = () => {
+    setCollapseKey(prev => prev + 1);
+    setExpandedItems(new Set()); // Clear all expanded items
+  };
+
+  // Track expansion changes
+  const handleExpandChange = (id: string, isExpanded: boolean) => {
+    setExpandedItems(prev => {
+      const newSet = new Set(prev);
+      if (isExpanded) {
+        newSet.add(id);
+      } else {
+        newSet.delete(id);
+      }
+      return newSet;
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -202,35 +220,22 @@ export const RecipeListView: React.FC<RecipeListViewProps> = ({
       ) : (
         <>
           {/* Toolbar */}
-          <div ref={listTopRef} className="space-y-3">
-            <div className="flex flex-nowrap items-center justify-between gap-3">
-              <div className="flex-1 max-w-md">
-                <LocalSearchInput
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  placeholder="Search Recipes..."
-                  filterButton={
-                    <FilterSortMenu
-                      sections={filterSortSections}
-                      activeFilters={{
-                        category: categoryFilters,
-                        sort: activeSort,
-                      }}
-                      onFilterChange={handleFilterChange}
-                      label=""
-                    />
-                  }
-                />
-              </div>
-              <Button
-                onClick={() => onCreateTask()}
-                variant="action"
-                size="sm"
-                icon={<Plus className="w-4 h-4" />}
-              >
-                Add
-              </Button>
-            </div>
+          <div ref={listTopRef}>
+            <AccordionToolbar
+              searchValue={searchQuery}
+              onSearchChange={setSearchQuery}
+              searchPlaceholder="Search Recipes..."
+              filterSortSections={filterSortSections}
+              activeFilters={{
+                category: categoryFilters,
+                sort: activeSort,
+              }}
+              onFilterChange={handleFilterChange}
+              onCollapseAll={handleCollapseAll}
+              hasExpandedItems={expandedItems.size > 0}
+              onActionClick={onCreateTask}
+              actionLabel="Add"
+            />
           </div>
 
           {/* Recipe List */}
@@ -272,7 +277,7 @@ export const RecipeListView: React.FC<RecipeListViewProps> = ({
 
               return (
                 <RecipeCard
-                  key={task.id}
+                  key={`${task.id}-${collapseKey}`}
                   recipeName={recipeName}
                   category={category}
                   prepTime={prepTime}
@@ -289,6 +294,7 @@ export const RecipeListView: React.FC<RecipeListViewProps> = ({
                   onDelete={
                     onDeleteTask ? () => onDeleteTask(task.id) : undefined
                   }
+                  onExpandChange={(isExpanded) => handleExpandChange(task.id, isExpanded)}
                 />
               );
             })}

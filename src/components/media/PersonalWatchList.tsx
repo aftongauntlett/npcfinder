@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import {
   SearchMovieModal,
   SendMediaModal,
@@ -22,6 +22,10 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
 }) => {
   // Ref for scroll-to-top
   const topRef = useRef<HTMLDivElement>(null);
+
+  // Collapse all state
+  const [collapseKey, setCollapseKey] = useState(0);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
   // Use the view model hook
   const {
@@ -63,10 +67,30 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
     isDeleting,
   } = useWatchlistViewModel({ initialFilter });
 
+  // Collapse all handler
+  const handleCollapseAll = () => {
+    setCollapseKey(prev => prev + 1);
+    setExpandedItems(new Set());
+  };
+
+  // Track expansion changes
+  const handleExpandChange = (id: string | number, isExpanded: boolean) => {
+    setExpandedItems(prev => {
+      const newSet = new Set(prev);
+      const stringId = String(id);
+      if (isExpanded) {
+        newSet.add(stringId);
+      } else {
+        newSet.delete(stringId);
+      }
+      return newSet;
+    });
+  };
+
   return (
     <div
       ref={topRef}
-      className="container mx-auto px-4 sm:px-6 space-y-4 sm:space-y-6"
+      className="container mx-auto px-4 sm:px-6"
     >
       {/* Controls Row: Filters + Sort + Actions */}
       {hasItemsForCurrentFilter && (
@@ -81,6 +105,8 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
           onSortChange={setSortBy}
           onSearchChange={setSearchQuery}
           onAddClick={() => setShowSearchModal(true)}
+          onCollapseAll={handleCollapseAll}
+          hasExpandedItems={expandedItems.size > 0}
         />
       )}
 
@@ -100,7 +126,7 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
           <div className="space-y-4">
             {paginatedItems.map((item) => (
               <MediaListItem
-                key={item.id}
+                key={`${item.id}-${collapseKey}`}
                 id={item.id}
                 title={item.title}
                 subtitle={item.director || undefined}
@@ -118,6 +144,7 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
                   setMovieToRecommend(item);
                   setShowSendModal(true);
                 }}
+                onExpandChange={(isExpanded) => handleExpandChange(item.id, isExpanded)}
               />
             ))}
           </div>

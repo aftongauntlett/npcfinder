@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Plus, Minimize2 } from "lucide-react";
 import Button from "../ui/Button";
 import FilterSortMenu from "../common/FilterSortMenu";
 import LocalSearchInput from "../common/LocalSearchInput";
@@ -26,10 +26,12 @@ interface MediaPageToolbarProps {
   filterConfig?: MenuFilterConfig;
   searchConfig?: SearchConfig;
   onAddClick: () => void;
+  onCollapseAll?: () => void;
+  hasExpandedItems?: boolean;
 }
 
 export function MediaPageToolbar(props: MediaPageToolbarProps) {
-  const { filterConfig, onAddClick, searchConfig } = props;
+  const { filterConfig, onAddClick, searchConfig, onCollapseAll, hasExpandedItems } = props;
 
   const handleRemoveFilter = (sectionId: string, filterId: string) => {
     if (!filterConfig) return;
@@ -49,7 +51,7 @@ export function MediaPageToolbar(props: MediaPageToolbarProps) {
   };
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+    <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
       <div className="flex items-center gap-3 flex-1 min-w-0 flex-wrap">
         {/* Search with Filter Button */}
         {searchConfig && (
@@ -82,14 +84,29 @@ export function MediaPageToolbar(props: MediaPageToolbarProps) {
         )}
       </div>
 
-      <Button
-        onClick={onAddClick}
-        variant="action"
-        size="md"
-        icon={<Plus size={18} />}
-      >
-        Add
-      </Button>
+      <div className="flex items-center gap-2">
+        {hasExpandedItems && onCollapseAll && (
+          <Button
+            onClick={onCollapseAll}
+            variant="subtle"
+            size="sm"
+            icon={<Minimize2 className="w-4 h-4" />}
+            aria-label="Collapse all items"
+            title="Collapse all items"
+            hideTextOnMobile
+          >
+            Collapse All
+          </Button>
+        )}
+        <Button
+          onClick={onAddClick}
+          variant="action"
+          size="md"
+          icon={<Plus size={18} />}
+        >
+          Add
+        </Button>
+      </div>
     </div>
   );
 }

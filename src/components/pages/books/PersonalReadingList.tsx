@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { Pagination } from "../../shared/common/Pagination";
 import SearchBookModal from "../../shared/search/SearchBookModal";
 import MediaListItem from "../../media/MediaListItem";
@@ -22,6 +22,27 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
 }) => {
   // Ref for scroll-to-top
   const topRef = useRef<HTMLDivElement>(null);
+
+  // Collapse state
+  const [collapseKey, setCollapseKey] = useState(0);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+
+  const handleCollapseAll = () => {
+    setCollapseKey((prev) => prev + 1);
+    setExpandedItems(new Set());
+  };
+
+  const handleExpandChange = (id: string, isExpanded: boolean) => {
+    setExpandedItems((prev) => {
+      const newSet = new Set(prev);
+      if (isExpanded) {
+        newSet.add(id);
+      } else {
+        newSet.delete(id);
+      }
+      return newSet;
+    });
+  };
 
   // Use the view model hook
   const {
@@ -64,7 +85,7 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
   return (
     <div
       ref={topRef}
-      className="container mx-auto px-4 sm:px-6 space-y-4 sm:space-y-6"
+      className="container mx-auto px-4 sm:px-6"
     >
       {/* Controls Row: Filter/Sort + Actions */}
       {hasItemsForCurrentFilter && (
@@ -77,6 +98,8 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
           onSortChange={setSortBy}
           onSearchChange={setSearchQuery}
           onAddClick={() => setShowSearchModal(true)}
+          onCollapseAll={handleCollapseAll}
+          hasExpandedItems={expandedItems.size > 0}
         />
       )}
 
@@ -95,7 +118,7 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
           <div className="space-y-4">
             {paginatedItems.map((book) => (
               <MediaListItem
-                key={book.id}
+                key={`${book.id}-${collapseKey}`}
                 id={book.id}
                 title={book.title}
                 subtitle={book.authors || undefined}
@@ -120,6 +143,7 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
                   setBookToRecommend(book);
                   setShowSendModal(true);
                 }}
+                onExpandChange={(isExpanded) => handleExpandChange(book.id, isExpanded)}
               />
             ))}
           </div>

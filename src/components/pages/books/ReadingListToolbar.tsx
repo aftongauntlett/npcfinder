@@ -12,6 +12,8 @@ interface ReadingListToolbarProps {
   onSortChange: (sort: ReadingListSortType) => void;
   onSearchChange: (query: string) => void;
   onAddClick: () => void;
+  onCollapseAll?: () => void;
+  hasExpandedItems?: boolean;
 }
 
 const ReadingListToolbar: React.FC<ReadingListToolbarProps> = ({
@@ -23,6 +25,8 @@ const ReadingListToolbar: React.FC<ReadingListToolbarProps> = ({
   onSortChange,
   onSearchChange,
   onAddClick,
+  onCollapseAll,
+  hasExpandedItems,
 }) => {
   const filterSections = getReadingListFilterSections(availableCategories);
 
@@ -51,6 +55,8 @@ const ReadingListToolbar: React.FC<ReadingListToolbarProps> = ({
           placeholder: "Search Books...",
         }}
         onAddClick={onAddClick}
+        onCollapseAll={onCollapseAll}
+        hasExpandedItems={hasExpandedItems}
       />
     </div>
   );

@@ -20,6 +20,8 @@ interface JobCardProps {
   notes?: string;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
+  isExpanded?: boolean; // Controlled expansion state
+  onExpandChange?: (isExpanded: boolean) => void; // Callback when expand state changes
 }
 
 /**
@@ -42,6 +44,8 @@ const JobCard: React.FC<JobCardProps> = ({
   notes,
   onEdit,
   onDelete,
+  isExpanded,
+  onExpandChange,
 }) => {
   const hasNotes = notes && notes.trim().length > 0;
   const hasDescription = jobDescription && jobDescription.trim().length > 0;
@@ -64,19 +68,6 @@ const JobCard: React.FC<JobCardProps> = ({
       .join(" → ");
   };
 
-  const getLocationTypeIcon = () => {
-    switch (locationType) {
-      case "Remote":
-        return "🏠";
-      case "Hybrid":
-        return "🔄";
-      case "In-Office":
-        return "🏢";
-      default:
-        return null;
-    }
-  };
-
   // Header content (always visible)
   const headerContent = (
     <div className="space-y-1.5">
@@ -97,23 +88,26 @@ const JobCard: React.FC<JobCardProps> = ({
             <ExternalLink className="w-3.5 h-3.5" />
           </a>
         )}
-        {employmentType && (
+        {/* Only show employment type chip if it's NOT Full-time (case-insensitive) */}
+        {employmentType && employmentType.toLowerCase() !== "full-time" && (
           <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
             {employmentType}
           </span>
         )}
-        {locationType && (
-          <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">
-            {getLocationTypeIcon()} {locationType}
-          </span>
-        )}
-        {location && (
-          <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400">
-            {location}
+        {/* Location chip with color coding: Remote=green, Hybrid=cyan, In-Office=orange */}
+        {(location || locationType) && (
+          <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium ${
+            locationType === "Remote"
+              ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+              : locationType === "Hybrid"
+              ? "bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400"
+              : "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400"
+          }`}>
+            {location || locationType}
           </span>
         )}
         {salaryRange && (
-          <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+          <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
             {salaryRange}
           </span>
         )}
@@ -201,6 +195,8 @@ const JobCard: React.FC<JobCardProps> = ({
       onEdit={() => onEdit(id)}
       onDelete={() => onDelete(id)}
       expandedContent={expandedContent}
+      isExpanded={isExpanded}
+      onExpandChange={onExpandChange}
     >
       {headerContent}
     </AccordionListCard>

@@ -11,7 +11,7 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
-import { ListChecks, Plus } from "lucide-react";
+import { ListChecks, Plus, Minimize2 } from "lucide-react";
 import TaskCard from "../../tasks/TaskCard";
 import CreateTaskModal from "../../tasks/CreateTaskModal";
 import TaskDetailModal from "../../tasks/TaskDetailModal";
@@ -36,6 +36,27 @@ import {
 } from "../../../utils/persistenceUtils";
 
 const InboxView: React.FC = () => {
+  // Collapse state
+  const [collapseKey, setCollapseKey] = useState(0);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+
+  const handleCollapseAll = () => {
+    setCollapseKey((prev) => prev + 1);
+    setExpandedItems(new Set());
+  };
+
+  const handleExpandChange = (id: string, isExpanded: boolean) => {
+    setExpandedItems((prev) => {
+      const newSet = new Set(prev);
+      if (isExpanded) {
+        newSet.add(id);
+      } else {
+        newSet.delete(id);
+      }
+      return newSet;
+    });
+  };
+
   const { data: tasks = [], isLoading } = useTasks(
     null as unknown as undefined,
     {
@@ -323,14 +344,29 @@ const InboxView: React.FC = () => {
           />
         </div>
 
-        <Button
-          onClick={() => setShowCreateModal(true)}
-          variant="action"
-          size="md"
-          icon={<Plus className="w-5 h-5" />}
-        >
-          New Task
-        </Button>
+        {/* Right side buttons */}
+        <div className="flex items-center gap-3">
+          {/* Collapse All Button - Only show when items are expanded */}
+          {expandedItems.size > 0 && (
+            <Button
+              onClick={handleCollapseAll}
+              variant="subtle"
+              size="md"
+              icon={<Minimize2 className="w-4 h-4" />}
+            >
+              <span className="hidden sm:inline">Collapse All</span>
+            </Button>
+          )}
+
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            variant="action"
+            size="md"
+            icon={<Plus className="w-5 h-5" />}
+          >
+            New Task
+          </Button>
+        </div>
       </div>
 
       {/* Task List */}
@@ -393,7 +429,7 @@ const InboxView: React.FC = () => {
           const isDropTarget = dragOverId === task.id;
           return (
             <div
-              key={task.id}
+              key={`${task.id}-${collapseKey}`}
               draggable={isCustomSort}
               onDragStart={(e) => isCustomSort && handleDragStart(e, task)}
               onDragEnd={(e) => isCustomSort && handleDragEnd(e)}
@@ -417,6 +453,7 @@ const InboxView: React.FC = () => {
                 onSnooze={handleSnooze}
                 onRemove={handleRemove}
                 onClick={() => setSelectedTask(task)}
+                onExpandChange={(isExpanded) => handleExpandChange(task.id, isExpanded)}
               />
             </div>
           );
