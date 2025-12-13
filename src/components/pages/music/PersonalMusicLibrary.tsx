@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Music } from "lucide-react";
 import { Pagination } from "../../shared/common/Pagination";
 import { FilterSortSection } from "../../shared/common/FilterSortMenu";
@@ -15,6 +16,7 @@ import MediaListItem from "../../media/MediaListItem";
 import SendMediaModal from "../../shared/media/SendMediaModal";
 import ConfirmationModal from "../../shared/ui/ConfirmationModal";
 import { MediaPageToolbar } from "../../shared/media/MediaPageToolbar";
+import Toast from "@/components/ui/Toast";
 import { searchMusic } from "../../../utils/mediaSearchAdapters";
 import { logger } from "@/lib/logger";
 import { usePagination } from "../../../hooks/usePagination";
@@ -46,6 +48,18 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
   // Collapse state
   const [collapseKey, setCollapseKey] = useState(0);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [recentlyMovedId, setRecentlyMovedId] = useState<string | number | null>(null);
+
+  const [toast, setToast] = useState<{
+    message: string;
+    action?: { label: string; onClick: () => void };
+  } | null>(null);
+
+  useEffect(() => {
+    if (recentlyMovedId === null) return;
+    const timer = setTimeout(() => setRecentlyMovedId(null), 650);
+    return () => clearTimeout(timer);
+  }, [recentlyMovedId]);
 
   const handleCollapseAll = () => {
     setCollapseKey((prev) => prev + 1);
@@ -381,35 +395,65 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
         />
       ) : (
         <div className="space-y-2">
-          {pagination.paginatedItems.map((music: MusicLibraryItem) => (
-            <MediaListItem
-              key={`${music.id}-${collapseKey}`}
-              id={music.id}
-              title={music.title}
-              subtitle={music.artist}
-              posterUrl={music.album_cover_url || undefined}
-              year={
-                music.release_date
-                  ? new Date(music.release_date).getFullYear().toString()
-                  : undefined
-              }
-              personalRating={music.personal_rating || undefined}
-              isCompleted={music.listened}
-              genres={music.genre || undefined}
-              mediaType={music.media_type}
-              artist={music.artist}
-              album={music.album || undefined}
-              trackDuration={music.track_duration || undefined}
-              trackCount={music.track_count || undefined}
-              previewUrl={music.preview_url || undefined}
-              externalId={music.external_id}
-              description={undefined}
-              onToggleComplete={() => handleToggleListened(music.id)}
-              onRemove={() => handleRemove(music)}
-              onRecommend={() => handleRecommend(music)}
-              onExpandChange={(isExpanded) => handleExpandChange(music.id, isExpanded)}
-            />
-          ))}
+          <AnimatePresence initial={false}>
+            {pagination.paginatedItems.map((music: MusicLibraryItem) => (
+              <motion.div
+                key={`${music.id}-${collapseKey}`}
+                layout
+                initial={{ opacity: 0, y: 6 }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                  scale: recentlyMovedId === music.id ? 1.01 : 1,
+                }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.18 }}
+              >
+                <MediaListItem
+                  id={music.id}
+                  title={music.title}
+                  subtitle={music.artist}
+                  posterUrl={music.album_cover_url || undefined}
+                  year={
+                    music.release_date
+                      ? new Date(music.release_date).getFullYear().toString()
+                      : undefined
+                  }
+                  personalRating={music.personal_rating || undefined}
+                  isCompleted={music.listened}
+                  genres={music.genre || undefined}
+                  mediaType={music.media_type}
+                  artist={music.artist}
+                  album={music.album || undefined}
+                  trackDuration={music.track_duration || undefined}
+                  trackCount={music.track_count || undefined}
+                  previewUrl={music.preview_url || undefined}
+                  externalId={music.external_id}
+                  description={undefined}
+                  onToggleComplete={(id) => {
+                    setRecentlyMovedId(id);
+                    handleToggleListened(String(id));
+                    setToast({
+                      message: `${music.title} moved`,
+                      action: {
+                        label: "Undo",
+                        onClick: () => {
+                          setRecentlyMovedId(id);
+                          handleToggleListened(String(id));
+                          setToast(null);
+                        },
+                      },
+                    });
+                  }}
+                  onRemove={() => handleRemove(music)}
+                  onRecommend={() => handleRecommend(music)}
+                  onExpandChange={(isExpanded) =>
+                    handleExpandChange(music.id, isExpanded)
+                  }
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       )}
 
@@ -481,6 +525,14 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
         variant="danger"
         isLoading={deleteFromLibrary.isPending}
       />
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          action={toast.action}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 };

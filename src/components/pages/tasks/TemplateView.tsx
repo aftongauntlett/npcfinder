@@ -342,35 +342,53 @@ const TemplateView: React.FC<TemplateViewProps> = ({
     <div className="container mx-auto px-4 sm:px-6">
       <h2 className="sr-only">{meta.title}</h2>
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 mb-4">
+      <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:items-center sm:justify-between">
         {/* Search Input with Filter Button */}
-        <div className="flex-1 max-w-md">
-          <LocalSearchInput
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Search Boards..."
-            filterButton={
-              <FilterSortMenu
-                sections={filterSortSections}
-                activeFilters={activeFilters}
-                onFilterChange={(sectionId, value) => {
-                  setActiveFilters({ ...activeFilters, [sectionId]: value });
-                }}
-                label=""
-              />
-            }
-          />
+        <div className="w-full flex items-center gap-2 sm:flex-1 sm:max-w-md">
+          <div className="flex-1 min-w-0">
+            <LocalSearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search Boards..."
+              filterButton={
+                <FilterSortMenu
+                  sections={filterSortSections}
+                  activeFilters={activeFilters}
+                  onFilterChange={(sectionId, value) => {
+                    setActiveFilters({ ...activeFilters, [sectionId]: value });
+                  }}
+                  label=""
+                />
+              }
+            />
+          </div>
+
+          {/* Mobile: icon-only create button inline with search */}
+          {allowsMultipleBoards && (
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              variant="action"
+              size="icon"
+              icon={<Plus className="w-5 h-5" />}
+              className="sm:hidden"
+              aria-label="Create board"
+              title="Create board"
+            />
+          )}
         </div>
 
+        {/* Desktop: full create button */}
         {allowsMultipleBoards && (
-          <Button
-            onClick={() => setShowCreateModal(true)}
-            variant="action"
-            size="md"
-            icon={<Plus className="w-5 h-5" />}
-          >
-            Create Board
-          </Button>
+          <div className="hidden sm:flex w-full sm:w-auto justify-end">
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              variant="action"
+              size="md"
+              icon={<Plus className="w-5 h-5" />}
+            >
+              Create Board
+            </Button>
+          </div>
         )}
       </div>
 

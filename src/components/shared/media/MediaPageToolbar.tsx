@@ -51,40 +51,55 @@ export function MediaPageToolbar(props: MediaPageToolbarProps) {
   };
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-      <div className="flex items-center gap-3 flex-1 min-w-0 flex-wrap">
+    <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+      <div className="w-full flex items-center gap-3 sm:flex-1 min-w-0 flex-wrap">
         {/* Search with Filter Button */}
         {searchConfig && (
-          <div className="w-[420px] max-w-full">
-            <LocalSearchInput
-              value={searchConfig.value}
-              onChange={searchConfig.onChange}
-              placeholder={searchConfig.placeholder || "Search..."}
-              filterButton={
-                filterConfig?.type === "menu" ? (
-                  <FilterSortMenu
-                    sections={filterConfig.sections}
-                    activeFilters={filterConfig.activeFilters}
-                    onFilterChange={filterConfig.onFilterChange}
-                    label=""
-                  />
-                ) : undefined
-              }
+          <div className="w-full flex items-center gap-2 sm:w-[420px] sm:max-w-full">
+            <div className="flex-1 min-w-0">
+              <LocalSearchInput
+                value={searchConfig.value}
+                onChange={searchConfig.onChange}
+                placeholder={searchConfig.placeholder || "Search..."}
+                filterButton={
+                  filterConfig?.type === "menu" ? (
+                    <FilterSortMenu
+                      sections={filterConfig.sections}
+                      activeFilters={filterConfig.activeFilters}
+                      onFilterChange={filterConfig.onFilterChange}
+                      label=""
+                    />
+                  ) : undefined
+                }
+              />
+            </div>
+
+            {/* Mobile: icon-only add button inline with search */}
+            <Button
+              onClick={onAddClick}
+              variant="action"
+              size="icon"
+              icon={<Plus size={18} />}
+              className="sm:hidden"
+              aria-label="Add"
+              title="Add"
             />
           </div>
         )}
 
         {/* Active Filter Chips */}
         {filterConfig?.type === "menu" && (
-          <ActiveFilterChips
-            sections={filterConfig.sections}
-            activeFilters={filterConfig.activeFilters}
-            onRemoveFilter={handleRemoveFilter}
-          />
+          <div className="hidden sm:block">
+            <ActiveFilterChips
+              sections={filterConfig.sections}
+              activeFilters={filterConfig.activeFilters}
+              onRemoveFilter={handleRemoveFilter}
+            />
+          </div>
         )}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="hidden sm:flex w-full sm:w-auto items-center justify-end gap-2">
         {hasExpandedItems && onCollapseAll && (
           <Button
             onClick={onCollapseAll}

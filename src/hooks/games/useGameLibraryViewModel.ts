@@ -64,6 +64,18 @@ export function useGameLibraryViewModel({
   );
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [toastAction, setToastAction] = useState<
+    | {
+        label: string;
+        onClick: () => void;
+      }
+    | undefined
+  >(undefined);
+
+  const dismissToast = useCallback(() => {
+    setShowToast(false);
+    setToastAction(undefined);
+  }, []);
 
   // Persist filter changes
   useEffect(() => {
@@ -197,11 +209,13 @@ export function useGameLibraryViewModel({
           description_raw: gameDetails?.description_raw || null,
           played: false,
         });
+        setToastAction(undefined);
         setToastMessage(`Added "${game.title}" to your library!`);
         setShowToast(true);
         setShowSearchModal(false);
       } catch (error) {
         logger.error("Failed to add game", { error });
+        setToastAction(undefined);
         setToastMessage(
           "Failed to add game. It might already be in your library."
         );
@@ -215,16 +229,39 @@ export function useGameLibraryViewModel({
     async (game: GameLibraryItem) => {
       try {
         await togglePlayed.mutateAsync(game.id);
+
+        setToastMessage(`${game.name} moved`);
+        setToastAction({
+          label: "Undo",
+          onClick: () => {
+            void togglePlayed
+              .mutateAsync(game.id)
+              .then(() => {
+                dismissToast();
+              })
+              .catch((error) => {
+                logger.error("Failed to undo game status change", {
+                  error,
+                  gameId: game.id,
+                });
+                setToastAction(undefined);
+                setToastMessage("Failed to undo");
+                setShowToast(true);
+              });
+          },
+        });
+        setShowToast(true);
       } catch (error) {
         logger.error("Failed to toggle played status", {
           error,
           gameId: game.id,
         });
+        setToastAction(undefined);
         setToastMessage("Failed to update game status");
         setShowToast(true);
       }
     },
-    [togglePlayed]
+    [dismissToast, togglePlayed]
   );
 
   const handleDelete = useCallback((game: GameLibraryItem) => {
@@ -241,6 +278,7 @@ export function useGameLibraryViewModel({
       setGameToDelete(null);
     } catch (error) {
       logger.error("Failed to delete game", { error, gameId: gameToDelete.id });
+      setToastAction(undefined);
       setToastMessage("Failed to remove game");
       setShowToast(true);
     }
@@ -254,6 +292,7 @@ export function useGameLibraryViewModel({
   const handleRecommendSent = useCallback(() => {
     setShowRecommendModal(false);
     setSelectedGame(null);
+    setToastAction(undefined);
     setToastMessage("Game recommendation sent!");
     setShowToast(true);
   }, []);
@@ -304,8 +343,9 @@ export function useGameLibraryViewModel({
 
     // Toast state
     showToast,
-    setShowToast,
+    dismissToast,
     toastMessage,
+    toastAction,
 
     // Handlers
     handleAddGame,

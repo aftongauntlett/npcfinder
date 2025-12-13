@@ -196,6 +196,62 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
   // Detailed variant - full info for Today view and Archive
   
   // Build header content following Movies/Recipes/JobCard pattern
+  const headerChips: Array<{ key: string; node: React.ReactNode }> = [];
+
+  if (repeatableOverdue || overdue) {
+    headerChips.push({
+      key: "overdue",
+      node: (
+        <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 font-medium text-xs">
+          Overdue
+        </span>
+      ),
+    });
+  }
+
+  if (task.due_date) {
+    headerChips.push({
+      key: "due",
+      node: (
+        <span
+          className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium ${
+            isToday(task.due_date)
+              ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+              : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+          }`}
+        >
+          {formatDueDate(task.due_date)}
+        </span>
+      ),
+    });
+  }
+
+  if (task.priority) {
+    headerChips.push({
+      key: "priority",
+      node: (
+        <span
+          className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium ${getTaskPriorityBg(
+            task.priority
+          )} ${getTaskPriorityColor(task.priority)}`}
+        >
+          {getTaskPriorityLabel(task.priority)}
+        </span>
+      ),
+    });
+  }
+
+  if (task.is_repeatable && task.repeat_frequency) {
+    headerChips.push({
+      key: "repeat",
+      node: (
+        <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">
+          {task.repeat_frequency}
+        </span>
+      ),
+    });
+  }
+
   const headerContent = (
     <div className="space-y-1.5">
       {/* Title row with badges */}
@@ -203,38 +259,26 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
         <h3 className="font-semibold text-gray-900 dark:text-white">
           {task.title}
         </h3>
-        {task.priority && (
-          <span
-            className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium ${getTaskPriorityBg(
-              task.priority
-            )} ${getTaskPriorityColor(task.priority)}`}
-          >
-            {getTaskPriorityLabel(task.priority)}
-          </span>
-        )}
-        {/* Due Date Chip */}
-        {task.due_date && (
-          <span
-            className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium ${
-              isToday(task.due_date)
-                ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
-                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-            }`}
-          >
-            {formatDueDate(task.due_date)}
-          </span>
-        )}
-        {/* Repeat Frequency Chip */}
-        {task.is_repeatable && task.repeat_frequency && (
-          <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">
-            {task.repeat_frequency}
-          </span>
-        )}
-        {/* Overdue Chip - only show when overdue */}
-        {(repeatableOverdue || overdue) && (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 font-medium text-xs">
-            Overdue
-          </span>
+        {/* Chips (collapsed on mobile: show 1 + +n) */}
+        {headerChips.length > 0 && (
+          <>
+            <div className="flex items-center gap-2 flex-wrap sm:hidden">
+              <React.Fragment key={headerChips[0].key}>
+                {headerChips[0].node}
+              </React.Fragment>
+              {headerChips.length > 1 && (
+                <span className="inline-flex items-center text-xs px-2.5 py-1 rounded-full font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                  +{headerChips.length - 1}
+                </span>
+              )}
+            </div>
+
+            <div className="hidden sm:flex items-center gap-2 flex-wrap">
+              {headerChips.map((chip) => (
+                <React.Fragment key={chip.key}>{chip.node}</React.Fragment>
+              ))}
+            </div>
+          </>
         )}
       </div>
 

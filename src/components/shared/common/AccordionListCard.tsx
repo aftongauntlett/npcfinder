@@ -75,6 +75,10 @@ const AccordionListCard: React.FC<AccordionListCardProps> = ({
   const isControlled = controlledExpanded !== undefined;
   const isExpanded = isControlled ? controlledExpanded : internalExpanded;
 
+  // Mobile: reduce header crowding by moving actions into expanded content
+  // Only do this when expandedContent exists (so actions remain accessible).
+  const moveActionsToExpandedOnMobile = !!expandedContent;
+
   const handleToggleExpand = (newState: boolean) => {
     if (!isControlled) {
       setInternalExpanded(newState);
@@ -144,11 +148,15 @@ const AccordionListCard: React.FC<AccordionListCardProps> = ({
             <div className="flex-1 min-w-0">{children}</div>
 
             {/* Right: Action buttons + Chevron */}
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-start gap-2 flex-shrink-0">
               {/* All action buttons - visible on hover on desktop, always visible on mobile */}
               {(customActions?.length || onEdit || onDelete) && (
                 <div
-                  className="flex items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                  className={`flex items-center gap-2 transition-opacity ${
+                    moveActionsToExpandedOnMobile
+                      ? "hidden sm:flex sm:opacity-0 sm:group-hover:opacity-100"
+                      : "opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+                  }`}
                   data-action-buttons
                 >
                   {/* Custom actions */}
@@ -163,7 +171,7 @@ const AccordionListCard: React.FC<AccordionListCardProps> = ({
                       size="icon"
                       icon={action.icon}
                       aria-label={action.ariaLabel || action.label}
-                      className={`h-8 w-8 ${action.className || ""}`}
+                      className={`h-7 w-7 sm:h-8 sm:w-8 ${action.className || ""}`}
                     />
                   ))}
 
@@ -178,7 +186,7 @@ const AccordionListCard: React.FC<AccordionListCardProps> = ({
                       size="icon"
                       icon={<Pencil className="w-4 h-4" />}
                       aria-label="Edit"
-                      className="h-8 w-8"
+                      className="h-7 w-7 sm:h-8 sm:w-8"
                     />
                   )}
                   {onDelete && (
@@ -191,7 +199,7 @@ const AccordionListCard: React.FC<AccordionListCardProps> = ({
                       size="icon"
                       icon={<Trash2 className="w-4 h-4" />}
                       aria-label="Delete"
-                      className="h-8 w-8"
+                      className="h-7 w-7 sm:h-8 sm:w-8"
                     />
                   )}
                 </div>
@@ -199,7 +207,7 @@ const AccordionListCard: React.FC<AccordionListCardProps> = ({
 
               {/* Chevron - always visible */}
               <ChevronDown
-                className={`w-5 h-5 text-gray-400 transition-transform ${
+                className={`w-4 h-4 sm:w-5 sm:h-5 mt-1 text-gray-400 transition-transform ${
                   isExpanded ? "rotate-180" : ""
                 }`}
               />
@@ -213,6 +221,57 @@ const AccordionListCard: React.FC<AccordionListCardProps> = ({
             className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700 pt-3"
             data-expanded-content
           >
+            {/* Mobile actions moved into details */}
+            {moveActionsToExpandedOnMobile &&
+              (customActions?.length || onEdit || onDelete) && (
+                <div
+                  className="sm:hidden flex items-center justify-end gap-2 mb-3"
+                  data-action-buttons
+                >
+                  {customActions?.map((action, index) => (
+                    <Button
+                      key={`mobile-action-${index}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        action.onClick();
+                      }}
+                      variant={action.variant || "subtle"}
+                      size="icon"
+                      icon={action.icon}
+                      aria-label={action.ariaLabel || action.label}
+                      className={`h-7 w-7 ${action.className || ""}`}
+                    />
+                  ))}
+
+                  {onEdit && (
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit();
+                      }}
+                      variant="subtle"
+                      size="icon"
+                      icon={<Pencil className="w-4 h-4" />}
+                      aria-label="Edit"
+                      className="h-7 w-7"
+                    />
+                  )}
+
+                  {onDelete && (
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete();
+                      }}
+                      variant="danger"
+                      size="icon"
+                      icon={<Trash2 className="w-4 h-4" />}
+                      aria-label="Delete"
+                      className="h-7 w-7"
+                    />
+                  )}
+                </div>
+              )}
             {expandedContent}
           </div>
         )}

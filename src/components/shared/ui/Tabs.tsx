@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Check, X } from "lucide-react";
+import { Check, X, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
 
 export interface Tab {
@@ -240,7 +240,7 @@ const MobileTabSelector = React.memo<MobileTabSelectorProps>(
         : "";
 
     return (
-      <div ref={menuRef} className="sm:hidden mb-6 relative">
+      <div ref={menuRef} className="sm:hidden mb-3 relative">
         <button
           onClick={handleToggle}
           className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-base font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
@@ -255,10 +255,11 @@ const MobileTabSelector = React.memo<MobileTabSelectorProps>(
             {activeTab?.label}
             {activeBadgeText}
           </span>
-          <Check
-            className={`w-5 h-5 transition-opacity ${
-              isOpen ? "opacity-100" : "opacity-0"
+          <ChevronDown
+            className={`w-5 h-5 text-gray-400 transition-transform ${
+              isOpen ? "rotate-180" : ""
             }`}
+            aria-hidden="true"
           />
         </button>
 

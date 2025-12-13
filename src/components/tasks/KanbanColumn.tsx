@@ -86,7 +86,7 @@ const KanbanColumnComponent: React.FC<KanbanColumnProps> = ({
   );
 
   return (
-    <div className="flex-1 min-w-[280px] sm:min-w-[320px] md:min-w-0 snap-start snap-always group">
+    <div className="w-full flex-1 min-w-0 sm:min-w-[320px] md:min-w-0 sm:snap-start sm:snap-always group">
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}

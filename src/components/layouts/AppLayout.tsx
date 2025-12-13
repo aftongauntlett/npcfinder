@@ -85,7 +85,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
         </header>
 
         {/* Page Content */}
-        <div className="pt-6 pb-8 flex-1 flex flex-col" role="main">
+        <div className="pt-4 sm:pt-6 pb-8 flex-1 flex flex-col" role="main">
           {children}
         </div>
 

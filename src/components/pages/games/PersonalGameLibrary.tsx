@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Gamepad2 } from "lucide-react";
 import { Pagination } from "../../shared/common/Pagination";
 import { EmptyStateAddCard } from "../../shared";
@@ -37,6 +38,13 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
   // Collapse state
   const [collapseKey, setCollapseKey] = useState(0);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [recentlyMovedId, setRecentlyMovedId] = useState<string | number | null>(null);
+
+  useEffect(() => {
+    if (recentlyMovedId === null) return;
+    const timer = setTimeout(() => setRecentlyMovedId(null), 650);
+    return () => clearTimeout(timer);
+  }, [recentlyMovedId]);
 
   const handleCollapseAll = () => {
     setCollapseKey((prev) => prev + 1);
@@ -83,8 +91,9 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
     setShowDeleteModal,
     gameToDelete: _gameToDelete,
     showToast,
-    setShowToast,
+    dismissToast,
     toastMessage,
+    toastAction,
     handleAddGame,
     handleTogglePlayed,
     handleDelete,
@@ -127,7 +136,7 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
 
         {/* Toast */}
         {showToast && (
-          <Toast message={toastMessage} onClose={() => setShowToast(false)} />
+          <Toast message={toastMessage} action={toastAction} onClose={dismissToast} />
         )}
       </div>
     );
@@ -172,28 +181,47 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
         />
       ) : (
         <div className="space-y-2 max-w-full overflow-hidden">
-          {paginatedItems.map((game) => (
-            <MediaListItem
-              key={`${game.id}-${collapseKey}`}
-              id={game.id}
-              title={game.name}
-              subtitle={undefined}
-              posterUrl={game.background_image || undefined}
-              year={game.released?.split("-")[0]}
-              personalRating={game.personal_rating || undefined}
-              genres={game.genres || undefined}
-              isCompleted={game.played}
-              mediaType="game"
-              externalId={game.external_id}
-              platforms={game.platforms || undefined}
-              metacritic={game.metacritic || undefined}
-              playtime={game.playtime || undefined}
-              onToggleComplete={() => void handleTogglePlayed(game)}
-              onRecommend={() => handleRecommendClick(game)}
-              onRemove={() => void handleDelete(game)}
-              onExpandChange={(isExpanded) => handleExpandChange(game.id, isExpanded)}
-            />
-          ))}
+          <AnimatePresence initial={false}>
+            {paginatedItems.map((game) => (
+              <motion.div
+                key={`${game.id}-${collapseKey}`}
+                layout
+                initial={{ opacity: 0, y: 6 }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                  scale: recentlyMovedId === game.id ? 1.01 : 1,
+                }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.18 }}
+              >
+                <MediaListItem
+                  id={game.id}
+                  title={game.name}
+                  subtitle={undefined}
+                  posterUrl={game.background_image || undefined}
+                  year={game.released?.split("-")[0]}
+                  personalRating={game.personal_rating || undefined}
+                  genres={game.genres || undefined}
+                  isCompleted={game.played}
+                  mediaType="game"
+                  externalId={game.external_id}
+                  platforms={game.platforms || undefined}
+                  metacritic={game.metacritic || undefined}
+                  playtime={game.playtime || undefined}
+                  onToggleComplete={() => {
+                    setRecentlyMovedId(game.id);
+                    void handleTogglePlayed(game);
+                  }}
+                  onRecommend={() => handleRecommendClick(game)}
+                  onRemove={() => void handleDelete(game)}
+                  onExpandChange={(isExpanded) =>
+                    handleExpandChange(game.id, isExpanded)
+                  }
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       )}
 
@@ -253,7 +281,7 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
 
       {/* Success notification Toast (NOT for delete operations) */}
       {showToast && (
-        <Toast message={toastMessage} onClose={() => setShowToast(false)} />
+        <Toast message={toastMessage} action={toastAction} onClose={dismissToast} />
       )}
 
       {/* Delete Confirmation Modal */}

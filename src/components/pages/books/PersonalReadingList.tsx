@@ -1,9 +1,11 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Pagination } from "../../shared/common/Pagination";
 import SearchBookModal from "../../shared/search/SearchBookModal";
 import MediaListItem from "../../media/MediaListItem";
 import SendMediaModal from "../../shared/media/SendMediaModal";
 import ConfirmationModal from "../../shared/ui/ConfirmationModal";
+import Toast from "@/components/ui/Toast";
 import { searchBooks } from "../../../utils/bookSearchAdapters";
 import { useReadingListViewModel } from "../../../hooks/books/useReadingListViewModel";
 import ReadingListToolbar from "./ReadingListToolbar";
@@ -26,6 +28,18 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
   // Collapse state
   const [collapseKey, setCollapseKey] = useState(0);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [recentlyMovedId, setRecentlyMovedId] = useState<string | number | null>(null);
+
+  const [toast, setToast] = useState<{
+    message: string;
+    action?: { label: string; onClick: () => void };
+  } | null>(null);
+
+  useEffect(() => {
+    if (recentlyMovedId === null) return;
+    const timer = setTimeout(() => setRecentlyMovedId(null), 650);
+    return () => clearTimeout(timer);
+  }, [recentlyMovedId]);
 
   const handleCollapseAll = () => {
     setCollapseKey((prev) => prev + 1);
@@ -116,36 +130,66 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
       {hasItemsForCurrentFilter && totalItems > 0 && (
         <>
           <div className="space-y-4">
-            {paginatedItems.map((book) => (
-              <MediaListItem
-                key={`${book.id}-${collapseKey}`}
-                id={book.id}
-                title={book.title}
-                subtitle={book.authors || undefined}
-                posterUrl={book.thumbnail_url || undefined}
-                year={
-                  book.published_date
-                    ? new Date(book.published_date).getFullYear()
-                    : undefined
-                }
-                description={book.description || undefined}
-                personalRating={book.personal_rating || undefined}
-                category={book.categories || undefined}
-                mediaType="book"
-                externalId={book.external_id}
-                authors={book.authors || undefined}
-                isbn={book.isbn || undefined}
-                pageCount={book.page_count || undefined}
-                isCompleted={book.read}
-                onToggleComplete={handleToggleRead}
-                onRemove={handleRemove}
-                onRecommend={() => {
-                  setBookToRecommend(book);
-                  setShowSendModal(true);
-                }}
-                onExpandChange={(isExpanded) => handleExpandChange(book.id, isExpanded)}
-              />
-            ))}
+            <AnimatePresence initial={false}>
+              {paginatedItems.map((book) => (
+                <motion.div
+                  key={`${book.id}-${collapseKey}`}
+                  layout
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                    scale: recentlyMovedId === book.id ? 1.01 : 1,
+                  }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.18 }}
+                >
+                  <MediaListItem
+                    id={book.id}
+                    title={book.title}
+                    subtitle={book.authors || undefined}
+                    posterUrl={book.thumbnail_url || undefined}
+                    year={
+                      book.published_date
+                        ? new Date(book.published_date).getFullYear()
+                        : undefined
+                    }
+                    description={book.description || undefined}
+                    personalRating={book.personal_rating || undefined}
+                    category={book.categories || undefined}
+                    mediaType="book"
+                    externalId={book.external_id}
+                    authors={book.authors || undefined}
+                    isbn={book.isbn || undefined}
+                    pageCount={book.page_count || undefined}
+                    isCompleted={book.read}
+                    onToggleComplete={(id) => {
+                      setRecentlyMovedId(id);
+                      handleToggleRead(id);
+                      setToast({
+                        message: `${book.title} moved`,
+                        action: {
+                          label: "Undo",
+                          onClick: () => {
+                            setRecentlyMovedId(id);
+                            handleToggleRead(id);
+                            setToast(null);
+                          },
+                        },
+                      });
+                    }}
+                    onRemove={handleRemove}
+                    onRecommend={() => {
+                      setBookToRecommend(book);
+                      setShowSendModal(true);
+                    }}
+                    onExpandChange={(isExpanded) =>
+                      handleExpandChange(book.id, isExpanded)
+                    }
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
 
           {/* Pagination */}
@@ -220,6 +264,14 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
         variant="danger"
         isLoading={isDeleting}
       />
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          action={toast.action}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 };

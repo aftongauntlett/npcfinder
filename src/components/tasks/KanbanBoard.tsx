@@ -137,7 +137,7 @@ const KanbanBoardComponent: React.FC<KanbanBoardProps> = ({
     <div>
       {/* Visually hidden h2 for proper heading hierarchy (h1 board title -> h2 board sections -> h3 column names) */}
       <h2 className="sr-only">Board Sections</h2>
-      <div className="flex gap-3 md:gap-4 overflow-x-auto pb-4 snap-x snap-mandatory md:snap-none scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
+      <div className="flex flex-col gap-3 sm:flex-row sm:gap-3 md:gap-4 sm:overflow-x-auto sm:pb-4 sm:snap-x sm:snap-mandatory md:snap-none sm:scrollbar-thin sm:scrollbar-thumb-gray-400 sm:dark:scrollbar-thumb-gray-600 sm:scrollbar-track-transparent">
         {sections.slice(0, 3).map((section) => {
           const sectionTasks = tasksBySection[section.id] || [];
           return (

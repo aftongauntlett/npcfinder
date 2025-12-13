@@ -50,6 +50,43 @@ const JobCard: React.FC<JobCardProps> = ({
   const hasNotes = notes && notes.trim().length > 0;
   const hasDescription = jobDescription && jobDescription.trim().length > 0;
 
+  // Build job chips (used for responsive collapsing)
+  const showEmploymentTypeChip =
+    !!employmentType && employmentType.toLowerCase() !== "full-time";
+  const locationLabel = location || locationType;
+
+  const jobChips: Array<{ key: string; label: string; className: string }> = [];
+
+  if (locationLabel) {
+    jobChips.push({
+      key: "location",
+      label: locationLabel,
+      className:
+        locationType === "Remote"
+          ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+          : locationType === "Hybrid"
+          ? "bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400"
+          : "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400",
+    });
+  }
+
+  if (salaryRange) {
+    jobChips.push({
+      key: "salary",
+      label: salaryRange,
+      className:
+        "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400",
+    });
+  }
+
+  if (showEmploymentTypeChip && employmentType) {
+    jobChips.push({
+      key: "employment",
+      label: employmentType,
+      className: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400",
+    });
+  }
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
@@ -88,28 +125,33 @@ const JobCard: React.FC<JobCardProps> = ({
             <ExternalLink className="w-3.5 h-3.5" />
           </a>
         )}
-        {/* Only show employment type chip if it's NOT Full-time (case-insensitive) */}
-        {employmentType && employmentType.toLowerCase() !== "full-time" && (
-          <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
-            {employmentType}
-          </span>
-        )}
-        {/* Location chip with color coding: Remote=green, Hybrid=cyan, In-Office=orange */}
-        {(location || locationType) && (
-          <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium ${
-            locationType === "Remote"
-              ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
-              : locationType === "Hybrid"
-              ? "bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400"
-              : "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400"
-          }`}>
-            {location || locationType}
-          </span>
-        )}
-        {salaryRange && (
-          <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
-            {salaryRange}
-          </span>
+        {/* Chips (collapsed on mobile: show 1 + +n) */}
+        {jobChips.length > 0 && (
+          <>
+            <div className="flex items-center gap-2 flex-wrap sm:hidden">
+              <span
+                className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium ${jobChips[0].className}`}
+              >
+                {jobChips[0].label}
+              </span>
+              {jobChips.length > 1 && (
+                <span className="inline-flex items-center text-xs px-2.5 py-1 rounded-full font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                  +{jobChips.length - 1}
+                </span>
+              )}
+            </div>
+
+            <div className="hidden sm:flex items-center gap-2 flex-wrap">
+              {jobChips.map((chip) => (
+                <span
+                  key={chip.key}
+                  className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium ${chip.className}`}
+                >
+                  {chip.label}
+                </span>
+              ))}
+            </div>
+          </>
         )}
       </div>
 

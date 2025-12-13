@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
 import { SlidersHorizontal } from "lucide-react";
 import FilterSortSection from "./FilterSortSection";
 
@@ -36,6 +36,21 @@ const FilterSortMenu: React.FC<FilterSortMenuProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+
+  const hasActiveFilters = useMemo(() => {
+    return sections.some((section) => {
+      // Treat sort changes as non-filtering; only indicate when filters are active.
+      if (section.id === "sort") return false;
+
+      const value = activeFilters[section.id];
+      if (section.multiSelect) {
+        const values = Array.isArray(value) ? value : [];
+        return !(values.length === 0 || (values.length === 1 && values[0] === "all"));
+      }
+
+      return value !== undefined && value !== "all";
+    });
+  }, [activeFilters, sections]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -136,7 +151,7 @@ const FilterSortMenu: React.FC<FilterSortMenuProps> = ({
       >
         <SlidersHorizontal 
           className={`w-4 h-4 transition-colors ${
-            isOpen ? "text-theme-primary" : "text-gray-400"
+            isOpen || hasActiveFilters ? "text-theme-primary" : "text-gray-400"
           }`} 
         />
       </button>

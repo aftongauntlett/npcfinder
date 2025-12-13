@@ -31,6 +31,10 @@ export default function GenreChips({
     return null;
   }
 
+  // Mobile: keep chip density low (1 chip + +n)
+  const mobileVisibleGenres = genreArray.slice(0, 1);
+  const mobileRemainingCount = Math.max(0, genreArray.length - 1);
+
   const visibleGenres = maxVisible
     ? genreArray.slice(0, maxVisible)
     : genreArray;
@@ -45,54 +49,90 @@ export default function GenreChips({
   const roundedClass = variant === "pill" ? "rounded-full" : "rounded";
 
   return (
-    <div
-      className={`inline-flex flex-wrap items-center gap-2 ${className}`}
-      role="list"
-      aria-label="Genres"
-    >
-      {visibleGenres.map((genre, index) => (
-        <span
-          key={`${genre}-${index}`}
-          role="listitem"
-          className={`inline-flex items-center font-medium ${
-            sizeClasses[size]
-          } ${roundedClass} ${getGenreColor(
-            genre
-          )} hover:opacity-80 transition-opacity duration-200 cursor-default`}
-        >
-          {genre}
-        </span>
-      ))}
+    <div className={`inline-flex flex-wrap items-center gap-2 ${className}`}>
+      {/* Mobile: 1 chip + +n */}
+      <div
+        className="inline-flex flex-wrap items-center gap-2 sm:hidden"
+        role="list"
+        aria-label="Genres"
+      >
+        {mobileVisibleGenres.map((genre, index) => (
+          <span
+            key={`mobile-${genre}-${index}`}
+            role="listitem"
+            className={`inline-flex items-center font-medium ${
+              sizeClasses[size]
+            } ${roundedClass} ${getGenreColor(
+              genre
+            )} hover:opacity-80 transition-opacity duration-200 cursor-default`}
+          >
+            {genre}
+          </span>
+        ))}
 
-      {remainingCount > 0 && (
-        <Tooltip
-          content={
-            <ul className="space-y-1.5">
-              {remainingGenres.map((genre, index) => (
-                <li
-                  key={`tooltip-${genre}-${index}`}
-                  className="text-sm font-medium"
-                >
-                  {genre}
-                </li>
-              ))}
-            </ul>
-          }
-          position="right"
-        >
+        {mobileRemainingCount > 0 && (
           <Chip
             variant="primary"
             size={size}
             rounded="full"
             className="cursor-default select-none"
-            aria-label={`${remainingCount} more genres: ${remainingGenres.join(
-              ", "
-            )}`}
+            aria-label={`${mobileRemainingCount} more genres`}
           >
-            +{remainingCount}
+            +{mobileRemainingCount}
           </Chip>
-        </Tooltip>
-      )}
+        )}
+      </div>
+
+      {/* Desktop: existing behavior (maxVisible + tooltip) */}
+      <div
+        className="hidden sm:inline-flex flex-wrap items-center gap-2"
+        role="list"
+        aria-label="Genres"
+      >
+        {visibleGenres.map((genre, index) => (
+          <span
+            key={`${genre}-${index}`}
+            role="listitem"
+            className={`inline-flex items-center font-medium ${
+              sizeClasses[size]
+            } ${roundedClass} ${getGenreColor(
+              genre
+            )} hover:opacity-80 transition-opacity duration-200 cursor-default`}
+          >
+            {genre}
+          </span>
+        ))}
+
+        {remainingCount > 0 && (
+          <Tooltip
+            content={
+              <ul className="space-y-1.5">
+                {remainingGenres.map((genre, index) => (
+                  <li
+                    key={`tooltip-${genre}-${index}`}
+                    className="text-sm font-medium"
+                  >
+                    {genre}
+                  </li>
+                ))}
+              </ul>
+            }
+            position="right"
+          >
+            <Chip
+              variant="primary"
+              size={size}
+              rounded="full"
+              className="cursor-default select-none"
+              aria-label={`${remainingCount} more genres: ${remainingGenres.join(
+                ", "
+              )}`}
+            >
+              +{remainingCount}
+            </Chip>
+          </Tooltip>
+        )}
+      </div>
     </div>
   );
 }

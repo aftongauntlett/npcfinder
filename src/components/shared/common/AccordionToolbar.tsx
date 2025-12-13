@@ -89,38 +89,55 @@ const AccordionToolbar: React.FC<AccordionToolbarProps> = ({
   };
 
   return (
-    <div className={`flex flex-wrap items-center justify-between gap-3 mb-4 ${className}`}>
-      <div className="flex items-center gap-3 flex-1 min-w-0 flex-wrap">
+    <div
+      className={`flex flex-col gap-3 mb-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between ${className}`}
+    >
+      <div className="w-full flex items-center gap-3 sm:flex-1 min-w-0 flex-wrap">
         {/* Search with Filter Button */}
-        <div className="w-[420px] max-w-full">
-          <LocalSearchInput
-            value={searchValue}
-            onChange={onSearchChange}
-            placeholder={searchPlaceholder}
-            filterButton={
-              filterSortSections && activeFilters && onFilterChange ? (
-                <FilterSortMenu
-                  sections={filterSortSections}
-                  activeFilters={activeFilters}
-                  onFilterChange={onFilterChange}
-                  label=""
-                />
-              ) : undefined
-            }
+        <div className="w-full flex items-center gap-2 sm:w-[420px] sm:max-w-full">
+          <div className="flex-1 min-w-0">
+            <LocalSearchInput
+              value={searchValue}
+              onChange={onSearchChange}
+              placeholder={searchPlaceholder}
+              filterButton={
+                filterSortSections && activeFilters && onFilterChange ? (
+                  <FilterSortMenu
+                    sections={filterSortSections}
+                    activeFilters={activeFilters}
+                    onFilterChange={onFilterChange}
+                    label=""
+                  />
+                ) : undefined
+              }
+            />
+          </div>
+
+          {/* Mobile: icon-only action button inline with search */}
+          <Button
+            onClick={onActionClick}
+            variant="action"
+            size="icon"
+            icon={actionIcon}
+            className="sm:hidden"
+            aria-label={actionLabel}
+            title={actionLabel}
           />
         </div>
 
         {/* Active Filter Chips - inline with search */}
         {filterSortSections && activeFilters && onFilterChange && (
-          <ActiveFilterChips
-            sections={filterSortSections}
-            activeFilters={activeFilters}
-            onRemoveFilter={handleRemoveFilter}
-          />
+          <div className="hidden sm:block">
+            <ActiveFilterChips
+              sections={filterSortSections}
+              activeFilters={activeFilters}
+              onRemoveFilter={handleRemoveFilter}
+            />
+          </div>
         )}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="hidden sm:flex w-full sm:w-auto items-center justify-end gap-2">
         {hasExpandedItems && (
           <Button
             onClick={onCollapseAll}

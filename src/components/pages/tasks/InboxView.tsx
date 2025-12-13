@@ -324,28 +324,44 @@ const InboxView: React.FC = () => {
   return (
     <div className="container mx-auto px-4 sm:px-6">
       {/* Header */}
-      <div ref={listTopRef} className="flex items-center justify-between gap-3 mb-4">
+      <div
+        ref={listTopRef}
+        className="flex flex-col gap-3 mb-4 sm:flex-row sm:items-center sm:justify-between"
+      >
         {/* Search Input with Filter Button */}
-        <div className="flex-1 max-w-md">
-          <LocalSearchInput
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Search Tasks..."
-            filterButton={
-              <FilterSortMenu
-                sections={filterSortSections}
-                activeFilters={activeFilters}
-                onFilterChange={(sectionId, value) => {
-                  setActiveFilters({ ...activeFilters, [sectionId]: value });
-                }}
-                label=""
-              />
-            }
+        <div className="w-full flex items-center gap-2 sm:flex-1 sm:max-w-md">
+          <div className="flex-1 min-w-0">
+            <LocalSearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search Tasks..."
+              filterButton={
+                <FilterSortMenu
+                  sections={filterSortSections}
+                  activeFilters={activeFilters}
+                  onFilterChange={(sectionId, value) => {
+                    setActiveFilters({ ...activeFilters, [sectionId]: value });
+                  }}
+                  label=""
+                />
+              }
+            />
+          </div>
+
+          {/* Mobile: icon-only create button inline with search */}
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            variant="action"
+            size="icon"
+            icon={<Plus className="w-5 h-5" />}
+            className="sm:hidden"
+            aria-label="New task"
+            title="New task"
           />
         </div>
 
-        {/* Right side buttons */}
-        <div className="flex items-center gap-3">
+        {/* Right side buttons (desktop only) */}
+        <div className="hidden sm:flex items-center justify-end gap-3 w-full sm:w-auto">
           {/* Collapse All Button - Only show when items are expanded */}
           {expandedItems.size > 0 && (
             <Button
@@ -354,7 +370,7 @@ const InboxView: React.FC = () => {
               size="md"
               icon={<Minimize2 className="w-4 h-4" />}
             >
-              <span className="hidden sm:inline">Collapse All</span>
+              Collapse All
             </Button>
           )}
 

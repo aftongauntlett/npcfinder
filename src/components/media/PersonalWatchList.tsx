@@ -1,4 +1,5 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   SearchMovieModal,
   SendMediaModal,
@@ -6,6 +7,7 @@ import {
 } from "@/components/shared";
 import MediaListItem from "./MediaListItem";
 import ConfirmationModal from "../shared/ui/ConfirmationModal";
+import Toast from "@/components/ui/Toast";
 import { searchMoviesAndTV } from "../../utils/mediaSearchAdapters";
 import { useWatchlistViewModel } from "../../hooks/media/useWatchlistViewModel";
 import WatchlistToolbar from "./WatchlistToolbar";
@@ -26,6 +28,18 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
   // Collapse all state
   const [collapseKey, setCollapseKey] = useState(0);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [recentlyMovedId, setRecentlyMovedId] = useState<string | number | null>(null);
+
+  const [toast, setToast] = useState<{
+    message: string;
+    action?: { label: string; onClick: () => void };
+  } | null>(null);
+
+  useEffect(() => {
+    if (recentlyMovedId === null) return;
+    const timer = setTimeout(() => setRecentlyMovedId(null), 650);
+    return () => clearTimeout(timer);
+  }, [recentlyMovedId]);
 
   // Use the view model hook
   const {
@@ -124,29 +138,59 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
       {hasItemsForCurrentFilter && totalItems > 0 && (
         <>
           <div className="space-y-4">
-            {paginatedItems.map((item) => (
-              <MediaListItem
-                key={`${item.id}-${collapseKey}`}
-                id={item.id}
-                title={item.title}
-                subtitle={item.director || undefined}
-                posterUrl={item.poster_url || undefined}
-                year={item.release_date?.split("-")[0]}
-                description={item.overview || undefined}
-                mediaType={item.media_type}
-                genres={item.genres?.join(", ") || undefined}
-                externalId={item.external_id}
-                releaseDate={item.release_date || undefined}
-                isCompleted={item.watched}
-                onToggleComplete={handleToggleWatched}
-                onRemove={handleRemoveFromWatchList}
-                onRecommend={() => {
-                  setMovieToRecommend(item);
-                  setShowSendModal(true);
-                }}
-                onExpandChange={(isExpanded) => handleExpandChange(item.id, isExpanded)}
-              />
-            ))}
+            <AnimatePresence initial={false}>
+              {paginatedItems.map((item) => (
+                <motion.div
+                  key={`${item.id}-${collapseKey}`}
+                  layout
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                    scale: recentlyMovedId === item.id ? 1.01 : 1,
+                  }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.18 }}
+                >
+                  <MediaListItem
+                    id={item.id}
+                    title={item.title}
+                    subtitle={item.director || undefined}
+                    posterUrl={item.poster_url || undefined}
+                    year={item.release_date?.split("-")[0]}
+                    description={item.overview || undefined}
+                    mediaType={item.media_type}
+                    genres={item.genres?.join(", ") || undefined}
+                    externalId={item.external_id}
+                    releaseDate={item.release_date || undefined}
+                    isCompleted={item.watched}
+                    onToggleComplete={(id) => {
+                      setRecentlyMovedId(id);
+                      handleToggleWatched(id);
+                      setToast({
+                        message: `${item.title} moved`,
+                        action: {
+                          label: "Undo",
+                          onClick: () => {
+                            setRecentlyMovedId(id);
+                            handleToggleWatched(id);
+                            setToast(null);
+                          },
+                        },
+                      });
+                    }}
+                    onRemove={handleRemoveFromWatchList}
+                    onRecommend={() => {
+                      setMovieToRecommend(item);
+                      setShowSendModal(true);
+                    }}
+                    onExpandChange={(isExpanded) =>
+                      handleExpandChange(item.id, isExpanded)
+                    }
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
 
           {/* Pagination */}
@@ -220,6 +264,14 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
         variant="danger"
         isLoading={isDeleting}
       />
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          action={toast.action}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 };
