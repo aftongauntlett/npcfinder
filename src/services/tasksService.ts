@@ -1282,28 +1282,3 @@ export async function ensureSingletonBoard(
     return { data: null, error: error as Error };
   }
 }
-
-/**
- * Get all tasks with due dates for calendar view
- */
-export async function getTasksWithDueDates(): Promise<ServiceResponse<Task[]>> {
-  try {
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      throw new Error('User not authenticated');
-    }
-
-    const { data, error } = await supabase
-      .from('tasks')
-      .select('*')
-      .eq('user_id', user.id)
-      .not('due_date', 'is', null)
-      .order('due_date', { ascending: true });
-
-    if (error) throw error;
-    return { data, error: null };
-  } catch (error) {
-    logger.error('Failed to fetch calendar tasks', { error });
-    return { data: null, error: error as Error };
-  }
-}

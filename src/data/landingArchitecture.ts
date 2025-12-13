@@ -1,7 +1,7 @@
 import {
-  DatabaseIcon,
-  ShieldCheckIcon,
-  LightningIcon,
+  Database,
+  ShieldCheck,
+  Lightning,
   type Icon,
 } from "@phosphor-icons/react";
 import {
@@ -21,7 +21,7 @@ interface ArchitectureData {
 
 export const landingArchitecture: ArchitectureData[] = [
   {
-    icon: DatabaseIcon,
+    icon: Database,
     iconColor: LANDING_TEAL,
     title: "Database Architecture",
     items: [
@@ -33,7 +33,7 @@ export const landingArchitecture: ArchitectureData[] = [
     itemColors: [LANDING_TEAL, LANDING_PURPLE, LANDING_PEACH, LANDING_BLUE],
   },
   {
-    icon: ShieldCheckIcon,
+    icon: ShieldCheck,
     iconColor: LANDING_PURPLE,
     title: "Security Features",
     items: [
@@ -45,7 +45,7 @@ export const landingArchitecture: ArchitectureData[] = [
     itemColors: [LANDING_TEAL, LANDING_PURPLE, LANDING_PEACH, LANDING_BLUE],
   },
   {
-    icon: LightningIcon,
+    icon: Lightning,
     iconColor: LANDING_PEACH,
     title: "Performance",
     items: [

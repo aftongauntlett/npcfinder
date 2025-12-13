@@ -1,10 +1,10 @@
 import React from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import {
-  GithubLogoIcon,
+  GithubLogo,
   Lock,
   Question,
-  LinkedinLogoIcon,
+  LinkedinLogo,
   ArrowUp,
 } from "@phosphor-icons/react";
 import { StarryBackground } from "@/components/shared";
@@ -159,7 +159,7 @@ const DemoLanding: React.FC = () => {
               <LandingButton
                 href="https://github.com/aftongauntlett/npcfinder"
                 variant="ghost"
-                icon={<GithubLogoIcon className="w-5 h-5" weight="duotone" />}
+                icon={<GithubLogo className="w-5 h-5" weight="duotone" />}
               >
                 View Source
               </LandingButton>
@@ -469,7 +469,7 @@ const DemoLanding: React.FC = () => {
             <LandingButton
               href="https://github.com/aftongauntlett/npcfinder"
               variant="tertiary"
-              icon={<GithubLogoIcon className="w-4 h-4" weight="duotone" />}
+              icon={<GithubLogo className="w-4 h-4" weight="duotone" />}
             >
               View Source Code
             </LandingButton>
@@ -509,7 +509,7 @@ const DemoLanding: React.FC = () => {
                 className="flex items-center gap-1.5 hover:text-gray-300 transition-colors"
                 aria-label="View GitHub profile"
               >
-                <GithubLogoIcon className="w-4 h-4" weight="duotone" />
+                <GithubLogo className="w-4 h-4" weight="duotone" />
                 <span className="hidden sm:inline">GitHub</span>
               </a>
               <a
@@ -519,7 +519,7 @@ const DemoLanding: React.FC = () => {
                 className="flex items-center gap-1.5 hover:text-gray-300 transition-colors"
                 aria-label="Connect on LinkedIn"
               >
-                <LinkedinLogoIcon className="w-4 h-4" weight="duotone" />
+                <LinkedinLogo className="w-4 h-4" weight="duotone" />
                 <span className="hidden sm:inline">LinkedIn</span>
               </a>
 

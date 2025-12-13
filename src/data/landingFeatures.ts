@@ -1,10 +1,10 @@
 import {
-  FilmStripIcon,
-  ShieldCheckIcon,
-  UsersThreeIcon,
-  SlidersIcon,
-  CookingPotIcon,
-  ListChecksIcon,
+  FilmStrip,
+  ShieldCheck,
+  UsersThree,
+  Sliders,
+  CookingPot,
+  ListChecks,
   type Icon,
 } from "@phosphor-icons/react";
 import {
@@ -23,7 +23,7 @@ interface FeatureData {
 
 export const landingFeatures: FeatureData[] = [
   {
-    icon: FilmStripIcon,
+    icon: FilmStrip,
     iconColor: LANDING_PEACH,
     title: "Media Tracking & Recommendations",
     items: [
@@ -33,7 +33,7 @@ export const landingFeatures: FeatureData[] = [
     ],
   },
   {
-    icon: ShieldCheckIcon,
+    icon: ShieldCheck,
     iconColor: LANDING_PURPLE,
     title: "Privacy-First",
     items: [
@@ -43,7 +43,7 @@ export const landingFeatures: FeatureData[] = [
     ],
   },
   {
-    icon: UsersThreeIcon,
+    icon: UsersThree,
     iconColor: LANDING_TEAL,
     title: "Small Group Sharing",
     items: [
@@ -53,7 +53,7 @@ export const landingFeatures: FeatureData[] = [
     ],
   },
   {
-    icon: SlidersIcon,
+    icon: Sliders,
     iconColor: LANDING_BLUE,
     title: "Customization & Personalization",
     items: [
@@ -63,7 +63,7 @@ export const landingFeatures: FeatureData[] = [
     ],
   },
   {
-    icon: CookingPotIcon,
+    icon: CookingPot,
     iconColor: LANDING_PEACH,
     title: "Recipe & Meal Planning",
     items: [
@@ -73,12 +73,11 @@ export const landingFeatures: FeatureData[] = [
     ],
   },
   {
-    icon: ListChecksIcon,
+    icon: ListChecks,
     iconColor: LANDING_BLUE,
     title: "Personal Trackers",
     items: [
       "Kanban boards for task management with drag-and-drop, priorities, and due dates",
-      "Calendar view with event indicators to visualize tasks and deadlines",
       "Flexible task lists and checklists for any purpose",
       "Job application tracker to manage your job search pipeline",
   

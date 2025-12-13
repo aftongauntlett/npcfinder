@@ -33,7 +33,6 @@ export const DEFAULT_BOARD_SECTIONS = [
 export const BOARD_TYPES = {
   KANBAN: "kanban",
   LIST: "list",
-  CALENDAR: "calendar",
 } as const;
 
 export type BoardType = (typeof BOARD_TYPES)[keyof typeof BOARD_TYPES];
@@ -51,7 +50,6 @@ export const BOARD_ICONS = [
   "heart", // Health
   "dollar-sign", // Finance
   "target", // Goals
-  "calendar", // Planning
 ] as const;
 
 // Color options for boards

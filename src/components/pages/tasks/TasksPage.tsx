@@ -4,7 +4,6 @@
  * Tabbed view with:
  * - Tasks: Unassigned tasks (inbox)
  * - Kanban: Kanban template boards
- * - Calendar: Calendar view of tasks with due dates
  * - Recipes: Recipe template boards
  * - Job Applications: Job tracker template boards
  */
@@ -15,12 +14,10 @@ import {
   LayoutGrid,
   ChefHat,
   Briefcase,
-  Calendar,
 } from "lucide-react";
 import AppLayout from "../../layouts/AppLayout";
 import InboxView from "./InboxView";
 import TemplateView from "./TemplateView";
-import CalendarView from "../../tasks/views/CalendarView";
 import { TabPanel } from "../../shared";
 import CreateTaskModal from "../../tasks/CreateTaskModal";
 import KanbanTaskModal from "../../tasks/KanbanTaskModal";
@@ -36,7 +33,7 @@ import { useAllSingletonBoards } from "../../../hooks/useSingletonBoard";
 import type { BoardWithStats } from "../../../services/tasksService.types";
 import { usePageMeta } from "../../../hooks/usePageMeta";
 
-type ViewType = "tasks" | "kanban" | "calendar" | "recipes" | "job_applications";
+type ViewType = "tasks" | "kanban" | "recipes" | "job_applications";
 
 // Static page meta options (stable reference)
 const pageMetaOptions = {
@@ -57,7 +54,6 @@ const TasksPage: React.FC = () => {
     string | undefined
   >();
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
-  const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(null);
 
   const { data: boards = [] } = useBoards() as { data: BoardWithStats[] };
   // Fetch specific task when editing (lazy-loaded only when needed)
@@ -96,8 +92,6 @@ const TasksPage: React.FC = () => {
         return "Tasks";
       case "kanban":
         return "Kanban";
-      case "calendar":
-        return "Calendar";
       case "recipes":
         return "Recipes";
       case "job_applications":
@@ -121,11 +115,6 @@ const TasksPage: React.FC = () => {
         label: "Kanban",
         icon: LayoutGrid,
         badge: kanbanBoards.length > 0 ? kanbanBoards.length : undefined,
-      },
-      {
-        id: "calendar",
-        label: "Calendar",
-        icon: Calendar,
       },
       {
         id: "recipes",
@@ -199,18 +188,6 @@ const TasksPage: React.FC = () => {
             onEditTask={handleEditTask}
           />
         )}
-        {selectedView === "calendar" && (
-          <div className="container mx-auto px-4 sm:px-6">
-            <CalendarView 
-              onDayClick={(date) => {
-                setSelectedCalendarDate(date);
-                setCreateTaskBoardId(undefined);
-                setCreateTaskSectionId(undefined);
-                setShowCreateTask(true);
-              }}
-            />
-          </div>
-        )}
         {selectedView === "recipes" && (
           <TemplateView
             templateType="recipe"
@@ -230,6 +207,7 @@ const TasksPage: React.FC = () => {
       </TabPanel>
 
       {/* Modals */}
+      {/* Task Creation Modals */}
       {showCreateTask &&
         (createTaskBoard?.template_type === "recipe" ? (
           <RecipeFormModal
@@ -259,14 +237,12 @@ const TasksPage: React.FC = () => {
               setShowCreateTask(false);
               setCreateTaskBoardId(undefined);
               setCreateTaskSectionId(undefined);
-              setSelectedCalendarDate(null);
             }}
             boardId={createTaskBoardId}
             boardType={
               createTaskBoard?.board_type || createTaskBoard?.template_type
             }
             defaultSectionId={createTaskSectionId}
-            defaultDueDate={selectedCalendarDate}
           />
         ))}
 

@@ -1310,25 +1310,3 @@ export function useUpdateSharePermission() {
     },
   });
 }
-
-/**
- * Get tasks for calendar view (all tasks with due dates)
- */
-export function useCalendarTasks() {
-  const { user } = useAuth();
-
-  return useQuery({
-    queryKey: queryKeys.tasks.calendarTasks(user?.id),
-    queryFn: async () => {
-      const { data, error } = await tasksService.getTasksWithDueDates();
-      if (error) {
-        const parsedError = parseSupabaseError(error);
-        throw parsedError;
-      }
-      return data || [];
-    },
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 30,
-    enabled: !!user,
-  });
-}

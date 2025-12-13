@@ -24,7 +24,7 @@ NPC Finder is built as a real production application, not a single-page demo. It
 - **Media Tracking**: Movies, TV shows, music, books, and games with personal libraries and custom statuses
 - **Friend Recommendations**: Send and track media recommendations with personal notes and feedback
 - **Recipe & Meal Planning**: Save recipes, plan meals, and organize your cooking schedule
-- **Personal Trackers**: Kanban boards, task management with calendar view, and job application tracking
+- **Personal Trackers**: Kanban boards, task management, recipe and job application tracking
 - **Reviews & Ratings**: Rate and review content with privacy controls
 - **Customization**: Custom themes, dark/light mode, configurable dashboard
 - **Friend Connections**: Manual, opt-in connections with trusted friends
@@ -127,11 +127,6 @@ These guides are for developers who want to self-host or contribute to the proje
 ## Roadmap
 
 Future features under consideration. These are not currently available and plans may change based on user feedback, technical feasibility, and project priorities.
-
-**Productivity:**
-
-- Advanced Analytics - Track productivity patterns, media consumption trends, and personal insights over time
-- Calendar Integration - Sync tasks and meal plans with your calendar for better time management
 
 **Social:**
 

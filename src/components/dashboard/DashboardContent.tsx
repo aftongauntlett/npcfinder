@@ -2,7 +2,6 @@ import React from "react";
 import { X } from "lucide-react";
 import { DashboardRecommendations } from "./DashboardRecommendations";
 import { UserSearch, Button } from "@/components/shared";
-import CalendarView from "../tasks/views/CalendarView";
 
 interface DashboardContentProps {
   activeTab: string;
@@ -26,15 +25,6 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({
     <div className="container mx-auto px-6">
       {/* Tab Panels */}
       <div role="tabpanel" id={`${activeTab}-panel`}>
-        {activeTab === "dashboard" && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              Your Calendar
-            </h2>
-            <CalendarView readOnly={true} compact={true} />
-          </div>
-        )}
-
         {activeTab === "friends" && (
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">

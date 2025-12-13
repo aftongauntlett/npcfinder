@@ -1,4 +1,4 @@
-import { KeyIcon, LockIcon, type Icon } from "@phosphor-icons/react";
+import { Key, Lock, type Icon } from "@phosphor-icons/react";
 import { LANDING_TEAL, LANDING_PURPLE } from "./landingTheme";
 
 export interface AvailabilityPoint {
@@ -29,14 +29,14 @@ export const landingAvailability: AvailabilityData = {
     "NPC Finder is currently invite-only while in beta. You'll receive a code from an existing admin to join your friend group.",
   points: [
     {
-      icon: KeyIcon,
+      icon: Key,
       iconColor: LANDING_TEAL,
       title: "How Invites Work",
       description:
         "Admins generate invite codes for specific email addresses. Each code expires after 30 days and works only once. This keeps the community trusted and private.",
     },
     {
-      icon: LockIcon,
+      icon: Lock,
       iconColor: LANDING_PURPLE,
       title: "No Public Registration",
       description:
