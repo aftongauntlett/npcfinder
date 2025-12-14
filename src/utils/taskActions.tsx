@@ -3,7 +3,11 @@
  * Generates standardized action button configurations for task cards
  */
 
-import { Check, Clock, X } from "@phosphor-icons/react";
+import {
+  CheckIcon as Check,
+  ClockIcon as Clock,
+  XIcon as X,
+} from "@phosphor-icons/react";
 
 export interface TaskActionCallbacks {
   onRemove?: (taskId: string) => void;

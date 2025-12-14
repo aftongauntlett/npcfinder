@@ -1,4 +1,4 @@
-import { Key, Lock, type Icon } from "@phosphor-icons/react";
+import { KeyIcon as Key, LockIcon as Lock, type Icon } from "@phosphor-icons/react";
 import { LANDING_TEAL, LANDING_PURPLE } from "./landingTheme";
 
 export interface AvailabilityPoint {

@@ -1,8 +1,8 @@
 import {
-  ShieldCheck,
-  UserMinus,
-  EyeSlash,
-  Stack,
+  ShieldCheckIcon as ShieldCheck,
+  UserMinusIcon as UserMinus,
+  EyeSlashIcon as EyeSlash,
+  StackIcon as Stack,
   type Icon,
 } from "@phosphor-icons/react";
 import {

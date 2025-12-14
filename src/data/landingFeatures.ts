@@ -1,10 +1,10 @@
 import {
-  FilmStrip,
-  ShieldCheck,
-  UsersThree,
-  Sliders,
-  CookingPot,
-  ListChecks,
+  FilmStripIcon as FilmStrip,
+  ShieldCheckIcon as ShieldCheck,
+  UsersThreeIcon as UsersThree,
+  SlidersIcon as Sliders,
+  CookingPotIcon as CookingPot,
+  ListChecksIcon as ListChecks,
   type Icon,
 } from "@phosphor-icons/react";
 import {

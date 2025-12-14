@@ -1,7 +1,7 @@
 import {
-  Database,
-  ShieldCheck,
-  Lightning,
+  DatabaseIcon as Database,
+  ShieldCheckIcon as ShieldCheck,
+  LightningIcon as Lightning,
   type Icon,
 } from "@phosphor-icons/react";
 import {
