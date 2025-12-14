@@ -16,6 +16,7 @@ import type {
   CreateSectionData,
   CreateTaskData,
   TaskFilters,
+  BoardMemberRole,
 } from "../services/tasksService.types";
 
 // =====================================================
@@ -1183,16 +1184,16 @@ export function useShareBoard() {
     mutationFn: async ({
       boardId,
       userIds,
-      canEdit,
+      role,
     }: {
       boardId: string;
       userIds: string[];
-      canEdit?: boolean;
+      role: BoardMemberRole;
     }) => {
       const { data, error } = await tasksService.shareBoard(
         boardId,
         userIds,
-        canEdit
+        role
       );
       if (error) throw error;
       return data!;
@@ -1240,15 +1241,15 @@ export function useUnshareBoard() {
 }
 
 /**
- * Get board sharing information
+ * Get board members (sharing information)
  */
-export function useBoardShares(boardId: string) {
+export function useBoardMembers(boardId: string) {
   const { user } = useAuth();
 
   return useQuery({
     queryKey: queryKeys.tasks.boardShares(boardId),
     queryFn: async () => {
-      const { data, error } = await tasksService.getBoardShares(boardId);
+      const { data, error } = await tasksService.getBoardMembers(boardId);
       if (error) throw error;
       return data || [];
     },
@@ -1280,24 +1281,24 @@ export function useSharedBoards() {
 }
 
 /**
- * Update sharing permission
+ * Update member role (viewer/editor)
  */
-export function useUpdateSharePermission() {
+export function useUpdateBoardMemberRole() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({
-      shareId,
-      canEdit,
+      memberId,
+      role,
       boardId: _boardId,
     }: {
-      shareId: string;
-      canEdit: boolean;
+      memberId: string;
+      role: BoardMemberRole;
       boardId: string;
     }) => {
-      const { data, error } = await tasksService.updateSharePermission(
-        shareId,
-        canEdit
+      const { data, error } = await tasksService.updateBoardMemberRole(
+        memberId,
+        role
       );
       if (error) throw error;
       return data!;

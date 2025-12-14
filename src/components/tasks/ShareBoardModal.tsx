@@ -11,12 +11,14 @@ import Modal from "../shared/ui/Modal";
 import Button from "../shared/ui/Button";
 import ConfirmDialog from "../shared/ui/ConfirmDialog";
 import {
-  useBoardShares,
+  useBoardMembers,
   useShareBoard,
   useUnshareBoard,
+  useUpdateBoardMemberRole,
 } from "../../hooks/useTasksQueries";
 import { useUserSearch } from "../../hooks/useUserSearch";
 import Input from "../shared/ui/Input";
+import type { BoardMemberRole } from "../../services/tasksService.types";
 
 interface ShareBoardModalProps {
   isOpen: boolean;
@@ -34,23 +36,24 @@ const ShareBoardModal: React.FC<ShareBoardModalProps> = ({
   const [showAddShare, setShowAddShare] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
-  const [canEdit, setCanEdit] = useState(false);
+  const [role, setRole] = useState<BoardMemberRole>("viewer");
   const [confirmUnshare, setConfirmUnshare] = useState<{
     userId: string;
     userName: string;
   } | null>(null);
 
-  const { data: shares = [], isLoading: sharesLoading } =
-    useBoardShares(boardId);
+  const { data: members = [], isLoading: sharesLoading } =
+    useBoardMembers(boardId);
   const { data: searchResults } = useUserSearch(searchQuery, 1, 10);
   const shareBoard = useShareBoard();
   const unshareBoard = useUnshareBoard();
+  const updateMemberRole = useUpdateBoardMemberRole();
 
   // Filter search results to only show connections not already shared
   const availableUsers = (searchResults?.users || []).filter(
     (user) =>
       user.is_connected &&
-      !shares.some((share) => share.shared_with_user_id === user.user_id)
+      !members.some((member) => member.user_id === user.user_id)
   );
 
   const handleToggleUser = (userId: string) => {
@@ -68,11 +71,11 @@ const ShareBoardModal: React.FC<ShareBoardModalProps> = ({
       await shareBoard.mutateAsync({
         boardId,
         userIds: selectedUserIds,
-        canEdit,
+        role,
       });
       setSelectedUserIds([]);
       setSearchQuery("");
-      setCanEdit(false);
+      setRole("viewer");
       setShowAddShare(false);
     } catch (error) {
       logger.error("Failed to share board", {
@@ -101,20 +104,12 @@ const ShareBoardModal: React.FC<ShareBoardModalProps> = ({
     }
   };
 
-  const handleTogglePermission = async (
-    userId: string,
-    currentCanEdit: boolean
-  ) => {
-    // For toggling, we remove and re-add with opposite permission
+  const handleTogglePermission = async (memberId: string, userId: string, currentRole: BoardMemberRole) => {
     try {
-      await unshareBoard.mutateAsync({ boardId, userId });
-      await shareBoard.mutateAsync({
-        boardId,
-        userIds: [userId],
-        canEdit: !currentCanEdit,
-      });
+      const nextRole: BoardMemberRole = currentRole === "editor" ? "viewer" : "editor";
+      await updateMemberRole.mutateAsync({ memberId, role: nextRole, boardId });
     } catch (error) {
-      logger.error("Failed to update board permissions", {
+      logger.error("Failed to update board member role", {
         error,
         boardId,
         userId,
@@ -149,17 +144,17 @@ const ShareBoardModal: React.FC<ShareBoardModalProps> = ({
                 Loading shares...
               </p>
             </div>
-          ) : shares.length > 0 ? (
+          ) : members.length > 0 ? (
             <div className="space-y-2">
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Shared with ({shares.length})
+                Shared with ({members.length})
               </h3>
-              {shares.map((share) => {
+              {members.map((member) => {
                 const userName =
-                  share.shared_with_user?.display_name || "Unknown User";
+                  member.user_profile?.display_name || "Unknown User";
                 return (
                   <div
-                    key={share.shared_with_user_id}
+                    key={member.user_id}
                     className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
                   >
                     <div className="flex items-center gap-3 flex-1">
@@ -174,7 +169,7 @@ const ShareBoardModal: React.FC<ShareBoardModalProps> = ({
                           {userName}
                         </h4>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {share.can_edit ? "Can edit" : "View only"}
+                          {member.role === "editor" ? "Can edit" : "View only"}
                         </p>
                       </div>
                     </div>
@@ -184,18 +179,19 @@ const ShareBoardModal: React.FC<ShareBoardModalProps> = ({
                       <button
                         onClick={() =>
                           handleTogglePermission(
-                            share.shared_with_user_id,
-                            share.can_edit
+                            member.id,
+                            member.user_id,
+                            member.role
                           )
                         }
                         className="px-3 py-1.5 text-xs font-medium rounded bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                       >
-                        {share.can_edit ? "Make view-only" : "Allow editing"}
+                        {member.role === "editor" ? "Make view-only" : "Allow editing"}
                       </button>
                       <button
                         onClick={() =>
                           setConfirmUnshare({
-                            userId: share.shared_with_user_id,
+                            userId: member.user_id,
                             userName: userName,
                           })
                         }
@@ -259,8 +255,8 @@ const ShareBoardModal: React.FC<ShareBoardModalProps> = ({
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={canEdit}
-                  onChange={(e) => setCanEdit(e.target.checked)}
+                  checked={role === "editor"}
+                  onChange={(e) => setRole(e.target.checked ? "editor" : "viewer")}
                   className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-primary focus:ring-2 focus:ring-primary/30"
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">

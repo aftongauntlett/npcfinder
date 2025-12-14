@@ -5,12 +5,12 @@
  */
 
 import React, { useState } from "react";
-import { Share2 } from "lucide-react";
+import { Share2, Lock, LockOpen } from "lucide-react";
 import AccordionCard from "../shared/common/AccordionCard";
 import ShareBoardModal from "./ShareBoardModal";
 import { useTheme } from "../../hooks/useTheme";
 import { lightenColor, darkenColor } from "../../styles/colorThemes";
-import { useBoardShares } from "../../hooks/useTasksQueries";
+import { useBoardMembers } from "../../hooks/useTasksQueries";
 import KanbanBoard from "./KanbanBoard";
 import SimpleListView from "./SimpleListView";
 import { JobTrackerView } from "./views/JobTrackerView";
@@ -45,7 +45,7 @@ const BoardCard: React.FC<BoardCardProps> = ({
 }) => {
   const { themeColor } = useTheme();
   const [showShareModal, setShowShareModal] = useState(false);
-  const { data: shares = [] } = useBoardShares(board.id);
+  const { data: members = [] } = useBoardMembers(board.id);
 
   // Subtitle showing task count and starter badge
   const subtitle = (
@@ -64,7 +64,22 @@ const BoardCard: React.FC<BoardCardProps> = ({
           Starter
         </span>
       )}
-      {shares.length > 0 && (
+      <span
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+        style={{
+          backgroundColor: lightenColor(themeColor, 0.9),
+          color: darkenColor(themeColor, 0.3),
+        }}
+      >
+        {board.is_public ? (
+          <LockOpen className="w-3 h-3" />
+        ) : (
+          <Lock className="w-3 h-3" />
+        )}
+        {board.is_public ? "Public" : "Private"}
+      </span>
+
+      {members.length > 0 && (
         <span
           className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
           style={{
@@ -73,7 +88,7 @@ const BoardCard: React.FC<BoardCardProps> = ({
           }}
         >
           <Share2 className="w-3 h-3" />
-          {shares.length}
+          {members.length}
         </span>
       )}
     </div>

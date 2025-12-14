@@ -23,8 +23,8 @@ import type {
   TaskFilters,
   BoardWithStats,
   ServiceResponse,
-  BoardShareWithUser,
-  SharedBoardData,
+  BoardMemberRole,
+  BoardMemberWithUser,
 } from "./tasksService.types";
 
 // =====================================================
@@ -45,7 +45,6 @@ export async function getBoards(): Promise<ServiceResponse<Board[]>> {
     const { data, error } = await supabase
       .from("task_boards")
       .select("*")
-      .eq("user_id", user.id)
       .order("display_order", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: false });
 
@@ -73,7 +72,6 @@ export async function getBoardsWithStats(): Promise<
     const { data, error } = await supabase
       .from("task_boards_with_stats")
       .select("*")
-      .eq("user_id", user.id)
       .order("display_order", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: false });
 
@@ -102,7 +100,6 @@ export async function getBoardById(
       .from("task_boards")
       .select("*")
       .eq("id", boardId)
-      .eq("user_id", user.id)
       .single();
 
     if (error) throw error;
@@ -650,6 +647,8 @@ export async function createTask(
         section_id: taskData.section_id || null,
         title: taskData.title,
         description: taskData.description || null,
+        icon: taskData.icon ?? null,
+        icon_color: taskData.icon_color ?? null,
         status: taskData.status || "todo",
         priority: taskData.priority || null,
         due_date: taskData.due_date || null,
@@ -694,7 +693,6 @@ export async function updateTask(
       .from("tasks")
       .update(updates)
       .eq("id", taskId)
-      .eq("user_id", user.id)
       .select()
       .single();
 
@@ -722,8 +720,7 @@ export async function deleteTask(
     const { error } = await supabase
       .from("tasks")
       .delete()
-      .eq("id", taskId)
-      .eq("user_id", user.id);
+      .eq("id", taskId);
 
     if (error) throw error;
     return { data: null, error: null };
@@ -1058,12 +1055,53 @@ export async function getActiveTimers(): Promise<ServiceResponse<Task[]>> {
 // =====================================================
 
 /**
- * Share a board with specific users
+ * Get all members a board is shared with.
+ *
+ * Note: task_board_members.user_id references auth.users(id).
+ * user_profiles.user_id also references auth.users(id).
+ * Since there's no direct FK between them, we fetch members and profiles separately,
+ * then manually join them.
+ */
+export async function getBoardMembers(
+  boardId: string
+): Promise<ServiceResponse<BoardMemberWithUser[]>> {
+  try {
+    const { data: members, error: membersError } = await supabase
+      .from("task_board_members")
+      .select("*")
+      .eq("board_id", boardId);
+
+    if (membersError) throw membersError;
+    if (!members || members.length === 0) return { data: [], error: null };
+
+    const userIds = members.map((m) => m.user_id);
+    const { data: profiles, error: profilesError } = await supabase
+      .from("user_profiles")
+      .select("user_id, display_name")
+      .in("user_id", userIds);
+
+    if (profilesError) throw profilesError;
+
+    const profileMap = new Map((profiles || []).map((p) => [p.user_id, p]));
+    const membersWithUsers = members.map((member) => ({
+      ...member,
+      user_profile: profileMap.get(member.user_id) || null,
+    }));
+
+    return { data: membersWithUsers as BoardMemberWithUser[], error: null };
+  } catch (error) {
+    logger.error(`Failed to fetch members for board ${boardId}`, error);
+    return { data: null, error: error as Error };
+  }
+}
+
+/**
+ * Share a board with specific users (viewer/editor)
  */
 export async function shareBoard(
   boardId: string,
   userIds: string[],
-  canEdit = false
+  role: BoardMemberRole
 ): Promise<ServiceResponse<boolean>> {
   try {
     const {
@@ -1089,15 +1127,16 @@ export async function shareBoard(
       throw new Error("Can only share boards with connected users (friends)");
     }
 
-    // Create shares
     const shares = userIds.map((userId) => ({
       board_id: boardId,
-      shared_by_user_id: user.id,
-      shared_with_user_id: userId,
-      can_edit: canEdit,
+      user_id: userId,
+      role,
+      invited_by: user.id,
     }));
 
-    const { error } = await supabase.from("board_shares").insert(shares);
+    const { error } = await supabase
+      .from("task_board_members")
+      .upsert(shares, { onConflict: "board_id,user_id" });
 
     if (error) throw error;
     return { data: true, error: null };
@@ -1116,10 +1155,10 @@ export async function unshareBoard(
 ): Promise<ServiceResponse<boolean>> {
   try {
     const { error } = await supabase
-      .from("board_shares")
+      .from("task_board_members")
       .delete()
       .eq("board_id", boardId)
-      .eq("shared_with_user_id", userId);
+      .eq("user_id", userId);
 
     if (error) throw error;
     return { data: true, error: null };
@@ -1130,48 +1169,22 @@ export async function unshareBoard(
 }
 
 /**
- * Get all users a board is shared with
- * Note: board_shares.shared_with_user_id references auth.users(id).
- * user_profiles.user_id also references auth.users(id).
- * Since there's no direct FK between them, we fetch shares and profiles separately,
- * then manually join them.
+ * Update a member's role (viewer/editor)
  */
-export async function getBoardShares(
-  boardId: string
-): Promise<ServiceResponse<BoardShareWithUser[]>> {
+export async function updateBoardMemberRole(
+  memberId: string,
+  role: BoardMemberRole
+): Promise<ServiceResponse<boolean>> {
   try {
-    // Fetch board shares
-    const { data: shares, error: sharesError } = await supabase
-      .from("board_shares")
-      .select("*")
-      .eq("board_id", boardId);
+    const { error } = await supabase
+      .from("task_board_members")
+      .update({ role })
+      .eq("id", memberId);
 
-    if (sharesError) throw sharesError;
-    if (!shares || shares.length === 0) {
-      return { data: [], error: null };
-    }
-
-    // Fetch user profiles for all shared users
-    const userIds = shares.map((share) => share.shared_with_user_id);
-    const { data: profiles, error: profilesError } = await supabase
-      .from("user_profiles")
-      .select("user_id, display_name")
-      .in("user_id", userIds);
-
-    if (profilesError) throw profilesError;
-
-    // Create a map of user_id -> profile
-    const profileMap = new Map((profiles || []).map((p) => [p.user_id, p]));
-
-    // Join shares with profiles
-    const sharesWithUsers = shares.map((share) => ({
-      ...share,
-      shared_with_user: profileMap.get(share.shared_with_user_id) || null,
-    }));
-
-    return { data: sharesWithUsers, error: null };
+    if (error) throw error;
+    return { data: true, error: null };
   } catch (error) {
-    logger.error(`Failed to fetch shares for board ${boardId}`, error);
+    logger.error(`Failed to update board member role ${memberId}`, error);
     return { data: null, error: error as Error };
   }
 }
@@ -1189,48 +1202,25 @@ export async function getSharedBoards(): Promise<
     if (!user) throw new Error("User not authenticated");
 
     const { data, error } = await supabase
-      .from("board_shares")
+      .from("task_board_members")
       .select(
         `
         *,
         board:task_boards_with_stats(*)
       `
       )
-      .eq("shared_with_user_id", user.id);
+      .eq("user_id", user.id);
 
     if (error) throw error;
 
     // Extract boards from the joined data
     const boards =
-      data?.map((share: SharedBoardData) => share.board).filter(Boolean) || [];
+      (data || [])
+        .map((member: { board: BoardWithStats | null }) => member.board)
+        .filter((board): board is BoardWithStats => Boolean(board)) || [];
     return { data: boards, error: null };
   } catch (error) {
     logger.error("Failed to fetch shared boards", error);
-    return { data: null, error: error as Error };
-  }
-}
-
-/**
- * Update sharing permission for a user
- *
- * @security Only board owners can update share permissions. RLS enforces this by checking
- *           that the board_id belongs to a task_board owned by auth.uid(). Share recipients
- *           (even those with can_edit = true) cannot modify share entries.
- */
-export async function updateSharePermission(
-  shareId: string,
-  canEdit: boolean
-): Promise<ServiceResponse<boolean>> {
-  try {
-    const { error } = await supabase
-      .from("board_shares")
-      .update({ can_edit: canEdit })
-      .eq("id", shareId);
-
-    if (error) throw error;
-    return { data: true, error: null };
-  } catch (error) {
-    logger.error(`Failed to update share permission ${shareId}`, error);
     return { data: null, error: error as Error };
   }
 }

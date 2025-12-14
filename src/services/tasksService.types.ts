@@ -98,6 +98,8 @@ export interface Task {
   section_id: string | null;
   title: string;
   description: string | null;
+  icon?: string | null;
+  icon_color?: string | null;
   status: "todo" | "in_progress" | "done" | "archived";
   priority: "low" | "medium" | "high" | "urgent" | null;
   due_date: string | null; // ISO date string (YYYY-MM-DD)
@@ -143,6 +145,8 @@ export interface CreateTaskData {
   section_id?: string;
   title: string;
   description?: string;
+  icon?: string | null;
+  icon_color?: string | null;
   status?: Task["status"];
   priority?: Task["priority"];
   due_date?: string;
@@ -151,6 +155,29 @@ export interface CreateTaskData {
   repeat_frequency?: "daily" | "weekly" | "biweekly" | "monthly" | "yearly";
   timer_duration_minutes?: number;
   is_urgent_after_timer?: boolean;
+}
+
+// =====================================================
+// BOARD MEMBER (NEW SHARING MODEL)
+// =====================================================
+
+export type BoardMemberRole = "viewer" | "editor";
+
+export interface BoardMember {
+  id: string;
+  board_id: string;
+  user_id: string;
+  role: BoardMemberRole;
+  invited_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BoardMemberWithUser extends BoardMember {
+  user_profile: {
+    user_id: string;
+    display_name: string | null;
+  } | null;
 }
 
 export interface TaskFilters {

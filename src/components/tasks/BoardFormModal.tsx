@@ -18,9 +18,9 @@ import {
   useUpdateBoard,
   useDeleteBoard,
   useBoards,
-  useBoardShares,
+  useBoardMembers,
 } from "../../hooks/useTasksQueries";
-import { useTheme } from "../../hooks/useTheme";
+import PrivacyToggle from "../shared/common/PrivacyToggle";
 import { getBoardTypeFromTemplate } from "../../utils/boardTemplates";
 import type { TemplateType } from "../../utils/boardTemplates";
 
@@ -45,13 +45,16 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
   const [nameError, setNameError] = useState<string>("");
   const [isNameAutoFilled, setIsNameAutoFilled] = useState(false);
 
-  const { themeColor } = useTheme();
   const { data: boards = [] } = useBoards();
-  const { data: shares = [] } = useBoardShares(board?.id || "");
+  const { data: members = [] } = useBoardMembers(board?.id || "");
 
   const createBoard = useCreateBoard();
   const updateBoard = useUpdateBoard();
   const deleteBoard = useDeleteBoard();
+
+  const effectiveTemplateType = board?.template_type || preselectedTemplate;
+  const isJobTracker = effectiveTemplateType === "job_tracker";
+  const isRecipe = effectiveTemplateType === "recipe";
 
   // Validate board name for duplicates
   const validateBoardName = (boardName: string): string => {
@@ -89,7 +92,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
     if (board) {
       setName(board.name);
       setDescription(board.description || "");
-      setIsPublic(board.is_public || false);
+      setIsPublic(isJobTracker ? false : board.is_public || false);
       setNameError("");
       setIsNameAutoFilled(false);
     } else {
@@ -100,7 +103,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
       setNameError("");
       setIsNameAutoFilled(false);
     }
-  }, [board, isOpen]);
+  }, [board, isOpen, isJobTracker]);
 
 
 
@@ -122,17 +125,17 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
       return;
     }
 
-    // Determine board_type and template_type from preselectedTemplate
-    // For kanban/markdown, both board_type and template_type are inferred automatically
-    const boardType = preselectedTemplate ? getBoardTypeFromTemplate(preselectedTemplate) : "grid";
-    const templateType = preselectedTemplate || "kanban";
+    // Determine board_type and template_type from edit or preselected template
+    const templateType = (board?.template_type || preselectedTemplate || "kanban") as TemplateType;
+    // For kanban/markdown, board_type is inferred automatically
+    const boardType = getBoardTypeFromTemplate(templateType);
 
     const boardData: CreateBoardData = {
       name,
       description: description || undefined,
       board_type: boardType,
       template_type: templateType,
-      is_public: isPublic,
+      ...(isJobTracker ? {} : { is_public: isPublic }),
     };
 
     if (board) {
@@ -230,38 +233,19 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
           </div>
 
           {/* Privacy Toggle */}
-          <div className="flex items-center justify-between">
-            <div>
-              <label
-                htmlFor="board-privacy"
-                className="text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Make board public
-              </label>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Others can view this board
-              </p>
-            </div>
-            <button
-              type="button"
-              id="board-privacy"
-              onClick={() => setIsPublic(!isPublic)}
-              className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-              style={{
-                backgroundColor: isPublic ? themeColor : "#d1d5db",
-              }}
-              aria-pressed={isPublic}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  isPublic ? "translate-x-6" : "translate-x-1"
-                }`}
-              />
-            </button>
-          </div>
+          {!isJobTracker && (
+            <PrivacyToggle
+              variant="switch"
+              size="sm"
+              isPublic={isPublic}
+              onChange={setIsPublic}
+              showDescription
+              contextLabel="board"
+            />
+          )}
 
-          {/* Sharing Section - Only for existing boards with shares */}
-          {board && shares.length > 0 && (
+          {/* Sharing Section - Only for existing non-recipe boards, and never for job tracker boards */}
+          {board && !isRecipe && !isJobTracker && (
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -270,10 +254,10 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                       Sharing
                     </h3>
-                    {shares.length > 0 && (
+                    {members.length > 0 && (
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Shared with {shares.length}{" "}
-                        {shares.length === 1 ? "person" : "people"}
+                        Shared with {members.length}{" "}
+                        {members.length === 1 ? "person" : "people"}
                       </p>
                     )}
                   </div>
