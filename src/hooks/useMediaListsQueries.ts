@@ -53,12 +53,16 @@ export function useCreateMediaList(domain: MediaDomain) {
     mutationFn: async (params: {
       title: string;
       description?: string | null;
+      icon?: string | null;
+      icon_color?: string | null;
       is_public: boolean;
     }) => {
       const { data, error } = await mediaListsService.createMediaList({
         media_domain: domain,
         title: params.title,
         description: params.description,
+        icon: params.icon ?? null,
+        icon_color: params.icon_color ?? null,
         is_public: params.is_public,
       });
       if (error) throw error;
@@ -78,7 +82,13 @@ export function useUpdateMediaList(domain: MediaDomain) {
   return useMutation({
     mutationFn: async (params: {
       listId: string;
-      updates: { title?: string; description?: string | null; is_public?: boolean };
+      updates: {
+        title?: string;
+        description?: string | null;
+        icon?: string | null;
+        icon_color?: string | null;
+        is_public?: boolean;
+      };
     }) => {
       const { data, error } = await mediaListsService.updateMediaList(
         params.listId,

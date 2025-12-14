@@ -80,6 +80,8 @@ export async function createMediaList(params: {
   media_domain: MediaDomain;
   title: string;
   description?: string | null;
+  icon?: string | null;
+  icon_color?: string | null;
   is_public: boolean;
 }): Promise<ServiceResponse<MediaList>> {
   try {
@@ -98,6 +100,8 @@ export async function createMediaList(params: {
         media_domain: params.media_domain,
         title: params.title,
         description: params.description ?? null,
+        icon: params.icon ?? null,
+        icon_color: params.icon_color ?? null,
         is_public: params.is_public,
       })
       .select("*")
@@ -113,7 +117,9 @@ export async function createMediaList(params: {
 
 export async function updateMediaList(
   listId: string,
-  updates: Partial<Pick<MediaList, "title" | "description" | "is_public">>
+  updates: Partial<
+    Pick<MediaList, "title" | "description" | "icon" | "icon_color" | "is_public">
+  >
 ): Promise<ServiceResponse<MediaList>> {
   try {
     const { data, error } = await supabase
@@ -122,6 +128,10 @@ export async function updateMediaList(
         ...(updates.title !== undefined ? { title: updates.title } : {}),
         ...(updates.description !== undefined
           ? { description: updates.description }
+          : {}),
+        ...(updates.icon !== undefined ? { icon: updates.icon } : {}),
+        ...(updates.icon_color !== undefined
+          ? { icon_color: updates.icon_color }
           : {}),
         ...(updates.is_public !== undefined
           ? { is_public: updates.is_public }

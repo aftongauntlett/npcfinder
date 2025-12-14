@@ -13,6 +13,8 @@ export interface MediaList {
   media_domain: MediaDomain;
   title: string;
   description: string | null;
+  icon?: string | null;
+  icon_color?: string | null;
   is_public: boolean;
   created_at: string;
   updated_at: string;
