@@ -216,6 +216,7 @@ export const RecipeListView: React.FC<RecipeListViewProps> = ({
           description="Save and organize your favorite recipes. Paste a recipe URL or manually enter details."
           onClick={onCreateTask}
           ariaLabel="Add your first recipe"
+          actionLabel="Add Recipe"
         />
       ) : (
         <>

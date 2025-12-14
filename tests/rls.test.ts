@@ -378,12 +378,8 @@ describe("User Data Isolation", () => {
       order: mockOrder2,
     });
 
-    const mockEq = vi.fn().mockReturnValue({
-      order: mockOrder1,
-    });
-
     const mockSelect = vi.fn().mockReturnValue({
-      eq: mockEq,
+      order: mockOrder1,
     } as any);
 
     vi.mocked(supabase.from).mockReturnValue({
@@ -399,7 +395,9 @@ describe("User Data Isolation", () => {
     // Verify the query chain
     expect(supabase.from).toHaveBeenCalledWith("task_boards_with_stats");
     expect(mockSelect).toHaveBeenCalledWith("*");
-    expect(mockEq).toHaveBeenCalledWith("user_id", "admin-user-id");
+
+    // Note: board visibility is enforced by RLS (shared/public/owned); the client no
+    // longer applies a user_id filter here.
 
     // Verify the result
     expect(result.data).toBeTruthy();

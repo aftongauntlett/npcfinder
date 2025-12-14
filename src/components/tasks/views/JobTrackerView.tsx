@@ -271,6 +271,7 @@ export const JobTrackerView: React.FC<JobTrackerViewProps> = ({
           description="Track your job search progress. Paste a job posting URL or manually enter details."
           onClick={onCreateTask}
           ariaLabel="Add your first job application"
+          actionLabel="Add Job Application"
         />
       ) : (
         <>

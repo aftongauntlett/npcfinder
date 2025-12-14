@@ -1,4 +1,7 @@
-import { ThumbsUp, ThumbsDown } from "@phosphor-icons/react";
+import {
+  ThumbsUpIcon as ThumbsUp,
+  ThumbsDownIcon as ThumbsDown,
+} from "@phosphor-icons/react";
 
 interface MediaRecommendationStatusProps {
   status: string;

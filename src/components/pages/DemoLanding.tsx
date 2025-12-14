@@ -1,11 +1,11 @@
 import React from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import {
-  GithubLogo,
-  Lock,
-  Question,
-  LinkedinLogo,
-  ArrowUp,
+  GithubLogoIcon as GithubLogo,
+  LockIcon as Lock,
+  QuestionIcon as Question,
+  LinkedinLogoIcon as LinkedinLogo,
+  ArrowUpIcon as ArrowUp,
 } from "@phosphor-icons/react";
 import { useTheme } from "@/hooks/useTheme";
 import LandingButton from "../landing/LandingButton";

@@ -11,6 +11,7 @@ interface PrivacyToggleProps {
   showDescription?: boolean;
   contextLabel?: string;
   className?: string;
+  align?: "between" | "right";
 }
 
 export default function PrivacyToggle({
@@ -21,6 +22,7 @@ export default function PrivacyToggle({
   showDescription = true,
   contextLabel,
   className = "",
+  align = "between",
 }: PrivacyToggleProps) {
   const { themeColor } = useTheme();
 
@@ -39,8 +41,13 @@ export default function PrivacyToggle({
     const trackClass = size === "sm" ? "w-11 h-6" : "w-11 h-6";
     const knobClass = size === "sm" ? "w-4 h-4" : "w-4 h-4";
 
+    const containerLayout =
+      align === "right"
+        ? "flex items-center justify-end gap-3"
+        : "flex items-center justify-between";
+
     return (
-      <div className={`flex items-center justify-between ${className}`}>
+      <div className={`${containerLayout} ${className}`.trim()}>
         <div className="flex items-center gap-2">
           {isPublic ? (
             <LockOpen

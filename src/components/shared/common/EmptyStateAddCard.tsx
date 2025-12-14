@@ -24,6 +24,7 @@
 
 import { useTheme } from "@/hooks/useTheme";
 import { type LucideIcon } from "lucide-react";
+import Button from "../ui/Button";
 
 interface EmptyStateAddCardProps {
   icon: LucideIcon;
@@ -31,8 +32,16 @@ interface EmptyStateAddCardProps {
   description: string;
   onClick: () => void;
   ariaLabel?: string;
+  actionLabel?: string;
   className?: string;
 }
+
+const deriveActionLabel = (title: string) => {
+  const match = title.match(/^Add Your First (.+)$/i);
+  if (match?.[1]) return `Add ${match[1]}`;
+  if (title.toLowerCase().includes("empty")) return "Add Item";
+  return "Add";
+};
 
 export default function EmptyStateAddCard({
   icon: Icon,
@@ -40,69 +49,52 @@ export default function EmptyStateAddCard({
   description,
   onClick,
   ariaLabel,
+  actionLabel,
   className = "",
 }: EmptyStateAddCardProps) {
   const { themeColor } = useTheme();
+  const ctaLabel = actionLabel || deriveActionLabel(title);
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={ariaLabel || title}
-      className={`
-        group
-        w-full
-        px-16 py-20
-        bg-gray-800/50
-        border-2 border-gray-700
-        rounded-xl
-        transition-all duration-200
-        hover:bg-gray-800/70
-        focus-visible:outline-none
-        focus-visible:ring-2
-        cursor-pointer
-        ${className}
-      `}
-      style={
-        {
-          "--theme-hover-border": `${themeColor}80`, // 50% opacity for border
-          "--theme-focus-ring": themeColor,
-        } as React.CSSProperties & {
-          "--theme-hover-border": string;
-          "--theme-focus-ring": string;
-        }
-      }
-      onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = `${themeColor}80`;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "";
-      }}
-      onFocus={(e) => {
-        e.currentTarget.style.setProperty("--tw-ring-color", themeColor);
-      }}
-      onBlur={(e) => {
-        e.currentTarget.style.removeProperty("--tw-ring-color");
-      }}
+    <div
+      data-testid="empty-state-add-card"
+      className={[
+        "w-full",
+        "px-10 py-14 sm:px-14 sm:py-16",
+        "bg-gray-800/20",
+        "border border-gray-700/60 border-dashed",
+        "rounded-xl",
+        "text-center",
+        className,
+      ].join(" ")}
     >
-      <div className="flex flex-col items-center justify-center text-center">
-        <Icon
-          className="w-16 h-16 mb-6 text-gray-400 group-hover:transition-colors group-hover:duration-200"
-          style={
-            {
-              "--icon-color": themeColor,
-            } as React.CSSProperties & { "--icon-color": string }
-          }
-          onMouseOver={(e) => {
-            (e.currentTarget as SVGElement).style.color = themeColor;
-          }}
-          onMouseOut={(e) => {
-            (e.currentTarget as SVGElement).style.color = "";
-          }}
-        />
-        <h3 className="text-lg font-semibold text-white mb-3">{title}</h3>
-        <p className="text-sm text-gray-400 max-w-md mx-auto">{description}</p>
+      <div className="flex flex-col items-center justify-center">
+        <div
+          className="w-14 h-14 rounded-full bg-gray-800/30 border border-gray-700/50 flex items-center justify-center mb-5"
+          style={{ borderColor: `${themeColor}30` }}
+        >
+          <Icon className="w-7 h-7 text-gray-400" />
+        </div>
+
+        <h3 className="text-base sm:text-lg font-semibold text-gray-100 mb-2">
+          {title}
+        </h3>
+        <p className="text-sm text-gray-400 max-w-md mx-auto">
+          {description}
+        </p>
+
+        <div className="mt-6">
+          <Button
+            type="button"
+            variant="primary"
+            onClick={onClick}
+            aria-label={ariaLabel || title}
+            className="px-6"
+          >
+            {ctaLabel}
+          </Button>
+        </div>
       </div>
-    </button>
+    </div>
   );
 }

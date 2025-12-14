@@ -7,6 +7,13 @@ import React, {
 } from "react";
 import { AlertCircle, ChevronDown, Check } from "lucide-react";
 
+export type SelectOption = {
+  value: string;
+  label: string;
+  disabled?: boolean;
+  leftIcon?: React.ReactNode;
+};
+
 export interface SelectProps
   extends Omit<SelectHTMLAttributes<HTMLSelectElement>, "className" | "size"> {
   label?: string;
@@ -16,7 +23,7 @@ export interface SelectProps
   containerClassName?: string;
   selectClassName?: string;
   placeholder?: string;
-  options?: Array<{ value: string; label: string; disabled?: boolean }>;
+  options?: SelectOption[];
   size?: "sm" | "md" | "lg";
 }
 
@@ -253,7 +260,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
           {isOpen && !disabled && (
             <div
               ref={dropdownRef}
-              className="absolute z-dropdown mt-2 w-full min-w-[200px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg"
+              className="absolute z-dropdown mt-2 w-full min-w-[200px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-72 overflow-auto"
               role="listbox"
             >
               {options.map((option, index) => (
@@ -263,8 +270,9 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
                   onClick={() => !option.disabled && handleSelect(option.value)}
                   onMouseEnter={() => setFocusedIndex(index)}
                   disabled={option.disabled}
-                  className={`
-                    w-full flex items-center justify-between
+                  className={
+                    `
+                    w-full flex items-center justify-between gap-3
                     ${sizeClasses[size]}
                     text-left transition-colors
                     ${
@@ -281,12 +289,20 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
                     ${index === 0 ? "rounded-t-lg" : ""}
                     ${index === options.length - 1 ? "rounded-b-lg" : ""}
                   `
-                    .trim()
-                    .replace(/\s+/g, " ")}
+                      .trim()
+                      .replace(/\s+/g, " ")
+                  }
                   role="option"
                   aria-selected={value === option.value}
                 >
-                  <span>{option.label}</span>
+                  <span className="flex items-center gap-2 min-w-0">
+                    {option.leftIcon ? (
+                      <span className="flex-shrink-0" aria-hidden="true">
+                        {option.leftIcon}
+                      </span>
+                    ) : null}
+                    <span className="truncate">{option.label}</span>
+                  </span>
                   {value === option.value && (
                     <Check
                       className="w-4 h-4 text-primary flex-shrink-0"

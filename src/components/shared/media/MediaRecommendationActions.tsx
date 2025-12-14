@@ -1,10 +1,10 @@
 import {
-  ThumbsUp,
-  ThumbsDown,
-  ChatCircle,
-  Trash,
-  ArrowCounterClockwise,
-  PencilSimple,
+  ThumbsUpIcon as ThumbsUp,
+  ThumbsDownIcon as ThumbsDown,
+  ChatCircleIcon as ChatCircle,
+  TrashIcon as Trash,
+  ArrowCounterClockwiseIcon as ArrowCounterClockwise,
+  PencilSimpleIcon as PencilSimple,
 } from "@phosphor-icons/react";
 import ActionButtonGroup from "../common/ActionButtonGroup";
 import type { BaseRecommendation } from "../types";

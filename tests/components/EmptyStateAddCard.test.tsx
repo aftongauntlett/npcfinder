@@ -126,9 +126,9 @@ describe("EmptyStateAddCard", () => {
       />
     );
 
-    const button = container.querySelector("button");
-    expect(button?.classList.contains("min-h-[400px]")).toBe(true);
-    expect(button?.classList.contains("custom-class")).toBe(true);
+    const card = container.querySelector('[data-testid="empty-state-add-card"]');
+    expect(card?.classList.contains("min-h-[400px]")).toBe(true);
+    expect(card?.classList.contains("custom-class")).toBe(true);
   });
 
   it("is keyboard accessible", () => {

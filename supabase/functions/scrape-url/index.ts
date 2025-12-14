@@ -271,10 +271,14 @@ serve(async (req) => {
       }
     }
 
-    // Extract recipe data (JSON-LD schema.org)
+    // Extract recipe data (JSON-LD schema.org + DOM fallback)
     const recipe = extractRecipe(html);
-    if (recipe) {
-      metadata.recipe = recipe;
+    const recipeFallback = extractRecipeFallback(html, metadata);
+    if (recipe || recipeFallback) {
+      metadata.recipe = {
+        ...(recipeFallback ?? {}),
+        ...(recipe ?? {}),
+      };
     }
 
     // Set the kind discriminant based on what was extracted
@@ -1244,4 +1248,79 @@ function extractRecipe(html: string): ScrapedMetadata["recipe"] | undefined {
   }
 
   return undefined;
+}
+
+function extractRecipeFallback(
+  html: string,
+  base: Pick<ScrapedMetadata, "title" | "description">
+): ScrapedMetadata["recipe"] | undefined {
+  try {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    if (!doc) return undefined;
+
+    const recipe: ScrapedMetadata["recipe"] = {};
+
+    // Name: prefer explicit recipe title nodes; fallback to page title
+    const titleEl =
+      doc.querySelector(
+        '[itemprop="name"], h1[itemprop="headline"], h1.entry-title, h1.recipe-title, h1'
+      ) || null;
+    const titleText = titleEl?.textContent?.trim();
+    recipe.name = titleText || base.title || undefined;
+
+    // Description: common summary containers
+    const descEl =
+      doc.querySelector(
+        '[itemprop="description"], .recipe-summary, .wprm-recipe-summary, .tasty-recipes-description, .entry-content p'
+      ) || null;
+    const descText = descEl?.textContent?.trim();
+    recipe.description = descText || base.description || undefined;
+
+    // Ingredients: Microdata + common plugins
+    const ingredientNodes = Array.from(
+      doc.querySelectorAll(
+        '[itemprop="recipeIngredient"], .wprm-recipe-ingredient, .tasty-recipes-ingredients li, .recipe-ingredients li, .ingredients li'
+      )
+    );
+    const ingredients = ingredientNodes
+      .map((n) => n.textContent?.trim() || "")
+      .map((t) => t.replace(/\s+/g, " ").trim())
+      .filter((t) => t.length > 0 && t.length < 300);
+    if (ingredients.length > 0) recipe.ingredients = ingredients;
+
+    // Instructions: Microdata HowToStep + common plugins
+    const instructionNodes = Array.from(
+      doc.querySelectorAll(
+        '[itemprop="recipeInstructions"] li, [itemprop="recipeInstructions"] [itemprop="text"], [itemprop="step"], .wprm-recipe-instruction-text, .tasty-recipes-instructions li, .recipe-instructions li, .instructions li'
+      )
+    );
+    const instructions = instructionNodes
+      .map((n) => n.textContent?.trim() || "")
+      .map((t) => t.replace(/\s+/g, " ").trim())
+      .filter((t) => t.length > 0 && t.length < 600);
+    if (instructions.length > 0) recipe.instructions = instructions;
+
+    // Basic time/servings: microdata when present
+    const prep = doc.querySelector('[itemprop="prepTime"]')?.getAttribute("datetime")?.trim();
+    const cook = doc.querySelector('[itemprop="cookTime"]')?.getAttribute("datetime")?.trim();
+    const total = doc.querySelector('[itemprop="totalTime"]')?.getAttribute("datetime")?.trim();
+    const yieldText =
+      doc.querySelector('[itemprop="recipeYield"], [itemprop="yield"], .wprm-recipe-servings')
+        ?.textContent?.trim();
+    if (prep) recipe.prepTime = prep;
+    if (cook) recipe.cookTime = cook;
+    if (total) recipe.totalTime = total;
+    if (yieldText) recipe.servings = yieldText;
+
+    // Return only if we got something useful
+    return Object.values(recipe).some((v) => {
+      if (Array.isArray(v)) return v.length > 0;
+      return Boolean(v);
+    })
+      ? recipe
+      : undefined;
+  } catch (error) {
+    console.error("⚠️ Error in recipe fallback extraction:", error);
+    return undefined;
+  }
 }

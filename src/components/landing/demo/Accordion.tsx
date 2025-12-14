@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { CaretDown, type Icon } from "@phosphor-icons/react";
+import { CaretDownIcon as CaretDown, type Icon } from "@phosphor-icons/react";
 import {
   LANDING_TEAL,
   LANDING_PURPLE,
