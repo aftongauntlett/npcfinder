@@ -17,6 +17,7 @@ import {
 import type { MediaDomain, MediaListWithCounts } from "@/services/mediaListsService.types";
 import CreateMediaListModal from "./CreateMediaListModal";
 import EditMediaListModal from "./EditMediaListModal";
+import { getIconsForMediaType, MEDIA_DOMAIN_DEFAULT_ICON } from "@/utils/mediaIcons";
 
 interface PersonalMediaListsProps {
   domain: MediaDomain;
@@ -38,9 +39,16 @@ const PersonalMediaLists: React.FC<PersonalMediaListsProps> = ({ domain, onOpenL
   const updateList = useUpdateMediaList(domain);
   const deleteList = useDeleteMediaList(domain);
 
+  const iconOptions = useMemo(() => getIconsForMediaType(domain), [domain]);
+  const iconByName = useMemo(() => {
+    return new Map(iconOptions.map((o) => [o.name, o.icon] as const));
+  }, [iconOptions]);
+
   const handleCreateList = async (params: {
     title: string;
     description?: string | null;
+    icon?: string | null;
+    icon_color?: string | null;
     is_public: boolean;
   }) => {
     await createList.mutateAsync(params);
@@ -193,7 +201,26 @@ const PersonalMediaLists: React.FC<PersonalMediaListsProps> = ({ domain, onOpenL
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <List className="w-4 h-4 text-gray-400" />
+                      {(() => {
+                        const Icon =
+                          (list.icon ? iconByName.get(list.icon) : null) ??
+                          MEDIA_DOMAIN_DEFAULT_ICON[domain];
+                        return (
+                          <Icon
+                            className={
+                              list.icon_color
+                                ? "w-4 h-4"
+                                : "w-4 h-4 text-gray-400"
+                            }
+                            style={
+                              list.icon_color
+                                ? { color: list.icon_color }
+                                : undefined
+                            }
+                            weight="regular"
+                          />
+                        );
+                      })()}
                       <h3 className="font-semibold text-gray-900 dark:text-white truncate">
                         {list.title}
                       </h3>
@@ -218,6 +245,7 @@ const PersonalMediaLists: React.FC<PersonalMediaListsProps> = ({ domain, onOpenL
       <CreateMediaListModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
+        domain={domain}
         onCreate={handleCreateList}
       />
 
@@ -225,9 +253,12 @@ const PersonalMediaLists: React.FC<PersonalMediaListsProps> = ({ domain, onOpenL
         <EditMediaListModal
           isOpen={!!editTarget}
           onClose={() => setEditTarget(null)}
+          domain={domain}
           initialValues={{
             title: editTarget.title,
             description: editTarget.description,
+            icon: editTarget.icon ?? null,
+            icon_color: editTarget.icon_color ?? null,
             is_public: editTarget.is_public,
           }}
           onSave={async (updates) => {
