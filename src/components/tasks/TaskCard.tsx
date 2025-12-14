@@ -9,7 +9,8 @@
  */
 
 import React, { useMemo, useCallback } from "react";
-import { Calendar, Flag } from "@phosphor-icons/react";
+import { CalendarIcon as Calendar, FlagIcon as Flag } from "@phosphor-icons/react";
+import { ListTodo } from "lucide-react";
 import ActionButtonGroup from "../shared/common/ActionButtonGroup";
 import AccordionListCard from "../shared/common/AccordionListCard";
 import TimerWidget from "./TimerWidget";
@@ -18,6 +19,8 @@ import { useIsMobile } from "../../hooks/useIsMobile";
 import { useCompleteRepeatableTask } from "../../hooks/useTasksQueries";
 import { formatShortDate } from "../../utils/dateFormatting";
 import type { Task } from "../../services/tasksService.types";
+import { withOpacity } from "../../data/landingTheme";
+import { getTaskIconOptionByName } from "../../utils/taskIcons";
 import {
   formatDueDate,
   isOverdue,
@@ -54,6 +57,24 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
   const repeatableOverdue = isRepeatableTaskOverdue(task);
   const isMobile = useIsMobile();
   const completeRepeatable = useCompleteRepeatableTask();
+
+  const taskIconOption = useMemo(
+    () => getTaskIconOptionByName(task.icon),
+    [task.icon]
+  );
+  const TaskIcon = taskIconOption?.icon ?? ListTodo;
+  const isLucideTaskIcon = taskIconOption == null;
+  const iconColor = task.icon_color ?? undefined;
+  const iconContainerStyle = useMemo(() => {
+    if (!iconColor) return undefined;
+    return {
+      backgroundColor: withOpacity(iconColor, 0.14),
+    } as React.CSSProperties;
+  }, [iconColor]);
+  const iconStyle = useMemo(() => {
+    if (!iconColor) return undefined;
+    return { color: iconColor } as React.CSSProperties;
+  }, [iconColor]);
 
   const handleCardClick = useCallback(
     (e: React.MouseEvent) => {
@@ -112,6 +133,19 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
             : ""
         }`}
       >
+        {TaskIcon && (
+          <span
+            className="flex items-center justify-center w-7 h-7 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"
+            style={iconContainerStyle}
+            aria-hidden="true"
+          >
+            {isLucideTaskIcon ? (
+              <TaskIcon className="w-4 h-4" style={iconStyle} />
+            ) : (
+              <TaskIcon className="w-4 h-4" weight="regular" style={iconStyle} />
+            )}
+          </span>
+        )}
         <span className="flex-1 text-sm text-gray-900 dark:text-white">
           {task.title}
         </span>
@@ -149,9 +183,25 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
         }`}
       >
         <div className="flex items-start justify-between gap-3 mb-3">
-          <h4 className="text-sm font-medium flex-1 text-gray-900 dark:text-white">
-            {task.title}
-          </h4>
+          <div className="flex items-start gap-2 flex-1 min-w-0">
+            {TaskIcon && (
+              <span
+                className="mt-0.5 flex items-center justify-center w-7 h-7 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"
+                style={iconContainerStyle}
+                aria-hidden="true"
+              >
+                {isLucideTaskIcon ? (
+                  <TaskIcon className="w-4 h-4" style={iconStyle} />
+                ) : (
+                  <TaskIcon className="w-4 h-4" weight="regular" style={iconStyle} />
+                )}
+              </span>
+            )}
+
+            <h4 className="text-sm font-medium flex-1 text-gray-900 dark:text-white min-w-0">
+              {task.title}
+            </h4>
+          </div>
 
           {/* Action buttons - always visible on mobile, shown on hover on desktop */}
           <div
@@ -256,6 +306,19 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
     <div className="space-y-1.5">
       {/* Title row with badges */}
       <div className="flex items-center gap-2 flex-wrap">
+        {TaskIcon && (
+          <span
+            className="flex items-center justify-center w-7 h-7 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"
+            style={iconContainerStyle}
+            aria-hidden="true"
+          >
+            {isLucideTaskIcon ? (
+              <TaskIcon className="w-4 h-4" style={iconStyle} />
+            ) : (
+              <TaskIcon className="w-4 h-4" weight="regular" style={iconStyle} />
+            )}
+          </span>
+        )}
         <h3 className="font-semibold text-gray-900 dark:text-white">
           {task.title}
         </h3>
@@ -440,6 +503,8 @@ export default React.memo(
   (prevProps, nextProps) =>
     prevProps.task.id === nextProps.task.id &&
     prevProps.task.title === nextProps.task.title &&
+    prevProps.task.icon === nextProps.task.icon &&
+    prevProps.task.icon_color === nextProps.task.icon_color &&
     prevProps.task.due_date === nextProps.task.due_date &&
     prevProps.task.priority === nextProps.task.priority &&
     prevProps.task.timer_started_at === nextProps.task.timer_started_at &&

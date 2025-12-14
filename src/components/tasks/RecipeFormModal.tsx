@@ -312,28 +312,19 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
       title={task ? "Edit Recipe" : "Add Recipe"}
       maxWidth="2xl"
     >
-      <form onSubmit={handleSubmit} className="p-6 space-y-5">
+      <form onSubmit={handleSubmit} className="p-6 space-y-6">
         {/* URL Input with Scraping */}
-        <div
-          className="border rounded-lg p-3"
-          style={{
-            backgroundColor: `${themeColor}10`,
-            borderColor: `${themeColor}40`,
-          }}
-        >
-          <label
-            htmlFor="recipe-url"
-            className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200 mb-2"
-          >
-            <Link className="w-4 h-4" />
-            Recipe URL (Optional)
-          </label>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+            <Link className="w-3.5 h-3.5" />
+            Quick add from URL
+          </div>
           <Input
             id="recipe-url"
             type="url"
             value={url}
             onChange={(e) => void handleUrlChange(e.target.value)}
-            placeholder="Paste a recipe URL to auto-fill details..."
+            placeholder="Paste recipe URL to auto-fill..."
             leftIcon={<Link className="w-4 h-4" />}
             rightIcon={
               urlLoading ? (
@@ -346,7 +337,7 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
           />
           {urlFeedback && (
             <div
-              className={`mt-2 flex items-start gap-2 text-xs px-2 py-1.5 rounded ${
+              className={`flex items-start gap-2 text-xs px-3 py-2 rounded-md ${
                 urlFeedback.type === "success"
                   ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300"
                   : urlFeedback.type === "warning"
@@ -362,133 +353,140 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
               <span>{urlFeedback.message}</span>
             </div>
           )}
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Or fill in the details manually below
-          </p>
+          {!urlFeedback && (
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Or fill in the details manually below
+            </p>
+          )}
         </div>
 
-        {/* Recipe Name */}
-        <Input
-          id="recipe-name"
-          label="Recipe Name"
-          type="text"
-          value={recipeName}
-          onChange={(e) => setRecipeName(e.target.value)}
-          placeholder="e.g., Chocolate Chip Cookies"
-          required
-        />
-
-        {/* Description */}
-        <Textarea
-          label="Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Brief description of the recipe..."
-          rows={2}
-        />
-
-        {/* Category */}
-        <div className="space-y-2">
-          <label className="block text-sm font-bold text-primary">
-            Category
-          </label>
-          <Dropdown
-            trigger={
-              <div className="w-full flex items-center justify-between px-4 py-2.5 text-base bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white hover:border-gray-400 dark:hover:border-gray-500 transition-colors cursor-pointer">
-                <span
-                  className={category ? "" : "text-gray-500 dark:text-gray-400"}
-                >
-                  {category || "Select a category..."}
-                </span>
-                <ChevronDown className="w-4 h-4 text-gray-500" />
-              </div>
-            }
-            options={[
-              { id: "Appetizer", label: "Appetizer" },
-              { id: "Breakfast", label: "Breakfast" },
-              { id: "Main", label: "Main Course" },
-              { id: "Side", label: "Side Dish" },
-              { id: "Dessert", label: "Dessert" },
-              { id: "Snack", label: "Snack" },
-              { id: "Beverage", label: "Beverage" },
-              { id: "Sauce", label: "Sauce/Condiment" },
-              { id: "Soup", label: "Soup" },
-              { id: "Salad", label: "Salad" },
-              { id: "Bread", label: "Bread/Baked Goods" },
-              { id: "Other", label: "Other" },
-            ]}
-            value={category}
-            onChange={(value) => setCategory(value as string)}
-            dropdownClassName="w-full"
+        {/* Core Recipe Details */}
+        <div className="space-y-4">
+          {/* Recipe Name */}
+          <Input
+            id="recipe-name"
+            label="Recipe Name"
+            type="text"
+            value={recipeName}
+            onChange={(e) => setRecipeName(e.target.value)}
+            placeholder="e.g., Chocolate Chip Cookies"
+            required
           />
+
+          {/* Description */}
+          <Textarea
+            label="Description (optional)"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Brief description of the recipe..."
+            rows={2}
+          />
+
+          {/* Time & Serving Info */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Input
+              id="prep-time"
+              label="Prep Time"
+              type="text"
+              value={prepTime}
+              onChange={(e) => setPrepTime(e.target.value)}
+              placeholder="15 min"
+            />
+            <Input
+              id="cook-time"
+              label="Cook Time"
+              type="text"
+              value={cookTime}
+              onChange={(e) => setCookTime(e.target.value)}
+              placeholder="30 min"
+            />
+            <Input
+              id="total-time"
+              label="Total Time"
+              type="text"
+              value={totalTime}
+              onChange={(e) => setTotalTime(e.target.value)}
+              placeholder="45 min"
+            />
+            <Input
+              id="servings"
+              label="Servings"
+              type="text"
+              value={servings}
+              onChange={(e) => setServings(e.target.value)}
+              placeholder="4-6"
+            />
+          </div>
+
+          {/* Category */}
+          <div className="space-y-2">
+            <label className="block text-sm font-bold text-primary">
+              Category (optional)
+            </label>
+            <Dropdown
+              trigger={
+                <div className="w-full flex items-center justify-between px-4 py-2.5 text-base bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white hover:border-gray-400 dark:hover:border-gray-500 transition-colors cursor-pointer">
+                  <span
+                    className={category ? "" : "text-gray-500 dark:text-gray-400"}
+                  >
+                    {category || "Select a category..."}
+                  </span>
+                  <ChevronDown className="w-4 h-4 text-gray-500" />
+                </div>
+              }
+              options={[
+                { id: "Appetizer", label: "Appetizer" },
+                { id: "Breakfast", label: "Breakfast" },
+                { id: "Main", label: "Main Course" },
+                { id: "Side", label: "Side Dish" },
+                { id: "Dessert", label: "Dessert" },
+                { id: "Snack", label: "Snack" },
+                { id: "Beverage", label: "Beverage" },
+                { id: "Sauce", label: "Sauce/Condiment" },
+                { id: "Soup", label: "Soup" },
+                { id: "Salad", label: "Salad" },
+                { id: "Bread", label: "Bread/Baked Goods" },
+                { id: "Other", label: "Other" },
+              ]}
+              value={category}
+              onChange={(value) => setCategory(value as string)}
+              dropdownClassName="w-full"
+            />
+          </div>
         </div>
 
-        {/* Time Fields Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Input
-            id="prep-time"
-            label="Prep Time"
-            type="text"
-            value={prepTime}
-            onChange={(e) => setPrepTime(e.target.value)}
-            placeholder="15 mins"
+        {/* Recipe Content */}
+        <div className="space-y-4 pt-2 border-t border-gray-200 dark:border-gray-700">
+          {/* Ingredients */}
+          <Textarea
+            label="Ingredients"
+            value={ingredients}
+            onChange={(e) => setIngredients(e.target.value)}
+            placeholder="Enter each ingredient on a new line..."
+            rows={8}
+            helperText="One ingredient per line"
           />
-          <Input
-            id="cook-time"
-            label="Cook Time"
-            type="text"
-            value={cookTime}
-            onChange={(e) => setCookTime(e.target.value)}
-            placeholder="30 mins"
+
+          {/* Instructions */}
+          <Textarea
+            label="Instructions"
+            value={instructions}
+            onChange={(e) => setInstructions(e.target.value)}
+            placeholder="Enter each step on a new line..."
+            rows={8}
+            helperText="One step per line"
           />
-          <Input
-            id="total-time"
-            label="Total Time"
-            type="text"
-            value={totalTime}
-            onChange={(e) => setTotalTime(e.target.value)}
-            placeholder="45 mins"
+
+          {/* Notes */}
+          <Textarea
+            label="Notes (optional)"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Any additional notes or tips..."
+            rows={3}
           />
+
         </div>
-
-        {/* Servings */}
-        <Input
-          id="servings"
-          label="Servings"
-          type="text"
-          value={servings}
-          onChange={(e) => setServings(e.target.value)}
-          placeholder="e.g., 4-6 servings"
-        />
-
-        {/* Ingredients */}
-        <Textarea
-          label="Ingredients"
-          value={ingredients}
-          onChange={(e) => setIngredients(e.target.value)}
-          placeholder="Enter each ingredient on a new line..."
-          rows={6}
-          helperText="One ingredient per line"
-        />
-
-        {/* Instructions */}
-        <Textarea
-          label="Instructions"
-          value={instructions}
-          onChange={(e) => setInstructions(e.target.value)}
-          placeholder="Enter each step on a new line..."
-          rows={8}
-          helperText="One step per line"
-        />
-
-        {/* Notes */}
-        <Textarea
-          label="Notes"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Any additional notes or tips..."
-          rows={3}
-        />
 
         {/* Duplicate Error (blocking) */}
         {duplicateWarning && (
@@ -500,7 +498,7 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
         )}
 
         {/* Actions */}
-        <div className="flex gap-3 pt-4">
+        <div className="flex gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
           <Button
             type="button"
             onClick={handleClose}

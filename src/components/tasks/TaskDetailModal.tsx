@@ -4,7 +4,7 @@
  * Fetches fresh task data to ensure updates are reflected
  */
 
-import React, { useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Trash2 } from "lucide-react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -14,9 +14,11 @@ import Modal from "../shared/ui/Modal";
 import Button from "../shared/ui/Button";
 import Input from "../shared/ui/Input";
 import Textarea from "../shared/ui/Textarea";
-import Select from "../shared/ui/Select";
 import ConfirmationModal from "../shared/ui/ConfirmationModal";
 import { useTheme } from "../../hooks/useTheme";
+import { TASK_ICONS } from "@/utils/taskIcons";
+import TaskSchedulingControls from "./partials/TaskSchedulingControls";
+import TaskAppearanceControls from "./partials/TaskAppearanceControls";
 import JobTaskSection from "./JobTaskSection";
 import RecipeTaskSection from "./RecipeTaskSection";
 import type { Task } from "../../services/tasksService.types";
@@ -62,6 +64,17 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const { themeColor } = useTheme();
 
+  // Icon + color
+  const [icon, setIcon] = useState<string | null>(task.icon ?? null);
+  const [iconColor, setIconColor] = useState<string>(
+    task.icon_color ?? themeColor
+  );
+
+  useEffect(() => {
+    setIcon(task.icon ?? null);
+    setIconColor(task.icon_color ?? themeColor);
+  }, [task.icon, task.icon_color, themeColor]);
+
   // Repeatable task state
   const [isRepeatable, setIsRepeatable] = useState(task.is_repeatable || false);
   const [repeatFrequency, setRepeatFrequency] = useState<
@@ -79,7 +92,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   const [hasTimer, setHasTimer] = useState(!!task.timer_duration_minutes);
   const [timerDuration, setTimerDuration] = useState<number>(
     task.timer_duration_minutes && task.timer_duration_minutes >= 60
-      ? Math.floor(task.timer_duration_minutes / 60)
+      ? Math.max(1, Math.floor(task.timer_duration_minutes / 60))
       : task.timer_duration_minutes || 30
   );
   const [timerUnit, setTimerUnit] = useState<"minutes" | "hours">(
@@ -206,6 +219,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     const updates: Partial<Task> = {
       ...baseUpdates,
       item_data,
+      icon: icon || null,
+      icon_color: iconColor || null,
       is_repeatable: isRepeatable,
       repeat_frequency: isRepeatable ? repeatFrequency : null,
       timer_duration_minutes: hasTimer
@@ -255,7 +270,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         closeOnBackdropClick={true}
       >
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Duplicate Error */}
           {duplicateError && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-md">
@@ -387,197 +402,44 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             </div>
           )}
 
-          {/* Repeatable Task & Timer Toggles - Hidden for job tracker and recipes */}
+          {/* Repeatable Task & Timer + Icon/Color - Hidden for job tracker and recipes */}
           {!isJobTracker && !isRecipe && (
             <div className="space-y-4">
-              {/* Repeatable Task Section */}
-              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="relative flex-shrink-0 cursor-pointer"
-                    onClick={() => {
-                      const newValue = !isRepeatable;
-                      setIsRepeatable(newValue);
-                      if (newValue && !dueDate) {
-                        const tomorrow = new Date();
-                        tomorrow.setDate(tomorrow.getDate() + 1);
-                        setDueDate(tomorrow);
-                      }
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isRepeatable}
-                      onChange={() => {}}
-                      className="sr-only peer"
-                      tabIndex={-1}
-                    />
-                    <div
-                      className="w-11 h-6 bg-gray-300 dark:bg-gray-600 rounded-full peer transition-colors"
-                      style={
-                        isRepeatable ? { backgroundColor: themeColor } : {}
-                      }
-                    ></div>
-                    <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
-                  </div>
-                  <div className="flex-1">
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">
-                      Repeatable Task
-                    </span>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Auto-reschedules after completion
-                    </p>
-                  </div>
-                </div>
-
-                {/* Repeat Frequency - Show only if repeatable */}
-                {isRepeatable && (
-                  <div className="pt-2">
-                    <Select
-                      id="repeat-frequency-edit"
-                      label="Repeat Frequency"
-                      value={repeatFrequency}
-                      onChange={(e) =>
-                        setRepeatFrequency(
-                          e.target.value as
-                            | "daily"
-                            | "weekly"
-                            | "biweekly"
-                            | "monthly"
-                            | "yearly"
-                        )
-                      }
-                      options={[
-                        { value: "daily", label: "Daily" },
-                        { value: "weekly", label: "Weekly" },
-                        { value: "biweekly", label: "Bi-weekly" },
-                        { value: "monthly", label: "Monthly" },
-                        { value: "yearly", label: "Annually" },
-                      ]}
-                      size="sm"
-                    />
-                    {!dueDate && (
-                      <p className="text-xs text-red-500 dark:text-red-400 mt-1">
-                        ⚠️ Date required for repeatable tasks
-                      </p>
-                    )}
-                  </div>
-                )}
+              {/* Row 1: Repeatable (left) + Timer (right) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <TaskSchedulingControls
+                  themeColor={themeColor}
+                  dueDate={dueDate}
+                  setDueDate={setDueDate}
+                  isRepeatable={isRepeatable}
+                  setIsRepeatable={setIsRepeatable}
+                  repeatFrequency={repeatFrequency}
+                  setRepeatFrequency={setRepeatFrequency}
+                  hasTimer={hasTimer}
+                  setHasTimer={setHasTimer}
+                  timerDuration={timerDuration}
+                  setTimerDuration={setTimerDuration}
+                  timerUnit={timerUnit}
+                  setTimerUnit={setTimerUnit}
+                  isUrgentAfterTimer={isUrgentAfterTimer}
+                  setIsUrgentAfterTimer={setIsUrgentAfterTimer}
+                  repeatFrequencySelectId="repeat-frequency-edit"
+                  timerDurationSelectId="timer-duration-edit"
+                  timerUnitSelectId="timer-unit-edit"
+                />
               </div>
 
-              {/* Timer Section */}
-              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="relative flex-shrink-0 cursor-pointer"
-                    onClick={() => setHasTimer(!hasTimer)}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={hasTimer}
-                      onChange={() => {}}
-                      className="sr-only peer"
-                      tabIndex={-1}
-                    />
-                    <div
-                      className="w-11 h-6 bg-gray-300 dark:bg-gray-600 rounded-full peer transition-colors"
-                      style={hasTimer ? { backgroundColor: themeColor } : {}}
-                    ></div>
-                    <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
-                  </div>
-                  <div className="flex-1">
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">
-                      Add Timer
-                    </span>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Set a countdown timer for this task
-                    </p>
-                  </div>
-                </div>
-
-                {/* Timer Duration - Show only if timer enabled */}
-                {hasTimer && (
-                  <div className="pt-2 space-y-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Duration
-                      </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="number"
-                          min={1}
-                          max={timerUnit === "hours" ? 24 : 1440}
-                          value={timerDuration}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            // Allow empty input for deletion
-                            if (val === "") {
-                              setTimerDuration(0);
-                              return;
-                            }
-                            const numVal = parseInt(val);
-                            const max = timerUnit === "hours" ? 24 : 1440;
-                            setTimerDuration(Math.min(max, numVal));
-                          }}
-                          onBlur={(e) => {
-                            // On blur, ensure we have a valid value
-                            const val = parseInt(e.target.value);
-                            if (isNaN(val) || val < 1) {
-                              setTimerDuration(1);
-                            }
-                          }}
-                          placeholder="30"
-                          className="hide-number-spinner flex-1 block rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                        />
-                        <div className="w-32">
-                          <Select
-                            id="timer-unit-edit"
-                            value={timerUnit}
-                            onChange={(e) => {
-                              setTimerUnit(
-                                e.target.value as "minutes" | "hours"
-                              );
-                              if (e.target.value === "hours") {
-                                setTimerDuration(
-                                  Math.min(24, Math.ceil(timerDuration / 60))
-                                );
-                              } else {
-                                setTimerDuration(
-                                  Math.min(1440, timerDuration * 60)
-                                );
-                              }
-                            }}
-                            options={[
-                              { value: "minutes", label: "Minutes" },
-                              { value: "hours", label: "Hours" },
-                            ]}
-                            size="md"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Urgent After Timer */}
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={isUrgentAfterTimer}
-                        onChange={(e) =>
-                          setIsUrgentAfterTimer(e.target.checked)
-                        }
-                        className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 checked:bg-current focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 cursor-pointer"
-                        style={{
-                          accentColor: isUrgentAfterTimer
-                            ? themeColor
-                            : undefined,
-                        }}
-                      />
-                      <span className="text-sm text-gray-700 dark:text-gray-300">
-                        Mark as urgent when timer completes
-                      </span>
-                    </label>
-                  </div>
-                )}
+              {/* Row 2: Icon (left) + Color (right) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <TaskAppearanceControls
+                  icon={icon}
+                  setIcon={setIcon}
+                  iconColor={iconColor}
+                  setIconColor={setIconColor}
+                  icons={TASK_ICONS}
+                  iconHexInputId="task-icon-hex-edit"
+                  iconPickerLabel="Icon"
+                />
               </div>
             </div>
           )}

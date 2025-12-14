@@ -19,6 +19,9 @@ import { useUrlMetadata } from "../../hooks/useUrlMetadata";
 import { PRIORITY_OPTIONS } from "../../utils/taskConstants";
 import { Link, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { useTheme } from "../../hooks/useTheme";
+import { TASK_ICONS } from "@/utils/taskIcons";
+import TaskSchedulingControls from "./partials/TaskSchedulingControls";
+import TaskAppearanceControls from "./partials/TaskAppearanceControls";
 import {
   applyJobMetadataToForm,
   applyRecipeMetadataToForm,
@@ -77,6 +80,12 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   const [timerDuration, setTimerDuration] = useState<number>(30);
   const [timerUnit, setTimerUnit] = useState<"minutes" | "hours">("minutes");
   const [isUrgentAfterTimer, setIsUrgentAfterTimer] = useState(false);
+
+  // Task icon + color
+  const [icon, setIcon] = useState<string | null>(null);
+  const [iconColor, setIconColor] = useState<string>(themeColor);
+
+  // Optional sections (progressive disclosure)
 
   // Job tracker specific fields
   const [companyName, setCompanyName] = useState("");
@@ -296,6 +305,8 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
       section_id: defaultSectionId || undefined,
       title: finalTitle,
       description: description || undefined,
+      icon: icon || undefined,
+      icon_color: iconColor || undefined,
       priority: priority || undefined,
       due_date: dueDate ? dueDate.toISOString().split("T")[0] : undefined,
       item_data,
@@ -329,6 +340,11 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
           setTimerDuration(30);
           setTimerUnit("minutes");
           setIsUrgentAfterTimer(false);
+          // Reset icon + color
+          setIcon(null);
+          setIconColor(themeColor);
+          // Reset optional sections
+
           // Reset job tracker fields
           setCompanyName("");
           setCompanyUrl("");
@@ -378,30 +394,21 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         onSubmit={(e) => {
           void handleSubmit(e);
         }}
-        className="p-6 space-y-5"
+        className="p-6 space-y-6"
       >
         {/* Quick Add from URL - Only for recipe boards (job tracker has it integrated below) */}
         {boardType === "recipe" && (
-          <div
-            className="border rounded-lg p-3"
-            style={{
-              backgroundColor: `${themeColor}10`,
-              borderColor: `${themeColor}40`,
-            }}
-          >
-            <label
-              htmlFor="task-url"
-              className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200 mb-2"
-            >
-              <Link className="w-4 h-4" />
-              Recipe URL (Optional)
-            </label>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+              <Link className="w-3.5 h-3.5" />
+              Quick add from URL
+            </div>
             <Input
               id="task-url"
               type="url"
               value={url}
               onChange={(e) => void handleUrlChange(e.target.value)}
-              placeholder="Paste a recipe URL to auto-fill details..."
+              placeholder="Paste recipe URL to auto-fill..."
               leftIcon={<Link className="w-4 h-4" />}
               rightIcon={
                 urlLoading ? (
@@ -415,7 +422,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
             {/* URL Feedback Message */}
             {urlFeedback && (
               <div
-                className={`flex items-start gap-2 mt-2 text-xs px-2 py-1.5 rounded ${
+                className={`flex items-start gap-2 text-xs px-3 py-2 rounded-md ${
                   urlFeedback.type === "success"
                     ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300"
                     : urlFeedback.type === "warning"
@@ -431,9 +438,11 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 <span>{urlFeedback.message}</span>
               </div>
             )}
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Or fill in the details manually below
-            </p>
+            {!urlFeedback && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Or fill in the details manually below
+              </p>
+            )}
           </div>
         )}
 
@@ -467,28 +476,19 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
         {/* Job Tracker Specific Fields */}
         {boardType === "job_tracker" && (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {/* Quick Add URL */}
-            <div
-              className="border rounded-lg p-3"
-              style={{
-                backgroundColor: `${themeColor}10`,
-                borderColor: `${themeColor}40`,
-              }}
-            >
-              <label
-                htmlFor="job-url"
-                className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200 mb-2"
-              >
-                <Link className="w-4 h-4" />
-                Job Posting URL (Optional)
-              </label>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                <Link className="w-3.5 h-3.5" />
+                Quick add from URL
+              </div>
               <Input
                 id="job-url"
                 type="url"
                 value={url}
                 onChange={(e) => void handleUrlChange(e.target.value)}
-                placeholder="Paste job posting URL to auto-fill details..."
+                placeholder="Paste job posting URL to auto-fill..."
                 leftIcon={<Link className="w-4 h-4" />}
                 rightIcon={
                   urlLoading ? (
@@ -502,7 +502,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               {/* URL Feedback Message */}
               {urlFeedback && (
                 <div
-                  className={`flex items-start gap-2 mt-2 text-xs px-2 py-1.5 rounded ${
+                  className={`flex items-start gap-2 text-xs px-3 py-2 rounded-md ${
                     urlFeedback.type === "success"
                       ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300"
                       : urlFeedback.type === "warning"
@@ -518,89 +518,104 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                   <span>{urlFeedback.message}</span>
                 </div>
               )}
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Or fill in the details manually below
-              </p>
+              {!urlFeedback && (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Or fill in the details manually below
+                </p>
+              )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                id="company-name"
-                label="Company Name"
-                type="text"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                placeholder="Company name"
-                required
-              />
-              <Input
-                id="position"
-                label="Position"
-                type="text"
-                value={position}
-                onChange={(e) => setPosition(e.target.value)}
-                placeholder="Software Engineer"
-                required
-              />
-              <Input
-                id="salary-range"
-                label="Salary Range"
-                type="text"
-                value={salaryRange}
-                onChange={(e) => setSalaryRange(e.target.value)}
-                placeholder="$100k - $150k"
-              />
-              <Input
-                id="location"
-                label="Location"
-                type="text"
-                value={location}
-                onChange={(e) => {
-                  const newLocation = e.target.value;
-                  setLocation(newLocation);
-                  // Auto-detect location type from manual entry
-                  setLocationType(detectLocationTypeFromLocationText(newLocation));
-                }}
-                placeholder="San Francisco, CA"
+            {/* Core Job Details */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input
+                  id="company-name"
+                  label="Company Name"
+                  type="text"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  placeholder="Company name"
+                  required
+                />
+                <Input
+                  id="position"
+                  label="Position"
+                  type="text"
+                  value={position}
+                  onChange={(e) => setPosition(e.target.value)}
+                  placeholder="Software Engineer"
+                  required
+                />
+              </div>
+
+              {/* Optional Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input
+                  id="salary-range"
+                  label="Salary Range (optional)"
+                  type="text"
+                  value={salaryRange}
+                  onChange={(e) => setSalaryRange(e.target.value)}
+                  placeholder="$100k - $150k"
+                />
+                <Input
+                  id="location"
+                  label="Location (optional)"
+                  type="text"
+                  value={location}
+                  onChange={(e) => {
+                    const newLocation = e.target.value;
+                    setLocation(newLocation);
+                    // Auto-detect location type from manual entry
+                    setLocationType(detectLocationTypeFromLocationText(newLocation));
+                  }}
+                  placeholder="San Francisco, CA"
+                />
+              </div>
+
+              <Select
+                id="employment-type"
+                label="Employment Type (optional)"
+                value={employmentType}
+                onChange={(e) => setEmploymentType(e.target.value)}
+                placeholder="Select type"
+                options={[
+                  { value: "Full-time", label: "Full-time" },
+                  { value: "Part-time", label: "Part-time" },
+                  { value: "Contract", label: "Contract" },
+                ]}
               />
             </div>
-            <Select
-              id="employment-type"
-              label="Employment Type"
-              value={employmentType}
-              onChange={(e) => setEmploymentType(e.target.value)}
-              placeholder="Select type"
-              options={[
-                { value: "Full-time", label: "Full-time" },
-                { value: "Part-time", label: "Part-time" },
-                { value: "Contract", label: "Contract" },
-              ]}
-            />
-            <Textarea
-              id="job-description"
-              label="Job Description"
-              value={jobDescription}
-              onChange={(e) => setJobDescription(e.target.value)}
-              placeholder="Paste or type the full job description here..."
-              rows={8}
-              resize="vertical"
-            />
-            <Textarea
-              id="job-notes"
-              label="Notes"
-              value={jobNotes}
-              onChange={(e) => setJobNotes(e.target.value)}
-              placeholder="Interview notes, contacts, follow-ups, etc."
-              rows={8}
-              resize="vertical"
-            />
+
+            {/* Additional Context */}
+            <div className="space-y-4 pt-2 border-t border-gray-200 dark:border-gray-700">
+              <Textarea
+                id="job-description"
+                label="Job Description (optional)"
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+                placeholder="Paste or type the full job description here..."
+                rows={6}
+                resize="vertical"
+              />
+              <Textarea
+                id="job-notes"
+                label="Notes (optional)"
+                value={jobNotes}
+                onChange={(e) => setJobNotes(e.target.value)}
+                placeholder="Interview notes, contacts, follow-ups..."
+                rows={4}
+                resize="vertical"
+              />
+            </div>
           </div>
         )}
 
         {/* Recipe Specific Fields */}
         {boardType === "recipe" && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-6">
+            {/* Core Recipe Details */}
+            <div className="space-y-4">
               <Input
                 id="recipe-name"
                 label="Recipe Name"
@@ -609,207 +624,108 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 onChange={(e) => setRecipeName(e.target.value)}
                 placeholder="Chocolate Chip Cookies"
               />
-              <Input
-                id="prep-time"
-                label="Prep Time"
-                type="text"
-                inputMode="numeric"
-                value={prepTime}
-                onChange={(e) => setPrepTime(e.target.value)}
-                placeholder="15 minutes"
-              />
-              <Input
-                id="cook-time"
-                label="Cook Time"
-                type="text"
-                inputMode="numeric"
-                value={cookTime}
-                onChange={(e) => setCookTime(e.target.value)}
-                placeholder="30 minutes"
-              />
-              <Input
-                id="total-time"
-                label="Total Time"
-                type="text"
-                inputMode="numeric"
-                value={totalTime}
-                onChange={(e) => setTotalTime(e.target.value)}
-                placeholder="45 minutes"
-              />
-              <Input
-                id="servings"
-                label="Servings"
-                type="text"
-                value={servings}
-                onChange={(e) => setServings(e.target.value)}
-                placeholder="4"
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Select
-                id="category"
-                label="Category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                placeholder="Select a category..."
-                options={[
-                  { value: "Main", label: "Main" },
-                  { value: "Side", label: "Side" },
-                  { value: "Dessert", label: "Dessert" },
-                  { value: "Appetizer", label: "Appetizer" },
-                  { value: "Breakfast", label: "Breakfast" },
-                  { value: "Soup", label: "Soup" },
-                  { value: "Salad", label: "Salad" },
-                  { value: "Snack", label: "Snack" },
-                  { value: "Beverage", label: "Beverage" },
-                ]}
-              />
-              <Input
-                id="recipe-url-2"
-                label="Source URL (Optional)"
-                type="url"
-                value={recipeUrl}
-                onChange={(e) => setRecipeUrl(e.target.value)}
-                placeholder="https://recipe-site.com/..."
-              />
-            </div>
-            <Textarea
-              id="ingredients"
-              label="Ingredients (one per line)"
-              value={ingredients}
-              onChange={(e) => setIngredients(e.target.value)}
-              placeholder="2 cups flour&#10;1 cup sugar&#10;2 eggs"
-              rows={4}
-            />
-            <Textarea
-              id="instructions"
-              label="Instructions (one step per line)"
-              value={instructions}
-              onChange={(e) => setInstructions(e.target.value)}
-              placeholder="Preheat oven to 350°F&#10;Mix dry ingredients&#10;Add wet ingredients"
-              rows={4}
-            />
-            <Textarea
-              id="recipe-notes"
-              label="Notes"
-              value={recipeNotes}
-              onChange={(e) => setRecipeNotes(e.target.value)}
-              placeholder="Personal notes, modifications, etc."
-              rows={2}
-            />
-
-            {/* Timer Section */}
-            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
-              <div className="flex items-center gap-3">
-                <div
-                  className="relative flex-shrink-0 cursor-pointer"
-                  onClick={() => setHasTimer(!hasTimer)}
-                >
-                  <input
-                    type="checkbox"
-                    checked={hasTimer}
-                    onChange={() => {}}
-                    className="sr-only peer"
-                    tabIndex={-1}
-                  />
-                  <div
-                    className="w-11 h-6 bg-gray-300 dark:bg-gray-600 rounded-full peer transition-colors"
-                    style={hasTimer ? { backgroundColor: themeColor } : {}}
-                  ></div>
-                  <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
-                </div>
-                <div className="flex-1">
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    Add Timer
-                  </span>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Set a countdown timer for this recipe
-                  </p>
-                </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <Input
+                  id="prep-time"
+                  label="Prep Time"
+                  type="text"
+                  inputMode="numeric"
+                  value={prepTime}
+                  onChange={(e) => setPrepTime(e.target.value)}
+                  placeholder="15 min"
+                />
+                <Input
+                  id="cook-time"
+                  label="Cook Time"
+                  type="text"
+                  inputMode="numeric"
+                  value={cookTime}
+                  onChange={(e) => setCookTime(e.target.value)}
+                  placeholder="30 min"
+                />
+                <Input
+                  id="total-time"
+                  label="Total Time"
+                  type="text"
+                  inputMode="numeric"
+                  value={totalTime}
+                  onChange={(e) => setTotalTime(e.target.value)}
+                  placeholder="45 min"
+                />
+                <Input
+                  id="servings"
+                  label="Servings"
+                  type="text"
+                  value={servings}
+                  onChange={(e) => setServings(e.target.value)}
+                  placeholder="4"
+                />
               </div>
 
-              {/* Timer Duration - Show only if timer enabled */}
-              {hasTimer && (
-                <div className="pt-2 space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Duration
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="number"
-                        min={1}
-                        max={timerUnit === "hours" ? 24 : 1440}
-                        value={timerDuration}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val === "") {
-                            setTimerDuration(0);
-                            return;
-                          }
-                          const numVal = parseInt(val);
-                          const max = timerUnit === "hours" ? 24 : 1440;
-                          setTimerDuration(Math.min(max, numVal));
-                        }}
-                        onBlur={(e) => {
-                          const val = parseInt(e.target.value);
-                          if (isNaN(val) || val < 1) {
-                            setTimerDuration(1);
-                          }
-                        }}
-                        placeholder="30"
-                        className="hide-number-spinner flex-1 block rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                      />
-                      <div className="w-32">
-                        <Select
-                          id="timer-unit-recipe"
-                          value={timerUnit}
-                          onChange={(e) => {
-                            setTimerUnit(e.target.value as "minutes" | "hours");
-                            if (e.target.value === "hours") {
-                              setTimerDuration(
-                                Math.min(24, Math.ceil(timerDuration / 60))
-                              );
-                            } else {
-                              setTimerDuration(
-                                Math.min(1440, timerDuration * 60)
-                              );
-                            }
-                          }}
-                          options={[
-                            { value: "minutes", label: "Minutes" },
-                            { value: "hours", label: "Hours" },
-                          ]}
-                          size="sm"
-                        />
-                      </div>
-                    </div>
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Select
+                  id="category"
+                  label="Category (optional)"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  placeholder="Select a category..."
+                  options={[
+                    { value: "Main", label: "Main" },
+                    { value: "Side", label: "Side" },
+                    { value: "Dessert", label: "Dessert" },
+                    { value: "Appetizer", label: "Appetizer" },
+                    { value: "Breakfast", label: "Breakfast" },
+                    { value: "Soup", label: "Soup" },
+                    { value: "Salad", label: "Salad" },
+                    { value: "Snack", label: "Snack" },
+                    { value: "Beverage", label: "Beverage" },
+                  ]}
+                />
+                <Input
+                  id="recipe-url-2"
+                  label="Source URL (optional)"
+                  type="url"
+                  value={recipeUrl}
+                  onChange={(e) => setRecipeUrl(e.target.value)}
+                  placeholder="https://recipe-site.com/..."
+                />
+              </div>
+            </div>
 
-                  {/* Mark as Urgent */}
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={isUrgentAfterTimer}
-                      onChange={(e) => setIsUrgentAfterTimer(e.target.checked)}
-                      className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 checked:bg-current focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 cursor-pointer"
-                      style={{
-                        accentColor: isUrgentAfterTimer ? themeColor : undefined,
-                      }}
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">
-                      Mark as urgent when timer completes
-                    </span>
-                  </label>
-                </div>
-              )}
+            {/* Recipe Content */}
+            <div className="space-y-4 pt-2 border-t border-gray-200 dark:border-gray-700">
+              <Textarea
+                id="ingredients"
+                label="Ingredients (one per line)"
+                value={ingredients}
+                onChange={(e) => setIngredients(e.target.value)}
+                placeholder="2 cups flour&#10;1 cup sugar&#10;2 eggs"
+                rows={6}
+              />
+              <Textarea
+                id="instructions"
+                label="Instructions (one step per line)"
+                value={instructions}
+                onChange={(e) => setInstructions(e.target.value)}
+                placeholder="Preheat oven to 350°F&#10;Mix dry ingredients&#10;Add wet ingredients"
+                rows={6}
+              />
+              <Textarea
+                id="recipe-notes"
+                label="Notes (optional)"
+                value={recipeNotes}
+                onChange={(e) => setRecipeNotes(e.target.value)}
+                placeholder="Personal notes, modifications..."
+                rows={3}
+              />
             </div>
           </div>
         )}
 
         {/* Optional Fields - Hidden for job tracker */}
         {boardType !== "job_tracker" && (
-          <div className="space-y-5">
+          <div className="space-y-4">
             {/* Priority */}
             <div>
               <label className="block text-sm font-bold text-primary mb-2.5">
@@ -872,178 +788,44 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               </div>
             </div>
 
-            {/* Repeatable Task Section */}
-            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
-              <div className="flex items-center gap-3">
-                <div
-                  className="relative flex-shrink-0 cursor-pointer"
-                  onClick={() => {
-                    const newValue = !isRepeatable;
-                    setIsRepeatable(newValue);
-                    // If enabling repeatable and no due date, prompt user
-                    if (newValue && !dueDate) {
-                      // Set default to tomorrow
-                      const tomorrow = new Date();
-                      tomorrow.setDate(tomorrow.getDate() + 1);
-                      setDueDate(tomorrow);
-                    }
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isRepeatable}
-                    onChange={() => {}}
-                    className="sr-only peer"
-                    tabIndex={-1}
-                  />
-                  <div
-                    className="w-11 h-6 bg-gray-300 dark:bg-gray-600 rounded-full peer transition-colors"
-                    style={isRepeatable ? { backgroundColor: themeColor } : {}}
-                  ></div>
-                  <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
-                </div>
-                <div className="flex-1">
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    Repeatable Task
-                  </span>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Auto-reschedules after completion
-                  </p>
-                </div>
+            {/* Scheduling + Appearance */}
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-4">
+              {/* Row 1: Repeatable (left) + Timer (right) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <TaskSchedulingControls
+                  themeColor={themeColor}
+                  dueDate={dueDate}
+                  setDueDate={setDueDate}
+                  isRepeatable={isRepeatable}
+                  setIsRepeatable={setIsRepeatable}
+                  repeatFrequency={repeatFrequency}
+                  setRepeatFrequency={setRepeatFrequency}
+                  hasTimer={hasTimer}
+                  setHasTimer={setHasTimer}
+                  timerDuration={timerDuration}
+                  setTimerDuration={setTimerDuration}
+                  timerUnit={timerUnit}
+                  setTimerUnit={setTimerUnit}
+                  isUrgentAfterTimer={isUrgentAfterTimer}
+                  setIsUrgentAfterTimer={setIsUrgentAfterTimer}
+                  repeatFrequencySelectId="repeat-frequency"
+                  timerDurationSelectId="timer-duration"
+                  timerUnitSelectId="timer-unit"
+                />
               </div>
 
-              {/* Repeat Frequency - Show only if repeatable */}
-              {isRepeatable && (
-                <div className="pt-2">
-                  <Select
-                    id="repeat-frequency"
-                    label="Repeat Frequency"
-                    value={repeatFrequency}
-                    onChange={(e) =>
-                      setRepeatFrequency(
-                        e.target.value as
-                          | "daily"
-                          | "weekly"
-                          | "biweekly"
-                          | "monthly"
-                          | "yearly"
-                      )
-                    }
-                    options={[
-                      { value: "daily", label: "Daily" },
-                      { value: "weekly", label: "Weekly" },
-                      { value: "biweekly", label: "Bi-weekly" },
-                      { value: "monthly", label: "Monthly" },
-                      { value: "yearly", label: "Annually" },
-                    ]}
-                    size="sm"
-                  />
-                  {!dueDate && (
-                    <p className="text-xs text-red-500 dark:text-red-400 mt-1">
-                      ⚠️ Date required for repeatable tasks
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Timer Section */}
-            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
-              <div className="flex items-center gap-3">
-                <div
-                  className="relative flex-shrink-0 cursor-pointer"
-                  onClick={() => setHasTimer(!hasTimer)}
-                >
-                  <input
-                    type="checkbox"
-                    checked={hasTimer}
-                    onChange={() => {}}
-                    className="sr-only peer"
-                    tabIndex={-1}
-                  />
-                  <div
-                    className="w-11 h-6 bg-gray-300 dark:bg-gray-600 rounded-full peer transition-colors"
-                    style={hasTimer ? { backgroundColor: themeColor } : {}}
-                  ></div>
-                  <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
-                </div>
-                <div className="flex-1">
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    Add Timer
-                  </span>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Set a countdown timer for this task
-                  </p>
-                </div>
+              {/* Row 2: Icon (left) + Color (right) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <TaskAppearanceControls
+                  icon={icon}
+                  setIcon={setIcon}
+                  iconColor={iconColor}
+                  setIconColor={setIconColor}
+                  icons={TASK_ICONS}
+                  iconHexInputId="task-icon-hex"
+                  iconPickerLabel="Icon"
+                />
               </div>
-
-              {/* Timer Duration - Show only if timer enabled */}
-              {hasTimer && (
-                <div className="pt-2 space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Duration
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="number"
-                        min={1}
-                        max={timerUnit === "hours" ? 24 : 1440}
-                        value={timerDuration}
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value) || 1;
-                          const max = timerUnit === "hours" ? 24 : 1440;
-                          setTimerDuration(Math.min(max, Math.max(1, val)));
-                        }}
-                        placeholder="30"
-                        className="hide-number-spinner flex-1 block rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                      />
-                      <div className="w-32">
-                        <Select
-                          id="timer-unit"
-                          value={timerUnit}
-                          onChange={(e) => {
-                            setTimerUnit(e.target.value as "minutes" | "hours");
-                            // Convert duration when switching units
-                            if (e.target.value === "hours") {
-                              setTimerDuration(
-                                Math.min(24, Math.ceil(timerDuration / 60))
-                              );
-                            } else {
-                              setTimerDuration(
-                                Math.min(1440, timerDuration * 60)
-                              );
-                            }
-                          }}
-                          options={[
-                            { value: "minutes", label: "Minutes" },
-                            { value: "hours", label: "Hours" },
-                          ]}
-                          size="md"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Urgent After Timer */}
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={isUrgentAfterTimer}
-                      onChange={(e) => setIsUrgentAfterTimer(e.target.checked)}
-                      className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 checked:bg-current focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 cursor-pointer"
-                      style={{
-                        accentColor: isUrgentAfterTimer
-                          ? themeColor
-                          : undefined,
-                      }}
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">
-                      Mark as urgent when timer completes
-                    </span>
-                  </label>
-                </div>
-              )}
             </div>
           </div>
         )}
