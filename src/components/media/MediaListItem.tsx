@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Clock, RotateCcw, Check, Lightbulb } from "lucide-react";
 import { Book } from "@phosphor-icons/react";
+import { useQuery } from "@tanstack/react-query";
 import { type MediaStatus } from "@/utils/mediaStatus";
-import { logger } from "@/lib/logger";
+import { queryKeys } from "@/lib/queryKeys";
+import { getMediaDetailsWithCache } from "@/services/mediaDetailsWithCache";
 import {
   AccordionListCard,
   GenreChips,
@@ -12,10 +14,6 @@ import {
   MediaDetailsContent,
   MediaReviewModal,
 } from "@/components/shared";
-import {
-  fetchDetailedMediaInfo,
-  type DetailedMediaInfo,
-} from "@/utils/tmdbDetails";
 
 interface MediaListItemProps {
   id: string | number;
@@ -140,11 +138,18 @@ const MediaListItemComponent: React.FC<MediaListItemProps> = ({
   pageCount,
   onExpandChange,
 }) => {
-  // State for detailed info
-  const [details, setDetails] = useState<DetailedMediaInfo | null>(null);
-  const [loadingDetails, setLoadingDetails] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+
+  const isMovieOrTv = mediaType === "movie" || mediaType === "tv";
+
+  const { data: details = null } = useQuery({
+    queryKey: queryKeys.watchlist.details(externalId || "", mediaType || ""),
+    queryFn: () => getMediaDetailsWithCache(externalId!, mediaType as "movie" | "tv"),
+    enabled: isExpanded && !!externalId && isMovieOrTv,
+    staleTime: Number.POSITIVE_INFINITY,
+    placeholderData: null,
+  });
 
   // Notify parent when expansion changes
   useEffect(() => {
@@ -152,28 +157,8 @@ const MediaListItemComponent: React.FC<MediaListItemProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isExpanded]);
 
-  // Fetch detailed info when accordion expands (only for movies/TV)
-  useEffect(() => {
-    if (
-      isExpanded &&
-      !details &&
-      externalId &&
-      mediaType &&
-      (mediaType === "movie" || mediaType === "tv")
-    ) {
-      setLoadingDetails(true);
-      fetchDetailedMediaInfo(externalId, mediaType)
-        .then((info) => {
-          setDetails(info);
-        })
-        .catch((err) => {
-          logger.error("Failed to load media details", err);
-        })
-        .finally(() => {
-          setLoadingDetails(false);
-        });
-    }
-  }, [isExpanded, details, externalId, mediaType]);
+  // Details are cache-only; prefetch fills React Query cache before first expand.
+  // Keep the expand UX instant and spinner-free.
 
   // Build custom actions for media-specific buttons - memoized to prevent recreation
   const customActions = useMemo(() => {
@@ -351,7 +336,6 @@ const MediaListItemComponent: React.FC<MediaListItemProps> = ({
         title={title}
         description={description}
         details={details}
-        loadingDetails={loadingDetails}
         mediaType={mediaType}
         externalId={externalId}
         isCompleted={isCompleted}
@@ -377,7 +361,6 @@ const MediaListItemComponent: React.FC<MediaListItemProps> = ({
       title,
       description,
       details,
-      loadingDetails,
       mediaType,
       externalId,
       isCompleted,

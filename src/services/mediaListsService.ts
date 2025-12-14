@@ -10,6 +10,7 @@ import type {
   MediaDomain,
   MediaList,
   MediaListItem,
+  MediaListMember,
   MediaListMemberRole,
   MediaListMemberWithUser,
   MediaListWithCounts,

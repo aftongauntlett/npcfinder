@@ -4,11 +4,17 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import * as recommendationsService from "../services/recommendationsService";
 import { queryKeys } from "../lib/queryKeys";
 import { useAuth } from "../contexts/AuthContext";
 import { parseSupabaseError } from "../utils/errorUtils";
+import { fetchMultipleMediaDetails, type DetailedMediaInfo } from "../utils/tmdbDetails";
+import {
+  getCachedMediaDetailsBatch,
+  upsertCachedMediaDetails,
+} from "@/services/mediaDetailsCacheService";
+import { logger } from "@/lib/logger";
 import type {
   WatchlistItem,
   AddWatchlistItemData,
@@ -365,4 +371,67 @@ export function useWatchlistIds() {
   return useMemo(() => {
     return new Set(watchlist.map((item) => item.external_id));
   }, [watchlist]);
+}
+
+export function usePrefetchWatchlistDetails(
+  items: Array<{ external_id: string; media_type: "movie" | "tv" }>,
+  enabled: boolean = true
+) {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!enabled || items.length === 0) return;
+
+    let cancelled = false;
+
+    const uncached = items.filter((item) => {
+      const key = queryKeys.watchlist.details(item.external_id, item.media_type);
+      return !queryClient.getQueryData<DetailedMediaInfo>(key);
+    });
+
+    if (uncached.length === 0) return;
+
+    void (async () => {
+      try {
+        // 1) Hydrate from Supabase cache first (fast, shared)
+        const cached = await getCachedMediaDetailsBatch(uncached);
+        if (cancelled) return;
+
+        const remaining: typeof uncached = [];
+        uncached.forEach((item) => {
+          const cachedDetails = cached.get(`${item.external_id}:${item.media_type}`);
+          if (cachedDetails) {
+            queryClient.setQueryData(
+              queryKeys.watchlist.details(item.external_id, item.media_type),
+              cachedDetails
+            );
+          } else {
+            remaining.push(item);
+          }
+        });
+
+        // 2) Fill any misses via external APIs (rate limiters apply)
+        if (remaining.length === 0) return;
+
+        const fetched = await fetchMultipleMediaDetails(remaining);
+        if (cancelled) return;
+
+        fetched.forEach((details, externalId) => {
+          queryClient.setQueryData(
+            queryKeys.watchlist.details(externalId, details.media_type),
+            details
+          );
+
+          // 3) Persist to Supabase cache (fire-and-forget)
+          void upsertCachedMediaDetails(details);
+        });
+      } catch (error) {
+        logger.warn("Failed to prefetch watchlist details", { error });
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled, items, queryClient]);
 }

@@ -6,10 +6,12 @@ import {
   useAddToWatchlist,
   useToggleWatchlistWatched,
   useDeleteFromWatchlist,
+  usePrefetchWatchlistDetails,
 } from "../useWatchlistQueries";
 import { useMediaFiltering } from "../useMediaFiltering";
 import { useUrlPaginationState } from "../useUrlPaginationState";
 import { fetchDetailedMediaInfo } from "../../utils/tmdbDetails";
+import { upsertCachedMediaDetails } from "@/services/mediaDetailsCacheService";
 import {
   getPersistedFilters,
   persistFilters,
@@ -31,7 +33,8 @@ export interface UseWatchlistViewModelProps {
 export function useWatchlistViewModel({
   initialFilter = "all",
 }: UseWatchlistViewModelProps) {
-  const { data: watchList = [] } = useWatchlist();
+  const watchListQuery = useWatchlist();
+  const watchList = useMemo(() => watchListQuery.data ?? [], [watchListQuery.data]);
   const addToWatchlist = useAddToWatchlist();
   const toggleWatched = useToggleWatchlistWatched();
   const deleteFromWatchlist = useDeleteFromWatchlist();
@@ -169,6 +172,20 @@ export function useWatchlistViewModel({
     onItemsPerPageChange: setPerPage,
   });
 
+  const pageDetailItems = useMemo(
+    () =>
+      paginatedItems.map((item) => ({
+        external_id: item.external_id,
+        media_type: item.media_type,
+      })),
+    [paginatedItems]
+  );
+
+  usePrefetchWatchlistDetails(
+    pageDetailItems,
+    watchListQuery.isSuccess && pageDetailItems.length > 0
+  );
+
   // Calculate counts for empty state logic
   const toWatchCount = useMemo(
     () => watchList.filter((item) => !item.watched).length,
@@ -197,6 +214,10 @@ export function useWatchlistViewModel({
         result.external_id,
         mediaType
       );
+
+      if (detailedInfo) {
+        void upsertCachedMediaDetails(detailedInfo);
+      }
 
       void addToWatchlist.mutateAsync({
         external_id: result.external_id,

@@ -28,7 +28,7 @@ interface PerformanceMonitorOptions {
 export function usePerformanceMonitor({
   componentName,
   threshold = 10,
-  enabled = process.env.NODE_ENV === "development",
+  enabled = import.meta.env.DEV,
 }: PerformanceMonitorOptions): void {
   const renderCount = useRef(0);
   const startTime = useRef(Date.now());

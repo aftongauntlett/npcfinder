@@ -80,6 +80,14 @@ export const queryKeys = {
     item: (id: string) => [...queryKeys.watchlist.all, "item", id] as const,
     byStatus: (watched: boolean, userId?: string) =>
       [...queryKeys.watchlist.all, "by-status", watched, userId] as const,
+    details: (externalId: string, mediaType: string) =>
+      [...queryKeys.watchlist.all, "details", externalId, mediaType] as const,
+    detailsBatch: (externalIds: string[]) =>
+      [
+        ...queryKeys.watchlist.all,
+        "details-batch",
+        externalIds.sort().join(","),
+      ] as const,
   },
 
   // Reviews

@@ -6,6 +6,17 @@
 import { tmdbLimiter, omdbLimiter } from "./rateLimiter";
 import { logger } from "@/lib/logger";
 
+function getEnvVar(key: string): string | undefined {
+  // Vite runtime
+  const viteEnv = (import.meta as unknown as { env?: Record<string, string> }).env;
+  if (viteEnv?.[key]) return viteEnv[key];
+
+  // Node runtime (one-off scripts)
+  const nodeEnv = (globalThis as unknown as { process?: { env?: Record<string, string> } })
+    .process?.env;
+  return nodeEnv?.[key];
+}
+
 interface OMDBResponse {
   Title: string;
   Year: string;
@@ -43,7 +54,7 @@ interface OMDBResponse {
 async function fetchOMDBData(
   imdbId: string
 ): Promise<Partial<OMDBResponse> | null> {
-  const apiKey = import.meta.env.VITE_OMDB_API_KEY;
+  const apiKey = getEnvVar("VITE_OMDB_API_KEY");
   if (!apiKey) {
     logger.warn("OMDB API key not configured");
     return null;
@@ -90,7 +101,6 @@ export interface DetailedMediaInfo {
   vote_average: number | null;
   vote_count: number | null;
   runtime: number | null;
-  awards: string[];
   // OMDB enriched data
   imdb_rating: string | null;
   rotten_tomatoes_score: string | null;
@@ -127,13 +137,18 @@ interface TMDBMovieDetails {
  */
 export async function fetchDetailedMediaInfo(
   externalId: string,
-  mediaType: "movie" | "tv"
+  mediaType: "movie" | "tv",
+  options?: {
+    includeOmdb?: boolean;
+  }
 ): Promise<DetailedMediaInfo | null> {
-  const apiKey = import.meta.env.VITE_TMDB_API_KEY;
+  const apiKey = getEnvVar("VITE_TMDB_API_KEY");
   if (!apiKey) {
     logger.error("TMDB API key not configured");
     return null;
   }
+
+  const includeOmdb = options?.includeOmdb ?? true;
 
   try {
     // Fetch detailed information including credits and external_ids (for IMDb ID)
@@ -188,35 +203,18 @@ export async function fetchDetailedMediaInfo(
     // Extract genres
     const genres = data.genres?.map((g) => g.name) || [];
 
-    // Extract ALL cast members (not just first 5)
-    const cast = data.credits?.cast?.map((actor) => actor.name) || [];
-
-    // Detect prestigious awards based on ratings and popularity
-    // Note: TMDB doesn't provide Emmy/Oscar data directly, but we can infer quality
-    const awards: string[] = [];
-    const avgRating = data.vote_average || 0;
-    const voteCount = data.vote_count || 0;
-
-    if (avgRating >= 8.5 && voteCount >= 10000) {
-      // Very high ratings with many votes often indicate award winners
-      if (mediaType === "movie") {
-        awards.push("Oscar-Worthy");
-      } else {
-        awards.push("Emmy-Worthy");
-      }
-    }
-    if (avgRating >= 8.0 && voteCount >= 5000) {
-      awards.push("Critically Acclaimed");
-    }
-    if (avgRating >= 7.5 && voteCount >= 20000) {
-      awards.push("Fan Favorite");
-    }
+    // Extract cast (cap for predictable DB/cache size)
+    // UI currently displays only the first 10 names.
+    const MAX_CACHED_CAST = 20;
+    const cast = (data.credits?.cast || [])
+      .map((actor) => actor.name)
+      .slice(0, MAX_CACHED_CAST);
 
     // Fetch OMDB data if IMDb ID is available
     const imdbId = data.external_ids?.imdb_id;
     let omdbData: Partial<OMDBResponse> | null = null;
 
-    if (imdbId) {
+    if (includeOmdb && imdbId) {
       omdbData = await fetchOMDBData(imdbId);
     }
 
@@ -266,7 +264,6 @@ export async function fetchDetailedMediaInfo(
       vote_average: data.vote_average || null,
       vote_count: data.vote_count || null,
       runtime: data.runtime || null,
-      awards,
       // OMDB enriched data
       imdb_rating: omdbData?.imdbRating || null,
       rotten_tomatoes_score: rottenTomatoesScore,
@@ -293,30 +290,22 @@ export async function fetchMultipleMediaDetails(
 ): Promise<Map<string, DetailedMediaInfo>> {
   const results = new Map<string, DetailedMediaInfo>();
 
-  // Process in batches to respect rate limits (40 requests per 10 seconds)
-  const batchSize = 10;
-  const delayMs = 300; // 300ms between requests
+  // Fire all requests concurrently; internal rate limiters handle pacing.
+  // Include OMDB during prefetch so expanded details have awards/ratings.
+  const settled = await Promise.allSettled(
+    items.map(async (item) => {
+      const details = await fetchDetailedMediaInfo(item.external_id, item.media_type, {
+        includeOmdb: true,
+      });
+      return { id: item.external_id, details };
+    })
+  );
 
-  for (let i = 0; i < items.length; i += batchSize) {
-    const batch = items.slice(i, i + batchSize);
-
-    const batchResults = await Promise.all(
-      batch.map(async (item) => {
-        await new Promise((resolve) => setTimeout(resolve, delayMs));
-        const details = await fetchDetailedMediaInfo(
-          item.external_id,
-          item.media_type
-        );
-        return { id: item.external_id, details };
-      })
-    );
-
-    batchResults.forEach(({ id, details }) => {
-      if (details) {
-        results.set(id, details);
-      }
-    });
-  }
+  settled.forEach((result) => {
+    if (result.status !== "fulfilled") return;
+    const { id, details } = result.value;
+    if (details) results.set(id, details);
+  });
 
   return results;
 }

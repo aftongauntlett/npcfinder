@@ -1,4 +1,4 @@
-import { Loader2, MessageSquare } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { Button, AudioPlayer } from "@/components/shared";
 import { useMyMediaReview } from "@/hooks/useSimpleMediaReviews";
 import type { DetailedMediaInfo } from "@/utils/tmdbDetails";
@@ -7,7 +7,6 @@ interface MediaDetailsContentProps {
   title?: string; // Media title for aria-label context
   description?: string; // Overview/description text
   details: DetailedMediaInfo | null;
-  loadingDetails: boolean;
   mediaType?: "movie" | "tv" | "song" | "album" | "playlist" | "game" | "book";
   externalId?: string;
   isCompleted?: boolean;
@@ -42,7 +41,6 @@ export default function MediaDetailsContent({
   title,
   description,
   details,
-  loadingDetails,
   mediaType = "movie",
   externalId,
   isCompleted,
@@ -140,6 +138,7 @@ export default function MediaDetailsContent({
     return "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700";
   };
 
+
   // Helper function to format playtime
   const formatPlaytime = (minutes: number): string => {
     const hours = Math.floor(minutes / 60);
@@ -151,7 +150,6 @@ export default function MediaDetailsContent({
     }
     return `${mins} ${mins === 1 ? "minute" : "minutes"}`;
   };
-
   // Helper function to format track duration from milliseconds
   const formatTrackDuration = (milliseconds: number): string => {
     const minutes = Math.floor(milliseconds / 60000);
@@ -187,15 +185,8 @@ export default function MediaDetailsContent({
         </div>
       )}
 
-      {/* Loading state */}
-      {loadingDetails && (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
-        </div>
-      )}
-
       {/* Music-specific details */}
-      {isMusic && !loadingDetails && (
+      {isMusic && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Left Column: Details */}
           <div>
@@ -284,7 +275,7 @@ export default function MediaDetailsContent({
       )}
 
       {/* Game-specific details */}
-      {isGame && !loadingDetails && (
+        {isGame && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Left Column: Details */}
           <div>
@@ -392,7 +383,7 @@ export default function MediaDetailsContent({
       )}
 
       {/* Book-specific details */}
-      {isBook && !loadingDetails && (
+        {isBook && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Left Column: Details */}
           <div>
@@ -486,7 +477,7 @@ export default function MediaDetailsContent({
       {isMovie && (
         <>
           {/* Two-column layout for all movie details */}
-          {details && !loadingDetails && (
+          {details && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Left Column: Details (Crew/Cast) */}
               <div>

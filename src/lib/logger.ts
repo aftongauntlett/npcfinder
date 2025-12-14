@@ -7,13 +7,19 @@
 
 import * as Sentry from "@sentry/react";
 
-const isDev = import.meta.env.DEV;
-const isProd = import.meta.env.PROD;
+const viteEnv = (import.meta as unknown as { env?: Record<string, string> }).env;
+const nodeEnv = (globalThis as unknown as { process?: { env?: Record<string, string> } }).process
+  ?.env;
+const nodeEnvMode = nodeEnv?.NODE_ENV;
+
+const isDev = viteEnv?.DEV ? viteEnv.DEV === "true" : nodeEnvMode !== "production";
+const isProd = viteEnv?.PROD ? viteEnv.PROD === "true" : nodeEnvMode === "production";
+const sentryDsn = viteEnv?.VITE_SENTRY_DSN ?? nodeEnv?.VITE_SENTRY_DSN;
 
 // Initialize Sentry in production
-if (isProd && import.meta.env.VITE_SENTRY_DSN) {
+if (isProd && sentryDsn && typeof window !== "undefined") {
   Sentry.init({
-    dsn: import.meta.env.VITE_SENTRY_DSN,
+    dsn: sentryDsn,
     environment: "production",
     // Sample 10% of transactions for performance monitoring
     tracesSampleRate: 0.1,
