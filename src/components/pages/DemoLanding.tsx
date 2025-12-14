@@ -7,7 +7,7 @@ import {
   LinkedinLogo,
   ArrowUp,
 } from "@phosphor-icons/react";
-import { StarryBackground } from "@/components/shared";
+import { useTheme } from "@/hooks/useTheme";
 import LandingButton from "../landing/LandingButton";
 import HeroConstellation from "../effects/HeroConstellation";
 import { FeatureBlock } from "../landing/demo/FeatureBlock";
@@ -25,6 +25,11 @@ import {
 import { landingAvailability } from "../../data/landingAvailability";
 import { landingPrivacy } from "../../data/landingPrivacy";
 import { usePageMeta } from "../../hooks/usePageMeta";
+
+// Only load the starfield in dark mode.
+const StarryBackground = React.lazy(
+  () => import("@/components/shared/common/StarryBackground")
+);
 
 // Structured data for search engines (static, outside component)
 const structuredData = {
@@ -63,6 +68,7 @@ const pageMetaOptions = {
 const DemoLanding: React.FC = () => {
   usePageMeta(pageMetaOptions);
   const prefersReducedMotion = useReducedMotion();
+  const { resolvedTheme } = useTheme();
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
       {/* Structured Data for Search Engines */}
@@ -79,7 +85,11 @@ const DemoLanding: React.FC = () => {
         Skip to main content
       </a>
 
-      <StarryBackground />
+      {resolvedTheme === "dark" && !prefersReducedMotion && (
+        <React.Suspense fallback={null}>
+          <StarryBackground />
+        </React.Suspense>
+      )}
 
       {/* Header */}
       <header

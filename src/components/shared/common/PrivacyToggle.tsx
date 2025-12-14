@@ -1,6 +1,7 @@
 import React from "react";
 import { Lock, LockOpen } from "lucide-react";
 import Button from "../ui/Button";
+import { useTheme } from "@/hooks/useTheme";
 
 interface PrivacyToggleProps {
   isPublic: boolean;
@@ -21,6 +22,8 @@ export default function PrivacyToggle({
   contextLabel,
   className = "",
 }: PrivacyToggleProps) {
+  const { themeColor } = useTheme();
+
   const handleToggle = () => {
     onChange(!isPublic);
   };
@@ -33,6 +36,9 @@ export default function PrivacyToggle({
   };
 
   if (variant === "switch") {
+    const trackClass = size === "sm" ? "w-11 h-6" : "w-11 h-6";
+    const knobClass = size === "sm" ? "w-4 h-4" : "w-4 h-4";
+
     return (
       <div className={`flex items-center justify-between ${className}`}>
         <div className="flex items-center gap-2">
@@ -57,32 +63,29 @@ export default function PrivacyToggle({
             {isPublic ? "Public" : "Private"}
           </span>
         </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={isPublic}
+        <div
+          className="relative flex-shrink-0 cursor-pointer"
           onClick={handleToggle}
           onKeyDown={handleKeyDown}
-          className={`relative inline-flex ${
-            size === "sm" ? "h-5 w-9" : "h-6 w-11"
-          } items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-            isPublic
-              ? "bg-green-600 dark:bg-green-500"
-              : "bg-gray-200 dark:bg-gray-700"
-          }`}
+          role="switch"
+          aria-checked={isPublic}
+          tabIndex={0}
         >
-          <span
-            className={`${
-              size === "sm" ? "h-4 w-4" : "h-5 w-5"
-            } transform rounded-full bg-white shadow-lg transition-transform ${
-              isPublic
-                ? size === "sm"
-                  ? "translate-x-5"
-                  : "translate-x-6"
-                : "translate-x-0.5"
-            }`}
+          <input
+            type="checkbox"
+            checked={isPublic}
+            onChange={() => {}}
+            className="sr-only peer"
+            tabIndex={-1}
           />
-        </button>
+          <div
+            className={`${trackClass} bg-gray-300 dark:bg-gray-600 rounded-full peer transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2`}
+            style={isPublic ? { backgroundColor: themeColor } : undefined}
+          />
+          <div
+            className={`absolute left-1 top-1 ${knobClass} bg-white rounded-full transition-transform peer-checked:translate-x-5`}
+          />
+        </div>
       </div>
     );
   }

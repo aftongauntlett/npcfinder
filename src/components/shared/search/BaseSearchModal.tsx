@@ -131,15 +131,21 @@ function BaseSearchModal<T extends { external_id: string; title: string }>({
       {/* Results */}
       <div className="overflow-y-auto p-6 max-h-[60vh]">
         {searching && (
-          <p className="text-center text-gray-500 py-8">Searching...</p>
+          <p className="text-center text-gray-600 dark:text-gray-400 py-8">
+            Searching...
+          </p>
         )}
 
         {!searching && searchQuery && searchResults.length === 0 && (
-          <p className="text-center text-gray-500 py-8">{emptyStateText}</p>
+          <p className="text-center text-gray-600 dark:text-gray-400 py-8">
+            {emptyStateText}
+          </p>
         )}
 
         {!searching && !searchQuery && (
-          <p className="text-center text-gray-500 py-8">{initialText}</p>
+          <p className="text-center text-gray-600 dark:text-gray-400 py-8">
+            {initialText}
+          </p>
         )}
 
         {searchResults.length > 0 && (

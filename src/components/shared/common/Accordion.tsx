@@ -63,7 +63,7 @@ export default function Accordion({
         variant="subtle"
         onClick={handleToggle}
         onKeyDown={handleKeyDown}
-        className={`w-full justify-between bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 ${
+        className={`w-full justify-between bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-50/70 dark:hover:bg-gray-700/50 ${
           expanded ? "rounded-t-lg" : "rounded-lg"
         } ${variant === "compact" ? "py-2 px-3" : "py-3 px-4"}`}
         aria-expanded={expanded}

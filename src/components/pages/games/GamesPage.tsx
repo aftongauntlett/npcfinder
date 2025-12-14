@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Lightbulb, Play, Check } from "lucide-react";
+import { Lightbulb, Play, Check, List } from "lucide-react";
 import AppLayout from "../../layouts/AppLayout";
 import PersonalGameLibrary from "./PersonalGameLibrary";
 import GamesSuggestions from "./GamesSuggestions";
@@ -7,8 +7,10 @@ import { useGameLibrary } from "../../../hooks/useGameLibraryQueries";
 import { useGameStats } from "../../../hooks/useGameQueries";
 import { usePageMeta } from "../../../hooks/usePageMeta";
 import { TabPanel } from "@/components/shared";
+import PersonalMediaLists from "../../media/PersonalMediaLists";
+import MediaListDetail from "../../media/MediaListDetail";
 
-type TabId = "playing" | "played" | "recommendations";
+type TabId = "playing" | "played" | "recommendations" | "lists" | "list-detail";
 
 // Static page meta options (stable reference)
 const pageMetaOptions = {
@@ -27,6 +29,7 @@ const GamesPage: React.FC = () => {
   usePageMeta(pageMetaOptions);
 
   const [activeTab, setActiveTab] = useState<TabId>("playing");
+  const [activeList, setActiveList] = useState<{ id: string; title: string } | null>(null);
 
   // Fetch data for badge counts
   const { data: gameLibrary = [] } = useGameLibrary();
@@ -35,16 +38,30 @@ const GamesPage: React.FC = () => {
   const tabs = [
     {
       id: "playing" as TabId,
-      label: "Playing",
+      label: "Queue",
       icon: Play,
       badge: gameLibrary.filter((item) => !item.played).length,
     },
     {
       id: "played" as TabId,
-      label: "Played",
+      label: "Completed",
       icon: Check,
       badge: gameLibrary.filter((item) => item.played).length,
     },
+    {
+      id: "lists" as TabId,
+      label: "Lists",
+      icon: List,
+    },
+    ...(activeList
+      ? [
+          {
+            id: "list-detail" as TabId,
+            label: activeList.title,
+            icon: List,
+          },
+        ]
+      : []),
     {
       id: "recommendations" as TabId,
       label: "Recommendations",
@@ -59,7 +76,13 @@ const GamesPage: React.FC = () => {
       description="Track games you're playing and discover recommendations from friends"
       tabs={tabs}
       activeTab={activeTab}
-      onTabChange={(tabId) => setActiveTab(tabId as TabId)}
+      onTabChange={(tabId) => {
+        const nextTab = tabId as TabId;
+        setActiveTab(nextTab);
+        if (nextTab !== "list-detail") {
+          setActiveList(null);
+        }
+      }}
     >
       {/* Tab Content */}
       <TabPanel id={`${activeTab}-panel`} tabId={`${activeTab}-tab`}>
@@ -70,6 +93,18 @@ const GamesPage: React.FC = () => {
           <PersonalGameLibrary initialFilter="played" />
         )}
         {activeTab === "recommendations" && <GamesSuggestions embedded />}
+        {activeTab === "lists" && (
+          <PersonalMediaLists
+            domain="games"
+            onOpenList={(list) => {
+              setActiveList(list);
+              setActiveTab("list-detail");
+            }}
+          />
+        )}
+        {activeTab === "list-detail" && activeList && (
+          <MediaListDetail domain="games" listId={activeList.id} />
+        )}
       </TabPanel>
     </AppLayout>
   );

@@ -6,7 +6,13 @@ import { motion } from "framer-motion";
 import { Save } from "lucide-react";
 import { updateUserProfile } from "../../lib/profiles";
 import { logger } from "../../lib/logger";
-import { Button, ConfirmDialog, Card, SkeletonCard } from "@/components/shared";
+import {
+  Button,
+  ConfirmDialog,
+  Card,
+  SkeletonCard,
+  Select,
+} from "@/components/shared";
 import MainLayout from "../layouts/MainLayout";
 import ContentLayout from "../layouts/ContentLayout";
 import ProfileInformationSection from "../settings/ProfileInformationSection";
@@ -46,7 +52,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
   usePageMeta(pageMetaOptions);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { changeThemeColor } = useTheme();
+  const { theme, changeTheme, changeThemeColor } = useTheme();
 
   // Use cached profile query instead of direct API call
   const { data: cachedProfile, isLoading: profileLoading } = useProfileQuery();
@@ -214,58 +220,81 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.2 }}
+          className="space-y-6"
         >
-          <Card variant="glass" spacing="lg" border>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                void handleSave(e);
-              }}
-              className="space-y-6"
-            >
-              {/* Top Row: Profile Information (with Bio) + Change Password */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void handleSave(e);
+            }}
+            className="space-y-6"
+          >
+            {/* Top Row: Profile Information + Change Password */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card variant="glass" spacing="lg" border>
                 <ProfileInformationSection
                   displayName={profile.display_name}
                   bio={profile.bio}
                   currentUser={currentUser}
                   onChange={handleChange}
                 />
+              </Card>
 
+              <Card variant="glass" spacing="lg" border>
                 <PasswordChangeSection />
-              </div>
+              </Card>
+            </div>
 
-              {/* Theme Color - Full Width */}
-              <div className="pt-6 border-t border-gray-700/30">
-                <CompactColorThemePicker
-                  selectedColor={profile.theme_color}
-                  onColorChange={handleThemeColorChange}
+            {/* Appearance */}
+            <Card variant="glass" spacing="lg" border>
+              <div className="space-y-4">
+                <h3 className="text-base font-medium text-primary mb-1">
+                  Appearance
+                </h3>
+                <Select
+                  id="theme"
+                  label="Theme"
+                  value={theme}
+                  onChange={(e) => {
+                    changeTheme(e.target.value as "light" | "dark" | "system");
+                  }}
+                  helperText="Choose Light or Dark mode, or follow your system setting"
+                  options={[
+                    { value: "system", label: "System" },
+                    { value: "light", label: "Light" },
+                    { value: "dark", label: "Dark" },
+                  ]}
                 />
-              </div>
 
-              {/* Action Buttons - Bottom Right */}
-              <div className="pt-6 border-t border-gray-700/30">
-                <div className="flex gap-3 justify-end">
-                  <Button
-                    type="button"
-                    variant="danger"
-                    onClick={() => handleNavigateAway("/app")}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    icon={<Save className="w-4 h-4" />}
-                    loading={isSaving}
-                    disabled={isSaving}
-                  >
-                    {isSaving ? "Saving..." : "Save Changes"}
-                  </Button>
+                <div className="pt-6 border-t border-gray-200/80 dark:border-gray-700/30">
+                  <CompactColorThemePicker
+                    selectedColor={profile.theme_color}
+                    onColorChange={handleThemeColorChange}
+                  />
                 </div>
               </div>
-            </form>
-          </Card>
+            </Card>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 justify-end">
+              <Button
+                type="button"
+                variant="danger"
+                onClick={() => handleNavigateAway("/app")}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                icon={<Save className="w-4 h-4" />}
+                loading={isSaving}
+                disabled={isSaving}
+              >
+                {isSaving ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          </form>
         </motion.div>
       </ContentLayout>
     </MainLayout>

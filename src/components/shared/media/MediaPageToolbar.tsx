@@ -26,12 +26,26 @@ interface MediaPageToolbarProps {
   filterConfig?: MenuFilterConfig;
   searchConfig?: SearchConfig;
   onAddClick: () => void;
+  addLabel?: string;
+  addIcon?: React.ReactNode;
+  rightActions?: React.ReactNode;
+  hideAddButton?: boolean;
   onCollapseAll?: () => void;
   hasExpandedItems?: boolean;
 }
 
 export function MediaPageToolbar(props: MediaPageToolbarProps) {
-  const { filterConfig, onAddClick, searchConfig, onCollapseAll, hasExpandedItems } = props;
+  const {
+    filterConfig,
+    onAddClick,
+    searchConfig,
+    onCollapseAll,
+    hasExpandedItems,
+    addLabel = "Add",
+    addIcon = <Plus size={18} />,
+    rightActions,
+    hideAddButton = false,
+  } = props;
 
   const handleRemoveFilter = (sectionId: string, filterId: string) => {
     if (!filterConfig) return;
@@ -74,16 +88,20 @@ export function MediaPageToolbar(props: MediaPageToolbarProps) {
               />
             </div>
 
-            {/* Mobile: icon-only add button inline with search */}
-            <Button
-              onClick={onAddClick}
-              variant="action"
-              size="icon"
-              icon={<Plus size={18} />}
-              className="sm:hidden"
-              aria-label="Add"
-              title="Add"
-            />
+            {/* Mobile: actions inline with search */}
+            <div className="flex items-center gap-2 sm:hidden">
+              {rightActions}
+              {!hideAddButton && (
+                <Button
+                  onClick={onAddClick}
+                  variant="action"
+                  size="icon"
+                  icon={addIcon}
+                  aria-label={addLabel}
+                  title={addLabel}
+                />
+              )}
+            </div>
           </div>
         )}
 
@@ -113,14 +131,12 @@ export function MediaPageToolbar(props: MediaPageToolbarProps) {
             Collapse All
           </Button>
         )}
-        <Button
-          onClick={onAddClick}
-          variant="action"
-          size="md"
-          icon={<Plus size={18} />}
-        >
-          Add
-        </Button>
+        {rightActions}
+        {!hideAddButton && (
+          <Button onClick={onAddClick} variant="action" size="md" icon={addIcon}>
+            {addLabel}
+          </Button>
+        )}
       </div>
     </div>
   );

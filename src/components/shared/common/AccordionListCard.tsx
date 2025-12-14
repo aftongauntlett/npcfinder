@@ -93,16 +93,24 @@ const AccordionListCard: React.FC<AccordionListCardProps> = ({
       return;
     }
 
+    // Don't trigger card click if using the chevron toggle
+    if (target.closest("[data-chevron-toggle]")) {
+      return;
+    }
+
     // Don't toggle if clicking inside expanded content area
     if (target.closest("[data-expanded-content]")) {
       return;
     }
 
-    if (onClick && !isExpanded) {
+    // If onClick is provided, treat the card body as a primary action (e.g. open detail)
+    // and use the chevron button for expanding/collapsing details.
+    if (onClick) {
       onClick();
-    } else {
-      handleToggleExpand(!isExpanded);
+      return;
     }
+
+    handleToggleExpand(!isExpanded);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -111,18 +119,20 @@ const AccordionListCard: React.FC<AccordionListCardProps> = ({
     if (
       target.closest("[data-action-buttons]") ||
       target.closest("a") ||
-      target.closest("[data-expanded-content]")
+      target.closest("[data-expanded-content]") ||
+      target.closest("[data-chevron-toggle]")
     ) {
       return;
     }
 
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      if (onClick && !isExpanded) {
+      if (onClick) {
         onClick();
-      } else {
-        handleToggleExpand(!isExpanded);
+        return;
       }
+
+      handleToggleExpand(!isExpanded);
     }
   };
 
@@ -138,7 +148,7 @@ const AccordionListCard: React.FC<AccordionListCardProps> = ({
         variant="interactive"
         hover="none"
         spacing="none"
-        className={`group relative hover:bg-gray-900/[0.04] dark:hover:bg-gray-900 cursor-pointer ${className}`}
+        className={`group relative hover:bg-gray-900/[0.02] dark:hover:bg-gray-900 cursor-pointer ${className}`}
       >
         {/* Header */}
         <div className="p-4">
@@ -206,11 +216,22 @@ const AccordionListCard: React.FC<AccordionListCardProps> = ({
               )}
 
               {/* Chevron - always visible */}
-              <ChevronDown
-                className={`w-4 h-4 sm:w-5 sm:h-5 mt-1 text-gray-400 transition-transform ${
-                  isExpanded ? "rotate-180" : ""
-                }`}
-              />
+              <button
+                type="button"
+                data-chevron-toggle
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleExpand(!isExpanded);
+                }}
+                className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                aria-label={isExpanded ? "Hide details" : "Show details"}
+              >
+                <ChevronDown
+                  className={`w-4 h-4 sm:w-5 sm:h-5 text-gray-400 transition-transform ${
+                    isExpanded ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
             </div>
           </div>
         </div>

@@ -57,7 +57,7 @@ const LocalSearchInput: React.FC<LocalSearchInputProps> = ({
 
   return (
     <div
-      className={`relative flex items-center gap-0 bg-gray-700/50 border border-gray-600 rounded-lg transition-colors ${
+      className={`relative flex items-center gap-0 bg-white dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg transition-colors ${
         isFocused ? "ring-2 ring-primary ring-offset-0" : ""
       } ${className}`}
     >
@@ -66,7 +66,7 @@ const LocalSearchInput: React.FC<LocalSearchInputProps> = ({
         <>
           <div className="pl-3 pr-2">{filterButton}</div>
           {/* Divider */}
-          <div className="h-5 w-px bg-gray-600" />
+          <div className="h-5 w-px bg-gray-200 dark:bg-gray-600" />
         </>
       )}
 
@@ -79,14 +79,14 @@ const LocalSearchInput: React.FC<LocalSearchInputProps> = ({
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         placeholder={placeholder}
-        className="flex-1 bg-transparent border-0 outline-none px-3 py-2 text-white placeholder-gray-500 min-w-0"
+        className="flex-1 bg-transparent border-0 outline-none px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 min-w-0"
         aria-label={placeholder}
       />
 
       {/* Search Icon */}
       <div className="pr-3 pl-2 flex items-center group cursor-pointer">
         <Search
-          className="w-4 h-4 text-gray-400 group-hover:text-theme-primary transition-colors"
+          className="w-4 h-4 text-gray-500 dark:text-gray-400 group-hover:text-theme-primary transition-colors"
           aria-hidden="true"
         />
       </div>

@@ -1,5 +1,6 @@
 import React from "react";
 import Button from "../ui/Button";
+import Tooltip from "../ui/Tooltip";
 
 export interface ActionConfig {
   id: string;
@@ -75,7 +76,7 @@ export default function ActionButtonGroup({
       {actions.map((action) => {
         const customClass = getCustomClassName(action.variant);
 
-        return (
+        const button = (
           <Button
             key={action.id}
             onClick={(e) => {
@@ -86,10 +87,19 @@ export default function ActionButtonGroup({
             variant={getButtonVariant(action.variant)}
             size="icon"
             icon={action.icon}
-            title={action.tooltip || action.label}
             aria-label={action.label}
             className={customClass}
           />
+        );
+
+        if (!action.tooltip) {
+          return button;
+        }
+
+        return (
+          <Tooltip key={action.id} content={action.tooltip} position="bottom">
+            {button}
+          </Tooltip>
         );
       })}
     </div>

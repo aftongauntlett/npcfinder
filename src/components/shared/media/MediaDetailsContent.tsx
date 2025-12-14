@@ -181,7 +181,7 @@ export default function MediaDetailsContent({
           <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
             Overview
           </h4>
-          <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+          <p className="text-sm text-gray-800 dark:text-gray-300 leading-relaxed">
             {description}
           </p>
         </div>
@@ -503,50 +503,50 @@ export default function MediaDetailsContent({
                     <div className="space-y-2">
                       {details.cast && details.cast.length > 0 && (
                         <div className="text-sm">
-                          <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                          <span className="text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">
                             Cast:
                           </span>{" "}
-                          <span className="font-medium text-gray-700 dark:text-gray-300">
+                          <span className="font-medium text-gray-800 dark:text-gray-300">
                             {details.cast.slice(0, 10).join(", ")}
                           </span>
                         </div>
                       )}
                       {details.director && (
                         <div className="text-sm">
-                          <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                          <span className="text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">
                             {mediaType === "tv" ? "Creator:" : "Director:"}
                           </span>{" "}
-                          <span className="font-medium text-gray-700 dark:text-gray-300">
+                          <span className="font-medium text-gray-800 dark:text-gray-300">
                             {details.director}
                           </span>
                         </div>
                       )}
                       {details.producer && (
                         <div className="text-sm">
-                          <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                          <span className="text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">
                             Producer:
                           </span>{" "}
-                          <span className="font-medium text-gray-700 dark:text-gray-300">
+                          <span className="font-medium text-gray-800 dark:text-gray-300">
                             {details.producer}
                           </span>
                         </div>
                       )}
                       {details.cinematographer && (
                         <div className="text-sm">
-                          <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                          <span className="text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">
                             Cinematographer:
                           </span>{" "}
-                          <span className="font-medium text-gray-700 dark:text-gray-300">
+                          <span className="font-medium text-gray-800 dark:text-gray-300">
                             {details.cinematographer}
                           </span>
                         </div>
                       )}
                       {details.writer && (
                         <div className="text-sm">
-                          <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                          <span className="text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">
                             Writer:
                           </span>{" "}
-                          <span className="font-medium text-gray-700 dark:text-gray-300">
+                          <span className="font-medium text-gray-800 dark:text-gray-300">
                             {details.writer}
                           </span>
                         </div>
@@ -569,30 +569,30 @@ export default function MediaDetailsContent({
                     <div className="space-y-2">
                       {details.rotten_tomatoes_score && (
                         <div className="text-sm">
-                          <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                          <span className="text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">
                             Rotten Tomatoes:
                           </span>{" "}
-                          <span className="font-medium text-gray-700 dark:text-gray-300">
+                          <span className="font-medium text-gray-800 dark:text-gray-300">
                             {details.rotten_tomatoes_score}
                           </span>
                         </div>
                       )}
                       {details.metacritic_score && (
                         <div className="text-sm">
-                          <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                          <span className="text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">
                             Metacritic:
                           </span>{" "}
-                          <span className="font-medium text-gray-700 dark:text-gray-300">
+                          <span className="font-medium text-gray-800 dark:text-gray-300">
                             {details.metacritic_score}
                           </span>
                         </div>
                       )}
                       {details.imdb_rating && (
                         <div className="text-sm">
-                          <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                          <span className="text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">
                             IMDB:
                           </span>{" "}
-                          <span className="font-medium text-gray-700 dark:text-gray-300">
+                          <span className="font-medium text-gray-800 dark:text-gray-300">
                             {details.imdb_rating}
                           </span>
                         </div>

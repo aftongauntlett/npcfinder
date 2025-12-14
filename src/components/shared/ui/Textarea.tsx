@@ -120,7 +120,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
 
         {/* Character Count */}
         {maxLength && !error && (
-          <div className="mt-1 text-xs text-gray-500 dark:text-gray-400 text-right">
+          <div className="mt-1 text-xs text-gray-600 dark:text-gray-400 text-right">
             {props.value
               ? `${String(props.value).length}/${maxLength}`
               : `0/${maxLength}`}
@@ -131,7 +131,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         {helperText && !error && (
           <p
             id={helperId}
-            className="mt-1 text-sm text-gray-500 dark:text-gray-400"
+            className="mt-1 text-sm text-gray-600 dark:text-gray-400"
           >
             {helperText}
           </p>

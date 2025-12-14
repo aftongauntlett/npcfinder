@@ -1,10 +1,10 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import type { User } from "@supabase/supabase-js";
-import { StarryBackground } from "@/components/shared";
 import PageContainer from "./PageContainer";
 import ProtectedAdminRoute from "./ProtectedAdminRoute";
 import { SidebarProvider } from "../../contexts/SidebarContext";
+import { useTheme } from "@/hooks/useTheme";
 // Lazy load authenticated components to avoid Supabase imports on landing page
 const HomePage = React.lazy(() => import("../pages/HomePage"));
 const Sidebar = React.lazy(() => import("../shared/layout/Sidebar"));
@@ -15,6 +15,11 @@ const GamesPage = React.lazy(() => import("../pages/games/GamesPage"));
 const TasksPage = React.lazy(() => import("../pages/tasks/TasksPage"));
 const UserSettings = React.lazy(() => import("../pages/UserSettings"));
 const AdminPage = React.lazy(() => import("../pages/admin/AdminPage"));
+
+// Star background is only used in dark mode; lazy-load so it doesn't ship in light mode.
+const StarryBackground = React.lazy(
+  () => import("@/components/shared/common/StarryBackground")
+);
 interface AuthenticatedAppLayoutProps {
   user: User;
 }
@@ -26,10 +31,16 @@ interface AuthenticatedAppLayoutProps {
 const AuthenticatedAppLayout: React.FC<AuthenticatedAppLayoutProps> = ({
   user,
 }) => {
+  const { resolvedTheme } = useTheme();
+
   return (
     <SidebarProvider>
       <PageContainer className="relative">
-        <StarryBackground />
+        {resolvedTheme === "dark" && (
+          <React.Suspense fallback={null}>
+            <StarryBackground />
+          </React.Suspense>
+        )}
         <React.Suspense
           fallback={
             <div className="flex items-center justify-center min-h-screen">
