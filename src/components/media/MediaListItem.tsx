@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Clock, RotateCcw, Check, Lightbulb } from "lucide-react";
-import { Book } from "@phosphor-icons/react";
+import { RotateCcw, Check, Lightbulb } from "lucide-react";
+import { BookIcon as Book } from "@phosphor-icons/react";
 import { useQuery } from "@tanstack/react-query";
 import { type MediaStatus } from "@/utils/mediaStatus";
 import { queryKeys } from "@/lib/queryKeys";
@@ -250,6 +250,24 @@ const MediaListItemComponent: React.FC<MediaListItemProps> = ({
                   <span>{year}</span>
                 </>
               )}
+              {details && details.runtime && (
+                <>
+                  <span className="mx-2">•</span>
+                  <span>
+                    {(() => {
+                      const totalMinutes =
+                        typeof details.runtime === "string"
+                          ? parseInt(details.runtime)
+                          : details.runtime;
+                      const hours = Math.floor(totalMinutes / 60);
+                      const minutes = totalMinutes % 60;
+                      return hours > 0
+                        ? `${hours}h ${minutes}m`
+                        : `${minutes}m`;
+                    })()}
+                  </span>
+                </>
+              )}
             </p>
           )}
 
@@ -257,34 +275,26 @@ const MediaListItemComponent: React.FC<MediaListItemProps> = ({
           {!subtitle && year && (
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               {year}
+              {details && details.runtime && (
+                <>
+                  <span className="mx-2">•</span>
+                  <span>
+                    {(() => {
+                      const totalMinutes =
+                        typeof details.runtime === "string"
+                          ? parseInt(details.runtime)
+                          : details.runtime;
+                      const hours = Math.floor(totalMinutes / 60);
+                      const minutes = totalMinutes % 60;
+                      return hours > 0
+                        ? `${hours}h ${minutes}m`
+                        : `${minutes}m`;
+                    })()}
+                  </span>
+                </>
+              )}
             </p>
           )}
-
-          {/* Runtime */}
-          <div className="flex items-center gap-2 mt-1 flex-wrap">
-            {details && details.runtime && (
-              <span className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                <Clock className="w-3 h-3" />
-                {(() => {
-                  const totalMinutes =
-                    typeof details.runtime === "string"
-                      ? parseInt(details.runtime)
-                      : details.runtime;
-                  const hours = Math.floor(totalMinutes / 60);
-                  const minutes = totalMinutes % 60;
-                  return hours > 0
-                    ? `${hours} ${hours === 1 ? "hour" : "hours"}${
-                        minutes > 0
-                          ? ` ${minutes} ${
-                              minutes === 1 ? "minute" : "minutes"
-                            }`
-                          : ""
-                      }`
-                    : `${minutes} ${minutes === 1 ? "minute" : "minutes"}`;
-                })()}
-              </span>
-            )}
-          </div>
 
           {/* Ratings */}
           <div className="flex items-center gap-3 mt-1 flex-wrap">

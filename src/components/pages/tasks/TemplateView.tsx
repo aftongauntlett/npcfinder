@@ -276,7 +276,9 @@ const TemplateView: React.FC<TemplateViewProps> = ({
 
   // For job_tracker and recipe templates, show the list view directly (no board cards)
   if (templateType === "job_tracker" && boards.length > 0) {
-    const board = filteredBoards[0]; // Use the first (and typically only) board
+    // Find the board with the most tasks (in case of duplicates)
+    const board = boards.reduce((max, b) => ((b.total_tasks || 0) > (max.total_tasks || 0) ? b : max), boards[0]);
+    console.log('[TemplateView] Selected job board with most tasks:', { id: board.id, name: board.name, total_tasks: board.total_tasks });
     return (
       <div className="container mx-auto px-4 sm:px-6">
         <h2 className="sr-only">{meta.title}</h2>
@@ -305,7 +307,8 @@ const TemplateView: React.FC<TemplateViewProps> = ({
   }
 
   if (templateType === "recipe" && boards.length > 0) {
-    const board = filteredBoards[0]; // Use the first (and typically only) board
+    // Find the board with the most tasks (in case of duplicates)
+    const board = boards.reduce((max, b) => ((b.total_tasks || 0) > (max.total_tasks || 0) ? b : max), boards[0]);
     return (
       <div className="container mx-auto px-4 sm:px-6">
         <h2 className="sr-only">{meta.title}</h2>
