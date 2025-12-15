@@ -94,12 +94,13 @@ const EditMediaListModal: React.FC<EditMediaListModalProps> = ({
         </div>
 
         {/* Appearance */}
-        <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-700">
-          <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-            Appearance
-          </span>
+        <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+          <div className="bg-gray-50/50 dark:bg-gray-800/30 rounded-lg p-4 space-y-3">
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+              Appearance
+            </span>
 
-          <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-start">
+            <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-start">
             <IconSelect
               id="media-list-icon-edit"
               label="Icon"
@@ -134,6 +135,7 @@ const EditMediaListModal: React.FC<EditMediaListModalProps> = ({
                 showHexInput={false}
               />
             </div>
+          </div>
           </div>
         </div>
 

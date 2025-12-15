@@ -19,6 +19,7 @@ import { useTheme } from "../../hooks/useTheme";
 import { TASK_ICONS } from "@/utils/taskIcons";
 import TaskSchedulingControls from "./partials/TaskSchedulingControls";
 import TaskAppearanceControls from "./partials/TaskAppearanceControls";
+import Accordion from "@/components/shared/common/Accordion";
 import JobTaskSection from "./JobTaskSection";
 import RecipeTaskSection from "./RecipeTaskSection";
 import type { Task } from "../../services/tasksService.types";
@@ -270,7 +271,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         closeOnBackdropClick={true}
       >
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Duplicate Error */}
           {duplicateError && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-md">
@@ -331,10 +332,10 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
           {/* Priority - Hidden for job tracker and recipes */}
           {!isJobTracker && !isRecipe && (
-            <div>
-              <label className="block text-sm font-bold text-primary mb-2.5">
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-2.5 block">
                 Priority
-              </label>
+              </span>
               <div className="grid grid-cols-4 gap-2">
                 <button
                   type="button"
@@ -368,12 +369,9 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
           {/* Due Date - Hidden for job tracker and recipes */}
           {!isJobTracker && !isRecipe && (
             <div>
-              <label
-                htmlFor="task-due-date"
-                className="block text-sm font-bold text-primary mb-2.5"
-              >
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-2.5 block">
                 Due Date
-              </label>
+              </span>
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -405,33 +403,34 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
           {/* Repeatable Task & Timer + Icon/Color - Hidden for job tracker and recipes */}
           {!isJobTracker && !isRecipe && (
             <div className="space-y-4">
-              {/* Row 1: Repeatable (left) + Timer (right) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <TaskSchedulingControls
-                  themeColor={themeColor}
-                  dueDate={dueDate}
-                  setDueDate={setDueDate}
-                  isRepeatable={isRepeatable}
-                  setIsRepeatable={setIsRepeatable}
-                  repeatFrequency={repeatFrequency}
-                  setRepeatFrequency={setRepeatFrequency}
-                  hasTimer={hasTimer}
-                  setHasTimer={setHasTimer}
-                  timerDuration={timerDuration}
-                  setTimerDuration={setTimerDuration}
-                  timerUnit={timerUnit}
-                  setTimerUnit={setTimerUnit}
-                  isUrgentAfterTimer={isUrgentAfterTimer}
-                  setIsUrgentAfterTimer={setIsUrgentAfterTimer}
-                  repeatFrequencySelectId="repeat-frequency-edit"
-                  timerDurationSelectId="timer-duration-edit"
-                  timerUnitSelectId="timer-unit-edit"
-                />
-              </div>
+              <Accordion title="SCHEDULING OPTIONS" defaultExpanded={true}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <TaskSchedulingControls
+                    themeColor={themeColor}
+                    dueDate={dueDate}
+                    setDueDate={setDueDate}
+                    isRepeatable={isRepeatable}
+                    setIsRepeatable={setIsRepeatable}
+                    repeatFrequency={repeatFrequency}
+                    setRepeatFrequency={setRepeatFrequency}
+                    hasTimer={hasTimer}
+                    setHasTimer={setHasTimer}
+                    timerDuration={timerDuration}
+                    setTimerDuration={setTimerDuration}
+                    timerUnit={timerUnit}
+                    setTimerUnit={setTimerUnit}
+                    isUrgentAfterTimer={isUrgentAfterTimer}
+                    setIsUrgentAfterTimer={setIsUrgentAfterTimer}
+                    repeatFrequencySelectId="repeat-frequency-edit"
+                    timerDurationSelectId="timer-duration-edit"
+                    timerUnitSelectId="timer-unit-edit"
+                  />
+                </div>
+              </Accordion>
 
-              {/* Row 2: Icon (left) + Color (right) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Accordion title="APPEARANCE" defaultExpanded={true}>
                 <TaskAppearanceControls
+                  id="task-icon-edit"
                   icon={icon}
                   setIcon={setIcon}
                   iconColor={iconColor}
@@ -440,12 +439,12 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   iconHexInputId="task-icon-hex-edit"
                   iconPickerLabel="Icon"
                 />
-              </div>
+              </Accordion>
             </div>
           )}
 
           {/* Actions */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
             <Button
               type="button"
               variant="danger"

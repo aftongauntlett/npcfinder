@@ -1,9 +1,10 @@
 import Input from "@/components/shared/ui/Input";
-import IconPicker from "@/components/shared/common/IconPicker";
+import IconSelect from "@/components/shared/common/IconSelect";
 import CompactColorThemePicker from "@/components/settings/CompactColorThemePicker";
 import type { IconOption } from "@/utils/taskIcons";
 
 interface TaskAppearanceControlsProps {
+  id?: string;
   icon: string | null;
   setIcon: (value: string | null) => void;
 
@@ -17,6 +18,7 @@ interface TaskAppearanceControlsProps {
 }
 
 export default function TaskAppearanceControls({
+  id = "task-icon",
   icon,
   setIcon,
   iconColor,
@@ -26,20 +28,22 @@ export default function TaskAppearanceControls({
   iconPickerLabel = "Icon",
 }: TaskAppearanceControlsProps) {
   return (
-    <>
-      {/* Left: icon picker */}
-      <div className="space-y-2">
-        <label className="block text-sm font-bold text-primary">
-          {iconPickerLabel}
-        </label>
-        <IconPicker selectedIcon={icon} onIconChange={setIcon} icons={icons} />
-      </div>
+    <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-start">
+      {/* Column 1: Icon Dropdown */}
+      <IconSelect
+        id={id}
+        label={iconPickerLabel}
+        selectedIcon={icon}
+        onIconChange={setIcon}
+        icons={icons}
+        iconColor={iconColor}
+      />
 
-      {/* Right: color */}
-      <div className="space-y-3">
+      {/* Column 2: Hex Input */}
+      <div className="w-28">
         <Input
           id={iconHexInputId}
-          label="Hex Code"
+          label="Hex"
           type="text"
           value={iconColor}
           onChange={(e) => {
@@ -51,15 +55,19 @@ export default function TaskAppearanceControls({
           placeholder="#9333ea"
           maxLength={7}
         />
+      </div>
+
+      {/* Column 3: Color Picker */}
+      <div className="flex items-end h-full">
         <CompactColorThemePicker
           selectedColor={iconColor}
           onColorChange={setIconColor}
           title=""
           showPreview={false}
-          pickerHeightPx={140}
+          pickerHeightPx={120}
           showHexInput={false}
         />
       </div>
-    </>
+    </div>
   );
 }

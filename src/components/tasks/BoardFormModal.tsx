@@ -194,7 +194,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
         closeOnBackdropClick={true}
       >
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Name */}
           <div>
             <label
@@ -222,15 +222,20 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
           </div>
 
           {/* Icon and Color Picker */}
-          <TaskAppearanceControls
-            icon={icon}
-            setIcon={setIcon}
-            iconColor={iconColor}
-            setIconColor={setIconColor}
-            icons={TASK_ICONS}
-            iconHexInputId="board-icon-color"
-            iconPickerLabel="Board Icon"
-          />
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-3 block">
+              Appearance
+            </span>
+            <TaskAppearanceControls
+              icon={icon}
+              setIcon={setIcon}
+              iconColor={iconColor}
+              setIconColor={setIconColor}
+              icons={TASK_ICONS}
+              iconHexInputId="board-icon-color"
+              iconPickerLabel="Board Icon"
+            />
+          </div>
 
           {/* Privacy Toggle */}
           {!isJobTracker && (
@@ -251,7 +256,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
                 <div className="flex items-center gap-2">
                   <Share2 className="w-5 h-5 text-primary" />
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    <h3 className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
                       Sharing
                     </h3>
                     {members.length > 0 && (
@@ -275,7 +280,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
           )}
 
           {/* Actions */}
-          <div className="flex justify-between gap-3 pt-4">
+          <div className="flex justify-between gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
             {/* Delete Button (Edit Mode Only, except for starter boards) */}
             {board &&
               !showDeleteModal &&

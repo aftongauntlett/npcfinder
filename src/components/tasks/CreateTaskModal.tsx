@@ -22,6 +22,7 @@ import { useTheme } from "../../hooks/useTheme";
 import { TASK_ICONS } from "@/utils/taskIcons";
 import TaskSchedulingControls from "./partials/TaskSchedulingControls";
 import TaskAppearanceControls from "./partials/TaskAppearanceControls";
+import Accordion from "@/components/shared/common/Accordion";
 import {
   applyJobMetadataToForm,
   applyRecipeMetadataToForm,
@@ -399,10 +400,9 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         {/* Quick Add from URL - Only for recipe boards (job tracker has it integrated below) */}
         {boardType === "recipe" && (
           <div className="space-y-2">
-            <div className="flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-              <Link className="w-3.5 h-3.5" />
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
               Quick add from URL
-            </div>
+            </span>
             <Input
               id="task-url"
               type="url"
@@ -479,10 +479,9 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
           <div className="space-y-6">
             {/* Quick Add URL */}
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-                <Link className="w-3.5 h-3.5" />
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
                 Quick add from URL
-              </div>
+              </span>
               <Input
                 id="job-url"
                 type="url"
@@ -725,12 +724,12 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
         {/* Optional Fields - Hidden for job tracker */}
         {boardType !== "job_tracker" && (
-          <div className="space-y-4">
+          <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             {/* Priority */}
             <div>
-              <label className="block text-sm font-bold text-primary mb-2.5">
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-2.5 block">
                 Priority
-              </label>
+              </span>
               <div className="grid grid-cols-3 gap-2">
                 {PRIORITY_OPTIONS.map((option) => (
                   <button
@@ -755,12 +754,9 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
             {/* Due Date */}
             <div>
-              <label
-                htmlFor="task-due-date"
-                className="block text-sm font-bold text-primary mb-2.5"
-              >
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-2.5 block">
                 {isRepeatable ? "Date *" : "Due Date"}
-              </label>
+              </span>
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -789,34 +785,35 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
             </div>
 
             {/* Scheduling + Appearance */}
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-4">
-              {/* Row 1: Repeatable (left) + Timer (right) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <TaskSchedulingControls
-                  themeColor={themeColor}
-                  dueDate={dueDate}
-                  setDueDate={setDueDate}
-                  isRepeatable={isRepeatable}
-                  setIsRepeatable={setIsRepeatable}
-                  repeatFrequency={repeatFrequency}
-                  setRepeatFrequency={setRepeatFrequency}
-                  hasTimer={hasTimer}
-                  setHasTimer={setHasTimer}
-                  timerDuration={timerDuration}
-                  setTimerDuration={setTimerDuration}
-                  timerUnit={timerUnit}
-                  setTimerUnit={setTimerUnit}
-                  isUrgentAfterTimer={isUrgentAfterTimer}
-                  setIsUrgentAfterTimer={setIsUrgentAfterTimer}
-                  repeatFrequencySelectId="repeat-frequency"
-                  timerDurationSelectId="timer-duration"
-                  timerUnitSelectId="timer-unit"
-                />
-              </div>
+            <div className="space-y-4">
+              <Accordion title="SCHEDULING OPTIONS" defaultExpanded={false}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <TaskSchedulingControls
+                    themeColor={themeColor}
+                    dueDate={dueDate}
+                    setDueDate={setDueDate}
+                    isRepeatable={isRepeatable}
+                    setIsRepeatable={setIsRepeatable}
+                    repeatFrequency={repeatFrequency}
+                    setRepeatFrequency={setRepeatFrequency}
+                    hasTimer={hasTimer}
+                    setHasTimer={setHasTimer}
+                    timerDuration={timerDuration}
+                    setTimerDuration={setTimerDuration}
+                    timerUnit={timerUnit}
+                    setTimerUnit={setTimerUnit}
+                    isUrgentAfterTimer={isUrgentAfterTimer}
+                    setIsUrgentAfterTimer={setIsUrgentAfterTimer}
+                    repeatFrequencySelectId="repeat-frequency"
+                    timerDurationSelectId="timer-duration"
+                    timerUnitSelectId="timer-unit"
+                  />
+                </div>
+              </Accordion>
 
-              {/* Row 2: Icon (left) + Color (right) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Accordion title="APPEARANCE" defaultExpanded={false}>
                 <TaskAppearanceControls
+                  id="task-icon"
                   icon={icon}
                   setIcon={setIcon}
                   iconColor={iconColor}
@@ -825,7 +822,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                   iconHexInputId="task-icon-hex"
                   iconPickerLabel="Icon"
                 />
-              </div>
+              </Accordion>
             </div>
           </div>
         )}
@@ -840,7 +837,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         )}
 
         {/* Actions */}
-        <div className="flex gap-3 pt-4">
+        <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
           <Button
             type="button"
             variant="secondary"
