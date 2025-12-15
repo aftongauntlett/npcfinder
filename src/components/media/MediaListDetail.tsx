@@ -193,7 +193,7 @@ const MediaListDetail: React.FC<MediaListDetailProps> = ({ domain, listId }) => 
             />
           )
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-2">
             {sortedItems.map((item) => (
               <MediaListItem
                 key={item.id}

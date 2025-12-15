@@ -129,7 +129,7 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
       {/* List View */}
       {hasItemsForCurrentFilter && totalItems > 0 && (
         <>
-          <div className="space-y-4">
+          <div className="space-y-2">
             <AnimatePresence initial={false}>
               {paginatedItems.map((book) => (
                 <motion.div

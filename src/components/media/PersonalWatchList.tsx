@@ -137,7 +137,7 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
       {/* List View */}
       {hasItemsForCurrentFilter && totalItems > 0 && (
         <>
-          <div className="space-y-4">
+          <div className="space-y-2">
             <AnimatePresence initial={false}>
               {paginatedItems.map((item) => (
                 <motion.div
