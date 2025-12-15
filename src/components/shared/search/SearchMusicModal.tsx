@@ -23,6 +23,7 @@ const SearchMusicModal: React.FC<SearchMusicModalProps> = ({
   const renderMusicResult = (
     result: MediaItem,
     alreadyAdded: boolean,
+    isPending: boolean,
     handleAddClick: (result: MediaItem) => void,
     themeColor: string
   ) => {
@@ -31,23 +32,25 @@ const SearchMusicModal: React.FC<SearchMusicModalProps> = ({
 
     return (
       <div
-        onClick={() => !alreadyAdded && handleAddClick(result)}
+        onClick={() => !isPending && handleAddClick(result)}
         className={`group relative flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg transition-all ${
-          alreadyAdded
-            ? "cursor-not-allowed opacity-60"
+          isPending
+            ? "cursor-wait opacity-50"
             : "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-md"
-        }`}
+        } ${alreadyAdded && !isPending ? "opacity-80" : ""}`}
         role="button"
-        tabIndex={alreadyAdded ? -1 : 0}
+        tabIndex={isPending ? -1 : 0}
         onKeyDown={(e) => {
-          if (!alreadyAdded && (e.key === "Enter" || e.key === " ")) {
+          if (!isPending && (e.key === "Enter" || e.key === " ")) {
             e.preventDefault();
             handleAddClick(result);
           }
         }}
         aria-label={
-          alreadyAdded
-            ? `${result.title} - Already added`
+          isPending
+            ? `${result.title} - Adding...`
+            : alreadyAdded
+            ? `${result.title} - Already added (click to remove)`
             : `Add ${result.title} to music library`
         }
       >

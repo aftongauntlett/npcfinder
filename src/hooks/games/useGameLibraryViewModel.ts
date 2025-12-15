@@ -212,7 +212,6 @@ export function useGameLibraryViewModel({
         setToastAction(undefined);
         setToastMessage(`Added "${game.title}" to your library!`);
         setShowToast(true);
-        setShowSearchModal(false);
       } catch (error) {
         logger.error("Failed to add game", { error });
         setToastAction(undefined);

@@ -142,7 +142,6 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
       track_count: result.track_count || null,
       listened: shouldMarkAsListened,
     });
-    setShowSearchModal(false);
   };
 
   // Toggle listened status

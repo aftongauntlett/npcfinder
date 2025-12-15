@@ -234,7 +234,6 @@ export function useWatchlistViewModel({
         vote_count: detailedInfo?.vote_count || null,
         runtime: detailedInfo?.runtime || null,
       });
-      setShowSearchModal(false);
     },
     [addToWatchlist, filter]
   );

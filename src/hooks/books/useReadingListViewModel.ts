@@ -208,7 +208,6 @@ export function useReadingListViewModel({
         categories: result.categories || null,
         read: shouldMarkAsRead,
       });
-      setShowSearchModal(false);
     },
     [addToReadingList, filter]
   );

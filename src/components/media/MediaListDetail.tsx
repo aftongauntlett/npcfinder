@@ -243,7 +243,6 @@ const MediaListDetail: React.FC<MediaListDetailProps> = ({ domain, listId }) => 
           onClose={() => setShowAddItemModal(false)}
           onAdd={(item) => {
             void handleAddItem(item);
-            setShowAddItemModal(false);
           }}
           existingIds={existingExternalIds}
         />
@@ -254,7 +253,6 @@ const MediaListDetail: React.FC<MediaListDetailProps> = ({ domain, listId }) => 
           onClose={() => setShowAddItemModal(false)}
           onSelect={(item) => {
             void handleAddItem(item);
-            setShowAddItemModal(false);
           }}
           existingIds={existingExternalIds}
         />
@@ -265,7 +263,6 @@ const MediaListDetail: React.FC<MediaListDetailProps> = ({ domain, listId }) => 
           onClose={() => setShowAddItemModal(false)}
           onSelect={(item) => {
             void handleAddItem(item);
-            setShowAddItemModal(false);
           }}
           existingIds={existingExternalIds}
         />
@@ -276,7 +273,6 @@ const MediaListDetail: React.FC<MediaListDetailProps> = ({ domain, listId }) => 
           onClose={() => setShowAddItemModal(false)}
           onSelect={(item) => {
             void handleAddItem(item);
-            setShowAddItemModal(false);
           }}
           existingIds={existingExternalIds}
         />
