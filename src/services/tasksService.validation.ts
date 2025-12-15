@@ -14,11 +14,6 @@ export const CreateBoardSchema = z.object({
     .string()
     .min(1, "Board title is required")
     .max(200, "Board title too long"),
-  description: z
-    .string()
-    .max(1000, "Board description too long")
-    .nullable()
-    .optional(),
   is_template: z.boolean().optional().default(false),
   category: z.string().max(100, "Category too long").nullable().optional(),
 });

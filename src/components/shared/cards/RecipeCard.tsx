@@ -104,7 +104,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
 
   // Header content (always visible)
   const headerContent = (
-    <div className="space-y-1.5">
+    <div>
       {/* Title row with chips */}
       <div className="flex items-center gap-2 flex-wrap">
         <h3 className="font-semibold text-gray-900 dark:text-white">
@@ -151,7 +151,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
 
       {/* One-line truncated description */}
       {description && (
-        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-1">
+        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-1 mt-1">
           {description}
         </p>
       )}

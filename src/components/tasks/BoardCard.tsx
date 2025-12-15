@@ -47,12 +47,16 @@ const BoardCard: React.FC<BoardCardProps> = ({
   const [showShareModal, setShowShareModal] = useState(false);
   const { data: members = [] } = useBoardMembers(board.id);
 
-  // Subtitle showing task count and starter badge
-  const subtitle = (
+  // Privacy icon - just the lock/unlock icon, no text or chip
+  const privacyIcon = board.is_public ? (
+    <LockOpen className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+  ) : (
+    <Lock className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+  );
+
+  // Subtitle showing only starter badge and sharing info
+  const subtitle = isStarter || members.length > 0 ? (
     <div className="flex items-center gap-2">
-      <span>
-        {board.total_tasks || 0} task{board.total_tasks !== 1 ? "s" : ""}
-      </span>
       {isStarter && (
         <span
           className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
@@ -64,21 +68,6 @@ const BoardCard: React.FC<BoardCardProps> = ({
           Starter
         </span>
       )}
-      <span
-        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
-        style={{
-          backgroundColor: lightenColor(themeColor, 0.9),
-          color: darkenColor(themeColor, 0.3),
-        }}
-      >
-        {board.is_public ? (
-          <LockOpen className="w-3 h-3" />
-        ) : (
-          <Lock className="w-3 h-3" />
-        )}
-        {board.is_public ? "Public" : "Private"}
-      </span>
-
       {members.length > 0 && (
         <span
           className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
@@ -92,7 +81,7 @@ const BoardCard: React.FC<BoardCardProps> = ({
         </span>
       )}
     </div>
-  );
+  ) : undefined;
 
   // Expanded content - template-aware preview
   const expandedContent = (
@@ -131,6 +120,7 @@ const BoardCard: React.FC<BoardCardProps> = ({
       <AccordionCard
         title={board.name}
         subtitle={subtitle}
+        privacyIcon={privacyIcon}
         description={board.description || undefined}
         expandedContent={expandedContent}
         onEdit={onEdit}

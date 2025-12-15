@@ -55,6 +55,10 @@ const JobCard: React.FC<JobCardProps> = ({
     !!employmentType && employmentType.toLowerCase() !== "full-time";
   const locationLabel = location || locationType;
 
+  // Check if "remote" appears anywhere in the location text (case-insensitive)
+  const isRemote = locationLabel?.toLowerCase().includes("remote") || locationType === "Remote";
+  const isHybrid = locationLabel?.toLowerCase().includes("hybrid") || locationType === "Hybrid";
+
   const jobChips: Array<{ key: string; label: string; className: string }> = [];
 
   if (locationLabel) {
@@ -62,9 +66,9 @@ const JobCard: React.FC<JobCardProps> = ({
       key: "location",
       label: locationLabel,
       className:
-        locationType === "Remote"
-          ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
-          : locationType === "Hybrid"
+        isRemote
+          ? "bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400"
+          : isHybrid
           ? "bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400"
           : "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400",
     });
@@ -107,7 +111,7 @@ const JobCard: React.FC<JobCardProps> = ({
 
   // Header content (always visible)
   const headerContent = (
-    <div className="space-y-1.5">
+    <div>
       {/* Title row with company name: job title and chips */}
       <div className="flex items-center gap-2 flex-wrap">
         <h3 className="text-gray-900 dark:text-white">
@@ -156,7 +160,7 @@ const JobCard: React.FC<JobCardProps> = ({
       </div>
 
       {/* Status and date subtitle */}
-      <p className="text-sm text-gray-500 dark:text-gray-400">
+      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
         {status === "Applied" 
           ? `Applied • ${formatDate(dateApplied)}`
           : `${status} • Updated ${formatDate(dateApplied)}`}

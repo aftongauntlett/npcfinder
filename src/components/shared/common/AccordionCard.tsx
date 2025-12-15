@@ -16,6 +16,8 @@ interface AccordionCardProps {
   title: string;
   subtitle?: string | ReactNode;
   metadata?: ReactNode; // Priority badge for tasks, nothing for boards
+  headerChips?: ReactNode; // Additional chips to show in header (e.g., task count)
+  privacyIcon?: ReactNode; // Privacy indicator icon (lock/unlock)
 
   // Description
   description?: string;
@@ -41,8 +43,10 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
   title,
   subtitle,
   metadata,
-  description,
-  descriptionPreview = true,
+  headerChips,
+  privacyIcon,
+  description: _description,
+  descriptionPreview: _descriptionPreview = true,
   expandedContent,
   onEdit,
   onDelete,
@@ -117,6 +121,8 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
                 <h3 className="font-bold text-base text-gray-900 dark:text-white">
                   {title}
                 </h3>
+                {/* Privacy icon - small lock/unlock icon next to title */}
+                {privacyIcon && <div className="flex-shrink-0">{privacyIcon}</div>}
                 {/* Metadata chips (priority, status, etc.) - now on the right of title */}
                 {metadata && <div className="flex-shrink-0">{metadata}</div>}
               </div>
@@ -128,8 +134,11 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
             </div>
           </div>
 
-          {/* Right: Action buttons + Chevron */}
+          {/* Right: Header chips, Action buttons, Chevron */}
           <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Header chips (e.g., task count) - always visible */}
+            {headerChips && <div className="flex-shrink-0">{headerChips}</div>}
+            
             {/* Quick action buttons - visible on hover on desktop, always visible on mobile */}
             <div
               className="flex items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
@@ -204,16 +213,6 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
             </motion.div>
           </div>
         </div>
-
-        {/* Description preview (truncated, only when closed) */}
-        {!isExpanded &&
-          descriptionPreview &&
-          description &&
-          description.trim().length > 0 && (
-            <p className="text-sm text-gray-400 line-clamp-2 leading-relaxed mt-1.5">
-              {description}
-            </p>
-          )}
       </div>
 
       {/* Expanded Content */}
@@ -221,16 +220,9 @@ const AccordionCard: React.FC<AccordionCardProps> = ({
         <motion.div
           animate={{ opacity: 1 }}
           transition={{ duration: 0.1 }}
-          className="px-4 pb-4 pt-3"
+          className="px-4 pb-4"
           data-expanded-content
         >
-          {/* Full Description */}
-          {description && description.trim().length > 0 && (
-            <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap mb-3">
-              {description}
-            </p>
-          )}
-
           {/* Custom expanded content */}
           {expandedContent}
         </motion.div>

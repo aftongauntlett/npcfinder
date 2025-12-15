@@ -9,8 +9,10 @@ import { Share2 } from "lucide-react";
 import Modal from "../shared/ui/Modal";
 import Button from "../shared/ui/Button";
 import Input from "../shared/ui/Input";
-import Textarea from "../shared/ui/Textarea";
 import ConfirmationModal from "../shared/ui/ConfirmationModal";
+import TaskAppearanceControls from "./partials/TaskAppearanceControls";
+import { TASK_ICONS } from "@/utils/taskIcons";
+import { useTheme } from "../../hooks/useTheme";
 import ShareBoardModal from "./ShareBoardModal";
 import type { Board, CreateBoardData } from "../../services/tasksService.types";
 import {
@@ -38,7 +40,8 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
   preselectedTemplate,
 }) => {
   const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [icon, setIcon] = useState<string | null>(null);
+  const [iconColor, setIconColor] = useState<string>("");
   const [isPublic, setIsPublic] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -51,6 +54,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
   const createBoard = useCreateBoard();
   const updateBoard = useUpdateBoard();
   const deleteBoard = useDeleteBoard();
+  const { themeColor } = useTheme();
 
   const effectiveTemplateType = board?.template_type || preselectedTemplate;
   const isJobTracker = effectiveTemplateType === "job_tracker";
@@ -91,19 +95,21 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
   useEffect(() => {
     if (board) {
       setName(board.name);
-      setDescription(board.description || "");
+      setIcon(board.icon || null);
+      setIconColor(board.icon_color || themeColor);
       setIsPublic(isJobTracker ? false : board.is_public || false);
       setNameError("");
       setIsNameAutoFilled(false);
     } else {
       // Reset form for new board
       setName("");
-      setDescription("");
+      setIcon(null);
+      setIconColor(themeColor);
       setIsPublic(false);
       setNameError("");
       setIsNameAutoFilled(false);
     }
-  }, [board, isOpen, isJobTracker]);
+  }, [board, isOpen, isJobTracker, themeColor]);
 
 
 
@@ -132,7 +138,8 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
 
     const boardData: CreateBoardData = {
       name,
-      description: description || undefined,
+      icon: icon || undefined,
+      icon_color: iconColor || undefined,
       board_type: boardType,
       template_type: templateType,
       ...(isJobTracker ? {} : { is_public: isPublic }),
@@ -214,23 +221,16 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
             />
           </div>
 
-          {/* Description */}
-          <div>
-            <label
-              htmlFor="board-description"
-              className="block text-sm font-bold text-primary mb-2.5"
-            >
-              Description
-            </label>
-            <Textarea
-              id="board-description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="What's this board for?"
-              rows={3}
-              maxLength={500}
-            />
-          </div>
+          {/* Icon and Color Picker */}
+          <TaskAppearanceControls
+            icon={icon}
+            setIcon={setIcon}
+            iconColor={iconColor}
+            setIconColor={setIconColor}
+            icons={TASK_ICONS}
+            iconHexInputId="board-icon-color"
+            iconPickerLabel="Board Icon"
+          />
 
           {/* Privacy Toggle */}
           {!isJobTracker && (

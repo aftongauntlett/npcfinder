@@ -278,7 +278,6 @@ const TemplateView: React.FC<TemplateViewProps> = ({
   if (templateType === "job_tracker" && boards.length > 0) {
     // Find the board with the most tasks (in case of duplicates)
     const board = boards.reduce((max, b) => ((b.total_tasks || 0) > (max.total_tasks || 0) ? b : max), boards[0]);
-    console.log('[TemplateView] Selected job board with most tasks:', { id: board.id, name: board.name, total_tasks: board.total_tasks });
     return (
       <div className="container mx-auto px-4 sm:px-6">
         <h2 className="sr-only">{meta.title}</h2>

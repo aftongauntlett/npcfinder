@@ -5,9 +5,12 @@
  * Uses the enhanced Card component and new design system
  */
 
-import React from "react";
+import React, { useMemo } from "react";
+import { Lock, LockOpen, ListTodo } from "lucide-react";
 import Chip from "../ui/Chip";
 import AccordionCard from "../common/AccordionCard";
+import { getTaskIconOptionByName } from "@/utils/taskIcons";
+import { withOpacity } from "@/data/landingTheme";
 import KanbanBoard from "../../tasks/KanbanBoard";
 import SimpleListView from "../../tasks/SimpleListView";
 import { JobTrackerView } from "../../tasks/views/JobTrackerView";
@@ -39,23 +42,70 @@ const BoardCard: React.FC<BoardCardProps> = ({
   onDeleteTask,
   isStarter = false,
 }) => {
-  // Subtitle showing task count and starter badge
-  const subtitle = (
-    <div className="flex items-center gap-2">
-      <span>
-        {board.total_tasks || 0} task{board.total_tasks !== 1 ? "s" : ""}
-      </span>
-      {isStarter && (
-        <Chip variant="primary" size="sm">
-          Starter
-        </Chip>
-      )}
-    </div>
+  // Get icon for board
+  const taskIconOption = useMemo(
+    () => getTaskIconOptionByName(board.icon),
+    [board.icon]
   );
+  const BoardIcon = taskIconOption?.icon ?? ListTodo;
+  const isLucideIcon = taskIconOption == null;
+  const iconColor = board.icon_color ?? undefined;
+  const iconContainerStyle = useMemo(() => {
+    if (!iconColor) return undefined;
+    return {
+      backgroundColor: withOpacity(iconColor, 0.14),
+    } as React.CSSProperties;
+  }, [iconColor]);
+  const iconStyle = useMemo(() => {
+    if (!iconColor) return undefined;
+    return { color: iconColor } as React.CSSProperties;
+  }, [iconColor]);
+
+  // Board icon element
+  const boardIcon = (
+    <span
+      className="flex items-center justify-center w-10 h-10 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex-shrink-0"
+      style={iconContainerStyle}
+      aria-hidden="true"
+    >
+      {isLucideIcon ? (
+        <BoardIcon className="w-5 h-5" style={iconStyle} />
+      ) : (
+        <BoardIcon className="w-5 h-5" weight="regular" style={iconStyle} />
+      )}
+    </span>
+  );
+
+  // Privacy icon - just the lock/unlock icon, no text or chip
+  const privacyIcon = board.is_public ? (
+    <LockOpen className="w-4 h-4 text-gray-400 dark:text-gray-500" title="Public board" />
+  ) : (
+    <Lock className="w-4 h-4 text-gray-400 dark:text-gray-500" title="Private board" />
+  );
+
+  // Task count chip to show next to title
+  const taskCountChip = board.total_tasks > 0 ? (
+    <Chip 
+      variant="ghost" 
+      size="sm"
+      className="text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+    >
+      {board.total_tasks}
+    </Chip>
+  ) : null;
+
+  // Subtitle showing only starter badge (no task count)
+  const subtitle = isStarter ? (
+    <div className="flex items-center gap-2">
+      <Chip variant="primary" size="sm">
+        Starter
+      </Chip>
+    </div>
+  ) : undefined;
 
   // Expanded content - template-aware preview
   const expandedContent = (
-    <div className="mt-4">
+    <div>
       {board.template_type === "job_tracker" ? (
         <JobTrackerView
           boardId={board.id}
@@ -87,8 +137,11 @@ const BoardCard: React.FC<BoardCardProps> = ({
 
   return (
     <AccordionCard
+      icon={boardIcon}
       title={board.name}
       subtitle={subtitle}
+      headerChips={taskCountChip}
+      privacyIcon={privacyIcon}
       expandedContent={expandedContent}
       onClick={onClick}
       onEdit={onEdit}

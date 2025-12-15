@@ -94,8 +94,8 @@ export const PRIORITY_CONFIG = {
   },
   high: {
     label: "High",
-    color: "text-orange-600 dark:text-orange-300",
-    bg: "bg-orange-100/60 dark:bg-orange-900/20",
+    color: "text-red-600 dark:text-red-300",
+    bg: "bg-red-100/60 dark:bg-red-900/20",
   },
   urgent: {
     label: "Urgent",

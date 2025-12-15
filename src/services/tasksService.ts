@@ -121,7 +121,6 @@ export async function createBoard(
     // SECURITY: Validate input
     const validatedData = validateInput(CreateBoardSchema, {
       title: boardData.name,
-      description: boardData.description,
       is_template: boardData.is_public,
       category: boardData.board_type,
     });
@@ -151,19 +150,33 @@ export async function createBoard(
       boardData.template_type
     );
 
-    const { data, error } = await supabase
+    // Note: We separate INSERT and SELECT because chaining .insert().select()
+    // can cause RLS policy issues where can_view_task_board() fails on the
+    // newly created row within the same transaction.
+    const { error: insertError } = await supabase
       .from("task_boards")
       .insert({
         user_id: user.id,
         name: validatedData.title,
-        description: validatedData.description || null,
+        icon: boardData.icon || null,
+        icon_color: boardData.icon_color || null,
         is_public: boardData.is_public || false,
         board_type: boardType,
         template_type: templateType,
         field_config: boardData.field_config || null,
         display_order: nextOrder,
-      })
+      });
+
+    if (insertError) throw insertError;
+
+    // Fetch the newly created board
+    const { data, error } = await supabase
+      .from("task_boards")
       .select()
+      .eq("user_id", user.id)
+      .eq("name", validatedData.title)
+      .order("created_at", { ascending: false })
+      .limit(1)
       .single();
 
     if (error) throw error;

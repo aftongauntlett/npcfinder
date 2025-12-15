@@ -79,6 +79,61 @@ export function getDaysUntilDue(dueDate: string | null): number | null {
   return differenceInDays(new Date(dueDate), new Date());
 }
 
+/**
+ * Get color classes for due date chip based on days until due
+ * - Green: 5+ days away
+ * - Yellow: 1-4 days away
+ * - Red: Today and Overdue
+ */
+export function getDueDateChipColor(dueDate: string | null): string {
+  if (!dueDate) return "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300";
+  
+  if (isOverdue(dueDate)) {
+    return "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300";
+  }
+  
+  const daysUntil = getDaysUntilDue(dueDate);
+  
+  // Today - Red
+  if (daysUntil === 0) {
+    return "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300";
+  }
+  
+  // 1-4 days away - Yellow
+  if (daysUntil !== null && daysUntil >= 1 && daysUntil < 5) {
+    return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300";
+  }
+  
+  // 5+ days away - Green
+  return "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300";
+}
+
+/**
+ * Get text color classes for due date (without background) based on days until due
+ */
+export function getDueDateTextColor(dueDate: string | null): string {
+  if (!dueDate) return "text-gray-600 dark:text-gray-400";
+  
+  if (isOverdue(dueDate)) {
+    return "text-red-600 dark:text-red-400";
+  }
+  
+  const daysUntil = getDaysUntilDue(dueDate);
+  
+  // Today - Red
+  if (daysUntil === 0) {
+    return "text-red-600 dark:text-red-400";
+  }
+  
+  // 1-4 days away - Yellow
+  if (daysUntil !== null && daysUntil >= 1 && daysUntil < 5) {
+    return "text-yellow-600 dark:text-yellow-400";
+  }
+  
+  // 5+ days away - Green
+  return "text-green-700 dark:text-green-400";
+}
+
 // =====================================================
 // TASK STATUS & PRIORITY HELPERS
 // =====================================================

@@ -9,7 +9,7 @@
  */
 
 import React, { useMemo, useCallback } from "react";
-import { CalendarIcon as Calendar, FlagIcon as Flag } from "@phosphor-icons/react";
+import { CalendarIcon as Calendar, FlagIcon as Flag, ArrowsClockwiseIcon as ArrowsClockwise } from "@phosphor-icons/react";
 import { ListTodo } from "lucide-react";
 import ActionButtonGroup from "../shared/common/ActionButtonGroup";
 import AccordionListCard from "../shared/common/AccordionListCard";
@@ -24,11 +24,12 @@ import { getTaskIconOptionByName } from "../../utils/taskIcons";
 import {
   formatDueDate,
   isOverdue,
-  isToday,
   getTaskPriorityColor,
   getTaskPriorityBg,
   getTaskPriorityLabel,
   isRepeatableTaskOverdue,
+  getDueDateChipColor,
+  getDueDateTextColor,
 } from "../../utils/taskHelpers";
 import { generateTaskActions } from "../../utils/taskActions";
 
@@ -217,11 +218,9 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
         <div className="flex flex-wrap gap-2">
           {task.due_date && (
             <span
-              className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded ${
-                overdue
-                  ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
-                  : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
-              }`}
+              className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded ${getDueDateChipColor(
+                task.due_date
+              )}`}
             >
               <Calendar className="w-3 h-3" />
               {formatDueDate(task.due_date)}
@@ -259,23 +258,6 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
     });
   }
 
-  if (task.due_date) {
-    headerChips.push({
-      key: "due",
-      node: (
-        <span
-          className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium ${
-            isToday(task.due_date)
-              ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
-              : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-          }`}
-        >
-          {formatDueDate(task.due_date)}
-        </span>
-      ),
-    });
-  }
-
   if (task.priority) {
     headerChips.push({
       key: "priority",
@@ -295,69 +277,74 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
     headerChips.push({
       key: "repeat",
       node: (
-        <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">
-          {task.repeat_frequency}
+        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400" title={`Repeats ${task.repeat_frequency}`}>
+          <ArrowsClockwise className="w-4 h-4" weight="bold" />
         </span>
       ),
     });
   }
 
   const headerContent = (
-    <div className="space-y-1.5">
-      {/* Title row with badges */}
-      <div className="flex items-center gap-2 flex-wrap">
-        {TaskIcon && (
-          <span
-            className="flex items-center justify-center w-7 h-7 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"
-            style={iconContainerStyle}
-            aria-hidden="true"
-          >
-            {isLucideTaskIcon ? (
-              <TaskIcon className="w-4 h-4" style={iconStyle} />
-            ) : (
-              <TaskIcon className="w-4 h-4" weight="regular" style={iconStyle} />
-            )}
-          </span>
-        )}
-        <h3 className="font-semibold text-gray-900 dark:text-white">
-          {task.title}
-        </h3>
-        {/* Chips (collapsed on mobile: show 1 + +n) */}
-        {headerChips.length > 0 && (
-          <>
-            <div className="flex items-center gap-2 flex-wrap sm:hidden">
-              <React.Fragment key={headerChips[0].key}>
-                {headerChips[0].node}
-              </React.Fragment>
-              {headerChips.length > 1 && (
-                <span className="inline-flex items-center text-xs px-2.5 py-1 rounded-full font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                  +{headerChips.length - 1}
-                </span>
-              )}
-            </div>
+    <div className="flex items-start gap-3">
+      {/* Icon */}
+      {TaskIcon && (
+        <span
+          className="flex items-center justify-center w-10 h-10 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex-shrink-0"
+          style={iconContainerStyle}
+          aria-hidden="true"
+        >
+          {isLucideTaskIcon ? (
+            <TaskIcon className="w-5 h-5" style={iconStyle} />
+          ) : (
+            <TaskIcon className="w-5 h-5" weight="regular" style={iconStyle} />
+          )}
+        </span>
+      )}
+      
+      {/* Title, Due Date, and Chips */}
+      <div className="flex-1 min-w-0">
+        {/* Title row with badges */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <h3 className="font-semibold text-gray-900 dark:text-white">
+            {task.title}
+          </h3>
+          {/* Chips (collapsed on mobile: show 1 + +n) */}
+          {headerChips.length > 0 && (
+            <>
+              <div className="flex items-center gap-2 flex-wrap sm:hidden">
+                <React.Fragment key={headerChips[0].key}>
+                  {headerChips[0].node}
+                </React.Fragment>
+                {headerChips.length > 1 && (
+                  <span className="inline-flex items-center text-xs px-2.5 py-1 rounded-full font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                    +{headerChips.length - 1}
+                  </span>
+                )}
+              </div>
 
-            <div className="hidden sm:flex items-center gap-2 flex-wrap">
-              {headerChips.map((chip) => (
-                <React.Fragment key={chip.key}>{chip.node}</React.Fragment>
-              ))}
-            </div>
-          </>
+              <div className="hidden sm:flex items-center gap-2 flex-wrap">
+                {headerChips.map((chip) => (
+                  <React.Fragment key={chip.key}>{chip.node}</React.Fragment>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Due date display */}
+        {task.due_date && (
+          <p className={`text-sm font-medium mt-1 ${getDueDateTextColor(task.due_date)}`}>
+            Due: {formatDueDate(task.due_date)}
+          </p>
         )}
       </div>
-
-      {/* One-line truncated description */}
-      {task.description && (
-        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-1">
-          {task.description}
-        </p>
-      )}
     </div>
   );
 
   const expandedContent = (
     <div className="space-y-4">
-      {/* Two-column grid: left for details, right for timer (if exists) or due date */}
-      {task.timer_duration_minutes || task.due_date ? (
+      {/* Two-column grid: left for details, right for timer (if exists) */}
+      {task.timer_duration_minutes ? (
         <div className="grid md:grid-cols-2 gap-6">
           {/* Left Column: Task Details */}
           <div className="space-y-4">
@@ -369,23 +356,6 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
                 </h4>
                 <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
                   {task.description}
-                </p>
-              </div>
-            )}
-
-            {/* Due Date Details - only show in left column if timer exists */}
-            {task.due_date && task.timer_duration_minutes && (
-              <div>
-                <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
-                  Due Date
-                </h4>
-                <p className="text-sm text-gray-700 dark:text-gray-300">
-                  {formatDueDate(task.due_date)}
-                  {(repeatableOverdue || overdue) && (
-                    <span className="ml-2 text-red-600 dark:text-red-400 font-medium">
-                      (Overdue)
-                    </span>
-                  )}
                 </p>
               </div>
             )}
@@ -412,25 +382,9 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
             )}
           </div>
 
-          {/* Right Column: Timer or Due Date */}
+          {/* Right Column: Timer */}
           <div className="flex flex-col justify-start">
-            {task.timer_duration_minutes ? (
-              <TimerWidget task={task} compact={false} />
-            ) : task.due_date ? (
-              <div>
-                <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
-                  Due Date
-                </h4>
-                <p className="text-sm text-gray-700 dark:text-gray-300">
-                  {formatDueDate(task.due_date)}
-                  {(repeatableOverdue || overdue) && (
-                    <span className="ml-2 text-red-600 dark:text-red-400 font-medium">
-                      (Overdue)
-                    </span>
-                  )}
-                </p>
-              </div>
-            ) : null}
+            <TimerWidget task={task} compact={false} />
           </div>
         </div>
       ) : (
