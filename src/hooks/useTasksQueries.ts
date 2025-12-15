@@ -538,6 +538,7 @@ export function useUpdateTask() {
     }: {
       taskId: string;
       updates: Partial<Task>;
+      boardId?: string | null;
     }) => {
       const { data, error } = await tasksService.updateTask(taskId, updates);
       if (error) {
@@ -547,23 +548,7 @@ export function useUpdateTask() {
       return data!;
     },
 
-    onMutate: async ({ taskId, updates }) => {
-      // Get current task to know which board it belongs to
-      const boardTasks = queryClient.getQueriesData<Task[]>({
-        queryKey: queryKeys.tasks.all,
-      });
-
-      let boardId: string | null | undefined;
-      for (const [, tasks] of boardTasks) {
-        if (Array.isArray(tasks)) {
-          const task = tasks.find((t) => t.id === taskId);
-          if (task) {
-            boardId = task.board_id;
-            break;
-          }
-        }
-      }
-
+    onMutate: async ({ taskId, updates, boardId }) => {
       if (boardId !== undefined) {
         await queryClient.cancelQueries({
           queryKey: queryKeys.tasks.boardTasks(boardId),
@@ -589,7 +574,7 @@ export function useUpdateTask() {
     },
 
     onError: (_err, _variables, context) => {
-      if (context?.previousTasks && context?.boardId) {
+      if (context?.previousTasks && context?.boardId !== undefined) {
         queryClient.setQueryData(
           queryKeys.tasks.boardTasks(context.boardId),
           context.previousTasks
@@ -660,30 +645,20 @@ export function useDeleteTask() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async (taskId: string) => {
+    mutationFn: async ({ taskId, boardId }: { taskId: string; boardId: string | null }) => {
       const { error } = await tasksService.deleteTask(taskId);
       if (error) {
         const parsedError = parseSupabaseError(error);
         throw parsedError;
       }
-      return taskId;
+      return { taskId, boardId };
     },
 
-    onMutate: async (taskId) => {
-      // Capture task data before deletion to know which queries to invalidate
-      const task = queryClient.getQueryData<Task>(queryKeys.tasks.task(taskId));
-      return { task };
-    },
-
-    onSuccess: (_taskId, _variables, context) => {
-      const boardId = context?.task?.board_id;
-      
+    onSuccess: ({ boardId }) => {
       // Invalidate specific board tasks query
-      if (boardId !== undefined) {
-        void queryClient.invalidateQueries({
-          queryKey: queryKeys.tasks.boardTasks(boardId),
-        });
-      }
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.tasks.boardTasks(boardId),
+      });
       void queryClient.invalidateQueries({
         queryKey: queryKeys.tasks.todayTasks(user?.id),
       });

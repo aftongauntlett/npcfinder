@@ -232,7 +232,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     };
 
     void updateTask
-      .mutateAsync({ taskId: task.id, updates })
+      .mutateAsync({ taskId: task.id, updates, boardId: task.board_id })
       .then(() => {
         onClose();
       })
@@ -243,7 +243,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
   const handleDelete = () => {
     void deleteTask
-      .mutateAsync(task.id)
+      .mutateAsync({ taskId: task.id, boardId: task.board_id })
       .then(() => {
         onClose();
       })

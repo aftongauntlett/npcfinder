@@ -26,6 +26,7 @@ import FilterSortMenu, {
 import {
   useTasks,
   useUpdateTask,
+  useReorderTasks,
   useDeleteTask,
 } from "../../../hooks/useTasksQueries";
 import type { Task } from "../../../services/tasksService.types";
@@ -64,10 +65,11 @@ const InboxView: React.FC = () => {
     }
   );
   const updateTask = useUpdateTask();
+  const reorderTasks = useReorderTasks();
   const deleteTask = useDeleteTask();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
+  const [taskToDelete, setTaskToDelete] = useState<{ taskId: string; boardId: string | null } | null>(null);
 
   // Load persisted filter state
   const persistenceKey = "tasks-inbox-filters";
@@ -207,13 +209,13 @@ const InboxView: React.FC = () => {
     [updateTask]
   );
 
-  const handleRemove = useCallback((taskId: string) => {
-    setTaskToDelete(taskId);
+  const handleRemove = useCallback((taskId: string, boardId: string | null) => {
+    setTaskToDelete({ taskId, boardId });
   }, []);
 
   const confirmDelete = () => {
     if (taskToDelete) {
-      deleteTask.mutate(taskToDelete);
+      deleteTask.mutate({ taskId: taskToDelete.taskId, boardId: taskToDelete.boardId || "inbox" });
       setTaskToDelete(null);
     }
   };
@@ -278,15 +280,10 @@ const InboxView: React.FC = () => {
       draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
     reordered.splice(insertIndex, 0, draggedTask);
 
-    // Calculate page offset for display_order
-    const pageOffset = (pagination.currentPage - 1) * pagination.itemsPerPage;
-
-    // Update display_order only for tasks on current page
-    reordered.forEach((task, index) => {
-      updateTask.mutate({
-        taskId: task.id,
-        updates: { display_order: pageOffset + index },
-      });
+    // Use reorderTasks for a single mutation instead of multiple updates
+    reorderTasks.mutate({
+      taskIds: reordered.map((task) => task.id),
+      boardId: "", // Empty string for unassigned tasks
     });
 
     setDraggedTask(null);
@@ -413,16 +410,10 @@ const InboxView: React.FC = () => {
                 reordered.splice(draggedIndex, 1);
                 reordered.unshift(draggedTask);
 
-                // Calculate page offset for display_order
-                const pageOffset =
-                  (pagination.currentPage - 1) * pagination.itemsPerPage;
-
-                // Update only tasks on current page
-                reordered.forEach((task, index) => {
-                  updateTask.mutate({
-                    taskId: task.id,
-                    updates: { display_order: pageOffset + index },
-                  });
+                // Use reorderTasks for a single mutation
+                reorderTasks.mutate({
+                  taskIds: reordered.map((task) => task.id),
+                  boardId: "", // Empty string for unassigned tasks
                 });
 
                 setDraggedTask(null);

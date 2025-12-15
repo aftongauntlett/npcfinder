@@ -19,7 +19,7 @@ import FilterSortMenu, {
 } from "../../shared/common/FilterSortMenu";
 import {
   useDeleteBoard,
-  useUpdateBoard,
+  useReorderBoards,
   useDeleteTask,
 } from "../../../hooks/useTasksQueries";
 import type { BoardWithStats } from "../../../services/tasksService.types";
@@ -71,7 +71,7 @@ const TemplateView: React.FC<TemplateViewProps> = ({
   onEditTask,
 }) => {
   const deleteBoard = useDeleteBoard();
-  const updateBoard = useUpdateBoard();
+  const reorderBoards = useReorderBoards();
   const deleteTask = useDeleteTask();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingBoard, setEditingBoard] = useState<BoardWithStats | null>(null);
@@ -79,6 +79,7 @@ const TemplateView: React.FC<TemplateViewProps> = ({
     null
   );
   const [deletingTask, setDeletingTask] = useState<string | null>(null);
+  const [deletingBoardId, setDeletingBoardId] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<
     Record<string, string | string[]>
   >({
@@ -105,9 +106,18 @@ const TemplateView: React.FC<TemplateViewProps> = ({
   };
 
   const handleDeleteTask = () => {
-    if (deletingTask) {
-      deleteTask.mutate(deletingTask);
-      setDeletingTask(null);
+    if (deletingTask && deletingBoardId) {
+      void deleteTask
+        .mutateAsync({ taskId: deletingTask, boardId: deletingBoardId })
+        .then(() => {
+          setDeletingTask(null);
+          setDeletingBoardId(null);
+        })
+        .catch(() => {
+          // Error is already handled by react-query and logged
+          setDeletingTask(null);
+          setDeletingBoardId(null);
+        });
     }
   };
 
@@ -165,13 +175,8 @@ const TemplateView: React.FC<TemplateViewProps> = ({
       draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
     reordered.splice(insertIndex, 0, draggedBoard);
 
-    // Update display_order for ALL boards to ensure consistency
-    reordered.forEach((board, index) => {
-      updateBoard.mutate({
-        boardId: board.id,
-        updates: { display_order: index },
-      });
-    });
+    // Use reorderBoards for a single mutation instead of multiple updates
+    reorderBoards.mutate(reordered.map((board) => board.id));
 
     setDraggedBoard(null);
   };
@@ -285,7 +290,10 @@ const TemplateView: React.FC<TemplateViewProps> = ({
           boardId={board.id}
           onCreateTask={() => onCreateTask?.()} // No boardId needed - singleton handled by parent
           onEditTask={(task) => onEditTask?.(task.id)}
-          onDeleteTask={(taskId) => setDeletingTask(taskId)}
+          onDeleteTask={(taskId) => {
+            setDeletingTask(taskId);
+            setDeletingBoardId(board.id);
+          }}
         />
 
         {/* Delete Task Confirmation */}
@@ -319,7 +327,10 @@ const TemplateView: React.FC<TemplateViewProps> = ({
               onEditTask(task.id);
             }
           }}
-          onDeleteTask={(taskId) => setDeletingTask(taskId)}
+          onDeleteTask={(taskId) => {
+            setDeletingTask(taskId);
+            setDeletingBoardId(board.id);
+          }}
         />
 
         {/* Delete Task Confirmation */}
@@ -420,13 +431,8 @@ const TemplateView: React.FC<TemplateViewProps> = ({
               reordered.splice(draggedIndex, 1);
               reordered.unshift(draggedBoard);
 
-              // Update ALL boards to ensure consistency
-              reordered.forEach((board, index) => {
-                updateBoard.mutate({
-                  boardId: board.id,
-                  updates: { display_order: index },
-                });
-              });
+              // Use reorderBoards for a single mutation
+              reorderBoards.mutate(reordered.map((board) => board.id));
 
               setDraggedBoard(null);
             }}
@@ -483,7 +489,10 @@ const TemplateView: React.FC<TemplateViewProps> = ({
                   onCreateTask?.(board.id, sectionId)
                 }
                 onEditTask={(task) => onEditTask?.(task.id)}
-                onDeleteTask={(taskId) => setDeletingTask(taskId)}
+                onDeleteTask={(taskId) => {
+                  setDeletingTask(taskId);
+                  setDeletingBoardId(board.id);
+                }}
                 isStarter={isStarter}
               />
             </div>

@@ -121,7 +121,6 @@ const BoardCard: React.FC<BoardCardProps> = ({
         title={board.name}
         subtitle={subtitle}
         privacyIcon={privacyIcon}
-        description={board.description || undefined}
         expandedContent={expandedContent}
         onEdit={onEdit}
         onDelete={onDelete}

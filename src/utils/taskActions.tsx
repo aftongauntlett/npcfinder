@@ -10,14 +10,15 @@ import {
 } from "@phosphor-icons/react";
 
 export interface TaskActionCallbacks {
-  onRemove?: (taskId: string) => void;
+  onRemove?: (taskId: string, boardId: string | null) => void;
   onToggleComplete?: (taskId: string) => void;
   onSnooze?: (taskId: string) => void;
 }
 
 export function generateTaskActions(
   taskId: string,
-  callbacks: TaskActionCallbacks
+  callbacks: TaskActionCallbacks,
+  boardId?: string | null
 ) {
   const actions = [];
 
@@ -26,7 +27,7 @@ export function generateTaskActions(
       id: "remove",
       icon: <X size={18} weight="bold" />,
       label: "Remove",
-      onClick: () => callbacks.onRemove!(taskId),
+      onClick: () => callbacks.onRemove!(taskId, boardId ?? null),
       variant: "danger" as const,
       tooltip: "Delete task",
     });

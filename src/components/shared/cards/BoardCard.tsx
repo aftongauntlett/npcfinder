@@ -78,15 +78,14 @@ const BoardCard: React.FC<BoardCardProps> = ({
 
   // Privacy icon - just the lock/unlock icon, no text or chip
   const privacyIcon = board.is_public ? (
-    <LockOpen className="w-4 h-4 text-gray-400 dark:text-gray-500" title="Public board" />
+    <LockOpen className="w-4 h-4 text-gray-400 dark:text-gray-500" />
   ) : (
-    <Lock className="w-4 h-4 text-gray-400 dark:text-gray-500" title="Private board" />
+    <Lock className="w-4 h-4 text-gray-400 dark:text-gray-500" />
   );
 
   // Task count chip to show next to title
   const taskCountChip = board.total_tasks > 0 ? (
     <Chip 
-      variant="ghost" 
       size="sm"
       className="text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
     >

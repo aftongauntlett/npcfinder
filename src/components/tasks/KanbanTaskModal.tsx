@@ -13,10 +13,6 @@ import Input from "../shared/ui/Input";
 import Textarea from "../shared/ui/Textarea";
 import ConfirmationModal from "../shared/ui/ConfirmationModal";
 import { Trash2 } from "lucide-react";
-import IconPicker from "../shared/common/IconPicker";
-import CompactColorThemePicker from "../settings/CompactColorThemePicker";
-import { TASK_ICONS } from "@/utils/taskIcons";
-import { useTheme } from "../../hooks/useTheme";
 import type { Task, CreateTaskData } from "../../services/tasksService.types";
 import {
   useCreateTask,
@@ -42,9 +38,6 @@ const KanbanTaskModal: React.FC<KanbanTaskModalProps> = ({
 }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const { themeColor } = useTheme();
-  const [icon, setIcon] = useState<string | null>(null);
-  const [iconColor, setIconColor] = useState<string>(themeColor);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
 
@@ -58,17 +51,13 @@ const KanbanTaskModal: React.FC<KanbanTaskModalProps> = ({
     if (task) {
       setTitle(task.title);
       setDescription(task.description || "");
-      setIcon(task.icon ?? null);
-      setIconColor(task.icon_color ?? themeColor);
       setDuplicateError(null);
     } else {
       setTitle("");
       setDescription("");
-      setIcon(null);
-      setIconColor(themeColor);
       setDuplicateError(null);
     }
-  }, [task, isOpen, themeColor]);
+  }, [task, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,9 +85,8 @@ const KanbanTaskModal: React.FC<KanbanTaskModalProps> = ({
           updates: {
             title,
             description: description || null,
-            icon: icon || null,
-            icon_color: iconColor || null,
           },
+          boardId,
         })
         .then(() => {
           onClose();
@@ -116,8 +104,6 @@ const KanbanTaskModal: React.FC<KanbanTaskModalProps> = ({
         section_id: sectionId,
         title,
         description: description || undefined,
-        icon: icon || undefined,
-        icon_color: iconColor || undefined,
         status: "todo",
       };
 
@@ -129,8 +115,6 @@ const KanbanTaskModal: React.FC<KanbanTaskModalProps> = ({
           setTimeout(() => {
             setTitle("");
             setDescription("");
-            setIcon(null);
-            setIconColor(themeColor);
             setDuplicateError(null);
           }, 100);
         })
@@ -144,7 +128,7 @@ const KanbanTaskModal: React.FC<KanbanTaskModalProps> = ({
     if (!task) return;
 
     void deleteTask
-      .mutateAsync(task.id)
+      .mutateAsync({ taskId: task.id, boardId })
       .then(() => {
         onClose();
       })
@@ -196,47 +180,6 @@ const KanbanTaskModal: React.FC<KanbanTaskModalProps> = ({
             maxLength={1000}
             resize="vertical"
           />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <div className="space-y-3">
-                <div className="space-y-2">
-                  <label className="block text-sm font-bold text-primary">
-                    Task Icon
-                  </label>
-                  <IconPicker
-                    selectedIcon={icon}
-                    onIconChange={setIcon}
-                    icons={TASK_ICONS}
-                  />
-                </div>
-                <Input
-                  id="kanban-task-icon-hex"
-                  label="Hex Code"
-                  type="text"
-                  value={iconColor}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                      setIconColor(value);
-                    }
-                  }}
-                  placeholder="#9333ea"
-                  maxLength={7}
-                />
-              </div>
-            </div>
-            <div>
-              <CompactColorThemePicker
-                selectedColor={iconColor}
-                onColorChange={setIconColor}
-                title=""
-                showPreview={false}
-                pickerHeightPx={140}
-                showHexInput={false}
-              />
-            </div>
-          </div>
 
           {/* Actions */}
           <div className="flex justify-between gap-3 pt-4">
