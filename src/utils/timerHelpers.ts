@@ -13,11 +13,11 @@ import { TIMER_STATUS, type TimerStatus } from "./taskConstants";
  */
 export function calculateRemainingTime(
   startedAt: string,
-  durationMinutes: number
+  durationSeconds: number
 ): number {
   const startTime = new Date(startedAt).getTime();
   const now = Date.now();
-  const durationMs = durationMinutes * 60 * 1000;
+  const durationMs = durationSeconds * 1000;
   const elapsed = now - startTime;
   const remaining = durationMs - elapsed;
 
@@ -47,7 +47,7 @@ export function formatTimerDuration(seconds: number): string {
  * Get the current status of a task timer
  * 
  * NOTE: Pause is now handled entirely in the frontend as local UI state.
- * The database only tracks: timer_duration_minutes, timer_started_at, timer_completed_at
+ * The database only tracks: timer_duration_seconds, timer_started_at, timer_completed_at
  */
 export function getTimerStatus(task: Task): TimerStatus {
   if (!task.timer_started_at) {
@@ -61,10 +61,10 @@ export function getTimerStatus(task: Task): TimerStatus {
 
   // Check if timer has naturally expired (reached zero)
   if (
-    task.timer_duration_minutes &&
+    task.timer_duration_seconds &&
     calculateRemainingTime(
       task.timer_started_at,
-      task.timer_duration_minutes
+      task.timer_duration_seconds
     ) === 0
   ) {
     return TIMER_STATUS.COMPLETED;
@@ -78,9 +78,9 @@ export function getTimerStatus(task: Task): TimerStatus {
  */
 export function isTimerExpired(
   startedAt: string,
-  durationMinutes: number
+  durationSeconds: number
 ): boolean {
-  return calculateRemainingTime(startedAt, durationMinutes) === 0;
+  return calculateRemainingTime(startedAt, durationSeconds) === 0;
 }
 
 /**
@@ -88,28 +88,15 @@ export function isTimerExpired(
  */
 export function getTimerProgress(
   startedAt: string,
-  durationMinutes: number
+  durationSeconds: number
 ): number {
   const startTime = new Date(startedAt).getTime();
   const now = Date.now();
-  const durationMs = durationMinutes * 60 * 1000;
+  const durationMs = durationSeconds * 1000;
   const elapsed = now - startTime;
 
   const progress = Math.min((elapsed / durationMs) * 100, 100);
   return Math.max(progress, 0);
-}
-
-/**
- * Check if task should show urgent alert
- * (timer completed and is_urgent_after_timer is true)
- */
-export function shouldShowUrgentAlert(task: Task): boolean {
-  if (!task.is_urgent_after_timer) {
-    return false;
-  }
-
-  const status = getTimerStatus(task);
-  return status === TIMER_STATUS.COMPLETED;
 }
 
 /**

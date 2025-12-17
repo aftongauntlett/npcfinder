@@ -13,14 +13,7 @@ export const TASK_STATUS = {
 
 export type TaskStatus = (typeof TASK_STATUS)[keyof typeof TASK_STATUS];
 
-// Task priorities
-export const TASK_PRIORITY = {
-  LOW: "low",
-  MEDIUM: "medium",
-  HIGH: "high",
-} as const;
-
-export type TaskPriority = (typeof TASK_PRIORITY)[keyof typeof TASK_PRIORITY];
+// Task priorities removed - no longer used
 
 // Default board sections
 export const DEFAULT_BOARD_SECTIONS = [
@@ -80,30 +73,6 @@ export const TASK_LIMITS = {
   MAX_REMINDER_DAYS_AHEAD: 365, // 1 year
 } as const;
 
-// Priority labels and colors
-export const PRIORITY_CONFIG = {
-  low: {
-    label: "Low",
-    color: "text-green-600 dark:text-green-300",
-    bg: "bg-green-100/60 dark:bg-green-900/20",
-  },
-  medium: {
-    label: "Medium",
-    color: "text-blue-600 dark:text-blue-300",
-    bg: "bg-blue-100/60 dark:bg-blue-900/20",
-  },
-  high: {
-    label: "High",
-    color: "text-red-600 dark:text-red-300",
-    bg: "bg-red-100/60 dark:bg-red-900/20",
-  },
-  urgent: {
-    label: "Urgent",
-    color: "text-red-600 dark:text-red-300",
-    bg: "bg-red-100/60 dark:bg-red-900/20",
-  },
-} as const;
-
 // Status labels and colors
 export const STATUS_CONFIG = {
   todo: {
@@ -127,13 +96,6 @@ export const STATUS_CONFIG = {
     bg: "bg-purple-100 dark:bg-purple-900/30",
   },
 } as const;
-
-// Priority options for forms
-export const PRIORITY_OPTIONS = [
-  { value: "low" as const, ...PRIORITY_CONFIG.low },
-  { value: "medium" as const, ...PRIORITY_CONFIG.medium },
-  { value: "high" as const, ...PRIORITY_CONFIG.high },
-] as const;
 
 // Status options for forms
 export const STATUS_OPTIONS = [

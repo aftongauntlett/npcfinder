@@ -1,14 +1,11 @@
 /**
  * Task Form State Hook
- * Manages generic task form fields (title, description, priority, due date)
+ * Manages generic task form fields (title, description, due date)
  * Provides an updates builder for the base Task object
  */
 
 import { useState, useEffect } from "react";
 import type { Task } from "../../services/tasksService.types";
-
-// Task.priority is broader than TaskPriority constant
-type TaskPriorityValue = Task["priority"];
 
 export interface UseTaskFormStateReturn {
   // Generic task fields
@@ -16,8 +13,6 @@ export interface UseTaskFormStateReturn {
   setTitle: (title: string) => void;
   description: string;
   setDescription: (description: string) => void;
-  priority: TaskPriorityValue;
-  setPriority: (priority: TaskPriorityValue) => void;
   dueDate: Date | null;
   setDueDate: (date: Date | null) => void;
 
@@ -28,7 +23,6 @@ export interface UseTaskFormStateReturn {
 export function useTaskFormState(task: Task): UseTaskFormStateReturn {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || "");
-  const [priority, setPriority] = useState<TaskPriorityValue>(task.priority);
   const [dueDate, setDueDate] = useState<Date | null>(
     task.due_date ? new Date(task.due_date) : null
   );
@@ -37,14 +31,12 @@ export function useTaskFormState(task: Task): UseTaskFormStateReturn {
   useEffect(() => {
     setTitle(task.title);
     setDescription(task.description || "");
-    setPriority(task.priority);
     setDueDate(task.due_date ? new Date(task.due_date) : null);
   }, [task]);
 
   const buildBaseUpdates = (): Partial<Task> => ({
     title,
     description: description || null,
-    priority: priority || null,
     due_date: dueDate ? dueDate.toISOString().split("T")[0] : null,
   });
 
@@ -53,8 +45,6 @@ export function useTaskFormState(task: Task): UseTaskFormStateReturn {
     setTitle,
     description,
     setDescription,
-    priority,
-    setPriority,
     dueDate,
     setDueDate,
     buildBaseUpdates,

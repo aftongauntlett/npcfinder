@@ -28,8 +28,8 @@ export default function TaskAppearanceControls({
   iconPickerLabel = "Icon",
 }: TaskAppearanceControlsProps) {
   return (
-    <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-start">
-      {/* Column 1: Icon Dropdown */}
+    <div className="grid grid-cols-1 md:grid-cols-[1fr_200px] gap-4 items-start">
+      {/* Icon Dropdown */}
       <IconSelect
         id={id}
         label={iconPickerLabel}
@@ -39,11 +39,11 @@ export default function TaskAppearanceControls({
         iconColor={iconColor}
       />
 
-      {/* Column 2: Hex Input */}
-      <div className="w-28">
+      {/* Hex Input + Color Picker */}
+      <div className="space-y-3">
         <Input
           id={iconHexInputId}
-          label="Hex"
+          label="Color"
           type="text"
           value={iconColor}
           onChange={(e) => {
@@ -55,18 +55,16 @@ export default function TaskAppearanceControls({
           placeholder="#9333ea"
           maxLength={7}
         />
-      </div>
-
-      {/* Column 3: Color Picker */}
-      <div className="flex items-end h-full">
-        <CompactColorThemePicker
-          selectedColor={iconColor}
-          onColorChange={setIconColor}
-          title=""
-          showPreview={false}
-          pickerHeightPx={120}
-          showHexInput={false}
-        />
+        <div className="relative">
+          <CompactColorThemePicker
+            selectedColor={iconColor}
+            onColorChange={setIconColor}
+            title=""
+            showPreview={false}
+            pickerHeightPx={140}
+            showHexInput={false}
+          />
+        </div>
       </div>
     </div>
   );

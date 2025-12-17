@@ -9,7 +9,7 @@
  */
 
 import React, { useMemo, useCallback } from "react";
-import { CalendarIcon as Calendar, FlagIcon as Flag, ArrowsClockwiseIcon as ArrowsClockwise } from "@phosphor-icons/react";
+import { CalendarIcon as Calendar, ArrowsClockwiseIcon as ArrowsClockwise, CheckIcon as Check } from "@phosphor-icons/react";
 import { ListTodo } from "lucide-react";
 import ActionButtonGroup from "../shared/common/ActionButtonGroup";
 import AccordionListCard from "../shared/common/AccordionListCard";
@@ -24,12 +24,8 @@ import { getTaskIconOptionByName } from "../../utils/taskIcons";
 import {
   formatDueDate,
   isOverdue,
-  getTaskPriorityColor,
-  getTaskPriorityBg,
-  getTaskPriorityLabel,
   isRepeatableTaskOverdue,
   getDueDateChipColor,
-  getDueDateTextColor,
 } from "../../utils/taskHelpers";
 import { generateTaskActions } from "../../utils/taskActions";
 
@@ -212,17 +208,6 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
               {formatDueDate(task.due_date)}
             </span>
           )}
-
-          {task.priority && (
-            <span
-              className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded ${getTaskPriorityBg(
-                task.priority
-              )} ${getTaskPriorityColor(task.priority)}`}
-            >
-              <Flag className="w-3 h-3" />
-              {getTaskPriorityLabel(task.priority)}
-            </span>
-          )}
         </div>
       </div>
     );
@@ -233,27 +218,17 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
   // Build header content following Movies/Recipes/JobCard pattern
   const headerChips: Array<{ key: string; node: React.ReactNode }> = [];
 
-  if (repeatableOverdue || overdue) {
+  if (task.due_date) {
     headerChips.push({
-      key: "overdue",
-      node: (
-        <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 font-medium text-xs">
-          Overdue
-        </span>
-      ),
-    });
-  }
-
-  if (task.priority) {
-    headerChips.push({
-      key: "priority",
+      key: "due_date",
       node: (
         <span
-          className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium ${getTaskPriorityBg(
-            task.priority
-          )} ${getTaskPriorityColor(task.priority)}`}
+          className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium ${getDueDateChipColor(
+            task.due_date
+          )}`}
         >
-          {getTaskPriorityLabel(task.priority)}
+          <Calendar className="w-3.5 h-3.5" />
+          {formatDueDate(task.due_date)}
         </span>
       ),
     });
@@ -287,7 +262,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
         </span>
       )}
       
-      {/* Title, Due Date, and Chips */}
+      {/* Title and Chips */}
       <div className="flex-1 min-w-0">
         {/* Title row with badges */}
         <div className="flex items-center gap-2 flex-wrap">
@@ -317,22 +292,80 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
           )}
         </div>
 
-        {/* Due date display */}
-        {task.due_date && (
-          <p className={`text-sm font-medium mt-1 ${getDueDateTextColor(task.due_date)}`}>
-            Due: {formatDueDate(task.due_date)}
+        {/* Description - muted text under title */}
+        {task.description && (
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+            {task.description}
           </p>
         )}
       </div>
     </div>
   );
 
+  // Status section component - only for tasks with due dates that are due/overdue
+  const today = new Date().toISOString().split('T')[0];
+  const isDueToday = task.due_date === today;
+  const shouldShowStatus = onToggleComplete && (
+    (task.is_repeatable && repeatableOverdue) || 
+    (task.due_date && (overdue || isDueToday))
+  );
+  
+  const statusSection = shouldShowStatus && (
+    <div>
+      <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
+        Status
+      </h4>
+      {task.is_repeatable && repeatableOverdue ? (
+        <>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+            Mark this cycle as complete to reset the schedule.
+          </p>
+          <Button
+            onClick={(e) => {
+              e.stopPropagation();
+              void completeRepeatable.mutateAsync(task.id);
+            }}
+            disabled={completeRepeatable.isPending}
+            variant="secondary"
+            size="sm"
+            icon={<Check size={16} weight="bold" />}
+            iconPosition="left"
+          >
+            {completeRepeatable.isPending ? "Completing..." : "Mark Complete"}
+          </Button>
+        </>
+      ) : (
+        <>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+            Mark this task as complete.
+          </p>
+          <Button
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              console.log('[TaskCard] Mark Complete clicked for task:', task.id, 'status:', task.status);
+              if (onToggleComplete) {
+                onToggleComplete(task.id);
+              }
+            }}
+            variant="secondary"
+            size="sm"
+            icon={<Check size={16} weight="bold" />}
+            iconPosition="left"
+          >
+            Mark Complete
+          </Button>
+        </>
+      )}
+    </div>
+  );
+
   const expandedContent = (
     <div className="space-y-4">
       {/* Two-column grid: left for details, right for timer (if exists) */}
-      {task.timer_duration_minutes ? (
+      {task.timer_duration_seconds ? (
         <div className="grid md:grid-cols-2 gap-6">
-          {/* Left Column: Task Details */}
+          {/* Left Column: Task Details + Status (when timer exists) */}
           <div className="space-y-4">
             {/* Full Description */}
             {task.description && (
@@ -346,37 +379,22 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
               </div>
             )}
 
-            {/* Repeatable Task Completion CTA */}
-            {task.is_repeatable && repeatableOverdue && (
-              <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 dark:bg-primary-light/10 border border-primary/30 dark:border-primary-light/30">
-                <span className="text-xs font-medium text-primary dark:text-primary-light">
-                  Did you do this?
-                </span>
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    void completeRepeatable.mutateAsync(task.id);
-                  }}
-                  disabled={completeRepeatable.isPending}
-                  variant="action"
-                  size="sm"
-                  className="!py-0.5 !px-2 !text-xs !h-auto"
-                >
-                  {completeRepeatable.isPending ? "..." : "Yes, Done!"}
-                </Button>
-              </div>
-            )}
+            {/* Status section - shown in left column when timer exists */}
+            {statusSection}
           </div>
 
           {/* Right Column: Timer */}
           <div className="flex flex-col justify-start">
-            <TimerWidget task={task} compact={false} />
+            <TimerWidget 
+              task={task} 
+              compact={false} 
+            />
           </div>
         </div>
       ) : (
-        /* Single column layout when no timer and no due date */
-        <div className="space-y-4">
-          {/* Full Description */}
+        /* Two-column layout when no timer: description left, status right */
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Left Column: Description */}
           {task.description && (
             <div>
               <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
@@ -388,24 +406,10 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
             </div>
           )}
 
-          {/* Repeatable Task Completion CTA */}
-          {task.is_repeatable && repeatableOverdue && (
-            <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 dark:bg-primary-light/10 border border-primary/30 dark:border-primary-light/30">
-              <span className="text-xs font-medium text-primary dark:text-primary-light">
-                Did you do this?
-              </span>
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  void completeRepeatable.mutateAsync(task.id);
-                }}
-                disabled={completeRepeatable.isPending}
-                variant="action"
-                size="sm"
-                className="!py-0.5 !px-2 !text-xs !h-auto"
-              >
-                {completeRepeatable.isPending ? "..." : "Yes, Done!"}
-              </Button>
+          {/* Right Column: Status section when no timer */}
+          {statusSection && (
+            <div className="flex flex-col justify-start">
+              {statusSection}
             </div>
           )}
         </div>
@@ -424,6 +428,32 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
     </div>
   );
 
+  // Custom actions - only for tasks with due dates that are due/overdue
+  const customActions = [];
+  if (onToggleComplete && shouldShowStatus) {
+    if (task.is_repeatable && repeatableOverdue) {
+      customActions.push({
+        label: "Complete cycle",
+        icon: <Check size={16} weight="bold" />,
+        onClick: () => {
+          void completeRepeatable.mutateAsync(task.id);
+        },
+        variant: "action" as const,
+        ariaLabel: "Mark this cycle complete",
+        className: "!bg-green-100 dark:!bg-green-900/30 !text-green-700 dark:!text-green-400 hover:!bg-green-200 dark:hover:!bg-green-900/50",
+      });
+    } else {
+      customActions.push({
+        label: "Complete",
+        icon: <Check size={16} weight="bold" />,
+        onClick: () => onToggleComplete(task.id),
+        variant: "action" as const,
+        ariaLabel: "Mark task complete",
+        className: "!bg-green-100 dark:!bg-green-900/30 !text-green-700 dark:!text-green-400 hover:!bg-green-200 dark:hover:!bg-green-900/50",
+      });
+    }
+  }
+
   return (
     <AccordionListCard
       onEdit={() => onClick?.(task.id)}
@@ -431,6 +461,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
       expandedContent={expandedContent}
       onClick={isMobile && onClick ? () => onClick(task.id) : undefined}
       onExpandChange={onExpandChange}
+      customActions={customActions.length > 0 ? customActions : undefined}
     >
       {headerContent}
     </AccordionListCard>
@@ -443,14 +474,15 @@ export default React.memo(
   (prevProps, nextProps) =>
     prevProps.task.id === nextProps.task.id &&
     prevProps.task.title === nextProps.task.title &&
+    prevProps.task.description === nextProps.task.description &&
     prevProps.task.icon === nextProps.task.icon &&
     prevProps.task.icon_color === nextProps.task.icon_color &&
     prevProps.task.due_date === nextProps.task.due_date &&
-    prevProps.task.priority === nextProps.task.priority &&
+    prevProps.task.updated_at === nextProps.task.updated_at &&
     prevProps.task.timer_started_at === nextProps.task.timer_started_at &&
     prevProps.task.timer_completed_at === nextProps.task.timer_completed_at &&
-    prevProps.task.timer_duration_minutes ===
-      nextProps.task.timer_duration_minutes &&
+    prevProps.task.timer_duration_seconds ===
+      nextProps.task.timer_duration_seconds &&
     prevProps.variant === nextProps.variant &&
     prevProps.draggable === nextProps.draggable &&
     prevProps.onToggleComplete === nextProps.onToggleComplete &&

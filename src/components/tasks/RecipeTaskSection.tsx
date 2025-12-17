@@ -17,27 +17,19 @@ interface RecipeTaskSectionProps {
     builder: () => Record<string, unknown>,
     isValid: boolean
   ) => void;
-  hasTimer: boolean;
-  setHasTimer: (value: boolean) => void;
   timerDuration: number;
   setTimerDuration: (value: number) => void;
-  timerUnit: "minutes" | "hours";
-  setTimerUnit: (value: "minutes" | "hours") => void;
-  isUrgentAfterTimer: boolean;
-  setIsUrgentAfterTimer: (value: boolean) => void;
+  timerUnit: "minutes" | "hours" | "seconds";
+  setTimerUnit: (value: "minutes" | "hours" | "seconds") => void;
 }
 
 const RecipeTaskSection: React.FC<RecipeTaskSectionProps> = ({
   task,
   onBuildItemData,
-  hasTimer,
-  setHasTimer,
   timerDuration,
   setTimerDuration,
   timerUnit,
   setTimerUnit,
-  isUrgentAfterTimer,
-  setIsUrgentAfterTimer,
 }) => {
   const { themeColor } = useTheme();
   // Recipe specific fields
@@ -215,97 +207,53 @@ const RecipeTaskSection: React.FC<RecipeTaskSectionProps> = ({
       
       {/* Timer Section */}
       <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
-            <div className="flex items-center gap-3">
-              <div
-                className="relative flex-shrink-0 cursor-pointer"
-                onClick={() => setHasTimer(!hasTimer)}
-              >
-                <input
-                  type="checkbox"
-                  checked={hasTimer}
-                  onChange={() => {}}
-                  className="sr-only peer"
-                  tabIndex={-1}
-                />
-                <div
-                  className="w-11 h-6 bg-gray-300 dark:bg-gray-600 rounded-full peer transition-colors"
-                  style={hasTimer ? { backgroundColor: themeColor } : {}}
-                ></div>
-                <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
-              </div>
-              <div className="flex-1">
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  Add Timer
-                </span>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Set a countdown timer
-                </p>
-              </div>
+        <div>
+          <h4 className="text-sm font-semibold mb-1" style={{ color: themeColor }}>
+            Timer
+          </h4>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Set a countdown timer for this recipe
+          </p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Duration
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="number"
+              min={1}
+              max={timerUnit === "hours" ? 24 : timerUnit === "minutes" ? 1440 : 86400}
+              value={timerDuration}
+              onChange={(e) => {
+                const val = parseInt(e.target.value);
+                if (isNaN(val) || val < 1) {
+                  setTimerDuration(1);
+                  return;
+                }
+                const max = timerUnit === "hours" ? 24 : timerUnit === "minutes" ? 1440 : 86400;
+                setTimerDuration(Math.min(max, val));
+              }}
+              placeholder="30"
+              className="hide-number-spinner flex-1 block rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+            />
+            <div className="w-32">
+              <Select
+                id="timer-unit-recipe"
+                value={timerUnit}
+                onChange={(e) => {
+                  setTimerUnit(e.target.value as "minutes" | "hours" | "seconds");
+                }}
+                options={[
+                  { value: "seconds", label: "Seconds" },
+                  { value: "minutes", label: "Minutes" },
+                  { value: "hours", label: "Hours" },
+                ]}
+                size="sm"
+              />
             </div>
-
-            {/* Timer Duration - Show only if timer enabled */}
-            {hasTimer && (
-              <div className="pt-2 space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Duration
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="number"
-                      min={1}
-                      max={timerUnit === "hours" ? 24 : 1440}
-                      value={timerDuration}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value);
-                        if (isNaN(val) || val < 1) {
-                          setTimerDuration(1);
-                          return;
-                        }
-                        const max = timerUnit === "hours" ? 24 : 1440;
-                        setTimerDuration(Math.min(max, val));
-                      }}
-                      placeholder="30"
-                      className="hide-number-spinner flex-1 block rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                    />
-                    <div className="w-32">
-                      <Select
-                        id="timer-unit-recipe"
-                        value={timerUnit}
-                        onChange={(e) => {
-                          setTimerUnit(e.target.value as "minutes" | "hours");
-                        }}
-                        options={[
-                          { value: "minutes", label: "Minutes" },
-                          { value: "hours", label: "Hours" },
-                        ]}
-                        size="sm"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Mark as Urgent */}
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="urgent-after-timer-recipe"
-                    checked={isUrgentAfterTimer}
-                    onChange={(e) => setIsUrgentAfterTimer(e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary/20"
-                    style={{
-                      accentColor: themeColor,
-                    }}
-                  />
-                  <label
-                    htmlFor="urgent-after-timer-recipe"
-                    className="text-sm text-gray-700 dark:text-gray-300"
-                  >
-                    Mark as urgent after timer expires
-                  </label>
-                </div>
-              </div>
-            )}
+          </div>
+        </div>
       </div>
     </div>
   );

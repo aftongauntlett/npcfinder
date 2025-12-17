@@ -10,19 +10,16 @@
  */
 
 import React, { useState, useEffect, useRef } from "react";
-import { Play, Pause, RotateCcw, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { Play, Pause, RotateCcw, CheckCircle, Clock } from "lucide-react";
 import { logger } from "@/lib/logger";
-import Toast from "../ui/Toast";
 import MediaTimeDisplay from "../shared/ui/MediaTimeDisplay";
 import ProgressBar from "../shared/ui/ProgressBar";
 import type { Task } from "../../services/tasksService.types";
 import {
   getTimerStatus,
   calculateRemainingTime,
-  formatTimerDuration,
   getTimerProgress,
   getTimerColor,
-  shouldShowUrgentAlert,
 } from "../../utils/timerHelpers";
 import { TIMER_STATUS } from "../../utils/taskConstants";
 import { useStartTimer, useCompleteTimer } from "../../hooks/useTasksQueries";
@@ -34,13 +31,48 @@ interface TimerWidgetProps {
 }
 
 const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
+  // Helper to get/set pause state from localStorage
+  const getPauseState = () => {
+    try {
+      const stored = localStorage.getItem(`timer-pause-${task.id}`);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Only use stored pause state if timer hasn't changed
+        if (parsed.timer_started_at === task.timer_started_at && parsed.timer_duration === task.timer_duration_seconds) {
+          return { isPaused: true, remainingSeconds: parsed.remainingSeconds };
+        }
+      }
+    } catch {
+      // Ignore errors
+    }
+    return { isPaused: false, remainingSeconds: 0 };
+  };
+
+  const savePauseState = (isPaused: boolean, remainingSeconds: number) => {
+    try {
+      if (isPaused) {
+        localStorage.setItem(`timer-pause-${task.id}`, JSON.stringify({
+          timer_started_at: task.timer_started_at,
+          timer_duration: task.timer_duration_seconds,
+          remainingSeconds,
+        }));
+      } else {
+        localStorage.removeItem(`timer-pause-${task.id}`);
+      }
+    } catch {
+      // Ignore errors
+    }
+  };
+
+  // Initialize pause state from localStorage
+  const initialPauseState = getPauseState();
+  
   // Local state for pause functionality
-  const [isPaused, setIsPaused] = useState(false);
-  const [pausedRemainingSeconds, setPausedRemainingSeconds] = useState(0);
+  const [isPaused, setIsPaused] = useState(initialPauseState.isPaused);
+  const [pausedRemainingSeconds, setPausedRemainingSeconds] = useState(initialPauseState.remainingSeconds);
   
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [progress, setProgress] = useState(0);
-  const [showToast, setShowToast] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const timerRef = useRef<HTMLDivElement>(null);
 
@@ -48,7 +80,6 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
   const completeTimer = useCompleteTimer();
 
   const timerStatus = getTimerStatus(task);
-  const showUrgentAlert = shouldShowUrgentAlert(task);
 
   usePerformanceMonitor({ componentName: "TimerWidget", threshold: 60 });
 
@@ -78,23 +109,24 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
     if (timerStatus === TIMER_STATUS.NOT_STARTED || timerStatus === TIMER_STATUS.COMPLETED) {
       setIsPaused(false);
       setPausedRemainingSeconds(0);
+      savePauseState(false, 0); // Clear localStorage
     }
 
     if (
       timerStatus === TIMER_STATUS.RUNNING &&
       task.timer_started_at &&
-      task.timer_duration_minutes &&
+      task.timer_duration_seconds &&
       !isPaused && // Only run countdown if not paused locally
       isVisible // Only update when visible
     ) {
       const updateTimer = () => {
         const remaining = calculateRemainingTime(
           task.timer_started_at!,
-          task.timer_duration_minutes!
+          task.timer_duration_seconds!
         );
         const prog = getTimerProgress(
           task.timer_started_at!,
-          task.timer_duration_minutes!
+          task.timer_duration_seconds!
         );
         setRemainingSeconds(remaining);
         setProgress(prog);
@@ -102,7 +134,6 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
         // Auto-complete only when timer naturally expires
         if (remaining === 0 && !task.timer_completed_at) {
           void completeTimer.mutateAsync(task.id);
-          setShowToast(true);
         }
       };
 
@@ -116,8 +147,8 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
       // When paused locally, use frozen values
       setRemainingSeconds(pausedRemainingSeconds);
       // Recalculate progress based on paused remaining time
-      if (task.timer_duration_minutes) {
-        const totalSeconds = task.timer_duration_minutes * 60;
+      if (task.timer_duration_seconds) {
+        const totalSeconds = task.timer_duration_seconds;
         const elapsed = totalSeconds - pausedRemainingSeconds;
         setProgress(Math.min((elapsed / totalSeconds) * 100, 100));
       }
@@ -126,7 +157,7 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
   }, [
     timerStatus,
     task.timer_started_at,
-    task.timer_duration_minutes,
+    task.timer_duration_seconds,
     task.timer_completed_at,
     task.id,
     isPaused,
@@ -135,25 +166,25 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
   ]);
 
   const handleStart = async () => {
-    if (!task.timer_duration_minutes) {
-      logger.error("Cannot start timer: timer_duration_minutes is not set", {
+    if (!task.timer_duration_seconds) {
+      logger.error("Cannot start timer: timer_duration_seconds is not set", {
         taskId: task.id,
-        timerDuration: task.timer_duration_minutes,
+        timerDuration: task.timer_duration_seconds,
       });
       return;
     }
 
     logger.info("Starting timer", {
       taskId: task.id,
-      durationMinutes: task.timer_duration_minutes,
+      durationSeconds: task.timer_duration_seconds,
     });
 
     try {
       await startTimer.mutateAsync({
         taskId: task.id,
-        durationMinutes: task.timer_duration_minutes,
-        isUrgentAfter: task.is_urgent_after_timer || undefined,
+        durationMinutes: task.timer_duration_seconds,
       });
+      savePauseState(false, 0); // Clear any stored pause state
       logger.info("Timer started successfully", { taskId: task.id });
     } catch (error) {
       logger.error("Failed to start timer", { error, taskId: task.id });
@@ -162,11 +193,11 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
 
   const handlePause = async () => {
     // Pause locally - do NOT update database
-    if (!task.timer_started_at || !task.timer_duration_minutes) return;
+    if (!task.timer_started_at || !task.timer_duration_seconds) return;
     
     const remaining = calculateRemainingTime(
       task.timer_started_at,
-      task.timer_duration_minutes
+      task.timer_duration_seconds
     );
     
     logger.info("Pausing timer locally", {
@@ -176,6 +207,7 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
     
     setIsPaused(true);
     setPausedRemainingSeconds(remaining);
+    savePauseState(true, remaining);
   };
 
   const handleResume = async () => {
@@ -188,17 +220,17 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
       
       // Calculate new start time: now - (total duration - remaining time)
       const totalDurationMs = pausedRemainingSeconds * 1000;
-      const newStartTime = new Date(Date.now() - (task.timer_duration_minutes! * 60 * 1000 - totalDurationMs));
+      const newStartTime = new Date(Date.now() - (task.timer_duration_seconds! * 1000 - totalDurationMs));
       
       await startTimer.mutateAsync({
         taskId: task.id,
-        durationMinutes: task.timer_duration_minutes!,
-        isUrgentAfter: task.is_urgent_after_timer || undefined,
+        durationMinutes: task.timer_duration_seconds!,
         startTime: newStartTime.toISOString(),
       });
       
       setIsPaused(false);
       setPausedRemainingSeconds(0);
+      savePauseState(false, 0);
       logger.info("Timer resumed successfully", { taskId: task.id });
     } catch (error) {
       logger.error("Failed to resume timer", { error, taskId: task.id });
@@ -206,67 +238,69 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
   };
 
   const handleRestart = async () => {
-    if (!task.timer_duration_minutes) {
-      logger.error("Cannot restart timer: timer_duration_minutes is not set", {
+    if (!task.timer_duration_seconds) {
+      logger.error("Cannot restart timer: timer_duration_seconds is not set", {
         taskId: task.id,
-        timerDuration: task.timer_duration_minutes,
+        timerDuration: task.timer_duration_seconds,
       });
       return;
     }
 
     logger.info("Restarting timer", {
       taskId: task.id,
-      durationMinutes: task.timer_duration_minutes,
+      durationSeconds: task.timer_duration_seconds,
     });
 
     try {
       // Start timer (this automatically clears timer_completed_at)
       await startTimer.mutateAsync({
         taskId: task.id,
-        durationMinutes: task.timer_duration_minutes,
-        isUrgentAfter: task.is_urgent_after_timer || undefined,
+        durationMinutes: task.timer_duration_seconds,
       });
+      savePauseState(false, 0); // Clear any stored pause state
       logger.info("Timer restarted successfully", { taskId: task.id });
     } catch (error) {
       logger.error("Failed to restart timer", { error, taskId: task.id });
     }
   };
 
-  // Compact version for list views
+  // Compact version for list views - simplified to icon-only for reliability
   if (compact) {
-    if (timerStatus === TIMER_STATUS.NOT_STARTED && !isPaused) {
+    // Show paused state FIRST - highest priority
+    if (isPaused && timerStatus === TIMER_STATUS.RUNNING) {
+      return (
+        <div className="flex items-center justify-center w-7 h-7 rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300" title="Timer paused">
+          <Pause className="w-4 h-4" />
+        </div>
+      );
+    }
+
+    // Not started - show start button
+    if (timerStatus === TIMER_STATUS.NOT_STARTED) {
       return (
         <button
           onClick={(e) => {
             e.stopPropagation();
             void handleStart();
           }}
-          className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/30 transition-colors"
+          className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/30 transition-colors"
           disabled={startTimer.isPending}
+          title="Start timer"
         >
-          <Play className="w-3 h-3" />
-          <span>{task.timer_duration_minutes}m</span>
+          <Play className="w-4 h-4" />
         </button>
       );
     }
 
-    if ((timerStatus === TIMER_STATUS.RUNNING && !isPaused) || (timerStatus === TIMER_STATUS.NOT_STARTED && isPaused)) {
+    // Running (and not paused) - show animated icon only
+    if (timerStatus === TIMER_STATUS.RUNNING) {
       const colors = getTimerColor(progress);
       return (
         <div
-          className={`flex items-center gap-1 px-2 py-1 text-xs font-medium rounded ${colors.bg} ${colors.text}`}
+          className={`flex items-center justify-center w-7 h-7 rounded-full ${colors.bg} ${colors.text}`}
+          title="Timer running"
         >
-          <Clock className="w-3 h-3 animate-pulse" />
-          <span>{formatTimerDuration(remainingSeconds)}</span>
-        </div>
-      );
-    }
-
-    if (isPaused) {
-      return (
-        <div className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300">
-          <Pause className="w-3 h-3" />
-          <span>{formatTimerDuration(remainingSeconds)}</span>
+          <Clock className="w-4 h-4 animate-pulse" />
         </div>
       );
     }
@@ -274,17 +308,9 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
     if (timerStatus === TIMER_STATUS.COMPLETED) {
       return (
         <div
-          className={`flex items-center gap-1 px-2 py-1 text-xs font-medium rounded ${
-            showUrgentAlert
-              ? "bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300"
-              : "bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300"
-          }`}
+          className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300"
         >
-          {showUrgentAlert ? (
-            <AlertCircle className="w-3 h-3" />
-          ) : (
-            <CheckCircle className="w-3 h-3" />
-          )}
+          <CheckCircle className="w-3 h-3" />
           <span>Done</span>
         </div>
       );
@@ -382,15 +408,6 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
           </div>
         </div>
       </div>
-
-      {/* Toast notification for timer completion */}
-      {showToast && (
-        <Toast
-          message={`${task.title} - Timer Complete!`}
-          onClose={() => setShowToast(false)}
-          duration={8000}
-        />
-      )}
     </>
   );
 };

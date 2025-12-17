@@ -441,6 +441,28 @@ export function useTodayTasks() {
 }
 
 /**
+ * Get upcoming tasks (due within 5 days)
+ */
+export function useUpcomingTasks() {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: queryKeys.tasks.upcomingTasks(user?.id),
+    queryFn: async () => {
+      const { data, error } = await tasksService.getUpcomingTasks();
+      if (error) {
+        const parsedError = parseSupabaseError(error);
+        throw parsedError;
+      }
+      return data || [];
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 15,
+    enabled: !!user,
+  });
+}
+
+/**
  * Get archived tasks
  */
 export function useArchivedTasks() {
@@ -550,6 +572,7 @@ export function useUpdateTask() {
 
     onMutate: async ({ taskId, updates, boardId }) => {
       if (boardId !== undefined) {
+        // Cancel outgoing queries to prevent race conditions
         await queryClient.cancelQueries({
           queryKey: queryKeys.tasks.boardTasks(boardId),
         });
@@ -559,6 +582,7 @@ export function useUpdateTask() {
         );
 
         if (previousTasks) {
+          // Apply optimistic update
           queryClient.setQueryData<Task[]>(
             queryKeys.tasks.boardTasks(boardId),
             previousTasks.map((task) =>
@@ -583,21 +607,31 @@ export function useUpdateTask() {
     },
 
     onSuccess: (data) => {
+      // Invalidate all task list queries to ensure immediate UI updates
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.tasks.boardTasks(data.board_id),
+      });
+      
       // Invalidate the specific task query to ensure fresh data in modals
       void queryClient.invalidateQueries({
         queryKey: queryKeys.tasks.task(data.id),
       });
-      // Invalidate specific board tasks query
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.tasks.boardTasks(data.board_id),
-      });
+      
       void queryClient.invalidateQueries({
         queryKey: queryKeys.tasks.todayTasks(user?.id),
       });
+      
       // Invalidate board list to update task counts if status changed
       void queryClient.invalidateQueries({
         queryKey: queryKeys.tasks.boards(user?.id),
       });
+      
+      // Invalidate active timers if this task has timer fields
+      if (data.timer_duration_seconds || data.timer_started_at) {
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.tasks.activeTimers(),
+        });
+      }
     },
   });
 }
@@ -723,7 +757,7 @@ export function useReorderTasks() {
       boardId: _boardId,
     }: {
       taskIds: string[];
-      boardId: string;
+      boardId: string | null;
     }) => {
       const { error } = await tasksService.reorderTasks(taskIds);
       if (error) {
@@ -884,9 +918,10 @@ export function useActiveTimers() {
       if (error) throw error;
       return data || [];
     },
-    refetchInterval: 300000, // Poll every 5 minutes instead of 30 seconds
-    staleTime: 60000, // Consider data fresh for 1 minute
-    refetchOnWindowFocus: false, // Prevent refetch when switching to/from DevTools
+    refetchInterval: false, // No polling - TimerWidget handles countdown locally
+    staleTime: 30000, // Consider data fresh for 30 seconds
+    refetchOnWindowFocus: true, // Check once when user returns to window
+    refetchOnMount: true, // Check once on mount
     enabled: !!user,
   });
 }
@@ -923,18 +958,15 @@ export function useStartTimer() {
     mutationFn: async ({
       taskId,
       durationMinutes,
-      isUrgentAfter,
       startTime,
     }: {
       taskId: string;
       durationMinutes: number;
-      isUrgentAfter?: boolean;
       startTime?: string;
     }) => {
       const { data, error } = await tasksService.startTaskTimer(
         taskId,
         durationMinutes,
-        isUrgentAfter,
         startTime
       );
       if (error) throw error;
@@ -942,7 +974,7 @@ export function useStartTimer() {
     },
 
     // Optimistic update for instant UI feedback
-    onMutate: async ({ taskId, durationMinutes, isUrgentAfter, startTime }) => {
+    onMutate: async ({ taskId, durationMinutes, startTime }) => {
       const now = startTime || new Date().toISOString();
       
       // Get the task to know its board_id
@@ -960,8 +992,7 @@ export function useStartTimer() {
           ...previousTask,
           timer_started_at: now,
           timer_completed_at: null,
-          timer_duration_minutes: durationMinutes,
-          is_urgent_after_timer: isUrgentAfter || null,
+          timer_duration_seconds: durationMinutes,
         });
       }
 
@@ -970,8 +1001,7 @@ export function useStartTimer() {
         ...task,
         timer_started_at: now,
         timer_completed_at: null,
-        timer_duration_minutes: durationMinutes,
-        is_urgent_after_timer: isUrgentAfter || null,
+        timer_duration_seconds: durationMinutes,
       }));
 
       return { previousTask };

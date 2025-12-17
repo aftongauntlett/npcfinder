@@ -55,6 +55,9 @@ const JobTaskSection: React.FC<JobTaskSectionProps> = ({
   const [jobNotes, setJobNotes] = useState(
     (task.item_data?.notes as string) || ""
   );
+  const [jobDescription, setJobDescription] = useState(
+    (task.item_data?.job_description as string) || ""
+  );
   const [jobStatus, setJobStatus] = useState(
     (task.item_data?.status as string) || "Applied"
   );
@@ -86,6 +89,7 @@ const JobTaskSection: React.FC<JobTaskSectionProps> = ({
     setLocationType((task.item_data?.location_type as "Remote" | "Hybrid" | "In-Office") || "In-Office");
     setEmploymentType((task.item_data?.employment_type as string) || "");
     setJobNotes((task.item_data?.notes as string) || "");
+    setJobDescription((task.item_data?.job_description as string) || "");
     const currentJobStatus = (task.item_data?.status as string) || "Applied";
     setJobStatus(currentJobStatus);
     setPrevJobStatus(currentJobStatus); // Sync prevJobStatus to prevent duplicate entries
@@ -142,6 +146,7 @@ const JobTaskSection: React.FC<JobTaskSectionProps> = ({
         location_type: locationType,
         employment_type: employmentType,
         notes: jobNotes,
+        job_description: jobDescription,
         status: jobStatus,
         date_applied: dateApplied,
         status_history: statusHistory,
@@ -159,6 +164,7 @@ const JobTaskSection: React.FC<JobTaskSectionProps> = ({
     locationType,
     employmentType,
     jobNotes,
+    jobDescription,
     jobStatus,
     statusHistory,
     task.item_data,
@@ -278,26 +284,26 @@ const JobTaskSection: React.FC<JobTaskSectionProps> = ({
         )}
       </div>
 
+      {/* Job Description - supports markdown */}
+      <Textarea
+        id="job-description"
+        label="Job Description"
+        value={jobDescription}
+        onChange={(e) => setJobDescription(e.target.value)}
+        placeholder="Paste or type the full job description here..."
+        rows={6}
+        resize="vertical"
+      />
+
       {/* Notes - supports markdown */}
       <Textarea
         id="job-notes"
         label="Notes"
         value={jobNotes}
         onChange={(e) => setJobNotes(e.target.value)}
-        placeholder="Interview notes, contacts, follow-ups, etc."
+        placeholder="Interview notes, contacts, follow-ups..."
         rows={4}
-        helperText="Supports basic markdown: **bold**, - bullet lists"
-      />
-
-      {/* Description - supports markdown */}
-      <Textarea
-        id="job-description"
-        label="Description"
-        value={jobNotes}
-        onChange={(e) => setJobNotes(e.target.value)}
-        placeholder="**Role Overview**&#10;&#10;Key responsibilities:&#10;- Lead feature development&#10;- Collaborate with cross-functional teams&#10;- Mentor junior engineers"
-        rows={6}
-        helperText="Supports basic markdown: **bold**, - bullet lists"
+        resize="vertical"
       />
     </>
   );

@@ -18,7 +18,7 @@ import {
   addYears,
 } from "date-fns";
 import type { Task, BoardSection } from "../services/tasksService.types";
-import { PRIORITY_CONFIG, STATUS_CONFIG } from "./taskConstants";
+import { STATUS_CONFIG } from "./taskConstants";
 
 // =====================================================
 // DATE HELPERS
@@ -159,29 +159,7 @@ export function getTaskStatusLabel(status: Task["status"]): string {
   return STATUS_CONFIG[status]?.label || "To Do";
 }
 
-/**
- * Get color class for task priority
- */
-export function getTaskPriorityColor(priority: Task["priority"]): string {
-  if (!priority) return PRIORITY_CONFIG.medium.color;
-  return PRIORITY_CONFIG[priority]?.color || PRIORITY_CONFIG.medium.color;
-}
 
-/**
- * Get background color class for task priority
- */
-export function getTaskPriorityBg(priority: Task["priority"]): string {
-  if (!priority) return PRIORITY_CONFIG.medium.bg;
-  return PRIORITY_CONFIG[priority]?.bg || PRIORITY_CONFIG.medium.bg;
-}
-
-/**
- * Get label for task priority
- */
-export function getTaskPriorityLabel(priority: Task["priority"]): string {
-  if (!priority) return "Medium";
-  return PRIORITY_CONFIG[priority]?.label || "Medium";
-}
 
 /**
  * Check if a task can be moved to a target section
@@ -309,19 +287,6 @@ export function sortTasksByDueDate(tasks: Task[]): Task[] {
 }
 
 /**
- * Sort tasks by priority (urgent first, null last)
- */
-export function sortTasksByPriority(tasks: Task[]): Task[] {
-  const priorityOrder = { urgent: 0, high: 1, medium: 2, low: 3 };
-
-  return [...tasks].sort((a, b) => {
-    const aPriority = a.priority ? priorityOrder[a.priority] : 4;
-    const bPriority = b.priority ? priorityOrder[b.priority] : 4;
-    return aPriority - bPriority;
-  });
-}
-
-/**
  * Sort tasks by display order
  */
 export function sortTasksByOrder(tasks: Task[]): Task[] {
@@ -424,25 +389,26 @@ export function isRecipeTask(task: Task): boolean {
  */
 export function getNextOccurrenceDate(
   currentDate: string,
-  frequency: "daily" | "weekly" | "biweekly" | "monthly" | "yearly" | "custom"
+  frequency: "daily" | "weekly" | "biweekly" | "monthly" | "yearly" | "custom",
+  interval: number = 1
 ): Date {
   const date = new Date(currentDate);
 
   switch (frequency) {
     case "daily":
-      return addDays(date, 1);
+      return addDays(date, interval);
     case "weekly":
-      return addWeeks(date, 1);
+      return addWeeks(date, interval);
     case "biweekly":
-      return addWeeks(date, 2);
+      return addWeeks(date, 2 * interval);
     case "monthly":
-      return addMonths(date, 1);
+      return addMonths(date, interval);
     case "yearly":
-      return addYears(date, 1);
+      return addYears(date, interval);
     case "custom":
-      return addWeeks(date, 1); // Default to weekly for custom
+      return addWeeks(date, interval); // Use interval for custom
     default:
-      return addWeeks(date, 1);
+      return addWeeks(date, interval);
   }
 }
 

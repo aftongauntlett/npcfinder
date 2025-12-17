@@ -3,8 +3,7 @@
  * Modal for creating new tasks
  */
 
-import React, { useState } from "react";
-import DatePicker from "react-datepicker";
+import React, { useState, useRef, useEffect } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import "../../styles/datepicker.css";
 import { logger } from "@/lib/logger";
@@ -16,13 +15,12 @@ import Select from "../shared/ui/Select";
 import type { CreateTaskData } from "../../services/tasksService.types";
 import { useCreateTask, useTasks } from "../../hooks/useTasksQueries";
 import { useUrlMetadata } from "../../hooks/useUrlMetadata";
-import { PRIORITY_OPTIONS } from "../../utils/taskConstants";
 import { Link, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { useTheme } from "../../hooks/useTheme";
 import { TASK_ICONS } from "@/utils/taskIcons";
 import TaskSchedulingControls from "./partials/TaskSchedulingControls";
-import TaskAppearanceControls from "./partials/TaskAppearanceControls";
-import Accordion from "@/components/shared/common/Accordion";
+import IconSelect from "@/components/shared/common/IconSelect";
+import CompactColorThemePicker from "@/components/settings/CompactColorThemePicker";
 import {
   applyJobMetadataToForm,
   applyRecipeMetadataToForm,
@@ -65,26 +63,43 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [priority, setPriority] = useState<"low" | "medium" | "high" | null>(
-    null
-  );
   const [dueDate, setDueDate] = useState<Date | null>(defaultDueDate || null);
 
   // Repeatable task fields
   const [isRepeatable, setIsRepeatable] = useState(false);
   const [repeatFrequency, setRepeatFrequency] = useState<
-    "daily" | "weekly" | "biweekly" | "monthly" | "yearly"
+    "daily" | "weekly" | "monthly" | "yearly"
   >("weekly");
+  const [repeatInterval, setRepeatInterval] = useState<number>(1);
 
   // Timer fields
   const [hasTimer, setHasTimer] = useState(false);
   const [timerDuration, setTimerDuration] = useState<number>(30);
-  const [timerUnit, setTimerUnit] = useState<"minutes" | "hours">("minutes");
-  const [isUrgentAfterTimer, setIsUrgentAfterTimer] = useState(false);
+  const [timerUnit, setTimerUnit] = useState<"minutes" | "hours" | "seconds">("minutes");
+
 
   // Task icon + color
-  const [icon, setIcon] = useState<string | null>(null);
+  const [icon, setIcon] = useState<string | null>("PencilSimple");
   const [iconColor, setIconColor] = useState<string>(themeColor);
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const colorPickerRef = useRef<HTMLDivElement>(null);
+  
+  // Optional settings disclosure
+  const [showOptionalSettings, setShowOptionalSettings] = useState(false);
+
+  // Close color picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (colorPickerRef.current && !colorPickerRef.current.contains(event.target as Node)) {
+        setShowColorPicker(false);
+      }
+    };
+
+    if (showColorPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showColorPicker]);
 
   // Optional sections (progressive disclosure)
 
@@ -308,18 +323,19 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
       description: description || undefined,
       icon: icon || undefined,
       icon_color: iconColor || undefined,
-      priority: priority || undefined,
       due_date: dueDate ? dueDate.toISOString().split("T")[0] : undefined,
       item_data,
       is_repeatable: isRepeatable || undefined,
       repeat_frequency: isRepeatable ? repeatFrequency : undefined,
+      repeat_interval: isRepeatable ? repeatInterval : undefined,
       // Timer fields
-      timer_duration_minutes: hasTimer
+      timer_duration_seconds: hasTimer
         ? timerUnit === "hours"
+          ? timerDuration * 3600
+          : timerUnit === "minutes"
           ? timerDuration * 60
           : timerDuration
         : undefined,
-      is_urgent_after_timer: hasTimer ? isUrgentAfterTimer : undefined,
     };
 
     void createTask
@@ -331,16 +347,15 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
           setUrl("");
           setTitle("");
           setDescription("");
-          setPriority(null);
           setDueDate(null);
           // Reset repeatable fields
           setIsRepeatable(false);
           setRepeatFrequency("weekly");
+          setRepeatInterval(1);
           // Reset timer fields
           setHasTimer(false);
           setTimerDuration(30);
           setTimerUnit("minutes");
-          setIsUrgentAfterTimer(false);
           // Reset icon + color
           setIcon(null);
           setIconColor(themeColor);
@@ -722,108 +737,124 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
           </div>
         )}
 
-        {/* Optional Fields - Hidden for job tracker */}
+        {/* Optional Settings Disclosure - Hidden for job tracker */}
         {boardType !== "job_tracker" && (
-          <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            {/* Priority */}
-            <div>
-              <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-2.5 block">
-                Priority
-              </span>
-              <div className="grid grid-cols-3 gap-2">
-                {PRIORITY_OPTIONS.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() =>
-                      setPriority(
-                        priority === option.value ? null : option.value
-                      )
-                    }
-                    className={`px-3 py-2 rounded-lg border-2 transition-all text-sm ${
-                      priority === option.value
-                        ? `${option.bg} ${option.color} border-current`
-                        : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300"
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Due Date */}
-            <div>
-              <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-2.5 block">
-                {isRepeatable ? "Date *" : "Due Date"}
-              </span>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setDueDate(null)}
-                  className={`px-3 py-2 rounded-lg border-2 transition-all text-sm whitespace-nowrap ${
-                    dueDate === null
-                      ? "border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300"
-                      : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300"
-                  }`}
-                >
-                  None
-                </button>
-                <DatePicker
-                  id="task-due-date"
-                  selected={dueDate}
-                  onChange={(date) => setDueDate(date)}
-                  dateFormat="MMM d, yyyy"
-                  placeholderText="Select a date"
-                  minDate={new Date()}
-                  showPopperArrow={false}
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2.5 pr-10 focus:outline-none  focus:border-transparent transition-colors"
-                  calendarClassName="bg-white dark:bg-gray-800 border-2 rounded-lg shadow-xl"
-                  wrapperClassName="flex-1"
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <button
+              type="button"
+              onClick={() => setShowOptionalSettings(!showOptionalSettings)}
+              className="flex items-center justify-end gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors ml-auto"
+            >
+              <span>Optional settings</span>
+              <svg
+                className={`w-4 h-4 transition-transform ${
+                  showOptionalSettings ? "rotate-90" : ""
+                }`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
                 />
-              </div>
-            </div>
+              </svg>
+            </button>
 
-            {/* Scheduling + Appearance */}
-            <div className="space-y-4">
-              <Accordion title="SCHEDULING OPTIONS" defaultExpanded={false}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <TaskSchedulingControls
-                    themeColor={themeColor}
-                    dueDate={dueDate}
-                    setDueDate={setDueDate}
+            {showOptionalSettings && (
+              <div className="mt-6 space-y-6">
+                {/* Icon Appearance */}
+                <div>
+                  <label className="block text-sm font-semibold mb-2" style={{ color: themeColor }}>
+                    Icon Appearance
+                  </label>
+                  <div className="grid grid-cols-12 gap-3">
+                    <div className="col-span-8">
+                      <IconSelect
+                        id="task-icon"
+                        selectedIcon={icon}
+                        onIconChange={(value) => {
+                          setIcon(value);
+                          setShowColorPicker(false);
+                        }}
+                        icons={TASK_ICONS}
+                        iconColor={iconColor}
+                      />
+                    </div>
+                    <div className="col-span-4 relative" ref={colorPickerRef}>
+                      <button
+                        type="button"
+                        onClick={() => setShowColorPicker(!showColorPicker)}
+                        className="w-full flex items-center justify-center gap-2 px-4 h-[42px] rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 transition-colors bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white"
+                      >
+                        <span className="text-sm font-medium">Icon Color</span>
+                        <div
+                          className="w-5 h-5 rounded border border-gray-300 dark:border-gray-600"
+                          style={{ backgroundColor: iconColor }}
+                        />
+                      </button>
+                      {showColorPicker && (
+                        <div className="absolute top-full mt-2 right-0 z-50 bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg shadow-xl p-4 space-y-3 w-[280px]">
+                          <Input
+                            id="task-icon-hex"
+                            label="Color"
+                            type="text"
+                            value={iconColor}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                                setIconColor(value);
+                              }
+                            }}
+                            placeholder="#9333ea"
+                            maxLength={7}
+                          />
+                          <CompactColorThemePicker
+                            selectedColor={iconColor}
+                            onColorChange={setIconColor}
+                            title=""
+                            showPreview={false}
+                            pickerHeightPx={140}
+                            showHexInput={false}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowColorPicker(false)}
+                            className="w-full px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                          >
+                            Done
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* TaskSchedulingControls now includes Date, Repeatable, Timer */}
+                <TaskSchedulingControls
+                  themeColor={themeColor}
+                  dueDate={dueDate}
+                  setDueDate={setDueDate}
                     isRepeatable={isRepeatable}
                     setIsRepeatable={setIsRepeatable}
                     repeatFrequency={repeatFrequency}
                     setRepeatFrequency={setRepeatFrequency}
+                    repeatInterval={repeatInterval}
+                    setRepeatInterval={setRepeatInterval}
                     hasTimer={hasTimer}
                     setHasTimer={setHasTimer}
-                    timerDuration={timerDuration}
-                    setTimerDuration={setTimerDuration}
-                    timerUnit={timerUnit}
-                    setTimerUnit={setTimerUnit}
-                    isUrgentAfterTimer={isUrgentAfterTimer}
-                    setIsUrgentAfterTimer={setIsUrgentAfterTimer}
-                    repeatFrequencySelectId="repeat-frequency"
-                    timerDurationSelectId="timer-duration"
-                    timerUnitSelectId="timer-unit"
-                  />
-                </div>
-              </Accordion>
-
-              <Accordion title="APPEARANCE" defaultExpanded={false}>
-                <TaskAppearanceControls
-                  id="task-icon"
-                  icon={icon}
-                  setIcon={setIcon}
-                  iconColor={iconColor}
-                  setIconColor={setIconColor}
-                  icons={TASK_ICONS}
-                  iconHexInputId="task-icon-hex"
-                  iconPickerLabel="Icon"
+                  timerDuration={timerDuration}
+                  setTimerDuration={setTimerDuration}
+                  timerUnit={timerUnit}
+                  setTimerUnit={setTimerUnit}
+                  repeatFrequencySelectId="repeat-frequency"
+                  timerDurationSelectId="timer-duration"
+                  timerUnitSelectId="timer-unit"
                 />
-              </Accordion>
-            </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -835,6 +866,9 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
             </p>
           </div>
         )}
+
+        {/* Spacer for consistent divider spacing - only when optional settings expanded */}
+        {showOptionalSettings && <div className="h-2" />}
 
         {/* Actions */}
         <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
