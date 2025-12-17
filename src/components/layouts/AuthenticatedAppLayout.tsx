@@ -20,6 +20,8 @@ const AdminPage = React.lazy(() => import("../pages/admin/AdminPage"));
 const StarryBackground = React.lazy(
   () => import("@/components/shared/common/StarryBackground")
 );
+const GlobalTimerAlert = React.lazy(() => import("../tasks/GlobalTimerAlert"));
+
 interface AuthenticatedAppLayoutProps {
   user: User;
 }
@@ -49,6 +51,8 @@ const AuthenticatedAppLayout: React.FC<AuthenticatedAppLayoutProps> = ({
           }
         >
           <Sidebar currentUser={user} />
+          {/* Global timer completion alert - shows on all pages */}
+          <GlobalTimerAlert />
           {/* Main content - no top nav, sidebar handles everything */}
           <Routes>
             <Route path="/" element={<HomePage user={user} />} />

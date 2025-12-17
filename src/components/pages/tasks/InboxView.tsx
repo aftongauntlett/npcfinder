@@ -28,9 +28,9 @@ import {
   useUpdateTask,
   useReorderTasks,
   useDeleteTask,
+  useCompleteRepeatableTask,
 } from "../../../hooks/useTasksQueries";
 import type { Task } from "../../../services/tasksService.types";
-import { getNextDueDate } from "../../../utils/repeatableTaskHelpers";
 import {
   getPersistedFilters,
   persistFilters,
@@ -67,6 +67,7 @@ const InboxView: React.FC = () => {
   const updateTask = useUpdateTask();
   const reorderTasks = useReorderTasks();
   const deleteTask = useDeleteTask();
+  const completeRepeatableTask = useCompleteRepeatableTask();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [taskToDelete, setTaskToDelete] = useState<{ taskId: string; boardId: string | null } | null>(null);
@@ -120,19 +121,6 @@ const InboxView: React.FC = () => {
         });
       case "name":
         return sorted.sort((a, b) => a.title.localeCompare(b.title));
-      case "priority": {
-        const priorityOrder: Record<string, number> = {
-          urgent: 4,
-          high: 3,
-          medium: 2,
-          low: 1,
-        };
-        return sorted.sort((a, b) => {
-          const priorityA = a.priority ? priorityOrder[a.priority] : 0;
-          const priorityB = b.priority ? priorityOrder[b.priority] : 0;
-          return priorityB - priorityA;
-        });
-      }
       case "date":
       default:
         return sorted.sort(
@@ -163,26 +151,27 @@ const InboxView: React.FC = () => {
 
   const handleToggleComplete = useCallback(
     (taskId: string) => {
+      console.log('[InboxView] handleToggleComplete called for:', taskId);
       const task = tasks.find((t) => t.id === taskId);
-      if (!task) return;
+      if (!task) {
+        console.error('[InboxView] Task not found in tasks array:', taskId);
+        return;
+      }
+      console.log('[InboxView] Found task:', task.title, 'repeatable:', task.is_repeatable, 'status:', task.status, 'due_date:', task.due_date);
 
-      // If task is repeatable and being marked complete
-      if (task.is_repeatable && task.status !== "done" && task.due_date) {
-        const nextDueDate = getNextDueDate(
-          task.due_date,
-          task.repeat_frequency || "weekly"
-        );
+      // Prevent duplicate mutations if one is already pending
+      if (updateTask.isPending) {
+        console.log('[InboxView] Update already pending, skipping');
+        return;
+      }
 
-        updateTask.mutate({
-          taskId,
-          updates: {
-            status: "todo", // Keep status as todo
-            due_date: nextDueDate,
-            last_completed_at: new Date().toISOString(),
-          },
-        });
+      // If task is repeatable and has a due date, use the proper mutation
+      if (task.is_repeatable && task.due_date) {
+        console.log('[InboxView] Using repeatable path');
+        completeRepeatableTask.mutate(taskId);
       } else {
         // Normal toggle for non-repeatable tasks
+        console.log('[InboxView] Using normal toggle path, changing status from', task.status, 'to', task.status === "done" ? "todo" : "done");
         updateTask.mutate({
           taskId,
           updates: {
@@ -191,7 +180,7 @@ const InboxView: React.FC = () => {
         });
       }
     },
-    [tasks, updateTask]
+    [tasks, updateTask, completeRepeatableTask]
   );
 
   const handleSnooze = useCallback(
@@ -283,7 +272,7 @@ const InboxView: React.FC = () => {
     // Use reorderTasks for a single mutation instead of multiple updates
     reorderTasks.mutate({
       taskIds: reordered.map((task) => task.id),
-      boardId: "", // Empty string for unassigned tasks
+      boardId: null, // null for unassigned/inbox tasks
     });
 
     setDraggedTask(null);
@@ -493,7 +482,7 @@ const InboxView: React.FC = () => {
 
       {selectedTask && (
         <TaskDetailModal
-          task={selectedTask}
+          task={tasks.find(t => t.id === selectedTask.id) || selectedTask}
           isOpen={!!selectedTask}
           onClose={() => setSelectedTask(null)}
         />
