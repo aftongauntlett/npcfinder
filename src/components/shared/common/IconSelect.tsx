@@ -1,6 +1,3 @@
-import { useMemo } from "react";
-
-import Select, { type SelectOption } from "@/components/shared/ui/Select";
 import type { IconOption } from "@/utils/taskIcons";
 
 interface IconSelectProps {
@@ -22,76 +19,46 @@ export default function IconSelect({
   iconColor,
   disabled,
 }: IconSelectProps) {
-  const formatLabel = useMemo(() => {
-    const overrides: Record<string, string> = {
-      CheckCircle: "Check",
-      ListChecks: "Checklist",
-      Gear: "Settings",
-      FilmSlate: "Film",
-      GameController: "Controller",
-      MusicNote: "Music",
-      BookOpen: "Book",
-      BookBookmark: "Bookmark",
-      Books: "Books",
-      PianoKeys: "Piano",
-      PenNib: "Pen",
-      PaintBrush: "Paint",
-      ShoppingCart: "Shopping",
-    };
-
-    return (name: string) => {
-      if (overrides[name]) return overrides[name];
-      return name
-        .replace(/([a-z])([A-Z])/g, "$1 $2")
-        .replace(/\s+/g, " ")
-        .trim();
-    };
-  }, []);
-
-  const options = useMemo(() => {
-    const base: SelectOption[] = (icons ?? []).map((opt) => {
-      const Icon = opt.icon;
-      return {
-        value: opt.name,
-        label: formatLabel(opt.name),
-        leftIcon: (
-          <Icon
-            className="w-4 h-4"
-            weight="regular"
-            style={iconColor ? { color: iconColor } : undefined}
-          />
-        ),
-      };
-    });
-
-    return [{ value: "", label: "None" }, ...base];
-  }, [formatLabel, iconColor, icons]);
-
-  const selectedOption = useMemo(() => {
-    if (!selectedIcon) return null;
-    return (icons ?? []).find((o) => o.name === selectedIcon) ?? null;
-  }, [icons, selectedIcon]);
-
-  const Icon = selectedOption?.icon ?? null;
-
   return (
-    <Select
-      id={id}
-      label={label}
-      value={selectedIcon ?? ""}
-      onChange={(e) => onIconChange(e.target.value ? e.target.value : null)}
-      options={options}
-      disabled={disabled}
-      leftIcon={
-        Icon ? (
-          <Icon
-            className="w-5 h-5"
-            weight="regular"
-            style={iconColor ? { color: iconColor } : undefined}
-          />
-        ) : null
-      }
-      size="md"
-    />
+    <div>
+      {label && (
+        <label htmlFor={id} className="block text-sm font-bold text-primary mb-2">
+          {label}
+        </label>
+      )}
+      <div className="grid grid-cols-8 gap-2">
+        {/* Icon options */}
+        {(icons ?? []).map((iconOption) => {
+          const Icon = iconOption.icon;
+          const isSelected = selectedIcon === iconOption.name;
+          
+          return (
+            <button
+              key={iconOption.name}
+              type="button"
+              onClick={() => onIconChange(iconOption.name)}
+              disabled={disabled}
+              className={`
+                aspect-square rounded-lg border-2 transition-all flex items-center justify-center
+                ${
+                  isSelected
+                    ? "border-current bg-gray-100 dark:bg-gray-800"
+                    : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
+                }
+                ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+              `}
+              style={isSelected && iconColor ? { borderColor: iconColor } : undefined}
+              title={iconOption.name}
+            >
+              <Icon
+                className="w-5 h-5"
+                weight="regular"
+                style={iconColor ? { color: iconColor } : undefined}
+              />
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }

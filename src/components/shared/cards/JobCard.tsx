@@ -35,10 +35,7 @@ const JobCard: React.FC<JobCardProps> = ({
   position,
   status,
   dateApplied,
-  location,
-  locationType,
   salaryRange,
-  employmentType,
   statusHistory,
   jobDescription,
   notes,
@@ -50,46 +47,36 @@ const JobCard: React.FC<JobCardProps> = ({
   const hasNotes = notes && notes.trim().length > 0;
   const hasDescription = jobDescription && jobDescription.trim().length > 0;
 
-  // Build job chips (used for responsive collapsing)
-  const showEmploymentTypeChip =
-    !!employmentType && employmentType.toLowerCase() !== "full-time";
-  const locationLabel = location || locationType;
+  // Get status chip color based on status value
+  const getStatusChipColor = (statusValue: string): string => {
+    const normalizedStatus = statusValue.toLowerCase();
+    
+    if (normalizedStatus === "applied") {
+      return "bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600";
+    } else if (normalizedStatus === "rejected") {
+      return "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400";
+    } else if (normalizedStatus === "interview") {
+      return "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400";
+    } else if (normalizedStatus === "no response") {
+      return "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400";
+    } else if (normalizedStatus === "declined") {
+      return "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400";
+    } else if (normalizedStatus === "accepted") {
+      return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400";
+    }
+    
+    // Default color for any other status
+    return "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300";
+  };
 
-  // Check if "remote" appears anywhere in the location text (case-insensitive)
-  const isRemote = locationLabel?.toLowerCase().includes("remote") || locationType === "Remote";
-  const isHybrid = locationLabel?.toLowerCase().includes("hybrid") || locationType === "Hybrid";
-
-  const jobChips: Array<{ key: string; label: string; className: string }> = [];
-
-  if (locationLabel) {
-    jobChips.push({
-      key: "location",
-      label: locationLabel,
-      className:
-        isRemote
-          ? "bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400"
-          : isHybrid
-          ? "bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400"
-          : "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400",
-    });
-  }
-
-  if (salaryRange) {
-    jobChips.push({
-      key: "salary",
-      label: salaryRange,
-      className:
-        "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400",
-    });
-  }
-
-  if (showEmploymentTypeChip && employmentType) {
-    jobChips.push({
-      key: "employment",
-      label: employmentType,
-      className: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400",
-    });
-  }
+  // Build job chips (status chips for header)
+  const jobChips: Array<{ key: string; label: string; className: string }> = [
+    {
+      key: "status",
+      label: status,
+      className: getStatusChipColor(status),
+    },
+  ];
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -115,7 +102,7 @@ const JobCard: React.FC<JobCardProps> = ({
       {/* Title row with company name: job title and chips */}
       <div className="flex items-center gap-2 flex-wrap">
         <h3 className="text-gray-900 dark:text-white">
-          <span className="font-semibold">{companyName}:</span> {position}
+          <span className="font-semibold text-primary dark:text-primary-light">{companyName}:</span> {position}
         </h3>
         {companyUrl && (
           <a
@@ -159,11 +146,12 @@ const JobCard: React.FC<JobCardProps> = ({
         )}
       </div>
 
-      {/* Status and date subtitle */}
+      {/* Salary and date subtitle */}
       <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        {salaryRange && `${salaryRange} • `}
         {status === "Applied" 
-          ? `Applied • ${formatDate(dateApplied)}`
-          : `${status} • Updated ${formatDate(dateApplied)}`}
+          ? `Applied ${formatDate(dateApplied)}`
+          : `Updated ${formatDate(dateApplied)}`}
       </p>
     </div>
   );

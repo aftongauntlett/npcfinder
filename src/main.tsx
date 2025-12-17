@@ -1,4 +1,3 @@
-import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "./styles/theme.css";
@@ -76,6 +75,9 @@ function bootstrap() {
         staleTime: 1000 * 60 * 5, // 5 minutes
         gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)
         refetchOnWindowFocus: false,
+        refetchOnMount: false, // Prevent refetch on component mount if data is fresh
+        refetchOnReconnect: false, // Don't refetch on reconnect
+        networkMode: 'online', // Only fetch when online
         retry: (failureCount, error) => {
           // Handle typed AppError
           if (error && typeof error === "object" && "type" in error) {
@@ -111,12 +113,10 @@ function bootstrap() {
   }
 
   createRoot(rootElement).render(
-    <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <GlobalErrorNotifications />
-        <App />
-      </QueryClientProvider>
-    </StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <GlobalErrorNotifications />
+      <App />
+    </QueryClientProvider>
   );
 }
 

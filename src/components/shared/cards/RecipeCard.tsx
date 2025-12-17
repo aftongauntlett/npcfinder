@@ -162,7 +162,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
   const expandedContent = (
     <div className="space-y-4">
       {/* Two-column grid: left for recipe details, right for timer (if exists) */}
-      {task?.timer_duration_minutes ? (
+      {task?.timer_duration_seconds ? (
         <div className="grid md:grid-cols-2 gap-6">
           {/* Left Column: Recipe Details */}
           <div className="space-y-4">
