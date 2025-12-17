@@ -145,6 +145,8 @@ export function useGameLibraryViewModel({
   const sortFn = useCallback(
     (a: GameLibraryItem, b: GameLibraryItem) => {
       switch (activeSort) {
+        case "custom":
+          return (a.custom_order || 0) - (b.custom_order || 0);
         case "name":
           return a.name.localeCompare(b.name);
         case "year": {

@@ -1,6 +1,6 @@
 export const GAME_LIBRARY_PERSISTENCE_KEY = "gameLibrary";
 
-export type GameLibrarySortType = "date-added" | "name" | "year" | "rating";
+export type GameLibrarySortType = "custom" | "date-added" | "name" | "year" | "rating";
 
 export interface GameLibraryFilters {
   genreFilters: string[];
@@ -10,7 +10,7 @@ export interface GameLibraryFilters {
 
 export const GAME_LIBRARY_DEFAULT_FILTERS: GameLibraryFilters = {
   genreFilters: ["all"],
-  sortBy: "date-added",
+  sortBy: "custom",
 };
 
 export function getGameLibraryFilterSections(availableGenres: Set<string>) {
@@ -35,6 +35,7 @@ export function getGameLibraryFilterSections(availableGenres: Set<string>) {
       id: "sort",
       title: "Sort By",
       options: [
+        { id: "custom", label: "Custom" },
         { id: "date-added", label: "Recently Added" },
         { id: "name", label: "Name (A-Z)" },
         { id: "year", label: "Release Year" },

@@ -10,8 +10,10 @@ import ConfirmationModal from "../shared/ui/ConfirmationModal";
 import Toast from "@/components/ui/Toast";
 import { searchMoviesAndTV } from "../../utils/mediaSearchAdapters";
 import { useWatchlistViewModel } from "../../hooks/media/useWatchlistViewModel";
+import { useReorderWatchlistItems } from "../../hooks/useWatchlistQueries";
 import WatchlistToolbar from "./WatchlistToolbar";
 import WatchlistEmptyState from "./WatchlistEmptyState";
+import type { WatchlistItem } from "../../services/recommendationsService.types";
 
 type FilterType = "all" | "to-watch" | "watched";
 
@@ -29,6 +31,11 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
   const [collapseKey, setCollapseKey] = useState(0);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [recentlyMovedId, setRecentlyMovedId] = useState<string | number | null>(null);
+  
+  // Drag-and-drop state
+  const [draggedItem, setDraggedItem] = useState<WatchlistItem | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const reorderItems = useReorderWatchlistItems();
 
   const [toast, setToast] = useState<{
     message: string;
@@ -101,6 +108,61 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
     });
   };
 
+  const isCustomSort = sortBy === "custom";
+
+  // Drag handlers
+  const handleItemDragStart = (e: React.DragEvent, item: WatchlistItem) => {
+    setDraggedItem(item);
+    const dragElement = e.currentTarget as HTMLElement;
+    if (dragElement) {
+      dragElement.style.opacity = "0.5";
+    }
+  };
+
+  const handleItemDragEnd = (e: React.DragEvent) => {
+    const dragElement = e.currentTarget as HTMLElement;
+    if (dragElement) {
+      dragElement.style.opacity = "1";
+    }
+    setDraggedItem(null);
+    setDragOverId(null);
+  };
+
+  const handleItemDragOver = (e: React.DragEvent, targetItem: WatchlistItem) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (draggedItem && draggedItem.id !== targetItem.id) {
+      setDragOverId(targetItem.id);
+    }
+  };
+
+  const handleItemDragLeave = (e: React.DragEvent) => {
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    if (!relatedTarget || !e.currentTarget.contains(relatedTarget)) {
+      setDragOverId(null);
+    }
+  };
+
+  const handleItemDrop = (e: React.DragEvent, targetItem: WatchlistItem) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverId(null);
+
+    if (!draggedItem || draggedItem.id === targetItem.id) return;
+
+    const draggedIndex = paginatedItems.findIndex((i) => i.id === draggedItem.id);
+    const targetIndex = paginatedItems.findIndex((i) => i.id === targetItem.id);
+
+    const reordered = [...paginatedItems];
+    reordered.splice(draggedIndex, 1);
+
+    const insertIndex = draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
+    reordered.splice(insertIndex, 0, draggedItem);
+
+    reorderItems.mutate(reordered.map((item) => item.id));
+    setDraggedItem(null);
+  };
+
   return (
     <div
       ref={topRef}
@@ -152,6 +214,19 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.18 }}
                 >
+                  <div
+                    draggable={isCustomSort}
+                    onDragStart={(e) => handleItemDragStart(e, item)}
+                    onDragEnd={handleItemDragEnd}
+                    onDragOver={(e) => handleItemDragOver(e, item)}
+                    onDragLeave={handleItemDragLeave}
+                    onDrop={(e) => handleItemDrop(e, item)}
+                    className={
+                      isCustomSort && dragOverId === item.id
+                        ? "border-t-2 border-primary"
+                        : ""
+                    }
+                  >
                   <MediaListItem
                     id={item.id}
                     title={item.title}
@@ -187,8 +262,7 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
                     onExpandChange={(isExpanded) =>
                       handleExpandChange(item.id, isExpanded)
                     }
-                  />
-                </motion.div>
+                  />                  </div>                </motion.div>
               ))}
             </AnimatePresence>
           </div>

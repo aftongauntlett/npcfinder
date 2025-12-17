@@ -8,8 +8,10 @@ import ConfirmationModal from "../../shared/ui/ConfirmationModal";
 import Toast from "@/components/ui/Toast";
 import { searchBooks } from "../../../utils/bookSearchAdapters";
 import { useReadingListViewModel } from "../../../hooks/books/useReadingListViewModel";
+import { useReorderReadingListItems } from "../../../hooks/useReadingListQueries";
 import ReadingListToolbar from "./ReadingListToolbar";
 import ReadingListEmptyState from "./ReadingListEmptyState";
+import type { ReadingListItem } from "../../../services/booksService.types";
 
 type FilterType = "all" | "to-read" | "read";
 
@@ -29,6 +31,11 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
   const [collapseKey, setCollapseKey] = useState(0);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [recentlyMovedId, setRecentlyMovedId] = useState<string | number | null>(null);
+  
+  // Drag-and-drop state
+  const [draggedItem, setDraggedItem] = useState<ReadingListItem | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const reorderItems = useReorderReadingListItems();
 
   const [toast, setToast] = useState<{
     message: string;
@@ -96,6 +103,61 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
     isDeleting,
   } = useReadingListViewModel({ initialFilter });
 
+  const isCustomSort = sortBy === "custom";
+
+  // Drag handlers
+  const handleItemDragStart = (e: React.DragEvent, item: ReadingListItem) => {
+    setDraggedItem(item);
+    const dragElement = e.currentTarget as HTMLElement;
+    if (dragElement) {
+      dragElement.style.opacity = "0.5";
+    }
+  };
+
+  const handleItemDragEnd = (e: React.DragEvent) => {
+    const dragElement = e.currentTarget as HTMLElement;
+    if (dragElement) {
+      dragElement.style.opacity = "1";
+    }
+    setDraggedItem(null);
+    setDragOverId(null);
+  };
+
+  const handleItemDragOver = (e: React.DragEvent, targetItem: ReadingListItem) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (draggedItem && draggedItem.id !== targetItem.id) {
+      setDragOverId(targetItem.id);
+    }
+  };
+
+  const handleItemDragLeave = (e: React.DragEvent) => {
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    if (!relatedTarget || !e.currentTarget.contains(relatedTarget)) {
+      setDragOverId(null);
+    }
+  };
+
+  const handleItemDrop = (e: React.DragEvent, targetItem: ReadingListItem) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverId(null);
+
+    if (!draggedItem || draggedItem.id === targetItem.id) return;
+
+    const draggedIndex = paginatedItems.findIndex((i) => i.id === draggedItem.id);
+    const targetIndex = paginatedItems.findIndex((i) => i.id === targetItem.id);
+
+    const reordered = [...paginatedItems];
+    reordered.splice(draggedIndex, 1);
+
+    const insertIndex = draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
+    reordered.splice(insertIndex, 0, draggedItem);
+
+    reorderItems.mutate(reordered.map((item) => item.id));
+    setDraggedItem(null);
+  };
+
   return (
     <div
       ref={topRef}
@@ -144,6 +206,19 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.18 }}
                 >
+                  <div
+                    draggable={isCustomSort}
+                    onDragStart={(e) => handleItemDragStart(e, book)}
+                    onDragEnd={handleItemDragEnd}
+                    onDragOver={(e) => handleItemDragOver(e, book)}
+                    onDragLeave={handleItemDragLeave}
+                    onDrop={(e) => handleItemDrop(e, book)}
+                    className={
+                      isCustomSort && dragOverId === book.id
+                        ? "border-t-2 border-primary"
+                        : ""
+                    }
+                  >
                   <MediaListItem
                     id={book.id}
                     title={book.title}
@@ -186,8 +261,7 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
                     onExpandChange={(isExpanded) =>
                       handleExpandChange(book.id, isExpanded)
                     }
-                  />
-                </motion.div>
+                  />                  </div>                </motion.div>
               ))}
             </AnimatePresence>
           </div>

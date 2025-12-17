@@ -129,6 +129,8 @@ export function useWatchlistViewModel({
   const sortFn = useCallback(
     (a: WatchlistItem, b: WatchlistItem) => {
       switch (sortBy) {
+        case "custom":
+          return (a.custom_order || 0) - (b.custom_order || 0);
         case "title":
           return a.title.localeCompare(b.title);
         case "year": {

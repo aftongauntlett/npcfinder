@@ -89,13 +89,11 @@ const CreateMediaListModal: React.FC<CreateMediaListModalProps> = ({
         </div>
 
         {/* Appearance */}
-        <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-          <div className="bg-gray-50/50 dark:bg-gray-800/30 rounded-lg p-4 space-y-3">
-            <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-              Appearance
-            </span>
-
-            <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-start">
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+          <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-4 block">
+            Appearance
+          </span>
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_200px] gap-4 items-start">
             <IconSelect
               id="media-list-icon"
               label="Icon"
@@ -105,9 +103,9 @@ const CreateMediaListModal: React.FC<CreateMediaListModalProps> = ({
               iconColor={iconColor}
               disabled={isSubmitting}
             />
-            <div className="w-28">
+            <div className="space-y-3">
               <Input
-                label="Hex"
+                label="Color"
                 type="text"
                 value={iconColor}
                 onChange={(e) => {
@@ -119,23 +117,22 @@ const CreateMediaListModal: React.FC<CreateMediaListModalProps> = ({
                 placeholder="#9333ea"
                 maxLength={7}
               />
+              <div className="relative">
+                <CompactColorThemePicker
+                  selectedColor={iconColor}
+                  onColorChange={setIconColor}
+                  title=""
+                  showPreview={false}
+                  pickerHeightPx={140}
+                  showHexInput={false}
+                />
+              </div>
             </div>
-            <div className="flex items-end h-full">
-              <CompactColorThemePicker
-                selectedColor={iconColor}
-                onColorChange={setIconColor}
-                title=""
-                showPreview={false}
-                pickerHeightPx={120}
-                showHexInput={false}
-              />
-            </div>
-          </div>
           </div>
         </div>
 
         {/* Privacy */}
-        <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
           <PrivacyToggle
             variant="switch"
             size="sm"

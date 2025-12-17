@@ -26,6 +26,7 @@ import {
   useAddToLibrary,
   useToggleListened,
   useDeleteFromLibrary,
+  useReorderMusicLibraryItems,
 } from "../../../hooks/useMusicLibraryQueries";
 import type { MusicLibraryItem } from "../../../services/musicService.types";
 import {
@@ -34,7 +35,7 @@ import {
 } from "../../../utils/persistenceUtils";
 
 type FilterType = "all" | "listening" | "listened";
-type SortType = "date-added" | "title" | "artist" | "year" | "rating";
+type SortType = "custom" | "date-added" | "title" | "artist" | "year" | "rating";
 
 interface PersonalMusicLibraryProps {
   initialFilter?: FilterType;
@@ -49,6 +50,11 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
   const [collapseKey, setCollapseKey] = useState(0);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [recentlyMovedId, setRecentlyMovedId] = useState<string | number | null>(null);
+  
+  // Drag-and-drop state
+  const [draggedItem, setDraggedItem] = useState<MusicLibraryItem | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const reorderItems = useReorderMusicLibraryItems();
 
   const [toast, setToast] = useState<{
     message: string;
@@ -78,6 +84,59 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
     });
   };
 
+  // Drag handlers
+  const handleItemDragStart = (e: React.DragEvent, item: MusicLibraryItem) => {
+    setDraggedItem(item);
+    const dragElement = e.currentTarget as HTMLElement;
+    if (dragElement) {
+      dragElement.style.opacity = "0.5";
+    }
+  };
+
+  const handleItemDragEnd = (e: React.DragEvent) => {
+    const dragElement = e.currentTarget as HTMLElement;
+    if (dragElement) {
+      dragElement.style.opacity = "1";
+    }
+    setDraggedItem(null);
+    setDragOverId(null);
+  };
+
+  const handleItemDragOver = (e: React.DragEvent, targetItem: MusicLibraryItem) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (draggedItem && draggedItem.id !== targetItem.id) {
+      setDragOverId(targetItem.id);
+    }
+  };
+
+  const handleItemDragLeave = (e: React.DragEvent) => {
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    if (!relatedTarget || !e.currentTarget.contains(relatedTarget)) {
+      setDragOverId(null);
+    }
+  };
+
+  const handleItemDrop = (e: React.DragEvent, targetItem: MusicLibraryItem) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverId(null);
+
+    if (!draggedItem || draggedItem.id === targetItem.id) return;
+
+    const draggedIndex = pagination.paginatedItems.findIndex((i) => i.id === draggedItem.id);
+    const targetIndex = pagination.paginatedItems.findIndex((i) => i.id === targetItem.id);
+
+    const reordered = [...pagination.paginatedItems];
+    reordered.splice(draggedIndex, 1);
+
+    const insertIndex = draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
+    reordered.splice(insertIndex, 0, draggedItem);
+
+    reorderItems.mutate(reordered.map((item) => item.id));
+    setDraggedItem(null);
+  };
+
   // Fetch music library from database
   const { data: musicLibrary = [] } = useMusicLibrary();
   const addToLibrary = useAddToLibrary();
@@ -88,7 +147,7 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
   const persistenceKey = "musicLibrary";
   const persistedFilters = getPersistedFilters(persistenceKey, {
     genreFilters: ["all"],
-    sortBy: "date-added",
+    sortBy: "custom",
     itemsPerPage: 10,
   });
 
@@ -194,10 +253,13 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
     return genreSet;
   }, [filteredByStatus]);
 
+  const isCustomSort = sortBy === "custom";
+
   // Create filter & sort sections for FilterSortMenu
   const filterSortSections = useMemo((): FilterSortSection[] => {
     // Sort options
     const sortOptions = [
+      { id: "custom" as SortType, label: "Custom" },
       { id: "date-added" as SortType, label: "Recently Added" },
       { id: "title" as SortType, label: "Title" },
       { id: "artist" as SortType, label: "Artist" },
@@ -267,6 +329,8 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
   const sortFn = useCallback(
     (a: MusicLibraryItem, b: MusicLibraryItem) => {
       switch (sortBy) {
+        case "custom":
+          return (a.custom_order || 0) - (b.custom_order || 0);
         case "date-added":
           return (
             new Date(b.created_at || "").getTime() -
@@ -408,7 +472,20 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.18 }}
               >
-                <MediaListItem
+                <div
+                  draggable={isCustomSort}
+                  onDragStart={(e) => handleItemDragStart(e, music)}
+                  onDragEnd={handleItemDragEnd}
+                  onDragOver={(e) => handleItemDragOver(e, music)}
+                  onDragLeave={handleItemDragLeave}
+                  onDrop={(e) => handleItemDrop(e, music)}
+                  className={
+                    isCustomSort && dragOverId === music.id
+                      ? "border-t-2 border-primary"
+                      : ""
+                  }
+                >
+                  <MediaListItem
                   id={music.id}
                   title={music.title}
                   subtitle={music.artist}
@@ -450,6 +527,7 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
                     handleExpandChange(music.id, isExpanded)
                   }
                 />
+                </div>
               </motion.div>
             ))}
           </AnimatePresence>

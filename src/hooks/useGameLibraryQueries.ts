@@ -29,6 +29,7 @@ export interface GameLibraryItem {
   created_at: string;
   updated_at: string;
   played_at: string | null;
+  custom_order: number | null;
 }
 
 interface BatchAddResult {
@@ -307,5 +308,28 @@ export function useIsGameInLibrary(externalId: string) {
       return data !== null;
     },
     enabled: !!externalId,
+  });
+}
+
+/**
+ * Reorder game library items mutation
+ * Updates custom_order for drag-to-reorder functionality
+ */
+export function useReorderGameLibraryItems() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (itemIds: string[]) => {
+      const { reorderGameLibraryItems } = await import(
+        "../services/recommendationsService"
+      );
+      return await reorderGameLibraryItems(itemIds);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.gameLibrary.list(user?.id),
+      });
+    },
   });
 }

@@ -3,7 +3,7 @@ import type { SortOption } from "@/components/shared";
 export const WATCHLIST_PERSISTENCE_KEY = "watchlist";
 
 export type MediaTypeFilter = "all" | "movie" | "tv";
-export type WatchlistSortType = "date-added" | "title" | "year" | "rating";
+export type WatchlistSortType = "custom" | "date-added" | "title" | "year" | "rating";
 
 export interface WatchlistFilters {
   mediaTypeFilter: MediaTypeFilter;
@@ -15,10 +15,11 @@ export interface WatchlistFilters {
 export const WATCHLIST_DEFAULT_FILTERS: WatchlistFilters = {
   mediaTypeFilter: "all",
   genreFilters: ["all"],
-  sortBy: "date-added",
+  sortBy: "custom",
 };
 
 export const WATCHLIST_SORT_OPTIONS: SortOption[] = [
+  { id: "custom", label: "Sort: Custom" },
   { id: "date-added", label: "Sort: Date Added" },
   { id: "title", label: "Sort: Title (A-Z)" },
   { id: "year", label: "Sort: Year" },

@@ -251,3 +251,26 @@ export function useUpdateMusicNotes() {
     },
   });
 }
+
+/**
+ * Reorder music library items mutation
+ * Updates custom_order for drag-to-reorder functionality
+ */
+export function useReorderMusicLibraryItems() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (itemIds: string[]) => {
+      const { reorderMusicLibraryItems } = await import(
+        "../services/recommendationsService"
+      );
+      return await reorderMusicLibraryItems(itemIds);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.musicLibrary.list(user?.id),
+      });
+    },
+  });
+}

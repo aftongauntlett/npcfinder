@@ -96,6 +96,7 @@ export function useAddToWatchlist() {
           added_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           watched_at: newItem.watched ? new Date().toISOString() : null, // Set watched_at if already watched
+          custom_order: null,
         };
 
         queryClient.setQueryData<WatchlistItem[]>(
@@ -434,4 +435,28 @@ export function usePrefetchWatchlistDetails(
       cancelled = true;
     };
   }, [enabled, items, queryClient]);
+}
+
+/**
+ * Reorder watchlist items mutation
+ * Updates custom_order for drag-to-reorder functionality
+ */
+export function useReorderWatchlistItems() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (itemIds: string[]) => {
+      return await recommendationsService.reorderWatchlistItems(itemIds);
+    },
+    onSuccess: () => {
+      // Invalidate watchlist query to reflect new order
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.watchlist.list(user?.id),
+      });
+    },
+    onError: (error) => {
+      logger.error("Failed to reorder watchlist items", { error });
+    },
+  });
 }

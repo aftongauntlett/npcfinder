@@ -131,6 +131,8 @@ export function useReadingListViewModel({
   const sortFn = useCallback(
     (a: ReadingListItem, b: ReadingListItem) => {
       switch (sortBy) {
+        case "custom":
+          return (a.custom_order || 0) - (b.custom_order || 0);
         case "date-added":
           return (
             new Date(b.added_at || "").getTime() -

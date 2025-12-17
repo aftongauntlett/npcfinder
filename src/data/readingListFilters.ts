@@ -1,6 +1,6 @@
 export const READING_LIST_PERSISTENCE_KEY = "readingList";
 
-export type ReadingListSortType = "date-added" | "title" | "year" | "rating";
+export type ReadingListSortType = "custom" | "date-added" | "title" | "year" | "rating";
 
 export interface ReadingListFilters {
   categoryFilters: string[];
@@ -10,7 +10,7 @@ export interface ReadingListFilters {
 
 export const READING_LIST_DEFAULT_FILTERS: ReadingListFilters = {
   categoryFilters: ["all"],
-  sortBy: "date-added",
+  sortBy: "custom",
 };
 
 export function getReadingListFilterSections(availableCategories: Set<string>) {
@@ -35,6 +35,7 @@ export function getReadingListFilterSections(availableCategories: Set<string>) {
       id: "sort",
       title: "Sort By",
       options: [
+        { id: "custom", label: "Custom" },
         { id: "date-added", label: "Recently Added" },
         { id: "title", label: "Title" },
         { id: "year", label: "Publication Year" },

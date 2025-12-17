@@ -193,3 +193,26 @@ export function useUpdateBookNotes() {
     },
   });
 }
+
+/**
+ * Reorder reading list items mutation
+ * Updates custom_order for drag-to-reorder functionality
+ */
+export function useReorderReadingListItems() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (itemIds: string[]) => {
+      const { reorderReadingListItems } = await import(
+        "../services/recommendationsService"
+      );
+      return await reorderReadingListItems(itemIds);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.readingList.list(user?.id),
+      });
+    },
+  });
+}
