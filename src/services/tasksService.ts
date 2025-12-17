@@ -478,9 +478,6 @@ export async function getTasks(
     if (filters?.status) {
       query = query.eq("status", filters.status);
     }
-    if (filters?.priority) {
-      query = query.eq("priority", filters.priority);
-    }
     if (filters?.dueBefore) {
       query = query.lte("due_date", filters.dueBefore);
     }
@@ -546,12 +543,49 @@ export async function getTodayTasks(): Promise<ServiceResponse<Task[]>> {
       .lte("due_date", today)
       .in("status", ["todo", "in_progress"])
       .order("due_date", { ascending: true })
-      .order("priority", { ascending: false, nullsFirst: false });
+      .order("created_at", { ascending: false });
 
     if (error) throw error;
     return { data: data || [], error: null };
   } catch (error) {
     logger.error("Failed to fetch today's tasks", error);
+    return { data: null, error: error as Error };
+  }
+}
+
+/**
+ * Fetch upcoming tasks (due within the next 5 days)
+ * SECURITY: Explicitly filters by user_id for defense-in-depth
+ */
+export async function getUpcomingTasks(): Promise<ServiceResponse<Task[]>> {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
+    const today = new Date();
+    const fiveDaysFromNow = new Date(today);
+    fiveDaysFromNow.setDate(today.getDate() + 5);
+
+    const todayStr = today.toISOString().split("T")[0];
+    const fiveDaysStr = fiveDaysFromNow.toISOString().split("T")[0];
+
+    const { data, error } = await supabase
+      .from("tasks")
+      .select("*")
+      .eq("user_id", user.id)
+      .gte("due_date", todayStr)
+      .lte("due_date", fiveDaysStr)
+      .in("status", ["todo", "in_progress"])
+      .order("due_date", { ascending: true })
+      .order("created_at", { ascending: false })
+      .limit(10); // Limit to 10 upcoming tasks
+
+    if (error) throw error;
+    return { data: data || [], error: null };
+  } catch (error) {
+    logger.error("Failed to fetch upcoming tasks", error);
     return { data: null, error: error as Error };
   }
 }
@@ -663,7 +697,6 @@ export async function createTask(
         icon: taskData.icon ?? null,
         icon_color: taskData.icon_color ?? null,
         status: taskData.status || "todo",
-        priority: taskData.priority || null,
         due_date: taskData.due_date || null,
         item_data: taskData.item_data || null,
         display_order: nextOrder,
@@ -672,10 +705,9 @@ export async function createTask(
         repeat_frequency: taskData.repeat_frequency || null,
         last_completed_at: null, // Set by toggleTaskStatus when completing repeatable tasks
         // Timer fields
-        timer_duration_minutes: taskData.timer_duration_minutes || null,
+        timer_duration_seconds: taskData.timer_duration_seconds || null,
         timer_started_at: null, // Set by startTaskTimer
         timer_completed_at: null, // Set by completeTaskTimer
-        is_urgent_after_timer: taskData.is_urgent_after_timer || null,
       })
       .select()
       .single();
@@ -783,7 +815,8 @@ export async function completeRepeatableTask(
     // Calculate next occurrence
     const nextDate = getNextOccurrenceDate(
       task.due_date,
-      task.repeat_frequency as "daily" | "weekly" | "biweekly" | "monthly" | "yearly" | "custom"
+      task.repeat_frequency as "daily" | "weekly" | "biweekly" | "monthly" | "yearly" | "custom",
+      task.repeat_interval || 1
     );
 
     // Update task: reset to todo status and update date to next occurrence
@@ -959,17 +992,15 @@ export async function archiveTask(
 export async function startTaskTimer(
   taskId: string,
   durationMinutes: number,
-  isUrgentAfter = false,
   startTime?: string
 ): Promise<ServiceResponse<Task>> {
   try {
     const { data, error } = await supabase
       .from("tasks")
       .update({
-        timer_duration_minutes: durationMinutes,
+        timer_duration_seconds: durationMinutes,
         timer_started_at: startTime || new Date().toISOString(),
         timer_completed_at: null, // Reset completion if restarting timer
-        is_urgent_after_timer: isUrgentAfter,
       })
       .eq("id", taskId)
       .select()

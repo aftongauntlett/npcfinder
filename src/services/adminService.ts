@@ -353,7 +353,6 @@ export interface TaskAdmin {
   title: string;
   description?: string;
   status: string;
-  priority?: string;
   due_date?: string;
   created_at: string;
   updated_at: string;
@@ -489,7 +488,6 @@ export const getAllTasksAdmin = async (
           title: string;
           description?: string;
           status: string;
-          priority?: string;
           due_date?: string;
           created_at: string;
           updated_at: string;
@@ -503,7 +501,6 @@ export const getAllTasksAdmin = async (
           title: task.title,
           description: task.description,
           status: task.status,
-          priority: task.priority,
           due_date: task.due_date,
           created_at: task.created_at,
           updated_at: task.updated_at,

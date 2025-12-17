@@ -125,6 +125,8 @@ export const queryKeys = {
     task: (taskId: string) => [...queryKeys.tasks.all, "task", taskId] as const,
     todayTasks: (userId?: string) =>
       [...queryKeys.tasks.all, "today", userId] as const,
+    upcomingTasks: (userId?: string) =>
+      [...queryKeys.tasks.all, "upcoming", userId] as const,
     archivedTasks: (userId?: string) =>
       [...queryKeys.tasks.all, "archived", userId] as const,
     tasksByStatus: (status: string, userId?: string) =>

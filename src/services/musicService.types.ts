@@ -24,6 +24,7 @@ export interface MusicLibraryItem {
   created_at: string;
   updated_at: string;
   listened_at: string | null; // When marked as listened
+  custom_order: number | null; // For drag-to-reorder functionality
 }
 
 export interface AddToLibraryParams {

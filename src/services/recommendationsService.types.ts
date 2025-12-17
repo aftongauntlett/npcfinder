@@ -77,6 +77,7 @@ export interface WatchlistItem {
   added_at: string;
   updated_at: string;
   watched_at: string | null;
+  custom_order: number | null;
 }
 
 export interface AddWatchlistItemData {

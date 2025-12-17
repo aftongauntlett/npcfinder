@@ -102,7 +102,6 @@ export interface Task {
   icon?: string | null;
   icon_color?: string | null;
   status: "todo" | "in_progress" | "done" | "archived";
-  priority: "low" | "medium" | "high" | "urgent" | null;
   due_date: string | null; // ISO date string (YYYY-MM-DD)
   item_data?: Record<string, unknown> | null;
   display_order: number | null;
@@ -119,12 +118,12 @@ export interface Task {
     | "monthly"
     | "yearly"
     | null;
+  repeat_interval: number | null; // Multiplier for frequency (e.g., 3 for "every 3 months")
   last_completed_at: string | null; // Track when last completed for repeatable tasks
   // Timer fields
-  timer_duration_minutes: number | null;
+  timer_duration_seconds: number | null;
   timer_started_at: string | null;
   timer_completed_at: string | null;
-  is_urgent_after_timer: boolean | null;
 }
 
 export interface CreateBoardData {
@@ -150,13 +149,12 @@ export interface CreateTaskData {
   icon?: string | null;
   icon_color?: string | null;
   status?: Task["status"];
-  priority?: Task["priority"];
   due_date?: string;
   item_data?: Record<string, unknown>;
   is_repeatable?: boolean;
   repeat_frequency?: "daily" | "weekly" | "biweekly" | "monthly" | "yearly";
-  timer_duration_minutes?: number;
-  is_urgent_after_timer?: boolean;
+  repeat_interval?: number; // Multiplier for frequency (e.g., 3 for "every 3 months")
+  timer_duration_seconds?: number;
 }
 
 // =====================================================
@@ -184,7 +182,6 @@ export interface BoardMemberWithUser extends BoardMember {
 
 export interface TaskFilters {
   status?: Task["status"];
-  priority?: Task["priority"];
   dueBefore?: string;
   dueAfter?: string;
   unassigned?: boolean; // Filter for tasks with null board_id

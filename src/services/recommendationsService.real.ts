@@ -755,3 +755,133 @@ export async function getGameQuickStats(
     sent: sent.length,
   };
 }
+
+/**
+ * REORDER FUNCTIONS for drag-to-reorder functionality
+ */
+
+/**
+ * Reorder watchlist items
+ */
+export async function reorderWatchlistItems(
+  itemIds: string[]
+): Promise<void> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Not authenticated");
+
+  // Update each item's custom_order field
+  const updates = itemIds.map((id, index) =>
+    supabase
+      .from("user_watchlist")
+      .update({ custom_order: index })
+      .eq("id", id)
+      .eq("user_id", user.id)
+  );
+
+  const results = await Promise.all(updates);
+
+  // Check for errors
+  const errors = results.filter((r) => r.error);
+  if (errors.length > 0) {
+    logger.error("Failed to reorder watchlist items", {
+      errors: errors.map((r) => r.error),
+    });
+    throw errors[0].error;
+  }
+}
+
+/**
+ * Reorder reading list items
+ */
+export async function reorderReadingListItems(
+  itemIds: string[]
+): Promise<void> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Not authenticated");
+
+  const updates = itemIds.map((id, index) =>
+    supabase
+      .from("reading_list")
+      .update({ custom_order: index })
+      .eq("id", id)
+      .eq("user_id", user.id)
+  );
+
+  const results = await Promise.all(updates);
+
+  const errors = results.filter((r) => r.error);
+  if (errors.length > 0) {
+    logger.error("Failed to reorder reading list items", {
+      errors: errors.map((r) => r.error),
+    });
+    throw errors[0].error;
+  }
+}
+
+/**
+ * Reorder game library items
+ */
+export async function reorderGameLibraryItems(
+  itemIds: string[]
+): Promise<void> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Not authenticated");
+
+  const updates = itemIds.map((id, index) =>
+    supabase
+      .from("game_library")
+      .update({ custom_order: index })
+      .eq("id", id)
+      .eq("user_id", user.id)
+  );
+
+  const results = await Promise.all(updates);
+
+  const errors = results.filter((r) => r.error);
+  if (errors.length > 0) {
+    logger.error("Failed to reorder game library items", {
+      errors: errors.map((r) => r.error),
+    });
+    throw errors[0].error;
+  }
+}
+
+/**
+ * Reorder music library items
+ */
+export async function reorderMusicLibraryItems(
+  itemIds: string[]
+): Promise<void> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Not authenticated");
+
+  const updates = itemIds.map((id, index) =>
+    supabase
+      .from("music_library")
+      .update({ custom_order: index })
+      .eq("id", id)
+      .eq("user_id", user.id)
+  );
+
+  const results = await Promise.all(updates);
+
+  const errors = results.filter((r) => r.error);
+  if (errors.length > 0) {
+    logger.error("Failed to reorder music library items", {
+      errors: errors.map((r) => r.error),
+    });
+    throw errors[0].error;
+  }
+}
