@@ -13,6 +13,7 @@ import BoardFormModal from "../../tasks/BoardFormModal";
 import BoardCard from "../../tasks/BoardCard";
 import { JobTrackerView } from "../../tasks/views/JobTrackerView";
 import { RecipeListView } from "../../tasks/views/RecipeListView";
+import { KanbanView } from "../../tasks/views/KanbanView";
 import ConfirmationModal from "../../shared/ui/ConfirmationModal";
 import FilterSortMenu, {
   FilterSortSection,
@@ -93,10 +94,10 @@ const TemplateView: React.FC<TemplateViewProps> = ({
     TEMPLATE_META[templateType as keyof typeof TEMPLATE_META] ||
     TEMPLATE_META.kanban;
 
-  // Only kanban and markdown templates allow multiple boards
-  // job_tracker and recipe are singleton (one per user, auto-created)
+  // Only markdown template allows multiple boards
+  // job_tracker, recipe, and kanban are singleton (one per user, auto-created)
   const allowsMultipleBoards =
-    templateType === "kanban" || templateType === "markdown";
+    templateType === "markdown";
 
   const handleDeleteBoard = () => {
     if (deletingBoard) {
@@ -346,6 +347,22 @@ const TemplateView: React.FC<TemplateViewProps> = ({
             isLoading={deleteTask.isPending}
           />
         )}
+      </div>
+    );
+  }
+
+  // For kanban template, show the singleton kanban view
+  if (templateType === "kanban" && boards.length > 0) {
+    const board = boards.reduce((max, b) => 
+      ((b.total_tasks || 0) > (max.total_tasks || 0) ? b : max), boards[0]);
+    return (
+      <div className="container mx-auto px-4 sm:px-6">
+        <h2 className="sr-only">{meta.title}</h2>
+        <KanbanView
+          boardId={board.id}
+          onCreateTask={(sectionId) => onCreateTask?.(board.id, sectionId)}
+          onEditTask={(task) => onEditTask?.(task.id)}
+        />
       </div>
     );
   }

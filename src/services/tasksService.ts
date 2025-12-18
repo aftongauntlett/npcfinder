@@ -1276,7 +1276,7 @@ export async function getSharedBoards(): Promise<
 /**
  * Template types that should have singleton boards (one per user)
  */
-const SINGLETON_TEMPLATE_TYPES = ["job_tracker", "recipe"] as const;
+const SINGLETON_TEMPLATE_TYPES = ["job_tracker", "recipe", "kanban"] as const;
 type SingletonTemplateType = (typeof SINGLETON_TEMPLATE_TYPES)[number];
 
 /**

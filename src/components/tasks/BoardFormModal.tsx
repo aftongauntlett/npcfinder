@@ -58,7 +58,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
 
   const effectiveTemplateType = board?.template_type || preselectedTemplate;
   const isJobTracker = effectiveTemplateType === "job_tracker";
-  const isRecipe = effectiveTemplateType === "recipe";
+  const isKanban = effectiveTemplateType === "kanban";
 
   // Validate board name for duplicates
   const validateBoardName = (boardName: string): string => {
@@ -184,6 +184,12 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
 
   if (!isOpen) return null;
 
+  // Prevent creating new kanban boards (they're singleton)
+  if (!board && isKanban) {
+    onClose();
+    return null;
+  }
+
   return (
     <>
       <Modal
@@ -237,7 +243,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
             />
           </div>
 
-          {/* Privacy Toggle */}
+          {/* Privacy Toggle - hidden for job_tracker only */}
           {!isJobTracker && (
             <PrivacyToggle
               variant="switch"
@@ -249,8 +255,8 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
             />
           )}
 
-          {/* Sharing Section - Only for existing non-recipe boards, and never for job tracker boards */}
-          {board && !isRecipe && !isJobTracker && (
+          {/* Sharing Section - Only for existing boards that allow sharing (not job_tracker) */}
+          {board && !isJobTracker && (
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">

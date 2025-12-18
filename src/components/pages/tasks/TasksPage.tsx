@@ -61,14 +61,15 @@ const TasksPage: React.FC = () => {
   // Fetch unassigned tasks count for badge (lightweight count-only query)
   const { data: unassignedTasksCount = 0 } = useUnassignedTasksCount();
 
-  // Get singleton board IDs for job_tracker and recipe
-  const { jobBoardId, recipeBoardId } = useAllSingletonBoards();
+  // Get singleton board IDs for job_tracker, recipe, and kanban
+  const { jobBoardId, recipeBoardId, kanbanBoardId } = useAllSingletonBoards();
 
   // Extract board filtering and task counts into dedicated hook
   const {
     kanbanBoards,
     recipeBoards,
     jobBoards,
+    kanbanTaskCount,
     recipeTaskCount,
     jobTaskCount,
   } = useBoardTemplates(boards);
@@ -114,7 +115,7 @@ const TasksPage: React.FC = () => {
         id: "kanban",
         label: "Kanban",
         icon: LayoutGrid,
-        badge: kanbanBoards.length > 0 ? kanbanBoards.length : undefined,
+        badge: kanbanTaskCount > 0 ? kanbanTaskCount : undefined,
       },
       {
         id: "recipes",
@@ -131,13 +132,13 @@ const TasksPage: React.FC = () => {
     ];
   }, [
     unassignedTasksCount,
-    kanbanBoards.length,
+    kanbanTaskCount,
     recipeTaskCount,
     jobTaskCount,
   ]);
 
   // Handle create task from board
-  // For singleton types (job_tracker, recipe), boardId is optional and handled automatically
+  // For singleton types (job_tracker, recipe, kanban), boardId is optional and handled automatically
   const handleCreateTask = (boardId?: string, sectionId?: string) => {
     // Determine which board to use based on current view
     let targetBoardId = boardId;
@@ -148,6 +149,8 @@ const TasksPage: React.FC = () => {
         targetBoardId = jobBoardId ?? undefined;
       } else if (selectedView === "recipes") {
         targetBoardId = recipeBoardId ?? undefined;
+      } else if (selectedView === "kanban") {
+        targetBoardId = kanbanBoardId ?? undefined;
       }
     }
 

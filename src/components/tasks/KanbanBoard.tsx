@@ -21,12 +21,14 @@ interface KanbanBoardProps {
   boardId: string;
   onCreateTask: (sectionId?: string) => void;
   onEditTask: (task: Task) => void;
+  lockColumnTitles?: boolean; // Lock column titles (no rename/delete)
 }
 
 const KanbanBoardComponent: React.FC<KanbanBoardProps> = ({
   boardId,
   onCreateTask,
   onEditTask,
+  lockColumnTitles = false,
 }) => {
   const { data: sections = [] } = useBoardSections(boardId);
   const { data: tasks = [] } = useTasks(boardId);
@@ -147,11 +149,12 @@ const KanbanBoardComponent: React.FC<KanbanBoardProps> = ({
               tasks={sectionTasks}
               onCreateTask={() => onCreateTask(section.id)}
               onEditTask={onEditTask}
-              onRenameSection={handleRenameSection}
+              onRenameSection={lockColumnTitles ? undefined : handleRenameSection}
               onDeleteSection={undefined}
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
               onDrop={handleDrop}
+              allowRename={!lockColumnTitles}
             />
           );
         })}

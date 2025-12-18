@@ -525,14 +525,16 @@ export function useCreateTask() {
     },
 
     onSuccess: (data) => {
-      // Invalidate relevant queries
+      // Invalidate relevant queries (use exact: false to catch queries with filters)
       void queryClient.invalidateQueries({
         queryKey: queryKeys.tasks.boardTasks(data.board_id),
+        exact: false,
       });
       // If no board_id (inbox task), also invalidate the inbox
       if (!data.board_id) {
         void queryClient.invalidateQueries({
           queryKey: queryKeys.tasks.boardTasks(null),
+          exact: false,
         });
       }
       void queryClient.invalidateQueries({

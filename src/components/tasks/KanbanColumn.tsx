@@ -21,6 +21,7 @@ interface KanbanColumnProps {
   onDragStart?: (task: Task) => void;
   onDragEnd?: () => void;
   onDrop?: (targetSectionId: string, targetTaskId?: string) => void;
+  allowRename?: boolean; // Allow renaming/deleting columns (default true)
 }
 
 const KanbanColumnComponent: React.FC<KanbanColumnProps> = ({
@@ -33,6 +34,7 @@ const KanbanColumnComponent: React.FC<KanbanColumnProps> = ({
   onDragStart,
   onDragEnd,
   onDrop,
+  allowRename = true,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(section.name);
@@ -115,27 +117,29 @@ const KanbanColumnComponent: React.FC<KanbanColumnProps> = ({
                   {tasks.length}
                 </span>
               </h3>
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                {onRenameSection && (
-                  <Button
-                    onClick={() => setIsEditing(true)}
-                    variant="subtle"
-                    size="icon"
-                    icon={<Pencil className="w-3.5 h-3.5" />}
-                    aria-label={`Rename ${section.name}`}
-                  />
-                )}
-                {onDeleteSection && (
-                  <Button
-                    onClick={() => setShowDeleteConfirm(true)}
-                    variant="subtle"
-                    size="icon"
-                    icon={<Trash2 className="w-3.5 h-3.5" />}
-                    aria-label={`Delete ${section.name}`}
-                    className="hover:text-red-600 dark:hover:text-red-400"
-                  />
-                )}
-              </div>
+              {allowRename && (
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {onRenameSection && (
+                    <Button
+                      onClick={() => setIsEditing(true)}
+                      variant="subtle"
+                      size="icon"
+                      icon={<Pencil className="w-3.5 h-3.5" />}
+                      aria-label={`Rename ${section.name}`}
+                    />
+                  )}
+                  {onDeleteSection && (
+                    <Button
+                      onClick={() => setShowDeleteConfirm(true)}
+                      variant="subtle"
+                      size="icon"
+                      icon={<Trash2 className="w-3.5 h-3.5" />}
+                      aria-label={`Delete ${section.name}`}
+                      className="hover:text-red-600 dark:hover:text-red-400"
+                    />
+                  )}
+                </div>
+              )}
             </>
           )}
         </div>

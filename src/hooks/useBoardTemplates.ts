@@ -12,6 +12,7 @@ export interface BoardTemplateGroups {
   kanbanBoards: BoardWithStats[];
   recipeBoards: BoardWithStats[];
   jobBoards: BoardWithStats[];
+  kanbanTaskCount: number;
   recipeTaskCount: number;
   jobTaskCount: number;
 }
@@ -41,6 +42,12 @@ export function useBoardTemplates(
   );
 
   // Calculate task counts for each template type
+  const kanbanTaskCount = useMemo(
+    () =>
+      kanbanBoards.reduce((sum, board) => sum + (board.total_tasks || 0), 0),
+    [kanbanBoards]
+  );
+
   const recipeTaskCount = useMemo(
     () =>
       recipeBoards.reduce((sum, board) => sum + (board.total_tasks || 0), 0),
@@ -56,6 +63,7 @@ export function useBoardTemplates(
     kanbanBoards,
     recipeBoards,
     jobBoards,
+    kanbanTaskCount,
     recipeTaskCount,
     jobTaskCount,
   };
