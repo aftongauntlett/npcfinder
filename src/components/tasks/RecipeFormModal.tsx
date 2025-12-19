@@ -59,6 +59,9 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
   const [servings, setServings] = useState("");
   const [notes, setNotes] = useState("");
 
+  // Optional settings disclosure
+  const [showOptionalSettings, setShowOptionalSettings] = useState(false);
+
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const { fetchMetadata, loading: urlLoading } = useUrlMetadata();
@@ -382,81 +385,6 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
             rows={2}
           />
 
-          {/* Time & Serving Info */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Input
-              id="prep-time"
-              label="Prep Time"
-              type="text"
-              value={prepTime}
-              onChange={(e) => setPrepTime(e.target.value)}
-              placeholder="15 min"
-            />
-            <Input
-              id="cook-time"
-              label="Cook Time"
-              type="text"
-              value={cookTime}
-              onChange={(e) => setCookTime(e.target.value)}
-              placeholder="30 min"
-            />
-            <Input
-              id="total-time"
-              label="Total Time"
-              type="text"
-              value={totalTime}
-              onChange={(e) => setTotalTime(e.target.value)}
-              placeholder="45 min"
-            />
-            <Input
-              id="servings"
-              label="Servings"
-              type="text"
-              value={servings}
-              onChange={(e) => setServings(e.target.value)}
-              placeholder="4-6"
-            />
-          </div>
-
-          {/* Category */}
-          <div className="space-y-2">
-            <label className="block text-sm font-bold text-primary">
-              Category (optional)
-            </label>
-            <Dropdown
-              trigger={
-                <div className="w-full flex items-center justify-between px-4 py-2.5 text-base bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white hover:border-gray-400 dark:hover:border-gray-500 transition-colors cursor-pointer">
-                  <span
-                    className={category ? "" : "text-gray-500 dark:text-gray-400"}
-                  >
-                    {category || "Select a category..."}
-                  </span>
-                  <ChevronDown className="w-4 h-4 text-gray-500" />
-                </div>
-              }
-              options={[
-                { id: "Appetizer", label: "Appetizer" },
-                { id: "Breakfast", label: "Breakfast" },
-                { id: "Main", label: "Main Course" },
-                { id: "Side", label: "Side Dish" },
-                { id: "Dessert", label: "Dessert" },
-                { id: "Snack", label: "Snack" },
-                { id: "Beverage", label: "Beverage" },
-                { id: "Sauce", label: "Sauce/Condiment" },
-                { id: "Soup", label: "Soup" },
-                { id: "Salad", label: "Salad" },
-                { id: "Bread", label: "Bread/Baked Goods" },
-                { id: "Other", label: "Other" },
-              ]}
-              value={category}
-              onChange={(value) => setCategory(value as string)}
-              dropdownClassName="w-full"
-            />
-          </div>
-        </div>
-
-        {/* Recipe Content */}
-        <div className="space-y-4 pt-2 border-t border-gray-200 dark:border-gray-700">
           {/* Ingredients */}
           <Textarea
             label="Ingredients"
@@ -476,29 +404,143 @@ const RecipeFormModal: React.FC<RecipeFormModalProps> = ({
             rows={8}
             helperText="One step per line"
           />
+        </div>
 
-          {/* Notes */}
-          <Textarea
-            label="Notes (optional)"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Any additional notes or tips..."
-            rows={3}
-          />
+        {/* Optional Settings Disclosure */}
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+          <button
+            type="button"
+            onClick={() => setShowOptionalSettings(!showOptionalSettings)}
+            className="flex items-center justify-end gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors ml-auto"
+          >
+            <span>Optional settings</span>
+            <svg
+              className={`w-4 h-4 transition-transform ${
+                showOptionalSettings ? "rotate-90" : ""
+              }`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </button>
 
+          {showOptionalSettings && (
+            <div className="mt-6 space-y-6">
+              {/* Time & Serving Info */}
+              <div>
+                <label className="block text-sm font-semibold mb-3" style={{ color: themeColor }}>
+                  Time & Servings
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <Input
+                    id="prep-time"
+                    label="Prep Time"
+                    type="text"
+                    value={prepTime}
+                    onChange={(e) => setPrepTime(e.target.value)}
+                    placeholder="15 min"
+                  />
+                  <Input
+                    id="cook-time"
+                    label="Cook Time"
+                    type="text"
+                    value={cookTime}
+                    onChange={(e) => setCookTime(e.target.value)}
+                    placeholder="30 min"
+                  />
+                  <Input
+                    id="total-time"
+                    label="Total Time"
+                    type="text"
+                    value={totalTime}
+                    onChange={(e) => setTotalTime(e.target.value)}
+                    placeholder="45 min"
+                  />
+                  <Input
+                    id="servings"
+                    label="Servings"
+                    type="text"
+                    value={servings}
+                    onChange={(e) => setServings(e.target.value)}
+                    placeholder="4-6"
+                  />
+                </div>
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="block text-sm font-semibold mb-3" style={{ color: themeColor }}>
+                  Category
+                </label>
+                <Dropdown
+                  trigger={
+                    <div className="w-full flex items-center justify-between px-4 py-2.5 text-base bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white hover:border-gray-400 dark:hover:border-gray-500 transition-colors cursor-pointer">
+                      <span
+                        className={category ? "" : "text-gray-500 dark:text-gray-400"}
+                      >
+                        {category || "Select a category..."}
+                      </span>
+                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                    </div>
+                  }
+                  options={[
+                    { id: "Appetizer", label: "Appetizer" },
+                    { id: "Breakfast", label: "Breakfast" },
+                    { id: "Main", label: "Main Course" },
+                    { id: "Side", label: "Side Dish" },
+                    { id: "Dessert", label: "Dessert" },
+                    { id: "Snack", label: "Snack" },
+                    { id: "Beverage", label: "Beverage" },
+                    { id: "Sauce", label: "Sauce/Condiment" },
+                    { id: "Soup", label: "Soup" },
+                    { id: "Salad", label: "Salad" },
+                    { id: "Bread", label: "Bread/Baked Goods" },
+                    { id: "Other", label: "Other" },
+                  ]}
+                  value={category}
+                  onChange={(value) => setCategory(value as string)}
+                  dropdownClassName="w-full"
+                />
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="block text-sm font-semibold mb-3" style={{ color: themeColor }}>
+                  Additional Notes
+                </label>
+                <Textarea
+                  label=""
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Any additional notes or tips..."
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Duplicate Error (blocking) */}
         {duplicateWarning && (
-          <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3">
+          <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 mt-4">
             <p className="text-sm text-red-800 dark:text-red-200 font-medium">
               {duplicateWarning}
             </p>
           </div>
         )}
 
+        {/* Spacer for consistent divider spacing - only when optional settings expanded */}
+        {showOptionalSettings && <div className="h-2" />}
+
         {/* Actions */}
-        <div className="flex gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
           <Button
             type="button"
             onClick={handleClose}

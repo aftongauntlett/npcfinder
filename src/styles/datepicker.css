@@ -246,6 +246,16 @@
   width: 100%;
 }
 
+/* Hide input text when datepicker is open to prevent overlap with calendar */
+.react-datepicker__input-container input.react-datepicker-ignore-onclickoutside {
+  color: transparent !important;
+}
+
+/* Keep the placeholder visible */
+.react-datepicker__input-container input.react-datepicker-ignore-onclickoutside::placeholder {
+  color: transparent !important;
+}
+
 /* Clear button (X) styling */
 .react-datepicker__close-icon {
   right: 2px !important;

@@ -292,10 +292,10 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
           )}
         </div>
 
-        {/* Description - muted text under title */}
+        {/* Description - muted text under title (show only first line) */}
         {task.description && (
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
-            {task.description}
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-1">
+            {task.description.split('\n')[0]}
           </p>
         )}
       </div>
