@@ -304,6 +304,7 @@ export default function HeroConstellation({
     const dpr = window.devicePixelRatio || 1;
     canvas.width = width * dpr;
     canvas.height = height * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     // Store canvas bounding rect for mouse coordinate conversion (Comment 2)
     updateRect();
 
