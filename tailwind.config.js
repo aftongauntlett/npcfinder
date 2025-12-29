@@ -11,6 +11,12 @@ export default {
           light: "var(--color-primary-light)",
           pale: "var(--color-primary-pale)",
         },
+        secondary: {
+          DEFAULT: "var(--color-secondary)",
+          dark: "var(--color-secondary-dark)",
+          light: "var(--color-secondary-light)",
+          pale: "var(--color-secondary-pale)",
+        },
         landing: {
           peach: "#FFB088",
           teal: "#5DCCCC",

@@ -31,6 +31,14 @@ h6 {
   --color-primary-ring: #9333ea;
   --color-text-on-primary: #ffffff;
 
+  /* Default secondary color (complementary of purple) - will be overridden dynamically */
+  --color-secondary: #33ea93;
+  --color-secondary-dark: #22ce7e;
+  --color-secondary-light: #55f7a8;
+  --color-secondary-pale: #e8fff3;
+  --color-secondary-ring: #33ea93;
+  --color-text-on-secondary: #000000;
+
   /* Action Button Colors - Pastel shades for softer UI */
   --color-success: #10b981; /* Emerald-500 - for positive actions (save, add, watched, send) */
   --color-success-hover: #059669; /* Emerald-600 */

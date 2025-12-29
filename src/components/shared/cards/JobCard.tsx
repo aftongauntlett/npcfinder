@@ -50,7 +50,7 @@ const JobCard: React.FC<JobCardProps> = ({
   // Get status chip color based on status value
   const getStatusChipColor = (statusValue: string): string => {
     const normalizedStatus = statusValue.toLowerCase();
-    
+
     if (normalizedStatus === "applied") {
       return "bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600";
     } else if (normalizedStatus === "rejected") {
@@ -64,7 +64,7 @@ const JobCard: React.FC<JobCardProps> = ({
     } else if (normalizedStatus === "accepted") {
       return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400";
     }
-    
+
     // Default color for any other status
     return "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300";
   };
@@ -102,7 +102,10 @@ const JobCard: React.FC<JobCardProps> = ({
       {/* Title row with company name: job title and chips */}
       <div className="flex items-center gap-2 flex-wrap">
         <h3 className="text-gray-900 dark:text-white">
-          <span className="font-semibold text-primary dark:text-primary-light">{companyName}:</span> {position}
+          <span className="font-semibold text-primary dark:text-primary-light">
+            {companyName}:
+          </span>{" "}
+          {position}
         </h3>
         {companyUrl && (
           <a
@@ -149,7 +152,7 @@ const JobCard: React.FC<JobCardProps> = ({
       {/* Salary and date subtitle */}
       <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
         {salaryRange && `${salaryRange} • `}
-        {status === "Applied" 
+        {status === "Applied"
           ? `Applied ${formatDate(dateApplied)}`
           : `Updated ${formatDate(dateApplied)}`}
       </p>
@@ -162,8 +165,8 @@ const JobCard: React.FC<JobCardProps> = ({
       {/* Job Description */}
       {hasDescription && (
         <div>
-          <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
-            Job Description
+          <h4 className="font-semibold text-secondary dark:text-secondary-light mb-2">
+            Job Description:
           </h4>
           <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
             {jobDescription}
@@ -174,7 +177,7 @@ const JobCard: React.FC<JobCardProps> = ({
       {/* Timeline (Status History) */}
       {statusHistory && statusHistory.length > 0 && (
         <div>
-          <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
+          <h4 className="font-semibold text-secondary dark:text-secondary-light mb-2">
             Timeline
           </h4>
           <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
@@ -186,8 +189,8 @@ const JobCard: React.FC<JobCardProps> = ({
       {/* Notes */}
       {hasNotes && (
         <div>
-          <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
-            Description
+          <h4 className="font-semibold text-secondary dark:text-secondary-light mb-2">
+            Notes:
           </h4>
           <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed prose prose-sm dark:prose-invert max-w-none">
             <ReactMarkdown

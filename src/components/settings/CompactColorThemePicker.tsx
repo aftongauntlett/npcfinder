@@ -1,6 +1,9 @@
 import React from "react";
 import { HexColorPicker } from "react-colorful";
-import { getContrastColor } from "../../styles/colorThemes";
+import {
+  getContrastColor,
+  getComplementaryColor,
+} from "../../styles/colorThemes";
 import { Button, Input } from "@/components/shared";
 
 interface CompactColorThemePickerProps {
@@ -71,7 +74,17 @@ const CompactColorThemePicker: React.FC<CompactColorThemePickerProps> = ({
                   color: getContrastColor(selectedColor),
                 }}
               >
-                Example Card
+                Primary: Example Card
+              </div>
+
+              <div
+                className="w-full h-14 rounded-lg flex items-center justify-center text-base font-heading font-bold transition-colors"
+                style={{
+                  backgroundColor: getComplementaryColor(selectedColor),
+                  color: getContrastColor(getComplementaryColor(selectedColor)),
+                }}
+              >
+                Secondary: Auto-generated
               </div>
 
               <div className="w-full">
@@ -79,10 +92,19 @@ const CompactColorThemePicker: React.FC<CompactColorThemePickerProps> = ({
                   className="text-xl font-heading font-bold transition-colors"
                   style={{ color: selectedColor }}
                 >
-                  Header Example
+                  Primary Header Example
                 </h4>
                 <p className="text-sm text-gray-500 mt-1">
-                  Links and text accents use this color
+                  Links and text accents use primary color
+                </p>
+                <h4
+                  className="text-xl font-heading font-bold transition-colors mt-3"
+                  style={{ color: getComplementaryColor(selectedColor) }}
+                >
+                  Secondary Header Example
+                </h4>
+                <p className="text-sm text-gray-500 mt-1">
+                  Secondary color is automatically complementary
                 </p>
               </div>
 
@@ -102,8 +124,11 @@ const CompactColorThemePicker: React.FC<CompactColorThemePickerProps> = ({
                   variant="secondary"
                   size="sm"
                   style={{
-                    borderColor: selectedColor,
-                    color: selectedColor,
+                    backgroundColor: getComplementaryColor(selectedColor),
+                    borderColor: getComplementaryColor(selectedColor),
+                    color: getContrastColor(
+                      getComplementaryColor(selectedColor)
+                    ),
                   }}
                 >
                   Secondary

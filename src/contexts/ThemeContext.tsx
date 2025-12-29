@@ -90,6 +90,28 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       colorVariations.textOnPrimary
     );
 
+    root.style.setProperty("--color-secondary", colorVariations.secondary);
+    root.style.setProperty(
+      "--color-secondary-dark",
+      colorVariations.secondaryDark
+    );
+    root.style.setProperty(
+      "--color-secondary-light",
+      colorVariations.secondaryLight
+    );
+    root.style.setProperty(
+      "--color-secondary-pale",
+      colorVariations.secondaryPale
+    );
+    root.style.setProperty(
+      "--color-secondary-ring",
+      colorVariations.secondaryRing
+    );
+    root.style.setProperty(
+      "--color-text-on-secondary",
+      colorVariations.textOnSecondary
+    );
+
     // CSS variables update automatically without forced reflow
     // Removed: void root.offsetHeight; (force repaint)
   }, [themeColor]);
