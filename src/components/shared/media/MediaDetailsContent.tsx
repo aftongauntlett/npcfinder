@@ -138,7 +138,6 @@ export default function MediaDetailsContent({
     return "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700";
   };
 
-
   // Helper function to format playtime
   const formatPlaytime = (minutes: number): string => {
     const hours = Math.floor(minutes / 60);
@@ -176,9 +175,7 @@ export default function MediaDetailsContent({
       {/* Overview Section */}
       {description && (
         <div>
-          <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
-            Overview
-          </h4>
+          <h4 className="section-title">Overview</h4>
           <p className="text-sm text-gray-800 dark:text-gray-300 leading-relaxed">
             {description}
           </p>
@@ -192,46 +189,32 @@ export default function MediaDetailsContent({
           <div>
             {(album || genre || trackDuration || trackCount) && (
               <div>
-                <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
-                  Details
-                </h4>
+                <h4 className="section-title">Details</h4>
                 <div className="space-y-2">
                   {album && mediaType === "song" && (
                     <div className="text-sm">
-                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                        Album:
-                      </span>{" "}
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
-                        {album}
-                      </span>
+                      <span className="metadata-label">Album:</span>{" "}
+                      <span className="metadata-value">{album}</span>
                     </div>
                   )}
                   {genre && (
                     <div className="text-sm">
-                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                        Genre:
-                      </span>{" "}
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
-                        {genre}
-                      </span>
+                      <span className="metadata-label">Genre:</span>{" "}
+                      <span className="metadata-value">{genre}</span>
                     </div>
                   )}
                   {trackDuration && mediaType === "song" && (
                     <div className="text-sm">
-                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                        Duration:
-                      </span>{" "}
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                      <span className="metadata-label">Duration:</span>{" "}
+                      <span className="metadata-value">
                         {formatTrackDuration(trackDuration)}
                       </span>
                     </div>
                   )}
                   {trackCount && mediaType === "album" && (
                     <div className="text-sm">
-                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                        Tracks:
-                      </span>{" "}
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                      <span className="metadata-label">Tracks:</span>{" "}
+                      <span className="metadata-value">
                         {trackCount} {trackCount === 1 ? "track" : "tracks"}
                       </span>
                     </div>
@@ -245,17 +228,11 @@ export default function MediaDetailsContent({
           <div className="space-y-4">
             {year && (
               <div>
-                <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
-                  Info
-                </h4>
+                <h4 className="section-title">Info</h4>
                 <div className="space-y-2">
                   <div className="text-sm">
-                    <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                      Released:
-                    </span>{" "}
-                    <span className="font-medium text-gray-700 dark:text-gray-300">
-                      {year}
-                    </span>
+                    <span className="metadata-label">Released:</span>{" "}
+                    <span className="metadata-value">{year}</span>
                   </div>
                 </div>
               </div>
@@ -264,9 +241,7 @@ export default function MediaDetailsContent({
             {/* Preview Audio Player */}
             {previewUrl && (
               <div>
-                <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
-                  Preview
-                </h4>
+                <h4 className="section-title">Preview</h4>
                 <AudioPlayer src={previewUrl} title={title} />
               </div>
             )}
@@ -275,54 +250,36 @@ export default function MediaDetailsContent({
       )}
 
       {/* Game-specific details */}
-        {isGame && (
+      {isGame && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Left Column: Details */}
           <div>
             {(developer || genre || platforms || year) && (
               <div>
-                <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
-                  Details
-                </h4>
+                <h4 className="section-title">Details</h4>
                 <div className="space-y-2">
                   {developer && (
                     <div className="text-sm">
-                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                        Developer:
-                      </span>{" "}
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
-                        {developer}
-                      </span>
+                      <span className="metadata-label">Developer:</span>{" "}
+                      <span className="metadata-value">{developer}</span>
                     </div>
                   )}
                   {genre && (
                     <div className="text-sm">
-                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                        Genre:
-                      </span>{" "}
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
-                        {genre}
-                      </span>
+                      <span className="metadata-label">Genre:</span>{" "}
+                      <span className="metadata-value">{genre}</span>
                     </div>
                   )}
                   {platforms && (
                     <div className="text-sm">
-                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                        Platforms:
-                      </span>{" "}
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
-                        {platforms}
-                      </span>
+                      <span className="metadata-label">Platforms:</span>{" "}
+                      <span className="metadata-value">{platforms}</span>
                     </div>
                   )}
                   {year && (
                     <div className="text-sm">
-                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                        Release Year:
-                      </span>{" "}
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
-                        {year}
-                      </span>
+                      <span className="metadata-label">Release Year:</span>{" "}
+                      <span className="metadata-value">{year}</span>
                     </div>
                   )}
                 </div>
@@ -334,26 +291,18 @@ export default function MediaDetailsContent({
           <div className="space-y-4">
             {(metacritic || rawgRating) && (
               <div>
-                <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
-                  Reviews
-                </h4>
+                <h4 className="section-title">Reviews</h4>
                 <div className="space-y-2">
                   {metacritic && (
                     <div className="text-sm">
-                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                        Metacritic:
-                      </span>{" "}
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
-                        {metacritic}/100
-                      </span>
+                      <span className="metadata-label">Metacritic:</span>{" "}
+                      <span className="metadata-value">{metacritic}/100</span>
                     </div>
                   )}
                   {rawgRating && (
                     <div className="text-sm">
-                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                        RAWG Rating:
-                      </span>{" "}
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                      <span className="metadata-label">RAWG Rating:</span>{" "}
+                      <span className="metadata-value">
                         {rawgRating.toFixed(1)}/5
                       </span>
                     </div>
@@ -363,15 +312,11 @@ export default function MediaDetailsContent({
             )}
             {playtime && (
               <div>
-                <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
-                  Info
-                </h4>
+                <h4 className="section-title">Info</h4>
                 <div className="space-y-2">
                   <div className="text-sm">
-                    <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                      Avg Playtime:
-                    </span>{" "}
-                    <span className="font-medium text-gray-700 dark:text-gray-300">
+                    <span className="metadata-label">Avg Playtime:</span>{" "}
+                    <span className="metadata-value">
                       {formatPlaytime(playtime)}
                     </span>
                   </div>
@@ -383,44 +328,30 @@ export default function MediaDetailsContent({
       )}
 
       {/* Book-specific details */}
-        {isBook && (
+      {isBook && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Left Column: Details */}
           <div>
             {(authors || publisher || genre) && (
               <div>
-                <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
-                  Details
-                </h4>
+                <h4 className="section-title">Details</h4>
                 <div className="space-y-2">
                   {authors && (
                     <div className="text-sm">
-                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                        Author:
-                      </span>{" "}
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
-                        {authors}
-                      </span>
+                      <span className="metadata-label">Author:</span>{" "}
+                      <span className="metadata-value">{authors}</span>
                     </div>
                   )}
                   {publisher && (
                     <div className="text-sm">
-                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                        Publisher:
-                      </span>{" "}
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
-                        {publisher}
-                      </span>
+                      <span className="metadata-label">Publisher:</span>{" "}
+                      <span className="metadata-value">{publisher}</span>
                     </div>
                   )}
                   {genre && (
                     <div className="text-sm">
-                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                        Category:
-                      </span>{" "}
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
-                        {genre}
-                      </span>
+                      <span className="metadata-label">Category:</span>{" "}
+                      <span className="metadata-value">{genre}</span>
                     </div>
                   )}
                 </div>
@@ -432,38 +363,26 @@ export default function MediaDetailsContent({
           <div>
             {(year || pageCount || isbn) && (
               <div>
-                <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
-                  Info
-                </h4>
+                <h4 className="section-title">Info</h4>
                 <div className="space-y-2">
                   {year && (
                     <div className="text-sm">
-                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                        Published:
-                      </span>{" "}
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
-                        {year}
-                      </span>
+                      <span className="metadata-label">Published:</span>{" "}
+                      <span className="metadata-value">{year}</span>
                     </div>
                   )}
                   {pageCount && (
                     <div className="text-sm">
-                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                        Pages:
-                      </span>{" "}
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                      <span className="metadata-label">Pages:</span>{" "}
+                      <span className="metadata-value">
                         {pageCount} ({formatReadingTime(pageCount)})
                       </span>
                     </div>
                   )}
                   {isbn && (
                     <div className="text-sm">
-                      <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                        ISBN:
-                      </span>{" "}
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
-                        {isbn}
-                      </span>
+                      <span className="metadata-label">ISBN:</span>{" "}
+                      <span className="metadata-value">{isbn}</span>
                     </div>
                   )}
                 </div>
@@ -488,56 +407,48 @@ export default function MediaDetailsContent({
                   details.writer ||
                   (details.cast && details.cast.length > 0)) && (
                   <div>
-                    <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
-                      Details
-                    </h4>
+                    <h4 className="section-title">Details</h4>
                     <div className="space-y-2">
                       {details.cast && details.cast.length > 0 && (
                         <div className="text-sm">
-                          <span className="text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">
-                            Cast:
-                          </span>{" "}
-                          <span className="font-medium text-gray-800 dark:text-gray-300">
+                          <span className="metadata-label">Cast:</span>{" "}
+                          <span className="metadata-value">
                             {details.cast.slice(0, 10).join(", ")}
                           </span>
                         </div>
                       )}
                       {details.director && (
                         <div className="text-sm">
-                          <span className="text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">
+                          <span className="metadata-label">
                             {mediaType === "tv" ? "Creator:" : "Director:"}
                           </span>{" "}
-                          <span className="font-medium text-gray-800 dark:text-gray-300">
+                          <span className="metadata-value">
                             {details.director}
                           </span>
                         </div>
                       )}
                       {details.producer && (
                         <div className="text-sm">
-                          <span className="text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">
-                            Producer:
-                          </span>{" "}
-                          <span className="font-medium text-gray-800 dark:text-gray-300">
+                          <span className="metadata-label">Producer:</span>{" "}
+                          <span className="metadata-value">
                             {details.producer}
                           </span>
                         </div>
                       )}
                       {details.cinematographer && (
                         <div className="text-sm">
-                          <span className="text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">
+                          <span className="metadata-label">
                             Cinematographer:
                           </span>{" "}
-                          <span className="font-medium text-gray-800 dark:text-gray-300">
+                          <span className="metadata-value">
                             {details.cinematographer}
                           </span>
                         </div>
                       )}
                       {details.writer && (
                         <div className="text-sm">
-                          <span className="text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">
-                            Writer:
-                          </span>{" "}
-                          <span className="font-medium text-gray-800 dark:text-gray-300">
+                          <span className="metadata-label">Writer:</span>{" "}
+                          <span className="metadata-value">
                             {details.writer}
                           </span>
                         </div>
@@ -554,36 +465,30 @@ export default function MediaDetailsContent({
                   details.metacritic_score ||
                   details.imdb_rating) && (
                   <div>
-                    <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
-                      Reviews
-                    </h4>
+                    <h4 className="section-title">Reviews</h4>
                     <div className="space-y-2">
                       {details.rotten_tomatoes_score && (
                         <div className="text-sm">
-                          <span className="text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">
+                          <span className="metadata-label">
                             Rotten Tomatoes:
                           </span>{" "}
-                          <span className="font-medium text-gray-800 dark:text-gray-300">
+                          <span className="metadata-value">
                             {details.rotten_tomatoes_score}
                           </span>
                         </div>
                       )}
                       {details.metacritic_score && (
                         <div className="text-sm">
-                          <span className="text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">
-                            Metacritic:
-                          </span>{" "}
-                          <span className="font-medium text-gray-800 dark:text-gray-300">
+                          <span className="metadata-label">Metacritic:</span>{" "}
+                          <span className="metadata-value">
                             {details.metacritic_score}
                           </span>
                         </div>
                       )}
                       {details.imdb_rating && (
                         <div className="text-sm">
-                          <span className="text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">
-                            IMDB:
-                          </span>{" "}
-                          <span className="font-medium text-gray-800 dark:text-gray-300">
+                          <span className="metadata-label">IMDB:</span>{" "}
+                          <span className="metadata-value">
                             {details.imdb_rating}
                           </span>
                         </div>
@@ -595,9 +500,7 @@ export default function MediaDetailsContent({
                 {/* Success Section (Awards + Box Office) */}
                 {(details.awards_text || details.box_office) && (
                   <div>
-                    <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
-                      Success
-                    </h4>
+                    <h4 className="section-title">Success</h4>
                     <div className="flex flex-wrap gap-2">
                       {details.box_office && (
                         <span className="px-2.5 py-1 text-xs rounded-md border font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700">

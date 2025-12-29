@@ -80,7 +80,11 @@ const ShareMediaListModal: React.FC<ShareMediaListModalProps> = ({
       setCanEdit(false);
       setShowAddShare(false);
     } catch (error) {
-      logger.error("Failed to share list", { error, listId, userIds: selectedUserIds });
+      logger.error("Failed to share list", {
+        error,
+        listId,
+        userIds: selectedUserIds,
+      });
     }
   };
 
@@ -94,11 +98,18 @@ const ShareMediaListModal: React.FC<ShareMediaListModalProps> = ({
       });
       setConfirmUnshare(null);
     } catch (error) {
-      logger.error("Failed to unshare list", { error, listId, userId: confirmUnshare.userId });
+      logger.error("Failed to unshare list", {
+        error,
+        listId,
+        userId: confirmUnshare.userId,
+      });
     }
   };
 
-  const handleTogglePermission = async (memberId: string, currentRole: string) => {
+  const handleTogglePermission = async (
+    memberId: string,
+    currentRole: string
+  ) => {
     try {
       await updateRole.mutateAsync({
         memberId,
@@ -106,7 +117,11 @@ const ShareMediaListModal: React.FC<ShareMediaListModalProps> = ({
         role: currentRole === "editor" ? "viewer" : "editor",
       });
     } catch (error) {
-      logger.error("Failed to update list permissions", { error, listId, memberId });
+      logger.error("Failed to update list permissions", {
+        error,
+        listId,
+        memberId,
+      });
     }
   };
 
@@ -123,14 +138,16 @@ const ShareMediaListModal: React.FC<ShareMediaListModalProps> = ({
             <div className="p-2 bg-primary/10 rounded-lg">
               <Users className="w-5 h-5 text-primary" />
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-muted">
               Invite specific friends with view-only or editing access.
             </p>
           </div>
 
           {membersLoading ? (
             <div className="text-center py-8">
-              <p className="text-gray-500 dark:text-gray-400">Loading invites...</p>
+              <p className="text-gray-500 dark:text-gray-400">
+                Loading invites...
+              </p>
             </div>
           ) : members.length > 0 ? (
             <div className="space-y-2">
@@ -138,7 +155,8 @@ const ShareMediaListModal: React.FC<ShareMediaListModalProps> = ({
                 Invited ({members.length})
               </h3>
               {members.map((member) => {
-                const userName = member.user_profile?.display_name || "Unknown User";
+                const userName =
+                  member.user_profile?.display_name || "Unknown User";
                 return (
                   <div
                     key={member.user_id}
@@ -160,10 +178,14 @@ const ShareMediaListModal: React.FC<ShareMediaListModalProps> = ({
 
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => handleTogglePermission(member.id, member.role)}
+                        onClick={() =>
+                          handleTogglePermission(member.id, member.role)
+                        }
                         className="px-3 py-1.5 text-xs font-medium rounded bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                       >
-                        {member.role === "editor" ? "Make view-only" : "Allow editing"}
+                        {member.role === "editor"
+                          ? "Make view-only"
+                          : "Allow editing"}
                       </button>
                       <button
                         onClick={() =>
@@ -251,7 +273,9 @@ const ShareMediaListModal: React.FC<ShareMediaListModalProps> = ({
                             {user.display_name || "Unknown User"}
                           </span>
                           {selected && (
-                            <span className="text-xs text-primary">Selected</span>
+                            <span className="text-xs text-primary">
+                              Selected
+                            </span>
                           )}
                         </div>
                       </button>
@@ -287,7 +311,9 @@ const ShareMediaListModal: React.FC<ShareMediaListModalProps> = ({
                   <Button
                     size="sm"
                     onClick={handleAddShares}
-                    disabled={selectedUserIds.length === 0 || shareList.isPending}
+                    disabled={
+                      selectedUserIds.length === 0 || shareList.isPending
+                    }
                   >
                     Invite
                   </Button>
@@ -303,7 +329,9 @@ const ShareMediaListModal: React.FC<ShareMediaListModalProps> = ({
         onClose={() => setConfirmUnshare(null)}
         onConfirm={handleUnshare}
         title="Remove invite"
-        message={`Remove ${confirmUnshare?.userName || "this user"} from this list?`}
+        message={`Remove ${
+          confirmUnshare?.userName || "this user"
+        } from this list?`}
         confirmText="Remove"
         cancelText="Cancel"
         variant="danger"

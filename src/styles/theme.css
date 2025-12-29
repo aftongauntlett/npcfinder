@@ -197,6 +197,89 @@ body {
   color: rgb(var(--color-primary));
 }
 
+.section-title {
+  @apply font-semibold text-primary dark:text-primary-light mb-2;
+}
+
+.section-title-secondary {
+  @apply font-semibold text-secondary dark:text-secondary-light mb-2;
+}
+
+/**
+ * Utility Classes for Repeated Patterns
+ * 
+ * These classes consolidate frequently repeated className combinations
+ * to improve code readability and maintainability.
+ * 
+ * Metadata Styles:
+ *   .metadata-label - Uppercase labels for key-value pairs
+ *   .metadata-value - Values in metadata displays
+ * 
+ * Text Styles:
+ *   .text-muted - Secondary/helper text
+ *   .text-body - Main content text
+ *   .form-label - Form field labels
+ * 
+ * Chips/Badges:
+ *   .chip-base - Base chip structure (extend with color classes)
+ *   .chip-neutral - Neutral gray chip
+ * 
+ * Icon Containers:
+ *   .icon-container-sm - Small icon wrapper (7x7)
+ *   .icon-container-md - Medium icon wrapper (9x9, circular)
+ *   .icon-container-lg - Large icon wrapper (10x10)
+ * 
+ * Usage:
+ *   <span className="metadata-label">Director:</span>
+ *   <span className="metadata-value">Christopher Nolan</span>
+ *   <span className="chip-neutral">+2 more</span>
+ *   <p className="text-muted">Helper text here</p>
+ */
+
+/* Metadata and Label Styles */
+.metadata-label {
+  @apply text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium;
+}
+
+.metadata-value {
+  @apply font-medium text-gray-700 dark:text-gray-300;
+}
+
+/* Text Styles */
+.text-muted {
+  @apply text-sm text-gray-600 dark:text-gray-400;
+}
+
+.text-body {
+  @apply text-sm text-gray-700 dark:text-gray-300;
+}
+
+.form-label {
+  @apply text-sm font-medium text-gray-700 dark:text-gray-300;
+}
+
+/* Chip/Badge Base Styles */
+.chip-base {
+  @apply inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium;
+}
+
+.chip-neutral {
+  @apply chip-base bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300;
+}
+
+/* Icon Container Styles */
+.icon-container-sm {
+  @apply flex items-center justify-center w-7 h-7 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800;
+}
+
+.icon-container-md {
+  @apply flex items-center justify-center w-9 h-9 rounded-full;
+}
+
+.icon-container-lg {
+  @apply flex items-center justify-center w-10 h-10 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800;
+}
+
 /**
  * Theme Color Utility Classes
  * 

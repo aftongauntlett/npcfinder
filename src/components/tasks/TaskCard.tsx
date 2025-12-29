@@ -9,7 +9,11 @@
  */
 
 import React, { useMemo, useCallback } from "react";
-import { CalendarIcon as Calendar, ArrowsClockwiseIcon as ArrowsClockwise, CheckIcon as Check } from "@phosphor-icons/react";
+import {
+  CalendarIcon as Calendar,
+  ArrowsClockwiseIcon as ArrowsClockwise,
+  CheckIcon as Check,
+} from "@phosphor-icons/react";
 import { ListTodo } from "lucide-react";
 import ActionButtonGroup from "../shared/common/ActionButtonGroup";
 import AccordionListCard from "../shared/common/AccordionListCard";
@@ -92,11 +96,15 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
   // Generate action buttons once for reuse - memoized to prevent recreation
   const actionButtons = useMemo(
     () =>
-      generateTaskActions(task.id, {
-        onRemove,
-        onToggleComplete,
-        onSnooze,
-      }, task.board_id),
+      generateTaskActions(
+        task.id,
+        {
+          onRemove,
+          onToggleComplete,
+          onSnooze,
+        },
+        task.board_id
+      ),
     [task.id, task.board_id, onRemove, onToggleComplete, onSnooze]
   );
 
@@ -132,14 +140,18 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
       >
         {TaskIcon && (
           <span
-            className="flex items-center justify-center w-7 h-7 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"
+            className="icon-container-sm"
             style={iconContainerStyle}
             aria-hidden="true"
           >
             {isLucideTaskIcon ? (
               <TaskIcon className="w-4 h-4" style={iconStyle} />
             ) : (
-              <TaskIcon className="w-4 h-4" weight="regular" style={iconStyle} />
+              <TaskIcon
+                className="w-4 h-4"
+                weight="regular"
+                style={iconStyle}
+              />
             )}
           </span>
         )}
@@ -214,7 +226,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
   }
 
   // Detailed variant - full info for Today view and Archive
-  
+
   // Build header content following Movies/Recipes/JobCard pattern
   const headerChips: Array<{ key: string; node: React.ReactNode }> = [];
 
@@ -222,11 +234,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
     headerChips.push({
       key: "due_date",
       node: (
-        <span
-          className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium ${getDueDateChipColor(
-            task.due_date
-          )}`}
-        >
+        <span className={`chip-base ${getDueDateChipColor(task.due_date)}`}>
           <Calendar className="w-3.5 h-3.5" />
           {formatDueDate(task.due_date)}
         </span>
@@ -238,7 +246,10 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
     headerChips.push({
       key: "repeat",
       node: (
-        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400" title={`Repeats ${task.repeat_frequency}`}>
+        <span
+          className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400"
+          title={`Repeats ${task.repeat_frequency}`}
+        >
           <ArrowsClockwise className="w-4 h-4" weight="bold" />
         </span>
       ),
@@ -250,7 +261,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
       {/* Icon */}
       {TaskIcon && (
         <span
-          className="flex items-center justify-center w-10 h-10 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex-shrink-0"
+          className="icon-container-lg flex-shrink-0"
           style={iconContainerStyle}
           aria-hidden="true"
         >
@@ -261,7 +272,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
           )}
         </span>
       )}
-      
+
       {/* Title and Chips */}
       <div className="flex-1 min-w-0">
         {/* Title row with badges */}
@@ -295,7 +306,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
         {/* Description - muted text under title (show only first line) */}
         {task.description && (
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-1">
-            {task.description.split('\n')[0]}
+            {task.description.split("\n")[0]}
           </p>
         )}
       </div>
@@ -303,18 +314,16 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
   );
 
   // Status section component - only for tasks with due dates that are due/overdue
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split("T")[0];
   const isDueToday = task.due_date === today;
-  const shouldShowStatus = onToggleComplete && (
-    (task.is_repeatable && repeatableOverdue) || 
-    (task.due_date && (overdue || isDueToday))
-  );
-  
+  const shouldShowStatus =
+    onToggleComplete &&
+    ((task.is_repeatable && repeatableOverdue) ||
+      (task.due_date && (overdue || isDueToday)));
+
   const statusSection = shouldShowStatus && (
     <div>
-      <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
-        Status
-      </h4>
+      <h4 className="section-title">Status</h4>
       {task.is_repeatable && repeatableOverdue ? (
         <>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
@@ -343,7 +352,12 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
-              console.log('[TaskCard] Mark Complete clicked for task:', task.id, 'status:', task.status);
+              console.log(
+                "[TaskCard] Mark Complete clicked for task:",
+                task.id,
+                "status:",
+                task.status
+              );
               if (onToggleComplete) {
                 onToggleComplete(task.id);
               }
@@ -370,9 +384,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
             {/* Full Description */}
             {task.description && (
               <div>
-                <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
-                  Description
-                </h4>
+                <h4 className="section-title">Description</h4>
                 <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
                   {task.description}
                 </p>
@@ -385,10 +397,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
 
           {/* Right Column: Timer */}
           <div className="flex flex-col justify-start">
-            <TimerWidget 
-              task={task} 
-              compact={false} 
-            />
+            <TimerWidget task={task} compact={false} />
           </div>
         </div>
       ) : (
@@ -397,9 +406,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
           {/* Left Column: Description */}
           {task.description && (
             <div>
-              <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
-                Description
-              </h4>
+              <h4 className="section-title">Description</h4>
               <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
                 {task.description}
               </p>
@@ -408,9 +415,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
 
           {/* Right Column: Status section when no timer */}
           {statusSection && (
-            <div className="flex flex-col justify-start">
-              {statusSection}
-            </div>
+            <div className="flex flex-col justify-start">{statusSection}</div>
           )}
         </div>
       )}
@@ -440,7 +445,8 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
         },
         variant: "action" as const,
         ariaLabel: "Mark this cycle complete",
-        className: "!bg-green-100 dark:!bg-green-900/30 !text-green-700 dark:!text-green-400 hover:!bg-green-200 dark:hover:!bg-green-900/50",
+        className:
+          "!bg-green-100 dark:!bg-green-900/30 !text-green-700 dark:!text-green-400 hover:!bg-green-200 dark:hover:!bg-green-900/50",
       });
     } else {
       customActions.push({
@@ -449,7 +455,8 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
         onClick: () => onToggleComplete(task.id),
         variant: "action" as const,
         ariaLabel: "Mark task complete",
-        className: "!bg-green-100 dark:!bg-green-900/30 !text-green-700 dark:!text-green-400 hover:!bg-green-200 dark:hover:!bg-green-900/50",
+        className:
+          "!bg-green-100 dark:!bg-green-900/30 !text-green-700 dark:!text-green-400 hover:!bg-green-200 dark:hover:!bg-green-900/50",
       });
     }
   }

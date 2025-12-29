@@ -19,9 +19,7 @@ export function MediaCastList({
 
   return (
     <div>
-      <h4 className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium mb-2">
-        Cast
-      </h4>
+      <h4 className="metadata-label mb-2">Cast</h4>
       <div className="flex flex-wrap gap-2" role="list">
         {displayedCast.map((actor, index) => (
           <span

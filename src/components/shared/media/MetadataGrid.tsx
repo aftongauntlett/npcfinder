@@ -47,9 +47,7 @@ export default function MetadataGrid({
     <div className={`grid ${gridClass} gap-4 ${className}`}>
       {visibleItems.map((item, index) => (
         <div key={`${item.label}-${index}`} className="space-y-1">
-          <div className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">
-            {item.label}
-          </div>
+          <div className="metadata-label">{item.label}</div>
           <div className="text-sm font-semibold text-gray-900 dark:text-white">
             {item.value}
           </div>

@@ -145,7 +145,8 @@ const MediaListItemComponent: React.FC<MediaListItemProps> = ({
 
   const { data: details = null } = useQuery({
     queryKey: queryKeys.watchlist.details(externalId || "", mediaType || ""),
-    queryFn: () => getMediaDetailsWithCache(externalId!, mediaType as "movie" | "tv"),
+    queryFn: () =>
+      getMediaDetailsWithCache(externalId!, mediaType as "movie" | "tv"),
     enabled: isExpanded && !!externalId && isMovieOrTv,
     staleTime: Number.POSITIVE_INFINITY,
     placeholderData: null,
@@ -242,7 +243,7 @@ const MediaListItemComponent: React.FC<MediaListItemProps> = ({
 
           {/* Subtitle shows creator info (director/author/artist/developer) */}
           {subtitle && (
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            <p className="text-muted mt-1">
               {subtitle}
               {year && (
                 <>
@@ -273,7 +274,7 @@ const MediaListItemComponent: React.FC<MediaListItemProps> = ({
 
           {/* Year only (if no subtitle) */}
           {!subtitle && year && (
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            <p className="text-muted mt-1">
               {year}
               {details && details.runtime && (
                 <>

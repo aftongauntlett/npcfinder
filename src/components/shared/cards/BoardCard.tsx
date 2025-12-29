@@ -64,7 +64,7 @@ const BoardCard: React.FC<BoardCardProps> = ({
   // Board icon element
   const boardIcon = (
     <span
-      className="flex items-center justify-center w-10 h-10 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex-shrink-0"
+      className="icon-container-lg flex-shrink-0"
       style={iconContainerStyle}
       aria-hidden="true"
     >
@@ -84,14 +84,15 @@ const BoardCard: React.FC<BoardCardProps> = ({
   );
 
   // Task count chip to show next to title
-  const taskCountChip = board.total_tasks > 0 ? (
-    <Chip 
-      size="sm"
-      className="text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
-    >
-      {board.total_tasks}
-    </Chip>
-  ) : null;
+  const taskCountChip =
+    board.total_tasks > 0 ? (
+      <Chip
+        size="sm"
+        className="text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+      >
+        {board.total_tasks}
+      </Chip>
+    ) : null;
 
   // Subtitle showing only starter badge (no task count)
   const subtitle = isStarter ? (

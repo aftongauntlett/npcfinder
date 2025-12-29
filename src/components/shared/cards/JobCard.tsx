@@ -102,10 +102,7 @@ const JobCard: React.FC<JobCardProps> = ({
       {/* Title row with company name: job title and chips */}
       <div className="flex items-center gap-2 flex-wrap">
         <h3 className="text-gray-900 dark:text-white">
-          <span className="font-semibold text-primary dark:text-primary-light">
-            {companyName}:
-          </span>{" "}
-          {position}
+          <span className="font-semibold">{companyName}:</span> {position}
         </h3>
         {companyUrl && (
           <a
@@ -123,9 +120,7 @@ const JobCard: React.FC<JobCardProps> = ({
         {jobChips.length > 0 && (
           <>
             <div className="flex items-center gap-2 flex-wrap sm:hidden">
-              <span
-                className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium ${jobChips[0].className}`}
-              >
+              <span className={`chip-base ${jobChips[0].className}`}>
                 {jobChips[0].label}
               </span>
               {jobChips.length > 1 && (
@@ -137,10 +132,7 @@ const JobCard: React.FC<JobCardProps> = ({
 
             <div className="hidden sm:flex items-center gap-2 flex-wrap">
               {jobChips.map((chip) => (
-                <span
-                  key={chip.key}
-                  className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium ${chip.className}`}
-                >
+                <span key={chip.key} className={`chip-base ${chip.className}`}>
                   {chip.label}
                 </span>
               ))}
@@ -165,10 +157,8 @@ const JobCard: React.FC<JobCardProps> = ({
       {/* Job Description */}
       {hasDescription && (
         <div>
-          <h4 className="font-semibold text-secondary dark:text-secondary-light mb-2">
-            Job Description:
-          </h4>
-          <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
+          <h4 className="section-title">Job Description:</h4>
+          <p className="text-body whitespace-pre-wrap leading-relaxed">
             {jobDescription}
           </p>
         </div>
@@ -177,22 +167,16 @@ const JobCard: React.FC<JobCardProps> = ({
       {/* Timeline (Status History) */}
       {statusHistory && statusHistory.length > 0 && (
         <div>
-          <h4 className="font-semibold text-secondary dark:text-secondary-light mb-2">
-            Timeline
-          </h4>
-          <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-            {formatStatusHistory()}
-          </p>
+          <h4 className="section-title">Timeline</h4>
+          <p className="text-body leading-relaxed">{formatStatusHistory()}</p>
         </div>
       )}
 
       {/* Notes */}
       {hasNotes && (
         <div>
-          <h4 className="font-semibold text-secondary dark:text-secondary-light mb-2">
-            Notes:
-          </h4>
-          <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed prose prose-sm dark:prose-invert max-w-none">
+          <h4 className="section-title">Notes:</h4>
+          <div className="text-body leading-relaxed prose prose-sm dark:prose-invert max-w-none">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{

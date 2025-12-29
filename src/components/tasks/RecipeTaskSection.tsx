@@ -195,7 +195,7 @@ const RecipeTaskSection: React.FC<RecipeTaskSectionProps> = ({
         placeholder="Preheat oven to 350°F&#10;Mix dry ingredients&#10;Add wet ingredients"
         rows={4}
       />
-      
+
       <Textarea
         id="recipe-notes"
         label="Notes"
@@ -204,11 +204,14 @@ const RecipeTaskSection: React.FC<RecipeTaskSectionProps> = ({
         placeholder="Personal notes, modifications, etc."
         rows={2}
       />
-      
+
       {/* Timer Section */}
       <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
         <div>
-          <h4 className="text-sm font-semibold mb-1" style={{ color: themeColor }}>
+          <h4
+            className="text-sm font-semibold mb-1"
+            style={{ color: themeColor }}
+          >
             Timer
           </h4>
           <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -216,14 +219,18 @@ const RecipeTaskSection: React.FC<RecipeTaskSectionProps> = ({
           </p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Duration
-          </label>
+          <label className="block form-label mb-2">Duration</label>
           <div className="flex gap-2">
             <input
               type="number"
               min={1}
-              max={timerUnit === "hours" ? 24 : timerUnit === "minutes" ? 1440 : 86400}
+              max={
+                timerUnit === "hours"
+                  ? 24
+                  : timerUnit === "minutes"
+                  ? 1440
+                  : 86400
+              }
               value={timerDuration}
               onChange={(e) => {
                 const val = parseInt(e.target.value);
@@ -231,7 +238,12 @@ const RecipeTaskSection: React.FC<RecipeTaskSectionProps> = ({
                   setTimerDuration(1);
                   return;
                 }
-                const max = timerUnit === "hours" ? 24 : timerUnit === "minutes" ? 1440 : 86400;
+                const max =
+                  timerUnit === "hours"
+                    ? 24
+                    : timerUnit === "minutes"
+                    ? 1440
+                    : 86400;
                 setTimerDuration(Math.min(max, val));
               }}
               placeholder="30"
@@ -242,7 +254,9 @@ const RecipeTaskSection: React.FC<RecipeTaskSectionProps> = ({
                 id="timer-unit-recipe"
                 value={timerUnit}
                 onChange={(e) => {
-                  setTimerUnit(e.target.value as "minutes" | "hours" | "seconds");
+                  setTimerUnit(
+                    e.target.value as "minutes" | "hours" | "seconds"
+                  );
                 }}
                 options={[
                   { value: "seconds", label: "Seconds" },

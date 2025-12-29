@@ -14,25 +14,40 @@ import {
   useMediaListItems,
   useUpdateMediaList,
 } from "@/hooks/useMediaListsQueries";
-import type { MediaDomain, MediaListWithCounts } from "@/services/mediaListsService.types";
+import type {
+  MediaDomain,
+  MediaListWithCounts,
+} from "@/services/mediaListsService.types";
 import CreateMediaListModal from "./CreateMediaListModal";
 import EditMediaListModal from "./EditMediaListModal";
-import { getIconsForMediaType, MEDIA_DOMAIN_DEFAULT_ICON } from "@/utils/mediaIcons";
+import {
+  getIconsForMediaType,
+  MEDIA_DOMAIN_DEFAULT_ICON,
+} from "@/utils/mediaIcons";
 
 interface PersonalMediaListsProps {
   domain: MediaDomain;
   onOpenList: (list: Pick<MediaListWithCounts, "id" | "title">) => void;
 }
 
-const PersonalMediaLists: React.FC<PersonalMediaListsProps> = ({ domain, onOpenList }) => {
+const PersonalMediaLists: React.FC<PersonalMediaListsProps> = ({
+  domain,
+  onOpenList,
+}) => {
   const { user } = useAuth();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [expandedListId, setExpandedListId] = useState<string | null>(null);
-  const [editTarget, setEditTarget] = useState<MediaListWithCounts | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<MediaListWithCounts | null>(null);
+  const [editTarget, setEditTarget] = useState<MediaListWithCounts | null>(
+    null
+  );
+  const [deleteTarget, setDeleteTarget] = useState<MediaListWithCounts | null>(
+    null
+  );
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState<"updated_desc" | "title" | "items_desc">("updated_desc");
+  const [sortBy, setSortBy] = useState<"updated_desc" | "title" | "items_desc">(
+    "updated_desc"
+  );
 
   const { data: lists = [], isLoading: listsLoading } = useMediaLists(domain);
   const createList = useCreateMediaList(domain);
@@ -93,18 +108,30 @@ const PersonalMediaLists: React.FC<PersonalMediaListsProps> = ({ domain, onOpenL
     return (
       <div className="space-y-4">
         {isLoading ? (
-          <div className="text-sm text-gray-500 dark:text-gray-400">Loading items...</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            Loading items...
+          </div>
         ) : items.length === 0 ? (
-          <div className="text-sm text-gray-500 dark:text-gray-400">No items yet.</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            No items yet.
+          </div>
         ) : (
           <div className="space-y-2">
-            <div className="text-xs font-medium text-gray-700 dark:text-gray-300">Items</div>
+            <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
+              Items
+            </div>
             <ul className="space-y-1">
               {preview.map((i) => (
-                <li key={i.id} className="text-sm text-gray-700 dark:text-gray-300">
+                <li
+                  key={i.id}
+                  className="text-sm text-gray-700 dark:text-gray-300"
+                >
                   <span className="font-medium">{i.title}</span>
                   {i.subtitle ? (
-                    <span className="text-gray-500 dark:text-gray-400"> · {i.subtitle}</span>
+                    <span className="text-gray-500 dark:text-gray-400">
+                      {" "}
+                      · {i.subtitle}
+                    </span>
                   ) : null}
                 </li>
               ))}
@@ -155,7 +182,9 @@ const PersonalMediaLists: React.FC<PersonalMediaListsProps> = ({ domain, onOpenL
         )}
 
         {listsLoading ? (
-          <div className="text-sm text-gray-500 dark:text-gray-400">Loading lists...</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            Loading lists...
+          </div>
         ) : lists.length === 0 ? (
           <EmptyStateAddCard
             icon={List}
@@ -193,7 +222,8 @@ const PersonalMediaLists: React.FC<PersonalMediaListsProps> = ({ domain, onOpenL
                   customActions={[
                     {
                       icon: <ExternalLink className="w-4 h-4" />,
-                      onClick: () => onOpenList({ id: list.id, title: list.title }),
+                      onClick: () =>
+                        onOpenList({ id: list.id, title: list.title }),
                       variant: "subtle",
                       ariaLabel: "Open",
                     },
@@ -225,12 +255,12 @@ const PersonalMediaLists: React.FC<PersonalMediaListsProps> = ({ domain, onOpenL
                         {list.title}
                       </h3>
                     </div>
-                    <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    <div className="mt-1 text-muted">
                       {owned ? "By you" : `By ${list.owner_display_name}`}
                       {list.is_public ? " • Visible to friends" : " • Private"}
                     </div>
                     {list.description && (
-                      <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                      <div className="mt-2 text-muted line-clamp-2">
                         {list.description}
                       </div>
                     )}

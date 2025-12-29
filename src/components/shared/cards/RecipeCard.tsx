@@ -80,20 +80,18 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
             </h3>
             <div className="flex flex-wrap gap-2">
               {category && (
-                <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400">
+                <span className="chip-base bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400">
                   {category}
                 </span>
               )}
               {(totalTime || prepTime || cookTime) && (
-                <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
+                <span className="chip-base bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
                   {totalTime ||
                     `Prep: ${prepTime || ""} Cook: ${cookTime || ""}`}
                 </span>
               )}
               {servings && (
-                <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                  {servings} servings
-                </span>
+                <span className="chip-neutral">{servings} servings</span>
               )}
             </div>
           </div>
@@ -111,30 +109,26 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
           {recipeName}
         </h3>
         {category && (
-          <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400">
+          <span className="chip-base bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400">
             {category}
           </span>
         )}
         {prepTime && (
-          <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
+          <span className="chip-base bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
             Prep: {prepTime}
           </span>
         )}
         {cookTime && (
-          <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+          <span className="chip-base bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
             Cook: {cookTime}
           </span>
         )}
         {totalTime && (
-          <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">
+          <span className="chip-base bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">
             Total: {totalTime}
           </span>
         )}
-        {servings && (
-          <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-            {servings} servings
-          </span>
-        )}
+        {servings && <span className="chip-neutral">{servings} servings</span>}
         {sourceUrl && (
           <a
             href={sourceUrl}
@@ -169,9 +163,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
             {/* Ingredients */}
             {ingredients.length > 0 && (
               <div>
-                <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
-                  Ingredients
-                </h4>
+                <h4 className="section-title">Ingredients</h4>
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5">
                   {ingredients.map((ingredient, index) => (
                     <li
@@ -189,9 +181,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
             {/* Instructions */}
             {instructions.length > 0 && (
               <div>
-                <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
-                  Instructions
-                </h4>
+                <h4 className="section-title">Instructions</h4>
                 <ol className="space-y-2">
                   {instructions.map((instruction, index) => {
                     const isCompleted = completedInstructions.has(index);
@@ -277,13 +267,11 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
           {/* Right Column: Timer */}
           <div className="flex flex-col justify-start space-y-4">
             {task && <TimerWidget task={task} compact={false} />}
-            
+
             {/* Notes */}
             {notes && (
               <div>
-                <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
-                  Notes
-                </h4>
+                <h4 className="section-title">Notes</h4>
                 <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed bg-gray-50 dark:bg-gray-800/30 rounded-md p-3">
                   {notes}
                 </p>
@@ -297,9 +285,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
           {/* Ingredients */}
           {ingredients.length > 0 && (
             <div>
-              <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
-                Ingredients
-              </h4>
+              <h4 className="section-title">Ingredients</h4>
               <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-1.5">
                 {ingredients.map((ingredient, index) => (
                   <li
@@ -317,9 +303,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
           {/* Instructions */}
           {instructions.length > 0 && (
             <div>
-              <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
-                Instructions
-              </h4>
+              <h4 className="section-title">Instructions</h4>
               <ol className="space-y-2">
                 {instructions.map((instruction, index) => {
                   const isCompleted = completedInstructions.has(index);
@@ -388,9 +372,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
           {/* Notes */}
           {notes && (
             <div>
-              <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
-                Notes
-              </h4>
+              <h4 className="section-title">Notes</h4>
               <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed bg-gray-50 dark:bg-gray-800/30 rounded-md p-3">
                 {notes}
               </p>

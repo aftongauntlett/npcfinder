@@ -126,9 +126,7 @@ export default function MediaMetrics({
       {/* Awards as Chips */}
       {parsedAwards.length > 0 && (
         <div>
-          <h4 className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium mb-2">
-            Awards
-          </h4>
+          <h4 className="metadata-label mb-2">Awards</h4>
           <div className="flex flex-wrap gap-2">
             {parsedAwards.map((award, index) => (
               <span

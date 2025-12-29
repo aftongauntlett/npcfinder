@@ -109,9 +109,7 @@ export default function MediaReview({
                 }`}
               />
             </button>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Visible to friends
-            </label>
+            <label className="form-label">Visible to friends</label>
           </div>
 
           {/* Save and Delete Buttons */}

@@ -127,7 +127,7 @@ export default function StarRating({
       </div>
 
       {showLabel && (
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <p className="form-label">
           {displayRating
             ? RATING_LABELS[displayRating]
             : showPlaceholder

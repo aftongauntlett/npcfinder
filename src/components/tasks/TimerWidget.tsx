@@ -2,10 +2,10 @@
  * Timer Widget
  *
  * Reusable timer display with countdown, progress bar, and controls
- * 
+ *
  * Refactored to use shared MediaTimeDisplay and ProgressBar components
  * for consistent time-based UI patterns across the application.
- * 
+ *
  * Performance: Uses IntersectionObserver to pause updates when off-screen
  */
 
@@ -38,7 +38,10 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
       if (stored) {
         const parsed = JSON.parse(stored);
         // Only use stored pause state if timer hasn't changed
-        if (parsed.timer_started_at === task.timer_started_at && parsed.timer_duration === task.timer_duration_seconds) {
+        if (
+          parsed.timer_started_at === task.timer_started_at &&
+          parsed.timer_duration === task.timer_duration_seconds
+        ) {
           return { isPaused: true, remainingSeconds: parsed.remainingSeconds };
         }
       }
@@ -51,11 +54,14 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
   const savePauseState = (isPaused: boolean, remainingSeconds: number) => {
     try {
       if (isPaused) {
-        localStorage.setItem(`timer-pause-${task.id}`, JSON.stringify({
-          timer_started_at: task.timer_started_at,
-          timer_duration: task.timer_duration_seconds,
-          remainingSeconds,
-        }));
+        localStorage.setItem(
+          `timer-pause-${task.id}`,
+          JSON.stringify({
+            timer_started_at: task.timer_started_at,
+            timer_duration: task.timer_duration_seconds,
+            remainingSeconds,
+          })
+        );
       } else {
         localStorage.removeItem(`timer-pause-${task.id}`);
       }
@@ -66,11 +72,13 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
 
   // Initialize pause state from localStorage
   const initialPauseState = getPauseState();
-  
+
   // Local state for pause functionality
   const [isPaused, setIsPaused] = useState(initialPauseState.isPaused);
-  const [pausedRemainingSeconds, setPausedRemainingSeconds] = useState(initialPauseState.remainingSeconds);
-  
+  const [pausedRemainingSeconds, setPausedRemainingSeconds] = useState(
+    initialPauseState.remainingSeconds
+  );
+
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [progress, setProgress] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
@@ -106,7 +114,10 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
   // The mutation is stable enough for this use case
   useEffect(() => {
     // Reset pause state when timer status changes from DB
-    if (timerStatus === TIMER_STATUS.NOT_STARTED || timerStatus === TIMER_STATUS.COMPLETED) {
+    if (
+      timerStatus === TIMER_STATUS.NOT_STARTED ||
+      timerStatus === TIMER_STATUS.COMPLETED
+    ) {
       setIsPaused(false);
       setPausedRemainingSeconds(0);
       savePauseState(false, 0); // Clear localStorage
@@ -194,17 +205,17 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
   const handlePause = async () => {
     // Pause locally - do NOT update database
     if (!task.timer_started_at || !task.timer_duration_seconds) return;
-    
+
     const remaining = calculateRemainingTime(
       task.timer_started_at,
       task.timer_duration_seconds
     );
-    
+
     logger.info("Pausing timer locally", {
       taskId: task.id,
       remainingSeconds: remaining,
     });
-    
+
     setIsPaused(true);
     setPausedRemainingSeconds(remaining);
     savePauseState(true, remaining);
@@ -217,17 +228,19 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
         taskId: task.id,
         remainingSeconds: pausedRemainingSeconds,
       });
-      
+
       // Calculate new start time: now - (total duration - remaining time)
       const totalDurationMs = pausedRemainingSeconds * 1000;
-      const newStartTime = new Date(Date.now() - (task.timer_duration_seconds! * 1000 - totalDurationMs));
-      
+      const newStartTime = new Date(
+        Date.now() - (task.timer_duration_seconds! * 1000 - totalDurationMs)
+      );
+
       await startTimer.mutateAsync({
         taskId: task.id,
         durationMinutes: task.timer_duration_seconds!,
         startTime: newStartTime.toISOString(),
       });
-      
+
       setIsPaused(false);
       setPausedRemainingSeconds(0);
       savePauseState(false, 0);
@@ -269,7 +282,10 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
     // Show paused state FIRST - highest priority
     if (isPaused && timerStatus === TIMER_STATUS.RUNNING) {
       return (
-        <div className="flex items-center justify-center w-7 h-7 rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300" title="Timer paused">
+        <div
+          className="flex items-center justify-center w-7 h-7 rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300"
+          title="Timer paused"
+        >
           <Pause className="w-4 h-4" />
         </div>
       );
@@ -307,9 +323,7 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
 
     if (timerStatus === TIMER_STATUS.COMPLETED) {
       return (
-        <div
-          className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300"
-        >
+        <div className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300">
           <CheckCircle className="w-3 h-3" />
           <span>Done</span>
         </div>
@@ -323,18 +337,18 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
   return (
     <>
       <div ref={timerRef} className="space-y-3">
-        <h4 className="font-semibold text-primary dark:text-primary-light mb-2">
-          Timer
-        </h4>
-        
+        <h4 className="section-title">Timer</h4>
+
         {/* Always show the same compact timer layout */}
         <div className="flex flex-col items-center w-full">
           {/* Time Display with optional status pill */}
           <div className="flex items-center justify-center gap-2 mb-3">
-            <MediaTimeDisplay 
-              seconds={timerStatus === TIMER_STATUS.NOT_STARTED ? 0 : remainingSeconds} 
-              format="countdown" 
-              size="lg" 
+            <MediaTimeDisplay
+              seconds={
+                timerStatus === TIMER_STATUS.NOT_STARTED ? 0 : remainingSeconds
+              }
+              format="countdown"
+              size="lg"
             />
             {isPaused && (
               <span className="text-xs font-medium text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/30 px-2 py-0.5 rounded">
@@ -351,7 +365,13 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
           {/* Progress Bar */}
           <div className="w-full mb-3">
             <ProgressBar
-              progress={timerStatus === TIMER_STATUS.NOT_STARTED ? 0 : timerStatus === TIMER_STATUS.COMPLETED ? 100 : progress}
+              progress={
+                timerStatus === TIMER_STATUS.NOT_STARTED
+                  ? 0
+                  : timerStatus === TIMER_STATUS.COMPLETED
+                  ? 100
+                  : progress
+              }
               variant="primary"
               size="md"
               containerPadding={false}
@@ -367,7 +387,7 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
               <button
                 onClick={() => void handlePause()}
                 disabled={completeTimer.isPending}
-                className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 hover:bg-primary/10 dark:bg-gray-700/50 dark:hover:bg-primary/20 text-gray-700 hover:text-primary dark:text-gray-400 dark:hover:text-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="icon-container-md bg-gray-100 hover:bg-primary/10 dark:bg-gray-700/50 dark:hover:bg-primary/20 text-gray-700 hover:text-primary dark:text-gray-400 dark:hover:text-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Pause timer"
                 title="Pause"
               >
@@ -377,7 +397,7 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
               <button
                 onClick={() => void handleResume()}
                 disabled={startTimer.isPending}
-                className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 hover:bg-primary/10 dark:bg-gray-700/50 dark:hover:bg-primary/20 text-gray-700 hover:text-primary dark:text-gray-400 dark:hover:text-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="icon-container-md bg-gray-100 hover:bg-primary/10 dark:bg-gray-700/50 dark:hover:bg-primary/20 text-gray-700 hover:text-primary dark:text-gray-400 dark:hover:text-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Resume timer"
                 title="Resume"
               >
@@ -387,7 +407,7 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
               <button
                 onClick={() => void handleStart()}
                 disabled={startTimer.isPending}
-                className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 hover:bg-primary/10 dark:bg-gray-700/50 dark:hover:bg-primary/20 text-gray-700 hover:text-primary dark:text-gray-400 dark:hover:text-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="icon-container-md bg-gray-100 hover:bg-primary/10 dark:bg-gray-700/50 dark:hover:bg-primary/20 text-gray-700 hover:text-primary dark:text-gray-400 dark:hover:text-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Start timer"
                 title="Play"
               >
@@ -398,8 +418,11 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ task, compact = false }) => {
             {/* Restart button */}
             <button
               onClick={() => void handleRestart()}
-              disabled={startTimer.isPending || (timerStatus === TIMER_STATUS.NOT_STARTED && !isPaused)}
-              className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700/50 dark:hover:bg-gray-600 text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={
+                startTimer.isPending ||
+                (timerStatus === TIMER_STATUS.NOT_STARTED && !isPaused)
+              }
+              className="icon-container-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-700/50 dark:hover:bg-gray-600 text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Restart timer"
               title="Restart"
             >
