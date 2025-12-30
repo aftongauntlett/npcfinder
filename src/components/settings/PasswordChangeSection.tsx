@@ -81,7 +81,7 @@ const PasswordChangeSection: React.FC<PasswordChangeSectionProps> = ({
 
   return (
     <div className="space-y-4">
-      <h3 className="text-base font-medium text-primary mb-3">
+      <h3 className="text-base font-medium text-gray-900 dark:text-white mb-3">
         Change Password
       </h3>
 
@@ -132,16 +132,18 @@ const PasswordChangeSection: React.FC<PasswordChangeSectionProps> = ({
           autoComplete="new-password"
         />
 
-        <Button
-          type="button"
-          variant="primary"
-          loading={isChanging}
-          disabled={isChanging || !newPassword || !confirmPassword}
-          size="sm"
-          onClick={handleSubmit}
-        >
-          {isChanging ? "Updating..." : "Update Password"}
-        </Button>
+        <div className="flex justify-end mt-6">
+          <Button
+            type="button"
+            variant="primary"
+            loading={isChanging}
+            disabled={isChanging || !newPassword || !confirmPassword}
+            size="sm"
+            onClick={handleSubmit}
+          >
+            {isChanging ? "Updating..." : "Update Password"}
+          </Button>
+        </div>
       </div>
     </div>
   );

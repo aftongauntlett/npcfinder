@@ -3,7 +3,6 @@ import type { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Save } from "lucide-react";
 import { updateUserProfile } from "../../lib/profiles";
 import { logger } from "../../lib/logger";
 import {
@@ -34,6 +33,8 @@ interface ProfileData {
   bio: string;
   visible_cards: string[];
   theme_color: string; // Hex color
+  secondary_theme_color: string | null; // Manual secondary color, null means use auto
+  auto_secondary_color: boolean; // Whether to auto-generate secondary
 }
 
 interface Message {
@@ -52,7 +53,13 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
   usePageMeta(pageMetaOptions);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { theme, changeTheme, changeThemeColor } = useTheme();
+  const {
+    theme,
+    changeTheme,
+    changeThemeColor,
+    changeSecondaryThemeColor,
+    changeAutoSecondaryColor,
+  } = useTheme();
 
   // Use cached profile query instead of direct API call
   const { data: cachedProfile, isLoading: profileLoading } = useProfileQuery();
@@ -65,6 +72,8 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
     bio: "",
     visible_cards: allCardIds,
     theme_color: DEFAULT_THEME_COLOR,
+    secondary_theme_color: null,
+    auto_secondary_color: true,
   });
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [message, setMessage] = useState<Message | null>(null);
@@ -84,6 +93,8 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
       bio: cachedProfile.bio || "",
       visible_cards: cachedProfile.visible_cards || allCardIds,
       theme_color: cachedProfile.theme_color || DEFAULT_THEME_COLOR,
+      secondary_theme_color: cachedProfile.secondary_theme_color || null,
+      auto_secondary_color: cachedProfile.auto_secondary_color ?? true,
     };
 
     setProfile(loadedProfile);
@@ -91,6 +102,12 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
     // Apply theme color immediately
     if (cachedProfile.theme_color) {
       changeThemeColor(cachedProfile.theme_color);
+    }
+    if (cachedProfile.secondary_theme_color !== undefined) {
+      changeSecondaryThemeColor(cachedProfile.secondary_theme_color || null);
+    }
+    if (cachedProfile.auto_secondary_color !== undefined) {
+      changeAutoSecondaryColor(cachedProfile.auto_secondary_color);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cachedProfile, currentUser]);
@@ -111,6 +128,24 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
     setProfile((prev) => ({
       ...prev,
       theme_color: color,
+    }));
+    setHasUnsavedChanges(true);
+    setMessage(null);
+  };
+
+  const handleSecondaryColorChange = (color: string | null) => {
+    setProfile((prev) => ({
+      ...prev,
+      secondary_theme_color: color,
+    }));
+    setHasUnsavedChanges(true);
+    setMessage(null);
+  };
+
+  const handleAutoSecondaryToggle = (auto: boolean) => {
+    setProfile((prev) => ({
+      ...prev,
+      auto_secondary_color: auto,
     }));
     setHasUnsavedChanges(true);
     setMessage(null);
@@ -148,6 +183,8 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
 
     // Apply theme color IMMEDIATELY before saving to ensure UI updates
     changeThemeColor(profile.theme_color);
+    changeSecondaryThemeColor(profile.secondary_theme_color || null);
+    changeAutoSecondaryColor(profile.auto_secondary_color);
 
     try {
       const { error } = await updateUserProfile(currentUser.id, profile);
@@ -234,7 +271,6 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
               <Card variant="glass" spacing="lg" border>
                 <ProfileInformationSection
                   displayName={profile.display_name}
-                  bio={profile.bio}
                   currentUser={currentUser}
                   onChange={handleChange}
                 />
@@ -248,12 +284,12 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
             {/* Appearance */}
             <Card variant="glass" spacing="lg" border>
               <div className="space-y-4">
-                <h3 className="text-base font-medium text-primary mb-1">
+                <h3 className="text-base font-medium text-gray-900 dark:text-white mb-1">
                   Appearance
                 </h3>
                 <Select
                   id="theme"
-                  label="Theme"
+                  label="Light or Dark Mode"
                   value={theme}
                   onChange={(e) => {
                     changeTheme(e.target.value as "light" | "dark" | "system");
@@ -270,6 +306,10 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
                   <CompactColorThemePicker
                     selectedColor={profile.theme_color}
                     onColorChange={handleThemeColorChange}
+                    secondaryColor={profile.secondary_theme_color}
+                    onSecondaryColorChange={handleSecondaryColorChange}
+                    autoSecondary={profile.auto_secondary_color}
+                    onAutoSecondaryToggle={handleAutoSecondaryToggle}
                   />
                 </div>
               </div>
@@ -279,7 +319,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
             <div className="flex gap-3 justify-end">
               <Button
                 type="button"
-                variant="danger"
+                variant="secondary"
                 onClick={() => handleNavigateAway("/app")}
               >
                 Cancel
@@ -287,7 +327,6 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
               <Button
                 type="submit"
                 variant="primary"
-                icon={<Save className="w-4 h-4" />}
                 loading={isSaving}
                 disabled={isSaving}
               >

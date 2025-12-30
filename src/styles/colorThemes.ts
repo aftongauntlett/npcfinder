@@ -141,8 +141,11 @@ export const getComplementaryColor = (hexColor: string): string => {
 /**
  * Create color variations from a base hex color
  */
-export const createColorVariations = (primaryHex: string) => {
-  const secondaryHex = getComplementaryColor(primaryHex);
+export const createColorVariations = (
+  primaryHex: string,
+  secondaryHex?: string | null
+) => {
+  const actualSecondaryHex = secondaryHex || getComplementaryColor(primaryHex);
 
   return {
     primary: primaryHex,
@@ -151,12 +154,12 @@ export const createColorVariations = (primaryHex: string) => {
     primaryPale: lightenColor(primaryHex, 0.8),
     primaryRing: primaryHex,
     textOnPrimary: getContrastColor(primaryHex),
-    secondary: secondaryHex,
-    secondaryDark: darkenColor(secondaryHex, 0.2),
-    secondaryLight: lightenColor(secondaryHex, 0.2),
-    secondaryPale: lightenColor(secondaryHex, 0.8),
-    secondaryRing: secondaryHex,
-    textOnSecondary: getContrastColor(secondaryHex),
+    secondary: actualSecondaryHex,
+    secondaryDark: darkenColor(actualSecondaryHex, 0.2),
+    secondaryLight: lightenColor(actualSecondaryHex, 0.2),
+    secondaryPale: lightenColor(actualSecondaryHex, 0.8),
+    secondaryRing: actualSecondaryHex,
+    textOnSecondary: getContrastColor(actualSecondaryHex),
   };
 };
 

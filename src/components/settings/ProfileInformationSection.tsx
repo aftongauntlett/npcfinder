@@ -1,10 +1,9 @@
 import React from "react";
 import type { User } from "@supabase/supabase-js";
-import { Input, Textarea } from "@/components/shared";
+import { Input } from "@/components/shared";
 
 interface ProfileInformationSectionProps {
   displayName: string;
-  bio: string;
   currentUser: User;
   onChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -13,13 +12,12 @@ interface ProfileInformationSectionProps {
 
 const ProfileInformationSection: React.FC<ProfileInformationSectionProps> = ({
   displayName,
-  bio,
   currentUser,
   onChange,
 }) => {
   return (
     <div className="space-y-4">
-      <h3 className="text-base font-medium text-primary mb-3">
+      <h3 className="text-base font-medium text-gray-900 dark:text-white mb-3">
         Profile Information
       </h3>
       <div className="space-y-4">
@@ -42,18 +40,6 @@ const ProfileInformationSection: React.FC<ProfileInformationSectionProps> = ({
           value={currentUser.email || ""}
           disabled
           helperText="Your email cannot be changed"
-        />
-
-        <Textarea
-          id="bio"
-          name="bio"
-          label="Bio"
-          value={bio}
-          onChange={onChange}
-          placeholder="Tell us about yourself..."
-          maxLength={1000}
-          rows={4}
-          resize="none"
         />
       </div>
     </div>

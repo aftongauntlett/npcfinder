@@ -14,6 +14,8 @@ export interface UserProfile {
   profile_picture_url: string | null;
   visible_cards?: string[]; // Array of card IDs to show on dashboard
   theme_color?: string; // User's chosen theme color (hex code)
+  secondary_theme_color?: string | null; // User's chosen secondary theme color (hex code), null means auto
+  auto_secondary_color?: boolean; // Whether to auto-generate secondary color
   role?: "user" | "admin" | "super_admin"; // User role
   created_at?: string;
   updated_at?: string;

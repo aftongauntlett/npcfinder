@@ -17,6 +17,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [theme, setTheme] = useState<ThemeOption>("system");
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>("light");
   const [themeColor, setThemeColor] = useState<string>(DEFAULT_THEME_COLOR);
+  const [secondaryThemeColor, setSecondaryThemeColor] = useState<string | null>(
+    null
+  );
+  const [autoSecondaryColor, setAutoSecondaryColor] = useState<boolean>(true);
 
   useEffect(() => {
     const loadTheme = () => {
@@ -32,6 +36,18 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
           if (/^#[0-9A-Fa-f]{6}$/.test(savedColor)) {
             setThemeColor(savedColor);
           }
+        }
+
+        const savedSecondaryColor = localStorage.getItem("secondaryThemeColor");
+        if (savedSecondaryColor) {
+          if (/^#[0-9A-Fa-f]{6}$/.test(savedSecondaryColor)) {
+            setSecondaryThemeColor(savedSecondaryColor);
+          }
+        }
+
+        const savedAutoSecondary = localStorage.getItem("autoSecondaryColor");
+        if (savedAutoSecondary !== null) {
+          setAutoSecondaryColor(savedAutoSecondary === "true");
         }
       } catch (error) {
         logger.error("Failed to load theme from localStorage", { error });
@@ -74,7 +90,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   // Apply theme color CSS custom properties
   useEffect(() => {
-    const colorVariations = createColorVariations(themeColor);
+    const secondaryHex = autoSecondaryColor ? null : secondaryThemeColor;
+    const colorVariations = createColorVariations(themeColor, secondaryHex);
     const root = document.documentElement;
 
     root.style.setProperty("--color-primary", colorVariations.primary);
@@ -114,7 +131,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
     // CSS variables update automatically without forced reflow
     // Removed: void root.offsetHeight; (force repaint)
-  }, [themeColor]);
+  }, [themeColor, autoSecondaryColor, secondaryThemeColor]);
   const changeTheme = useCallback((newTheme: ThemeOption) => {
     setTheme(newTheme);
     try {
@@ -139,15 +156,59 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     }
   }, []);
 
+  const changeSecondaryThemeColor = useCallback((newColor: string | null) => {
+    if (newColor === null || /^#[0-9A-Fa-f]{6}$/.test(newColor)) {
+      setSecondaryThemeColor(newColor);
+      try {
+        if (newColor) {
+          localStorage.setItem("secondaryThemeColor", newColor);
+        } else {
+          localStorage.removeItem("secondaryThemeColor");
+        }
+      } catch (error) {
+        logger.error("Failed to save secondary theme color to localStorage", {
+          error,
+          newColor,
+        });
+      }
+    }
+  }, []);
+
+  const changeAutoSecondaryColor = useCallback((auto: boolean) => {
+    setAutoSecondaryColor(auto);
+    try {
+      localStorage.setItem("autoSecondaryColor", auto.toString());
+    } catch (error) {
+      logger.error("Failed to save auto secondary color to localStorage", {
+        error,
+        auto,
+      });
+    }
+  }, []);
+
   const value = useMemo(
     () => ({
       theme,
       resolvedTheme,
       themeColor,
+      secondaryThemeColor,
+      autoSecondaryColor,
       changeTheme,
       changeThemeColor,
+      changeSecondaryThemeColor,
+      changeAutoSecondaryColor,
     }),
-    [theme, resolvedTheme, themeColor, changeTheme, changeThemeColor]
+    [
+      theme,
+      resolvedTheme,
+      themeColor,
+      secondaryThemeColor,
+      autoSecondaryColor,
+      changeTheme,
+      changeThemeColor,
+      changeSecondaryThemeColor,
+      changeAutoSecondaryColor,
+    ]
   );
 
   return (
