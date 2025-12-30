@@ -2,7 +2,15 @@ import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import AccordionListCard from "../common/AccordionListCard";
-import { ExternalLink } from "lucide-react";
+import {
+  ExternalLink,
+  Check,
+  Star,
+  X,
+  ShieldX,
+  MessageCircleQuestion,
+} from "lucide-react";
+import { withOpacity } from "../../../data/landingTheme";
 
 interface JobCardProps {
   id: string;
@@ -47,35 +55,53 @@ const JobCard: React.FC<JobCardProps> = ({
   const hasNotes = notes && notes.trim().length > 0;
   const hasDescription = jobDescription && jobDescription.trim().length > 0;
 
-  // Get status chip color based on status value
-  const getStatusChipColor = (statusValue: string): string => {
+  // Get status icon and color based on status value
+  const getStatusIcon = (statusValue: string) => {
     const normalizedStatus = statusValue.toLowerCase();
 
     if (normalizedStatus === "applied") {
-      return "bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600";
-    } else if (normalizedStatus === "rejected") {
-      return "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400";
-    } else if (normalizedStatus === "interview") {
-      return "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400";
-    } else if (normalizedStatus === "no response") {
-      return "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400";
-    } else if (normalizedStatus === "declined") {
-      return "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400";
+      return {
+        Icon: Check,
+        color: "#16a34a", // green-600
+        backgroundColor: withOpacity("#16a34a", 0.14),
+      };
     } else if (normalizedStatus === "accepted") {
-      return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400";
+      return {
+        Icon: Star,
+        color: "#d97706", // yellow-600
+        backgroundColor: withOpacity("#d97706", 0.14),
+      };
+    } else if (normalizedStatus === "rejected") {
+      return {
+        Icon: X,
+        color: "#dc2626", // red-600
+        backgroundColor: withOpacity("#dc2626", 0.14),
+      };
+    } else if (normalizedStatus === "declined") {
+      return {
+        Icon: ShieldX,
+        color: "#2563eb", // blue-600
+        backgroundColor: withOpacity("#2563eb", 0.14),
+      };
+    } else if (normalizedStatus === "no response") {
+      return {
+        Icon: MessageCircleQuestion,
+        color: "#6b7280", // gray-500
+        backgroundColor: withOpacity("#6b7280", 0.14),
+      };
     }
 
-    // Default color for any other status
-    return "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300";
+    // Default for interview or other statuses
+    return {
+      Icon: Check,
+      color: "#6b7280", // gray-500
+      backgroundColor: withOpacity("#6b7280", 0.14),
+    };
   };
 
-  // Build job chips (status chips for header)
+  // Build job chips (status chips for header) - removed status chip as it's now an icon
   const jobChips: Array<{ key: string; label: string; className: string }> = [
-    {
-      key: "status",
-      label: status,
-      className: getStatusChipColor(status),
-    },
+    // Status chip removed - now using icon instead
   ];
 
   const formatDate = (dateString: string) => {
@@ -98,56 +124,74 @@ const JobCard: React.FC<JobCardProps> = ({
 
   // Header content (always visible)
   const headerContent = (
-    <div>
-      {/* Title row with company name: job title and chips */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <h3 className="text-gray-900 dark:text-white">
-          <span className="font-semibold">{companyName}:</span> {position}
-        </h3>
-        {companyUrl && (
-          <a
-            href={companyUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:opacity-80 transition-opacity flex-shrink-0"
-            onClick={(e) => e.stopPropagation()}
-            aria-label="Visit company website"
-          >
-            <ExternalLink className="w-3.5 h-3.5" />
-          </a>
-        )}
-        {/* Chips (collapsed on mobile: show 1 + +n) */}
-        {jobChips.length > 0 && (
-          <>
-            <div className="flex items-center gap-2 flex-wrap sm:hidden">
-              <span className={`chip-base ${jobChips[0].className}`}>
-                {jobChips[0].label}
-              </span>
-              {jobChips.length > 1 && (
-                <span className="inline-flex items-center text-xs px-2.5 py-1 rounded-full font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                  +{jobChips.length - 1}
-                </span>
-              )}
-            </div>
+    <div className="flex items-start gap-3">
+      {/* Status Icon */}
+      <span
+        className="icon-container-lg flex-shrink-0"
+        style={{ backgroundColor: getStatusIcon(status).backgroundColor }}
+        aria-hidden="true"
+      >
+        {(() => {
+          const { Icon, color } = getStatusIcon(status);
+          return <Icon className="w-5 h-5" style={{ color }} />;
+        })()}
+      </span>
 
-            <div className="hidden sm:flex items-center gap-2 flex-wrap">
-              {jobChips.map((chip) => (
-                <span key={chip.key} className={`chip-base ${chip.className}`}>
-                  {chip.label}
+      {/* Title and Chips */}
+      <div className="flex-1 min-w-0">
+        {/* Title row with company name: job title and chips */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <h3 className="text-gray-900 dark:text-white">
+            <span className="font-semibold">{companyName}:</span> {position}
+          </h3>
+          {companyUrl && (
+            <a
+              href={companyUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:opacity-80 transition-opacity flex-shrink-0"
+              onClick={(e) => e.stopPropagation()}
+              aria-label="Visit company website"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          )}
+          {/* Chips (collapsed on mobile: show 1 + +n) */}
+          {jobChips.length > 0 && (
+            <>
+              <div className="flex items-center gap-2 flex-wrap sm:hidden">
+                <span className={`chip-base ${jobChips[0].className}`}>
+                  {jobChips[0].label}
                 </span>
-              ))}
-            </div>
-          </>
-        )}
+                {jobChips.length > 1 && (
+                  <span className="inline-flex items-center text-xs px-2.5 py-1 rounded-full font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                    +{jobChips.length - 1}
+                  </span>
+                )}
+              </div>
+
+              <div className="hidden sm:flex items-center gap-2 flex-wrap">
+                {jobChips.map((chip) => (
+                  <span
+                    key={chip.key}
+                    className={`chip-base ${chip.className}`}
+                  >
+                    {chip.label}
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Salary and date subtitle */}
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          {salaryRange && `${salaryRange} • `}
+          {status === "Applied"
+            ? `Applied ${formatDate(dateApplied)}`
+            : `Updated ${formatDate(dateApplied)}`}
+        </p>
       </div>
-
-      {/* Salary and date subtitle */}
-      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-        {salaryRange && `${salaryRange} • `}
-        {status === "Applied"
-          ? `Applied ${formatDate(dateApplied)}`
-          : `Updated ${formatDate(dateApplied)}`}
-      </p>
     </div>
   );
 

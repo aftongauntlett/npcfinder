@@ -11,6 +11,8 @@ import "../../styles/datepicker.css";
 import Input from "../shared/ui/Input";
 import Textarea from "../shared/ui/Textarea";
 import Select from "../shared/ui/Select";
+import Button from "../shared/ui/Button";
+import { Trash2, Calendar } from "lucide-react";
 import type {
   Task,
   StatusHistoryEntry,
@@ -46,8 +48,11 @@ const JobTaskSection: React.FC<JobTaskSectionProps> = ({
   const [location, setLocation] = useState(
     (task.item_data?.location as string) || ""
   );
-  const [locationType, setLocationType] = useState<"Remote" | "Hybrid" | "In-Office">(
-    (task.item_data?.location_type as "Remote" | "Hybrid" | "In-Office") || "In-Office"
+  const [locationType, setLocationType] = useState<
+    "Remote" | "Hybrid" | "In-Office"
+  >(
+    (task.item_data?.location_type as "Remote" | "Hybrid" | "In-Office") ||
+      "In-Office"
   );
   const [employmentType, setEmploymentType] = useState(
     (task.item_data?.employment_type as string) || ""
@@ -86,7 +91,10 @@ const JobTaskSection: React.FC<JobTaskSectionProps> = ({
     setPosition((task.item_data?.position as string) || "");
     setSalaryRange((task.item_data?.salary_range as string) || "");
     setLocation((task.item_data?.location as string) || "");
-    setLocationType((task.item_data?.location_type as "Remote" | "Hybrid" | "In-Office") || "In-Office");
+    setLocationType(
+      (task.item_data?.location_type as "Remote" | "Hybrid" | "In-Office") ||
+        "In-Office"
+    );
     setEmploymentType((task.item_data?.employment_type as string) || "");
     setJobNotes((task.item_data?.notes as string) || "");
     setJobDescription((task.item_data?.job_description as string) || "");
@@ -112,17 +120,48 @@ const JobTaskSection: React.FC<JobTaskSectionProps> = ({
     }
   }, [task]);
 
-  // Handle status changes - append to status history
+  // Handle status changes - update the last status history entry or add new one
   useEffect(() => {
     if (jobStatus !== prevJobStatus) {
-      const newEntry: StatusHistoryEntry = {
-        status: jobStatus,
-        date: new Date().toISOString().split("T")[0],
-      };
-      setStatusHistory((prev) => [...prev, newEntry]);
+      setStatusHistory((prev) => {
+        if (prev.length === 0) {
+          // No history yet, add first entry
+          return [
+            {
+              status: jobStatus,
+              date: new Date().toISOString().split("T")[0],
+            },
+          ];
+        } else {
+          // Update the last entry's status
+          const updated = [...prev];
+          updated[updated.length - 1] = {
+            ...updated[updated.length - 1],
+            status: jobStatus,
+          };
+          return updated;
+        }
+      });
       setPrevJobStatus(jobStatus);
     }
   }, [jobStatus, prevJobStatus]);
+
+  // Functions to manage status history
+  const updateStatusHistoryEntry = (
+    index: number,
+    field: keyof StatusHistoryEntry,
+    value: string
+  ) => {
+    setStatusHistory((prev) =>
+      prev.map((entry, i) =>
+        i === index ? { ...entry, [field]: value } : entry
+      )
+    );
+  };
+
+  const deleteStatusHistoryEntry = (index: number) => {
+    setStatusHistory((prev) => prev.filter((_, i) => i !== index));
+  };
 
   // Provide builder function to parent
   useEffect(() => {
@@ -249,39 +288,12 @@ const JobTaskSection: React.FC<JobTaskSectionProps> = ({
           }))}
         />
 
-        {/* Date for current status */}
-        {statusHistory.length > 0 && (
-          <div>
-            <label
-              htmlFor="status-date"
-              className="block text-sm font-bold text-primary mb-1.5"
-            >
-              Applied Date
-            </label>
-            <DatePicker
-              id="status-date"
-              selected={
-                statusHistory[statusHistory.length - 1]?.date
-                  ? new Date(statusHistory[statusHistory.length - 1].date)
-                  : new Date()
-              }
-              onChange={(date: Date | null) => {
-                if (date && statusHistory.length > 0) {
-                  const updatedHistory = [...statusHistory];
-                  updatedHistory[updatedHistory.length - 1] = {
-                    ...updatedHistory[updatedHistory.length - 1],
-                    date: date.toISOString().split("T")[0],
-                  };
-                  setStatusHistory(updatedHistory);
-                }
-              }}
-              dateFormat="MM/dd/yyyy"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white focus:outline-none transition-colors"
-              wrapperClassName="w-full"
-              calendarClassName="dark:bg-gray-800 dark:border-gray-700"
-            />
-          </div>
-        )}
+        {/* Current status will be added to history automatically */}
+        <div className="flex items-end">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Status changes are automatically tracked in the history below
+          </p>
+        </div>
       </div>
 
       {/* Job Description - supports markdown */}
@@ -305,6 +317,79 @@ const JobTaskSection: React.FC<JobTaskSectionProps> = ({
         rows={4}
         resize="vertical"
       />
+
+      {/* Status History */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <label className="block text-sm font-bold text-primary">
+            Status History
+          </label>
+        </div>
+
+        <div className="space-y-2">
+          {statusHistory.map((entry, index) => (
+            <div
+              key={index}
+              className="group relative flex items-center justify-between p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-900/[0.02] dark:hover:bg-gray-900 cursor-pointer transition-colors"
+            >
+              {/* Left side: Status and Date */}
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <span className="text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">
+                  {entry.status}
+                </span>
+                <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                  {entry.date
+                    ? new Date(entry.date).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })
+                    : "No date"}
+                </span>
+              </div>
+
+              {/* Right side: Date Icon and Delete Icon */}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <DatePicker
+                  id={`date-${index}`}
+                  selected={entry.date ? new Date(entry.date) : new Date()}
+                  onChange={(date: Date | null) => {
+                    if (date) {
+                      updateStatusHistoryEntry(
+                        index,
+                        "date",
+                        date.toISOString().split("T")[0]
+                      );
+                    }
+                  }}
+                  dateFormat="MM/dd/yyyy"
+                  customInput={
+                    <Button
+                      variant="subtle"
+                      size="icon"
+                      icon={<Calendar className="w-4 h-4" />}
+                      aria-label="Edit date"
+                      className="h-7 w-7 sm:h-8 sm:w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                    />
+                  }
+                  calendarClassName="dark:bg-gray-800 dark:border-gray-700"
+                />
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteStatusHistoryEntry(index);
+                  }}
+                  variant="danger"
+                  size="icon"
+                  icon={<Trash2 className="w-4 h-4" />}
+                  aria-label="Delete status entry"
+                  className="h-7 w-7 sm:h-8 sm:w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </>
   );
 };
