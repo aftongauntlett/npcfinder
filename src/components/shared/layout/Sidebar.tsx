@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  Clapperboard,
 } from "lucide-react";
 import { useAdmin } from "../../../contexts/AdminContext";
 import { useSidebar } from "../../../contexts/SidebarContext";
@@ -26,16 +27,24 @@ interface SidebarProps {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  {
-    id: "movies",
-    label: "Movies & TV",
-    icon: Film,
-    path: "/app/movies",
-  },
-  { id: "music", label: "Music", icon: Music, path: "/app/music" },
-  { id: "books", label: "Books", icon: BookOpen, path: "/app/books" },
-  { id: "games", label: "Games", icon: Gamepad2, path: "/app/games" },
   { id: "tasks", label: "Tasks", icon: ListChecks, path: "/app/tasks" },
+  {
+    id: "media",
+    label: "Media",
+    icon: Clapperboard,
+    path: "/app/movies",
+    subItems: [
+      {
+        id: "movies",
+        label: "Movies & TV",
+        icon: Film,
+        path: "/app/movies",
+      },
+      { id: "music", label: "Music", icon: Music, path: "/app/music" },
+      { id: "books", label: "Books", icon: BookOpen, path: "/app/books" },
+      { id: "games", label: "Games", icon: Gamepad2, path: "/app/games" },
+    ],
+  },
 ];
 
 // User menu items (shown in accordion under username)

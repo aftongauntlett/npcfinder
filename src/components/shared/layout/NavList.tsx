@@ -1,6 +1,7 @@
 import React, { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../../contexts/AuthContext";
+import { ChevronDown } from "lucide-react";
 import {
   prefetchMoviesData,
   prefetchTasksData,
@@ -83,8 +84,10 @@ const NavList: React.FC<NavListProps> = ({
     <ul className="space-y-1 px-2">
       {items.filter(hasAccess).map((item) => {
         const Icon = item.icon;
-        const active = isActive(item.path);
         const hasSubItems = item.subItems && item.subItems.length > 0;
+        const active =
+          isActive(item.path) ||
+          (hasSubItems && item.subItems!.some((sub) => isActive(sub.path)));
 
         return (
           <li key={item.id}>
@@ -108,11 +111,22 @@ const NavList: React.FC<NavListProps> = ({
                 aria-hidden="true"
               />
               {!isCollapsed && <span className="truncate">{item.label}</span>}
+              {!isCollapsed && hasSubItems && (
+                <ChevronDown
+                  className={`w-4 h-4 ml-auto transition-transform duration-200 ${
+                    active ? "rotate-0" : "-rotate-90"
+                  }`}
+                />
+              )}
             </button>
 
-            {/* Render sub-items if they exist and sidebar is not collapsed and parent is active */}
-            {!isCollapsed && hasSubItems && active && (
-              <ul className="mt-1 ml-8 space-y-1">
+            {hasSubItems && active && (
+              <div className="border-b border-gray-300 dark:border-gray-600 mx-2 my-1" />
+            )}
+
+            {/* Render sub-items if they exist and parent is active */}
+            {hasSubItems && active && (
+              <ul className={`mt-1 ${isCollapsed ? "" : "ml-6"} space-y-1`}>
                 {item.subItems!.filter(hasAccess).map((subItem) => {
                   const SubIcon = subItem.icon;
                   // Check if this sub-item is active (exact path match only)
@@ -127,7 +141,11 @@ const NavList: React.FC<NavListProps> = ({
                       <button
                         type="button"
                         onClick={() => onNavigate(subItem.path)}
-                        className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
+                        className={`w-full flex items-center ${
+                          isCollapsed
+                            ? "justify-center px-3 py-2 gap-0"
+                            : "gap-2 px-3 py-2"
+                        } rounded-lg text-sm transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
                           subActive
                             ? "bg-primary/20 text-primary font-medium"
                             : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -136,10 +154,12 @@ const NavList: React.FC<NavListProps> = ({
                         aria-current={subActive ? "page" : undefined}
                       >
                         <SubIcon
-                          className="w-4 h-4 flex-shrink-0"
+                          className="w-5 h-5 flex-shrink-0"
                           aria-hidden="true"
                         />
-                        <span className="truncate">{subItem.label}</span>
+                        {!isCollapsed && (
+                          <span className="truncate">{subItem.label}</span>
+                        )}
                       </button>
 
                       {/* Render nested sub-items (3rd level) */}
