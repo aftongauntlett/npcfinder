@@ -1,341 +1,185 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React from "react";
+import { Clapperboard, Tv as TvIcon } from "lucide-react";
 import {
-  ChevronDown,
-  ChevronRight,
-  User,
-  Clapperboard,
-  TvIcon,
-} from "lucide-react";
-import { Button } from "@/components/shared";
+  MediaRecommendationCard,
+  InlineRecommendationsLayout,
+  type BaseRecommendation,
+} from "@/components/shared";
 import { logger } from "@/lib/logger";
 import {
-  useMovieRecommendations,
-  useFriendsWithMovieRecs,
   useUpdateMovieRecommendationStatus,
   useDeleteMovieRecommendation,
+  useUpdateSenderNote,
   useUpdateRecipientNote,
 } from "../../hooks/useMovieQueries";
-import { MediaRecommendationCard } from "@/components/shared";
-import type { Recommendation } from "../../services/recommendationsService.types";
+import { useMovieRecommendationsData } from "../../hooks/useMovieRecommendationsData";
 
-interface FriendWithRecs {
-  user_id: string;
-  display_name: string;
-  recommendations: Recommendation[];
+// Extend BaseRecommendation with movie-specific fields
+interface MovieRecommendation extends BaseRecommendation {
+  media_type: "movie" | "tv";
+  release_date: string | null;
+  overview: string | null;
+  poster_url: string | null;
+  status: "pending" | "watched" | "hit" | "miss";
+  watched_at: string | null;
+  created_at: string;
+  sender_comment: string | null;
 }
 
-// Map service Recommendation to card's expected format
-interface CardRecommendation {
-  id: string;
-  from_user_id: string;
-  to_user_id: string;
-  external_id: string;
-  title: string;
-  status:
-    | "pending"
-    | "listened"
-    | "watched"
-    | "read"
-    | "played"
-    | "hit"
-    | "miss";
-  sent_message: string | null;
-  comment: string | null; // Maps to recipient_note
-  sender_comment: string | null; // Maps to sender_note
-  sent_at: string;
-  opened_at?: string | null;
-  // Extended properties for render functions
-  media_type: "song" | "album" | "movie" | "tv";
-  poster_url?: string;
-  year?: number;
-  overview?: string;
-}
-
-// Move outside component to avoid recreation on every render
-function mapToCardRec(rec: Recommendation): CardRecommendation {
-  return {
-    id: rec.id,
-    from_user_id: rec.from_user_id,
-    to_user_id: rec.to_user_id,
-    external_id: rec.external_id,
-    title: rec.title,
-    status: rec.status as CardRecommendation["status"],
-    sent_message: rec.sent_message || null,
-    comment: rec.recipient_note || null,
-    sender_comment: rec.sender_note || null,
-    sent_at: rec.created_at, // Map created_at to sent_at
-    opened_at: rec.opened_at,
-    media_type: rec.media_type,
-    poster_url: rec.poster_url,
-    year: rec.year,
-    overview: rec.overview,
-  };
-}
-
-/**
- * DashboardRecommendations
- * Shows pending recommendations from friends on the dashboard
- * Reusable for movies, music, books, games (accepts mediaType)
- *
- * Memoized: Grouping logic and event handlers optimized to prevent unnecessary rerenders
- */
 function DashboardRecommendationsComponent() {
-  const [expandedFriends, setExpandedFriends] = useState<Set<string>>(
-    new Set()
-  );
+  // Use data transformation hook - returns fully-shaped data ready for rendering
+  const {
+    hits,
+    misses,
+    friendRecommendations,
+    friendsWithRecs: filteredFriendsWithRecs,
+    quickStats,
+    userNameMap,
+    loading,
+  } = useMovieRecommendationsData();
+
+  // Mutations
   const updateStatusMutation = useUpdateMovieRecommendationStatus();
   const deleteRecMutation = useDeleteMovieRecommendation();
+  const updateSenderNoteMutation = useUpdateSenderNote();
   const updateRecipientNoteMutation = useUpdateRecipientNote();
 
-  // Fetch pending movie recommendations using the existing hook
-  const { data: recommendations = [], isLoading } =
-    useMovieRecommendations("queue");
-
-  // Fetch friends data to get display names
-  const { data: friendsWithRecs = [] } = useFriendsWithMovieRecs();
-
-  // Create a map of user_id -> display_name from friends data
-  const userNameMap = useMemo(() => {
-    const map = new Map<string, string>();
-    friendsWithRecs.forEach((friend) => {
-      map.set(friend.user_id, friend.display_name);
-    });
-    return map;
-  }, [friendsWithRecs]);
-
-  // Group recommendations by sender
-  const friendsGrouped: FriendWithRecs[] = useMemo(() => {
-    const recsByFriend = new Map<string, Recommendation[]>();
-
-    recommendations.forEach((rec) => {
-      const friendId = rec.from_user_id;
-      if (!recsByFriend.has(friendId)) {
-        recsByFriend.set(friendId, []);
-      }
-      // Type assertion: this component only handles movie/TV recommendations
-      recsByFriend.get(friendId)!.push(rec as Recommendation);
-    });
-
-    const grouped: FriendWithRecs[] = [];
-    recsByFriend.forEach((recs, friendId) => {
-      grouped.push({
-        user_id: friendId,
-        display_name: userNameMap.get(friendId) || "Unknown User",
-        recommendations: recs,
+  const updateRecommendationStatus = async (
+    recId: string,
+    status: string,
+    comment?: string
+  ) => {
+    try {
+      const dbStatus = status === "consumed" ? "watched" : status;
+      await updateStatusMutation.mutateAsync({
+        recId,
+        status: dbStatus,
       });
-    });
 
-    // Sort by number of recommendations (most first)
-    return grouped.sort(
-      (a, b) => b.recommendations.length - a.recommendations.length
-    );
-  }, [recommendations, userNameMap]);
-
-  const toggleFriend = useCallback((friendId: string) => {
-    setExpandedFriends((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(friendId)) {
-        newSet.delete(friendId);
-      } else {
-        newSet.add(friendId);
-      }
-      return newSet;
-    });
-  }, []);
-
-  const updateRecommendationStatus = useCallback(
-    async (recId: string, status: string, comment?: string) => {
-      try {
-        const dbStatus = status === "consumed" ? "watched" : status;
-        await updateStatusMutation.mutateAsync({
+      // If comment is provided, update recipient's note
+      if (comment !== undefined) {
+        await updateRecipientNoteMutation.mutateAsync({
           recId,
-          status: dbStatus,
-        });
-
-        // If comment is provided, update recipient's note
-        if (comment !== undefined) {
-          await updateRecipientNoteMutation.mutateAsync({
-            recId,
-            note: comment,
-          });
-        }
-      } catch (error) {
-        logger.error("Failed to update recommendation", {
-          error,
-          recId,
-          status,
-          comment,
+          note: comment,
         });
       }
-    },
-    [updateStatusMutation, updateRecipientNoteMutation]
-  );
+    } catch (error) {
+      logger.error("Failed to update movie recommendation", error);
+    }
+  };
 
-  const deleteRecommendation = useCallback(
-    async (recId: string) => {
-      try {
-        await deleteRecMutation.mutateAsync(recId);
-      } catch (error) {
-        logger.error("Failed to delete recommendation", { error, recId });
-      }
-    },
-    [deleteRecMutation]
-  );
+  const updateSenderComment = async (recId: string, senderComment: string) => {
+    try {
+      await updateSenderNoteMutation.mutateAsync({
+        recId,
+        note: senderComment,
+      });
+    } catch (error) {
+      logger.error("Failed to update sender comment", error);
+    }
+  };
 
-  if (isLoading) {
+  const deleteRecommendation = async (recId: string) => {
+    try {
+      await deleteRecMutation.mutateAsync(recId);
+    } catch (error) {
+      logger.error("Failed to delete movie recommendation", error);
+    }
+  };
+
+  const renderRecommendationCard = (
+    rec: MovieRecommendation,
+    isReceived: boolean,
+    index = 0
+  ) => {
+    const MediaIcon = rec.media_type === "tv" ? TvIcon : Clapperboard;
+
+    // Get the appropriate user name based on direction
+    const senderName = isReceived
+      ? userNameMap.get(rec.from_user_id) || "Unknown User"
+      : userNameMap.get(rec.to_user_id) || "Unknown User";
+
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-12 text-center">
-        <p className="text-gray-500 dark:text-gray-400">
-          Loading recommendations...
-        </p>
-      </div>
+      <MediaRecommendationCard
+        key={rec.id}
+        rec={rec}
+        index={index}
+        isReceived={isReceived}
+        senderName={senderName}
+        onStatusUpdate={updateRecommendationStatus}
+        onDelete={deleteRecommendation}
+        onUpdateSenderComment={updateSenderComment}
+        renderMediaArt={(r: MovieRecommendation) => {
+          return r.poster_url ? (
+            <img
+              src={r.poster_url}
+              alt={r.title}
+              loading="lazy"
+              className="w-12 h-16 rounded object-cover"
+            />
+          ) : (
+            <div className="w-12 h-16 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
+              <MediaIcon className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+            </div>
+          );
+        }}
+        renderMediaInfo={(r: MovieRecommendation) => {
+          return (
+            <>
+              <div className="flex items-center gap-2">
+                <div className="font-medium text-gray-900 dark:text-white truncate">
+                  {r.title}
+                </div>
+                {r.media_type === "tv" ? (
+                  <span className="flex items-center gap-1 text-xs text-primary bg-primary/10 px-2 py-0.5 rounded whitespace-nowrap">
+                    <TvIcon className="w-3 h-3" />
+                    TV
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 rounded whitespace-nowrap">
+                    <Clapperboard className="w-3 h-3" />
+                    Movie
+                  </span>
+                )}
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                {r.release_date}
+              </div>
+              {r.overview && (
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                  {r.overview}
+                </div>
+              )}
+            </>
+          );
+        }}
+      />
     );
-  }
-
-  if (friendsGrouped.length === 0) {
-    return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-12 text-center">
-        <p className="text-gray-500 dark:text-gray-400">
-          No pending recommendations
-        </p>
-        <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
-          When friends recommend movies or shows, they'll appear here
-        </p>
-      </div>
-    );
-  }
+  };
 
   return (
-    <div className="space-y-3">
-      {friendsGrouped.map((friend) => (
-        <div
-          key={friend.user_id}
-          className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm"
-        >
-          <Button
-            variant="subtle"
-            onClick={() => toggleFriend(friend.user_id)}
-            className="w-full p-4 flex items-center justify-between gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded-none"
-            aria-expanded={expandedFriends.has(friend.user_id)}
-          >
-            <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center flex-shrink-0">
-                <User className="w-5 h-5 text-blue-600 dark:text-blue-300" />
-              </div>
-              <div className="text-left min-w-0 flex-1">
-                <div className="font-medium text-gray-900 dark:text-white truncate">
-                  {friend.display_name}
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">
-                  {friend.recommendations.length}{" "}
-                  {friend.recommendations.length === 1
-                    ? "recommendation"
-                    : "recommendations"}
-                </div>
-              </div>
-            </div>
-            {expandedFriends.has(friend.user_id) ? (
-              <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
-            ) : (
-              <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
-            )}
-          </Button>
-
-          {expandedFriends.has(friend.user_id) && (
-            <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 p-4">
-              <div className="space-y-1">
-                {friend.recommendations.map((rec, index) => {
-                  const cardRec = mapToCardRec(rec);
-                  const MediaIcon =
-                    cardRec.media_type === "tv" ? TvIcon : Clapperboard;
-                  const senderName =
-                    userNameMap.get(rec.from_user_id) || "Unknown User";
-                  const isNew = !rec.opened_at; // Show "NEW" badge if never opened
-
-                  return (
-                    <div key={rec.id} className="relative">
-                      {/* NEW indicator badge */}
-                      {isNew && (
-                        <div className="absolute -top-1 -left-1 z-10">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-500 text-white shadow-sm">
-                            NEW
-                          </span>
-                        </div>
-                      )}
-                      <MediaRecommendationCard
-                        rec={cardRec}
-                        index={index}
-                        isReceived={true}
-                        senderName={senderName}
-                        onStatusUpdate={updateRecommendationStatus}
-                        onDelete={deleteRecommendation}
-                        renderMediaArt={(r) => {
-                          const typed = r;
-                          return typed.poster_url ? (
-                            <img
-                              src={typed.poster_url}
-                              alt={typed.title}
-                              loading="lazy"
-                              onError={(e) => {
-                                // Fallback to icon if image fails to load
-                                const target = e.target as HTMLImageElement;
-                                target.style.display = "none";
-                              }}
-                              className="w-12 h-16 rounded object-cover"
-                            />
-                          ) : (
-                            <div className="w-12 h-16 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
-                              <MediaIcon className="w-6 h-6 text-gray-400 dark:text-gray-500" />
-                            </div>
-                          );
-                        }}
-                        renderMediaInfo={(r) => {
-                          const typed = r;
-                          return (
-                            <>
-                              <div className="flex items-center gap-2">
-                                <h3 className="font-semibold text-gray-900 dark:text-white">
-                                  {typed.title}
-                                </h3>
-                                {typed.media_type === "tv" ? (
-                                  <span className="flex items-center gap-1 text-xs text-primary bg-primary/10 px-2 py-0.5 rounded whitespace-nowrap">
-                                    <TvIcon className="w-3 h-3" />
-                                    TV
-                                  </span>
-                                ) : (
-                                  <span className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 rounded whitespace-nowrap">
-                                    <Clapperboard className="w-3 h-3" />
-                                    Movie
-                                  </span>
-                                )}
-                              </div>
-                              {typed.year && (
-                                <p className="text-sm text-gray-600 dark:text-gray-400">
-                                  {typed.year}
-                                </p>
-                              )}
-                              {typed.overview && (
-                                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mt-1">
-                                  {typed.overview}
-                                </p>
-                              )}
-                            </>
-                          );
-                        }}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-      ))}
+    <div className="container mx-auto px-4 sm:px-6">
+      <div className="space-y-4 sm:space-y-6">
+        <InlineRecommendationsLayout
+          mediaType="Movies & TV"
+          mediaIcon={Clapperboard}
+          emptyMessage="No recommendations yet"
+          emptySubMessage="When friends recommend movies or TV shows, they'll show up here"
+          loading={loading}
+          friendsWithRecs={filteredFriendsWithRecs}
+          quickStats={quickStats}
+          hits={hits}
+          misses={misses}
+          sent={[]}
+          showSent={false}
+          friendRecommendations={friendRecommendations}
+          renderRecommendationCard={renderRecommendationCard}
+        />
+      </div>
     </div>
   );
 }
 
-// Memoize to prevent rerenders - no props, but internal state optimized with useCallback
 export const DashboardRecommendations = React.memo(
   DashboardRecommendationsComponent
 );

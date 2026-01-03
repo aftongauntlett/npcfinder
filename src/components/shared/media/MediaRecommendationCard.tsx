@@ -58,10 +58,7 @@ interface MediaRecommendationCardProps<T extends BaseRecommendation> {
  *
  * Usage Examples:
  * See implementation in:
- * - src/components/pages/movies/MoviesSuggestions.tsx
- * - src/components/pages/books/BooksSuggestions.tsx
- * - src/components/pages/games/GamesSuggestions.tsx
- * - src/components/pages/music/MusicSuggestions.tsx
+ * - src/components/dashboard/DashboardRecommendations.tsx
  *
  * @example
  * <MediaRecommendationCard

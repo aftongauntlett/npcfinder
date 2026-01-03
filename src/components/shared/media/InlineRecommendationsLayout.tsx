@@ -27,6 +27,7 @@ interface InlineRecommendationsLayoutProps<T extends BaseRecommendation> {
   hits: T[];
   misses: T[];
   sent: T[];
+  showSent?: boolean;
   friendRecommendations: Map<string, T[]>; // friendId -> recommendations
   renderRecommendationCard: (
     rec: T,
@@ -51,6 +52,7 @@ export function InlineRecommendationsLayout<T extends BaseRecommendation>({
   hits,
   misses,
   sent,
+  showSent = true,
   friendRecommendations,
 }: InlineRecommendationsLayoutProps<T>) {
   const [expandedSection, setExpandedSection] = useState<SectionType>(null);
@@ -76,6 +78,7 @@ export function InlineRecommendationsLayout<T extends BaseRecommendation>({
 
   // Group sent items by external_id (same media item)
   const groupedSentItems = React.useMemo(() => {
+    if (!showSent) return [] as T[][];
     const groups = new Map<string, T[]>();
     sent.forEach((rec) => {
       const key = rec.external_id;
@@ -85,12 +88,12 @@ export function InlineRecommendationsLayout<T extends BaseRecommendation>({
       groups.get(key)!.push(rec);
     });
     return Array.from(groups.values());
-  }, [sent]);
+  }, [sent, showSent]);
 
   return (
     <div className="space-y-6">
       {/* Quick Stats - Always visible */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className={`grid ${showSent ? "grid-cols-3" : "grid-cols-2"} gap-4`}>
         <button
           onClick={() => toggleSection("hits")}
           className={`bg-white dark:bg-gray-800 rounded-lg p-6 text-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
@@ -147,33 +150,35 @@ export function InlineRecommendationsLayout<T extends BaseRecommendation>({
           </div>
         </button>
 
-        <button
-          onClick={() => toggleSection("sent")}
-          className={`bg-white dark:bg-gray-800 rounded-lg p-6 text-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
-            expandedSection === "sent"
-              ? ""
-              : "hover:bg-gray-50 dark:hover:bg-gray-700"
-          }`}
-          aria-label="View recommendations you sent"
-          aria-expanded={expandedSection === "sent"}
-        >
-          <div className="flex items-center justify-center gap-2 mb-1">
-            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-              {quickStats.sent}
+        {showSent && (
+          <button
+            onClick={() => toggleSection("sent")}
+            className={`bg-white dark:bg-gray-800 rounded-lg p-6 text-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+              expandedSection === "sent"
+                ? ""
+                : "hover:bg-gray-50 dark:hover:bg-gray-700"
+            }`}
+            aria-label="View recommendations you sent"
+            aria-expanded={expandedSection === "sent"}
+          >
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                {quickStats.sent}
+              </div>
+              {expandedSection === "sent" ? (
+                <ChevronDown className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              ) : (
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              )}
             </div>
-            {expandedSection === "sent" ? (
-              <ChevronDown className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            ) : (
-              <ChevronRight className="w-5 h-5 text-gray-400" />
-            )}
-          </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            Your Sent
-          </div>
-          <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-            Recs you sent to friends
-          </div>
-        </button>
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Your Sent
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+              Recs you sent to friends
+            </div>
+          </button>
+        )}
       </div>
 
       {/* Expanded Hits Section */}
@@ -227,7 +232,7 @@ export function InlineRecommendationsLayout<T extends BaseRecommendation>({
       )}
 
       {/* Expanded Sent Section */}
-      {expandedSection === "sent" && (
+      {showSent && expandedSection === "sent" && (
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
           <div className="mb-4">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">

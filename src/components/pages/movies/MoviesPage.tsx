@@ -1,16 +1,14 @@
 import React, { useState } from "react";
-import { Lightbulb, Play, Check, List } from "lucide-react";
+import { Play, Check, List } from "lucide-react";
 import AppLayout from "../../layouts/AppLayout";
-import MoviesSuggestions from "./MoviesSuggestions";
 import { useWatchlist } from "../../../hooks/useWatchlistQueries";
-import { useMovieStats } from "../../../hooks/useMovieQueries";
 import PersonalWatchList from "../../media/PersonalWatchList";
 import PersonalMediaLists from "../../media/PersonalMediaLists";
 import MediaListDetail from "../../media/MediaListDetail";
 import { usePageMeta } from "../../../hooks/usePageMeta";
 import { TabPanel } from "@/components/shared";
 
-type TabId = "watching" | "watched" | "recommendations" | "lists" | "list-detail";
+type TabId = "watching" | "watched" | "lists" | "list-detail";
 
 // Static page meta options (stable reference)
 const pageMetaOptions = {
@@ -23,19 +21,20 @@ const pageMetaOptions = {
 /**
  * Movies & TV Page
  *
- * Three tabs: Watching, Watched, Recommendations
+ * Two tabs: Queue, Completed (plus Lists)
  * Uses unified AppLayout for consistent spacing and footer
  */
 const MoviesPage: React.FC = () => {
   usePageMeta(pageMetaOptions);
 
   const [activeTab, setActiveTab] = useState<TabId>("watching");
-  const [activeList, setActiveList] = useState<{ id: string; title: string } | null>(null);
+  const [activeList, setActiveList] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
 
   // Fetch data for badge counts
   const { data: watchlist = [] } = useWatchlist();
-  const { data: quickStats } = useMovieStats();
-
   const tabs = [
     {
       id: "watching" as TabId,
@@ -63,12 +62,6 @@ const MoviesPage: React.FC = () => {
           },
         ]
       : []),
-    {
-      id: "recommendations" as TabId,
-      label: "Recommendations",
-      icon: Lightbulb,
-      badge: quickStats?.queue || 0,
-    },
   ];
 
   return (
@@ -90,7 +83,6 @@ const MoviesPage: React.FC = () => {
         <h2 className="sr-only">
           {activeTab === "watching" && "Queue"}
           {activeTab === "watched" && "Completed"}
-          {activeTab === "recommendations" && "Recommendations"}
           {activeTab === "lists" && "Lists"}
           {activeTab === "list-detail" && (activeList?.title || "List")}
         </h2>
@@ -100,7 +92,6 @@ const MoviesPage: React.FC = () => {
         {activeTab === "watched" && (
           <PersonalWatchList initialFilter="watched" />
         )}
-        {activeTab === "recommendations" && <MoviesSuggestions embedded />}
         {activeTab === "lists" && (
           <PersonalMediaLists
             domain="movies-tv"
