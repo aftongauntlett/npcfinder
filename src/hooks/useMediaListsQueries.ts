@@ -1,5 +1,8 @@
 /**
- * TanStack Query hooks for Media Lists
+ * TanStack Query hooks for Media Lists (Collections)
+ *
+ * The UI still labels these as “Media Lists”, but the data model is evolving
+ * toward “Collections” (stored in media_lists + media_list_items).
  */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -8,16 +11,20 @@ import { useAuth } from "../contexts/AuthContext";
 import * as mediaListsService from "../services/mediaListsService";
 import type { MediaItem } from "@/components/shared";
 import type {
+  CollectionMemberRole,
   MediaDomain,
-  MediaListMemberRole,
 } from "../services/mediaListsService.types";
 
 export const mediaListsQueryKeys = {
   all: ["media-lists"] as const,
-  lists: (domain: MediaDomain) => [...mediaListsQueryKeys.all, "lists", domain] as const,
-  detail: (listId: string) => [...mediaListsQueryKeys.all, "detail", listId] as const,
-  items: (listId: string) => [...mediaListsQueryKeys.all, "items", listId] as const,
-  members: (listId: string) => [...mediaListsQueryKeys.all, "members", listId] as const,
+  lists: (domain: MediaDomain) =>
+    [...mediaListsQueryKeys.all, "lists", domain] as const,
+  detail: (listId: string) =>
+    [...mediaListsQueryKeys.all, "detail", listId] as const,
+  items: (listId: string) =>
+    [...mediaListsQueryKeys.all, "items", listId] as const,
+  members: (listId: string) =>
+    [...mediaListsQueryKeys.all, "members", listId] as const,
   myRole: (listId: string, userId?: string) =>
     [...mediaListsQueryKeys.all, "my-role", listId, userId] as const,
 };
@@ -26,7 +33,7 @@ export function useMediaLists(domain: MediaDomain) {
   return useQuery({
     queryKey: mediaListsQueryKeys.lists(domain),
     queryFn: async () => {
-      const { data, error } = await mediaListsService.getMediaLists(domain);
+      const { data, error } = await mediaListsService.getCollections(domain);
       if (error) throw error;
       return data || [];
     },
@@ -39,7 +46,7 @@ export function useMediaList(listId: string | null) {
     enabled: !!listId,
     queryFn: async () => {
       if (!listId) return null;
-      const { data, error } = await mediaListsService.getMediaList(listId);
+      const { data, error } = await mediaListsService.getCollection(listId);
       if (error) throw error;
       return data;
     },
@@ -147,10 +154,7 @@ export function useAddMediaListItem(domain: MediaDomain) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: {
-      listId: string;
-      item: MediaItem;
-    }) => {
+    mutationFn: async (params: { listId: string; item: MediaItem }) => {
       const { data, error } = await mediaListsService.addMediaListItem({
         listId: params.listId,
         mediaDomain: domain,
@@ -202,7 +206,9 @@ export function useMediaListMembers(listId: string | null) {
     enabled: !!listId,
     queryFn: async () => {
       if (!listId) return [];
-      const { data, error } = await mediaListsService.getMediaListMembers(listId);
+      const { data, error } = await mediaListsService.getMediaListMembers(
+        listId
+      );
       if (error) throw error;
       return data || [];
     },
@@ -217,7 +223,9 @@ export function useMyMediaListRole(listId: string | null) {
     enabled: !!listId && !!user?.id,
     queryFn: async () => {
       if (!listId) return null;
-      const { data, error } = await mediaListsService.getMyMediaListRole(listId);
+      const { data, error } = await mediaListsService.getMyMediaListRole(
+        listId
+      );
       if (error) throw error;
       return data;
     },
@@ -231,7 +239,7 @@ export function useShareMediaList(domain: MediaDomain) {
     mutationFn: async (params: {
       listId: string;
       userIds: string[];
-      role: MediaListMemberRole;
+      role: CollectionMemberRole;
     }) => {
       const { data, error } = await mediaListsService.shareMediaList(params);
       if (error) throw error;
@@ -272,11 +280,17 @@ export function useUpdateMediaListMemberRole(domain: MediaDomain) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: { memberId: string; role: MediaListMemberRole; listId: string }) => {
-      const { data, error } = await mediaListsService.updateMediaListMemberRole({
-        memberId: params.memberId,
-        role: params.role,
-      });
+    mutationFn: async (params: {
+      memberId: string;
+      role: CollectionMemberRole;
+      listId: string;
+    }) => {
+      const { data, error } = await mediaListsService.updateMediaListMemberRole(
+        {
+          memberId: params.memberId,
+          role: params.role,
+        }
+      );
       if (error) throw error;
       return data;
     },

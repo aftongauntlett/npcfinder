@@ -1,12 +1,20 @@
 /**
- * Media Lists Service - Supabase Implementation
- * Handles CRUD operations for user-created media lists + sharing (viewer/editor)
+ * Collections Service - Supabase Implementation
+ *
+ * Collections are stored in existing tables (media_lists + media_list_items).
+ * The current UI still refers to these as “Media Lists”; we keep the legacy
+ * exported function names for now to avoid user-visible behavior changes.
+ *
+ * Intentionally introduced ahead of any Collections UI work.
  */
 
 import { supabase } from "../lib/supabase";
 import { logger } from "../lib/logger";
 import type { MediaItem } from "../components/shared/media/SendMediaModal";
 import type {
+  CollectionItemInsert,
+  CollectionMembershipForMediaItem,
+  CollectionWithCounts,
   MediaDomain,
   MediaList,
   MediaListItem,
@@ -17,6 +25,146 @@ import type {
   ServiceResponse,
   UserProfileLite,
 } from "./mediaListsService.types";
+
+/**
+ * Collection-first APIs (generic/reusable)
+ *
+ * These are intentionally not wired into the Media UI yet.
+ */
+
+export async function getCollections(
+  mediaDomain: MediaDomain
+): Promise<ServiceResponse<CollectionWithCounts[]>> {
+  try {
+    const { data, error } = await supabase
+      .from("media_lists_with_counts")
+      .select("*")
+      .eq("media_domain", mediaDomain)
+      .order("updated_at", { ascending: false });
+
+    if (error) throw error;
+    return { data: (data || []) as CollectionWithCounts[], error: null };
+  } catch (error) {
+    logger.error("Failed to fetch collections", { error, mediaDomain });
+    return { data: null, error: error as Error };
+  }
+}
+
+export async function getCollection(
+  collectionId: string
+): Promise<ServiceResponse<CollectionWithCounts>> {
+  try {
+    const { data, error } = await supabase
+      .from("media_lists_with_counts")
+      .select("*")
+      .eq("id", collectionId)
+      .single();
+
+    if (error) throw error;
+    return { data: data as CollectionWithCounts, error: null };
+  } catch (error) {
+    logger.error("Failed to fetch collection", { error, collectionId });
+    return { data: null, error: error as Error };
+  }
+}
+
+export async function addMediaItemToCollection(params: {
+  collectionId: string;
+  item: CollectionItemInsert;
+}): Promise<ServiceResponse<MediaListItem>> {
+  try {
+    const { data, error } = await supabase
+      .from("media_list_items")
+      .insert({
+        list_id: params.collectionId,
+        ...params.item,
+      })
+      .select("*")
+      .single();
+
+    if (error) throw error;
+    return { data: data as MediaListItem, error: null };
+  } catch (error) {
+    logger.error("Failed to add media item to collection", {
+      error,
+      collectionId: params.collectionId,
+      externalId: params.item.external_id,
+      mediaType: params.item.media_type,
+    });
+    return { data: null, error: error as Error };
+  }
+}
+
+export async function removeMediaItemFromCollection(params: {
+  collectionId: string;
+  externalId: string;
+  mediaType: MediaListItem["media_type"];
+}): Promise<ServiceResponse<true>> {
+  try {
+    const { error } = await supabase
+      .from("media_list_items")
+      .delete()
+      .eq("list_id", params.collectionId)
+      .eq("external_id", params.externalId)
+      .eq("media_type", params.mediaType);
+
+    if (error) throw error;
+    return { data: true, error: null };
+  } catch (error) {
+    logger.error("Failed to remove media item from collection", {
+      error,
+      params,
+    });
+    return { data: null, error: error as Error };
+  }
+}
+
+export async function getCollectionMembershipForMediaItem(params: {
+  externalId: string;
+  mediaType: MediaListItem["media_type"];
+  mediaDomain?: MediaDomain;
+}): Promise<ServiceResponse<CollectionMembershipForMediaItem[]>> {
+  try {
+    const { data: items, error: itemsError } = await supabase
+      .from("media_list_items")
+      .select("id, list_id")
+      .eq("external_id", params.externalId)
+      .eq("media_type", params.mediaType);
+
+    if (itemsError) throw itemsError;
+    const rawMembership = (items || []).map((row) => ({
+      collection_id: String((row as { list_id: string }).list_id),
+      collection_item_id: String((row as { id: string }).id),
+    }));
+
+    if (!params.mediaDomain || rawMembership.length === 0) {
+      return { data: rawMembership, error: null };
+    }
+
+    const collectionIds = rawMembership.map((m) => m.collection_id);
+    const { data: collections, error: collectionsError } = await supabase
+      .from("media_lists")
+      .select("id")
+      .eq("media_domain", params.mediaDomain)
+      .in("id", collectionIds);
+
+    if (collectionsError) throw collectionsError;
+    const allowed = new Set((collections || []).map((c) => String(c.id)));
+
+    return {
+      data: rawMembership.filter((m) => allowed.has(m.collection_id)),
+      error: null,
+    };
+  } catch (error) {
+    logger.error("Failed to fetch collection membership for media item", {
+      error,
+      externalId: params.externalId,
+      mediaType: params.mediaType,
+      mediaDomain: params.mediaDomain,
+    });
+    return { data: null, error: error as Error };
+  }
+}
 
 function normalizeMediaType(
   domain: MediaDomain,
@@ -43,37 +191,16 @@ function normalizeYear(releaseDate: string | null | undefined): number | null {
 export async function getMediaLists(
   mediaDomain: MediaDomain
 ): Promise<ServiceResponse<MediaListWithCounts[]>> {
-  try {
-    const { data, error } = await supabase
-      .from("media_lists_with_counts")
-      .select("*")
-      .eq("media_domain", mediaDomain)
-      .order("updated_at", { ascending: false });
-
-    if (error) throw error;
-    return { data: (data || []) as MediaListWithCounts[], error: null };
-  } catch (error) {
-    logger.error("Failed to fetch media lists", { error, mediaDomain });
-    return { data: null, error: error as Error };
-  }
+  const res = await getCollections(mediaDomain);
+  // Legacy name; intentionally returns the same shape.
+  return { data: res.data as MediaListWithCounts[] | null, error: res.error };
 }
 
 export async function getMediaList(
   listId: string
 ): Promise<ServiceResponse<MediaListWithCounts>> {
-  try {
-    const { data, error } = await supabase
-      .from("media_lists_with_counts")
-      .select("*")
-      .eq("id", listId)
-      .single();
-
-    if (error) throw error;
-    return { data: data as MediaListWithCounts, error: null };
-  } catch (error) {
-    logger.error("Failed to fetch media list", { error, listId });
-    return { data: null, error: error as Error };
-  }
+  const res = await getCollection(listId);
+  return { data: res.data as MediaListWithCounts | null, error: res.error };
 }
 
 export async function createMediaList(params: {
@@ -85,10 +212,7 @@ export async function createMediaList(params: {
   is_public: boolean;
 }): Promise<ServiceResponse<MediaList>> {
   try {
-    const {
-      data: authData,
-      error: authError,
-    } = await supabase.auth.getUser();
+    const { data: authData, error: authError } = await supabase.auth.getUser();
 
     if (authError) throw authError;
     if (!authData.user) throw new Error("User not authenticated");
@@ -118,7 +242,10 @@ export async function createMediaList(params: {
 export async function updateMediaList(
   listId: string,
   updates: Partial<
-    Pick<MediaList, "title" | "description" | "icon" | "icon_color" | "is_public">
+    Pick<
+      MediaList,
+      "title" | "description" | "icon" | "icon_color" | "is_public"
+    >
   >
 ): Promise<ServiceResponse<MediaList>> {
   try {
@@ -153,7 +280,10 @@ export async function deleteMediaList(
   listId: string
 ): Promise<ServiceResponse<true>> {
   try {
-    const { error } = await supabase.from("media_lists").delete().eq("id", listId);
+    const { error } = await supabase
+      .from("media_lists")
+      .delete()
+      .eq("id", listId);
     if (error) throw error;
     return { data: true, error: null };
   } catch (error) {
@@ -189,8 +319,7 @@ export async function addMediaListItem(params: {
   try {
     const mediaType = normalizeMediaType(params.mediaDomain, params.item);
 
-    const record = {
-      list_id: params.listId,
+    const insert: CollectionItemInsert = {
       external_id: params.item.external_id,
       media_type: mediaType,
       title: params.item.title,
@@ -202,9 +331,14 @@ export async function addMediaListItem(params: {
         null,
       poster_url: params.item.poster_url,
       release_date: params.item.release_date ?? null,
-      description: params.item.description ?? params.item.description_raw ?? null,
+      description:
+        params.item.description ?? params.item.description_raw ?? null,
       year: normalizeYear(params.item.release_date ?? null),
-      genres: params.item.genres ?? params.item.genre ?? params.item.categories ?? null,
+      genres:
+        params.item.genres ??
+        params.item.genre ??
+        params.item.categories ??
+        null,
       authors: params.item.authors ?? null,
       artist: params.item.artist ?? null,
       album: params.item.album ?? null,
@@ -216,20 +350,15 @@ export async function addMediaListItem(params: {
       playtime: params.item.playtime ?? null,
       isbn: params.item.isbn ?? null,
       page_count: params.item.page_count ?? null,
-      publisher: undefined as unknown as null,
+      // publisher is not provided by adapters today; keep null.
+      publisher: null,
+      sort_order: null,
     };
 
-    // publisher is not provided by adapters today; keep null to satisfy type
-    (record as Record<string, unknown>).publisher = null;
-
-    const { data, error } = await supabase
-      .from("media_list_items")
-      .insert(record)
-      .select("*")
-      .single();
-
-    if (error) throw error;
-    return { data: data as MediaListItem, error: null };
+    return await addMediaItemToCollection({
+      collectionId: params.listId,
+      item: insert,
+    });
   } catch (error) {
     logger.error("Failed to add media list item", {
       error,
@@ -298,10 +427,7 @@ export async function getMyMediaListRole(
   listId: string
 ): Promise<ServiceResponse<MediaListMemberRole | null>> {
   try {
-    const {
-      data: authData,
-      error: authError,
-    } = await supabase.auth.getUser();
+    const { data: authData, error: authError } = await supabase.auth.getUser();
 
     if (authError) throw authError;
     if (!authData.user) throw new Error("User not authenticated");
@@ -329,10 +455,7 @@ export async function shareMediaList(params: {
   try {
     if (params.userIds.length === 0) return { data: true, error: null };
 
-    const {
-      data: authData,
-      error: authError,
-    } = await supabase.auth.getUser();
+    const { data: authData, error: authError } = await supabase.auth.getUser();
 
     if (authError) throw authError;
     if (!authData.user) throw new Error("User not authenticated");
@@ -346,8 +469,12 @@ export async function shareMediaList(params: {
 
     if (connError) throw connError;
 
-    const connectedUserIds = new Set((connections || []).map((c) => c.friend_id));
-    const invalidUsers = params.userIds.filter((id) => !connectedUserIds.has(id));
+    const connectedUserIds = new Set(
+      (connections || []).map((c) => c.friend_id)
+    );
+    const invalidUsers = params.userIds.filter(
+      (id) => !connectedUserIds.has(id)
+    );
     if (invalidUsers.length > 0) {
       throw new Error("Can only invite connected users (friends)");
     }

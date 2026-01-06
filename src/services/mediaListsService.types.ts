@@ -1,13 +1,26 @@
+/**
+ * Collections (data layer)
+ *
+ * We intentionally introduce “Collections” as a first-class concept ahead of any
+ * user-visible UI rename. Collections are persisted in the existing tables:
+ * - public.media_lists
+ * - public.media_list_items
+ * - public.media_list_members (sharing/roles)
+ *
+ * NOTE: Database tables are not renamed yet. Existing “MediaList*” type names
+ * remain as aliases to avoid breaking current UI code.
+ */
+
 export type MediaDomain = "movies-tv" | "books" | "games" | "music";
 
-export type MediaListMemberRole = "viewer" | "editor";
+export type CollectionMemberRole = "viewer" | "editor";
 
 export interface ServiceResponse<T> {
   data: T | null;
   error: Error | null;
 }
 
-export interface MediaList {
+export interface Collection {
   id: string;
   owner_id: string;
   media_domain: MediaDomain;
@@ -20,12 +33,12 @@ export interface MediaList {
   updated_at: string;
 }
 
-export interface MediaListWithCounts extends MediaList {
+export interface CollectionWithCounts extends Collection {
   owner_display_name: string;
   item_count: number;
 }
 
-export interface MediaListItem {
+export interface CollectionItem {
   id: string;
   list_id: string;
   external_id: string;
@@ -54,15 +67,27 @@ export interface MediaListItem {
   updated_at: string;
 }
 
-export interface MediaListMember {
+export type CollectionItemInsert = Omit<
+  CollectionItem,
+  "id" | "list_id" | "created_at" | "updated_at"
+>;
+
+export interface CollectionMember {
   id: string;
   list_id: string;
   user_id: string;
-  role: MediaListMemberRole;
+  role: CollectionMemberRole;
   invited_by: string;
   created_at: string;
   updated_at: string;
 }
+
+// Backwards-compatible aliases for current UI naming.
+export type MediaListMemberRole = CollectionMemberRole;
+export type MediaList = Collection;
+export type MediaListWithCounts = CollectionWithCounts;
+export type MediaListItem = CollectionItem;
+export type MediaListMember = CollectionMember;
 
 export interface UserProfileLite {
   user_id: string;
@@ -71,4 +96,12 @@ export interface UserProfileLite {
 
 export interface MediaListMemberWithUser extends MediaListMember {
   user_profile: UserProfileLite | null;
+}
+
+export type CollectionMemberWithUser = MediaListMemberWithUser;
+
+/** Minimal shape for “which collections contain this media item?” queries. */
+export interface CollectionMembershipForMediaItem {
+  collection_id: string;
+  collection_item_id: string;
 }
