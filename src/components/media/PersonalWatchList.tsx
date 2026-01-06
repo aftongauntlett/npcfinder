@@ -30,8 +30,10 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
   // Collapse all state
   const [collapseKey, setCollapseKey] = useState(0);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
-  const [recentlyMovedId, setRecentlyMovedId] = useState<string | number | null>(null);
-  
+  const [recentlyMovedId, setRecentlyMovedId] = useState<
+    string | number | null
+  >(null);
+
   // Drag-and-drop state
   const [draggedItem, setDraggedItem] = useState<WatchlistItem | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
@@ -60,7 +62,6 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
     toWatchCount: _toWatchCount,
     watchedCount: _watchedCount,
     hasItemsForCurrentFilter,
-    filter,
     mediaTypeFilter,
     genreFilters,
     sortBy,
@@ -90,13 +91,13 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
 
   // Collapse all handler
   const handleCollapseAll = () => {
-    setCollapseKey(prev => prev + 1);
+    setCollapseKey((prev) => prev + 1);
     setExpandedItems(new Set());
   };
 
   // Track expansion changes
   const handleExpandChange = (id: string | number, isExpanded: boolean) => {
-    setExpandedItems(prev => {
+    setExpandedItems((prev) => {
       const newSet = new Set(prev);
       const stringId = String(id);
       if (isExpanded) {
@@ -128,7 +129,10 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
     setDragOverId(null);
   };
 
-  const handleItemDragOver = (e: React.DragEvent, targetItem: WatchlistItem) => {
+  const handleItemDragOver = (
+    e: React.DragEvent,
+    targetItem: WatchlistItem
+  ) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
     if (draggedItem && draggedItem.id !== targetItem.id) {
@@ -150,13 +154,16 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
 
     if (!draggedItem || draggedItem.id === targetItem.id) return;
 
-    const draggedIndex = paginatedItems.findIndex((i) => i.id === draggedItem.id);
+    const draggedIndex = paginatedItems.findIndex(
+      (i) => i.id === draggedItem.id
+    );
     const targetIndex = paginatedItems.findIndex((i) => i.id === targetItem.id);
 
     const reordered = [...paginatedItems];
     reordered.splice(draggedIndex, 1);
 
-    const insertIndex = draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
+    const insertIndex =
+      draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
     reordered.splice(insertIndex, 0, draggedItem);
 
     reorderItems.mutate(reordered.map((item) => item.id));
@@ -164,10 +171,7 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
   };
 
   return (
-    <div
-      ref={topRef}
-      className="container mx-auto px-4 sm:px-6"
-    >
+    <div ref={topRef} className="container mx-auto px-4 sm:px-6">
       {/* Controls Row: Filters + Sort + Actions */}
       {hasItemsForCurrentFilter && (
         <WatchlistToolbar
@@ -188,7 +192,6 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
 
       {/* Content: List or Empty State */}
       <WatchlistEmptyState
-        filter={filter}
         mediaTypeFilter={mediaTypeFilter}
         genreFilters={genreFilters}
         hasItemsForCurrentFilter={hasItemsForCurrentFilter}
@@ -227,42 +230,44 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
                         : ""
                     }
                   >
-                  <MediaListItem
-                    id={item.id}
-                    title={item.title}
-                    subtitle={item.director || undefined}
-                    posterUrl={item.poster_url || undefined}
-                    year={item.release_date?.split("-")[0]}
-                    description={item.overview || undefined}
-                    mediaType={item.media_type}
-                    genres={item.genres?.join(", ") || undefined}
-                    externalId={item.external_id}
-                    releaseDate={item.release_date || undefined}
-                    isCompleted={item.watched}
-                    onToggleComplete={(id) => {
-                      setRecentlyMovedId(id);
-                      handleToggleWatched(id);
-                      setToast({
-                        message: `${item.title} moved`,
-                        action: {
-                          label: "Undo",
-                          onClick: () => {
-                            setRecentlyMovedId(id);
-                            handleToggleWatched(id);
-                            setToast(null);
+                    <MediaListItem
+                      id={item.id}
+                      title={item.title}
+                      subtitle={item.director || undefined}
+                      posterUrl={item.poster_url || undefined}
+                      year={item.release_date?.split("-")[0]}
+                      description={item.overview || undefined}
+                      mediaType={item.media_type}
+                      genres={item.genres?.join(", ") || undefined}
+                      externalId={item.external_id}
+                      releaseDate={item.release_date || undefined}
+                      isCompleted={item.watched}
+                      onToggleComplete={(id) => {
+                        setRecentlyMovedId(id);
+                        handleToggleWatched(id);
+                        setToast({
+                          message: `${item.title} moved`,
+                          action: {
+                            label: "Undo",
+                            onClick: () => {
+                              setRecentlyMovedId(id);
+                              handleToggleWatched(id);
+                              setToast(null);
+                            },
                           },
-                        },
-                      });
-                    }}
-                    onRemove={handleRemoveFromWatchList}
-                    onRecommend={() => {
-                      setMovieToRecommend(item);
-                      setShowSendModal(true);
-                    }}
-                    onExpandChange={(isExpanded) =>
-                      handleExpandChange(item.id, isExpanded)
-                    }
-                  />                  </div>                </motion.div>
+                        });
+                      }}
+                      onRemove={handleRemoveFromWatchList}
+                      onRecommend={() => {
+                        setMovieToRecommend(item);
+                        setShowSendModal(true);
+                      }}
+                      onExpandChange={(isExpanded) =>
+                        handleExpandChange(item.id, isExpanded)
+                      }
+                    />
+                  </div>
+                </motion.div>
               ))}
             </AnimatePresence>
           </div>

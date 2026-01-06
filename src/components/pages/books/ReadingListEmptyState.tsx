@@ -3,7 +3,6 @@ import { BookOpen } from "lucide-react";
 import { EmptyStateAddCard } from "@/components/shared";
 
 interface ReadingListEmptyStateProps {
-  filter: "all" | "to-read" | "read";
   hasItemsForCurrentFilter: boolean;
   totalItems: number;
   categoryFilters: string[];
@@ -11,7 +10,6 @@ interface ReadingListEmptyStateProps {
 }
 
 const ReadingListEmptyState: React.FC<ReadingListEmptyStateProps> = ({
-  filter: _filter,
   hasItemsForCurrentFilter,
   totalItems,
   categoryFilters,
@@ -22,10 +20,10 @@ const ReadingListEmptyState: React.FC<ReadingListEmptyStateProps> = ({
     return (
       <EmptyStateAddCard
         icon={BookOpen}
-        title="Your Reading list is empty"
-        description="You haven't added any books to your list yet. Add books to start tracking what you're currently reading!"
+        title="Your Book library is empty"
+        description="You haven't added any books yet. Add something to start building your library."
         onClick={onAddClick}
-        ariaLabel="Add books to your reading list"
+        ariaLabel="Add books to your library"
       />
     );
   }

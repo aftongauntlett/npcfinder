@@ -10,7 +10,10 @@ import Toast from "../../ui/Toast";
 import ConfirmationModal from "../../shared/ui/ConfirmationModal";
 import { searchGames } from "../../../utils/mediaSearchAdapters";
 import { useGameLibraryViewModel } from "../../../hooks/games/useGameLibraryViewModel";
-import { useReorderGameLibraryItems, type GameLibraryItem } from "../../../hooks/useGameLibraryQueries";
+import {
+  useReorderGameLibraryItems,
+  type GameLibraryItem,
+} from "../../../hooks/useGameLibraryQueries";
 import GameLibraryToolbar from "./GameLibraryToolbar";
 
 type FilterType = "all" | "to-play" | "played";
@@ -38,8 +41,10 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
 }) => {
   // Collapse state
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
-  const [recentlyMovedId, setRecentlyMovedId] = useState<string | number | null>(null);
-  
+  const [recentlyMovedId, setRecentlyMovedId] = useState<
+    string | number | null
+  >(null);
+
   // Drag-and-drop state
   const [draggedItem, setDraggedItem] = useState<GameLibraryItem | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
@@ -76,7 +81,6 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
     currentPage,
     itemsPerPage,
     availableGenres,
-    filter,
     activeSort,
     genreFilters,
     searchQuery,
@@ -128,7 +132,10 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
     setDragOverId(null);
   };
 
-  const handleItemDragOver = (e: React.DragEvent, targetItem: GameLibraryItem) => {
+  const handleItemDragOver = (
+    e: React.DragEvent,
+    targetItem: GameLibraryItem
+  ) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
     if (draggedItem && draggedItem.id !== targetItem.id) {
@@ -150,13 +157,16 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
 
     if (!draggedItem || draggedItem.id === targetItem.id) return;
 
-    const draggedIndex = paginatedItems.findIndex((i) => i.id === draggedItem.id);
+    const draggedIndex = paginatedItems.findIndex(
+      (i) => i.id === draggedItem.id
+    );
     const targetIndex = paginatedItems.findIndex((i) => i.id === targetItem.id);
 
     const reordered = [...paginatedItems];
     reordered.splice(draggedIndex, 1);
 
-    const insertIndex = draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
+    const insertIndex =
+      draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
     reordered.splice(insertIndex, 0, draggedItem);
 
     reorderItems.mutate(reordered.map((item) => item.id));
@@ -178,8 +188,8 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
       <div className="container mx-auto px-4 sm:px-6">
         <EmptyStateAddCard
           icon={Gamepad2}
-          title="Your Game list is empty"
-          description="You haven't added any games to your list yet. Add games to start tracking what you're currently playing!"
+          title="Your Game library is empty"
+          description="You haven't added any games yet. Add something to start building your library."
           onClick={() => setShowSearchModal(true)}
           ariaLabel="Add games to your library"
         />
@@ -195,7 +205,11 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
 
         {/* Toast */}
         {showToast && (
-          <Toast message={toastMessage} action={toastAction} onClose={dismissToast} />
+          <Toast
+            message={toastMessage}
+            action={toastAction}
+            onClose={dismissToast}
+          />
         )}
       </div>
     );
@@ -223,15 +237,9 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
       {paginatedItems.length === 0 ? (
         <EmptyStateAddCard
           icon={Gamepad2}
-          title={
-            filter === "to-play" || filter === "played"
-              ? "Your Game list is empty"
-              : "No Games Found"
-          }
+          title="No games found"
           description={
-            filter === "to-play" || filter === "played"
-              ? "You haven't added any games to your list yet. Add games to start tracking what you're currently playing!"
-              : genreFilters.length > 0 && !genreFilters.includes("all")
+            genreFilters.length > 0 && !genreFilters.includes("all")
               ? `No games found in selected genres: ${genreFilters.join(", ")}`
               : "No games found matching your current filters."
           }
@@ -267,30 +275,30 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.18 }}
                 >
-                <MediaListItem
-                  id={game.id}
-                  title={game.name}
-                  subtitle={undefined}
-                  posterUrl={game.background_image || undefined}
-                  year={game.released?.split("-")[0]}
-                  personalRating={game.personal_rating || undefined}
-                  genres={game.genres || undefined}
-                  isCompleted={game.played}
-                  mediaType="game"
-                  externalId={game.external_id}
-                  platforms={game.platforms || undefined}
-                  metacritic={game.metacritic || undefined}
-                  playtime={game.playtime || undefined}
-                  onToggleComplete={() => {
-                    setRecentlyMovedId(game.id);
-                    void handleTogglePlayed(game);
-                  }}
-                  onRecommend={() => handleRecommendClick(game)}
-                  onRemove={() => void handleDelete(game)}
-                  onExpandChange={(isExpanded) =>
-                    handleExpandChange(game.id, isExpanded)
-                  }
-                />
+                  <MediaListItem
+                    id={game.id}
+                    title={game.name}
+                    subtitle={undefined}
+                    posterUrl={game.background_image || undefined}
+                    year={game.released?.split("-")[0]}
+                    personalRating={game.personal_rating || undefined}
+                    genres={game.genres || undefined}
+                    isCompleted={game.played}
+                    mediaType="game"
+                    externalId={game.external_id}
+                    platforms={game.platforms || undefined}
+                    metacritic={game.metacritic || undefined}
+                    playtime={game.playtime || undefined}
+                    onToggleComplete={() => {
+                      setRecentlyMovedId(game.id);
+                      void handleTogglePlayed(game);
+                    }}
+                    onRecommend={() => handleRecommendClick(game)}
+                    onRemove={() => void handleDelete(game)}
+                    onExpandChange={(isExpanded) =>
+                      handleExpandChange(game.id, isExpanded)
+                    }
+                  />
                 </motion.div>
               </div>
             ))}
@@ -354,7 +362,11 @@ const PersonalGameLibrary: React.FC<PersonalGameLibraryProps> = ({
 
       {/* Success notification Toast (NOT for delete operations) */}
       {showToast && (
-        <Toast message={toastMessage} action={toastAction} onClose={dismissToast} />
+        <Toast
+          message={toastMessage}
+          action={toastAction}
+          onClose={dismissToast}
+        />
       )}
 
       {/* Delete Confirmation Modal */}

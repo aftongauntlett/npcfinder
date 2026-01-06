@@ -4,7 +4,6 @@ import { EmptyStateAddCard } from "@/components/shared";
 import type { MediaTypeFilter } from "../../data/watchlistFilters";
 
 interface WatchlistEmptyStateProps {
-  filter: "all" | "to-watch" | "watched";
   mediaTypeFilter: MediaTypeFilter;
   genreFilters: string[];
   hasItemsForCurrentFilter: boolean;
@@ -13,7 +12,6 @@ interface WatchlistEmptyStateProps {
 }
 
 const WatchlistEmptyState: React.FC<WatchlistEmptyStateProps> = ({
-  filter,
   mediaTypeFilter,
   genreFilters,
   hasItemsForCurrentFilter,
@@ -25,10 +23,10 @@ const WatchlistEmptyState: React.FC<WatchlistEmptyStateProps> = ({
     return (
       <EmptyStateAddCard
         icon={Film}
-        title="Your Movie & TV list is empty"
-        description="You haven't added any movies or TV shows to your list yet. Add content to start tracking what you're currently watching!"
+        title="Your Movie & TV library is empty"
+        description="You haven't added any movies or TV shows yet. Add something to start building your library."
         onClick={onAddClick}
-        ariaLabel="Add movies or TV shows to your watchlist"
+        ariaLabel="Add movies or TV shows to your library"
       />
     );
   }
@@ -42,13 +40,7 @@ const WatchlistEmptyState: React.FC<WatchlistEmptyStateProps> = ({
     return (
       <div className="text-center py-12">
         <p className="text-gray-500 dark:text-gray-400 text-lg mb-2">
-          {hasActiveFilters
-            ? "No movies match your filters"
-            : filter === "to-watch"
-            ? "No movies in your watching list"
-            : filter === "watched"
-            ? "No movies in your watched list"
-            : "No items found"}
+          {hasActiveFilters ? "No movies match your filters" : "No items found"}
         </p>
         {hasActiveFilters && (
           <p className="text-gray-400 dark:text-gray-500 text-sm">

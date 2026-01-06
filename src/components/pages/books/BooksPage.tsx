@@ -1,104 +1,49 @@
-import React, { useState } from "react";
-import { BookOpen, Check, List } from "lucide-react";
+import React, { useMemo } from "react";
+import { BookOpen } from "lucide-react";
 import AppLayout from "../../layouts/AppLayout";
 import PersonalReadingList from "./PersonalReadingList";
-import { useReadingList } from "../../../hooks/useReadingListQueries";
 import { usePageMeta } from "../../../hooks/usePageMeta";
-import { TabPanel } from "@/components/shared";
-import PersonalMediaLists from "../../media/PersonalMediaLists";
-import MediaListDetail from "../../media/MediaListDetail";
-
-type TabId = "reading" | "read" | "lists" | "list-detail";
+import { TabPanel } from "../../shared";
 
 // Static page meta options (stable reference)
 const pageMetaOptions = {
   title: "Books",
-  description: "Track your reading list and discover new books",
+  description: "Your complete book library",
   noIndex: true,
 };
+
+type TabId = "library";
 
 /**
  * Books Page
  *
- * Two tabs: Queue, Completed (plus Lists)
  * Uses unified AppLayout for consistent spacing and footer
  */
 const BooksPage: React.FC = () => {
   usePageMeta(pageMetaOptions);
 
-  const [activeTab, setActiveTab] = useState<TabId>("reading");
-  const [activeList, setActiveList] = useState<{
-    id: string;
-    title: string;
-  } | null>(null);
+  // Media intentionally uses a single "Library" tab.
+  // "Add" is an action (opens the search/add modal), not a mode,
+  // to avoid state-based navigation.
+  const activeTab: TabId = "library";
 
-  // Fetch data for badge counts
-  const { data: readingList = [] } = useReadingList();
-  // Calculate counts
-  const readingCount = readingList.filter((item) => !item.read).length;
-  const readCount = readingList.filter((item) => item.read).length;
-
-  const tabs = [
-    {
-      id: "reading" as TabId,
-      label: "Queue",
-      icon: BookOpen,
-      badge: readingCount,
-    },
-    {
-      id: "read" as TabId,
-      label: "Completed",
-      icon: Check,
-      badge: readCount,
-    },
-    {
-      id: "lists" as TabId,
-      label: "Lists",
-      icon: List,
-    },
-    ...(activeList
-      ? [
-          {
-            id: "list-detail" as TabId,
-            label: activeList.title,
-            icon: List,
-          },
-        ]
-      : []),
-  ];
+  const tabs = useMemo(
+    () => [{ id: "library" as TabId, label: "Library", icon: BookOpen }],
+    []
+  );
 
   return (
     <AppLayout
       title="Books"
-      description="Track what you're reading and discover new books from friends"
+      description="Your complete book library"
       tabs={tabs}
       activeTab={activeTab}
-      onTabChange={(tabId) => {
-        const nextTab = tabId as TabId;
-        setActiveTab(nextTab);
-        if (nextTab !== "list-detail") {
-          setActiveList(null);
-        }
+      onTabChange={() => {
+        // Single-tab layout: no-op by design.
       }}
     >
-      {/* Tab Content */}
-      <TabPanel id={`${activeTab}-panel`} tabId={`${activeTab}-tab`}>
-        {activeTab === "reading" && (
-          <PersonalReadingList initialFilter="to-read" />
-        )}
-        {activeTab === "read" && <PersonalReadingList initialFilter="read" />}
-        {activeTab === "lists" && (
-          <PersonalMediaLists
-            domain="books"
-            onOpenList={(list) => {
-              setActiveList(list);
-              setActiveTab("list-detail");
-            }}
-          />
-        )}
-        {activeTab === "list-detail" && activeList && (
-          <MediaListDetail domain="books" listId={activeList.id} />
-        )}
+      <TabPanel id="library-panel" tabId="library-tab">
+        <PersonalReadingList initialFilter="all" />
       </TabPanel>
     </AppLayout>
   );

@@ -35,7 +35,13 @@ import {
 } from "../../../utils/persistenceUtils";
 
 type FilterType = "all" | "listening" | "listened";
-type SortType = "custom" | "date-added" | "title" | "artist" | "year" | "rating";
+type SortType =
+  | "custom"
+  | "date-added"
+  | "title"
+  | "artist"
+  | "year"
+  | "rating";
 
 interface PersonalMusicLibraryProps {
   initialFilter?: FilterType;
@@ -49,8 +55,10 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
   // Collapse state
   const [collapseKey, setCollapseKey] = useState(0);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
-  const [recentlyMovedId, setRecentlyMovedId] = useState<string | number | null>(null);
-  
+  const [recentlyMovedId, setRecentlyMovedId] = useState<
+    string | number | null
+  >(null);
+
   // Drag-and-drop state
   const [draggedItem, setDraggedItem] = useState<MusicLibraryItem | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
@@ -102,7 +110,10 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
     setDragOverId(null);
   };
 
-  const handleItemDragOver = (e: React.DragEvent, targetItem: MusicLibraryItem) => {
+  const handleItemDragOver = (
+    e: React.DragEvent,
+    targetItem: MusicLibraryItem
+  ) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
     if (draggedItem && draggedItem.id !== targetItem.id) {
@@ -124,13 +135,18 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
 
     if (!draggedItem || draggedItem.id === targetItem.id) return;
 
-    const draggedIndex = pagination.paginatedItems.findIndex((i) => i.id === draggedItem.id);
-    const targetIndex = pagination.paginatedItems.findIndex((i) => i.id === targetItem.id);
+    const draggedIndex = pagination.paginatedItems.findIndex(
+      (i) => i.id === draggedItem.id
+    );
+    const targetIndex = pagination.paginatedItems.findIndex(
+      (i) => i.id === targetItem.id
+    );
 
     const reordered = [...pagination.paginatedItems];
     reordered.splice(draggedIndex, 1);
 
-    const insertIndex = draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
+    const insertIndex =
+      draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
     reordered.splice(insertIndex, 0, draggedItem);
 
     reorderItems.mutate(reordered.map((item) => item.id));
@@ -391,30 +407,14 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
   };
 
   // Empty state props
-  const emptyStateProps =
-    filter === "listened"
-      ? {
-          title: "Your Music list is empty",
-          message:
-            "You haven't added any albums or songs to your list yet. Add music to start tracking what you're currently listening to!",
-        }
-      : filter === "listening"
-      ? {
-          title: "Your Music list is empty",
-          message:
-            "You haven't added any albums or songs to your list yet. Add music to start tracking what you're currently listening to!",
-        }
-      : {
-          title: "Your Music list is empty",
-          message:
-            "You haven't added any albums or songs to your list yet. Add music to start tracking what you're currently listening to!",
-        };
+  const emptyStateProps = {
+    title: "Your Music library is empty",
+    message:
+      "You haven't added any albums or songs yet. Add something to start building your library.",
+  };
 
   return (
-    <div
-      ref={topRef}
-      className="container mx-auto px-4 sm:px-6"
-    >
+    <div ref={topRef} className="container mx-auto px-4 sm:px-6">
       {/* Action Bar - Only show when there's data */}
       {pagination.filteredItems.length > 0 && (
         <div className="space-y-3">
@@ -486,47 +486,47 @@ const PersonalMusicLibrary: React.FC<PersonalMusicLibraryProps> = ({
                   }
                 >
                   <MediaListItem
-                  id={music.id}
-                  title={music.title}
-                  subtitle={music.artist}
-                  posterUrl={music.album_cover_url || undefined}
-                  year={
-                    music.release_date
-                      ? new Date(music.release_date).getFullYear().toString()
-                      : undefined
-                  }
-                  personalRating={music.personal_rating || undefined}
-                  isCompleted={music.listened}
-                  genres={music.genre || undefined}
-                  mediaType={music.media_type}
-                  artist={music.artist}
-                  album={music.album || undefined}
-                  trackDuration={music.track_duration || undefined}
-                  trackCount={music.track_count || undefined}
-                  previewUrl={music.preview_url || undefined}
-                  externalId={music.external_id}
-                  description={undefined}
-                  onToggleComplete={(id) => {
-                    setRecentlyMovedId(id);
-                    handleToggleListened(String(id));
-                    setToast({
-                      message: `${music.title} moved`,
-                      action: {
-                        label: "Undo",
-                        onClick: () => {
-                          setRecentlyMovedId(id);
-                          handleToggleListened(String(id));
-                          setToast(null);
+                    id={music.id}
+                    title={music.title}
+                    subtitle={music.artist}
+                    posterUrl={music.album_cover_url || undefined}
+                    year={
+                      music.release_date
+                        ? new Date(music.release_date).getFullYear().toString()
+                        : undefined
+                    }
+                    personalRating={music.personal_rating || undefined}
+                    isCompleted={music.listened}
+                    genres={music.genre || undefined}
+                    mediaType={music.media_type}
+                    artist={music.artist}
+                    album={music.album || undefined}
+                    trackDuration={music.track_duration || undefined}
+                    trackCount={music.track_count || undefined}
+                    previewUrl={music.preview_url || undefined}
+                    externalId={music.external_id}
+                    description={undefined}
+                    onToggleComplete={(id) => {
+                      setRecentlyMovedId(id);
+                      handleToggleListened(String(id));
+                      setToast({
+                        message: `${music.title} moved`,
+                        action: {
+                          label: "Undo",
+                          onClick: () => {
+                            setRecentlyMovedId(id);
+                            handleToggleListened(String(id));
+                            setToast(null);
+                          },
                         },
-                      },
-                    });
-                  }}
-                  onRemove={() => handleRemove(music)}
-                  onRecommend={() => handleRecommend(music)}
-                  onExpandChange={(isExpanded) =>
-                    handleExpandChange(music.id, isExpanded)
-                  }
-                />
+                      });
+                    }}
+                    onRemove={() => handleRemove(music)}
+                    onRecommend={() => handleRecommend(music)}
+                    onExpandChange={(isExpanded) =>
+                      handleExpandChange(music.id, isExpanded)
+                    }
+                  />
                 </div>
               </motion.div>
             ))}

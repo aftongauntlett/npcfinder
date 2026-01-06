@@ -30,8 +30,10 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
   // Collapse state
   const [collapseKey, setCollapseKey] = useState(0);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
-  const [recentlyMovedId, setRecentlyMovedId] = useState<string | number | null>(null);
-  
+  const [recentlyMovedId, setRecentlyMovedId] = useState<
+    string | number | null
+  >(null);
+
   // Drag-and-drop state
   const [draggedItem, setDraggedItem] = useState<ReadingListItem | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
@@ -77,7 +79,6 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
     toReadCount: _toReadCount,
     readCount: _readCount,
     hasItemsForCurrentFilter,
-    filter,
     categoryFilters,
     sortBy,
     searchQuery,
@@ -123,7 +124,10 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
     setDragOverId(null);
   };
 
-  const handleItemDragOver = (e: React.DragEvent, targetItem: ReadingListItem) => {
+  const handleItemDragOver = (
+    e: React.DragEvent,
+    targetItem: ReadingListItem
+  ) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
     if (draggedItem && draggedItem.id !== targetItem.id) {
@@ -145,13 +149,16 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
 
     if (!draggedItem || draggedItem.id === targetItem.id) return;
 
-    const draggedIndex = paginatedItems.findIndex((i) => i.id === draggedItem.id);
+    const draggedIndex = paginatedItems.findIndex(
+      (i) => i.id === draggedItem.id
+    );
     const targetIndex = paginatedItems.findIndex((i) => i.id === targetItem.id);
 
     const reordered = [...paginatedItems];
     reordered.splice(draggedIndex, 1);
 
-    const insertIndex = draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
+    const insertIndex =
+      draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
     reordered.splice(insertIndex, 0, draggedItem);
 
     reorderItems.mutate(reordered.map((item) => item.id));
@@ -159,10 +166,7 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
   };
 
   return (
-    <div
-      ref={topRef}
-      className="container mx-auto px-4 sm:px-6"
-    >
+    <div ref={topRef} className="container mx-auto px-4 sm:px-6">
       {/* Controls Row: Filter/Sort + Actions */}
       {hasItemsForCurrentFilter && (
         <ReadingListToolbar
@@ -181,7 +185,6 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
 
       {/* Content: List or Empty State */}
       <ReadingListEmptyState
-        filter={filter}
         hasItemsForCurrentFilter={hasItemsForCurrentFilter}
         totalItems={totalItems}
         categoryFilters={categoryFilters}
@@ -219,49 +222,51 @@ const PersonalReadingList: React.FC<PersonalReadingListProps> = ({
                         : ""
                     }
                   >
-                  <MediaListItem
-                    id={book.id}
-                    title={book.title}
-                    subtitle={book.authors || undefined}
-                    posterUrl={book.thumbnail_url || undefined}
-                    year={
-                      book.published_date
-                        ? new Date(book.published_date).getFullYear()
-                        : undefined
-                    }
-                    description={book.description || undefined}
-                    personalRating={book.personal_rating || undefined}
-                    category={book.categories || undefined}
-                    mediaType="book"
-                    externalId={book.external_id}
-                    authors={book.authors || undefined}
-                    isbn={book.isbn || undefined}
-                    pageCount={book.page_count || undefined}
-                    isCompleted={book.read}
-                    onToggleComplete={(id) => {
-                      setRecentlyMovedId(id);
-                      handleToggleRead(id);
-                      setToast({
-                        message: `${book.title} moved`,
-                        action: {
-                          label: "Undo",
-                          onClick: () => {
-                            setRecentlyMovedId(id);
-                            handleToggleRead(id);
-                            setToast(null);
+                    <MediaListItem
+                      id={book.id}
+                      title={book.title}
+                      subtitle={book.authors || undefined}
+                      posterUrl={book.thumbnail_url || undefined}
+                      year={
+                        book.published_date
+                          ? new Date(book.published_date).getFullYear()
+                          : undefined
+                      }
+                      description={book.description || undefined}
+                      personalRating={book.personal_rating || undefined}
+                      category={book.categories || undefined}
+                      mediaType="book"
+                      externalId={book.external_id}
+                      authors={book.authors || undefined}
+                      isbn={book.isbn || undefined}
+                      pageCount={book.page_count || undefined}
+                      isCompleted={book.read}
+                      onToggleComplete={(id) => {
+                        setRecentlyMovedId(id);
+                        handleToggleRead(id);
+                        setToast({
+                          message: `${book.title} moved`,
+                          action: {
+                            label: "Undo",
+                            onClick: () => {
+                              setRecentlyMovedId(id);
+                              handleToggleRead(id);
+                              setToast(null);
+                            },
                           },
-                        },
-                      });
-                    }}
-                    onRemove={handleRemove}
-                    onRecommend={() => {
-                      setBookToRecommend(book);
-                      setShowSendModal(true);
-                    }}
-                    onExpandChange={(isExpanded) =>
-                      handleExpandChange(book.id, isExpanded)
-                    }
-                  />                  </div>                </motion.div>
+                        });
+                      }}
+                      onRemove={handleRemove}
+                      onRecommend={() => {
+                        setBookToRecommend(book);
+                        setShowSendModal(true);
+                      }}
+                      onExpandChange={(isExpanded) =>
+                        handleExpandChange(book.id, isExpanded)
+                      }
+                    />
+                  </div>
+                </motion.div>
               ))}
             </AnimatePresence>
           </div>
