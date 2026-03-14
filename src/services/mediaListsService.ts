@@ -33,7 +33,7 @@ import type {
  */
 
 export async function getCollections(
-  mediaDomain: MediaDomain
+  mediaDomain: MediaDomain,
 ): Promise<ServiceResponse<CollectionWithCounts[]>> {
   try {
     const { data, error } = await supabase
@@ -50,8 +50,30 @@ export async function getCollections(
   }
 }
 
+/**
+ * Returns all collections the current user can access (owned, shared, or authenticated-public).
+ *
+ * Note: access control is enforced by RLS policies on `media_lists`.
+ */
+export async function getAllAccessibleCollections(): Promise<
+  ServiceResponse<CollectionWithCounts[]>
+> {
+  try {
+    const { data, error } = await supabase
+      .from("media_lists_with_counts")
+      .select("*")
+      .order("updated_at", { ascending: false });
+
+    if (error) throw error;
+    return { data: (data || []) as CollectionWithCounts[], error: null };
+  } catch (error) {
+    logger.error("Failed to fetch accessible collections", { error });
+    return { data: null, error: error as Error };
+  }
+}
+
 export async function getCollection(
-  collectionId: string
+  collectionId: string,
 ): Promise<ServiceResponse<CollectionWithCounts>> {
   try {
     const { data, error } = await supabase
@@ -168,8 +190,30 @@ export async function getCollectionMembershipForMediaItem(params: {
 
 function normalizeMediaType(
   domain: MediaDomain,
-  item: MediaItem
+  item: MediaItem,
 ): MediaListItem["media_type"] {
+  if (domain === "mixed") {
+    const raw = item.media_type;
+    if (
+      raw === "movie" ||
+      raw === "tv" ||
+      raw === "book" ||
+      raw === "game" ||
+      raw === "song" ||
+      raw === "album" ||
+      raw === "playlist"
+    ) {
+      return raw;
+    }
+
+    // Defensive mappings for legacy/adapter values.
+    if (raw === "track") return "song";
+    if (raw === "collection") return "album";
+
+    // Fallback: keep inserts valid; prefer a conservative default.
+    return "movie";
+  }
+
   if (domain === "movies-tv") {
     return item.media_type === "tv" ? "tv" : "movie";
   }
@@ -189,7 +233,7 @@ function normalizeYear(releaseDate: string | null | undefined): number | null {
 }
 
 export async function getMediaLists(
-  mediaDomain: MediaDomain
+  mediaDomain: MediaDomain,
 ): Promise<ServiceResponse<MediaListWithCounts[]>> {
   const res = await getCollections(mediaDomain);
   // Legacy name; intentionally returns the same shape.
@@ -197,7 +241,7 @@ export async function getMediaLists(
 }
 
 export async function getMediaList(
-  listId: string
+  listId: string,
 ): Promise<ServiceResponse<MediaListWithCounts>> {
   const res = await getCollection(listId);
   return { data: res.data as MediaListWithCounts | null, error: res.error };
@@ -246,7 +290,7 @@ export async function updateMediaList(
       MediaList,
       "title" | "description" | "icon" | "icon_color" | "is_public"
     >
-  >
+  >,
 ): Promise<ServiceResponse<MediaList>> {
   try {
     const { data, error } = await supabase
@@ -277,7 +321,7 @@ export async function updateMediaList(
 }
 
 export async function deleteMediaList(
-  listId: string
+  listId: string,
 ): Promise<ServiceResponse<true>> {
   try {
     const { error } = await supabase
@@ -293,7 +337,7 @@ export async function deleteMediaList(
 }
 
 export async function getMediaListItems(
-  listId: string
+  listId: string,
 ): Promise<ServiceResponse<MediaListItem[]>> {
   try {
     const { data, error } = await supabase
@@ -388,7 +432,7 @@ export async function removeMediaListItem(params: {
 }
 
 export async function getMediaListMembers(
-  listId: string
+  listId: string,
 ): Promise<ServiceResponse<MediaListMemberWithUser[]>> {
   try {
     const { data: members, error: membersError } = await supabase
@@ -408,7 +452,7 @@ export async function getMediaListMembers(
     if (profilesError) throw profilesError;
 
     const profileMap = new Map<string, UserProfileLite>(
-      (profiles || []).map((p) => [p.user_id, p as UserProfileLite])
+      (profiles || []).map((p) => [p.user_id, p as UserProfileLite]),
     );
 
     const combined = members.map((m) => ({
@@ -424,7 +468,7 @@ export async function getMediaListMembers(
 }
 
 export async function getMyMediaListRole(
-  listId: string
+  listId: string,
 ): Promise<ServiceResponse<MediaListMemberRole | null>> {
   try {
     const { data: authData, error: authError } = await supabase.auth.getUser();
@@ -470,10 +514,10 @@ export async function shareMediaList(params: {
     if (connError) throw connError;
 
     const connectedUserIds = new Set(
-      (connections || []).map((c) => c.friend_id)
+      (connections || []).map((c) => c.friend_id),
     );
     const invalidUsers = params.userIds.filter(
-      (id) => !connectedUserIds.has(id)
+      (id) => !connectedUserIds.has(id),
     );
     if (invalidUsers.length > 0) {
       throw new Error("Can only invite connected users (friends)");

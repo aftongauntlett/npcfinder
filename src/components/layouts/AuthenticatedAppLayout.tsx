@@ -12,13 +12,14 @@ const MoviesPage = React.lazy(() => import("../pages/movies/MoviesPage"));
 const BooksPage = React.lazy(() => import("../pages/books/BooksPage"));
 const MusicPage = React.lazy(() => import("../pages/music/MusicPage"));
 const GamesPage = React.lazy(() => import("../pages/games/GamesPage"));
+const MediaPage = React.lazy(() => import("../pages/media/MediaPage"));
 const TasksPage = React.lazy(() => import("../pages/tasks/TasksPage"));
 const UserSettings = React.lazy(() => import("../pages/UserSettings"));
 const AdminPage = React.lazy(() => import("../pages/admin/AdminPage"));
 
 // Star background is only used in dark mode; lazy-load so it doesn't ship in light mode.
 const StarryBackground = React.lazy(
-  () => import("@/components/shared/common/StarryBackground")
+  () => import("@/components/shared/common/StarryBackground"),
 );
 const GlobalTimerAlert = React.lazy(() => import("../tasks/GlobalTimerAlert"));
 
@@ -55,24 +56,29 @@ const AuthenticatedAppLayout: React.FC<AuthenticatedAppLayoutProps> = ({
           <GlobalTimerAlert />
           {/* Main content - no top nav, sidebar handles everything */}
           <Routes>
-            <Route path="/" element={<HomePage user={user} />} />
+            <Route index element={<HomePage user={user} />} />
+
+            {/* Media (Collections-first) */}
+            <Route path="media" element={<MediaPage />} />
+            <Route path="media/:collectionId" element={<MediaPage />} />
+
             {/* Movies & TV - consolidated single route */}
-            <Route path="/movies" element={<MoviesPage />} />
+            <Route path="movies" element={<MoviesPage />} />
             {/* Books - consolidated single route */}
-            <Route path="/books" element={<BooksPage />} />
+            <Route path="books" element={<BooksPage />} />
             {/* Music - consolidated single route */}
-            <Route path="/music" element={<MusicPage />} />
+            <Route path="music" element={<MusicPage />} />
             {/* Games - consolidated single route */}
-            <Route path="/games" element={<GamesPage />} />
+            <Route path="games" element={<GamesPage />} />
             {/* Tasks - tabbed view with all templates */}
-            <Route path="/tasks" element={<TasksPage />} />
+            <Route path="tasks" element={<TasksPage />} />
             <Route
-              path="/settings"
+              path="settings"
               element={<UserSettings currentUser={user} />}
             />
             {/* Admin route */}
             <Route
-              path="/admin"
+              path="admin"
               element={
                 <ProtectedAdminRoute user={user}>
                   <AdminPage />

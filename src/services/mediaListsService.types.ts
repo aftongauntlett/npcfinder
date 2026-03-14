@@ -11,7 +11,7 @@
  * remain as aliases to avoid breaking current UI code.
  */
 
-export type MediaDomain = "movies-tv" | "books" | "games" | "music";
+export type MediaDomain = "movies-tv" | "books" | "games" | "music" | "mixed";
 
 export type CollectionMemberRole = "viewer" | "editor";
 

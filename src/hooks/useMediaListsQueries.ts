@@ -17,6 +17,7 @@ import type {
 
 export const mediaListsQueryKeys = {
   all: ["media-lists"] as const,
+  allAccessible: () => [...mediaListsQueryKeys.all, "accessible"] as const,
   lists: (domain: MediaDomain) =>
     [...mediaListsQueryKeys.all, "lists", domain] as const,
   detail: (listId: string) =>
@@ -28,6 +29,18 @@ export const mediaListsQueryKeys = {
   myRole: (listId: string, userId?: string) =>
     [...mediaListsQueryKeys.all, "my-role", listId, userId] as const,
 };
+
+export function useAllAccessibleCollections() {
+  return useQuery({
+    queryKey: mediaListsQueryKeys.allAccessible(),
+    queryFn: async () => {
+      const { data, error } =
+        await mediaListsService.getAllAccessibleCollections();
+      if (error) throw error;
+      return data || [];
+    },
+  });
+}
 
 export function useMediaLists(domain: MediaDomain) {
   return useQuery({
@@ -79,6 +92,10 @@ export function useCreateMediaList(domain: MediaDomain) {
       await queryClient.invalidateQueries({
         queryKey: mediaListsQueryKeys.lists(domain),
       });
+
+      await queryClient.invalidateQueries({
+        queryKey: mediaListsQueryKeys.allAccessible(),
+      });
     },
   });
 }
@@ -99,7 +116,7 @@ export function useUpdateMediaList(domain: MediaDomain) {
     }) => {
       const { data, error } = await mediaListsService.updateMediaList(
         params.listId,
-        params.updates
+        params.updates,
       );
       if (error) throw error;
       return data;
@@ -111,6 +128,9 @@ export function useUpdateMediaList(domain: MediaDomain) {
         }),
         queryClient.invalidateQueries({
           queryKey: mediaListsQueryKeys.detail(variables.listId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: mediaListsQueryKeys.allAccessible(),
         }),
       ]);
 
@@ -132,6 +152,10 @@ export function useDeleteMediaList(domain: MediaDomain) {
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: mediaListsQueryKeys.lists(domain),
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: mediaListsQueryKeys.allAccessible(),
       });
     },
   });
@@ -171,6 +195,9 @@ export function useAddMediaListItem(domain: MediaDomain) {
         queryClient.invalidateQueries({
           queryKey: mediaListsQueryKeys.lists(domain),
         }),
+        queryClient.invalidateQueries({
+          queryKey: mediaListsQueryKeys.allAccessible(),
+        }),
       ]);
     },
   });
@@ -195,6 +222,9 @@ export function useRemoveMediaListItem(domain: MediaDomain) {
         queryClient.invalidateQueries({
           queryKey: mediaListsQueryKeys.lists(domain),
         }),
+        queryClient.invalidateQueries({
+          queryKey: mediaListsQueryKeys.allAccessible(),
+        }),
       ]);
     },
   });
@@ -206,9 +236,8 @@ export function useMediaListMembers(listId: string | null) {
     enabled: !!listId,
     queryFn: async () => {
       if (!listId) return [];
-      const { data, error } = await mediaListsService.getMediaListMembers(
-        listId
-      );
+      const { data, error } =
+        await mediaListsService.getMediaListMembers(listId);
       if (error) throw error;
       return data || [];
     },
@@ -223,9 +252,8 @@ export function useMyMediaListRole(listId: string | null) {
     enabled: !!listId && !!user?.id,
     queryFn: async () => {
       if (!listId) return null;
-      const { data, error } = await mediaListsService.getMyMediaListRole(
-        listId
-      );
+      const { data, error } =
+        await mediaListsService.getMyMediaListRole(listId);
       if (error) throw error;
       return data;
     },
@@ -252,6 +280,10 @@ export function useShareMediaList(domain: MediaDomain) {
       await queryClient.invalidateQueries({
         queryKey: mediaListsQueryKeys.lists(domain),
       });
+
+      await queryClient.invalidateQueries({
+        queryKey: mediaListsQueryKeys.allAccessible(),
+      });
     },
   });
 }
@@ -272,6 +304,10 @@ export function useUnshareMediaList(domain: MediaDomain) {
       await queryClient.invalidateQueries({
         queryKey: mediaListsQueryKeys.lists(domain),
       });
+
+      await queryClient.invalidateQueries({
+        queryKey: mediaListsQueryKeys.allAccessible(),
+      });
     },
   });
 }
@@ -289,7 +325,7 @@ export function useUpdateMediaListMemberRole(domain: MediaDomain) {
         {
           memberId: params.memberId,
           role: params.role,
-        }
+        },
       );
       if (error) throw error;
       return data;
@@ -300,6 +336,10 @@ export function useUpdateMediaListMemberRole(domain: MediaDomain) {
       });
       await queryClient.invalidateQueries({
         queryKey: mediaListsQueryKeys.lists(domain),
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: mediaListsQueryKeys.allAccessible(),
       });
     },
   });

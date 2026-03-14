@@ -1,10 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
-  Film,
-  Music,
-  BookOpen,
-  Gamepad2,
   ListChecks,
   Settings,
   ShieldCheck,
@@ -32,18 +28,7 @@ const NAV_ITEMS: NavItem[] = [
     id: "media",
     label: "Media",
     icon: Clapperboard,
-    path: "/app/movies",
-    subItems: [
-      {
-        id: "movies",
-        label: "Movies & TV",
-        icon: Film,
-        path: "/app/movies",
-      },
-      { id: "music", label: "Music", icon: Music, path: "/app/music" },
-      { id: "books", label: "Books", icon: BookOpen, path: "/app/books" },
-      { id: "games", label: "Games", icon: Gamepad2, path: "/app/games" },
-    ],
+    path: "/app/media",
   },
 ];
 
@@ -132,7 +117,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
 
       {/* Sidebar - Shows as overlay from right on mobile, fixed sidebar on left on desktop */}
       <aside
-        className={`fixed z-40 flex flex-col bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out ${
+        className={`fixed z-[45] flex flex-col bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out ${
           isCollapsed ? "w-16" : "w-[224px]"
         } ${
           isMobile

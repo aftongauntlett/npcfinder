@@ -32,13 +32,17 @@ interface MediaListDetailProps {
 }
 
 function canRenderSearchModal(domain: MediaDomain) {
-  return domain === "movies-tv" || domain === "books" || domain === "games" || domain === "music";
+  return (
+    domain === "movies-tv" ||
+    domain === "books" ||
+    domain === "games" ||
+    domain === "music"
+  );
 }
 
-function getSortedItems<T extends { title: string; year: number | null; created_at: string }>(
-  items: T[],
-  sortBy: SortBy
-): T[] {
+function getSortedItems<
+  T extends { title: string; year: number | null; created_at: string },
+>(items: T[], sortBy: SortBy): T[] {
   if (sortBy === "custom") return items;
 
   const copy = [...items];
@@ -54,14 +58,19 @@ function getSortedItems<T extends { title: string; year: number | null; created_
   }
 
   if (sortBy === "added_desc") {
-    copy.sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : 0));
+    copy.sort((a, b) =>
+      a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : 0,
+    );
     return copy;
   }
 
   return items;
 }
 
-const MediaListDetail: React.FC<MediaListDetailProps> = ({ domain, listId }) => {
+const MediaListDetail: React.FC<MediaListDetailProps> = ({
+  domain,
+  listId,
+}) => {
   const { user } = useAuth();
 
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -70,16 +79,22 @@ const MediaListDetail: React.FC<MediaListDetailProps> = ({ domain, listId }) => 
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data: selectedList } = useMediaList(listId);
-  const { data: items = [], isLoading: itemsLoading } = useMediaListItems(listId);
+  const { data: items = [], isLoading: itemsLoading } =
+    useMediaListItems(listId);
   const { data: myRole } = useMyMediaListRole(listId);
 
   const addItem = useAddMediaListItem(domain);
   const removeItem = useRemoveMediaListItem(domain);
 
-  const isOwner = !!user?.id && !!selectedList?.owner_id && user.id === selectedList.owner_id;
+  const isOwner =
+    !!user?.id && !!selectedList?.owner_id && user.id === selectedList.owner_id;
   const canEditItems = isOwner || myRole === "editor";
+  const canManageMembers = canEditItems;
 
-  const existingExternalIds = useMemo(() => items.map((i) => i.external_id), [items]);
+  const existingExternalIds = useMemo(
+    () => items.map((i) => i.external_id),
+    [items],
+  );
 
   const visibleItems = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -101,7 +116,10 @@ const MediaListDetail: React.FC<MediaListDetailProps> = ({ domain, listId }) => 
     });
   }, [items, searchQuery]);
 
-  const sortedItems = useMemo(() => getSortedItems(visibleItems, sortBy), [visibleItems, sortBy]);
+  const sortedItems = useMemo(
+    () => getSortedItems(visibleItems, sortBy),
+    [visibleItems, sortBy],
+  );
 
   const handleAddItem = async (item: MediaItem) => {
     try {
@@ -115,7 +133,12 @@ const MediaListDetail: React.FC<MediaListDetailProps> = ({ domain, listId }) => 
     try {
       await removeItem.mutateAsync({ listId, itemId });
     } catch (error) {
-      logger.error("Failed to remove list item", { error, domain, listId, itemId });
+      logger.error("Failed to remove list item", {
+        error,
+        domain,
+        listId,
+        itemId,
+      });
     }
   };
 
@@ -159,7 +182,7 @@ const MediaListDetail: React.FC<MediaListDetailProps> = ({ domain, listId }) => 
             addIcon={<Plus size={18} />}
             hideAddButton={!showAddButton}
             rightActions={
-              isOwner && selectedList ? (
+              canManageMembers && selectedList ? (
                 <Button
                   variant="secondary"
                   onClick={() => setShowInviteModal(true)}
@@ -175,7 +198,9 @@ const MediaListDetail: React.FC<MediaListDetailProps> = ({ domain, listId }) => 
         )}
 
         {itemsLoading ? (
-          <div className="text-sm text-gray-500 dark:text-gray-400">Loading items...</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            Loading items...
+          </div>
         ) : sortedItems.length === 0 ? (
           canEditItems ? (
             <EmptyStateAddCard
@@ -219,14 +244,18 @@ const MediaListDetail: React.FC<MediaListDetailProps> = ({ domain, listId }) => 
                 isbn={item.isbn || undefined}
                 pageCount={item.page_count || undefined}
                 publisher={item.publisher || undefined}
-                onRemove={canEditItems ? () => void handleRemoveItem(item.id) : undefined}
+                onRemove={
+                  canEditItems
+                    ? () => void handleRemoveItem(item.id)
+                    : undefined
+                }
               />
             ))}
           </div>
         )}
       </div>
 
-      {isOwner && selectedList && (
+      {canManageMembers && selectedList && (
         <ShareMediaListModal
           isOpen={showInviteModal}
           onClose={() => setShowInviteModal(false)}

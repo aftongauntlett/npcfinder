@@ -63,6 +63,7 @@ export function getIconsForMediaType(domain: MediaDomain): IconOption[] {
   if (domain === "movies-tv") return MOVIES_TV_ICONS;
   if (domain === "books") return BOOKS_ICONS;
   if (domain === "games") return GAMES_ICONS;
+  if (domain === "mixed") return MOVIES_TV_ICONS;
   return MUSIC_ICONS;
 }
 
@@ -71,4 +72,5 @@ export const MEDIA_DOMAIN_DEFAULT_ICON: Record<MediaDomain, Icon> = {
   books: Book,
   games: GameController,
   music: MusicNote,
+  mixed: FilmSlate,
 };
