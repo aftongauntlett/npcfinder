@@ -23,7 +23,7 @@ interface SidebarProps {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { id: "tasks", label: "Tasks", icon: ListChecks, path: "/app/tasks" },
+  { id: "tasks", label: "Labs", icon: ListChecks, path: "/app/tasks" },
   {
     id: "media",
     label: "Media",

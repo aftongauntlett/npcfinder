@@ -37,7 +37,7 @@ const structuredData = {
   "@type": "WebApplication",
   name: "NPC Finder",
   description:
-    "Your personal dashboard for entertainment, music, games, tasks, and memories.",
+    "A private media clubhouse for trusted friends to collect, share, and revisit what they love.",
   url: "https://npcfinder.com",
   applicationCategory: "LifestyleApplication",
   operatingSystem: "Web",
@@ -54,9 +54,9 @@ const structuredData = {
 
 // Static page meta options (stable reference)
 const pageMetaOptions = {
-  title: "Your Personal Dashboard",
+  title: "Private Media Clubhouse",
   description:
-    "Track, organize, and curate your entertainment, fitness, and life in one place.",
+    "Archive and share movies, shows, books, games, and music with your trusted circle.",
   ogImage: "/og-image.png",
   canonical: "https://npcfinder.com/",
 };
@@ -143,7 +143,7 @@ const DemoLanding: React.FC = () => {
             </div>
 
             <h2 className="text-[2rem] sm:text-[2.5rem] lg:text-[2.9rem] font-bold mb-6 leading-[1.12] tracking-tight">
-              Your Private Life Hub
+              Your Private Media Clubhouse
               <br />
               <span
                 className="block mt-1.5 text-[1.6rem] sm:text-[1.95rem] lg:text-[2.4rem] leading-[1.15] bg-clip-text text-transparent"
@@ -151,14 +151,14 @@ const DemoLanding: React.FC = () => {
                   backgroundImage: `linear-gradient(to right, ${LANDING_PEACH}, ${LANDING_PEACH}, ${LANDING_PEACH})`,
                 }}
               >
-                Organized, Connected, and Fully Yours
+                Curated with Friends You Trust
               </span>
             </h2>
 
             <p className="text-base sm:text-lg text-neutral-300 mb-8 max-w-xl leading-relaxed font-light">
-              Track media, manage tasks, organize recipes, and share with your
-              trusted friends. Private, customizable, and built for small
-              groups.
+              Build shared collections for movies, shows, books, games, and
+              music. Invite your inner circle, keep things private, and stay
+              connected through what you love.
             </p>
 
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -190,9 +190,8 @@ const DemoLanding: React.FC = () => {
               What You Can Do Today
             </h3>
             <p className="text-gray-400 max-w-2xl">
-              NPC Finder provides media tracking, task management, recipe
-              organization, and friend recommendations - all in one private
-              dashboard.
+              NPC Finder is media-first today, with private collections,
+              recommendations, and trusted sharing at the core.
             </p>
           </div>
 
