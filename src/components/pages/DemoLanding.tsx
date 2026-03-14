@@ -28,7 +28,7 @@ import { usePageMeta } from "../../hooks/usePageMeta";
 
 // Only load the starfield in dark mode.
 const StarryBackground = React.lazy(
-  () => import("@/components/shared/common/StarryBackground")
+  () => import("@/components/shared/common/StarryBackground"),
 );
 
 // Structured data for search engines (static, outside component)
@@ -63,7 +63,6 @@ const pageMetaOptions = {
 
 /**
  * Public landing page for NPC Finder
- * Real product in development - open source and self-hostable
  */
 const DemoLanding: React.FC = () => {
   usePageMeta(pageMetaOptions);
@@ -106,12 +105,12 @@ const DemoLanding: React.FC = () => {
             <h1 className="text-2xl font-bold tracking-tight">NPC Finder</h1>
           </div>
           <LandingButton
-            href="/app"
+            href="#availability"
             variant="ghost"
             icon={<Lock className="w-4 h-4" weight="duotone" />}
             className="text-sm"
           >
-            <span className="hidden sm:inline">Login</span>
+            <span className="hidden sm:inline">Get Access</span>
           </LandingButton>
         </div>
       </header>
@@ -447,48 +446,6 @@ const DemoLanding: React.FC = () => {
                 </p>
               </div>
             </div>
-          </div>
-        </motion.section>
-
-        {/* Open Source & Self-Hostable Section */}
-        <motion.section
-          className="max-w-4xl mx-auto px-6 py-32 text-center"
-          initial={prefersReducedMotion ? undefined : { opacity: 0 }}
-          whileInView={prefersReducedMotion ? undefined : { opacity: 1 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
-        >
-          <h3 className="text-4xl font-bold mb-6 tracking-tight">
-            Open Source & Self-Hostable
-          </h3>
-          <p className="text-lg text-gray-300 mb-8 max-w-2xl mx-auto">
-            NPC Finder is open source and designed to be self-hosted. Run your
-            own instance with full control over your data, or follow development
-            as we build toward a public release.
-          </p>
-
-          {/* Development Warning Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 mb-10 rounded-full border border-yellow-500/30 bg-yellow-500/10">
-            <span className="text-yellow-400 text-lg">⚠️</span>
-            <span className="text-sm text-yellow-200">
-              In active development - recommend waiting for v1.0 milestone
-            </span>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <LandingButton
-              href="https://github.com/aftongauntlett/npcfinder"
-              variant="tertiary"
-              icon={<GithubLogo className="w-4 h-4" weight="duotone" />}
-            >
-              View Source Code
-            </LandingButton>
-            <LandingButton 
-              href="https://github.com/aftongauntlett/npcfinder/blob/main/docs/QUICK-START.md"
-              variant="primary"
-            >
-              Setup Guide
-            </LandingButton>
           </div>
         </motion.section>
       </main>
