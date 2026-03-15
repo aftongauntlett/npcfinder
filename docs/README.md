@@ -15,13 +15,14 @@ Complete guides for using, self-hosting, and contributing to NPC Finder.
 - **[Copilot + Agent Guide](COPILOT-AGENTS-GUIDE.md)** - Repo-specific instructions for AI coding agents
 - **[App Purpose and Direction](APP-PURPOSE-AND-DIRECTION.md)** - Product summary, strengths, and focus options
 - **[Traycer Prompt Pack](TRAYCER-PROMPTS.md)** - Ready-to-run prompts for deep external reviews
+- **[Browser Game Integration](BROWSER-GAME-INTEGRATION.md)** - Implemented `/app/game` route + Phase 1 token launch scaffold
 
 ## Product Planning
 
-- **[Future PRDs Index](prds/README.md)** - Implementation-ready specs for future features
+- **[PRDs Index](prds/README.md)** - Implementation-ready specs for active and future product work
 - **[Profiles Nostalgia PRD](prds/PROFILES-NOSTALGIA-PRD.md)** - MySpace-style profile customization roadmap
 - **[Groups and Networks PRD](prds/GROUPS-NETWORKS-PRD.md)** - Discord-style private friend groups and invitations
-- **[Browser Game Strategy PRD](prds/BROWSER-GAME-PRD.md)** - Game architecture and repo strategy
+- **[Browser Game Strategy PRD](prds/BROWSER-GAME-PRD.md)** - Architecture strategy (Phase 1 scaffold now implemented)
 
 ## Quick Links
 

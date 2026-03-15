@@ -12,15 +12,12 @@ import LandingButton from "../landing/LandingButton";
 import HeroConstellation from "../effects/HeroConstellation";
 import { FeatureBlock } from "../landing/demo/FeatureBlock";
 import ModernCard from "../landing/demo/ModernCard";
-import Accordion from "../landing/demo/Accordion";
 import { LANDING_PEACH, LANDING_TEAL } from "../../data/landingTheme";
 import { landingFeatures } from "../../data/landingFeatures";
-import { landingArchitecture } from "../../data/landingArchitecture";
 import {
   landingFutureCategories,
   futureDisclaimer,
-  type FutureCategory,
-  type FutureFeature,
+  gameMilestone,
 } from "../../data/landingFuture";
 import { landingAvailability } from "../../data/landingAvailability";
 import { landingPrivacy } from "../../data/landingPrivacy";
@@ -68,6 +65,12 @@ const DemoLanding: React.FC = () => {
   usePageMeta(pageMetaOptions);
   const prefersReducedMotion = useReducedMotion();
   const { resolvedTheme } = useTheme();
+  const futureCards = landingFutureCategories.flatMap((category) =>
+    category.features.map((feature) => ({
+      ...feature,
+      category: category.category,
+    })),
+  );
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
       {/* Structured Data for Search Engines */}
@@ -118,60 +121,55 @@ const DemoLanding: React.FC = () => {
       {/* Main Content */}
       <main className="relative z-10" id="main-content" role="main">
         {/* Hero Section */}
-        <section className="max-w-7xl mx-auto px-6 py-12 sm:py-16 lg:py-28 relative">
-          {/* Constellation Background - Full Width */}
-          <div className="hidden lg:block absolute inset-0 overflow-hidden">
-            <div className="absolute -right-32 top-1/2 -translate-y-1/2 pointer-events-auto">
+        <section className="max-w-7xl mx-auto px-6 pt-8 pb-12 sm:pt-12 sm:pb-16 lg:pt-16 lg:pb-28">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            {/* Left column - constellation (desktop only) */}
+            <div className="hidden lg:flex items-center justify-center pointer-events-auto">
               <HeroConstellation
-                width={900}
-                height={700}
+                width={620}
+                height={560}
                 nodeCount={50}
                 animationSpeed={0.8}
-                className="opacity-50"
+                className="opacity-60"
               />
             </div>
-          </div>
 
-          {/* Text Content - Overlaid */}
-          <div className="relative z-10 max-w-2xl pointer-events-auto">
-            {/* In Development Badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-4 rounded-full border border-yellow-500/30 bg-yellow-500/10">
-              <span className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
-              <span className="text-xs font-medium text-yellow-200">
-                In Active Development
-              </span>
-            </div>
+            {/* Right column - text */}
+            <div className="relative z-10 pointer-events-auto lg:pl-4">
+              <h2 className="text-[2rem] sm:text-[2.5rem] lg:text-[2.9rem] font-bold mb-6 leading-[1.12] tracking-tight">
+                A Quiet Corner of the Internet
+                <br />
+                <span
+                  className="block mt-1.5 text-[1.35rem] sm:text-[1.6rem] lg:text-[1.75rem] font-normal leading-[1.2] bg-clip-text text-transparent"
+                  style={{
+                    backgroundImage: `linear-gradient(to right, ${LANDING_PEACH}, ${LANDING_PEACH}, ${LANDING_PEACH})`,
+                  }}
+                >
+                  For the People Who Actually Text Back
+                </span>
+              </h2>
 
-            <h2 className="text-[2rem] sm:text-[2.5rem] lg:text-[2.9rem] font-bold mb-6 leading-[1.12] tracking-tight">
-              Your Private Media Clubhouse
-              <br />
-              <span
-                className="block mt-1.5 text-[1.6rem] sm:text-[1.95rem] lg:text-[2.4rem] leading-[1.15] bg-clip-text text-transparent"
-                style={{
-                  backgroundImage: `linear-gradient(to right, ${LANDING_PEACH}, ${LANDING_PEACH}, ${LANDING_PEACH})`,
-                }}
-              >
-                Curated with Friends You Trust
-              </span>
-            </h2>
+              <p className="text-base sm:text-lg text-neutral-300 mb-8 max-w-xl leading-relaxed font-light">
+                I got tired of social media feeling like a performance. I wanted
+                somewhere to honestly track what I&apos;m watching, reading, and
+                playing - and share it with the people I actually talk to. So I
+                built this. In my free time, by myself. No pitch deck, no ad
+                revenue, no growth targets. If it turns out to be useful to even
+                one other person, that&apos;s more than enough.
+              </p>
 
-            <p className="text-base sm:text-lg text-neutral-300 mb-8 max-w-xl leading-relaxed font-light">
-              Build shared collections for movies, shows, books, games, and
-              music. Invite your inner circle, keep things private, and stay
-              connected through what you love.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <LandingButton href="#availability" variant="primary">
-                Request Invite
-              </LandingButton>
-              <LandingButton
-                href="https://github.com/aftongauntlett/npcfinder"
-                variant="ghost"
-                icon={<GithubLogo className="w-5 h-5" weight="duotone" />}
-              >
-                View Source
-              </LandingButton>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-end gap-4">
+                <LandingButton href="#availability" variant="primary">
+                  Request Invite
+                </LandingButton>
+                <LandingButton
+                  href="https://github.com/aftongauntlett/npcfinder"
+                  variant="ghost"
+                  icon={<GithubLogo className="w-5 h-5" weight="duotone" />}
+                >
+                  View Source
+                </LandingButton>
+              </div>
             </div>
           </div>
         </section>
@@ -187,11 +185,11 @@ const DemoLanding: React.FC = () => {
         >
           <div className="mb-16">
             <h3 className="text-4xl font-bold mb-3 tracking-tight">
-              What You Can Do Today
+              What I&apos;ve Built So Far
             </h3>
             <p className="text-gray-400 max-w-2xl">
-              NPC Finder is media-first today, with private collections,
-              recommendations, and trusted sharing at the core.
+              This is what actually works right now - media tracking, shared
+              collections, and the first stage of an interactive game. No fluff.
             </p>
           </div>
 
@@ -240,68 +238,6 @@ const DemoLanding: React.FC = () => {
           </div>
         </motion.section>
 
-        {/* Technical Details */}
-        <motion.section
-          id="technical-details"
-          className="max-w-7xl mx-auto px-6 py-32"
-          initial={prefersReducedMotion ? undefined : { opacity: 0 }}
-          whileInView={prefersReducedMotion ? undefined : { opacity: 1 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
-        >
-          <div className="mb-12">
-            <h3 className="text-4xl font-bold mb-3 tracking-tight">
-              Technical Details
-            </h3>
-            <p className="text-gray-400 max-w-2xl">
-              Decisions made with security, performance, and maintainability in
-              mind.
-            </p>
-          </div>
-
-          {/* Tech Stack Badges */}
-          <div className="mb-12">
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-              {[
-                "React 19",
-                "TypeScript",
-                "Vite",
-                "Supabase",
-                "PostgreSQL",
-                "TailwindCSS",
-                "Framer Motion",
-                "React Router",
-                "TanStack Query",
-                "Vitest",
-              ].map((tech) => (
-                <span
-                  key={tech}
-                  className="px-4 py-2.5 bg-slate-800/60 border border-white/10 rounded-lg text-sm font-medium text-gray-300 hover:bg-slate-700/60 hover:border-white/20 hover:text-white transition-all duration-200 text-center"
-                >
-                  {tech}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Architecture Details - Click to Expand */}
-          <div className="space-y-4">
-            {landingArchitecture.map((arch, index) => (
-              <Accordion
-                key={arch.title}
-                title={arch.title}
-                defaultOpen={index === 0}
-                index={index}
-                idPrefix="tech"
-                icon={arch.icon}
-                iconColor={arch.iconColor}
-                items={arch.items}
-                itemColors={arch.itemColors}
-              />
-            ))}
-          </div>
-        </motion.section>
-
         {/* What's Next */}
         <motion.section
           id="roadmap"
@@ -313,55 +249,65 @@ const DemoLanding: React.FC = () => {
         >
           <div className="mb-12">
             <h3 className="text-4xl font-bold mb-6 tracking-tight">
-              Roadmap: Future Vision
+              Things I&apos;d Love to Build
             </h3>
 
-            {/* Refined Disclaimer */}
             <div
-              className="relative pl-6 pr-4 py-4 rounded-r-lg"
+              className="relative pl-5 pr-5 py-5 rounded-lg mb-8 flex gap-4 items-start"
               style={{
-                background: `linear-gradient(to right, ${LANDING_TEAL}0D, transparent)`,
-                borderLeft: `2px solid ${LANDING_TEAL}80`,
+                background: `linear-gradient(135deg, ${LANDING_PEACH}12, transparent)`,
+                border: `1px solid ${LANDING_PEACH}30`,
               }}
             >
-              <p className="text-gray-300 text-sm leading-relaxed">
-                <span className="font-medium" style={{ color: LANDING_TEAL }}>
-                  Note:
-                </span>{" "}
-                {futureDisclaimer}
-              </p>
+              {/* pulse dot */}
+              <div className="mt-1 shrink-0">
+                <span
+                  className="block w-2.5 h-2.5 rounded-full animate-pulse"
+                  style={{ backgroundColor: LANDING_PEACH }}
+                />
+              </div>
+              <div>
+                <p
+                  className="text-xs font-semibold uppercase tracking-widest mb-1"
+                  style={{ color: LANDING_PEACH }}
+                >
+                  Milestone
+                </p>
+                <p className="text-white font-semibold text-base leading-snug mb-1">
+                  {gameMilestone.title}
+                </p>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  {gameMilestone.description}
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            {landingFutureCategories.map((category: FutureCategory) => (
-              <div
-                key={category.category}
-                className="group/column"
-                style={{ "--cat-color": category.color } as React.CSSProperties}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {futureCards.map((feature) => (
+              <ModernCard
+                key={`${feature.category}-${feature.title}`}
+                iconColor={feature.color}
+                title={feature.title}
+                description={feature.description}
+                className="h-full"
               >
-                <h4 className="text-xl font-semibold mb-2 text-white transition-all duration-300 ease-out group-hover/column:scale-105 origin-left cursor-default">
-                  {category.category}
-                </h4>
-                <div
-                  className="h-0.5 w-16 group-hover/column:w-32 mb-6 bg-gradient-to-r from-current to-transparent transition-all duration-500 ease-out"
-                  style={{ color: category.color }}
-                />
-                <div className="space-y-6 transition-colors duration-300 ease-out group-hover/column:text-gray-200">
-                  {category.features.map((feature: FutureFeature) => (
-                    <div key={feature.title} className="group/item">
-                      <h5 className="text-base font-medium text-gray-200 mb-2 transition-colors duration-300 ease-out group-hover/item:[color:var(--cat-color)]">
-                        {feature.title}
-                      </h5>
-                      <p className="text-sm text-gray-400 leading-relaxed group-hover/column:text-gray-300 transition-colors duration-300 ease-out">
-                        {feature.description}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
+                <p
+                  className="text-xs font-medium mt-3"
+                  style={{ color: feature.color }}
+                >
+                  {feature.category}
+                </p>
+              </ModernCard>
             ))}
           </div>
+
+          <p className="text-gray-400 text-sm leading-relaxed mt-8 max-w-4xl">
+            <span className="font-medium" style={{ color: LANDING_TEAL }}>
+              Note:
+            </span>{" "}
+            {futureDisclaimer}
+          </p>
         </motion.section>
 
         {/* Access & Availability Section */}
@@ -391,6 +337,7 @@ const DemoLanding: React.FC = () => {
                 iconColor={point.iconColor}
                 title={point.title}
                 description={point.description}
+                className="h-full"
               />
             ))}
           </div>

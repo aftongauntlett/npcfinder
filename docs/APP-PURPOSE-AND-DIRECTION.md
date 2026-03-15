@@ -9,7 +9,7 @@ NPC Finder is currently a private, invite-only social utility for trusted friend
 1. **Media Collections** (movies/TV, books, music, games in mixed collections)
 2. **Tasks Workbench** (task inbox + kanban + recipes + job tracker)
 
-The app already supports identity, trust boundaries, sharing, and role-based admin controls. The core challenge is not whether the app works—it does. The challenge is **narrative clarity** and **product focus**.
+The app already supports identity, trust boundaries, sharing, and role-based admin controls. The core challenge is not whether the app works-it does. The challenge is **narrative clarity** and **product focus**.
 
 ## What The App Does Well Today
 

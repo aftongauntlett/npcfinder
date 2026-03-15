@@ -123,7 +123,7 @@ VITE_GOOGLE_BOOKS_API_KEY=your-key
 VITE_OMDB_API_KEY=your-key
 ```
 
-**Note:** Optional—enriches movie details with Rotten Tomatoes, Metacritic, awards.
+**Note:** Optional-enriches movie details with Rotten Tomatoes, Metacritic, awards.
 
 ### iTunes (Music)
 

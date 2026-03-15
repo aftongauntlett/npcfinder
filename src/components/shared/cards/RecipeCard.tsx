@@ -170,7 +170,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
                       key={index}
                       className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2 leading-relaxed"
                     >
-                      <span className="text-primary flex-shrink-0">—</span>
+                      <span className="text-primary flex-shrink-0">-</span>
                       <span>{ingredient}</span>
                     </li>
                   ))}
@@ -292,7 +292,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
                     key={index}
                     className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2 leading-relaxed"
                   >
-                    <span className="text-primary flex-shrink-0">—</span>
+                    <span className="text-primary flex-shrink-0">-</span>
                     <span>{ingredient}</span>
                   </li>
                 ))}

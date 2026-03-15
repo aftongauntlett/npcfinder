@@ -77,7 +77,7 @@ VITE_OMDB_API_KEY=your-key-here
 - Awards information
 - Box office data
 
-**Note:** Optional—app works without it but provides richer movie details when configured.
+**Note:** Optional-app works without it but provides richer movie details when configured.
 
 ## ⚠️ RAWG API (Games) - PLANNED
 

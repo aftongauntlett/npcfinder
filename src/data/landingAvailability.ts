@@ -1,4 +1,8 @@
-import { KeyIcon as Key, LockIcon as Lock, type Icon } from "@phosphor-icons/react";
+import {
+  KeyIcon as Key,
+  LockIcon as Lock,
+  type Icon,
+} from "@phosphor-icons/react";
 import { LANDING_TEAL, LANDING_PURPLE } from "./landingTheme";
 
 export interface AvailabilityPoint {
@@ -24,28 +28,28 @@ export interface DocLink {
 }
 
 export const landingAvailability: AvailabilityData = {
-  title: "Access & Availability",
+  title: "How to Get In",
   description:
-    "NPC Finder is currently invite-only while in beta. You'll receive a code from an existing admin to join your friend group.",
+    "NPC Finder is invite-only. Not in a hype-waitlist way - just in a 'I want to know who has an account' way. You'll get a code from me or someone I've trusted as an admin.",
   points: [
     {
       icon: Key,
       iconColor: LANDING_TEAL,
       title: "How Invites Work",
       description:
-        "Admins generate invite codes for specific email addresses. Each code expires after 30 days and works only once. This keeps the community trusted and private.",
+        "An admin generates a code tied to your email address. It expires after 30 days, works exactly once, and then it's gone. Small on purpose.",
     },
     {
       icon: Lock,
       iconColor: LANDING_PURPLE,
       title: "No Public Registration",
       description:
-        "There is no 'Sign Up' button for the general public. You must have an invite code from an existing admin to create an account. NPC Finder is not a public social platform - it's designed for trust and privacy within small friend groups.",
+        "There's no 'Create Account' button. That's intentional. This isn't trying to be a platform - it's trying to be a small, trusted space for people who actually know each other.",
     },
   ],
   demoNote:
-    "Demo video coming soon. Check back for a walkthrough of the app's core features and interface.",
-  ctaText: "Have an invite code? Get started",
+    "A walkthrough video is coming soon. I'll show the core features and what the day-to-day actually looks like.",
+  ctaText: "Have an invite code? Come on in",
   ctaLink: "/app",
 };
 

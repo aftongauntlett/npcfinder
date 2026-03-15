@@ -1,8 +1,9 @@
-import { LANDING_PURPLE, LANDING_PEACH, LANDING_TEAL } from "./landingTheme";
+import { LANDING_PURPLE, LANDING_PEACH, LANDING_TEAL, LANDING_BLUE } from "./landingTheme";
 
 export interface FutureFeature {
   title: string;
   description: string;
+  color: string;
 }
 
 export interface FutureCategory {
@@ -12,7 +13,7 @@ export interface FutureCategory {
 }
 
 export const futureDisclaimer =
-  "These features are under consideration for future development. None of them are currently available. Plans may change based on user feedback, technical feasibility, and project priorities.";
+  "These are things I'd love to build someday. No promises, no timelines - just honest intentions. Real life gets in the way sometimes, and that's okay.";
 
 export const landingFutureCategories: FutureCategory[] = [
   {
@@ -21,46 +22,40 @@ export const landingFutureCategories: FutureCategory[] = [
     features: [
       {
         title: "Custom Profiles",
+        color: LANDING_PEACH,
         description:
-          "Customizable profiles inspired by MySpace - custom backgrounds, music players, and personal expression. Not professional networking.",
+          "MySpace used to let you blast a song at people and have a Top 8. I want something like that - expressive, personal, a little nostalgic, but actually good this time.",
       },
       {
-        title: "Discord-Style Networks",
+        title: "Private Groups",
+        color: LANDING_TEAL,
         description:
-          "User-created groups with membership, permissions, and invite workflows so people can belong to multiple trusted circles.",
-      },
-      {
-        title: "In-Browser Social Game",
-        description:
-          "A cozy social game built into the dashboard. Keep pets, tend gardens, decorate your house, and visit friends. Think Animal Crossing meets productivity tracking.",
+          "Small, invitation-based groups - like a Discord server, but quieter and more intentional. A place for your actual people.",
       },
     ],
   },
   {
-    category: "Productivity",
+    category: "Personal",
     color: LANDING_PURPLE,
     features: [
       {
-        title: "Advanced Analytics",
+        title: "Private Journals",
+        color: LANDING_PURPLE,
         description:
-          "Track productivity patterns, media consumption trends, and personal insights over time",
+          "An end-to-end encrypted space for notes and reflections. Something just for you - not synced to a dashboard, not read by me.",
       },
       {
-        title: "Private Journals (E2E protected)",
+        title: "Personal Insights",
+        color: LANDING_BLUE,
         description:
-          "End-to-end encrypted personal journals for private thoughts, reflections, and daily entries",
-      },
-    ],
-  },
-  {
-    category: "Scalability",
-    color: LANDING_TEAL,
-    features: [
-      {
-        title: "End-to-End Encryption",
-        description:
-          "Private messaging and journaling with full E2E encryption like Signal. Requires significant architectural changes - long-term goal.",
+          "Patterns in what you watch, read, or play - just for your own curiosity. Nothing sent anywhere, no algorithm, just you looking at your own habits.",
       },
     ],
   },
 ];
+
+export const gameMilestone = {
+  title: "Interactive Game Foundation Is Live",
+  description:
+    "The first stage of the interactive game is now playable inside NPC Finder. Game systems are the current build focus.",
+};

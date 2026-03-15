@@ -1,7 +1,7 @@
 # PRD: Browser Social Game Strategy
 
 Date: 2026-03-14  
-Status: Draft (Execution Ready)
+Status: Phase 1 Scaffold Implemented
 
 ## 1) Decision
 
@@ -68,10 +68,11 @@ Keep contract versioned and minimal.
 
 ## 9) Acceptance Criteria for Phase 0 (Architecture)
 
-- New game repo scaffolded with Phaser + TypeScript
-- Auth handoff design documented and reviewed
-- NPC Finder has placeholder route and launch entry point
-- Security checklist for token/session flow approved
+- ✅ New game repo scaffolded with Phaser + TypeScript
+- ✅ Auth handoff design documented and reviewed
+- ✅ NPC Finder has dedicated `/app/game` route, immersive layout behavior, and sidebar launch entry
+- ✅ Supabase `game-launch` edge function scaffolded for short-lived tokenized launch flow
+- ⏳ Gameplay loop implementation in progress (next phase)
 
 ## 10) Copilot Execution Prompt
 

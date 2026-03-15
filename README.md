@@ -14,6 +14,7 @@ You can curate mixed collections (movies, TV, books, music, games), share with y
 
 - **Primary:** Media collections + trusted social sharing
 - **Secondary:** Personal tools (`/app/tasks`, currently labeled `Labs` in-app)
+- **Milestone:** In-app game route (`/app/game`) with Phase 1 launch-token scaffold complete
 - **Security:** Supabase Auth + PostgreSQL RLS + invite-only onboarding
 
 See [docs/APP-PURPOSE-AND-DIRECTION.md](docs/APP-PURPOSE-AND-DIRECTION.md) for full direction and roadmap guidance.
@@ -49,18 +50,19 @@ npm test
 
 ## Documentation
 
-- [docs/README.md](docs/README.md) — full documentation index
-- [docs/QUICK-START.md](docs/QUICK-START.md) — setup + deployment
-- [docs/API-SETUP.md](docs/API-SETUP.md) — media API keys
-- [docs/DATABASE-MIGRATIONS.md](docs/DATABASE-MIGRATIONS.md) — schema workflow
-- [docs/ROLE-SYSTEM.md](docs/ROLE-SYSTEM.md) — roles and authorization model
-- [docs/COPILOT-AGENTS-GUIDE.md](docs/COPILOT-AGENTS-GUIDE.md) — AI agent workflow and guardrails
-- [docs/APP-PURPOSE-AND-DIRECTION.md](docs/APP-PURPOSE-AND-DIRECTION.md) — product direction review
-- [docs/TRAYCER-PROMPTS.md](docs/TRAYCER-PROMPTS.md) — deep review prompt pack
-- [docs/prds/README.md](docs/prds/README.md) — future feature PRDs
+- [docs/README.md](docs/README.md) - full documentation index
+- [docs/QUICK-START.md](docs/QUICK-START.md) - setup + deployment
+- [docs/API-SETUP.md](docs/API-SETUP.md) - media API keys
+- [docs/DATABASE-MIGRATIONS.md](docs/DATABASE-MIGRATIONS.md) - schema workflow
+- [docs/ROLE-SYSTEM.md](docs/ROLE-SYSTEM.md) - roles and authorization model
+- [docs/COPILOT-AGENTS-GUIDE.md](docs/COPILOT-AGENTS-GUIDE.md) - AI agent workflow and guardrails
+- [docs/APP-PURPOSE-AND-DIRECTION.md](docs/APP-PURPOSE-AND-DIRECTION.md) - product direction review
+- [docs/TRAYCER-PROMPTS.md](docs/TRAYCER-PROMPTS.md) - deep review prompt pack
+- [docs/BROWSER-GAME-INTEGRATION.md](docs/BROWSER-GAME-INTEGRATION.md) - browser game integration + token handoff setup
+- [docs/prds/README.md](docs/prds/README.md) - product PRDs
 
 ## License
 
-MIT — see [LICENSE](https://opensource.org/licenses/MIT).
+MIT - see [LICENSE](https://opensource.org/licenses/MIT).
 
 Built by [Afton Gauntlett](https://www.aftongauntlett.com/)

@@ -81,7 +81,7 @@ serve(async (req: Request) => {
     const gameAppUrl =
       Deno.env.get("GAME_APP_URL")?.trim() || FALLBACK_GAME_URL;
     const launchPath =
-      Deno.env.get("GAME_LAUNCH_PATH")?.trim() || "/auth/launch";
+      Deno.env.get("GAME_LAUNCH_PATH")?.trim() || "/";
 
     const signingSecret = Deno.env.get("GAME_LAUNCH_SIGNING_SECRET")?.trim();
     if (!signingSecret) {

@@ -6,6 +6,7 @@ interface ModernCardProps {
   iconColor: string;
   title: string;
   description?: string;
+  className?: string;
   icon?: Icon;
   iconWeight?: "thin" | "light" | "regular" | "bold" | "fill" | "duotone";
   children?: ReactNode;
@@ -18,6 +19,7 @@ export default function ModernCard({
   iconColor,
   title,
   description,
+  className = "",
   icon: Icon,
   iconWeight = "duotone",
   children,
@@ -36,7 +38,7 @@ export default function ModernCard({
       <motion.div
         className={`relative bg-slate-800/40 border border-white/10 rounded-lg overflow-hidden transform-gpu ${
           isInteractive ? "cursor-pointer" : ""
-        } ${variant === "compact" ? "p-4" : "p-5"}`}
+        } ${variant === "compact" ? "p-4" : "p-5"} ${className}`}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
         whileHover={prefersReducedMotion ? undefined : {

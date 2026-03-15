@@ -51,7 +51,7 @@ Required Edge Function secrets:
 Optional Edge Function secrets:
 
 - `GAME_APP_URL` (default: `https://npcfinder-game.vercel.app`)
-- `GAME_LAUNCH_PATH` (default: `/auth/launch`)
+- `GAME_LAUNCH_PATH` (default: `/`)
 - `GAME_LAUNCH_TTL_SECONDS` (default: `60`, minimum enforced: `30`)
 - `GAME_TOKEN_ISSUER` (default: `npc-finder`)
 - `GAME_TOKEN_AUDIENCE` (default: `npcfinder-game`)
