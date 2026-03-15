@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import type { User } from "@supabase/supabase-js";
+import { useNavigate } from "react-router-dom";
 import AppLayout from "../layouts/AppLayout";
 import { DashboardContent } from "../dashboard/DashboardContent";
 import { SkeletonCard } from "@/components/shared";
@@ -44,6 +45,7 @@ const pageMetaOptions = {
  */
 const HomePage: React.FC<HomePageProps> = () => {
   usePageMeta(pageMetaOptions);
+  const navigate = useNavigate();
 
   const { changeThemeColor } = useTheme();
   const [activeTab, setActiveTab] = useState<TabId>("dashboard");
@@ -78,7 +80,7 @@ const HomePage: React.FC<HomePageProps> = () => {
         markAsOpened.mutate();
       }
     },
-    [stats, markAsOpened]
+    [stats, markAsOpened],
   );
 
   // Refetch recommendations when tab becomes active
@@ -125,7 +127,7 @@ const HomePage: React.FC<HomePageProps> = () => {
         badge: stats?.pendingRecommendations || 0,
       },
     ],
-    [stats?.pendingRecommendations]
+    [stats?.pendingRecommendations],
   );
 
   if (isLoading) {
@@ -168,6 +170,7 @@ const HomePage: React.FC<HomePageProps> = () => {
                 accentColor="blue"
                 label={STATUS_MAP["watched"].label}
                 hoverLabel={STATUS_MAP["to-watch"].label}
+                onClick={() => void navigate("/app/media")}
               />
               <StatCard
                 title="Music"
@@ -177,6 +180,7 @@ const HomePage: React.FC<HomePageProps> = () => {
                 accentColor="emerald"
                 label={STATUS_MAP["to-listen"].label}
                 hoverLabel={STATUS_MAP["to-listen"].label}
+                onClick={() => void navigate("/app/media")}
               />
               <StatCard
                 title="Books"
@@ -186,6 +190,7 @@ const HomePage: React.FC<HomePageProps> = () => {
                 accentColor="amber"
                 label={STATUS_MAP["read"].label}
                 hoverLabel={STATUS_MAP["to-read"].label}
+                onClick={() => void navigate("/app/media")}
               />
               <StatCard
                 title="Games"
@@ -195,6 +200,7 @@ const HomePage: React.FC<HomePageProps> = () => {
                 accentColor="purple"
                 label={STATUS_MAP["played"].label}
                 hoverLabel={STATUS_MAP["to-play"].label}
+                onClick={() => void navigate("/app/media")}
               />
             </div>
           </div>

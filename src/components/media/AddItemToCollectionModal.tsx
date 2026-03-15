@@ -4,8 +4,8 @@ import { Button, Input, Modal } from "@/components/shared";
 import type { MediaItem } from "@/components/shared";
 import { logger } from "@/lib/logger";
 import { searchAllMedia } from "@/services/unifiedMediaSearchService";
-import { useAddMediaListItem } from "@/hooks/useMediaListsQueries";
-import type { MediaDomain } from "@/services/mediaListsService.types";
+import { useAddCollectionItem } from "@/hooks/useCollectionsQueries";
+import type { MediaDomain } from "@/services/collectionsServiceTypes";
 import Toast from "@/components/ui/Toast";
 
 type ExistingKey = `${string}:${string}`; // `${media_type}:${external_id}`
@@ -28,7 +28,7 @@ export default function AddItemToCollectionModal(props: {
   const [isSearching, setIsSearching] = useState(false);
   const [toast, setToast] = useState<{ message: string } | null>(null);
 
-  const addItem = useAddMediaListItem(props.mediaDomain);
+  const addItem = useAddCollectionItem(props.mediaDomain);
 
   const existing = useMemo(() => {
     const set = new Set<ExistingKey>();
@@ -59,7 +59,7 @@ export default function AddItemToCollectionModal(props: {
 
   const handleAdd = async (item: MediaItem) => {
     try {
-      await addItem.mutateAsync({ listId: props.collectionId, item });
+      await addItem.mutateAsync({ collectionId: props.collectionId, item });
       setToast({ message: "Added to collection" });
     } catch (error) {
       // Duplicate (unique constraint) => show toast, treat as non-fatal.

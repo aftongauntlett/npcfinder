@@ -31,6 +31,7 @@ interface TemplateViewProps {
   boards: BoardWithStats[];
   onCreateTask?: (boardId?: string, sectionId?: string) => void; // boardId now optional for singleton types
   onEditTask?: (taskId: string) => void;
+  singletonError?: unknown;
 }
 
 // Template metadata
@@ -70,6 +71,7 @@ const TemplateView: React.FC<TemplateViewProps> = ({
   boards,
   onCreateTask,
   onEditTask,
+  singletonError,
 }) => {
   const deleteBoard = useDeleteBoard();
   const reorderBoards = useReorderBoards();
@@ -77,7 +79,7 @@ const TemplateView: React.FC<TemplateViewProps> = ({
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingBoard, setEditingBoard] = useState<BoardWithStats | null>(null);
   const [deletingBoard, setDeletingBoard] = useState<BoardWithStats | null>(
-    null
+    null,
   );
   const [deletingTask, setDeletingTask] = useState<string | null>(null);
   const [deletingBoardId, setDeletingBoardId] = useState<string | null>(null);
@@ -96,8 +98,7 @@ const TemplateView: React.FC<TemplateViewProps> = ({
 
   // Only markdown template allows multiple boards
   // job_tracker, recipe, and kanban are singleton (one per user, auto-created)
-  const allowsMultipleBoards =
-    templateType === "markdown";
+  const allowsMultipleBoards = templateType === "markdown";
 
   const handleDeleteBoard = () => {
     if (deletingBoard) {
@@ -165,9 +166,11 @@ const TemplateView: React.FC<TemplateViewProps> = ({
     if (!draggedBoard || draggedBoard.id === targetBoard.id) return;
 
     const draggedIndex = filteredBoards.findIndex(
-      (b) => b.id === draggedBoard.id
+      (b) => b.id === draggedBoard.id,
     );
-    const targetIndex = filteredBoards.findIndex((b) => b.id === targetBoard.id);
+    const targetIndex = filteredBoards.findIndex(
+      (b) => b.id === targetBoard.id,
+    );
 
     const reordered = [...filteredBoards];
     reordered.splice(draggedIndex, 1);
@@ -215,13 +218,13 @@ const TemplateView: React.FC<TemplateViewProps> = ({
         return sorted.sort((a, b) => a.name.localeCompare(b.name));
       case "tasks":
         return sorted.sort(
-          (a, b) => (b.total_tasks || 0) - (a.total_tasks || 0)
+          (a, b) => (b.total_tasks || 0) - (a.total_tasks || 0),
         );
       case "date":
       default:
         return sorted.sort(
           (a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
         );
     }
   }, [boards, activeFilters.sort]);
@@ -232,7 +235,7 @@ const TemplateView: React.FC<TemplateViewProps> = ({
 
     const query = searchQuery.toLowerCase();
     return sortedBoards.filter((board) =>
-      board.name.toLowerCase().includes(query)
+      board.name.toLowerCase().includes(query),
     );
   }, [sortedBoards, searchQuery]);
 
@@ -240,6 +243,31 @@ const TemplateView: React.FC<TemplateViewProps> = ({
     // For singleton types, board will be auto-created, so just show static informational state
     if (!allowsMultipleBoards) {
       const Icon = meta.icon;
+
+      if (singletonError) {
+        return (
+          <div className="container mx-auto px-4 sm:px-6">
+            <h2 className="sr-only">{meta.title}</h2>
+            <div className="bg-gray-800/50 border-2 border-gray-700 rounded-xl px-16 py-20 text-center">
+              <Icon className="w-16 h-16 mb-6 text-red-400 mx-auto" />
+              <h3 className="text-lg font-semibold text-white mb-3">
+                Couldn&apos;t load this board
+              </h3>
+              <p className="text-sm text-gray-400 max-w-md mx-auto mb-4">
+                Try refreshing the page to recover your singleton board state.
+              </p>
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="text-sm text-primary hover:underline"
+              >
+                Refresh
+              </button>
+            </div>
+          </div>
+        );
+      }
+
       return (
         <div className="container mx-auto px-4 sm:px-6">
           <h2 className="sr-only">{meta.title}</h2>
@@ -283,7 +311,10 @@ const TemplateView: React.FC<TemplateViewProps> = ({
   // For job_tracker and recipe templates, show the list view directly (no board cards)
   if (templateType === "job_tracker" && boards.length > 0) {
     // Find the board with the most tasks (in case of duplicates)
-    const board = boards.reduce((max, b) => ((b.total_tasks || 0) > (max.total_tasks || 0) ? b : max), boards[0]);
+    const board = boards.reduce(
+      (max, b) => ((b.total_tasks || 0) > (max.total_tasks || 0) ? b : max),
+      boards[0],
+    );
     return (
       <div className="container mx-auto px-4 sm:px-6">
         <h2 className="sr-only">{meta.title}</h2>
@@ -316,7 +347,10 @@ const TemplateView: React.FC<TemplateViewProps> = ({
 
   if (templateType === "recipe" && boards.length > 0) {
     // Find the board with the most tasks (in case of duplicates)
-    const board = boards.reduce((max, b) => ((b.total_tasks || 0) > (max.total_tasks || 0) ? b : max), boards[0]);
+    const board = boards.reduce(
+      (max, b) => ((b.total_tasks || 0) > (max.total_tasks || 0) ? b : max),
+      boards[0],
+    );
     return (
       <div className="container mx-auto px-4 sm:px-6">
         <h2 className="sr-only">{meta.title}</h2>
@@ -353,8 +387,10 @@ const TemplateView: React.FC<TemplateViewProps> = ({
 
   // For kanban template, show the singleton kanban view
   if (templateType === "kanban" && boards.length > 0) {
-    const board = boards.reduce((max, b) => 
-      ((b.total_tasks || 0) > (max.total_tasks || 0) ? b : max), boards[0]);
+    const board = boards.reduce(
+      (max, b) => ((b.total_tasks || 0) > (max.total_tasks || 0) ? b : max),
+      boards[0],
+    );
     return (
       <div className="container mx-auto px-4 sm:px-6">
         <h2 className="sr-only">{meta.title}</h2>
@@ -439,7 +475,7 @@ const TemplateView: React.FC<TemplateViewProps> = ({
               if (!draggedBoard) return;
 
               const draggedIndex = filteredBoards.findIndex(
-                (b) => b.id === draggedBoard.id
+                (b) => b.id === draggedBoard.id,
               );
 
               if (draggedIndex === 0) return;

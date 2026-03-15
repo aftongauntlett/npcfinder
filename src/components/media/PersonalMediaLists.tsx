@@ -8,16 +8,16 @@ import {
 } from "@/components/shared";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  useCreateMediaList,
-  useDeleteMediaList,
-  useMediaLists,
-  useMediaListItems,
-  useUpdateMediaList,
-} from "@/hooks/useMediaListsQueries";
+  useCreateCollection,
+  useDeleteCollection,
+  useCollections,
+  useCollectionItems,
+  useUpdateCollection,
+} from "@/hooks/useCollectionsQueries";
 import type {
   MediaDomain,
-  MediaListWithCounts,
-} from "@/services/mediaListsService.types";
+  CollectionWithCounts,
+} from "@/services/collectionsServiceTypes";
 import CreateMediaListModal from "./CreateMediaListModal";
 import EditMediaListModal from "./EditMediaListModal";
 import {
@@ -27,7 +27,7 @@ import {
 
 interface PersonalMediaListsProps {
   domain: MediaDomain;
-  onOpenList: (list: Pick<MediaListWithCounts, "id" | "title">) => void;
+  onOpenList: (list: Pick<CollectionWithCounts, "id" | "title">) => void;
 }
 
 const PersonalMediaLists: React.FC<PersonalMediaListsProps> = ({
@@ -38,21 +38,21 @@ const PersonalMediaLists: React.FC<PersonalMediaListsProps> = ({
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [expandedListId, setExpandedListId] = useState<string | null>(null);
-  const [editTarget, setEditTarget] = useState<MediaListWithCounts | null>(
-    null
+  const [editTarget, setEditTarget] = useState<CollectionWithCounts | null>(
+    null,
   );
-  const [deleteTarget, setDeleteTarget] = useState<MediaListWithCounts | null>(
-    null
+  const [deleteTarget, setDeleteTarget] = useState<CollectionWithCounts | null>(
+    null,
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"updated_desc" | "title" | "items_desc">(
-    "updated_desc"
+    "updated_desc",
   );
 
-  const { data: lists = [], isLoading: listsLoading } = useMediaLists(domain);
-  const createList = useCreateMediaList(domain);
-  const updateList = useUpdateMediaList(domain);
-  const deleteList = useDeleteMediaList(domain);
+  const { data: lists = [], isLoading: listsLoading } = useCollections(domain);
+  const createList = useCreateCollection(domain);
+  const updateList = useUpdateCollection(domain);
+  const deleteList = useDeleteCollection(domain);
 
   const iconOptions = useMemo(() => getIconsForMediaType(domain), [domain]);
   const iconByName = useMemo(() => {
@@ -99,8 +99,8 @@ const PersonalMediaLists: React.FC<PersonalMediaListsProps> = ({
     return sorted;
   }, [lists, searchQuery, sortBy]);
 
-  const ListDetails: React.FC<{ list: MediaListWithCounts }> = ({ list }) => {
-    const { data: items = [], isLoading } = useMediaListItems(list.id);
+  const ListDetails: React.FC<{ list: CollectionWithCounts }> = ({ list }) => {
+    const { data: items = [], isLoading } = useCollectionItems(list.id);
 
     const preview = items.slice(0, 6);
     const remaining = Math.max(0, items.length - preview.length);
@@ -292,7 +292,10 @@ const PersonalMediaLists: React.FC<PersonalMediaListsProps> = ({
             is_public: editTarget.is_public,
           }}
           onSave={async (updates) => {
-            await updateList.mutateAsync({ listId: editTarget.id, updates });
+            await updateList.mutateAsync({
+              collectionId: editTarget.id,
+              updates,
+            });
           }}
         />
       )}

@@ -88,7 +88,7 @@ export async function getBoardsWithStats(): Promise<
  * SECURITY: Explicitly filters by user_id for defense-in-depth
  */
 export async function getBoardById(
-  boardId: string
+  boardId: string,
 ): Promise<ServiceResponse<Board>> {
   try {
     const {
@@ -115,7 +115,7 @@ export async function getBoardById(
  * SECURITY: Input validated with Zod schema
  */
 export async function createBoard(
-  boardData: CreateBoardData
+  boardData: CreateBoardData,
 ): Promise<ServiceResponse<Board>> {
   try {
     // SECURITY: Validate input
@@ -147,25 +147,23 @@ export async function createBoard(
     const boardType = boardData.board_type || "kanban";
     const templateType = getBoardTemplateType(
       boardType,
-      boardData.template_type
+      boardData.template_type,
     );
 
     // Note: We separate INSERT and SELECT because chaining .insert().select()
     // can cause RLS policy issues where can_view_task_board() fails on the
     // newly created row within the same transaction.
-    const { error: insertError } = await supabase
-      .from("task_boards")
-      .insert({
-        user_id: user.id,
-        name: validatedData.title,
-        icon: boardData.icon || null,
-        icon_color: boardData.icon_color || null,
-        is_public: boardData.is_public || false,
-        board_type: boardType,
-        template_type: templateType,
-        field_config: boardData.field_config || null,
-        display_order: nextOrder,
-      });
+    const { error: insertError } = await supabase.from("task_boards").insert({
+      user_id: user.id,
+      name: validatedData.title,
+      icon: boardData.icon || null,
+      icon_color: boardData.icon_color || null,
+      is_public: boardData.is_public || false,
+      board_type: boardType,
+      template_type: templateType,
+      field_config: boardData.field_config || null,
+      display_order: nextOrder,
+    });
 
     if (insertError) throw insertError;
 
@@ -207,7 +205,7 @@ async function createDefaultSections(boardId: string): Promise<void> {
     defaultSections.map((section) => ({
       board_id: boardId,
       ...section,
-    }))
+    })),
   );
 }
 
@@ -217,7 +215,7 @@ async function createDefaultSections(boardId: string): Promise<void> {
  */
 export async function updateBoard(
   boardId: string,
-  updates: Partial<Board>
+  updates: Partial<Board>,
 ): Promise<ServiceResponse<Board>> {
   try {
     const {
@@ -246,7 +244,7 @@ export async function updateBoard(
  * SECURITY: Explicitly filters by user_id for defense-in-depth
  */
 export async function deleteBoard(
-  boardId: string
+  boardId: string,
 ): Promise<ServiceResponse<void>> {
   try {
     const {
@@ -272,11 +270,14 @@ export async function deleteBoard(
  * Reorder boards
  */
 export async function reorderBoards(
-  boardIds: string[]
+  boardIds: string[],
 ): Promise<ServiceResponse<void>> {
   try {
     const updates = boardIds.map((id, index) =>
-      supabase.from("task_boards").update({ display_order: index }).eq("id", id)
+      supabase
+        .from("task_boards")
+        .update({ display_order: index })
+        .eq("id", id),
     );
 
     const results = await Promise.all(updates);
@@ -314,7 +315,7 @@ export async function reorderBoards(
  * Fetch sections for a board
  */
 export async function getBoardSections(
-  boardId: string
+  boardId: string,
 ): Promise<ServiceResponse<BoardSection[]>> {
   try {
     const { data, error } = await supabase
@@ -336,7 +337,7 @@ export async function getBoardSections(
  */
 export async function createSection(
   boardId: string,
-  sectionData: CreateSectionData
+  sectionData: CreateSectionData,
 ): Promise<ServiceResponse<BoardSection>> {
   try {
     const { data, error } = await supabase
@@ -362,7 +363,7 @@ export async function createSection(
  */
 export async function updateSection(
   sectionId: string,
-  updates: Partial<BoardSection>
+  updates: Partial<BoardSection>,
 ): Promise<ServiceResponse<BoardSection>> {
   try {
     const { data, error } = await supabase
@@ -384,7 +385,7 @@ export async function updateSection(
  * Delete a section (tasks become unsectioned)
  */
 export async function deleteSection(
-  sectionId: string
+  sectionId: string,
 ): Promise<ServiceResponse<void>> {
   try {
     const { error } = await supabase
@@ -404,14 +405,14 @@ export async function deleteSection(
  * Reorder sections within a board
  */
 export async function reorderSections(
-  sectionIds: string[]
+  sectionIds: string[],
 ): Promise<ServiceResponse<void>> {
   try {
     const updates = sectionIds.map((id, index) =>
       supabase
         .from("task_board_sections")
         .update({ display_order: index })
-        .eq("id", id)
+        .eq("id", id),
     );
 
     const results = await Promise.all(updates);
@@ -451,7 +452,7 @@ export async function reorderSections(
  */
 export async function getTasks(
   boardId?: string,
-  filters?: TaskFilters
+  filters?: TaskFilters,
 ): Promise<ServiceResponse<Task[]>> {
   try {
     const {
@@ -500,7 +501,7 @@ export async function getTasks(
  * SECURITY: Explicitly filters by user_id for defense-in-depth
  */
 export async function getTaskById(
-  taskId: string
+  taskId: string,
 ): Promise<ServiceResponse<Task>> {
   try {
     const {
@@ -647,7 +648,7 @@ export async function getArchivedTasks(): Promise<ServiceResponse<Task[]>> {
  * Create a new task
  */
 export async function createTask(
-  taskData: CreateTaskData
+  taskData: CreateTaskData,
 ): Promise<ServiceResponse<Task>> {
   try {
     const {
@@ -673,7 +674,7 @@ export async function createTask(
     if (taskData.section_id) {
       existingTasksQuery = existingTasksQuery.eq(
         "section_id",
-        taskData.section_id
+        taskData.section_id,
       );
     } else {
       existingTasksQuery = existingTasksQuery.is("section_id", null);
@@ -726,7 +727,7 @@ export async function createTask(
  */
 export async function updateTask(
   taskId: string,
-  updates: Partial<Task>
+  updates: Partial<Task>,
 ): Promise<ServiceResponse<Task>> {
   try {
     const {
@@ -738,6 +739,7 @@ export async function updateTask(
       .from("tasks")
       .update(updates)
       .eq("id", taskId)
+      .eq("user_id", user.id)
       .select()
       .single();
 
@@ -754,7 +756,7 @@ export async function updateTask(
  * SECURITY: Explicitly filters by user_id for defense-in-depth
  */
 export async function deleteTask(
-  taskId: string
+  taskId: string,
 ): Promise<ServiceResponse<void>> {
   try {
     const {
@@ -765,7 +767,8 @@ export async function deleteTask(
     const { error } = await supabase
       .from("tasks")
       .delete()
-      .eq("id", taskId);
+      .eq("id", taskId)
+      .eq("user_id", user.id);
 
     if (error) throw error;
     return { data: null, error: null };
@@ -778,19 +781,10 @@ export async function deleteTask(
 /**
  * Complete a repeatable task and reschedule it
  * Marks the task as done and updates the date to the next occurrence
- * 
- * NOTE: This service method implements repeatable completion logic that differs from the
- * client-side implementation in src/components/pages/tasks/InboxView.tsx.
- * - This service: Uses getNextOccurrenceDate() from taskHelpers and returns ISO string
- * - InboxView: Uses getNextDueDate() from repeatableTaskHelpers and returns YYYY-MM-DD
- * 
- * TODO: Standardize on a single source of truth for repeatable task completion behavior.
- * Either migrate all client code to use this service method, or remove this service helper
- * and keep the existing client-side approach. Ensure consistent use of date helpers and
- * format (YYYY-MM-DD vs ISO strings) across the codebase.
+ * Stores due_date in YYYY-MM-DD format for date-column compatibility.
  */
 export async function completeRepeatableTask(
-  taskId: string
+  taskId: string,
 ): Promise<ServiceResponse<Task>> {
   try {
     const {
@@ -815,8 +809,14 @@ export async function completeRepeatableTask(
     // Calculate next occurrence
     const nextDate = getNextOccurrenceDate(
       task.due_date,
-      task.repeat_frequency as "daily" | "weekly" | "biweekly" | "monthly" | "yearly" | "custom",
-      task.repeat_interval || 1
+      task.repeat_frequency as
+        | "daily"
+        | "weekly"
+        | "biweekly"
+        | "monthly"
+        | "yearly"
+        | "custom",
+      task.repeat_interval || 1,
     );
 
     // Update task: reset to todo status and update date to next occurrence
@@ -824,7 +824,7 @@ export async function completeRepeatableTask(
       .from("tasks")
       .update({
         status: "todo",
-        due_date: nextDate.toISOString(),
+        due_date: nextDate.toISOString().split("T")[0],
       })
       .eq("id", taskId)
       .eq("user_id", user.id)
@@ -841,13 +841,19 @@ export async function completeRepeatableTask(
 
 /**
  * Move task to a different section
+ * SECURITY: Explicitly filters by user_id for defense-in-depth.
  */
 export async function moveTask(
   taskId: string,
   sectionId: string | null,
-  newOrder: number
+  newOrder: number,
 ): Promise<ServiceResponse<Task>> {
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { data, error } = await supabase
       .from("tasks")
       .update({
@@ -855,6 +861,7 @@ export async function moveTask(
         display_order: newOrder,
       })
       .eq("id", taskId)
+      .eq("user_id", user.id)
       .select()
       .single();
 
@@ -870,11 +877,11 @@ export async function moveTask(
  * Reorder tasks within a section
  */
 export async function reorderTasks(
-  taskIds: string[]
+  taskIds: string[],
 ): Promise<ServiceResponse<void>> {
   try {
     const updates = taskIds.map((id, index) =>
-      supabase.from("tasks").update({ display_order: index }).eq("id", id)
+      supabase.from("tasks").update({ display_order: index }).eq("id", id),
     );
 
     const results = await Promise.all(updates);
@@ -909,7 +916,7 @@ export async function reorderTasks(
  * For repeatable tasks, updates last_completed_at when marking as done
  */
 export async function toggleTaskStatus(
-  taskId: string
+  taskId: string,
 ): Promise<ServiceResponse<Task>> {
   try {
     // First get current status and repeatable flag
@@ -956,11 +963,17 @@ export async function toggleTaskStatus(
 /**
  * Archive a task
  * Sets status to 'archived' and updates archived_at timestamp
+ * SECURITY: Explicitly filters by user_id for defense-in-depth.
  */
 export async function archiveTask(
-  taskId: string
+  taskId: string,
 ): Promise<ServiceResponse<Task>> {
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { data, error } = await supabase
       .from("tasks")
       .update({
@@ -968,6 +981,7 @@ export async function archiveTask(
         archived_at: new Date().toISOString(),
       })
       .eq("id", taskId)
+      .eq("user_id", user.id)
       .select()
       .single();
 
@@ -986,13 +1000,13 @@ export async function archiveTask(
 /**
  * Start a timer for a task
  * FIELD ISOLATION: Only touches timer_* fields, does not affect other task properties
- * 
+ *
  * @param startTime - Optional custom start time for resuming paused timers
  */
 export async function startTaskTimer(
   taskId: string,
   durationMinutes: number,
-  startTime?: string
+  startTime?: string,
 ): Promise<ServiceResponse<Task>> {
   try {
     const { data, error } = await supabase
@@ -1017,12 +1031,12 @@ export async function startTaskTimer(
 /**
  * Complete a task timer
  * FIELD ISOLATION: Only touches timer_completed_at
- * 
+ *
  * This marks the timer as completed when it naturally expires.
  * Pause is handled entirely in the frontend as local UI state.
  */
 export async function completeTaskTimer(
-  taskId: string
+  taskId: string,
 ): Promise<ServiceResponse<Task>> {
   try {
     const { data, error } = await supabase
@@ -1046,7 +1060,7 @@ export async function completeTaskTimer(
  * Reset task timer (clear all timer state)
  */
 export async function resetTaskTimer(
-  taskId: string
+  taskId: string,
 ): Promise<ServiceResponse<Task>> {
   try {
     const { data, error } = await supabase
@@ -1107,7 +1121,7 @@ export async function getActiveTimers(): Promise<ServiceResponse<Task[]>> {
  * then manually join them.
  */
 export async function getBoardMembers(
-  boardId: string
+  boardId: string,
 ): Promise<ServiceResponse<BoardMemberWithUser[]>> {
   try {
     const { data: members, error: membersError } = await supabase
@@ -1145,7 +1159,7 @@ export async function getBoardMembers(
 export async function shareBoard(
   boardId: string,
   userIds: string[],
-  role: BoardMemberRole
+  role: BoardMemberRole,
 ): Promise<ServiceResponse<boolean>> {
   try {
     const {
@@ -1164,7 +1178,7 @@ export async function shareBoard(
 
     const connectedUserIds = connections?.map((c) => c.friend_id) || [];
     const invalidUserIds = userIds.filter(
-      (id) => !connectedUserIds.includes(id)
+      (id) => !connectedUserIds.includes(id),
     );
 
     if (invalidUserIds.length > 0) {
@@ -1195,7 +1209,7 @@ export async function shareBoard(
  */
 export async function unshareBoard(
   boardId: string,
-  userId: string
+  userId: string,
 ): Promise<ServiceResponse<boolean>> {
   try {
     const { error } = await supabase
@@ -1217,7 +1231,7 @@ export async function unshareBoard(
  */
 export async function updateBoardMemberRole(
   memberId: string,
-  role: BoardMemberRole
+  role: BoardMemberRole,
 ): Promise<ServiceResponse<boolean>> {
   try {
     const { error } = await supabase
@@ -1251,7 +1265,7 @@ export async function getSharedBoards(): Promise<
         `
         *,
         board:task_boards_with_stats(*)
-      `
+      `,
       )
       .eq("user_id", user.id);
 
@@ -1284,7 +1298,7 @@ type SingletonTemplateType = (typeof SINGLETON_TEMPLATE_TYPES)[number];
  */
 export function isSingletonTemplate(templateType: string): boolean {
   return SINGLETON_TEMPLATE_TYPES.includes(
-    templateType as SingletonTemplateType
+    templateType as SingletonTemplateType,
   );
 }
 
@@ -1295,7 +1309,7 @@ export function isSingletonTemplate(templateType: string): boolean {
  * These types should have exactly one board per user, auto-created on first use.
  */
 export async function ensureSingletonBoard(
-  templateType: SingletonTemplateType
+  templateType: SingletonTemplateType,
 ): Promise<ServiceResponse<string>> {
   try {
     const {

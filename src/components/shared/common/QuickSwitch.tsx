@@ -1,8 +1,22 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Grid3x3, ChevronDown } from "lucide-react";
-import { cards } from "../../../data/dashboardCards";
 import Button from "../ui/Button";
+
+const QUICK_SWITCH_ITEMS = [
+  {
+    id: 1,
+    title: "Media",
+    description: "Browse and manage shared collections",
+    route: "/app/media",
+  },
+  {
+    id: 2,
+    title: "Labs",
+    description: "Personal tools and task workflows",
+    route: "/app/tasks",
+  },
+];
 
 const QuickSwitch: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -26,8 +40,8 @@ const QuickSwitch: React.FC = () => {
   }, []);
 
   // Find the current page
-  const currentCard = cards.find((card) =>
-    location.pathname.startsWith(card.route)
+  const currentCard = QUICK_SWITCH_ITEMS.find((card) =>
+    location.pathname.startsWith(card.route),
   );
 
   // Don't show on home page
@@ -67,7 +81,7 @@ const QuickSwitch: React.FC = () => {
             <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
               Quick Switch
             </div>
-            {cards.map((card) => {
+            {QUICK_SWITCH_ITEMS.map((card) => {
               const isCurrent = location.pathname.startsWith(card.route);
               return (
                 <Button

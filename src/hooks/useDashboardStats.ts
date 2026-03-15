@@ -33,6 +33,8 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
     connectionsResult,
     movieRecsResult,
     bookRecsResult,
+    musicRecsResult,
+    gameRecsResult,
   ] = await Promise.all([
     supabase.from("user_watchlist").select("watched").eq("user_id", user.id),
     supabase.from("reading_list").select("read").eq("user_id", user.id),
@@ -54,6 +56,18 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
       .eq("to_user_id", user.id)
       .eq("status", "pending")
       .is("opened_at", null),
+    supabase
+      .from("music_recommendations")
+      .select("*", { count: "exact", head: true })
+      .eq("to_user_id", user.id)
+      .eq("status", "pending")
+      .is("opened_at", null),
+    supabase
+      .from("game_recommendations")
+      .select("*", { count: "exact", head: true })
+      .eq("to_user_id", user.id)
+      .eq("status", "pending")
+      .is("opened_at", null),
   ]);
 
   // Check for errors in media queries
@@ -64,6 +78,8 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
   if (connectionsResult.error) throw connectionsResult.error;
   if (movieRecsResult.error) throw movieRecsResult.error;
   if (bookRecsResult.error) throw bookRecsResult.error;
+  if (musicRecsResult.error) throw musicRecsResult.error;
+  if (gameRecsResult.error) throw gameRecsResult.error;
 
   // Process media data
   const watchlistItems = watchlistResult.data;
@@ -89,11 +105,13 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
   const connections = connectionsResult.data;
   const friendsCount =
     connections?.filter(
-      (conn) => conn.user_id === user.id || conn.friend_id === user.id
+      (conn) => conn.user_id === user.id || conn.friend_id === user.id,
     ).length || 0;
 
   const movieRecsCount = movieRecsResult.count || 0;
   const bookRecsCount = bookRecsResult.count || 0;
+  const musicRecsCount = musicRecsResult.count || 0;
+  const gameRecsCount = gameRecsResult.count || 0;
 
   const finalStats = {
     moviesAndTvCount: moviesAndTvCount || 0,
@@ -108,7 +126,8 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
     gamesPlayed: gamesPlayed || 0,
     gamesToPlay: gamesToPlay || 0,
     friendsCount,
-    pendingRecommendations: movieRecsCount + bookRecsCount,
+    pendingRecommendations:
+      movieRecsCount + bookRecsCount + musicRecsCount + gameRecsCount,
   };
 
   return finalStats;

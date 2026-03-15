@@ -3,11 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../../contexts/AuthContext";
 import { ChevronDown } from "lucide-react";
 import {
-  prefetchMoviesData,
   prefetchTasksData,
-  prefetchBooksData,
-  prefetchGamesData,
-  prefetchMusicData,
   debouncedPrefetch,
 } from "../../../utils/queryPrefetch";
 import { BTN_PAD_DEFAULT } from "../../../styles/ui";
@@ -47,11 +43,7 @@ const NavList: React.FC<NavListProps> = ({
       if (!userId) return;
 
       const prefetchMap: Record<string, () => Promise<void>> = {
-        movies: () => prefetchMoviesData(queryClient, userId),
         tasks: () => prefetchTasksData(queryClient, userId),
-        books: () => prefetchBooksData(queryClient, userId),
-        games: () => prefetchGamesData(queryClient, userId),
-        music: () => prefetchMusicData(queryClient, userId),
       };
 
       const prefetchFn = prefetchMap[itemId];
@@ -60,7 +52,7 @@ const NavList: React.FC<NavListProps> = ({
         debounced();
       }
     },
-    [queryClient, user?.id]
+    [queryClient, user?.id],
   );
 
   // Check if user has access based on required role
@@ -169,11 +161,11 @@ const NavList: React.FC<NavListProps> = ({
                             const NestedIcon = nestedSubItem.icon;
                             const nestedActive =
                               currentPath.startsWith(
-                                subItem.path.split("?")[0]
+                                subItem.path.split("?")[0],
                               ) &&
                               (nestedSubItem.path.split("?")[1]
                                 ? currentPath.includes(
-                                    nestedSubItem.path.split("?")[1]
+                                    nestedSubItem.path.split("?")[1],
                                   )
                                 : false);
 

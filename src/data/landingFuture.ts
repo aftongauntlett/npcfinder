@@ -16,6 +16,27 @@ export const futureDisclaimer =
 
 export const landingFutureCategories: FutureCategory[] = [
   {
+    category: "Social",
+    color: LANDING_PEACH,
+    features: [
+      {
+        title: "Custom Profiles",
+        description:
+          "Customizable profiles inspired by MySpace - custom backgrounds, music players, and personal expression. Not professional networking.",
+      },
+      {
+        title: "Discord-Style Networks",
+        description:
+          "User-created groups with membership, permissions, and invite workflows so people can belong to multiple trusted circles.",
+      },
+      {
+        title: "In-Browser Social Game",
+        description:
+          "A cozy social game built into the dashboard. Keep pets, tend gardens, decorate your house, and visit friends. Think Animal Crossing meets productivity tracking.",
+      },
+    ],
+  },
+  {
     category: "Productivity",
     color: LANDING_PURPLE,
     features: [
@@ -32,30 +53,9 @@ export const landingFutureCategories: FutureCategory[] = [
     ],
   },
   {
-    category: "Social",
-    color: LANDING_PEACH,
-    features: [
-      {
-        title: "Custom Profiles",
-        description:
-          "Customizable profiles inspired by MySpace - custom backgrounds, music players, and personal expression. Not professional networking.",
-      },
-      {
-        title: "In-Browser Social Game",
-        description:
-          "A cozy social game built into the dashboard. Keep pets, tend gardens, decorate your house, and visit friends. Think Animal Crossing meets productivity tracking.",
-      },
-    ],
-  },
-  {
     category: "Scalability",
     color: LANDING_TEAL,
     features: [
-      {
-        title: "Discord-Style Networks",
-        description:
-          "Optional user-created networks where groups manage their own spaces, permissions, and membership - scaling beyond small friend groups while maintaining privacy controls.",
-      },
       {
         title: "End-to-End Encryption",
         description:

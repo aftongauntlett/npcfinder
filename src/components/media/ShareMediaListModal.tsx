@@ -10,12 +10,12 @@ import { logger } from "@/lib/logger";
 import { Button, ConfirmDialog, Input, Modal } from "@/components/shared";
 import { useUserSearch } from "@/hooks/useUserSearch";
 import {
-  useMediaListMembers,
-  useShareMediaList,
-  useUnshareMediaList,
-  useUpdateMediaListMemberRole,
-} from "@/hooks/useMediaListsQueries";
-import type { MediaDomain } from "@/services/mediaListsService.types";
+  useCollectionMembers,
+  useShareCollection,
+  useUnshareCollection,
+  useUpdateCollectionMemberRole,
+} from "@/hooks/useCollectionsQueries";
+import type { MediaDomain } from "@/services/collectionsServiceTypes";
 
 interface ShareMediaListModalProps {
   isOpen: boolean;
@@ -42,27 +42,27 @@ const ShareMediaListModal: React.FC<ShareMediaListModalProps> = ({
   } | null>(null);
 
   const { data: members = [], isLoading: membersLoading } =
-    useMediaListMembers(listId);
+    useCollectionMembers(listId);
   const { data: searchResults } = useUserSearch(searchQuery, 1, 10);
 
-  const shareList = useShareMediaList(domain);
-  const unshareList = useUnshareMediaList(domain);
-  const updateRole = useUpdateMediaListMemberRole(domain);
+  const shareList = useShareCollection(domain);
+  const unshareList = useUnshareCollection(domain);
+  const updateRole = useUpdateCollectionMemberRole(domain);
 
   const existingSharedUserIds = useMemo(
     () => new Set(members.map((m) => m.user_id)),
-    [members]
+    [members],
   );
 
   const availableUsers = (searchResults?.users || []).filter(
-    (user) => user.is_connected && !existingSharedUserIds.has(user.user_id)
+    (user) => user.is_connected && !existingSharedUserIds.has(user.user_id),
   );
 
   const handleToggleUser = (userId: string) => {
     setSelectedUserIds((prev) =>
       prev.includes(userId)
         ? prev.filter((id) => id !== userId)
-        : [...prev, userId]
+        : [...prev, userId],
     );
   };
 
@@ -71,7 +71,7 @@ const ShareMediaListModal: React.FC<ShareMediaListModalProps> = ({
 
     try {
       await shareList.mutateAsync({
-        listId,
+        collectionId: listId,
         userIds: selectedUserIds,
         role: canEdit ? "editor" : "viewer",
       });
@@ -93,7 +93,7 @@ const ShareMediaListModal: React.FC<ShareMediaListModalProps> = ({
 
     try {
       await unshareList.mutateAsync({
-        listId,
+        collectionId: listId,
         userId: confirmUnshare.userId,
       });
       setConfirmUnshare(null);
@@ -108,12 +108,12 @@ const ShareMediaListModal: React.FC<ShareMediaListModalProps> = ({
 
   const handleTogglePermission = async (
     memberId: string,
-    currentRole: string
+    currentRole: string,
   ) => {
     try {
       await updateRole.mutateAsync({
         memberId,
-        listId,
+        collectionId: listId,
         role: currentRole === "editor" ? "viewer" : "editor",
       });
     } catch (error) {

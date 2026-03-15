@@ -1,9 +1,15 @@
 import React, { useMemo, useState } from "react";
-import { Button, Input, Modal, Textarea, PrivacyToggle } from "@/components/shared";
+import {
+  Button,
+  Input,
+  Modal,
+  Textarea,
+  PrivacyToggle,
+} from "@/components/shared";
 import IconSelect from "@/components/shared/common/IconSelect";
 import CompactColorThemePicker from "@/components/settings/CompactColorThemePicker";
 import { getIconsForMediaType } from "@/utils/mediaIcons";
-import type { MediaDomain } from "@/services/mediaListsService.types";
+import type { MediaDomain } from "@/services/collectionsServiceTypes";
 import { useTheme } from "@/hooks/useTheme";
 
 interface EditMediaListModalProps {
@@ -34,11 +40,13 @@ const EditMediaListModal: React.FC<EditMediaListModalProps> = ({
   onSave,
 }) => {
   const [title, setTitle] = useState(initialValues.title);
-  const [description, setDescription] = useState(initialValues.description ?? "");
+  const [description, setDescription] = useState(
+    initialValues.description ?? "",
+  );
   const [icon, setIcon] = useState<string | null>(initialValues.icon ?? null);
   const { themeColor } = useTheme();
   const [iconColor, setIconColor] = useState<string>(
-    initialValues.icon_color ?? themeColor
+    initialValues.icon_color ?? themeColor,
   );
   const [isPublic, setIsPublic] = useState(initialValues.is_public);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,7 +55,7 @@ const EditMediaListModal: React.FC<EditMediaListModalProps> = ({
 
   const canSubmit = useMemo(
     () => title.trim().length > 0 && !isSubmitting,
-    [title, isSubmitting]
+    [title, isSubmitting],
   );
 
   const handleClose = () => {
@@ -73,7 +81,12 @@ const EditMediaListModal: React.FC<EditMediaListModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Edit List" maxWidth="lg">
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="Edit List"
+      maxWidth="lg"
+    >
       <div className="p-6 space-y-6">
         {/* Core Details */}
         <div className="space-y-4">
@@ -101,41 +114,41 @@ const EditMediaListModal: React.FC<EditMediaListModalProps> = ({
             </span>
 
             <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-start">
-            <IconSelect
-              id="media-list-icon-edit"
-              label="Icon"
-              selectedIcon={icon}
-              onIconChange={setIcon}
-              icons={iconOptions}
-              iconColor={iconColor}
-              disabled={isSubmitting}
-            />
-            <div className="w-28">
-              <Input
-                label="Hex"
-                type="text"
-                value={iconColor}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                    setIconColor(value);
-                  }
-                }}
-                placeholder="#9333ea"
-                maxLength={7}
+              <IconSelect
+                id="media-list-icon-edit"
+                label="Icon"
+                selectedIcon={icon}
+                onIconChange={setIcon}
+                icons={iconOptions}
+                iconColor={iconColor}
+                disabled={isSubmitting}
               />
+              <div className="w-28">
+                <Input
+                  label="Hex"
+                  type="text"
+                  value={iconColor}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                      setIconColor(value);
+                    }
+                  }}
+                  placeholder="#9333ea"
+                  maxLength={7}
+                />
+              </div>
+              <div className="flex items-end h-full">
+                <CompactColorThemePicker
+                  selectedColor={iconColor}
+                  onColorChange={setIconColor}
+                  title=""
+                  showPreview={false}
+                  pickerHeightPx={120}
+                  showHexInput={false}
+                />
+              </div>
             </div>
-            <div className="flex items-end h-full">
-              <CompactColorThemePicker
-                selectedColor={iconColor}
-                onColorChange={setIconColor}
-                title=""
-                showPreview={false}
-                pickerHeightPx={120}
-                showHexInput={false}
-              />
-            </div>
-          </div>
           </div>
         </div>
 
@@ -154,10 +167,18 @@ const EditMediaListModal: React.FC<EditMediaListModalProps> = ({
 
         {/* Actions */}
         <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <Button variant="secondary" onClick={handleClose} disabled={isSubmitting}>
+          <Button
+            variant="secondary"
+            onClick={handleClose}
+            disabled={isSubmitting}
+          >
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={!canSubmit} loading={isSubmitting}>
+          <Button
+            onClick={handleSave}
+            disabled={!canSubmit}
+            loading={isSubmitting}
+          >
             Save
           </Button>
         </div>

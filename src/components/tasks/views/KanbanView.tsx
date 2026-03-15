@@ -1,6 +1,6 @@
 /**
  * Kanban View Component
- * 
+ *
  * Singleton view for the kanban board - displays a single kanban board
  * directly without accordion wrapper, with privacy and sharing controls.
  */
@@ -27,12 +27,13 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
   onEditTask,
 }) => {
   const [showShareModal, setShowShareModal] = useState(false);
-  
+
   // Get singleton board if no boardId provided
-  const { data: singletonBoardId } = useSingletonBoard("kanban");
+  const { data: singletonBoardId, isError: singletonError } =
+    useSingletonBoard("kanban");
   const boardId = propBoardId || singletonBoardId;
 
-  const { data: board } = useBoard(boardId || "");
+  const { data: board, isError: boardError } = useBoard(boardId || "");
   const updateBoard = useUpdateBoard();
 
   const handlePrivacyChange = (isPublic: boolean) => {
@@ -42,6 +43,25 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
       updates: { is_public: isPublic },
     });
   };
+
+  if (singletonError || boardError) {
+    return (
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="bg-gray-800/50 border-2 border-gray-700 rounded-xl px-16 py-20 text-center">
+          <p className="text-sm text-red-400 mb-3">
+            We couldn&apos;t load your kanban board.
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="text-sm text-primary hover:underline"
+          >
+            Refresh and try again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!boardId || !board) {
     return (

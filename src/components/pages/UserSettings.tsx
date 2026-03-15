@@ -17,7 +17,6 @@ import ContentLayout from "../layouts/ContentLayout";
 import ProfileInformationSection from "../settings/ProfileInformationSection";
 import CompactColorThemePicker from "../settings/CompactColorThemePicker";
 import PasswordChangeSection from "../settings/PasswordChangeSection";
-import { cards } from "../../data/dashboardCards";
 import { DEFAULT_THEME_COLOR } from "../../styles/colorThemes";
 import { useTheme } from "../../hooks/useTheme";
 import { useNavigationBlock } from "../../hooks/useNavigationBlock";
@@ -65,7 +64,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
   const { data: cachedProfile, isLoading: profileLoading } = useProfileQuery();
 
   // Default to all cards visible
-  const allCardIds = cards.map((c) => c.cardId);
+  const allCardIds = ["media", "labs"];
 
   const [profile, setProfile] = useState<ProfileData>({
     display_name: "",
@@ -113,7 +112,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
   }, [cachedProfile, currentUser]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setProfile((prev) => ({

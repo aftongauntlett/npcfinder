@@ -1,14 +1,10 @@
 /**
  * Collections (data layer)
  *
- * We intentionally introduce “Collections” as a first-class concept ahead of any
- * user-visible UI rename. Collections are persisted in the existing tables:
+ * Collections are persisted in existing tables:
  * - public.media_lists
  * - public.media_list_items
- * - public.media_list_members (sharing/roles)
- *
- * NOTE: Database tables are not renamed yet. Existing “MediaList*” type names
- * remain as aliases to avoid breaking current UI code.
+ * - public.media_list_members
  */
 
 export type MediaDomain = "movies-tv" | "books" | "games" | "music" | "mixed";
@@ -82,25 +78,15 @@ export interface CollectionMember {
   updated_at: string;
 }
 
-// Backwards-compatible aliases for current UI naming.
-export type MediaListMemberRole = CollectionMemberRole;
-export type MediaList = Collection;
-export type MediaListWithCounts = CollectionWithCounts;
-export type MediaListItem = CollectionItem;
-export type MediaListMember = CollectionMember;
-
 export interface UserProfileLite {
   user_id: string;
   display_name: string | null;
 }
 
-export interface MediaListMemberWithUser extends MediaListMember {
+export interface CollectionMemberWithUser extends CollectionMember {
   user_profile: UserProfileLite | null;
 }
 
-export type CollectionMemberWithUser = MediaListMemberWithUser;
-
-/** Minimal shape for “which collections contain this media item?” queries. */
 export interface CollectionMembershipForMediaItem {
   collection_id: string;
   collection_item_id: string;

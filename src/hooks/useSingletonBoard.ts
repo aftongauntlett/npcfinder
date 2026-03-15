@@ -25,8 +25,8 @@ export function useSingletonBoard(templateType: SingletonTemplateType) {
       if (result.error) throw result.error;
       return result.data;
     },
-    staleTime: Infinity, // Singleton boards don't change
-    gcTime: Infinity,
+    staleTime: 1000 * 60 * 60, // 1 hour
+    gcTime: 1000 * 60 * 60 * 24, // 1 day
   });
 }
 

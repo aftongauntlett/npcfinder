@@ -8,6 +8,7 @@ import {
   useUpdateStatus,
   useDeleteRec,
   useUpdateSenderNote as useUpdateSenderNoteGeneric,
+  useUpdateRecipientNote as useUpdateRecipientNoteGeneric,
 } from "./useRecommendations";
 import type { Recommendation } from "../services/recommendationsService.types";
 
@@ -38,7 +39,7 @@ export function useMusicStats() {
 // Get music recommendations with filters
 export function useMusicRecommendations(
   view: "overview" | "queue" | "friend" | "hits" | "misses" | "sent",
-  friendId?: string
+  friendId?: string,
 ) {
   return useRecommendations<MusicRecommendation>(view, friendId, "music");
 }
@@ -62,4 +63,11 @@ export function useDeleteRecommendation() {
  */
 export function useUpdateSenderNote() {
   return useUpdateSenderNoteGeneric("music");
+}
+
+/**
+ * Update recipient's note mutation
+ */
+export function useUpdateRecipientNote() {
+  return useUpdateRecipientNoteGeneric("music");
 }

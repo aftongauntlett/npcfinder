@@ -9,12 +9,7 @@
  */
 
 import React, { useState, useMemo } from "react";
-import {
-  ListTodo,
-  LayoutGrid,
-  ChefHat,
-  Briefcase,
-} from "lucide-react";
+import { ListTodo, LayoutGrid, ChefHat, Briefcase } from "lucide-react";
 import AppLayout from "../../layouts/AppLayout";
 import InboxView from "./InboxView";
 import TemplateView from "./TemplateView";
@@ -62,7 +57,12 @@ const TasksPage: React.FC = () => {
   const { data: unassignedTasksCount = 0 } = useUnassignedTasksCount();
 
   // Get singleton board IDs for job_tracker, recipe, and kanban
-  const { jobBoardId, recipeBoardId, kanbanBoardId } = useAllSingletonBoards();
+  const {
+    jobBoardId,
+    recipeBoardId,
+    kanbanBoardId,
+    error: singletonError,
+  } = useAllSingletonBoards();
 
   // Extract board filtering and task counts into dedicated hook
   const {
@@ -130,12 +130,7 @@ const TasksPage: React.FC = () => {
         badge: jobTaskCount > 0 ? jobTaskCount : undefined,
       },
     ];
-  }, [
-    unassignedTasksCount,
-    kanbanTaskCount,
-    recipeTaskCount,
-    jobTaskCount,
-  ]);
+  }, [unassignedTasksCount, kanbanTaskCount, recipeTaskCount, jobTaskCount]);
 
   // Handle create task from board
   // For singleton types (job_tracker, recipe, kanban), boardId is optional and handled automatically
@@ -178,10 +173,7 @@ const TasksPage: React.FC = () => {
       onTabChange={handleTabChange}
     >
       {/* Content */}
-      <TabPanel
-        id={`${selectedView}-panel`}
-        tabId={`${selectedView}-tab`}
-      >
+      <TabPanel id={`${selectedView}-panel`} tabId={`${selectedView}-tab`}>
         {selectedView === "tasks" && <InboxView />}
         {selectedView === "kanban" && (
           <TemplateView
@@ -189,6 +181,7 @@ const TasksPage: React.FC = () => {
             boards={kanbanBoards}
             onCreateTask={handleCreateTask}
             onEditTask={handleEditTask}
+            singletonError={singletonError}
           />
         )}
         {selectedView === "recipes" && (
@@ -197,6 +190,7 @@ const TasksPage: React.FC = () => {
             boards={recipeBoards}
             onCreateTask={handleCreateTask}
             onEditTask={handleEditTask}
+            singletonError={singletonError}
           />
         )}
         {selectedView === "job_applications" && (
@@ -205,6 +199,7 @@ const TasksPage: React.FC = () => {
             boards={jobBoards}
             onCreateTask={handleCreateTask}
             onEditTask={handleEditTask}
+            singletonError={singletonError}
           />
         )}
       </TabPanel>

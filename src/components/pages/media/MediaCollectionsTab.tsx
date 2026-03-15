@@ -13,8 +13,8 @@ import {
 } from "@/components/shared";
 import {
   useAllAccessibleCollections,
-  useCreateMediaList,
-} from "@/hooks/useMediaListsQueries";
+  useCreateCollection,
+} from "@/hooks/useCollectionsQueries";
 
 type SortId = "recent" | "name";
 
@@ -35,7 +35,7 @@ export default function MediaCollectionsTab(props: {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortId>("recent");
 
-  const create = useCreateMediaList("mixed");
+  const create = useCreateCollection("mixed");
 
   const closeCreate = () => {
     setShowCreate(false);

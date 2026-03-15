@@ -33,7 +33,7 @@ export function useAdminStats() {
 export function useAdminUsers(
   page: number,
   perPage: number,
-  searchTerm: string = ""
+  searchTerm: string = "",
 ) {
   return useQuery({
     queryKey: queryKeys.admin.users(page, searchTerm),
@@ -137,21 +137,24 @@ export function useBatchCreateInviteCodes() {
 
   return useMutation({
     mutationFn: async ({
-      count,
+      intendedEmails,
       notes,
       maxUses = 1,
       expiresInDays,
+      allowOpenCodes = false,
     }: {
-      count: number;
+      intendedEmails: string[];
       notes?: string;
       maxUses?: number;
       expiresInDays?: number;
+      allowOpenCodes?: boolean;
     }) => {
       const result = await inviteCodesLib.batchCreateInviteCodes(
-        count,
+        intendedEmails,
         notes,
         maxUses,
-        expiresInDays
+        expiresInDays,
+        allowOpenCodes,
       );
       if (result.error) {
         const parsedError = parseSupabaseError(result.error);

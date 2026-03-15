@@ -8,10 +8,6 @@ import { useTheme } from "@/hooks/useTheme";
 // Lazy load authenticated components to avoid Supabase imports on landing page
 const HomePage = React.lazy(() => import("../pages/HomePage"));
 const Sidebar = React.lazy(() => import("../shared/layout/Sidebar"));
-const MoviesPage = React.lazy(() => import("../pages/movies/MoviesPage"));
-const BooksPage = React.lazy(() => import("../pages/books/BooksPage"));
-const MusicPage = React.lazy(() => import("../pages/music/MusicPage"));
-const GamesPage = React.lazy(() => import("../pages/games/GamesPage"));
 const MediaPage = React.lazy(() => import("../pages/media/MediaPage"));
 const TasksPage = React.lazy(() => import("../pages/tasks/TasksPage"));
 const UserSettings = React.lazy(() => import("../pages/UserSettings"));
@@ -61,15 +57,6 @@ const AuthenticatedAppLayout: React.FC<AuthenticatedAppLayoutProps> = ({
             {/* Media (Collections-first) */}
             <Route path="media" element={<MediaPage />} />
             <Route path="media/:collectionId" element={<MediaPage />} />
-
-            {/* Movies & TV - consolidated single route */}
-            <Route path="movies" element={<MoviesPage />} />
-            {/* Books - consolidated single route */}
-            <Route path="books" element={<BooksPage />} />
-            {/* Music - consolidated single route */}
-            <Route path="music" element={<MusicPage />} />
-            {/* Games - consolidated single route */}
-            <Route path="games" element={<GamesPage />} />
             {/* Tasks - tabbed view with all templates */}
             <Route path="tasks" element={<TasksPage />} />
             <Route

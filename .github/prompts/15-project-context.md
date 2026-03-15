@@ -5,7 +5,9 @@ Use this to stay aligned with how the app works.
 
 ## Core Concepts
 
-- Invite-only private social app for trusted sharing (movies, TV, music)
+- Invite-only private social app for trusted sharing
+- Media-first product centered on collections and recommendations (movies, TV, books, games, music)
+- Tasks are available as secondary "Labs" tools
 - Calm UX, no social metrics (no likes/follows)
 - Direct recommendations between known friends
 - Split feedback model:

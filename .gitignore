@@ -27,6 +27,7 @@ check-invite-codes.js
 
 # Ignore docs folder (development notes)
 docs-private/
+docs/TRAYCER-PROMPTS.md
 
 # Copilot notes (AI-generated documentation)
 copilot-notes/

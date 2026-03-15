@@ -3,6 +3,8 @@ import { X } from "lucide-react";
 import { DashboardRecommendations } from "./DashboardRecommendations";
 import { DashboardUpcomingTasks } from "./DashboardUpcomingTasks";
 import { UserSearch, Button } from "@/components/shared";
+import { useAllAccessibleCollections } from "@/hooks/useCollectionsQueries";
+import { useNavigate } from "react-router-dom";
 
 interface DashboardContentProps {
   activeTab: string;
@@ -22,13 +24,71 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({
   showGettingStarted,
   setShowGettingStarted,
 }) => {
+  const navigate = useNavigate();
+  const { data: collections = [], isLoading: collectionsLoading } =
+    useAllAccessibleCollections();
+
+  const recentCollections = [...collections]
+    .sort((a, b) =>
+      (b.updated_at || b.created_at).localeCompare(
+        a.updated_at || a.created_at,
+      ),
+    )
+    .slice(0, 5);
+
   return (
     <div className="container mx-auto px-6">
       {/* Tab Panels */}
       <div role="tabpanel" id={`${activeTab}-panel`}>
-        {/* Dashboard Tab - Show Upcoming Tasks */}
+        {/* Dashboard Tab - Media-first */}
         {activeTab === "dashboard" && (
           <div className="space-y-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Recently Updated Collections
+                </h2>
+                <Button
+                  variant="subtle"
+                  onClick={() => void navigate("/app/media")}
+                >
+                  View Media
+                </Button>
+              </div>
+
+              {collectionsLoading ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Loading collections...
+                </p>
+              ) : recentCollections.length === 0 ? (
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  No collections yet. Start building your media space in the
+                  Media tab.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {recentCollections.map((collection) => (
+                    <button
+                      key={collection.id}
+                      type="button"
+                      onClick={() =>
+                        void navigate(`/app/media/${collection.id}`)
+                      }
+                      className="w-full text-left rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+                    >
+                      <div className="font-medium text-gray-900 dark:text-white truncate">
+                        {collection.title}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
+                        {collection.owner_display_name} •{" "}
+                        {collection.item_count} items
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <DashboardUpcomingTasks />
           </div>
         )}
@@ -55,7 +115,8 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({
                 Recent Activity
               </p>
               <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
-                No recent activity yet. Start by connecting with friends and sharing recommendations!
+                No recent activity yet. Start by connecting with friends and
+                sharing recommendations!
               </p>
             </div>
 

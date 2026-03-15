@@ -14,13 +14,13 @@ import {
 import type { MediaItem } from "@/components/shared";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  useAddMediaListItem,
-  useMediaList,
-  useMediaListItems,
-  useMyMediaListRole,
-  useRemoveMediaListItem,
-} from "@/hooks/useMediaListsQueries";
-import type { MediaDomain } from "@/services/mediaListsService.types";
+  useAddCollectionItem,
+  useCollection,
+  useCollectionItems,
+  useMyCollectionRole,
+  useRemoveCollectionItem,
+} from "@/hooks/useCollectionsQueries";
+import type { MediaDomain } from "@/services/collectionsServiceTypes";
 import MediaListItem from "./MediaListItem";
 import ShareMediaListModal from "./ShareMediaListModal";
 
@@ -78,13 +78,13 @@ const MediaListDetail: React.FC<MediaListDetailProps> = ({
   const [sortBy, setSortBy] = useState<SortBy>("custom");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: selectedList } = useMediaList(listId);
+  const { data: selectedList } = useCollection(listId);
   const { data: items = [], isLoading: itemsLoading } =
-    useMediaListItems(listId);
-  const { data: myRole } = useMyMediaListRole(listId);
+    useCollectionItems(listId);
+  const { data: myRole } = useMyCollectionRole(listId);
 
-  const addItem = useAddMediaListItem(domain);
-  const removeItem = useRemoveMediaListItem(domain);
+  const addItem = useAddCollectionItem(domain);
+  const removeItem = useRemoveCollectionItem(domain);
 
   const isOwner =
     !!user?.id && !!selectedList?.owner_id && user.id === selectedList.owner_id;
@@ -123,7 +123,7 @@ const MediaListDetail: React.FC<MediaListDetailProps> = ({
 
   const handleAddItem = async (item: MediaItem) => {
     try {
-      await addItem.mutateAsync({ listId, item });
+      await addItem.mutateAsync({ collectionId: listId, item });
     } catch (error) {
       logger.error("Failed to add list item", { error, domain, listId });
     }
@@ -131,7 +131,7 @@ const MediaListDetail: React.FC<MediaListDetailProps> = ({
 
   const handleRemoveItem = async (itemId: string) => {
     try {
-      await removeItem.mutateAsync({ listId, itemId });
+      await removeItem.mutateAsync({ collectionId: listId, itemId });
     } catch (error) {
       logger.error("Failed to remove list item", {
         error,

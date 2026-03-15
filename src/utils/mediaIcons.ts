@@ -23,7 +23,7 @@ import {
   type Icon,
 } from "@phosphor-icons/react";
 
-import type { MediaDomain } from "../services/mediaListsService.types";
+import type { MediaDomain } from "../services/collectionsServiceTypes";
 import type { IconOption } from "./taskIcons";
 
 const MOVIES_TV_ICONS: IconOption[] = [

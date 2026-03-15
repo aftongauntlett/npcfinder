@@ -1,7 +1,6 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ChevronRight, Home } from "lucide-react";
-import { cards } from "../../../data/dashboardCards";
 import Button from "../ui/Button";
 
 const Breadcrumb: React.FC = () => {
@@ -13,13 +12,7 @@ const Breadcrumb: React.FC = () => {
     return null;
   }
 
-  // Find the current page from our cards data
-  const currentCard = cards.find((card) =>
-    location.pathname.startsWith(card.route)
-  );
-
-  // If we can't find the card (e.g., settings, admin pages), handle gracefully
-  const pageName = currentCard?.title || getPageNameFromPath(location.pathname);
+  const pageName = getPageNameFromPath(location.pathname);
 
   return (
     <nav
@@ -45,6 +38,8 @@ const Breadcrumb: React.FC = () => {
 
 // Helper function to get page name from path for special pages
 function getPageNameFromPath(path: string): string {
+  if (path.includes("/media")) return "Media";
+  if (path.includes("/tasks")) return "Labs";
   if (path.includes("/settings")) return "Settings";
   if (path.includes("/admin")) return "Admin Panel";
 

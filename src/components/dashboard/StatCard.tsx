@@ -10,6 +10,7 @@ interface StatCardProps {
   accentColor: "blue" | "emerald" | "amber" | "purple" | "pink";
   label?: string;
   hoverLabel?: string;
+  onClick?: () => void;
 }
 
 const colorClasses = {
@@ -60,6 +61,7 @@ const StatCardComponent: React.FC<StatCardProps> = ({
   accentColor,
   label,
   hoverLabel,
+  onClick,
 }) => {
   const motionCount = useMotionValue(0);
   const [displayCount, setDisplayCount] = useState(0);
@@ -107,6 +109,19 @@ const StatCardComponent: React.FC<StatCardProps> = ({
       transition={{ duration: 0.3 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
     >
       <div className="flex flex-col items-center gap-2">
         <div className="text-4xl font-bold text-gray-900 dark:text-white tabular-nums">
@@ -134,5 +149,6 @@ export const StatCard = React.memo(
     prevProps.title === nextProps.title &&
     prevProps.accentColor === nextProps.accentColor &&
     prevProps.label === nextProps.label &&
-    prevProps.hoverLabel === nextProps.hoverLabel
+    prevProps.hoverLabel === nextProps.hoverLabel &&
+    prevProps.onClick === nextProps.onClick,
 );

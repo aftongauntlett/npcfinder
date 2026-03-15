@@ -3,12 +3,12 @@ import { Library, Plus, Share2, Trash2 } from "lucide-react";
 import { Button, ConfirmationModal, EmptyState } from "@/components/shared";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  useDeleteMediaList,
-  useMediaList,
-  useMediaListItems,
-  useMyMediaListRole,
-  useRemoveMediaListItem,
-} from "@/hooks/useMediaListsQueries";
+  useDeleteCollection,
+  useCollection,
+  useCollectionItems,
+  useMyCollectionRole,
+  useRemoveCollectionItem,
+} from "@/hooks/useCollectionsQueries";
 import MediaListItem from "@/components/media/MediaListItem";
 import ShareMediaListModal from "@/components/media/ShareMediaListModal";
 import AddItemToCollectionModal from "@/components/media/AddItemToCollectionModal";
@@ -26,10 +26,10 @@ export default function MediaCollectionTab(props: {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const { data: collection, isLoading: isCollectionLoading } =
-    useMediaList(collectionId);
+    useCollection(collectionId);
   const { data: items = [], isLoading: itemsLoading } =
-    useMediaListItems(collectionId);
-  const { data: myRole } = useMyMediaListRole(collectionId);
+    useCollectionItems(collectionId);
+  const { data: myRole } = useMyCollectionRole(collectionId);
 
   useEffect(() => {
     if (collection?.title) onTitle(collection.title);
@@ -41,10 +41,10 @@ export default function MediaCollectionTab(props: {
   const canManageMembers = canEditItems;
 
   // Remove mutation needs a domain for legacy invalidation.
-  const removeItem = useRemoveMediaListItem(
+  const removeItem = useRemoveCollectionItem(
     collection?.media_domain || "mixed",
   );
-  const deleteList = useDeleteMediaList(collection?.media_domain || "mixed");
+  const deleteList = useDeleteCollection(collection?.media_domain || "mixed");
 
   const existingKeys = useMemo(
     () =>
@@ -56,7 +56,7 @@ export default function MediaCollectionTab(props: {
   );
 
   const handleRemove = async (itemId: string) => {
-    await removeItem.mutateAsync({ listId: collectionId, itemId });
+    await removeItem.mutateAsync({ collectionId, itemId });
   };
 
   const handleDelete = async () => {

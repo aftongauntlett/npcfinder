@@ -35,6 +35,7 @@ import {
   getPersistedFilters,
   persistFilters,
 } from "../../../utils/persistenceUtils";
+import { logger } from "@/lib/logger";
 
 const InboxView: React.FC = () => {
   // Collapse state
@@ -62,7 +63,7 @@ const InboxView: React.FC = () => {
     null as unknown as undefined,
     {
       unassigned: true,
-    }
+    },
   );
   const updateTask = useUpdateTask();
   const reorderTasks = useReorderTasks();
@@ -70,7 +71,10 @@ const InboxView: React.FC = () => {
   const completeRepeatableTask = useCompleteRepeatableTask();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [taskToDelete, setTaskToDelete] = useState<{ taskId: string; boardId: string | null } | null>(null);
+  const [taskToDelete, setTaskToDelete] = useState<{
+    taskId: string;
+    boardId: string | null;
+  } | null>(null);
 
   // Load persisted filter state
   const persistenceKey = "tasks-inbox-filters";
@@ -125,7 +129,7 @@ const InboxView: React.FC = () => {
       default:
         return sorted.sort(
           (a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
         );
     }
   }, [tasks, activeFilters.sort]);
@@ -137,7 +141,8 @@ const InboxView: React.FC = () => {
     const query = searchQuery.toLowerCase();
     return sortedTasks.filter((task) => {
       const matchesTitle = task.title.toLowerCase().includes(query);
-      const matchesDescription = task.description?.toLowerCase().includes(query) || false;
+      const matchesDescription =
+        task.description?.toLowerCase().includes(query) || false;
       return matchesTitle || matchesDescription;
     });
   }, [sortedTasks, searchQuery]);
@@ -151,27 +156,22 @@ const InboxView: React.FC = () => {
 
   const handleToggleComplete = useCallback(
     (taskId: string) => {
-      console.log('[InboxView] handleToggleComplete called for:', taskId);
       const task = tasks.find((t) => t.id === taskId);
       if (!task) {
-        console.error('[InboxView] Task not found in tasks array:', taskId);
+        logger.error("Task not found in cache", { taskId });
         return;
       }
-      console.log('[InboxView] Found task:', task.title, 'repeatable:', task.is_repeatable, 'status:', task.status, 'due_date:', task.due_date);
 
       // Prevent duplicate mutations if one is already pending
       if (updateTask.isPending) {
-        console.log('[InboxView] Update already pending, skipping');
         return;
       }
 
       // If task is repeatable and has a due date, use the proper mutation
       if (task.is_repeatable && task.due_date) {
-        console.log('[InboxView] Using repeatable path');
         completeRepeatableTask.mutate(taskId);
       } else {
         // Normal toggle for non-repeatable tasks
-        console.log('[InboxView] Using normal toggle path, changing status from', task.status, 'to', task.status === "done" ? "todo" : "done");
         updateTask.mutate({
           taskId,
           updates: {
@@ -180,7 +180,7 @@ const InboxView: React.FC = () => {
         });
       }
     },
-    [tasks, updateTask, completeRepeatableTask]
+    [tasks, updateTask, completeRepeatableTask],
   );
 
   const handleSnooze = useCallback(
@@ -195,7 +195,7 @@ const InboxView: React.FC = () => {
         },
       });
     },
-    [updateTask]
+    [updateTask],
   );
 
   const handleRemove = useCallback((taskId: string, boardId: string | null) => {
@@ -204,7 +204,10 @@ const InboxView: React.FC = () => {
 
   const confirmDelete = () => {
     if (taskToDelete) {
-      deleteTask.mutate({ taskId: taskToDelete.taskId, boardId: taskToDelete.boardId || "inbox" });
+      deleteTask.mutate({
+        taskId: taskToDelete.taskId,
+        boardId: taskToDelete.boardId || "inbox",
+      });
       setTaskToDelete(null);
     }
   };
@@ -256,10 +259,10 @@ const InboxView: React.FC = () => {
 
     // Work with paginated items only
     const draggedIndex = pagination.paginatedItems.findIndex(
-      (t) => t.id === draggedTask.id
+      (t) => t.id === draggedTask.id,
     );
     const targetIndex = pagination.paginatedItems.findIndex(
-      (t) => t.id === targetTask.id
+      (t) => t.id === targetTask.id,
     );
 
     const reordered = [...pagination.paginatedItems];
@@ -390,7 +393,7 @@ const InboxView: React.FC = () => {
                 if (!draggedTask) return;
 
                 const draggedIndex = pagination.paginatedItems.findIndex(
-                  (t) => t.id === draggedTask.id
+                  (t) => t.id === draggedTask.id,
                 );
 
                 if (draggedIndex === 0) return;
@@ -449,7 +452,9 @@ const InboxView: React.FC = () => {
                 onSnooze={handleSnooze}
                 onRemove={handleRemove}
                 onClick={() => setSelectedTask(task)}
-                onExpandChange={(isExpanded) => handleExpandChange(task.id, isExpanded)}
+                onExpandChange={(isExpanded) =>
+                  handleExpandChange(task.id, isExpanded)
+                }
               />
             </div>
           );
@@ -482,7 +487,7 @@ const InboxView: React.FC = () => {
 
       {selectedTask && (
         <TaskDetailModal
-          task={tasks.find(t => t.id === selectedTask.id) || selectedTask}
+          task={tasks.find((t) => t.id === selectedTask.id) || selectedTask}
           isOpen={!!selectedTask}
           onClose={() => setSelectedTask(null)}
         />

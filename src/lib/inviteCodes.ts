@@ -54,14 +54,14 @@ export const generateSecureCode = (): string => {
 // SECURITY: Rate limited to prevent brute force enumeration (10 attempts per hour)
 export const validateInviteCode = async (
   code: string,
-  userEmail: string
+  userEmail: string,
 ): Promise<InviteCodeResult<boolean>> => {
   try {
     // SECURITY: Check rate limit first
     const rateLimitKey = `invite:${userEmail.toLowerCase()}`;
     if (!inviteCodeRateLimiter.checkLimit(rateLimitKey)) {
       const error = new Error(
-        "Too many invite code validation attempts. Please try again later."
+        "Too many invite code validation attempts. Please try again later.",
       );
       throw error;
     }
@@ -89,7 +89,7 @@ export const validateInviteCode = async (
 // UPDATED: Delete the code after it's been used instead of marking it
 export const consumeInviteCode = async (
   code: string,
-  userId: string
+  userId: string,
 ): Promise<InviteCodeResult<boolean>> => {
   try {
     // First, verify and mark the code as used
@@ -117,12 +117,12 @@ export const consumeInviteCode = async (
 
 // Create new invite code (admin only) - always 30 days expiration, max 1 use, requires email
 export const createInviteCode = async (
-  intendedEmail: string
+  intendedEmail: string,
 ): Promise<InviteCodeResult<InviteCode>> => {
   try {
     const code = generateSecureCode();
     const expiresAt = new Date(
-      Date.now() + 30 * 24 * 60 * 60 * 1000
+      Date.now() + 30 * 24 * 60 * 60 * 1000,
     ).toISOString(); // Always 30 days
 
     const {
@@ -185,12 +185,15 @@ export const getAllInviteCodes = async (): Promise<
         .in("user_id", Array.from(allUserIds));
 
       if (profiles) {
-        userEmails = profiles.reduce((acc, profile) => {
-          if (profile.email) {
-            acc[profile.user_id] = profile.email;
-          }
-          return acc;
-        }, {} as Record<string, string>);
+        userEmails = profiles.reduce(
+          (acc, profile) => {
+            if (profile.email) {
+              acc[profile.user_id] = profile.email;
+            }
+            return acc;
+          },
+          {} as Record<string, string>,
+        );
       }
     }
 
@@ -244,7 +247,7 @@ export const getMyInviteCodes = async (): Promise<
  * Permanently removes the code from the database
  */
 export const revokeInviteCode = async (
-  codeId: string
+  codeId: string,
 ): Promise<InviteCodeResult<boolean>> => {
   try {
     const { error } = await supabase
@@ -262,10 +265,11 @@ export const revokeInviteCode = async (
 
 // Batch create invite codes (admin only)
 export const batchCreateInviteCodes = async (
-  count: number,
+  intendedEmails: string[],
   notes?: string,
   maxUses = 1,
-  expiresInDays?: number
+  expiresInDays?: number,
+  allowOpenCodes = false,
 ): Promise<InviteCodeResult<InviteCode[]>> => {
   try {
     const {
@@ -276,16 +280,29 @@ export const batchCreateInviteCodes = async (
       throw new Error("Must be authenticated to create invite codes");
     }
 
+    if (!Array.isArray(intendedEmails) || intendedEmails.length === 0) {
+      throw new Error("At least one intended email is required");
+    }
+
+    const normalizedEmails = intendedEmails.map((email) =>
+      email.toLowerCase().trim(),
+    );
+
+    if (!allowOpenCodes && normalizedEmails.some((email) => !email)) {
+      throw new Error("All invite codes must be bound to a valid email");
+    }
+
     const expiresAt = expiresInDays
       ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toISOString()
       : null;
 
-    const codes = Array.from({ length: count }, () => ({
+    const codes = normalizedEmails.map((email) => ({
       code: generateSecureCode(),
       created_by: user.id,
       notes,
       max_uses: maxUses,
       expires_at: expiresAt,
+      intended_email: allowOpenCodes ? null : email,
     }));
 
     const { data, error } = await supabase

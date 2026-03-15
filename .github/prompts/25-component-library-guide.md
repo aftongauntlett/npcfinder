@@ -4,9 +4,11 @@
 
 This guide documents the NPC Finder component library, design system, and best practices for building consistent, accessible, and maintainable UI components.
 
-## ⚠️ Mandatory Component Usage
+## ⚠️ Preferred Component Usage
 
-**ALWAYS use reusable components from `src/components/shared/ui/` and `src/components/shared/common/` instead of creating custom implementations.** This ensures consistency, accessibility, and maintainability across the entire application.
+**Prefer reusable components from `src/components/shared/ui/` and `src/components/shared/common/` instead of creating new custom implementations.** This ensures consistency, accessibility, and maintainability across the entire application.
+
+If a native element is required for semantics, accessibility, or third-party integration, use it intentionally and match existing styles/behavior.
 
 ### Required Components
 
@@ -14,28 +16,25 @@ You MUST use these components for the following UI elements:
 
 #### Form Elements
 
-- **Button** (`/src/components/shared/ui/Button.tsx`) - ALL buttons, including icon-only buttons
-
-  - ❌ Never use `<button>` directly
+- **Button** (`/src/components/shared/ui/Button.tsx`) - default for app actions, including icon-only buttons
+  - ❌ Avoid ad-hoc `<button>` styling for standard app actions
   - ❌ Never use deprecated `IconButton` or `ActionButton`
   - ✅ Use `<Button variant="primary" />` for primary actions
   - ✅ Use `<Button size="icon" icon={<Icon />} aria-label="..." />` for icon buttons
+  - ✅ Use native `<button>` only when a shared component does not fit; keep keyboard/ARIA behavior intact
 
-- **Input** (`/src/components/shared/ui/Input.tsx`) - ALL text/email/number/etc inputs
-
-  - ❌ Never use `<input>` directly
+- **Input** (`/src/components/shared/ui/Input.tsx`) - default for text/email/number/etc inputs
+  - ❌ Avoid raw `<input>` when shared Input covers the use case
   - ✅ Use `<Input label="Email" type="email" error={errors.email} />`
   - Provides consistent styling, labels, errors, helper text, and accessibility
 
-- **Textarea** (`/src/components/shared/ui/Textarea.tsx`) - ALL text areas
-
-  - ❌ Never use `<textarea>` directly
+- **Textarea** (`/src/components/shared/ui/Textarea.tsx`) - default for text areas
+  - ❌ Avoid raw `<textarea>` when shared Textarea covers the use case
   - ✅ Use `<Textarea label="Description" rows={4} />`
   - Provides consistent styling, labels, errors, helper text, and accessibility
 
-- **Select** (`/src/components/shared/ui/Select.tsx`) - ALL native dropdown selects
-
-  - ❌ Never use `<select>` directly
+- **Select** (`/src/components/shared/ui/Select.tsx`) - default for native dropdown selects
+  - ❌ Avoid raw `<select>` when shared Select covers the use case
   - ❌ Never use deprecated `CustomDropdown`
   - ✅ Use `<Select label="Status" options={statusOptions} />`
   - Provides consistent styling, labels, errors, and accessibility
@@ -48,13 +47,11 @@ You MUST use these components for the following UI elements:
 #### Modal Dialogs
 
 - **Modal** (`/src/components/shared/ui/Modal.tsx`) - Base for ALL modals
-
   - ❌ Never build custom modal dialogs with backdrop and card manually
   - ✅ Use `<Modal isOpen={isOpen} onClose={onClose} title="Title">Content</Modal>`
   - All modal components should use Modal as their base
 
 - **ConfirmDialog** (`/src/components/shared/ui/ConfirmDialog.tsx`) - ALL confirmation dialogs
-
   - ❌ Never build custom confirmation dialogs
   - ✅ Use `<ConfirmDialog isOpen={show} onConfirm={handleConfirm} message="..." variant="danger" />`
 
@@ -64,7 +61,6 @@ You MUST use these components for the following UI elements:
 #### Layout Components
 
 - **Card** (`/src/components/shared/ui/Card.tsx`) - ALL content containers
-
   - ❌ Never build custom cards with manual styling
   - ✅ Use `<Card variant="interactive" hover="border">Content</Card>`
   - Provides consistent spacing, shadows, hover effects, and theme integration
@@ -76,12 +72,12 @@ You MUST use these components for the following UI elements:
 
 ### Component Consistency Rules
 
-1. **All modals MUST use Modal as base** - Never create standalone modals with custom backdrop/positioning
-2. **All buttons MUST use Button component** - Never use `<button>` or deprecated button components
-3. **All form inputs MUST use Input/Textarea/Select** - Never use native HTML form elements directly
-4. **All dropdowns MUST use Dropdown/Select** - Never build custom dropdown menus
-5. **All cards MUST use Card component** - Ensures consistent hover effects and spacing
-6. **All accordions MUST use Accordion/AccordionCard** - Consistent expand/collapse behavior
+1. **Use `Modal` as the base for app modals** unless a specialized integration requires otherwise.
+2. **Use `Button` for standard app actions**; avoid deprecated button components.
+3. **Use `Input`/`Textarea`/`Select` by default** for consistent labels, errors, and styling.
+4. **Use `Dropdown`/`Select` for menus and selects**; avoid duplicating custom dropdown behavior.
+5. **Use `Card` for content containers** to keep spacing/interaction consistent.
+6. **Use `Accordion`/`AccordionCard` for expandable sections** to keep behavior and accessibility consistent.
 
 ## 🚫 Deprecated Components
 
@@ -1204,27 +1200,31 @@ When in doubt, **maintain consistency** with existing well-designed components l
 const filterFn = useCallback(
   (item: WatchlistItem) => {
     if (filter === "to-watch" && item.watched) return false;
-    if (mediaTypeFilter !== "all" && item.media_type !== mediaTypeFilter) return false;
+    if (mediaTypeFilter !== "all" && item.media_type !== mediaTypeFilter)
+      return false;
     return true;
   },
-  [filter, mediaTypeFilter] // Only recreate when filters change
+  [filter, mediaTypeFilter], // Only recreate when filters change
 );
 
 const sortFn = useCallback(
   (a: WatchlistItem, b: WatchlistItem) => {
     switch (sortBy) {
-      case "title": return a.title.localeCompare(b.title);
-      case "date-added": return new Date(b.added_at) - new Date(a.added_at);
-      default: return 0;
+      case "title":
+        return a.title.localeCompare(b.title);
+      case "date-added":
+        return new Date(b.added_at) - new Date(a.added_at);
+      default:
+        return 0;
     }
   },
-  [sortBy] // Only recreate when sort changes
+  [sortBy], // Only recreate when sort changes
 );
 
 const { items } = useMediaFiltering({
   items: watchlist,
   filterFn, // Stable reference prevents unnecessary recalculations
-  sortFn,   // Stable reference prevents unnecessary recalculations
+  sortFn, // Stable reference prevents unnecessary recalculations
 });
 ```
 
@@ -1233,6 +1233,7 @@ const { items } = useMediaFiltering({
 #### React.memo for Components
 
 **Use `React.memo` only for:**
+
 - Components rendering expensive content (charts, large tables)
 - Components receiving same props frequently
 - Components re-rendering due to parent, not own state
@@ -1250,6 +1251,7 @@ const TaskCard = React.memo(({ task, onUpdate }: TaskCardProps) => {
 ```
 
 **Don't memo:**
+
 - Simple functional components (<10 JSX elements)
 - Components rendering differently most of the time
 - Components with unstable props (inline functions)
@@ -1259,22 +1261,24 @@ const TaskCard = React.memo(({ task, onUpdate }: TaskCardProps) => {
 **Primary Strategy:** Use pagination for all lists.
 
 **When to Consider Virtualization:**
+
 - Profiling shows >100ms render times with 100+ items
 - Scroll performance <60fps
 - User reports lag on large datasets
 
 **Don't Use Virtualization:**
+
 - Pagination keeps lists <50 items
 - Render times <50ms
 - No user complaints
 
 **Pagination Hooks:**
 
-| Hook | Use Case |
-|------|----------|
-| `usePagination` | Simple lists with basic filtering |
-| `useMediaFiltering` | Movies, books, games, music with genre filtering |
-| `useGroupedPagination` | Grouped data (tasks by board, events by date) |
+| Hook                   | Use Case                                         |
+| ---------------------- | ------------------------------------------------ |
+| `usePagination`        | Simple lists with basic filtering                |
+| `useMediaFiltering`    | Movies, books, games, music with genre filtering |
+| `useGroupedPagination` | Grouped data (tasks by board, events by date)    |
 
 **Example:**
 
@@ -1323,7 +1327,7 @@ const handlePageChange = useCallback(
     pagination.goToPage(page);
     topRef.current?.scrollIntoView({ behavior: "smooth" });
   },
-  [pagination] // Only recreate when pagination changes
+  [pagination], // Only recreate when pagination changes
 );
 ```
 
@@ -1353,11 +1357,13 @@ Use `usePageMeta` hook to set page-specific titles, descriptions, and Open Graph
 **Location:** `src/hooks/usePageMeta.ts`
 
 **Import:**
+
 ```typescript
-import { usePageMeta } from '@/hooks/usePageMeta';
+import { usePageMeta } from "@/hooks/usePageMeta";
 ```
 
 **Usage:**
+
 ```typescript
 const MyPage: React.FC = () => {
   usePageMeta({
@@ -1367,7 +1373,7 @@ const MyPage: React.FC = () => {
     ogImage: '/custom-og-image.png', // Optional: custom Open Graph image
     canonical: 'https://npcfinder.com/page', // Optional: canonical URL
   });
-  
+
   return <div>...</div>;
 };
 ```
@@ -1375,12 +1381,14 @@ const MyPage: React.FC = () => {
 ### Guidelines
 
 **Page Titles:**
+
 - Keep titles <60 characters (search engine display limit)
 - Be descriptive and unique per page
 - Don't include "NPC Finder" (automatically appended by hook)
 - Example: "Movies & TV" → displays as "Movies & TV | NPC Finder"
 
 **Descriptions:**
+
 - Keep descriptions <160 characters (search engine display limit)
 - Write for humans first, search engines second
 - Avoid keyword stuffing
@@ -1388,11 +1396,13 @@ const MyPage: React.FC = () => {
 - Example: "Track what you're watching and discover new content from friends"
 
 **Authenticated Pages:**
+
 - Always set `noIndex: true` for authenticated pages (dashboard, settings, user content)
 - Prevents search engines from indexing user-specific data
 - Example: All `/app/*` routes should use `noIndex: true`
 
 **Public Pages:**
+
 - Omit `noIndex` or set to `false` for public pages (landing, docs, etc.)
 - Add custom `ogImage` for better social media previews
 - Example: Landing page uses custom hero image for social sharing
@@ -1402,44 +1412,46 @@ const MyPage: React.FC = () => {
 ```typescript
 // ✅ CORRECT - Landing Page (Public)
 usePageMeta({
-  title: 'Your Personal Dashboard',
-  description: 'Track, organize, and curate your entertainment, fitness, and life in one place.',
-  ogImage: '/og-image.png', // Custom image for social sharing
+  title: "Your Personal Dashboard",
+  description:
+    "Track, organize, and curate your entertainment, fitness, and life in one place.",
+  ogImage: "/og-image.png", // Custom image for social sharing
 });
 
 // ✅ CORRECT - Dashboard (Authenticated)
 usePageMeta({
-  title: 'Dashboard',
-  description: 'Your personal dashboard for everything that matters',
+  title: "Dashboard",
+  description: "Your personal dashboard for everything that matters",
   noIndex: true, // Prevent search indexing
 });
 
 // ❌ WRONG - Title too long
 usePageMeta({
-  title: 'Movies, TV Shows, and Streaming Content Tracker - NPC Finder',
+  title: "Movies, TV Shows, and Streaming Content Tracker - NPC Finder",
   // Too long, "NPC Finder" is redundant (automatically appended)
 });
 
 // ❌ WRONG - Description too long
 usePageMeta({
-  title: 'Movies',
-  description: 'Track all your favorite movies and TV shows, discover new content from friends, get personalized recommendations based on your viewing history, and organize your watchlist with custom tags and ratings.',
+  title: "Movies",
+  description:
+    "Track all your favorite movies and TV shows, discover new content from friends, get personalized recommendations based on your viewing history, and organize your watchlist with custom tags and ratings.",
   // Too long (>160 chars), gets truncated in search results
 });
 
 // ❌ WRONG - Missing noIndex on authenticated page
 usePageMeta({
-  title: 'User Settings',
-  description: 'Manage your account settings',
+  title: "User Settings",
+  description: "Manage your account settings",
   // Missing noIndex: true - user settings should not be indexed
 });
 ```
 
 **Impact:**
+
 - Better search engine indexing (proper titles/descriptions)
 - Improved social media previews (Open Graph tags)
 - Descriptive browser tabs (per-page titles)
 - Prevented indexing of user-specific content (`noIndex`)
 
 **Reference:** See `docs/LIGHTHOUSE-AUDIT.md` for comprehensive SEO audit and optimization details.
-

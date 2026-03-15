@@ -1,9 +1,15 @@
 import React, { useMemo, useState } from "react";
-import { Button, Input, Modal, Textarea, PrivacyToggle } from "@/components/shared";
+import {
+  Button,
+  Input,
+  Modal,
+  Textarea,
+  PrivacyToggle,
+} from "@/components/shared";
 import IconSelect from "@/components/shared/common/IconSelect";
 import CompactColorThemePicker from "@/components/settings/CompactColorThemePicker";
 import { getIconsForMediaType } from "@/utils/mediaIcons";
-import type { MediaDomain } from "@/services/mediaListsService.types";
+import type { MediaDomain } from "@/services/collectionsServiceTypes";
 import { useTheme } from "@/hooks/useTheme";
 
 interface CreateMediaListModalProps {
@@ -35,10 +41,10 @@ const CreateMediaListModal: React.FC<CreateMediaListModalProps> = ({
 
   const iconOptions = useMemo(() => getIconsForMediaType(domain), [domain]);
 
-  const canSubmit = useMemo(() => title.trim().length > 0 && !isSubmitting, [
-    title,
-    isSubmitting,
-  ]);
+  const canSubmit = useMemo(
+    () => title.trim().length > 0 && !isSubmitting,
+    [title, isSubmitting],
+  );
 
   const handleClose = () => {
     if (isSubmitting) return;
@@ -68,7 +74,12 @@ const CreateMediaListModal: React.FC<CreateMediaListModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Create List" maxWidth="lg">
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="Create List"
+      maxWidth="lg"
+    >
       <div className="p-6 space-y-6">
         {/* Core Details */}
         <div className="space-y-4">
@@ -146,7 +157,11 @@ const CreateMediaListModal: React.FC<CreateMediaListModalProps> = ({
 
         {/* Actions */}
         <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <Button variant="secondary" onClick={handleClose} disabled={isSubmitting}>
+          <Button
+            variant="secondary"
+            onClick={handleClose}
+            disabled={isSubmitting}
+          >
             Cancel
           </Button>
           <Button onClick={handleCreate} disabled={!canSubmit}>
