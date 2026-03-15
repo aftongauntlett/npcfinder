@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import type { User } from "@supabase/supabase-js";
 import PageContainer from "./PageContainer";
 import ProtectedAdminRoute from "./ProtectedAdminRoute";
@@ -10,6 +10,7 @@ const HomePage = React.lazy(() => import("../pages/HomePage"));
 const Sidebar = React.lazy(() => import("../shared/layout/Sidebar"));
 const MediaPage = React.lazy(() => import("../pages/media/MediaPage"));
 const TasksPage = React.lazy(() => import("../pages/tasks/TasksPage"));
+const GamePage = React.lazy(() => import("../pages/game/GamePage"));
 const UserSettings = React.lazy(() => import("../pages/UserSettings"));
 const AdminPage = React.lazy(() => import("../pages/admin/AdminPage"));
 
@@ -30,7 +31,9 @@ interface AuthenticatedAppLayoutProps {
 const AuthenticatedAppLayout: React.FC<AuthenticatedAppLayoutProps> = ({
   user,
 }) => {
+  const location = useLocation();
   const { resolvedTheme } = useTheme();
+  const isGameRoute = location.pathname.startsWith("/app/game");
 
   return (
     <SidebarProvider>
@@ -47,7 +50,7 @@ const AuthenticatedAppLayout: React.FC<AuthenticatedAppLayoutProps> = ({
             </div>
           }
         >
-          <Sidebar currentUser={user} />
+          {!isGameRoute && <Sidebar currentUser={user} />}
           {/* Global timer completion alert - shows on all pages */}
           <GlobalTimerAlert />
           {/* Main content - no top nav, sidebar handles everything */}
@@ -59,6 +62,7 @@ const AuthenticatedAppLayout: React.FC<AuthenticatedAppLayoutProps> = ({
             <Route path="media/:collectionId" element={<MediaPage />} />
             {/* Tasks - tabbed view with all templates */}
             <Route path="tasks" element={<TasksPage />} />
+            <Route path="game" element={<GamePage />} />
             <Route
               path="settings"
               element={<UserSettings currentUser={user} />}

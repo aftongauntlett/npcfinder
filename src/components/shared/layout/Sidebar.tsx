@@ -8,6 +8,7 @@ import {
   ChevronRight,
   LogOut,
   Clapperboard,
+  Gamepad2,
 } from "lucide-react";
 import { useAdmin } from "../../../contexts/AdminContext";
 import { useSidebar } from "../../../contexts/SidebarContext";
@@ -29,6 +30,12 @@ const NAV_ITEMS: NavItem[] = [
     label: "Media",
     icon: Clapperboard,
     path: "/app/media",
+  },
+  {
+    id: "game",
+    label: "Game",
+    icon: Gamepad2,
+    path: "/app/game",
   },
 ];
 
