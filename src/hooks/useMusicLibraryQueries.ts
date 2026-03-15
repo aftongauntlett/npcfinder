@@ -160,7 +160,6 @@ export function useUpdateLibraryItem() {
         .single();
 
       if (error) throw error;
-      if (error) throw error;
       return data;
     },
     onSuccess: () => {
@@ -262,9 +261,8 @@ export function useReorderMusicLibraryItems() {
 
   return useMutation({
     mutationFn: async (itemIds: string[]) => {
-      const { reorderMusicLibraryItems } = await import(
-        "../services/recommendationsService"
-      );
+      const { reorderMusicLibraryItems } =
+        await import("../services/recommendationsService");
       return await reorderMusicLibraryItems(itemIds);
     },
     onSuccess: () => {

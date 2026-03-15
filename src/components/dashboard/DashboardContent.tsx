@@ -160,8 +160,8 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({
                   Start tracking content
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Browse Movies & TV, Music, Books, or Games and add items to
-                  your watchlist
+                  Create collections for Movies & TV, Music, Books, and Games to
+                  organize what you want to revisit and share
                 </p>
               </div>
             </li>

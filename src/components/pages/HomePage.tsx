@@ -19,7 +19,7 @@ import {
   Gamepad2,
   UserPlus,
 } from "lucide-react";
-import { useMarkMovieRecommendationsAsOpened } from "../../hooks/useMovieQueries";
+import { useMarkRecommendationsAsOpened } from "../../hooks/useRecommendations";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../../lib/queryKeys";
 import { usePageMeta } from "../../hooks/usePageMeta";
@@ -58,7 +58,10 @@ const HomePage: React.FC<HomePageProps> = () => {
   const queryClient = useQueryClient();
   const { data: profile, isLoading } = useProfileQuery();
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
-  const markAsOpened = useMarkMovieRecommendationsAsOpened();
+  const markMovieRecsAsOpened = useMarkRecommendationsAsOpened("movies-tv");
+  const markBookRecsAsOpened = useMarkRecommendationsAsOpened("books");
+  const markGameRecsAsOpened = useMarkRecommendationsAsOpened("games");
+  const markMusicRecsAsOpened = useMarkRecommendationsAsOpened("music");
 
   // Memoize greeting computation
   const greeting = useMemo(() => {
@@ -77,10 +80,19 @@ const HomePage: React.FC<HomePageProps> = () => {
         stats &&
         stats.pendingRecommendations > 0
       ) {
-        markAsOpened.mutate();
+        markMovieRecsAsOpened.mutate();
+        markBookRecsAsOpened.mutate();
+        markGameRecsAsOpened.mutate();
+        markMusicRecsAsOpened.mutate();
       }
     },
-    [stats, markAsOpened],
+    [
+      stats,
+      markMovieRecsAsOpened,
+      markBookRecsAsOpened,
+      markGameRecsAsOpened,
+      markMusicRecsAsOpened,
+    ],
   );
 
   // Refetch recommendations when tab becomes active

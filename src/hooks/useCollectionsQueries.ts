@@ -8,24 +8,9 @@ import type {
   MediaDomain,
 } from "../services/collectionsServiceTypes";
 
-export const collectionsQueryKeys = {
-  all: ["collections"] as const,
-  allAccessible: () => [...collectionsQueryKeys.all, "accessible"] as const,
-  lists: (domain: MediaDomain) =>
-    [...collectionsQueryKeys.all, "lists", domain] as const,
-  detail: (collectionId: string) =>
-    [...collectionsQueryKeys.all, "detail", collectionId] as const,
-  items: (collectionId: string) =>
-    [...collectionsQueryKeys.all, "items", collectionId] as const,
-  members: (collectionId: string) =>
-    [...collectionsQueryKeys.all, "members", collectionId] as const,
-  myRole: (collectionId: string, userId?: string) =>
-    [...collectionsQueryKeys.all, "my-role", collectionId, userId] as const,
-};
-
 export function useAllAccessibleCollections() {
   return useQuery({
-    queryKey: collectionsQueryKeys.allAccessible(),
+    queryKey: queryKeys.collections.allAccessible(),
     queryFn: async () => {
       const { data, error } =
         await collectionsService.getAllAccessibleCollections();
@@ -37,7 +22,7 @@ export function useAllAccessibleCollections() {
 
 export function useCollections(domain: MediaDomain) {
   return useQuery({
-    queryKey: collectionsQueryKeys.lists(domain),
+    queryKey: queryKeys.collections.lists(domain),
     queryFn: async () => {
       const { data, error } = await collectionsService.getCollections(domain);
       if (error) throw error;
@@ -48,7 +33,7 @@ export function useCollections(domain: MediaDomain) {
 
 export function useCollection(collectionId: string | null) {
   return useQuery({
-    queryKey: collectionsQueryKeys.detail(collectionId || ""),
+    queryKey: queryKeys.collections.detail(collectionId || ""),
     enabled: !!collectionId,
     queryFn: async () => {
       if (!collectionId) return null;
@@ -84,11 +69,11 @@ export function useCreateCollection(domain: MediaDomain) {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: collectionsQueryKeys.lists(domain),
+        queryKey: queryKeys.collections.lists(domain),
       });
 
       await queryClient.invalidateQueries({
-        queryKey: collectionsQueryKeys.allAccessible(),
+        queryKey: queryKeys.collections.allAccessible(),
       });
     },
   });
@@ -118,13 +103,13 @@ export function useUpdateCollection(domain: MediaDomain) {
     onSuccess: async (_data, variables) => {
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: collectionsQueryKeys.lists(domain),
+          queryKey: queryKeys.collections.lists(domain),
         }),
         queryClient.invalidateQueries({
-          queryKey: collectionsQueryKeys.detail(variables.collectionId),
+          queryKey: queryKeys.collections.detail(variables.collectionId),
         }),
         queryClient.invalidateQueries({
-          queryKey: collectionsQueryKeys.allAccessible(),
+          queryKey: queryKeys.collections.allAccessible(),
         }),
       ]);
 
@@ -145,11 +130,11 @@ export function useDeleteCollection(domain: MediaDomain) {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: collectionsQueryKeys.lists(domain),
+        queryKey: queryKeys.collections.lists(domain),
       });
 
       await queryClient.invalidateQueries({
-        queryKey: collectionsQueryKeys.allAccessible(),
+        queryKey: queryKeys.collections.allAccessible(),
       });
     },
   });
@@ -157,7 +142,7 @@ export function useDeleteCollection(domain: MediaDomain) {
 
 export function useCollectionItems(collectionId: string | null) {
   return useQuery({
-    queryKey: collectionsQueryKeys.items(collectionId || ""),
+    queryKey: queryKeys.collections.items(collectionId || ""),
     enabled: !!collectionId,
     queryFn: async () => {
       if (!collectionId) return [];
@@ -185,13 +170,13 @@ export function useAddCollectionItem(domain: MediaDomain) {
     onSuccess: async (_data, variables) => {
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: collectionsQueryKeys.items(variables.collectionId),
+          queryKey: queryKeys.collections.items(variables.collectionId),
         }),
         queryClient.invalidateQueries({
-          queryKey: collectionsQueryKeys.lists(domain),
+          queryKey: queryKeys.collections.lists(domain),
         }),
         queryClient.invalidateQueries({
-          queryKey: collectionsQueryKeys.allAccessible(),
+          queryKey: queryKeys.collections.allAccessible(),
         }),
       ]);
     },
@@ -213,13 +198,13 @@ export function useRemoveCollectionItem(domain: MediaDomain) {
     onSuccess: async (_data, variables) => {
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: collectionsQueryKeys.items(variables.collectionId),
+          queryKey: queryKeys.collections.items(variables.collectionId),
         }),
         queryClient.invalidateQueries({
-          queryKey: collectionsQueryKeys.lists(domain),
+          queryKey: queryKeys.collections.lists(domain),
         }),
         queryClient.invalidateQueries({
-          queryKey: collectionsQueryKeys.allAccessible(),
+          queryKey: queryKeys.collections.allAccessible(),
         }),
       ]);
     },
@@ -228,7 +213,7 @@ export function useRemoveCollectionItem(domain: MediaDomain) {
 
 export function useCollectionMembers(collectionId: string | null) {
   return useQuery({
-    queryKey: collectionsQueryKeys.members(collectionId || ""),
+    queryKey: queryKeys.collections.members(collectionId || ""),
     enabled: !!collectionId,
     queryFn: async () => {
       if (!collectionId) return [];
@@ -244,7 +229,7 @@ export function useMyCollectionRole(collectionId: string | null) {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: collectionsQueryKeys.myRole(collectionId || "", user?.id),
+    queryKey: queryKeys.collections.myRole(collectionId || "", user?.id),
     enabled: !!collectionId && !!user?.id,
     queryFn: async () => {
       if (!collectionId) return null;
@@ -275,14 +260,14 @@ export function useShareCollection(domain: MediaDomain) {
     },
     onSuccess: async (_data, variables) => {
       await queryClient.invalidateQueries({
-        queryKey: collectionsQueryKeys.members(variables.collectionId),
+        queryKey: queryKeys.collections.members(variables.collectionId),
       });
       await queryClient.invalidateQueries({
-        queryKey: collectionsQueryKeys.lists(domain),
+        queryKey: queryKeys.collections.lists(domain),
       });
 
       await queryClient.invalidateQueries({
-        queryKey: collectionsQueryKeys.allAccessible(),
+        queryKey: queryKeys.collections.allAccessible(),
       });
     },
   });
@@ -302,14 +287,14 @@ export function useUnshareCollection(domain: MediaDomain) {
     },
     onSuccess: async (_data, variables) => {
       await queryClient.invalidateQueries({
-        queryKey: collectionsQueryKeys.members(variables.collectionId),
+        queryKey: queryKeys.collections.members(variables.collectionId),
       });
       await queryClient.invalidateQueries({
-        queryKey: collectionsQueryKeys.lists(domain),
+        queryKey: queryKeys.collections.lists(domain),
       });
 
       await queryClient.invalidateQueries({
-        queryKey: collectionsQueryKeys.allAccessible(),
+        queryKey: queryKeys.collections.allAccessible(),
       });
     },
   });
@@ -334,14 +319,14 @@ export function useUpdateCollectionMemberRole(domain: MediaDomain) {
     },
     onSuccess: async (_data, variables) => {
       await queryClient.invalidateQueries({
-        queryKey: collectionsQueryKeys.members(variables.collectionId),
+        queryKey: queryKeys.collections.members(variables.collectionId),
       });
       await queryClient.invalidateQueries({
-        queryKey: collectionsQueryKeys.lists(domain),
+        queryKey: queryKeys.collections.lists(domain),
       });
 
       await queryClient.invalidateQueries({
-        queryKey: collectionsQueryKeys.allAccessible(),
+        queryKey: queryKeys.collections.allAccessible(),
       });
     },
   });

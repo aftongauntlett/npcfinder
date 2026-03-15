@@ -154,7 +154,9 @@ export function useDeleteFromGameLibrary() {
       if (error) throw error;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["game-library"] });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.gameLibrary.all,
+      });
     },
   });
 }
@@ -321,9 +323,8 @@ export function useReorderGameLibraryItems() {
 
   return useMutation({
     mutationFn: async (itemIds: string[]) => {
-      const { reorderGameLibraryItems } = await import(
-        "../services/recommendationsService"
-      );
+      const { reorderGameLibraryItems } =
+        await import("../services/recommendationsService");
       return await reorderGameLibraryItems(itemIds);
     },
     onSuccess: () => {

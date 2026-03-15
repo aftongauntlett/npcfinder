@@ -11,6 +11,7 @@ import Toast from "@/components/ui/Toast";
 import { searchMoviesAndTV } from "../../utils/mediaSearchAdapters";
 import { useWatchlistViewModel } from "../../hooks/media/useWatchlistViewModel";
 import { useReorderWatchlistItems } from "../../hooks/useWatchlistQueries";
+import { useDraggableList } from "../../hooks/useDraggableList";
 import WatchlistToolbar from "./WatchlistToolbar";
 import WatchlistEmptyState from "./WatchlistEmptyState";
 import type { WatchlistItem } from "../../services/recommendationsService.types";
@@ -34,9 +35,6 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
     string | number | null
   >(null);
 
-  // Drag-and-drop state
-  const [draggedItem, setDraggedItem] = useState<WatchlistItem | null>(null);
-  const [dragOverId, setDragOverId] = useState<string | null>(null);
   const reorderItems = useReorderWatchlistItems();
 
   const [toast, setToast] = useState<{
@@ -110,65 +108,16 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
   };
 
   const isCustomSort = sortBy === "custom";
-
-  // Drag handlers
-  const handleItemDragStart = (e: React.DragEvent, item: WatchlistItem) => {
-    setDraggedItem(item);
-    const dragElement = e.currentTarget as HTMLElement;
-    if (dragElement) {
-      dragElement.style.opacity = "0.5";
-    }
-  };
-
-  const handleItemDragEnd = (e: React.DragEvent) => {
-    const dragElement = e.currentTarget as HTMLElement;
-    if (dragElement) {
-      dragElement.style.opacity = "1";
-    }
-    setDraggedItem(null);
-    setDragOverId(null);
-  };
-
-  const handleItemDragOver = (
-    e: React.DragEvent,
-    targetItem: WatchlistItem
-  ) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    if (draggedItem && draggedItem.id !== targetItem.id) {
-      setDragOverId(targetItem.id);
-    }
-  };
-
-  const handleItemDragLeave = (e: React.DragEvent) => {
-    const relatedTarget = e.relatedTarget as HTMLElement;
-    if (!relatedTarget || !e.currentTarget.contains(relatedTarget)) {
-      setDragOverId(null);
-    }
-  };
-
-  const handleItemDrop = (e: React.DragEvent, targetItem: WatchlistItem) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragOverId(null);
-
-    if (!draggedItem || draggedItem.id === targetItem.id) return;
-
-    const draggedIndex = paginatedItems.findIndex(
-      (i) => i.id === draggedItem.id
-    );
-    const targetIndex = paginatedItems.findIndex((i) => i.id === targetItem.id);
-
-    const reordered = [...paginatedItems];
-    reordered.splice(draggedIndex, 1);
-
-    const insertIndex =
-      draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
-    reordered.splice(insertIndex, 0, draggedItem);
-
+  const {
+    dragOverId,
+    handleDragStart,
+    handleDragEnd,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+  } = useDraggableList<WatchlistItem>(paginatedItems, (reordered) => {
     reorderItems.mutate(reordered.map((item) => item.id));
-    setDraggedItem(null);
-  };
+  });
 
   return (
     <div ref={topRef} className="container mx-auto px-4 sm:px-6">
@@ -219,13 +168,13 @@ const PersonalWatchList: React.FC<PersonalWatchListProps> = ({
                 >
                   <div
                     draggable={isCustomSort}
-                    onDragStart={(e) => handleItemDragStart(e, item)}
-                    onDragEnd={handleItemDragEnd}
-                    onDragOver={(e) => handleItemDragOver(e, item)}
-                    onDragLeave={handleItemDragLeave}
-                    onDrop={(e) => handleItemDrop(e, item)}
+                    onDragStart={(e) => handleDragStart(e, item)}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={(e) => handleDragOver(e, item)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, item)}
                     className={
-                      isCustomSort && dragOverId === item.id
+                      isCustomSort && dragOverId === String(item.id)
                         ? "border-t-2 border-primary"
                         : ""
                     }

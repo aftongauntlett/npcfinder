@@ -10,37 +10,19 @@ import { z } from "zod";
 // =====================================================
 
 export const CreateBoardSchema = z.object({
-  title: z
+  name: z
     .string()
-    .min(1, "Board title is required")
-    .max(200, "Board title too long"),
-  is_template: z.boolean().optional().default(false),
-  category: z.string().max(100, "Category too long").nullable().optional(),
+    .min(1, "Board name is required")
+    .max(200, "Board name too long"),
+  is_public: z.boolean().optional().default(false),
+  board_type: z.string().max(100, "Board type too long").nullable().optional(),
+  template_type: z
+    .enum(["job_tracker", "markdown", "recipe", "kanban", "custom"])
+    .nullable()
+    .optional(),
 });
 
 export const UpdateBoardSchema = CreateBoardSchema.partial();
-
-export const BoardIdSchema = z.string().uuid("Invalid board ID");
-
-// =====================================================
-// SECTION VALIDATION SCHEMAS
-// =====================================================
-
-export const CreateSectionSchema = z.object({
-  title: z
-    .string()
-    .min(1, "Section title is required")
-    .max(200, "Section title too long"),
-  board_id: z.string().uuid("Invalid board ID"),
-  sort_order: z.number().int().min(0).optional(),
-  color: z.string().max(50, "Color value too long").nullable().optional(),
-});
-
-export const UpdateSectionSchema = CreateSectionSchema.partial().extend({
-  board_id: z.string().uuid("Invalid board ID").optional(),
-});
-
-export const SectionIdSchema = z.string().uuid("Invalid section ID");
 
 // =====================================================
 // TASK VALIDATION SCHEMAS
@@ -57,7 +39,11 @@ export const CreateTaskSchema = z.object({
     .nullable()
     .optional(),
   status: z.enum(["todo", "in_progress", "done", "archived"]).default("todo"),
-  due_date: z.string().datetime().nullable().optional(),
+  due_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "due_date must be YYYY-MM-DD")
+    .nullable()
+    .optional(),
   board_id: z.string().uuid("Invalid board ID").nullable().optional(),
   section_id: z.string().uuid("Invalid section ID").nullable().optional(),
   parent_task_id: z
@@ -74,48 +60,6 @@ export const CreateTaskSchema = z.object({
 
 export const UpdateTaskSchema = CreateTaskSchema.partial();
 
-export const TaskIdSchema = z.string().uuid("Invalid task ID");
-
-// =====================================================
-// FILTER VALIDATION SCHEMAS
-// =====================================================
-
-export const TaskFiltersSchema = z.object({
-  status: z.enum(["todo", "in_progress", "done", "archived"]).optional(),
-  board_id: z.string().uuid("Invalid board ID").optional(),
-  section_id: z.string().uuid("Invalid section ID").optional(),
-  is_favorite: z.boolean().optional(),
-  search: z.string().max(200, "Search query too long").optional(),
-  due_before: z.string().datetime().optional(),
-  due_after: z.string().datetime().optional(),
-});
-
-// =====================================================
-// BULK OPERATION SCHEMAS
-// =====================================================
-
-export const BulkTaskUpdateSchema = z.object({
-  task_ids: z
-    .array(z.string().uuid())
-    .min(1)
-    .max(100, "Too many tasks selected"),
-  updates: UpdateTaskSchema,
-});
-
-export const ReorderTasksSchema = z.object({
-  board_id: z.string().uuid("Invalid board ID").optional(),
-  section_id: z.string().uuid("Invalid section ID").optional(),
-  task_orders: z
-    .array(
-      z.object({
-        task_id: z.string().uuid(),
-        sort_order: z.number().int().min(0),
-      })
-    )
-    .min(1)
-    .max(1000, "Too many tasks to reorder"),
-});
-
 // =====================================================
 // HELPER FUNCTIONS
 // =====================================================
@@ -129,21 +73,4 @@ export const ReorderTasksSchema = z.object({
  */
 export function validateInput<T>(schema: z.ZodSchema<T>, data: unknown): T {
   return schema.parse(data);
-}
-
-/**
- * Safely validate input and return result with error
- * @param schema Zod schema to validate against
- * @param data Data to validate
- * @returns Object with success flag, data, and optional error
- */
-export function safeValidateInput<T>(
-  schema: z.ZodSchema<T>,
-  data: unknown
-): { success: true; data: T } | { success: false; error: z.ZodError } {
-  const result = schema.safeParse(data);
-  if (result.success) {
-    return { success: true, data: result.data };
-  }
-  return { success: false, error: result.error };
 }

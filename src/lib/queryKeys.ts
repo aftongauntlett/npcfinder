@@ -12,6 +12,7 @@ type RecommendationView =
   | "misses"
   | "sent"
   | "friend";
+type CollectionDomain = "movies-tv" | "books" | "games" | "music" | "mixed";
 
 export const queryKeys = {
   // Recommendations
@@ -30,7 +31,7 @@ export const queryKeys = {
     byMedia: (
       view: RecommendationView,
       friendId: string | undefined,
-      mediaType: MediaType
+      mediaType: MediaType,
     ) => [...queryKeys.recommendations.all, mediaType, view, friendId] as const,
   },
 
@@ -107,6 +108,22 @@ export const queryKeys = {
   dashboard: {
     all: ["dashboard"] as const,
     stats: () => [...queryKeys.dashboard.all, "stats"] as const,
+  },
+
+  // Collections
+  collections: {
+    all: ["collections"] as const,
+    allAccessible: () => [...queryKeys.collections.all, "accessible"] as const,
+    lists: (domain: CollectionDomain) =>
+      [...queryKeys.collections.all, "lists", domain] as const,
+    detail: (collectionId: string) =>
+      [...queryKeys.collections.all, "detail", collectionId] as const,
+    items: (collectionId: string) =>
+      [...queryKeys.collections.all, "items", collectionId] as const,
+    members: (collectionId: string) =>
+      [...queryKeys.collections.all, "members", collectionId] as const,
+    myRole: (collectionId: string, userId?: string) =>
+      [...queryKeys.collections.all, "my-role", collectionId, userId] as const,
   },
 
   // Tasks

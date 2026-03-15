@@ -97,7 +97,6 @@ The `db:push` command applies all pending migrations to the linked project.
 #### Step-by-Step Process
 
 1. **Make changes in Supabase Dashboard UI**
-
    - Navigate to Table Editor, Database settings, etc.
    - Create/modify tables, columns, indexes, etc. using the UI
    - These changes are applied directly to your database
@@ -111,7 +110,6 @@ The `db:push` command applies all pending migrations to the linked project.
    This compares your current database schema against the last migration and shows the SQL diff.
 
 3. **Review the generated SQL**
-
    - Verify the SQL accurately reflects your intended changes
    - Check for any unexpected alterations
 
@@ -127,7 +125,6 @@ The `db:push` command applies all pending migrations to the linked project.
    ```
 
 5. **Copy the diff SQL into your new migration**
-
    - Open the newly created migration file in `supabase/migrations/`
    - Paste the SQL from the diff output
    - Add any necessary comments
@@ -141,7 +138,6 @@ The `db:push` command applies all pending migrations to the linked project.
    This will apply all pending migrations to the linked production database.
 
 7. **Verify the migration works**
-
    - Check that all tables/columns/indexes were created correctly
    - Test affected application features
    - Run your test suite: `npm run test`
@@ -351,7 +347,8 @@ Vercel automatically deploys the updated app that uses the new schema.
 - **Add indexes** for frequently queried columns
 - **Document complex changes** with comments in migration files
 - **Test thoroughly** in the application before running migrations
-- **Commit migrations to git** before applying
+- **Apply migrations successfully** (`npm run db:push`) before committing
+- **Commit migrations and related code** only after the apply step succeeds
 
 ### ❌ DON'T
 

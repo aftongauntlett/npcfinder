@@ -19,7 +19,9 @@ import Button from "../../shared/ui/Button";
 import { EmptyStateAddCard, LocalSearchInput } from "../../shared";
 import ConfirmationModal from "../../shared/ui/ConfirmationModal";
 import { Pagination } from "../../shared/common/Pagination";
+import DroppableTopZone from "../../shared/common/DroppableTopZone";
 import { usePagination } from "../../../hooks/usePagination";
+import { useDraggableList } from "../../../hooks/useDraggableList";
 import FilterSortMenu, {
   FilterSortSection,
 } from "../../shared/common/FilterSortMenu";
@@ -91,8 +93,6 @@ const InboxView: React.FC = () => {
     persistFilters(persistenceKey, activeFilters);
   }, [activeFilters]);
 
-  const [draggedTask, setDraggedTask] = useState<Task | null>(null);
-  const [dragOverId, setDragOverId] = useState<string | null>(null);
   const listTopRef = useRef<HTMLDivElement>(null);
 
   // Filter/sort sections for FilterSortMenu
@@ -212,74 +212,20 @@ const InboxView: React.FC = () => {
     }
   };
 
-  const handleDragStart = (e: React.DragEvent, task: Task) => {
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", task.id);
-    setDraggedTask(task);
-    // Small delay to allow browser to create drag image
-    setTimeout(() => {
-      const dragElement = e.currentTarget as HTMLElement;
-      if (dragElement) {
-        dragElement.style.opacity = "0.5";
-      }
-    }, 0);
-  };
-
-  const handleDragEnd = (e: React.DragEvent) => {
-    const dragElement = e.currentTarget as HTMLElement;
-    if (dragElement) {
-      dragElement.style.opacity = "1";
-    }
-    setDraggedTask(null);
-    setDragOverId(null);
-  };
-
-  const handleDragOver = (e: React.DragEvent, targetTask: Task) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    if (draggedTask && draggedTask.id !== targetTask.id) {
-      setDragOverId(targetTask.id);
-    }
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    // Only clear if leaving the drop zone entirely
-    const relatedTarget = e.relatedTarget as HTMLElement;
-    if (!relatedTarget || !e.currentTarget.contains(relatedTarget)) {
-      setDragOverId(null);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent, targetTask: Task) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragOverId(null);
-
-    if (!draggedTask || draggedTask.id === targetTask.id) return;
-
-    // Work with paginated items only
-    const draggedIndex = pagination.paginatedItems.findIndex(
-      (t) => t.id === draggedTask.id,
-    );
-    const targetIndex = pagination.paginatedItems.findIndex(
-      (t) => t.id === targetTask.id,
-    );
-
-    const reordered = [...pagination.paginatedItems];
-    reordered.splice(draggedIndex, 1);
-
-    const insertIndex =
-      draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
-    reordered.splice(insertIndex, 0, draggedTask);
-
-    // Use reorderTasks for a single mutation instead of multiple updates
+  const {
+    draggedItem: draggedTask,
+    dragOverId,
+    handleDragStart,
+    handleDragEnd,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+  } = useDraggableList<Task>(pagination.paginatedItems, (reordered) => {
     reorderTasks.mutate({
       taskIds: reordered.map((task) => task.id),
-      boardId: null, // null for unassigned/inbox tasks
+      boardId: null,
     });
-
-    setDraggedTask(null);
-  };
+  });
 
   const isCustomSort = activeFilters.sort === "custom";
 
@@ -376,56 +322,20 @@ const InboxView: React.FC = () => {
 
       {/* Task List */}
       <div className="space-y-3">
-        {/* Drop zone for top position */}
-        {isCustomSort &&
-          draggedTask &&
-          pagination.paginatedItems.length > 0 && (
-            <div
-              onDragOver={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setDragOverId("__top__");
-              }}
-              onDragLeave={() => setDragOverId(null)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setDragOverId(null);
-                if (!draggedTask) return;
-
-                const draggedIndex = pagination.paginatedItems.findIndex(
-                  (t) => t.id === draggedTask.id,
-                );
-
-                if (draggedIndex === 0) return;
-
-                const reordered = [...pagination.paginatedItems];
-                reordered.splice(draggedIndex, 1);
-                reordered.unshift(draggedTask);
-
-                // Use reorderTasks for a single mutation
-                reorderTasks.mutate({
-                  taskIds: reordered.map((task) => task.id),
-                  boardId: "", // Empty string for unassigned tasks
-                });
-
-                setDraggedTask(null);
-              }}
-              className={`h-8 flex items-center justify-center transition-all duration-200 -mb-2 ${
-                dragOverId === "__top__"
-                  ? "bg-primary/10 border-2 border-dashed border-primary rounded-lg"
-                  : "border-2 border-transparent"
-              }`}
-            >
-              {dragOverId === "__top__" && (
-                <span className="text-sm text-primary font-medium">
-                  Drop here to move to top
-                </span>
-              )}
-            </div>
-          )}
+        <DroppableTopZone
+          visible={
+            isCustomSort &&
+            !!draggedTask &&
+            pagination.paginatedItems.length > 0
+          }
+          isActive={dragOverId === "__top__"}
+          onDragOver={(e) => handleDragOver(e)}
+          onDragLeave={handleDragLeave}
+          onDrop={(e) => handleDrop(e)}
+        />
         {pagination.paginatedItems.map((task) => {
           const isDragging = draggedTask?.id === task.id;
-          const isDropTarget = dragOverId === task.id;
+          const isDropTarget = dragOverId === String(task.id);
           return (
             <div
               key={`${task.id}-${collapseKey}`}

@@ -12,7 +12,11 @@ import { supabase } from "../lib/supabase";
 import { logger } from "../lib/logger";
 import { getBoardTemplateType } from "../utils/taskConstants";
 import { getNextOccurrenceDate } from "../utils/taskHelpers";
-import { CreateBoardSchema, validateInput } from "./tasksService.validation";
+import {
+  CreateBoardSchema,
+  CreateTaskSchema,
+  validateInput,
+} from "./tasksService.validation";
 import type {
   Board,
   BoardSection,
@@ -120,9 +124,10 @@ export async function createBoard(
   try {
     // SECURITY: Validate input
     const validatedData = validateInput(CreateBoardSchema, {
-      title: boardData.name,
-      is_template: boardData.is_public,
-      category: boardData.board_type,
+      name: boardData.name,
+      is_public: boardData.is_public,
+      board_type: boardData.board_type,
+      template_type: boardData.template_type ?? null,
     });
 
     const {
@@ -155,7 +160,7 @@ export async function createBoard(
     // newly created row within the same transaction.
     const { error: insertError } = await supabase.from("task_boards").insert({
       user_id: user.id,
-      name: validatedData.title,
+      name: validatedData.name,
       icon: boardData.icon || null,
       icon_color: boardData.icon_color || null,
       is_public: boardData.is_public || false,
@@ -172,7 +177,7 @@ export async function createBoard(
       .from("task_boards")
       .select()
       .eq("user_id", user.id)
-      .eq("name", validatedData.title)
+      .eq("name", validatedData.name)
       .order("created_at", { ascending: false })
       .limit(1)
       .single();
@@ -651,6 +656,16 @@ export async function createTask(
   taskData: CreateTaskData,
 ): Promise<ServiceResponse<Task>> {
   try {
+    const validatedTaskData = validateInput(CreateTaskSchema, {
+      title: taskData.title,
+      description: taskData.description ?? null,
+      status: taskData.status ?? "todo",
+      due_date: taskData.due_date ?? null,
+      board_id: taskData.board_id,
+      section_id: taskData.section_id ?? null,
+      item_data: taskData.item_data ?? null,
+    });
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -664,17 +679,20 @@ export async function createTask(
       .limit(1);
 
     // Handle null board_id properly (inbox tasks)
-    if (taskData.board_id) {
-      existingTasksQuery = existingTasksQuery.eq("board_id", taskData.board_id);
+    if (validatedTaskData.board_id) {
+      existingTasksQuery = existingTasksQuery.eq(
+        "board_id",
+        validatedTaskData.board_id,
+      );
     } else {
       existingTasksQuery = existingTasksQuery.is("board_id", null);
     }
 
     // Handle null section_id properly
-    if (taskData.section_id) {
+    if (validatedTaskData.section_id) {
       existingTasksQuery = existingTasksQuery.eq(
         "section_id",
-        taskData.section_id,
+        validatedTaskData.section_id,
       );
     } else {
       existingTasksQuery = existingTasksQuery.is("section_id", null);
@@ -691,15 +709,15 @@ export async function createTask(
       .from("tasks")
       .insert({
         user_id: user.id,
-        board_id: taskData.board_id,
-        section_id: taskData.section_id || null,
-        title: taskData.title,
-        description: taskData.description || null,
+        board_id: validatedTaskData.board_id,
+        section_id: validatedTaskData.section_id || null,
+        title: validatedTaskData.title,
+        description: validatedTaskData.description || null,
         icon: taskData.icon ?? null,
         icon_color: taskData.icon_color ?? null,
-        status: taskData.status || "todo",
-        due_date: taskData.due_date || null,
-        item_data: taskData.item_data || null,
+        status: validatedTaskData.status,
+        due_date: validatedTaskData.due_date || null,
+        item_data: validatedTaskData.item_data || null,
         display_order: nextOrder,
         // Repeatable task fields
         is_repeatable: taskData.is_repeatable || null,

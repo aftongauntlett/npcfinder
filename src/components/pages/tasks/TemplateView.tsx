@@ -15,9 +15,11 @@ import { JobTrackerView } from "../../tasks/views/JobTrackerView";
 import { RecipeListView } from "../../tasks/views/RecipeListView";
 import { KanbanView } from "../../tasks/views/KanbanView";
 import ConfirmationModal from "../../shared/ui/ConfirmationModal";
+import DroppableTopZone from "../../shared/common/DroppableTopZone";
 import FilterSortMenu, {
   FilterSortSection,
 } from "../../shared/common/FilterSortMenu";
+import { useDraggableList } from "../../../hooks/useDraggableList";
 import {
   useDeleteBoard,
   useReorderBoards,
@@ -89,8 +91,6 @@ const TemplateView: React.FC<TemplateViewProps> = ({
     sort: "custom",
   });
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [draggedBoard, setDraggedBoard] = useState<BoardWithStats | null>(null);
-  const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   const meta =
     TEMPLATE_META[templateType as keyof typeof TEMPLATE_META] ||
@@ -121,68 +121,6 @@ const TemplateView: React.FC<TemplateViewProps> = ({
           setDeletingBoardId(null);
         });
     }
-  };
-
-  const handleDragStart = (e: React.DragEvent, board: BoardWithStats) => {
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", board.id);
-    setDraggedBoard(board);
-    setTimeout(() => {
-      const dragElement = e.currentTarget as HTMLElement;
-      if (dragElement) {
-        dragElement.style.opacity = "0.5";
-      }
-    }, 0);
-  };
-
-  const handleDragEnd = (e: React.DragEvent) => {
-    const dragElement = e.currentTarget as HTMLElement;
-    if (dragElement) {
-      dragElement.style.opacity = "1";
-    }
-    setDraggedBoard(null);
-    setDragOverId(null);
-  };
-
-  const handleDragOver = (e: React.DragEvent, targetBoard: BoardWithStats) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    if (draggedBoard && draggedBoard.id !== targetBoard.id) {
-      setDragOverId(targetBoard.id);
-    }
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    const relatedTarget = e.relatedTarget as HTMLElement;
-    if (!relatedTarget || !e.currentTarget.contains(relatedTarget)) {
-      setDragOverId(null);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent, targetBoard: BoardWithStats) => {
-    e.preventDefault();
-    setDragOverId(null);
-
-    if (!draggedBoard || draggedBoard.id === targetBoard.id) return;
-
-    const draggedIndex = filteredBoards.findIndex(
-      (b) => b.id === draggedBoard.id,
-    );
-    const targetIndex = filteredBoards.findIndex(
-      (b) => b.id === targetBoard.id,
-    );
-
-    const reordered = [...filteredBoards];
-    reordered.splice(draggedIndex, 1);
-
-    const insertIndex =
-      draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
-    reordered.splice(insertIndex, 0, draggedBoard);
-
-    // Use reorderBoards for a single mutation instead of multiple updates
-    reorderBoards.mutate(reordered.map((board) => board.id));
-
-    setDraggedBoard(null);
   };
 
   const isCustomSort = activeFilters.sort === "custom";
@@ -238,6 +176,18 @@ const TemplateView: React.FC<TemplateViewProps> = ({
       board.name.toLowerCase().includes(query),
     );
   }, [sortedBoards, searchQuery]);
+
+  const {
+    draggedItem: draggedBoard,
+    dragOverId,
+    handleDragStart,
+    handleDragEnd,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+  } = useDraggableList<BoardWithStats>(filteredBoards, (reordered) => {
+    reorderBoards.mutate(reordered.map((board) => board.id));
+  });
 
   if (boards.length === 0) {
     // For singleton types, board will be auto-created, so just show static informational state
@@ -460,52 +410,17 @@ const TemplateView: React.FC<TemplateViewProps> = ({
 
       {/* Boards List */}
       <div className="space-y-3">
-        {/* Drop zone for top position */}
-        {isCustomSort && draggedBoard && filteredBoards.length > 0 && (
-          <div
-            onDragOver={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setDragOverId("__top__");
-            }}
-            onDragLeave={() => setDragOverId(null)}
-            onDrop={(e) => {
-              e.preventDefault();
-              setDragOverId(null);
-              if (!draggedBoard) return;
-
-              const draggedIndex = filteredBoards.findIndex(
-                (b) => b.id === draggedBoard.id,
-              );
-
-              if (draggedIndex === 0) return;
-
-              const reordered = [...filteredBoards];
-              reordered.splice(draggedIndex, 1);
-              reordered.unshift(draggedBoard);
-
-              // Use reorderBoards for a single mutation
-              reorderBoards.mutate(reordered.map((board) => board.id));
-
-              setDraggedBoard(null);
-            }}
-            className={`h-8 flex items-center justify-center transition-all duration-200 -mb-2 ${
-              dragOverId === "__top__"
-                ? "bg-primary/10 border-2 border-dashed border-primary rounded-lg"
-                : "border-2 border-transparent"
-            }`}
-          >
-            {dragOverId === "__top__" && (
-              <span className="text-sm text-primary font-medium">
-                Drop here to move to top
-              </span>
-            )}
-          </div>
-        )}
+        <DroppableTopZone
+          visible={isCustomSort && !!draggedBoard && filteredBoards.length > 0}
+          isActive={dragOverId === "__top__"}
+          onDragOver={(e) => handleDragOver(e)}
+          onDragLeave={handleDragLeave}
+          onDrop={(e) => handleDrop(e)}
+        />
         {filteredBoards.map((board) => {
           const isStarter = board.field_config?.starter === true;
           const isDragging = draggedBoard?.id === board.id;
-          const isDropTarget = dragOverId === board.id;
+          const isDropTarget = dragOverId === String(board.id);
           return (
             <div
               key={board.id}

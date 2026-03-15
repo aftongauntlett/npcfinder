@@ -32,7 +32,7 @@ type ViewType = "tasks" | "kanban" | "recipes" | "job_applications";
 
 // Static page meta options (stable reference)
 const pageMetaOptions = {
-  title: "Tasks",
+  title: "Labs",
   description: "Manage your tasks with flexible board-based organization",
   noIndex: true,
 };
@@ -90,7 +90,7 @@ const TasksPage: React.FC = () => {
   const pageTitle = useMemo(() => {
     switch (selectedView) {
       case "tasks":
-        return "Tasks";
+        return "Labs";
       case "kanban":
         return "Kanban";
       case "recipes":
@@ -98,7 +98,7 @@ const TasksPage: React.FC = () => {
       case "job_applications":
         return "Job Applications";
       default:
-        return "Tasks";
+        return "Labs";
     }
   }, [selectedView]);
 

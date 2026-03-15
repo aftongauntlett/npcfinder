@@ -18,6 +18,53 @@ interface DashboardStats {
   pendingRecommendations: number;
 }
 
+interface CollectionMediaCounts {
+  moviesAndTv: number;
+  books: number;
+  music: number;
+  games: number;
+}
+
+async function fetchCollectionsMediaCounts(): Promise<CollectionMediaCounts> {
+  const { data: items, error: itemsError } = await supabase
+    .from("media_list_items")
+    .select("media_type");
+
+  if (itemsError) throw itemsError;
+
+  let moviesAndTv = 0;
+  let books = 0;
+  let music = 0;
+  let games = 0;
+
+  (items || []).forEach((item) => {
+    if (item.media_type === "movie" || item.media_type === "tv") {
+      moviesAndTv += 1;
+      return;
+    }
+
+    if (item.media_type === "book") {
+      books += 1;
+      return;
+    }
+
+    if (item.media_type === "game") {
+      games += 1;
+      return;
+    }
+
+    if (
+      item.media_type === "song" ||
+      item.media_type === "album" ||
+      item.media_type === "playlist"
+    ) {
+      music += 1;
+    }
+  });
+
+  return { moviesAndTv, books, music, games };
+}
+
 async function fetchDashboardStats(): Promise<DashboardStats> {
   const {
     data: { user },
@@ -35,6 +82,7 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
     bookRecsResult,
     musicRecsResult,
     gameRecsResult,
+    collectionCounts,
   ] = await Promise.all([
     supabase.from("user_watchlist").select("watched").eq("user_id", user.id),
     supabase.from("reading_list").select("read").eq("user_id", user.id),
@@ -68,6 +116,7 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
       .eq("to_user_id", user.id)
       .eq("status", "pending")
       .is("opened_at", null),
+    fetchCollectionsMediaCounts(),
   ]);
 
   // Check for errors in media queries
@@ -114,16 +163,16 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
   const gameRecsCount = gameRecsResult.count || 0;
 
   const finalStats = {
-    moviesAndTvCount: moviesAndTvCount || 0,
-    moviesWatched: moviesWatched || 0,
+    moviesAndTvCount: collectionCounts.moviesAndTv || moviesAndTvCount || 0,
+    moviesWatched: collectionCounts.moviesAndTv || moviesWatched || 0,
     moviesToWatch: moviesToWatch || 0,
-    booksCount: booksCount || 0,
-    booksRead: booksRead || 0,
+    booksCount: collectionCounts.books || booksCount || 0,
+    booksRead: collectionCounts.books || booksRead || 0,
     booksReading: booksReading || 0,
     booksToRead: booksToRead || 0,
-    musicCount: musicCount || 0,
-    gamesCount: gamesCount || 0,
-    gamesPlayed: gamesPlayed || 0,
+    musicCount: collectionCounts.music || musicCount || 0,
+    gamesCount: collectionCounts.games || gamesCount || 0,
+    gamesPlayed: collectionCounts.games || gamesPlayed || 0,
     gamesToPlay: gamesToPlay || 0,
     friendsCount,
     pendingRecommendations:

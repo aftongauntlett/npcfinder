@@ -42,6 +42,7 @@ Agent rules:
 2. Never assume local ephemeral DB unless explicitly configured.
 3. Prefer migration files + review over direct destructive SQL.
 4. Call out blast radius for schema changes.
+5. If you create a migration file, run that migration before committing and report the execution result.
 
 ## 4) Codebase Navigation Hints
 
