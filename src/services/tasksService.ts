@@ -1027,6 +1027,11 @@ export async function startTaskTimer(
   startTime?: string,
 ): Promise<ServiceResponse<Task>> {
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { data, error } = await supabase
       .from("tasks")
       .update({
@@ -1035,6 +1040,7 @@ export async function startTaskTimer(
         timer_completed_at: null, // Reset completion if restarting timer
       })
       .eq("id", taskId)
+      .eq("user_id", user.id)
       .select()
       .single();
 
@@ -1057,12 +1063,18 @@ export async function completeTaskTimer(
   taskId: string,
 ): Promise<ServiceResponse<Task>> {
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { data, error } = await supabase
       .from("tasks")
       .update({
         timer_completed_at: new Date().toISOString(),
       })
       .eq("id", taskId)
+      .eq("user_id", user.id)
       .select()
       .single();
 
@@ -1081,6 +1093,11 @@ export async function resetTaskTimer(
   taskId: string,
 ): Promise<ServiceResponse<Task>> {
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { data, error } = await supabase
       .from("tasks")
       .update({
@@ -1088,6 +1105,7 @@ export async function resetTaskTimer(
         timer_completed_at: null,
       })
       .eq("id", taskId)
+      .eq("user_id", user.id)
       .select()
       .single();
 
@@ -1252,6 +1270,29 @@ export async function updateBoardMemberRole(
   role: BoardMemberRole,
 ): Promise<ServiceResponse<boolean>> {
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
+    const { data: member, error: memberError } = await supabase
+      .from("task_board_members")
+      .select("board_id")
+      .eq("id", memberId)
+      .single();
+
+    if (memberError) throw memberError;
+
+    const { data: board, error: boardError } = await supabase
+      .from("task_boards")
+      .select("id")
+      .eq("id", member.board_id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (boardError) throw boardError;
+    if (!board) throw new Error("Only board owners can update member roles");
+
     const { error } = await supabase
       .from("task_board_members")
       .update({ role })

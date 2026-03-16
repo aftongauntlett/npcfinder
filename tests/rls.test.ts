@@ -4,6 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createClient } from "@supabase/supabase-js";
 
 // Mock the Supabase client
 vi.mock("../src/lib/supabase", () => ({
@@ -252,18 +253,16 @@ describe("Watchlist RLS Policies", () => {
   });
 });
 
-describe("Board Sharing RLS Policies", () => {
+describe("Task Board Members RLS Policies", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("should prevent non-owner editors from updating share permissions", async () => {
-    // Mock a user with can_edit = true trying to update share permissions
-    // This should fail because only board owners can update shares
+  it("should prevent non-owner editors from updating member roles", async () => {
     const mockError = {
       code: "42501",
       message: "new row violates row-level security policy",
-      details: "Policy violation on table board_shares",
+      details: "Policy violation on table task_board_members",
       hint: null,
     };
 
@@ -276,75 +275,71 @@ describe("Board Sharing RLS Policies", () => {
       }),
     } as any);
 
-    // Attempt to update share permission as a non-owner editor
     const { error } = await supabase
-      .from("board_shares")
-      .update({ can_edit: false })
-      .eq("id", "some-share-id");
+      .from("task_board_members")
+      .update({ role: "viewer" })
+      .eq("id", "some-member-id");
 
     expect(error).toBeTruthy();
     expect(error?.code).toBe("42501");
   });
 
-  it("should allow board owners to update share permissions", async () => {
-    // Mock successful share permission update by board owner
+  it("should allow board owners to update member roles", async () => {
     vi.spyOn(supabase, "from").mockReturnValue({
       update: vi.fn().mockReturnValue({
         eq: vi.fn().mockResolvedValue({
-          data: { id: "share-id", can_edit: false },
+          data: { id: "member-id", role: "viewer" },
           error: null,
         }),
       }),
     } as any);
 
     const { data, error } = await supabase
-      .from("board_shares")
-      .update({ can_edit: false })
-      .eq("id", "share-id");
+      .from("task_board_members")
+      .update({ role: "viewer" })
+      .eq("id", "member-id");
 
     expect(error).toBeNull();
     expect(data).toBeTruthy();
   });
 
-  it("should allow board owners to create shares", async () => {
-    // Mock successful share creation by board owner
+  it("should allow board owners to add board members", async () => {
     vi.spyOn(supabase, "from").mockReturnValue({
       insert: vi.fn().mockResolvedValue({
         data: {
-          id: "new-share-id",
+          id: "new-member-id",
           board_id: "board-id",
-          shared_with_user_id: "recipient-id",
-          can_edit: true,
+          user_id: "recipient-id",
+          role: "viewer",
         },
         error: null,
       }),
     } as any);
 
-    const { data, error } = await supabase.from("board_shares").insert({
+    const { data, error } = await supabase.from("task_board_members").insert({
       board_id: "board-id",
-      shared_with_user_id: "recipient-id",
-      can_edit: true,
+      user_id: "recipient-id",
+      role: "viewer",
     });
 
     expect(error).toBeNull();
     expect(data).toBeTruthy();
   });
 
-  it("should allow board owners to delete shares", async () => {
-    // Mock successful share deletion by board owner
+  it("should allow board owners to delete board members", async () => {
     vi.spyOn(supabase, "from").mockReturnValue({
       delete: vi.fn().mockReturnValue({
         eq: vi.fn().mockResolvedValue({
-          data: { id: "share-id" },
+          data: { id: "member-id" },
           error: null,
         }),
       }),
     } as any);
 
     const { error } = await supabase
-      .from("board_shares")
+      .from("task_board_members")
       .delete()
-      .eq("id", "share-id");
+      .eq("id", "member-id");
 
     expect(error).toBeNull();
   });
@@ -457,7 +452,7 @@ describe("User Data Isolation", () => {
     expect(result.data![0].user_id).toBe("user-a-id");
     // Verify that user B's data is not included
     expect(result.data!.every((task) => task.user_id === "user-a-id")).toBe(
-      true
+      true,
     );
   });
 
@@ -534,5 +529,198 @@ describe("User Data Isolation", () => {
     // Verify the result
     expect(result.data).toBeTruthy();
     expect(result.data![0].user_id).toBe("user-id");
+  });
+});
+
+const integrationConfig = {
+  url: process.env.VITE_SUPABASE_URL,
+  anonKey: process.env.VITE_SUPABASE_ANON_KEY,
+  serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  userAEmail: process.env.TEST_RLS_USER_A_EMAIL,
+  userAPassword: process.env.TEST_RLS_USER_A_PASSWORD,
+  userBEmail: process.env.TEST_RLS_USER_B_EMAIL,
+  userBPassword: process.env.TEST_RLS_USER_B_PASSWORD,
+  ownerEmail: process.env.TEST_RLS_OWNER_EMAIL,
+  ownerPassword: process.env.TEST_RLS_OWNER_PASSWORD,
+  viewerEmail: process.env.TEST_RLS_VIEWER_EMAIL,
+  viewerPassword: process.env.TEST_RLS_VIEWER_PASSWORD,
+};
+
+const hasIntegrationEnv =
+  !!integrationConfig.url &&
+  !!integrationConfig.anonKey &&
+  !!integrationConfig.serviceKey &&
+  !!integrationConfig.userAEmail &&
+  !!integrationConfig.userAPassword &&
+  !!integrationConfig.userBEmail &&
+  !!integrationConfig.userBPassword &&
+  !!integrationConfig.ownerEmail &&
+  !!integrationConfig.ownerPassword &&
+  !!integrationConfig.viewerEmail &&
+  !!integrationConfig.viewerPassword;
+
+const integrationDescribe = hasIntegrationEnv ? describe : describe.skip;
+
+integrationDescribe("RLS Integration Tests", () => {
+  function getServiceClient() {
+    return createClient(integrationConfig.url!, integrationConfig.serviceKey!);
+  }
+
+  async function signIn(email: string, password: string) {
+    const client = createClient(
+      integrationConfig.url!,
+      integrationConfig.anonKey!,
+    );
+    const { data, error } = await client.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error || !data.user) {
+      throw new Error(
+        `Failed to sign in integration user ${email}: ${error?.message ?? "unknown"}`,
+      );
+    }
+
+    return { client, userId: data.user.id };
+  }
+
+  it("integration: signed-in user cannot read another user's task data", async () => {
+    const userA = await signIn(
+      integrationConfig.userAEmail!,
+      integrationConfig.userAPassword!,
+    );
+    const userB = await signIn(
+      integrationConfig.userBEmail!,
+      integrationConfig.userBPassword!,
+    );
+    const serviceClient = getServiceClient();
+
+    const { data: insertedTask, error: insertError } = await serviceClient
+      .from("tasks")
+      .insert({
+        user_id: userB.userId,
+        title: "RLS integration isolation test",
+        status: "todo",
+      })
+      .select("id")
+      .single();
+
+    expect(insertError).toBeNull();
+    expect(insertedTask?.id).toBeTruthy();
+
+    const { data, error } = await userA.client
+      .from("tasks")
+      .select("id, user_id")
+      .eq("id", insertedTask!.id);
+
+    expect(error).toBeNull();
+    expect(data || []).toHaveLength(0);
+
+    await serviceClient.from("tasks").delete().eq("id", insertedTask!.id);
+  });
+
+  it("integration: validate_invite_code rejects wrong email for active code", async () => {
+    const serviceClient = getServiceClient();
+    const codeValue = `INT-${Date.now()}-A`;
+    const intendedEmail = "integration-correct@example.com";
+    const wrongEmail = "integration-wrong@example.com";
+
+    const { error: insertError } = await serviceClient
+      .from("invite_codes")
+      .insert({
+        code: codeValue,
+        is_active: true,
+        max_uses: 1,
+        current_uses: 0,
+        intended_email: intendedEmail,
+      });
+
+    expect(insertError).toBeNull();
+
+    const anonClient = createClient(
+      integrationConfig.url!,
+      integrationConfig.anonKey!,
+    );
+    const { data, error } = await anonClient.rpc("validate_invite_code", {
+      code_value: codeValue,
+      user_email: wrongEmail,
+    });
+
+    expect(error).toBeNull();
+    expect(data).toBe(false);
+
+    await serviceClient.from("invite_codes").delete().eq("code", codeValue);
+  });
+
+  it("integration: viewer board member can read but not update board tasks", async () => {
+    const serviceClient = getServiceClient();
+    const owner = await signIn(
+      integrationConfig.ownerEmail!,
+      integrationConfig.ownerPassword!,
+    );
+    const viewer = await signIn(
+      integrationConfig.viewerEmail!,
+      integrationConfig.viewerPassword!,
+    );
+
+    const { data: board, error: boardError } = await serviceClient
+      .from("task_boards")
+      .insert({
+        user_id: owner.userId,
+        name: `RLS Integration Board ${Date.now()}`,
+      })
+      .select("id")
+      .single();
+
+    expect(boardError).toBeNull();
+    expect(board?.id).toBeTruthy();
+
+    const { data: task, error: taskError } = await serviceClient
+      .from("tasks")
+      .insert({
+        user_id: owner.userId,
+        board_id: board!.id,
+        title: "Viewer permissions test task",
+        status: "todo",
+      })
+      .select("id")
+      .single();
+
+    expect(taskError).toBeNull();
+    expect(task?.id).toBeTruthy();
+
+    const { error: memberError } = await serviceClient
+      .from("task_board_members")
+      .insert({
+        board_id: board!.id,
+        user_id: viewer.userId,
+        role: "viewer",
+        invited_by: owner.userId,
+      });
+
+    expect(memberError).toBeNull();
+
+    const { data: readableTasks, error: readError } = await viewer.client
+      .from("tasks")
+      .select("id, board_id")
+      .eq("id", task!.id);
+
+    expect(readError).toBeNull();
+    expect((readableTasks || []).length).toBeGreaterThan(0);
+
+    const { error: updateError } = await viewer.client
+      .from("tasks")
+      .update({ title: "Viewer should not be able to update this" })
+      .eq("id", task!.id);
+
+    expect(updateError).toBeTruthy();
+
+    await serviceClient
+      .from("task_board_members")
+      .delete()
+      .eq("board_id", board!.id);
+    await serviceClient.from("tasks").delete().eq("id", task!.id);
+    await serviceClient.from("task_boards").delete().eq("id", board!.id);
   });
 });

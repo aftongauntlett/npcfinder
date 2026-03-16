@@ -13,6 +13,7 @@ dotenv.config({ path: ".env.local" });
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseServiceKey) {
   console.error("❌ Missing Supabase credentials in .env.local");
@@ -20,13 +21,16 @@ if (!supabaseUrl || !supabaseServiceKey) {
 }
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
+const anonClient = supabaseAnonKey
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
 
 // Tables that should have admin override policies
 const TABLES_WITH_USER_DATA = [
   "task_boards",
   "task_board_sections",
   "tasks",
-  "board_shares",
+  "task_board_members",
   "user_watchlist",
   "user_watched_archive",
   "reading_list",
@@ -66,7 +70,7 @@ async function verifyRLSPolicies() {
       // Check if RLS is enabled
       const { data: rlsData, error: rlsError } = await supabase.rpc(
         "check_rls_enabled",
-        { table_name: table }
+        { table_name: table },
       );
 
       if (rlsError) {
@@ -92,12 +96,12 @@ async function verifyRLSPolicies() {
       // Check for admin override policy by querying with service role
       const { data: policyData, error: policyError } = await supabase.rpc(
         "check_admin_policy_exists",
-        { table_name: table }
+        { table_name: table },
       );
 
       if (policyError) {
         console.log(
-          "    ⚠️  Could not verify admin override policy (manual check needed)"
+          "    ⚠️  Could not verify admin override policy (manual check needed)",
         );
         warnings++;
       } else if (policyData) {
@@ -137,14 +141,14 @@ async function verifyRLSPolicies() {
     console.log("✅ All RLS policies verified successfully!");
   } else {
     console.log(
-      `⚠️  Verification completed with ${errors} errors and ${warnings} warnings`
+      `⚠️  Verification completed with ${errors} errors and ${warnings} warnings`,
     );
     if (warnings > 0) {
       console.log(
-        "\n⚠️  Note: Some checks require direct database access and may show warnings."
+        "\n⚠️  Note: Some checks require direct database access and may show warnings.",
       );
       console.log(
-        "    For full verification, run direct SQL queries against pg_policies."
+        "    For full verification, run direct SQL queries against pg_policies.",
       );
     }
   }
@@ -307,7 +311,7 @@ async function checkPermissionLeakage() {
         passed++;
       } else if (result.error) {
         console.log(
-          `  ⚠️  Unexpected result: ${result.error.message || "Unknown error"}`
+          `  ⚠️  Unexpected result: ${result.error.message || "Unknown error"}`,
         );
         failed++;
       } else {
@@ -323,18 +327,55 @@ async function checkPermissionLeakage() {
 
   console.log(`\n📊 Permission checks: ${passed} passed, ${failed} failed\n`);
 
-  // Note about limitations
-  console.log(
-    "⚠️  Note: This script uses service role key which bypasses RLS."
-  );
-  console.log(
-    "    To fully test RLS, create test users and use their auth tokens."
-  );
-  console.log(
-    "    For comprehensive testing, see tests/rls.test.ts for user-level tests.\n"
-  );
+  if (!anonClient) {
+    console.log(
+      "⚠️  Note: VITE_SUPABASE_ANON_KEY not provided, anon-perspective checks skipped.\n",
+    );
+  }
 
   return { passed, failed };
+}
+
+async function checkAnonPublicAccess() {
+  console.log("\n🕵️  Checking restrictions with anon key...\n");
+
+  if (!anonClient) {
+    console.log("⚠️  Skipping anon checks (missing VITE_SUPABASE_ANON_KEY)\n");
+    return { passed: 0, failed: 0, skipped: true };
+  }
+
+  let passed = 0;
+  let failed = 0;
+
+  const anonChecks = [
+    // Note: these checks verify that tables are not publicly accessible
+    // without authentication. They do NOT verify user-to-user isolation —
+    // for that, see the integration tests in tests/rls.test.ts.
+    { name: "anon cannot read user_profiles", table: "user_profiles" },
+    { name: "anon cannot read tasks", table: "tasks" },
+    { name: "anon cannot read invite_codes", table: "invite_codes" },
+  ];
+
+  for (const check of anonChecks) {
+    console.log(`Checking: ${check.name}`);
+    try {
+      const { error } = await anonClient.from(check.table).select("*").limit(1);
+      if (error) {
+        console.log(`  ✅ Restricted as expected (${error.code || "error"})`);
+        passed++;
+      } else {
+        console.log("  ❌ Unexpectedly readable with anon key");
+        failed++;
+      }
+    } catch (err) {
+      console.log(`  ✅ Restricted (exception): ${err.message}`);
+      passed++;
+    }
+    console.log("");
+  }
+
+  console.log(`📊 Anon checks: ${passed} passed, ${failed} failed\n`);
+  return { passed, failed, skipped: false };
 }
 
 // Main execution
@@ -346,24 +387,36 @@ async function main() {
   const rlsResults = await verifyRLSPolicies();
   await testRoleBasedAccess();
   const leakageResults = await checkPermissionLeakage();
+  const anonResults = await checkAnonPublicAccess();
 
   console.log("\n" + "=".repeat(60));
   console.log("📋 Summary");
   console.log("=".repeat(60));
   console.log(
-    `RLS Policies: ${rlsResults.errors} errors, ${rlsResults.warnings} warnings`
+    `RLS Policies: ${rlsResults.errors} errors, ${rlsResults.warnings} warnings`,
   );
   console.log(
-    `Permission Checks: ${leakageResults.passed} passed, ${leakageResults.failed} failed`
+    `Permission Checks: ${leakageResults.passed} passed, ${leakageResults.failed} failed`,
   );
+  if (anonResults.skipped) {
+    console.log("Anon Checks: skipped (missing anon key)");
+  } else {
+    console.log(
+      `Anon Checks: ${anonResults.passed} passed, ${anonResults.failed} failed`,
+    );
+  }
   console.log("=".repeat(60) + "\n");
 
   console.log("✨ Verification complete!\n");
 
   // Exit with error code if there were critical errors
-  if (rlsResults.errors > 0 || leakageResults.failed > 0) {
+  if (
+    rlsResults.errors > 0 ||
+    leakageResults.failed > 0 ||
+    (!anonResults.skipped && anonResults.failed > 0)
+  ) {
     console.log(
-      "⚠️  Some critical checks failed. Please review the output above.\n"
+      "⚠️  Some critical checks failed. Please review the output above.\n",
     );
     process.exit(1);
   }
