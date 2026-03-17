@@ -162,18 +162,23 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
   const musicRecsCount = musicRecsResult.count || 0;
   const gameRecsCount = gameRecsResult.count || 0;
 
+  // Transitional blend:
+  // - `collectionCounts` is the new collections-first model.
+  // - watchlist/reading/music/game tables are legacy personal lists still counted
+  //   until migration is complete. Remove legacy sources once all users are migrated.
   const finalStats = {
-    moviesAndTvCount: collectionCounts.moviesAndTv || moviesAndTvCount || 0,
-    moviesWatched: collectionCounts.moviesAndTv || moviesWatched || 0,
-    moviesToWatch: moviesToWatch || 0,
-    booksCount: collectionCounts.books || booksCount || 0,
-    booksRead: collectionCounts.books || booksRead || 0,
-    booksReading: booksReading || 0,
-    booksToRead: booksToRead || 0,
-    musicCount: collectionCounts.music || musicCount || 0,
-    gamesCount: collectionCounts.games || gamesCount || 0,
-    gamesPlayed: collectionCounts.games || gamesPlayed || 0,
-    gamesToPlay: gamesToPlay || 0,
+    moviesAndTvCount:
+      (collectionCounts.moviesAndTv ?? 0) + (moviesAndTvCount ?? 0),
+    moviesWatched: (collectionCounts.moviesAndTv ?? 0) + (moviesWatched ?? 0),
+    moviesToWatch: moviesToWatch ?? 0,
+    booksCount: (collectionCounts.books ?? 0) + (booksCount ?? 0),
+    booksRead: (collectionCounts.books ?? 0) + (booksRead ?? 0),
+    booksReading: booksReading ?? 0,
+    booksToRead: booksToRead ?? 0,
+    musicCount: (collectionCounts.music ?? 0) + (musicCount ?? 0),
+    gamesCount: (collectionCounts.games ?? 0) + (gamesCount ?? 0),
+    gamesPlayed: (collectionCounts.games ?? 0) + (gamesPlayed ?? 0),
+    gamesToPlay: gamesToPlay ?? 0,
     friendsCount,
     pendingRecommendations:
       movieRecsCount + bookRecsCount + musicRecsCount + gameRecsCount,

@@ -1,5 +1,20 @@
 # API Setup
 
+## Supabase Edge Function Secrets (`populate-media-cache`)
+
+The `populate-media-cache` Edge Function reads provider keys from Supabase
+project secrets (not from client `VITE_` env vars). Set these before deploying
+or invoking the function:
+
+```bash
+supabase secrets set TMDB_API_KEY=your-key-here
+supabase secrets set OMDB_API_KEY=your-key-here
+supabase secrets set GOOGLE_BOOKS_API_KEY=your-key-here
+supabase secrets set RAWG_API_KEY=your-key-here
+```
+
+Without these secrets, cache-miss fetches in the function will fail in production.
+
 ## TMDB (Movies & TV)
 
 **Free tier: 3,000 requests/day**
@@ -79,13 +94,11 @@ VITE_OMDB_API_KEY=your-key-here
 
 **Note:** Optional-app works without it but provides richer movie details when configured.
 
-## ⚠️ RAWG API (Games) - PLANNED
+## RAWG API (Games)
 
-**Not Yet Implemented**
+Used for game search and cache enrichment, similar to how TMDB powers movie/TV search and detailed metadata.
 
-Games support is planned but not yet implemented. API key listed in `.env.example` for future use.
-
-### Future Setup
+### Setup
 
 1. Create account: https://rawg.io/apidocs
 2. Get API key
@@ -106,12 +119,12 @@ All APIs have built-in error handling in the app. If you hit limits, the app wil
 
 ## Cost Summary
 
-| API          | Cost | Limit                  |
-| ------------ | ---- | ---------------------- |
-| TMDB         | Free | 3,000/day              |
-| iTunes       | Free | Unlimited\*            |
-| Google Books | Free | Standard API quotas    |
-| OMDB         | Free | 1,000/day              |
-| RAWG         | Free | Planned (20,000/month) |
+| API          | Cost | Limit               |
+| ------------ | ---- | ------------------- |
+| TMDB         | Free | 3,000/day           |
+| iTunes       | Free | Unlimited\*         |
+| Google Books | Free | Standard API quotas |
+| OMDB         | Free | 1,000/day           |
+| RAWG         | Free | 20,000/month        |
 
 \*No published limits, reasonable use expected

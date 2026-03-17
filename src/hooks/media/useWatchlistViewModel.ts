@@ -10,8 +10,8 @@ import {
 } from "../useWatchlistQueries";
 import { useMediaFiltering } from "../useMediaFiltering";
 import { useUrlPaginationState } from "../useUrlPaginationState";
-import { fetchDetailedMediaInfo } from "../../utils/tmdbDetails";
 import { upsertCachedMediaDetails } from "@/services/mediaDetailsCacheService";
+import type { DetailedMediaInfo } from "@/utils/tmdbDetails";
 import {
   getPersistedFilters,
   persistFilters,
@@ -34,7 +34,10 @@ export function useWatchlistViewModel({
   initialFilter = "all",
 }: UseWatchlistViewModelProps) {
   const watchListQuery = useWatchlist();
-  const watchList = useMemo(() => watchListQuery.data ?? [], [watchListQuery.data]);
+  const watchList = useMemo(
+    () => watchListQuery.data ?? [],
+    [watchListQuery.data],
+  );
   const addToWatchlist = useAddToWatchlist();
   const toggleWatched = useToggleWatchlistWatched();
   const deleteFromWatchlist = useDeleteFromWatchlist();
@@ -42,19 +45,19 @@ export function useWatchlistViewModel({
   // Load persisted filter state
   const persistedFilters = getPersistedFilters(
     WATCHLIST_PERSISTENCE_KEY,
-    WATCHLIST_DEFAULT_FILTERS
+    WATCHLIST_DEFAULT_FILTERS,
   );
 
   // Filter state - use prop directly instead of state since it changes between tabs
   const filter = initialFilter;
   const [mediaTypeFilter, setMediaTypeFilter] = useState<MediaTypeFilter>(
-    persistedFilters.mediaTypeFilter as MediaTypeFilter
+    persistedFilters.mediaTypeFilter as MediaTypeFilter,
   );
   const [genreFilters, setGenreFilters] = useState<string[]>(
-    persistedFilters.genreFilters as string[]
+    persistedFilters.genreFilters as string[],
   );
   const [sortBy, setSortBy] = useState<WatchlistSortType>(
-    persistedFilters.sortBy as WatchlistSortType
+    persistedFilters.sortBy as WatchlistSortType,
   );
   // searchQuery is intentionally not persisted - resets on each visit for fresh search experience
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -108,7 +111,7 @@ export function useWatchlistViewModel({
 
         const itemGenres = item.genres.map((g) => g.trim().toLowerCase());
         const hasMatchingGenre = genreFilters.some((selectedGenre) =>
-          itemGenres.includes(selectedGenre)
+          itemGenres.includes(selectedGenre),
         );
         if (!hasMatchingGenre) return false;
       }
@@ -122,7 +125,7 @@ export function useWatchlistViewModel({
 
       return true;
     },
-    [filter, mediaTypeFilter, genreFilters, searchQuery]
+    [filter, mediaTypeFilter, genreFilters, searchQuery],
   );
 
   // Sort function based on current sort state
@@ -148,7 +151,7 @@ export function useWatchlistViewModel({
           );
       }
     },
-    [sortBy]
+    [sortBy],
   );
 
   // URL-based pagination state
@@ -180,30 +183,30 @@ export function useWatchlistViewModel({
         external_id: item.external_id,
         media_type: item.media_type,
       })),
-    [paginatedItems]
+    [paginatedItems],
   );
 
   usePrefetchWatchlistDetails(
     pageDetailItems,
-    watchListQuery.isSuccess && pageDetailItems.length > 0
+    watchListQuery.isSuccess && pageDetailItems.length > 0,
   );
 
   // Calculate counts for empty state logic
   const toWatchCount = useMemo(
     () => watchList.filter((item) => !item.watched).length,
-    [watchList]
+    [watchList],
   );
   const watchedCount = useMemo(
     () => watchList.filter((item) => item.watched).length,
-    [watchList]
+    [watchList],
   );
 
   const hasItemsForCurrentFilter =
     filter === "all"
       ? watchList.length > 0
       : filter === "to-watch"
-      ? toWatchCount > 0
-      : watchedCount > 0;
+        ? toWatchCount > 0
+        : watchedCount > 0;
 
   // Event handlers
   const handleAddToWatchList = useCallback(
@@ -211,15 +214,10 @@ export function useWatchlistViewModel({
       const shouldMarkAsWatched = filter === "watched";
       const mediaType = (result.media_type || "movie") as "movie" | "tv";
 
-      // Fetch detailed info to get genres, director, cast, etc.
-      const detailedInfo = await fetchDetailedMediaInfo(
-        result.external_id,
-        mediaType
-      );
-
-      if (detailedInfo) {
-        void upsertCachedMediaDetails(detailedInfo);
-      }
+      const detailedInfo = (await upsertCachedMediaDetails({
+        external_id: result.external_id,
+        media_type: mediaType,
+      })) as DetailedMediaInfo | null;
 
       void addToWatchlist.mutateAsync({
         external_id: result.external_id,
@@ -237,14 +235,14 @@ export function useWatchlistViewModel({
         runtime: detailedInfo?.runtime || null,
       });
     },
-    [addToWatchlist, filter]
+    [addToWatchlist, filter],
   );
 
   const handleToggleWatched = useCallback(
     (id: string | number) => {
       void toggleWatched.mutateAsync(String(id));
     },
-    [toggleWatched]
+    [toggleWatched],
   );
 
   const handleRemoveFromWatchList = useCallback(
@@ -255,7 +253,7 @@ export function useWatchlistViewModel({
       setItemToDelete(item);
       setShowDeleteModal(true);
     },
-    [watchList]
+    [watchList],
   );
 
   const handleConfirmDelete = useCallback(async () => {
@@ -276,7 +274,7 @@ export function useWatchlistViewModel({
       setCurrentPage(page);
       scrollRef?.current?.scrollIntoView({ behavior: "smooth" });
     },
-    [setCurrentPage]
+    [setCurrentPage],
   );
 
   return {

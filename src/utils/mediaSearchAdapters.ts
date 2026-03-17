@@ -43,39 +43,41 @@ interface TMDBResponse {
  */
 export async function searchMusic(query: string): Promise<MediaItem[]> {
   const url = `https://itunes.apple.com/search?term=${encodeURIComponent(
-    query
+    query,
   )}&limit=25&media=music`;
 
   // Use rate limiter for iTunes requests
   const response = await itunesLimiter.add(() => fetch(url));
   const data: iTunesResponse = await response.json();
 
-  return data.results.map((item) => {
-    // Map iTunes wrapperType to our media_type
-    // iTunes returns: "track", "collection", "artist"
-    // We want: "song", "album", "playlist"
-    let mediaType: "song" | "album" | "playlist" = "song";
-    if (item.wrapperType === "collection") {
-      mediaType = "album";
-    } else if (item.wrapperType === "track") {
-      mediaType = "song";
-    }
+  return data.results
+    .filter((item) => item.wrapperType !== "artist")
+    .map((item) => {
+      // Map iTunes wrapperType to our media_type
+      // iTunes returns: "track", "collection", "artist"
+      // We want: "song", "album", "playlist"
+      let mediaType: "song" | "album" | "playlist" = "song";
+      if (item.wrapperType === "collection") {
+        mediaType = "album";
+      } else if (item.wrapperType === "track") {
+        mediaType = "song";
+      }
 
-    return {
-      external_id: String(item.trackId || item.collectionId),
-      title: item.trackName || item.collectionName || "Unknown Title",
-      subtitle: item.artistName,
-      artist: item.artistName,
-      album: item.collectionName,
-      poster_url: item.artworkUrl100 || null,
-      release_date: item.releaseDate || null,
-      media_type: mediaType,
-      genre: item.primaryGenreName || null,
-      track_duration: item.trackTimeMillis || null,
-      track_count: item.trackCount || null,
-      preview_url: item.previewUrl || null,
-    };
-  });
+      return {
+        external_id: String(item.trackId || item.collectionId),
+        title: item.trackName || item.collectionName || "Unknown Title",
+        subtitle: item.artistName,
+        artist: item.artistName,
+        album: item.collectionName,
+        poster_url: item.artworkUrl100 || null,
+        release_date: item.releaseDate || null,
+        media_type: mediaType,
+        genre: item.primaryGenreName || null,
+        track_duration: item.trackTimeMillis || null,
+        track_count: item.trackCount || null,
+        preview_url: item.previewUrl || null,
+      };
+    });
 }
 
 /**
@@ -89,7 +91,7 @@ export async function searchMoviesAndTV(query: string): Promise<MediaItem[]> {
   }
 
   const url = `https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&query=${encodeURIComponent(
-    query
+    query,
   )}&include_adult=false`;
 
   // Use rate limiter for TMDB requests
@@ -118,7 +120,10 @@ export async function searchMoviesAndTV(query: string): Promise<MediaItem[]> {
  * Import searchBooks from '@/utils/bookSearchAdapters' instead.
  */
 export function searchBooks(query: string): Promise<MediaItem[]> {
-  logger.warn("Deprecated: Use searchBooks from bookSearchAdapters.ts instead", { query });
+  logger.warn(
+    "Deprecated: Use searchBooks from bookSearchAdapters.ts instead",
+    { query },
+  );
   return Promise.resolve([]);
 }
 
@@ -169,7 +174,7 @@ export async function searchGames(query: string): Promise<MediaItem[]> {
   }
 
   const url = `https://api.rawg.io/api/games?key=${apiKey}&search=${encodeURIComponent(
-    query
+    query,
   )}&page_size=25`;
 
   try {
@@ -209,7 +214,7 @@ export async function searchGames(query: string): Promise<MediaItem[]> {
  * Fetch detailed game information from RAWG API
  */
 export async function fetchGameDetails(
-  gameId: string
+  gameId: string,
 ): Promise<RAWGGameDetails | null> {
   const apiKey = import.meta.env.VITE_RAWG_API_KEY;
   if (!apiKey) {

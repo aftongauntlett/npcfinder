@@ -10,7 +10,6 @@ import { useDashboardStats } from "../../hooks/useDashboardStats";
 import { useTheme } from "../../hooks/useTheme";
 import { STATUS_MAP } from "../../utils/mediaStatus";
 import {
-  TrendingUpDown,
   Clock,
   Lightbulb,
   Film,
@@ -28,7 +27,7 @@ interface HomePageProps {
   user: User;
 }
 
-type TabId = "dashboard" | "friends" | "trending" | "recommendations";
+type TabId = "dashboard" | "friends" | "recommendations";
 
 // Static page meta options (stable reference)
 const pageMetaOptions = {
@@ -128,11 +127,6 @@ const HomePage: React.FC<HomePageProps> = () => {
         icon: UserPlus,
       },
       {
-        id: "trending" as TabId,
-        label: "Trending",
-        icon: TrendingUpDown,
-      },
-      {
         id: "recommendations" as TabId,
         label: "Recommendations",
         icon: Lightbulb,
@@ -221,7 +215,6 @@ const HomePage: React.FC<HomePageProps> = () => {
       {/* Main Content - Activity/Trending/Find Friends */}
       <DashboardContent
         activeTab={activeTab}
-        handleTabChange={(tabId) => handleTabChange(tabId as TabId)}
         showGettingStarted={showGettingStarted}
         setShowGettingStarted={setShowGettingStarted}
       />

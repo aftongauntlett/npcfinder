@@ -165,8 +165,8 @@ const MediaListItemComponent: React.FC<MediaListItemProps> = ({
   const customActions = useMemo(() => {
     const actions = [];
 
-    // Add recommend button if available and item is completed
-    if (isCompleted && onRecommend) {
+    // Add recommend button when action is provided
+    if (onRecommend) {
       actions.push({
         icon: <Lightbulb className="w-4 h-4" />,
         onClick: () => onRecommend(id),
@@ -337,7 +337,7 @@ const MediaListItemComponent: React.FC<MediaListItemProps> = ({
       personalRating,
       criticRating,
       audienceRating,
-    ]
+    ],
   );
 
   // Expanded content (shown when accordion opens) - memoized to prevent recreation
@@ -391,7 +391,7 @@ const MediaListItemComponent: React.FC<MediaListItemProps> = ({
       authors,
       publisher,
       isbn,
-    ]
+    ],
   );
 
   return (
@@ -419,16 +419,4 @@ const MediaListItemComponent: React.FC<MediaListItemProps> = ({
   );
 };
 
-// Memoize with custom comparison to prevent rerenders when key props unchanged
-export default React.memo(
-  MediaListItemComponent,
-  (prevProps, nextProps) =>
-    prevProps.id === nextProps.id &&
-    prevProps.title === nextProps.title &&
-    prevProps.posterUrl === nextProps.posterUrl &&
-    prevProps.isCompleted === nextProps.isCompleted &&
-    prevProps.personalRating === nextProps.personalRating &&
-    prevProps.onToggleComplete === nextProps.onToggleComplete &&
-    prevProps.onRecommend === nextProps.onRecommend &&
-    prevProps.onRemove === nextProps.onRemove
-);
+export default React.memo(MediaListItemComponent);

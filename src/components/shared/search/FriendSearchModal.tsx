@@ -41,7 +41,7 @@ export function FriendSearchModal({ isOpen, onClose }: FriendSearchModalProps) {
   const { data, isLoading } = useUserSearch(
     debouncedQuery,
     currentPage,
-    pageSize
+    pageSize,
   );
   const createConnection = useCreateConnection();
 
@@ -83,7 +83,6 @@ export function FriendSearchModal({ isOpen, onClose }: FriendSearchModalProps) {
 
         {/* Search Input */}
         <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
-          \n{" "}
           <Input
             ref={searchInputRef}
             type="text"

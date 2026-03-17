@@ -2,7 +2,7 @@
   "name": "npc-finder",
   "private": true,
   "version": "1.2.0",
-  "description": "Your personal dashboard for entertainment, music, games, tasks, and memories. Track, organize, and curate your life with flexible board-based task management.",
+  "description": "Invite-only media archive and social curation for trusted friends — movies, TV, books, games, and music.",
   "author": "Afton Gauntlett",
   "type": "module",
   "scripts": {

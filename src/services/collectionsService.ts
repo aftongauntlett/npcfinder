@@ -174,7 +174,6 @@ export async function getCollectionItems(
       .from("media_list_items")
       .select("*")
       .eq("list_id", collectionId)
-      .order("sort_order", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: true });
 
     if (error) throw error;
@@ -206,7 +205,7 @@ function normalizeMediaType(
     if (raw === "track") return "song";
     if (raw === "collection") return "album";
 
-    return "movie";
+    throw new Error(`Cannot normalize unknown media_type: ${String(raw)}`);
   }
 
   if (domain === "movies-tv") {
@@ -293,7 +292,7 @@ export async function addCollectionItem(params: {
       isbn: params.item.isbn ?? null,
       page_count: params.item.page_count ?? null,
       publisher: null,
-      sort_order: null,
+      // Reserved for future custom ordering feature.
     };
 
     return await addMediaItemToCollection({

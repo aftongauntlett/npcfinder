@@ -12,6 +12,14 @@ import {
 import MediaListItem from "@/components/media/MediaListItem";
 import ShareMediaListModal from "@/components/media/ShareMediaListModal";
 import AddItemToCollectionModal from "@/components/media/AddItemToCollectionModal";
+import SendMediaModal from "@/components/shared/media/SendMediaModal";
+import {
+  searchMoviesAndTV,
+  searchGames,
+  searchMusic,
+} from "@/utils/mediaSearchAdapters";
+import { searchBooks } from "@/utils/bookSearchAdapters";
+import type { CollectionItem } from "@/services/collectionsServiceTypes";
 
 export default function MediaCollectionTab(props: {
   collectionId: string;
@@ -24,6 +32,9 @@ export default function MediaCollectionTab(props: {
   const [showShare, setShowShare] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [recommendItem, setRecommendItem] = useState<CollectionItem | null>(
+    null,
+  );
 
   const { data: collection, isLoading: isCollectionLoading } =
     useCollection(collectionId);
@@ -39,6 +50,7 @@ export default function MediaCollectionTab(props: {
     !!user?.id && !!collection?.owner_id && user.id === collection.owner_id;
   const canEditItems = isOwner || myRole === "editor";
   const canManageMembers = canEditItems;
+  const canRecommendItems = !!user?.id;
 
   // Remove mutation needs a domain for legacy invalidation.
   const removeItem = useRemoveCollectionItem(
@@ -64,6 +76,61 @@ export default function MediaCollectionTab(props: {
     setShowDeleteConfirm(false);
     onDeleted();
   };
+
+  const recommendationConfig = useMemo(() => {
+    if (!recommendItem) return null;
+
+    if (
+      recommendItem.media_type === "movie" ||
+      recommendItem.media_type === "tv"
+    ) {
+      return {
+        mediaType: "movies" as const,
+        tableName: "movie_recommendations",
+        searchPlaceholder: "Search for movies or TV shows...",
+        searchFunction: searchMoviesAndTV,
+        recommendationTypes: [
+          { value: "watch", label: "Watch" },
+          { value: "rewatch", label: "Rewatch" },
+        ],
+        defaultRecommendationType: "watch",
+      };
+    }
+
+    if (recommendItem.media_type === "book") {
+      return {
+        mediaType: "books" as const,
+        tableName: "book_recommendations",
+        searchPlaceholder: "Search for books...",
+        searchFunction: searchBooks,
+        recommendationTypes: [{ value: "read", label: "Read" }],
+        defaultRecommendationType: "read",
+      };
+    }
+
+    if (recommendItem.media_type === "game") {
+      return {
+        mediaType: "games" as const,
+        tableName: "game_recommendations",
+        searchPlaceholder: "Search for games...",
+        searchFunction: searchGames,
+        recommendationTypes: [{ value: "play", label: "Play" }],
+        defaultRecommendationType: "play",
+      };
+    }
+
+    return {
+      mediaType: "music" as const,
+      tableName: "music_recommendations",
+      searchPlaceholder: "Search for songs, albums, or playlists...",
+      searchFunction: searchMusic,
+      recommendationTypes: [
+        { value: "listen", label: "Listen" },
+        { value: "relisten", label: "Relisten" },
+      ],
+      defaultRecommendationType: "listen",
+    };
+  }, [recommendItem]);
 
   return (
     <div className="container mx-auto px-4 sm:px-6">
@@ -145,6 +212,13 @@ export default function MediaCollectionTab(props: {
               isbn={item.isbn || undefined}
               pageCount={item.page_count || undefined}
               publisher={item.publisher || undefined}
+              onRecommend={
+                canRecommendItems
+                  ? () => {
+                      setRecommendItem(item);
+                    }
+                  : undefined
+              }
               onRemove={
                 canEditItems ? () => void handleRemove(item.id) : undefined
               }
@@ -183,6 +257,42 @@ export default function MediaCollectionTab(props: {
           confirmText={deleteList.isPending ? "Deleting..." : "Delete"}
           variant="danger"
           isLoading={deleteList.isPending}
+        />
+      )}
+
+      {recommendItem && recommendationConfig && (
+        <SendMediaModal
+          isOpen={!!recommendItem}
+          onClose={() => setRecommendItem(null)}
+          onSent={() => setRecommendItem(null)}
+          mediaType={recommendationConfig.mediaType}
+          tableName={recommendationConfig.tableName}
+          searchPlaceholder={recommendationConfig.searchPlaceholder}
+          searchFunction={recommendationConfig.searchFunction}
+          recommendationTypes={recommendationConfig.recommendationTypes}
+          defaultRecommendationType={
+            recommendationConfig.defaultRecommendationType
+          }
+          preselectedItem={{
+            external_id: recommendItem.external_id,
+            title: recommendItem.title,
+            subtitle: recommendItem.subtitle || undefined,
+            authors: recommendItem.authors || undefined,
+            artist: recommendItem.artist || undefined,
+            album: recommendItem.album || undefined,
+            poster_url: recommendItem.poster_url,
+            release_date: recommendItem.release_date,
+            description: recommendItem.description,
+            media_type: recommendItem.media_type,
+            page_count: recommendItem.page_count ?? undefined,
+            isbn: recommendItem.isbn ?? undefined,
+            categories: recommendItem.genres ?? undefined,
+            genres: recommendItem.genres ?? undefined,
+            metacritic: recommendItem.metacritic ?? undefined,
+            playtime: recommendItem.playtime ?? undefined,
+            platforms: recommendItem.platforms ?? undefined,
+            preview_url: recommendItem.preview_url ?? undefined,
+          }}
         />
       )}
     </div>

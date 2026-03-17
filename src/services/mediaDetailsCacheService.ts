@@ -4,17 +4,75 @@ import type { DetailedMediaInfo } from "@/utils/tmdbDetails";
 
 const DEFAULT_TTL_MS = 1000 * 60 * 60 * 24 * 180; // 180 days (mostly static)
 
-type MediaType = "movie" | "tv";
+export type MediaType =
+  | "movie"
+  | "tv"
+  | "book"
+  | "game"
+  | "song"
+  | "album"
+  | "playlist";
+
+export interface BookDetailedInfo {
+  external_id: string;
+  media_type: "book";
+  title: string;
+  authors: string | null;
+  poster_url: string | null;
+  release_date: string | null;
+  description: string | null;
+  page_count: number | null;
+  categories: string | null;
+  publisher: string | null;
+  isbn: string | null;
+  average_rating: number | null;
+}
+
+export interface GameDetailedInfo {
+  external_id: string;
+  media_type: "game";
+  title: string;
+  poster_url: string | null;
+  release_date: string | null;
+  description: string | null;
+  platforms: string | null;
+  genres: string | null;
+  rating: number | null;
+  metacritic: number | null;
+  playtime: number | null;
+}
+
+export interface MusicDetailedInfo {
+  external_id: string;
+  media_type: "song" | "album" | "playlist";
+  title: string;
+  artist: string | null;
+  album: string | null;
+  poster_url: string | null;
+  release_date: string | null;
+  genre: string | null;
+  track_duration: number | null;
+  track_count: number | null;
+  preview_url: string | null;
+}
+
+export type CachedMediaDetails =
+  | DetailedMediaInfo
+  | BookDetailedInfo
+  | GameDetailedInfo
+  | MusicDetailedInfo;
 
 type MediaDetailsCacheRow = {
   external_id: string;
   media_type: MediaType;
-  data: DetailedMediaInfo;
+  data: CachedMediaDetails;
   fetched_at: string;
   expires_at: string | null;
 };
 
-function isCacheFresh(row: Pick<MediaDetailsCacheRow, "fetched_at" | "expires_at">): boolean {
+function isCacheFresh(
+  row: Pick<MediaDetailsCacheRow, "fetched_at" | "expires_at">,
+): boolean {
   if (row.expires_at) {
     return Date.parse(row.expires_at) > Date.now();
   }
@@ -30,9 +88,9 @@ function toCacheKey(externalId: string, mediaType: MediaType): string {
  * Uses a simple OR filter because watchlist pages are small (10 items).
  */
 export async function getCachedMediaDetailsBatch(
-  items: Array<{ external_id: string; media_type: MediaType }>
-): Promise<Map<string, DetailedMediaInfo>> {
-  const results = new Map<string, DetailedMediaInfo>();
+  items: Array<{ external_id: string; media_type: MediaType }>,
+): Promise<Map<string, CachedMediaDetails>> {
+  const results = new Map<string, CachedMediaDetails>();
   if (items.length === 0) return results;
 
   try {
@@ -40,7 +98,7 @@ export async function getCachedMediaDetailsBatch(
     const orFilter = items
       .map(
         (item) =>
-          `and(external_id.eq.${encodeURIComponent(item.external_id)},media_type.eq.${item.media_type})`
+          `and(external_id.eq.${encodeURIComponent(item.external_id)},media_type.eq.${item.media_type})`,
       )
       .join(",");
 
@@ -66,8 +124,8 @@ export async function getCachedMediaDetailsBatch(
 
 export async function getCachedMediaDetails(
   externalId: string,
-  mediaType: MediaType
-): Promise<DetailedMediaInfo | null> {
+  mediaType: MediaType,
+): Promise<CachedMediaDetails | null> {
   try {
     const { data, error } = await supabase
       .from("media_details_cache")
@@ -85,39 +143,64 @@ export async function getCachedMediaDetails(
 
     return row.data;
   } catch (error) {
-    logger.warn("Failed to read media details cache row", { error, externalId, mediaType });
+    logger.warn("Failed to read media details cache row", {
+      error,
+      externalId,
+      mediaType,
+    });
     return null;
   }
 }
 
 export async function upsertCachedMediaDetails(
-  details: DetailedMediaInfo,
-  options?: { ttlMs?: number }
-): Promise<void> {
+  details: Pick<CachedMediaDetails, "external_id" | "media_type">,
+  options?: { ttlMs?: number },
+): Promise<CachedMediaDetails | null> {
   const ttlMs = options?.ttlMs ?? DEFAULT_TTL_MS;
 
   try {
-    const nowIso = new Date().toISOString();
-    const expiresAtIso = new Date(Date.now() + ttlMs).toISOString();
-
-    const { error } = await supabase.from("media_details_cache").upsert(
+    const { data, error } = await supabase.functions.invoke(
+      "populate-media-cache",
       {
-        external_id: details.external_id,
-        media_type: details.media_type,
-        data: details,
-        fetched_at: nowIso,
-        expires_at: expiresAtIso,
-        updated_at: nowIso,
+        body: {
+          externalId: details.external_id,
+          mediaType: details.media_type,
+          ttlMs,
+        },
       },
-      { onConflict: "external_id,media_type" }
     );
 
-    if (error) throw error;
+    if (error) {
+      const status = (error as { context?: { status?: number } })?.context
+        ?.status;
+
+      if (status === 403) {
+        logger.warn("populate-media-cache denied (403)", {
+          externalId: details.external_id,
+          mediaType: details.media_type,
+          status,
+          message: error.message,
+        });
+        return null;
+      }
+
+      throw error;
+    }
+
+    if (data && typeof data === "object" && "error" in data) {
+      throw new Error(
+        String((data as { error?: string }).error || "Unknown error"),
+      );
+    }
+
+    return ((data as { details?: CachedMediaDetails } | null)?.details ??
+      null) as CachedMediaDetails | null;
   } catch (error) {
     logger.warn("Failed to upsert media details cache", {
       error,
       externalId: details.external_id,
       mediaType: details.media_type,
     });
+    return null;
   }
 }

@@ -58,7 +58,6 @@ export interface CollectionItem {
   isbn: string | null;
   page_count: number | null;
   publisher: string | null;
-  sort_order: number | null;
   created_at: string;
   updated_at: string;
 }

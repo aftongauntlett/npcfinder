@@ -9,7 +9,7 @@ import * as recommendationsService from "../services/recommendationsService";
 import { queryKeys } from "../lib/queryKeys";
 import { useAuth } from "../contexts/AuthContext";
 import { parseSupabaseError } from "../utils/errorUtils";
-import { fetchMultipleMediaDetails, type DetailedMediaInfo } from "../utils/tmdbDetails";
+import { type DetailedMediaInfo } from "../utils/tmdbDetails";
 import {
   getCachedMediaDetailsBatch,
   upsertCachedMediaDetails,
@@ -70,7 +70,7 @@ export function useAddToWatchlist() {
 
       // Snapshot the previous value
       const previousWatchlist = queryClient.getQueryData<WatchlistItem[]>(
-        queryKeys.watchlist.list(user?.id)
+        queryKeys.watchlist.list(user?.id),
       );
 
       // Optimistically update with temporary ID
@@ -101,7 +101,7 @@ export function useAddToWatchlist() {
 
         queryClient.setQueryData<WatchlistItem[]>(
           queryKeys.watchlist.list(user?.id),
-          [optimisticItem, ...previousWatchlist]
+          [optimisticItem, ...previousWatchlist],
         );
       }
 
@@ -114,7 +114,7 @@ export function useAddToWatchlist() {
       if (context?.previousWatchlist) {
         queryClient.setQueryData(
           queryKeys.watchlist.list(user?.id),
-          context.previousWatchlist
+          context.previousWatchlist,
         );
       }
     },
@@ -127,7 +127,7 @@ export function useAddToWatchlist() {
           if (!old) return [data];
           // Replace temporary item with real data from server
           return [data, ...old.filter((item) => !item.id.startsWith("temp-"))];
-        }
+        },
       );
     },
 
@@ -165,7 +165,7 @@ export function useToggleWatchlistWatched() {
       });
 
       const previousWatchlist = queryClient.getQueryData<WatchlistItem[]>(
-        queryKeys.watchlist.list(user?.id)
+        queryKeys.watchlist.list(user?.id),
       );
 
       // Optimistically update watched status
@@ -179,8 +179,8 @@ export function useToggleWatchlistWatched() {
                   watched: !item.watched,
                   watched_at: !item.watched ? new Date().toISOString() : null,
                 }
-              : item
-          )
+              : item,
+          ),
         );
       }
 
@@ -191,7 +191,7 @@ export function useToggleWatchlistWatched() {
       if (context?.previousWatchlist) {
         queryClient.setQueryData(
           queryKeys.watchlist.list(user?.id),
-          context.previousWatchlist
+          context.previousWatchlist,
         );
       }
     },
@@ -234,15 +234,15 @@ export function useUpdateWatchlistNotes() {
       });
 
       const previousWatchlist = queryClient.getQueryData<WatchlistItem[]>(
-        queryKeys.watchlist.list(user?.id)
+        queryKeys.watchlist.list(user?.id),
       );
 
       if (previousWatchlist) {
         queryClient.setQueryData<WatchlistItem[]>(
           queryKeys.watchlist.list(user?.id),
           previousWatchlist.map((item) =>
-            item.id === id ? { ...item, notes } : item
-          )
+            item.id === id ? { ...item, notes } : item,
+          ),
         );
       }
 
@@ -253,7 +253,7 @@ export function useUpdateWatchlistNotes() {
       if (context?.previousWatchlist) {
         queryClient.setQueryData(
           queryKeys.watchlist.list(user?.id),
-          context.previousWatchlist
+          context.previousWatchlist,
         );
       }
     },
@@ -264,7 +264,7 @@ export function useUpdateWatchlistNotes() {
         (old) => {
           if (!old) return [data];
           return old.map((item) => (item.id === data.id ? data : item));
-        }
+        },
       );
     },
   });
@@ -295,14 +295,14 @@ export function useDeleteFromWatchlist() {
       });
 
       const previousWatchlist = queryClient.getQueryData<WatchlistItem[]>(
-        queryKeys.watchlist.list(user?.id)
+        queryKeys.watchlist.list(user?.id),
       );
 
       // Optimistically remove the item
       if (previousWatchlist) {
         queryClient.setQueryData<WatchlistItem[]>(
           queryKeys.watchlist.list(user?.id),
-          previousWatchlist.filter((item) => item.id !== id)
+          previousWatchlist.filter((item) => item.id !== id),
         );
       }
 
@@ -314,7 +314,7 @@ export function useDeleteFromWatchlist() {
       if (context?.previousWatchlist) {
         queryClient.setQueryData(
           queryKeys.watchlist.list(user?.id),
-          context.previousWatchlist
+          context.previousWatchlist,
         );
       }
     },
@@ -326,7 +326,7 @@ export function useDeleteFromWatchlist() {
         (old) => {
           if (!old) return [];
           return old.filter((item) => item.id !== id);
-        }
+        },
       );
     },
 
@@ -361,7 +361,7 @@ export function useIsInWatchlist(external_id: string | null) {
 /**
  * Get a Set of external IDs in the watchlist for efficient lookups
  * Use this when checking many items to avoid repeated Array.prototype.some scans
- * 
+ *
  * @example
  * const watchlistIds = useWatchlistIds();
  * const isInWatchlist = watchlistIds.has(external_id);
@@ -376,7 +376,7 @@ export function useWatchlistIds() {
 
 export function usePrefetchWatchlistDetails(
   items: Array<{ external_id: string; media_type: "movie" | "tv" }>,
-  enabled: boolean = true
+  enabled: boolean = true,
 ) {
   const queryClient = useQueryClient();
 
@@ -386,7 +386,10 @@ export function usePrefetchWatchlistDetails(
     let cancelled = false;
 
     const uncached = items.filter((item) => {
-      const key = queryKeys.watchlist.details(item.external_id, item.media_type);
+      const key = queryKeys.watchlist.details(
+        item.external_id,
+        item.media_type,
+      );
       return !queryClient.getQueryData<DetailedMediaInfo>(key);
     });
 
@@ -400,31 +403,45 @@ export function usePrefetchWatchlistDetails(
 
         const remaining: typeof uncached = [];
         uncached.forEach((item) => {
-          const cachedDetails = cached.get(`${item.external_id}:${item.media_type}`);
+          const cachedDetails = cached.get(
+            `${item.external_id}:${item.media_type}`,
+          );
           if (cachedDetails) {
             queryClient.setQueryData(
               queryKeys.watchlist.details(item.external_id, item.media_type),
-              cachedDetails
+              cachedDetails,
             );
           } else {
             remaining.push(item);
           }
         });
 
-        // 2) Fill any misses via external APIs (rate limiters apply)
+        // 2) Fill any misses via edge function (provider fetch + cache write-through)
         if (remaining.length === 0) return;
 
-        const fetched = await fetchMultipleMediaDetails(remaining);
+        const settled = await Promise.allSettled(
+          remaining.map(async (item) => {
+            const details = await upsertCachedMediaDetails({
+              external_id: item.external_id,
+              media_type: item.media_type,
+            });
+
+            return { item, details };
+          }),
+        );
+
         if (cancelled) return;
 
-        fetched.forEach((details, externalId) => {
-          queryClient.setQueryData(
-            queryKeys.watchlist.details(externalId, details.media_type),
-            details
-          );
+        settled.forEach((result) => {
+          if (result.status !== "fulfilled") return;
+          const details = result.value.details;
+          const item = result.value.item;
+          if (!details) return;
 
-          // 3) Persist to Supabase cache (fire-and-forget)
-          void upsertCachedMediaDetails(details);
+          queryClient.setQueryData(
+            queryKeys.watchlist.details(item.external_id, item.media_type),
+            details,
+          );
         });
       } catch (error) {
         logger.warn("Failed to prefetch watchlist details", { error });

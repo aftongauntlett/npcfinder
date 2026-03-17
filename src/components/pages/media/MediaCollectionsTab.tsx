@@ -173,7 +173,17 @@ export default function MediaCollectionsTab(props: {
                   </div>
                   <span className="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700">
                     {c.media_domain}
-                    {c.is_public ? " • public" : ""}
+                    {c.is_public ? " • app-wide" : " • private"}
+                  </span>
+                  <span
+                    className="text-[10px] px-2 py-1 rounded border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400"
+                    title={
+                      c.is_public
+                        ? "App-wide: all NPC Finder members can browse this collection."
+                        : "Private: only owner + explicitly shared members can view this collection."
+                    }
+                  >
+                    {c.is_public ? "Visible to members" : "Shared by invite"}
                   </span>
                 </div>
                 {c.description ? (
@@ -223,7 +233,7 @@ export default function MediaCollectionsTab(props: {
               { value: "private", label: "Private (owner + members)" },
               {
                 value: "public",
-                label: "Public (any logged-in user can view)",
+                label: "App-wide (all NPC Finder members can browse)",
               },
             ]}
           />
