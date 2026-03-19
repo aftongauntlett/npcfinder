@@ -12,12 +12,17 @@ import LandingButton from "../landing/LandingButton";
 import HeroConstellation from "../effects/HeroConstellation";
 import { FeatureBlock } from "../landing/demo/FeatureBlock";
 import ModernCard from "../landing/demo/ModernCard";
-import { LANDING_PEACH, LANDING_TEAL } from "../../data/landingTheme";
+import {
+  LANDING_PEACH,
+  LANDING_TEAL,
+  LANDING_BLUE,
+} from "../../data/landingTheme";
 import { landingFeatures } from "../../data/landingFeatures";
 import {
   landingFutureCategories,
   futureDisclaimer,
   gameMilestone,
+  futureVisionBlurb,
 } from "../../data/landingFuture";
 import { landingAvailability } from "../../data/landingAvailability";
 import { landingPrivacy } from "../../data/landingPrivacy";
@@ -65,11 +70,8 @@ const DemoLanding: React.FC = () => {
   usePageMeta(pageMetaOptions);
   const prefersReducedMotion = useReducedMotion();
   const { resolvedTheme } = useTheme();
-  const futureCards = landingFutureCategories.flatMap((category) =>
-    category.features.map((feature) => ({
-      ...feature,
-      category: category.category,
-    })),
+  const futureCards = landingFutureCategories.flatMap(
+    (category) => category.features,
   );
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
@@ -253,56 +255,84 @@ const DemoLanding: React.FC = () => {
             </h3>
 
             <div
-              className="relative pl-5 pr-5 py-5 rounded-lg mb-8 flex gap-4 items-start"
+              className="relative p-5 rounded-lg mb-8"
               style={{
                 background: `linear-gradient(135deg, ${LANDING_PEACH}12, transparent)`,
                 border: `1px solid ${LANDING_PEACH}30`,
               }}
             >
-              {/* pulse dot */}
-              <div className="mt-1 shrink-0">
-                <span
-                  className="block w-2.5 h-2.5 rounded-full animate-pulse"
-                  style={{ backgroundColor: LANDING_PEACH }}
-                />
-              </div>
-              <div>
-                <p
-                  className="text-xs font-semibold uppercase tracking-widest mb-1"
-                  style={{ color: LANDING_PEACH }}
-                >
-                  Milestone
-                </p>
-                <p className="text-white font-semibold text-base leading-snug mb-1">
+              <div className="flex items-start justify-between gap-4 mb-2">
+                <p className="text-white font-semibold text-base leading-snug">
                   {gameMilestone.title}
                 </p>
-                <p className="text-gray-400 text-sm leading-relaxed">
-                  {gameMilestone.description}
-                </p>
+                <div className="flex items-center gap-2 shrink-0">
+                  <p
+                    className="text-xs font-semibold uppercase tracking-widest"
+                    style={{ color: LANDING_PEACH }}
+                  >
+                    Milestone
+                  </p>
+                  <span
+                    className="block w-2.5 h-2.5 rounded-full animate-pulse"
+                    style={{ backgroundColor: LANDING_PEACH }}
+                  />
+                </div>
               </div>
+              <p className="text-gray-300 text-sm leading-relaxed">
+                {gameMilestone.description}
+              </p>
+            </div>
+
+            <div className="mb-3 flex items-end justify-between gap-4">
+              <h4 className="text-2xl font-semibold text-white tracking-tight">
+                {futureVisionBlurb.title}
+              </h4>
+              <p className="text-xs uppercase tracking-wider text-gray-400">
+                Updated {futureVisionBlurb.updatedAt}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <ModernCard
+                iconColor={LANDING_PEACH}
+                title="The Dream"
+                description={futureVisionBlurb.content}
+                className="h-full"
+              />
+              <ModernCard
+                iconColor={LANDING_TEAL}
+                title="Reality Check"
+                description={futureVisionBlurb.realityCheck}
+                className="h-full"
+              />
+              <ModernCard
+                iconColor={LANDING_BLUE}
+                title="Non-Negotiables"
+                description={futureVisionBlurb.values}
+                className="h-full"
+              />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {futureCards.map((feature) => (
               <ModernCard
-                key={`${feature.category}-${feature.title}`}
+                key={feature.title}
                 iconColor={feature.color}
                 title={feature.title}
                 description={feature.description}
                 className="h-full"
-              >
-                <p
-                  className="text-xs font-medium mt-3"
-                  style={{ color: feature.color }}
-                >
-                  {feature.category}
-                </p>
-              </ModernCard>
+              />
             ))}
+            <ModernCard
+              iconColor={LANDING_BLUE}
+              title="Want to Collaborate?"
+              description="If this goes live and you'd like to shape where it goes, reach out. Suggestions and feature requests are welcome, especially from people who'd actually use this with friends."
+              className="h-full"
+            />
           </div>
 
-          <p className="text-gray-400 text-sm leading-relaxed mt-8 max-w-4xl">
+          <p className="text-gray-400 text-sm leading-relaxed mt-8">
             <span className="font-medium" style={{ color: LANDING_TEAL }}>
               Note:
             </span>{" "}

@@ -1,4 +1,4 @@
-import { LANDING_PURPLE, LANDING_PEACH, LANDING_TEAL, LANDING_BLUE } from "./landingTheme";
+import { LANDING_PEACH, LANDING_TEAL } from "./landingTheme";
 
 export interface FutureFeature {
   title: string;
@@ -34,28 +34,21 @@ export const landingFutureCategories: FutureCategory[] = [
       },
     ],
   },
-  {
-    category: "Personal",
-    color: LANDING_PURPLE,
-    features: [
-      {
-        title: "Private Journals",
-        color: LANDING_PURPLE,
-        description:
-          "An end-to-end encrypted space for notes and reflections. Something just for you - not synced to a dashboard, not read by me.",
-      },
-      {
-        title: "Personal Insights",
-        color: LANDING_BLUE,
-        description:
-          "Patterns in what you watch, read, or play - just for your own curiosity. Nothing sent anywhere, no algorithm, just you looking at your own habits.",
-      },
-    ],
-  },
 ];
 
 export const gameMilestone = {
   title: "Interactive Game Foundation Is Live",
   description:
     "The first stage of the interactive game is now playable inside NPC Finder. Game systems are the current build focus.",
+};
+
+export const futureVisionBlurb = {
+  title: "Big Dream, Tiny Team",
+  updatedAt: "March 18, 2026",
+  content:
+    "Long-term goal: Discord + MySpace + Stardew Valley energy. You get a home in town that others can discover, and friends can step inside. Optional watch parties should feel social and cozy, not like a stream dashboard.",
+  realityCheck:
+    "I don’t yet know how to do this legally and safely at scale, especially around licensing, sync, and browser playback limits. If you know practical legal paths, I’d genuinely love to hear from you.",
+  values:
+    "The direction stays the same: free to use, no ads, no data selling, and stronger privacy by default. It’s ambitious, but still worth pursuing.",
 };

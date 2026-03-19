@@ -30,7 +30,7 @@ export interface DocLink {
 export const landingAvailability: AvailabilityData = {
   title: "How to Get In",
   description:
-    "NPC Finder is invite-only. Not in a hype-waitlist way - just in a 'I want to know who has an account' way. You'll get a code from me or someone I've trusted as an admin.",
+    "NPC Finder is currently a private beta and invite-only by me. Not in a hype-waitlist way - intentionally low-key so I know who has access while the product is still taking shape.",
   points: [
     {
       icon: Key,
@@ -44,7 +44,7 @@ export const landingAvailability: AvailabilityData = {
       iconColor: LANDING_PURPLE,
       title: "No Public Registration",
       description:
-        "There's no 'Create Account' button. That's intentional. This isn't trying to be a platform - it's trying to be a small, trusted space for people who actually know each other.",
+        "There's no public sign-up. If you want access, reach out and tell me why you'd like to join. I review requests manually and keep access intentionally limited for now.",
     },
   ],
   demoNote:
