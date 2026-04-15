@@ -23,12 +23,13 @@ serve(async (req: Request) => {
   // Verify the shared secret so this endpoint isn't publicly abusable.
   // QStash will include this as a bearer token in the Authorization header.
   const keepAliveSecret = Deno.env.get("KEEP_ALIVE_SECRET");
-  if (keepAliveSecret) {
-    const authHeader = req.headers.get("Authorization");
-    const token = authHeader?.replace("Bearer ", "");
-    if (token !== keepAliveSecret) {
-      return new Response("Unauthorized", { status: 401 });
-    }
+  if (!keepAliveSecret) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+  const authHeader = req.headers.get("Authorization");
+  const token = authHeader?.replace("Bearer ", "");
+  if (token !== keepAliveSecret) {
+    return new Response("Unauthorized", { status: 401 });
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
