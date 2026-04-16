@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Supabase Edge Function: scrape-url
  *
@@ -63,7 +64,7 @@ serve(async (req) => {
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 401,
-        }
+        },
       );
     }
 
@@ -74,7 +75,7 @@ serve(async (req) => {
         global: {
           headers: { Authorization: authHeader },
         },
-      }
+      },
     );
 
     const {
@@ -88,14 +89,11 @@ serve(async (req) => {
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 401,
-        }
+        },
       );
     }
 
     const { url } = await req.json();
-
-    console.log("=== SCRAPE-URL v2.0 - Starting extraction ===");
-    console.log("Target URL:", url);
 
     if (!url) {
       throw new Error("URL is required");
@@ -163,11 +161,9 @@ serve(async (req) => {
       url.includes("gh_src=");
 
     if (isGreenhouse) {
-      console.log("[DEBUG] Greenhouse URL detected, trying JSON API");
       try {
         // Try adding .json to the URL path
         const jsonUrl = url.replace(/(\?|$)/, ".json$1");
-        console.log(`[DEBUG] Attempting JSON fetch: ${jsonUrl}`);
 
         const jsonResponse = await fetch(jsonUrl, {
           headers: {
@@ -177,18 +173,9 @@ serve(async (req) => {
 
         if (jsonResponse.ok) {
           jsonData = await jsonResponse.json();
-          console.log("[DEBUG] Successfully fetched Greenhouse JSON data");
-          console.log("[DEBUG] JSON keys:", Object.keys(jsonData));
-        } else {
-          console.log(
-            `[DEBUG] JSON API returned ${jsonResponse.status}, falling back to HTML`
-          );
         }
-      } catch (jsonError) {
-        console.log(
-          "[DEBUG] JSON API failed, falling back to HTML:",
-          jsonError
-        );
+      } catch {
+        // Fall back to HTML parsing
       }
     }
 
@@ -228,8 +215,6 @@ serve(async (req) => {
       url,
     };
 
-    console.log("=== Extracting base metadata ===");
-
     // Extract basic metadata from meta tags and title
     metadata = {
       kind: "generic",
@@ -245,26 +230,12 @@ serve(async (req) => {
 
     // Extract job posting data (JSON-LD schema.org)
     const jobPosting = extractJobPosting(html);
-    console.log(
-      "[DEBUG] JSON-LD extraction result:",
-      jobPosting ? "found" : "not found",
-      jobPosting
-    );
 
     if (jobPosting) {
       metadata.jobPosting = jobPosting;
     } else {
-      console.log(
-        "[DEBUG] Attempting fallback extraction for URL:",
-        metadata.url
-      );
       // Fallback: try to extract from meta tags and common patterns
       const fallbackJob = extractJobPostingFallback(html, metadata, jsonData);
-      console.log(
-        "[DEBUG] Fallback extraction result:",
-        fallbackJob ? "found" : "not found",
-        fallbackJob
-      );
 
       if (fallbackJob) {
         metadata.jobPosting = fallbackJob;
@@ -282,21 +253,12 @@ serve(async (req) => {
     }
 
     // Set the kind discriminant based on what was extracted
-    console.log("[DEBUG] Classification check - jobPosting:", {
-      exists: !!metadata.jobPosting,
-      company: metadata.jobPosting?.company,
-      position: metadata.jobPosting?.position,
-    });
-
     if (metadata.jobPosting?.company && metadata.jobPosting?.position) {
       metadata.kind = "job";
-      console.log("[DEBUG] Classified as: job");
     } else if (metadata.recipe?.name) {
       metadata.kind = "recipe";
-      console.log("[DEBUG] Classified as: recipe");
     } else {
       metadata.kind = "generic";
-      console.log("[DEBUG] Classified as: generic - missing required fields");
     }
 
     // Ensure minimal baseline is always set
@@ -304,38 +266,6 @@ serve(async (req) => {
       metadata.title = extractTitle(html) || "Untitled";
     }
 
-    // Debug info only in development (L3 - Security)
-    const isDev = Deno.env.get("ENVIRONMENT") === "development";
-
-    if (isDev) {
-      const debugInfo = {
-        version: "2.0",
-        jsonLdFound:
-          html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>/gi)
-            ?.length || 0,
-        hasJobPosting: !!metadata.jobPosting,
-        jobPostingData: metadata.jobPosting,
-        classificationReason:
-          metadata.jobPosting?.company && metadata.jobPosting?.position
-            ? "has company and position"
-            : `missing ${!metadata.jobPosting?.company ? "company" : ""}${
-                !metadata.jobPosting?.company && !metadata.jobPosting?.position
-                  ? " and "
-                  : ""
-              }${!metadata.jobPosting?.position ? "position" : ""}`,
-      };
-      console.log("[DEBUG] Final response:", {
-        kind: metadata.kind,
-        debugInfo,
-      });
-
-      return new Response(JSON.stringify({ ...metadata, _debug: debugInfo }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
-    }
-
-    // Production response without debug info
     return new Response(JSON.stringify(metadata), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
@@ -348,7 +278,7 @@ serve(async (req) => {
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
-      }
+      },
     );
   }
 });
@@ -358,19 +288,19 @@ function extractMetaTag(html: string, property: string): string | undefined {
   const patterns = [
     new RegExp(
       `<meta\\s+property=["']${property}["']\\s+content=["']([^"']+)["']`,
-      "i"
+      "i",
     ),
     new RegExp(
       `<meta\\s+name=["']${property}["']\\s+content=["']([^"']+)["']`,
-      "i"
+      "i",
     ),
     new RegExp(
       `<meta\\s+content=["']([^"']+)["']\\s+property=["']${property}["']`,
-      "i"
+      "i",
     ),
     new RegExp(
       `<meta\\s+content=["']([^"']+)["']\\s+name=["']${property}["']`,
-      "i"
+      "i",
     ),
   ];
 
@@ -390,16 +320,15 @@ function extractTitle(html: string): string | undefined {
 }
 
 function extractJobPosting(
-  html: string
+  html: string,
 ): ScrapedMetadata["jobPosting"] | undefined {
   try {
     // Look for JSON-LD script tags with JobPosting schema
     const jsonLdMatches = html.matchAll(
-      /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
+      /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
     );
 
     const matches = Array.from(jsonLdMatches);
-    console.log(`[DEBUG] Found ${matches.length} JSON-LD script tags`);
 
     for (const match of matches) {
       try {
@@ -463,7 +392,7 @@ function extractJobPosting(
               const mapped = jobData.employmentType
                 .map(
                   (t: string) =>
-                    typeMap[t] || (validTypes.includes(t) ? t : null)
+                    typeMap[t] || (validTypes.includes(t) ? t : null),
                 )
                 .filter(Boolean);
               employmentType =
@@ -518,7 +447,6 @@ function findJobPostings(data: any): any[] {
 
     // Check if this object is a JobPosting
     if (isJobPosting(current)) {
-      console.log("[DEBUG] Found JobPosting object:", current["@type"]);
       results.push(current);
     }
 
@@ -540,9 +468,6 @@ function findJobPostings(data: any): any[] {
     }
   }
 
-  console.log(
-    `[DEBUG] findJobPostings processed ${itemsProcessed} items, found ${results.length} JobPosting(s)`
-  );
   return results;
 }
 
@@ -666,7 +591,7 @@ function extractSalary(salaryData: any): string | undefined {
 function extractJobPostingFallback(
   html: string,
   metadata: ScrapedMetadata,
-  jsonData?: any
+  jsonData?: any,
 ): ScrapedMetadata["jobPosting"] | undefined {
   // Try to extract job info from common patterns
   const jobPosting: ScrapedMetadata["jobPosting"] = {};
@@ -824,7 +749,7 @@ function extractJobPostingFallback(
 // Site-specific extractors
 function extractLinkedInJob(
   html: string,
-  metadata: ScrapedMetadata
+  metadata: ScrapedMetadata,
 ): ScrapedMetadata["jobPosting"] | undefined {
   const jobPosting: ScrapedMetadata["jobPosting"] = {};
 
@@ -837,7 +762,7 @@ function extractLinkedInJob(
 
   // Location often in description
   const locationMatch = html.match(
-    /<span[^>]*class="[^"]*location[^"]*"[^>]*>([^<]+)<\/span>/i
+    /<span[^>]*class="[^"]*location[^"]*"[^>]*>([^<]+)<\/span>/i,
   );
   if (locationMatch) {
     jobPosting.location = locationMatch[1].trim();
@@ -848,13 +773,13 @@ function extractLinkedInJob(
 
 function extractIndeedJob(
   html: string,
-  metadata: ScrapedMetadata
+  metadata: ScrapedMetadata,
 ): ScrapedMetadata["jobPosting"] | undefined {
   const jobPosting: ScrapedMetadata["jobPosting"] = {};
 
   // Indeed format varies, often "Position - Company - Location"
   const titleMatch = metadata.title?.match(
-    /^(.+?)\s*[-–]\s*(.+?)\s*[-–]\s*(.+?)(?:\s*[-|]|$)/
+    /^(.+?)\s*[-–]\s*(.+?)\s*[-–]\s*(.+?)(?:\s*[-|]|$)/,
   );
   if (titleMatch) {
     jobPosting.position = titleMatch[1].trim();
@@ -864,7 +789,7 @@ function extractIndeedJob(
 
   // Salary in Indeed's metadata
   const salaryMatch = html.match(
-    /<div[^>]*class="[^"]*salary[^"]*"[^>]*>([^<]+)<\/div>/i
+    /<div[^>]*class="[^"]*salary[^"]*"[^>]*>([^<]+)<\/div>/i,
   );
   if (salaryMatch) {
     jobPosting.salary = salaryMatch[1].trim();
@@ -876,7 +801,7 @@ function extractIndeedJob(
 function extractGreenhouseJob(
   html: string,
   metadata: ScrapedMetadata,
-  jsonData?: any
+  jsonData?: any,
 ): ScrapedMetadata["jobPosting"] | undefined {
   const jobPosting: ScrapedMetadata["jobPosting"] = {};
   console.log("[DEBUG] Starting Greenhouse DOM extraction");
@@ -911,7 +836,7 @@ function extractGreenhouseJob(
           if (mappedType) {
             jobPosting.employmentType = mappedType;
             console.log(
-              `[DEBUG] Employment type from JSON: ${jobPosting.employmentType}`
+              `[DEBUG] Employment type from JSON: ${jobPosting.employmentType}`,
             );
           }
           // Don't set employmentType if value is not in map
@@ -930,7 +855,7 @@ function extractGreenhouseJob(
       jobPosting.description = contentText.substring(0, 500).trim();
       if (contentText.length > 500) jobPosting.description += "...";
       console.log(
-        `[DEBUG] Description from JSON (${jobPosting.description?.length} chars)`
+        `[DEBUG] Description from JSON (${jobPosting.description?.length} chars)`,
       );
     }
   }
@@ -975,7 +900,7 @@ function extractGreenhouseJob(
     if (!jobPosting.company) {
       // Look for common header patterns
       const headerElement = doc.querySelector(
-        "#header span, header .company-name, .employer-name"
+        "#header span, header .company-name, .employer-name",
       );
       if (headerElement?.textContent) {
         jobPosting.company = headerElement.textContent.trim();
@@ -1025,7 +950,7 @@ function extractGreenhouseJob(
     if (!jobPosting.location) {
       // Look for location elements (common class names and semantic patterns)
       const locationElement = doc.querySelector(
-        ".location, [class*='location'], [class*='office'], .job-location"
+        ".location, [class*='location'], [class*='office'], .job-location",
       );
 
       if (locationElement?.textContent) {
@@ -1039,7 +964,7 @@ function extractGreenhouseJob(
         } else {
           // Try to find City, State format
           const locationMatch = bodyText.match(
-            /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*,\s*[A-Z]{2})\b/
+            /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*,\s*[A-Z]{2})\b/,
           );
           if (locationMatch) {
             jobPosting.location = locationMatch[1].trim();
@@ -1068,7 +993,7 @@ function extractGreenhouseJob(
     // Greenhouse typically has content in a main content area or #content div
     console.log("[DEBUG] Extracting job description");
     const contentElement = doc.querySelector(
-      "#content, .content, [class*='job-description'], [class*='description'], main"
+      "#content, .content, [class*='job-description'], [class*='description'], main",
     );
 
     if (contentElement) {
@@ -1087,7 +1012,7 @@ function extractGreenhouseJob(
 
         jobPosting.description = description.trim();
         console.log(
-          `[DEBUG] Extracted description (${jobPosting.description.length} chars)`
+          `[DEBUG] Extracted description (${jobPosting.description.length} chars)`,
         );
       }
     }
@@ -1108,7 +1033,7 @@ function extractGreenhouseJob(
 
 function extractLeverJob(
   html: string,
-  metadata: ScrapedMetadata
+  metadata: ScrapedMetadata,
 ): ScrapedMetadata["jobPosting"] | undefined {
   const jobPosting: ScrapedMetadata["jobPosting"] = {};
 
@@ -1120,7 +1045,7 @@ function extractLeverJob(
   }
 
   const locationMatch = html.match(
-    /<div[^>]*class="location"[^>]*>([^<]+)<\/div>/i
+    /<div[^>]*class="location"[^>]*>([^<]+)<\/div>/i,
   );
   if (locationMatch) {
     jobPosting.location = locationMatch[1].trim();
@@ -1131,7 +1056,7 @@ function extractLeverJob(
 
 function extractYCombinatorJob(
   html: string,
-  metadata: ScrapedMetadata
+  metadata: ScrapedMetadata,
 ): ScrapedMetadata["jobPosting"] | undefined {
   const jobPosting: ScrapedMetadata["jobPosting"] = {};
 
@@ -1140,7 +1065,7 @@ function extractYCombinatorJob(
 
     // Extract company from title (format: "Position at Company | Work at a Startup")
     const titleMatch = metadata.title?.match(
-      /^(.+?)\s+at\s+(.+?)\s*[|\u2022]/i
+      /^(.+?)\s+at\s+(.+?)\s*[|\u2022]/i,
     );
     if (titleMatch) {
       jobPosting.position = titleMatch[1].trim();
@@ -1149,7 +1074,7 @@ function extractYCombinatorJob(
 
     // Extract salary - YC often has salary in a specific div
     const salaryElement = doc.querySelector(
-      '[class*="salary"], [class*="compensation"]'
+      '[class*="salary"], [class*="compensation"]',
     );
     if (salaryElement?.textContent) {
       jobPosting.salary = salaryElement.textContent.trim();
@@ -1163,7 +1088,7 @@ function extractYCombinatorJob(
 
     // Extract description - YC uses specific class names
     const descElement = doc.querySelector(
-      '[class*="description"], [class*="job-description"], .prose'
+      '[class*="description"], [class*="job-description"], .prose',
     );
     if (descElement) {
       const paragraphs = Array.from(descElement.querySelectorAll("p"))
@@ -1191,7 +1116,7 @@ function extractRecipe(html: string): ScrapedMetadata["recipe"] | undefined {
   try {
     // Look for JSON-LD script tags with Recipe schema
     const jsonLdMatches = html.matchAll(
-      /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
+      /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
     );
 
     for (const match of jsonLdMatches) {
@@ -1200,8 +1125,8 @@ function extractRecipe(html: string): ScrapedMetadata["recipe"] | undefined {
         const recipeData = Array.isArray(data)
           ? data.find((item) => item["@type"] === "Recipe")
           : data["@type"] === "Recipe"
-          ? data
-          : null;
+            ? data
+            : null;
 
         if (recipeData) {
           // Extract category from recipeCategory or recipeCuisine
@@ -1225,7 +1150,7 @@ function extractRecipe(html: string): ScrapedMetadata["recipe"] | undefined {
               : undefined,
             instructions: Array.isArray(recipeData.recipeInstructions)
               ? recipeData.recipeInstructions.map((step: any) =>
-                  typeof step === "string" ? step : step.text
+                  typeof step === "string" ? step : step.text,
                 )
               : undefined,
             prepTime: recipeData.prepTime || undefined,
@@ -1252,7 +1177,7 @@ function extractRecipe(html: string): ScrapedMetadata["recipe"] | undefined {
 
 function extractRecipeFallback(
   html: string,
-  base: Pick<ScrapedMetadata, "title" | "description">
+  base: Pick<ScrapedMetadata, "title" | "description">,
 ): ScrapedMetadata["recipe"] | undefined {
   try {
     const doc = new DOMParser().parseFromString(html, "text/html");
@@ -1263,7 +1188,7 @@ function extractRecipeFallback(
     // Name: prefer explicit recipe title nodes; fallback to page title
     const titleEl =
       doc.querySelector(
-        '[itemprop="name"], h1[itemprop="headline"], h1.entry-title, h1.recipe-title, h1'
+        '[itemprop="name"], h1[itemprop="headline"], h1.entry-title, h1.recipe-title, h1',
       ) || null;
     const titleText = titleEl?.textContent?.trim();
     recipe.name = titleText || base.title || undefined;
@@ -1271,7 +1196,7 @@ function extractRecipeFallback(
     // Description: common summary containers
     const descEl =
       doc.querySelector(
-        '[itemprop="description"], .recipe-summary, .wprm-recipe-summary, .tasty-recipes-description, .entry-content p'
+        '[itemprop="description"], .recipe-summary, .wprm-recipe-summary, .tasty-recipes-description, .entry-content p',
       ) || null;
     const descText = descEl?.textContent?.trim();
     recipe.description = descText || base.description || undefined;
@@ -1279,8 +1204,8 @@ function extractRecipeFallback(
     // Ingredients: Microdata + common plugins
     const ingredientNodes = Array.from(
       doc.querySelectorAll(
-        '[itemprop="recipeIngredient"], .wprm-recipe-ingredient, .tasty-recipes-ingredients li, .recipe-ingredients li, .ingredients li'
-      )
+        '[itemprop="recipeIngredient"], .wprm-recipe-ingredient, .tasty-recipes-ingredients li, .recipe-ingredients li, .ingredients li',
+      ),
     );
     const ingredients = ingredientNodes
       .map((n) => n.textContent?.trim() || "")
@@ -1291,8 +1216,8 @@ function extractRecipeFallback(
     // Instructions: Microdata HowToStep + common plugins
     const instructionNodes = Array.from(
       doc.querySelectorAll(
-        '[itemprop="recipeInstructions"] li, [itemprop="recipeInstructions"] [itemprop="text"], [itemprop="step"], .wprm-recipe-instruction-text, .tasty-recipes-instructions li, .recipe-instructions li, .instructions li'
-      )
+        '[itemprop="recipeInstructions"] li, [itemprop="recipeInstructions"] [itemprop="text"], [itemprop="step"], .wprm-recipe-instruction-text, .tasty-recipes-instructions li, .recipe-instructions li, .instructions li',
+      ),
     );
     const instructions = instructionNodes
       .map((n) => n.textContent?.trim() || "")
@@ -1301,12 +1226,23 @@ function extractRecipeFallback(
     if (instructions.length > 0) recipe.instructions = instructions;
 
     // Basic time/servings: microdata when present
-    const prep = doc.querySelector('[itemprop="prepTime"]')?.getAttribute("datetime")?.trim();
-    const cook = doc.querySelector('[itemprop="cookTime"]')?.getAttribute("datetime")?.trim();
-    const total = doc.querySelector('[itemprop="totalTime"]')?.getAttribute("datetime")?.trim();
-    const yieldText =
-      doc.querySelector('[itemprop="recipeYield"], [itemprop="yield"], .wprm-recipe-servings')
-        ?.textContent?.trim();
+    const prep = doc
+      .querySelector('[itemprop="prepTime"]')
+      ?.getAttribute("datetime")
+      ?.trim();
+    const cook = doc
+      .querySelector('[itemprop="cookTime"]')
+      ?.getAttribute("datetime")
+      ?.trim();
+    const total = doc
+      .querySelector('[itemprop="totalTime"]')
+      ?.getAttribute("datetime")
+      ?.trim();
+    const yieldText = doc
+      .querySelector(
+        '[itemprop="recipeYield"], [itemprop="yield"], .wprm-recipe-servings',
+      )
+      ?.textContent?.trim();
     if (prep) recipe.prepTime = prep;
     if (cook) recipe.cookTime = cook;
     if (total) recipe.totalTime = total;

@@ -74,7 +74,7 @@ function tableFor(
   } else if (mediaTypeKey === "games") {
     return "game_recommendations";
   } else {
-    return "movie_recommendations"; // fallback
+    throw new Error(`Unexpected mediaTypeKey: ${mediaTypeKey}`);
   }
 }
 
