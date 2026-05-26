@@ -1,6 +1,6 @@
 /**
  * AccordionToolbar Component
- * 
+ *
  * Reusable toolbar for pages with accordion lists
  * Includes search input, filter menu, collapse all button, and action button
  */
@@ -39,10 +39,10 @@ interface AccordionToolbarProps {
 
 /**
  * AccordionToolbar - Consistent toolbar for accordion-based views
- * 
+ *
  * @example
  * const [collapseKey, setCollapseKey] = useState(0);
- * 
+ *
  * <AccordionToolbar
  *   searchValue={searchQuery}
  *   onSearchChange={setSearchQuery}
@@ -54,8 +54,8 @@ interface AccordionToolbarProps {
  *   onActionClick={onCreate}
  *   actionLabel="Add"
  * />
- * 
- * {items.map(item => <JobCard key={`${item.id}-${collapseKey}`} ... />)}
+ *
+ * {items.map(item => <Card key={`${item.id}-${collapseKey}`} ... />)}
  */
 const AccordionToolbar: React.FC<AccordionToolbarProps> = ({
   searchValue,
@@ -73,7 +73,7 @@ const AccordionToolbar: React.FC<AccordionToolbarProps> = ({
 }) => {
   const handleRemoveFilter = (sectionId: string, filterId: string) => {
     if (!filterSortSections || !activeFilters || !onFilterChange) return;
-    
+
     const section = filterSortSections.find((s) => s.id === sectionId);
     if (!section) return;
 

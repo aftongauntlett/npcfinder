@@ -3,24 +3,6 @@
  */
 
 import type { UrlMetadata } from "../hooks/useUrlMetadata";
-import { detectLocationTypeFromUrl, type LocationType } from "./locationTypeDetection";
-
-/**
- * Result of applying job metadata to form state
- */
-export interface JobMetadataFormPatch {
-  title?: string;
-  companyName?: string;
-  companyUrl?: string;
-  position?: string;
-  salaryRange?: string;
-  location?: string;
-  locationType?: LocationType;
-  employmentType?: string;
-  description?: string;
-  extractedFields: number;
-  fieldNames: string[];
-}
 
 /**
  * Result of applying recipe metadata to form state
@@ -52,125 +34,6 @@ export interface GenericMetadataFormPatch {
 }
 
 /**
- * Pure function to map job posting metadata to form fields
- *
- * Note: extractedFields intentionally counts only core descriptive fields
- * (position, company, salary, location, employment type) for user feedback.
- * Metadata fields like companyUrl are set but not counted since they're
- * derived from the input URL rather than extracted from the page.
- *
- * @param metadata - The URL metadata from scrape-url function
- * @param currentUrl - The URL being scraped
- * @returns Patch object with fields to update and extraction stats
- */
-export function applyJobMetadataToForm(
-  metadata: UrlMetadata,
-  currentUrl: string
-): JobMetadataFormPatch {
-  const patch: JobMetadataFormPatch = {
-    extractedFields: 0,
-    fieldNames: [],
-  };
-
-  if (!metadata.jobPosting) {
-    return patch;
-  }
-
-  const {
-    company,
-    position: jobPosition,
-    salary,
-    location: jobLocation,
-    employmentType: empType,
-    description: jobDescription,
-  } = metadata.jobPosting;
-
-  if (jobPosition) {
-    patch.title = jobPosition;
-    patch.position = jobPosition;
-    patch.extractedFields++;
-    patch.fieldNames.push("position");
-  }
-
-  if (company) {
-    patch.companyName = company;
-    patch.extractedFields++;
-    patch.fieldNames.push("company");
-  }
-
-  if (salary) {
-    // Ensure salary is a string, not an object
-    if (typeof salary === "string") {
-      patch.salaryRange = salary;
-      patch.extractedFields++;
-      patch.fieldNames.push("salary");
-    } else if (salary && typeof salary === "object") {
-      // Log error but don't crash - just skip salary
-      console.error("Salary is an object, skipping:", salary);
-    }
-  }
-
-  if (jobLocation) {
-    patch.location = jobLocation;
-    patch.extractedFields++;
-    patch.fieldNames.push("location");
-  }
-
-  // Detect location type from URL and location text
-  // Priority: check location text first, then fall back to URL
-  const locationTypeFromLocation = jobLocation ? detectLocationTypeFromUrl(jobLocation) : null;
-  const locationTypeFromUrl = currentUrl ? detectLocationTypeFromUrl(currentUrl) : null;
-  
-  // Use location text detection if it's not "In-Office", otherwise use URL detection
-  if (locationTypeFromLocation && locationTypeFromLocation !== "In-Office") {
-    patch.locationType = locationTypeFromLocation;
-  } else if (locationTypeFromUrl) {
-    patch.locationType = locationTypeFromUrl;
-  } else {
-    patch.locationType = "In-Office";
-  }
-
-  // Validate and normalize employment type only if provided
-  // Do not default to Full-time to avoid misrepresenting scraped data
-  if (empType) {
-    const validTypes = [
-      "Full-time",
-      "Part-time",
-      "Contract",
-      "Temporary",
-      "Internship",
-    ];
-    const normalizedType = empType
-      .replace(/_/g, "-")
-      .replace(/([A-Z])/g, " $1")
-      .trim();
-
-    if (validTypes.includes(empType)) {
-      patch.employmentType = empType;
-      patch.extractedFields++;
-      patch.fieldNames.push("type");
-    } else if (validTypes.includes(normalizedType)) {
-      patch.employmentType = normalizedType;
-      patch.extractedFields++;
-      patch.fieldNames.push("type");
-    }
-    // If unrecognized employment type, leave it undefined rather than defaulting
-  }
-  // If no employment type provided, leave undefined so user can choose
-
-  if (jobDescription) {
-    patch.description = jobDescription;
-  }
-
-  // Set URL but don't count it (derived from input, not extracted)
-  if (currentUrl) {
-    patch.companyUrl = currentUrl;
-  }
-
-  return patch;
-}
-
-/**
  * Pure function to map recipe metadata to form fields
  *
  * Note: extractedFields intentionally counts only core descriptive fields
@@ -185,7 +48,7 @@ export function applyJobMetadataToForm(
  */
 export function applyRecipeMetadataToForm(
   metadata: UrlMetadata,
-  currentUrl: string
+  currentUrl: string,
 ): RecipeMetadataFormPatch {
   const patch: RecipeMetadataFormPatch = {
     extractedFields: 0,
@@ -280,7 +143,7 @@ export function applyRecipeMetadataToForm(
 export function applyGenericMetadataToForm(
   metadata: UrlMetadata,
   currentTitle: string,
-  currentDescription: string
+  currentDescription: string,
 ): GenericMetadataFormPatch {
   const patch: GenericMetadataFormPatch = {
     extractedFields: 0,

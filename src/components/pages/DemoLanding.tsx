@@ -21,7 +21,6 @@ import { landingFeatures } from "../../data/landingFeatures";
 import {
   landingFutureCategories,
   futureDisclaimer,
-  gameMilestone,
   futureVisionBlurb,
 } from "../../data/landingFuture";
 import { landingAvailability } from "../../data/landingAvailability";
@@ -191,7 +190,7 @@ const DemoLanding: React.FC = () => {
             </h3>
             <p className="text-gray-400 max-w-2xl">
               This is what actually works right now - media tracking, shared
-              collections, and the first stage of an interactive game. No fluff.
+              collections, and private collaboration features. No fluff.
             </p>
           </div>
 
@@ -253,35 +252,6 @@ const DemoLanding: React.FC = () => {
             <h3 className="text-4xl font-bold mb-6 tracking-tight">
               Things I&apos;d Love to Build
             </h3>
-
-            <div
-              className="relative p-5 rounded-lg mb-8"
-              style={{
-                background: `linear-gradient(135deg, ${LANDING_PEACH}12, transparent)`,
-                border: `1px solid ${LANDING_PEACH}30`,
-              }}
-            >
-              <div className="flex items-start justify-between gap-4 mb-2">
-                <p className="text-white font-semibold text-base leading-snug">
-                  {gameMilestone.title}
-                </p>
-                <div className="flex items-center gap-2 shrink-0">
-                  <p
-                    className="text-xs font-semibold uppercase tracking-widest"
-                    style={{ color: LANDING_PEACH }}
-                  >
-                    Milestone
-                  </p>
-                  <span
-                    className="block w-2.5 h-2.5 rounded-full animate-pulse"
-                    style={{ backgroundColor: LANDING_PEACH }}
-                  />
-                </div>
-              </div>
-              <p className="text-gray-300 text-sm leading-relaxed">
-                {gameMilestone.description}
-              </p>
-            </div>
 
             <div className="mb-3 flex items-end justify-between gap-4">
               <h4 className="text-2xl font-semibold text-white tracking-tight">

@@ -2,10 +2,9 @@ import {
   FilmStripIcon as FilmStrip,
   ShieldCheckIcon as ShieldCheck,
   UsersThreeIcon as UsersThree,
-  GameControllerIcon as GameController,
   type Icon,
 } from "@phosphor-icons/react";
-import { LANDING_PEACH, LANDING_PURPLE, LANDING_TEAL } from "./landingTheme";
+import { LANDING_PEACH, LANDING_TEAL } from "./landingTheme";
 
 interface FeatureData {
   icon: Icon;
@@ -31,15 +30,6 @@ export const landingFeatures: FeatureData[] = [
     items: [
       "Build mixed-media collections and share them with people you invite - nobody else can see them",
       "Set roles so you stay in control of who can contribute vs. just browse",
-    ],
-  },
-  {
-    icon: GameController,
-    iconColor: LANDING_PURPLE,
-    title: "Interactive Game (Phase 1 Live)",
-    items: [
-      "The first stage of the interactive game is playable right inside NPC Finder",
-      "Use immersive mode for focused play, or pop it out into a new tab",
     ],
   },
   {

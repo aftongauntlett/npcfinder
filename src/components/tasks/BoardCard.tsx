@@ -13,7 +13,6 @@ import { lightenColor, darkenColor } from "../../styles/colorThemes";
 import { useBoardMembers } from "../../hooks/useTasksQueries";
 import KanbanBoard from "./KanbanBoard";
 import SimpleListView from "./SimpleListView";
-import { JobTrackerView } from "./views/JobTrackerView";
 import { RecipeListView } from "./views/RecipeListView";
 import type { BoardWithStats } from "../../services/tasksService.types";
 import type { Task } from "../../services/tasksService.types";
@@ -55,49 +54,44 @@ const BoardCard: React.FC<BoardCardProps> = ({
   );
 
   // Subtitle showing only starter badge and sharing info
-  const subtitle = isStarter || members.length > 0 ? (
-    <div className="flex items-center gap-2">
-      {isStarter && (
-        <span
-          className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
-          style={{
-            backgroundColor: lightenColor(themeColor, 0.85),
-            color: darkenColor(themeColor, 0.3),
-          }}
-        >
-          Starter
-        </span>
-      )}
-      {members.length > 0 && (
-        <span
-          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
-          style={{
-            backgroundColor: lightenColor(themeColor, 0.85),
-            color: darkenColor(themeColor, 0.3),
-          }}
-        >
-          <Share2 className="w-3 h-3" />
-          {members.length}
-        </span>
-      )}
-    </div>
-  ) : undefined;
+  const subtitle =
+    isStarter || members.length > 0 ? (
+      <div className="flex items-center gap-2">
+        {isStarter && (
+          <span
+            className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+            style={{
+              backgroundColor: lightenColor(themeColor, 0.85),
+              color: darkenColor(themeColor, 0.3),
+            }}
+          >
+            Starter
+          </span>
+        )}
+        {members.length > 0 && (
+          <span
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+            style={{
+              backgroundColor: lightenColor(themeColor, 0.85),
+              color: darkenColor(themeColor, 0.3),
+            }}
+          >
+            <Share2 className="w-3 h-3" />
+            {members.length}
+          </span>
+        )}
+      </div>
+    ) : undefined;
 
   // Expanded content - template-aware preview
   const expandedContent = (
     <div className="mt-4">
-      {board.template_type === "job_tracker" ? (
-        <JobTrackerView
-          boardId={board.id}
-          onCreateTask={onCreateTask || (() => {})}
-          onEditTask={onEditTask || (() => {})}
-          onDeleteTask={onDeleteTask}
-        />
-      ) : board.template_type === "recipe" ? (
+      {board.template_type === "recipe" ? (
         <RecipeListView
           boardId={board.id}
           onCreateTask={onCreateTask || (() => {})}
           onViewRecipe={() => {}} // No-op in preview
+          onDeleteTask={onDeleteTask}
         />
       ) : board.template_type === "markdown" || board.board_type === "list" ? (
         <SimpleListView

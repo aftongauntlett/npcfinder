@@ -6,12 +6,11 @@
  */
 
 import React, { useState, useMemo } from "react";
-import { Plus, LayoutGrid, Briefcase, ChefHat, ListTodo } from "lucide-react";
+import { Plus, LayoutGrid, ChefHat, ListTodo } from "lucide-react";
 import Button from "../../shared/ui/Button";
 import { EmptyStateAddCard, LocalSearchInput } from "../../shared";
 import BoardFormModal from "../../tasks/BoardFormModal";
 import BoardCard from "../../tasks/BoardCard";
-import { JobTrackerView } from "../../tasks/views/JobTrackerView";
 import { RecipeListView } from "../../tasks/views/RecipeListView";
 import { KanbanView } from "../../tasks/views/KanbanView";
 import ConfirmationModal from "../../shared/ui/ConfirmationModal";
@@ -52,13 +51,6 @@ const TEMPLATE_META = {
     emptyDescription:
       "Create a markdown-style to-do list with support for formatting and bullets.",
   },
-  job_tracker: {
-    icon: Briefcase,
-    title: "Job Applications",
-    emptyTitle: "No job applications yet",
-    emptyDescription:
-      "Track your job search progress with company details and application status.",
-  },
   recipe: {
     icon: ChefHat,
     title: "Recipes",
@@ -97,7 +89,7 @@ const TemplateView: React.FC<TemplateViewProps> = ({
     TEMPLATE_META.kanban;
 
   // Only markdown template allows multiple boards
-  // job_tracker, recipe, and kanban are singleton (one per user, auto-created)
+  // recipe and kanban are singleton (one per user, auto-created)
   const allowsMultipleBoards = templateType === "markdown";
 
   const handleDeleteBoard = () => {
@@ -254,43 +246,6 @@ const TemplateView: React.FC<TemplateViewProps> = ({
           onClose={() => setShowCreateModal(false)}
           preselectedTemplate={templateType}
         />
-      </div>
-    );
-  }
-
-  // For job_tracker and recipe templates, show the list view directly (no board cards)
-  if (templateType === "job_tracker" && boards.length > 0) {
-    // Find the board with the most tasks (in case of duplicates)
-    const board = boards.reduce(
-      (max, b) => ((b.total_tasks || 0) > (max.total_tasks || 0) ? b : max),
-      boards[0],
-    );
-    return (
-      <div className="container mx-auto px-4 sm:px-6">
-        <h2 className="sr-only">{meta.title}</h2>
-        <JobTrackerView
-          boardId={board.id}
-          onCreateTask={() => onCreateTask?.()} // No boardId needed - singleton handled by parent
-          onEditTask={(task) => onEditTask?.(task.id)}
-          onDeleteTask={(taskId) => {
-            setDeletingTask(taskId);
-            setDeletingBoardId(board.id);
-          }}
-        />
-
-        {/* Delete Task Confirmation */}
-        {deletingTask && (
-          <ConfirmationModal
-            isOpen={!!deletingTask}
-            onClose={() => setDeletingTask(null)}
-            onConfirm={handleDeleteTask}
-            title="Delete Job Application?"
-            message="Are you sure you want to delete this job application? This action cannot be undone."
-            confirmText="Delete"
-            variant="danger"
-            isLoading={deleteTask.isPending}
-          />
-        )}
       </div>
     );
   }

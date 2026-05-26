@@ -61,7 +61,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
 
   const taskIconOption = useMemo(
     () => getTaskIconOptionByName(task.icon),
-    [task.icon]
+    [task.icon],
   );
   const TaskIcon = taskIconOption?.icon ?? ListTodo;
   const isLucideTaskIcon = taskIconOption == null;
@@ -90,7 +90,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
         onClick(task.id);
       }
     },
-    [onClick, variant, task.id]
+    [onClick, variant, task.id],
   );
 
   // Generate action buttons once for reuse - memoized to prevent recreation
@@ -103,9 +103,9 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
           onToggleComplete,
           onSnooze,
         },
-        task.board_id
+        task.board_id,
       ),
-    [task.id, task.board_id, onRemove, onToggleComplete, onSnooze]
+    [task.id, task.board_id, onRemove, onToggleComplete, onSnooze],
   );
 
   const handleKeyDown = useCallback(
@@ -121,7 +121,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
         onClick(task.id);
       }
     },
-    [onClick, task.id]
+    [onClick, task.id],
   );
 
   // Compact variant - minimal for lists
@@ -213,7 +213,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
           {task.due_date && (
             <span
               className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded ${getDueDateChipColor(
-                task.due_date
+                task.due_date,
               )}`}
             >
               <Calendar className="w-3 h-3" />
@@ -227,7 +227,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
 
   // Detailed variant - full info for Today view and Archive
 
-  // Build header content following Movies/Recipes/JobCard pattern
+  // Build header content following existing media and recipe card patterns
   const headerChips: Array<{ key: string; node: React.ReactNode }> = [];
 
   if (task.due_date) {
@@ -356,7 +356,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
                 "[TaskCard] Mark Complete clicked for task:",
                 task.id,
                 "status:",
-                task.status
+                task.status,
               );
               if (onToggleComplete) {
                 onToggleComplete(task.id);
@@ -420,7 +420,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
         </div>
       )}
 
-      {/* Timestamps footer - matches RecipeCard/JobCard/MediaListItem */}
+      {/* Timestamps footer - matches RecipeCard/MediaListItem */}
       <div className="text-xs text-gray-500 dark:text-gray-400 pt-4">
         Created {formatShortDate(task.created_at)}
         {task.updated_at !== task.created_at && (
@@ -495,5 +495,5 @@ export default React.memo(
     prevProps.onToggleComplete === nextProps.onToggleComplete &&
     prevProps.onSnooze === nextProps.onSnooze &&
     prevProps.onRemove === nextProps.onRemove &&
-    prevProps.onClick === nextProps.onClick
+    prevProps.onClick === nextProps.onClick,
 );

@@ -36,12 +36,6 @@ export const landingFutureCategories: FutureCategory[] = [
   },
 ];
 
-export const gameMilestone = {
-  title: "Interactive Game Foundation Is Live",
-  description:
-    "The first stage of the interactive game is now playable inside NPC Finder. Game systems are the current build focus.",
-};
-
 export const futureVisionBlurb = {
   title: "Big Dream, Tiny Team",
   updatedAt: "March 18, 2026",

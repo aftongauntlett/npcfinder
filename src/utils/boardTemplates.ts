@@ -4,12 +4,7 @@
  * Defines available board templates with their fields and configurations
  */
 
-export type TemplateType =
-  | "job_tracker"
-  | "markdown"
-  | "recipe"
-  | "kanban"
-  | "custom";
+export type TemplateType = "markdown" | "recipe" | "kanban" | "custom";
 
 export type ViewType = "table" | "checklist" | "cards" | "kanban" | "list";
 
@@ -34,94 +29,6 @@ export interface BoardTemplate {
   fields: TemplateField[];
   statusOptions?: string[]; // Custom status options for this template
 }
-
-/**
- * Job Application Tracker Template
- *
- * The item_data field for job tracker tasks includes:
- * - status_history: Array of StatusHistoryEntry objects tracking each status change
- *   - Each entry contains: { status: string, date: string (YYYY-MM-DD), notes?: string }
- *   - The first entry represents the initial application
- *   - New entries are appended when status changes
- * - date_applied: The date of initial application (also tracked in status_history)
- */
-export const JOB_TRACKER_TEMPLATE: BoardTemplate = {
-  id: "job_tracker",
-  name: "Job Applications",
-  description:
-    "Track your job search progress with company details and application status",
-  icon: "Briefcase",
-  emoji: "💼",
-  defaultView: "table",
-  fields: [
-    {
-      id: "company_name",
-      label: "Company",
-      type: "text",
-      required: true,
-      placeholder: "Company name",
-    },
-    {
-      id: "company_url",
-      label: "URL",
-      type: "url",
-      placeholder: "https://company.com/careers/job-id",
-    },
-    {
-      id: "position",
-      label: "Position",
-      type: "text",
-      placeholder: "Software Engineer",
-    },
-    {
-      id: "location",
-      label: "Location",
-      type: "text",
-      placeholder: "City, State or Remote",
-    },
-    {
-      id: "location_type",
-      label: "Work Location",
-      type: "select",
-      options: ["Remote", "Hybrid", "In-Office"],
-      placeholder: "Select work location type",
-    },
-    {
-      id: "salary_range",
-      label: "Salary Range",
-      type: "text",
-      placeholder: "$100k - $150k",
-    },
-    {
-      id: "employment_type",
-      label: "Employment Type",
-      type: "select",
-      options: ["Full-time", "Part-time", "Contract", "Internship"],
-      placeholder: "Select employment type",
-    },
-    {
-      id: "date_applied",
-      label: "Date Applied",
-      type: "date",
-      autoFill: true,
-      defaultValue: new Date(),
-    },
-    {
-      id: "notes",
-      label: "Notes",
-      type: "textarea",
-      placeholder: "Interview notes, contacts, etc.",
-    },
-  ],
-  statusOptions: [
-    "Applied",
-    "No Response",
-    "Interview",
-    "Accepted",
-    "Rejected",
-    "Declined",
-  ],
-};
 
 /**
  * Markdown To-Do List Template
@@ -260,7 +167,6 @@ export const KANBAN_TEMPLATE: BoardTemplate = {
  * All available templates
  */
 export const BOARD_TEMPLATES: Record<TemplateType, BoardTemplate> = {
-  job_tracker: JOB_TRACKER_TEMPLATE,
   markdown: MARKDOWN_TODO_TEMPLATE,
   recipe: RECIPE_TEMPLATE,
   kanban: KANBAN_TEMPLATE,
@@ -305,8 +211,6 @@ export function getBoardTypeFromTemplate(templateType: TemplateType): string {
 
   // Map template defaultView to board_type
   switch (template.defaultView) {
-    case "table":
-      return "job_tracker";
     case "checklist":
     case "list":
       return "list";

@@ -86,24 +86,25 @@ export function getDaysUntilDue(dueDate: string | null): number | null {
  * - Red: Today and Overdue
  */
 export function getDueDateChipColor(dueDate: string | null): string {
-  if (!dueDate) return "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300";
-  
+  if (!dueDate)
+    return "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300";
+
   if (isOverdue(dueDate)) {
     return "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300";
   }
-  
+
   const daysUntil = getDaysUntilDue(dueDate);
-  
+
   // Today - Red
   if (daysUntil === 0) {
     return "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300";
   }
-  
+
   // 1-4 days away - Yellow
   if (daysUntil !== null && daysUntil >= 1 && daysUntil < 5) {
     return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300";
   }
-  
+
   // 5+ days away - Green
   return "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300";
 }
@@ -113,23 +114,23 @@ export function getDueDateChipColor(dueDate: string | null): string {
  */
 export function getDueDateTextColor(dueDate: string | null): string {
   if (!dueDate) return "text-gray-600 dark:text-gray-400";
-  
+
   if (isOverdue(dueDate)) {
     return "text-red-600 dark:text-red-400";
   }
-  
+
   const daysUntil = getDaysUntilDue(dueDate);
-  
+
   // Today - Red
   if (daysUntil === 0) {
     return "text-red-600 dark:text-red-400";
   }
-  
+
   // 1-4 days away - Yellow
   if (daysUntil !== null && daysUntil >= 1 && daysUntil < 5) {
     return "text-yellow-600 dark:text-yellow-400";
   }
-  
+
   // 5+ days away - Green
   return "text-green-700 dark:text-green-400";
 }
@@ -159,8 +160,6 @@ export function getTaskStatusLabel(status: Task["status"]): string {
   return STATUS_CONFIG[status]?.label || "To Do";
 }
 
-
-
 /**
  * Check if a task can be moved to a target section
  */
@@ -177,14 +176,17 @@ export function canMoveTask(task: Task, targetSection: BoardSection): boolean {
  * Group tasks by board
  */
 export function groupTasksByBoard(tasks: Task[]): Record<string, Task[]> {
-  return tasks.reduce((acc, task) => {
-    const boardKey = task.board_id ?? "inbox";
-    if (!acc[boardKey]) {
-      acc[boardKey] = [];
-    }
-    acc[boardKey].push(task);
-    return acc;
-  }, {} as Record<string, Task[]>);
+  return tasks.reduce(
+    (acc, task) => {
+      const boardKey = task.board_id ?? "inbox";
+      if (!acc[boardKey]) {
+        acc[boardKey] = [];
+      }
+      acc[boardKey].push(task);
+      return acc;
+    },
+    {} as Record<string, Task[]>,
+  );
 }
 
 /**
@@ -261,13 +263,16 @@ export function groupTasksByDate(tasks: Task[]): Record<string, Task[]> {
  * Group tasks by status
  */
 export function groupTasksByStatus(tasks: Task[]): Record<string, Task[]> {
-  return tasks.reduce((acc, task) => {
-    if (!acc[task.status]) {
-      acc[task.status] = [];
-    }
-    acc[task.status].push(task);
-    return acc;
-  }, {} as Record<string, Task[]>);
+  return tasks.reduce(
+    (acc, task) => {
+      if (!acc[task.status]) {
+        acc[task.status] = [];
+      }
+      acc[task.status].push(task);
+      return acc;
+    },
+    {} as Record<string, Task[]>,
+  );
 }
 
 // =====================================================
@@ -358,17 +363,6 @@ export function validateTag(tag: string): { valid: boolean; error?: string } {
 // =====================================================
 
 /**
- * Check if a task is a job tracker task
- * Detects based on presence of job-specific fields in item_data
- */
-export function isJobTrackerTask(task: Task): boolean {
-  return (
-    task.item_data?.company_name !== undefined ||
-    task.item_data?.position !== undefined
-  );
-}
-
-/**
  * Check if a task is a recipe task
  * Detects based on presence of recipe-specific fields in item_data
  */
@@ -390,7 +384,7 @@ export function isRecipeTask(task: Task): boolean {
 export function getNextOccurrenceDate(
   currentDate: string,
   frequency: "daily" | "weekly" | "biweekly" | "monthly" | "yearly" | "custom",
-  interval: number = 1
+  interval: number = 1,
 ): Date {
   const date = new Date(currentDate);
 

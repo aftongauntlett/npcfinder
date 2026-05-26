@@ -68,12 +68,9 @@ export { default as UserSearch } from "./search/UserSearch";
 export { default as FriendSearchModal } from "./search/FriendSearchModal";
 
 // Layout Components - Layout and navigation
-export { default as Sidebar } from "./layout/Sidebar";
 export { default as Header } from "./layout/Header";
 export { default as Footer } from "./layout/Footer";
 export { default as Breadcrumb } from "./layout/Breadcrumb";
-export { default as NavList } from "./layout/NavList";
-export { default as UserMenuDropdown } from "./layout/UserMenuDropdown";
 
 // Common Components - Reusable utility components
 export { default as StarRating } from "./common/StarRating";

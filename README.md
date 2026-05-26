@@ -5,7 +5,7 @@
 
 NPC Finder is an invite-only app for trusted friends to **archive and share media collections**.
 
-You can curate mixed collections (movies, TV, books, music, games), share with your circle, and manage access with role-based permissions.
+You can curate mixed collections (movies, TV, books, music), share with your circle, and manage access with role-based permissions.
 
 **Live Site:** [npcfinder.com](https://npcfinder.com)  
 **Docs Index:** [docs/README.md](docs/README.md)
@@ -13,11 +13,11 @@ You can curate mixed collections (movies, TV, books, music, games), share with y
 ## Product Focus
 
 - **Primary:** Media collections + trusted social sharing
-- **Secondary:** Personal tools (`/app/tasks`, currently labeled `Labs` in-app)
-- **Milestone:** In-app game route (`/app/game`) with Phase 1 launch-token scaffold complete
+- **Secondary:** Personal tools (`/app/tasks`)
+- **Current milestone:** Invite-only collaboration and role-safe sharing workflows
 - **Security:** Supabase Auth + PostgreSQL RLS + invite-only onboarding
 
-See [docs/APP-PURPOSE-AND-DIRECTION.md](docs/APP-PURPOSE-AND-DIRECTION.md) for full direction and roadmap guidance.
+For the current routed app surface, see [docs/CURRENT-APP-STATE.md](docs/CURRENT-APP-STATE.md).
 
 ## Tech Stack
 
@@ -52,14 +52,11 @@ npm test
 
 - [docs/README.md](docs/README.md) - full documentation index
 - [docs/QUICK-START.md](docs/QUICK-START.md) - setup + deployment
-- [docs/API-SETUP.md](docs/API-SETUP.md) - media API keys
 - [docs/DATABASE-MIGRATIONS.md](docs/DATABASE-MIGRATIONS.md) - schema workflow
+- [docs/INVITE-SYSTEM-QUICKSTART.md](docs/INVITE-SYSTEM-QUICKSTART.md) - invite onboarding and admin flow
 - [docs/ROLE-SYSTEM.md](docs/ROLE-SYSTEM.md) - roles and authorization model
 - [docs/COPILOT-AGENTS-GUIDE.md](docs/COPILOT-AGENTS-GUIDE.md) - AI agent workflow and guardrails
-- [docs/APP-PURPOSE-AND-DIRECTION.md](docs/APP-PURPOSE-AND-DIRECTION.md) - product direction review
-- [docs/TRAYCER-PROMPTS.md](docs/TRAYCER-PROMPTS.md) - deep review prompt pack
-- [docs/BROWSER-GAME-INTEGRATION.md](docs/BROWSER-GAME-INTEGRATION.md) - browser game integration + token handoff setup
-- [docs/prds/README.md](docs/prds/README.md) - product PRDs
+- [docs/CURRENT-APP-STATE.md](docs/CURRENT-APP-STATE.md) - current feature and route snapshot
 
 ## License
 

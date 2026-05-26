@@ -17,7 +17,7 @@ export const CreateBoardSchema = z.object({
   is_public: z.boolean().optional().default(false),
   board_type: z.string().max(100, "Board type too long").nullable().optional(),
   template_type: z
-    .enum(["job_tracker", "markdown", "recipe", "kanban", "custom"])
+    .enum(["markdown", "recipe", "kanban", "custom"])
     .nullable()
     .optional(),
 });

@@ -12,7 +12,7 @@ const QUICK_SWITCH_ITEMS = [
   },
   {
     id: 2,
-    title: "Labs",
+    title: "Tasks",
     description: "Personal tools and task workflows",
     route: "/app/tasks",
   },

@@ -5,11 +5,10 @@
  * - Tasks: Unassigned tasks (inbox)
  * - Kanban: Kanban template boards
  * - Recipes: Recipe template boards
- * - Job Applications: Job tracker template boards
  */
 
 import React, { useState, useMemo } from "react";
-import { ListTodo, LayoutGrid, ChefHat, Briefcase } from "lucide-react";
+import { ListTodo, LayoutGrid, ChefHat } from "lucide-react";
 import AppLayout from "../../layouts/AppLayout";
 import InboxView from "./InboxView";
 import TemplateView from "./TemplateView";
@@ -28,11 +27,11 @@ import { useAllSingletonBoards } from "../../../hooks/useSingletonBoard";
 import type { BoardWithStats } from "../../../services/tasksService.types";
 import { usePageMeta } from "../../../hooks/usePageMeta";
 
-type ViewType = "tasks" | "kanban" | "recipes" | "job_applications";
+type ViewType = "tasks" | "kanban" | "recipes";
 
 // Static page meta options (stable reference)
 const pageMetaOptions = {
-  title: "Labs",
+  title: "Tasks",
   description: "Manage your tasks with flexible board-based organization",
   noIndex: true,
 };
@@ -56,9 +55,8 @@ const TasksPage: React.FC = () => {
   // Fetch unassigned tasks count for badge (lightweight count-only query)
   const { data: unassignedTasksCount = 0 } = useUnassignedTasksCount();
 
-  // Get singleton board IDs for job_tracker, recipe, and kanban
+  // Get singleton board IDs for recipe and kanban
   const {
-    jobBoardId,
     recipeBoardId,
     kanbanBoardId,
     error: singletonError,
@@ -68,10 +66,8 @@ const TasksPage: React.FC = () => {
   const {
     kanbanBoards,
     recipeBoards,
-    jobBoards,
     kanbanTaskCount,
     recipeTaskCount,
-    jobTaskCount,
   } = useBoardTemplates(boards);
 
   // Find board for the editing task
@@ -90,15 +86,13 @@ const TasksPage: React.FC = () => {
   const pageTitle = useMemo(() => {
     switch (selectedView) {
       case "tasks":
-        return "Labs";
+        return "Tasks";
       case "kanban":
         return "Kanban";
       case "recipes":
         return "Recipes";
-      case "job_applications":
-        return "Job Applications";
       default:
-        return "Labs";
+        return "Tasks";
     }
   }, [selectedView]);
 
@@ -123,26 +117,18 @@ const TasksPage: React.FC = () => {
         icon: ChefHat,
         badge: recipeTaskCount > 0 ? recipeTaskCount : undefined,
       },
-      {
-        id: "job_applications",
-        label: "Job Applications",
-        icon: Briefcase,
-        badge: jobTaskCount > 0 ? jobTaskCount : undefined,
-      },
     ];
-  }, [unassignedTasksCount, kanbanTaskCount, recipeTaskCount, jobTaskCount]);
+  }, [unassignedTasksCount, kanbanTaskCount, recipeTaskCount]);
 
   // Handle create task from board
-  // For singleton types (job_tracker, recipe, kanban), boardId is optional and handled automatically
+  // For singleton types (recipe, kanban), boardId is optional and handled automatically
   const handleCreateTask = (boardId?: string, sectionId?: string) => {
     // Determine which board to use based on current view
     let targetBoardId = boardId;
 
     if (!targetBoardId) {
       // Auto-assign singleton board based on current view
-      if (selectedView === "job_applications") {
-        targetBoardId = jobBoardId ?? undefined;
-      } else if (selectedView === "recipes") {
+      if (selectedView === "recipes") {
         targetBoardId = recipeBoardId ?? undefined;
       } else if (selectedView === "kanban") {
         targetBoardId = kanbanBoardId ?? undefined;
@@ -188,15 +174,6 @@ const TasksPage: React.FC = () => {
           <TemplateView
             templateType="recipe"
             boards={recipeBoards}
-            onCreateTask={handleCreateTask}
-            onEditTask={handleEditTask}
-            singletonError={singletonError}
-          />
-        )}
-        {selectedView === "job_applications" && (
-          <TemplateView
-            templateType="job_tracker"
-            boards={jobBoards}
             onCreateTask={handleCreateTask}
             onEditTask={handleEditTask}
             singletonError={singletonError}

@@ -15,9 +15,6 @@ import { supabase } from "../lib/supabase";
  * - **Generic pages** (`kind: "generic"`): Always includes `url` and attempts to extract
  *   `title` and `description`. May include `image`, `author`, and `date` when available.
  *
- * - **Job postings** (`kind: "job"`): Guaranteed to have `jobPosting` with at least
- *   `company` and `position` populated. May include `salary`, `location`, and `employmentType`.
- *
  * - **Recipes** (`kind: "recipe"`): Guaranteed to have `recipe` with at least `name` populated.
  *   May include `ingredients`, `instructions`, prep/cook times, and servings.
  *
@@ -25,21 +22,13 @@ import { supabase } from "../lib/supabase";
  * and know which fields are meaningful.
  */
 export interface UrlMetadata {
-  kind: "generic" | "job" | "recipe";
+  kind: "generic" | "recipe";
   title?: string;
   description?: string;
   image?: string;
   url?: string;
   author?: string;
   date?: string;
-  jobPosting?: {
-    company?: string;
-    position?: string;
-    salary?: string;
-    location?: string;
-    employmentType?: string;
-    description?: string;
-  };
   recipe?: {
     name?: string;
     description?: string;
@@ -109,7 +98,7 @@ export const useUrlMetadata = (): UseUrlMetadataReturn => {
         setLoading(false);
       }
     },
-    []
+    [],
   );
 
   return {

@@ -64,7 +64,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
   const { data: cachedProfile, isLoading: profileLoading } = useProfileQuery();
 
   // Default to all cards visible
-  const allCardIds = ["media", "labs"];
+  const allCardIds = ["media", "tasks"];
 
   const [profile, setProfile] = useState<ProfileData>({
     display_name: "",
@@ -87,10 +87,18 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
   useEffect(() => {
     if (!cachedProfile) return;
 
+    const normalizedVisibleCards = Array.from(
+      new Set(
+        (cachedProfile.visible_cards || allCardIds).map((cardId) =>
+          cardId === "labs" ? "tasks" : cardId,
+        ),
+      ),
+    );
+
     const loadedProfile = {
       display_name: cachedProfile.display_name || currentUser.email || "",
       bio: cachedProfile.bio || "",
-      visible_cards: cachedProfile.visible_cards || allCardIds,
+      visible_cards: normalizedVisibleCards,
       theme_color: cachedProfile.theme_color || DEFAULT_THEME_COLOR,
       secondary_theme_color: cachedProfile.secondary_theme_color || null,
       auto_secondary_color: cachedProfile.auto_secondary_color ?? true,

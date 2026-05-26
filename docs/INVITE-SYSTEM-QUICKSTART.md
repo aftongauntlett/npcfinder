@@ -121,7 +121,7 @@ Returns: true/false
 
 **Admin Checks:**
 
-- Admin status read from `user_profiles.is_admin` field
+- Admin status read from `user_profiles.role` (`is_admin` is generated for compatibility)
 - Frontend queries database (not JWT claims)
 - RLS policies enforce access at database level
 - Triggers prevent privilege escalation

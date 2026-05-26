@@ -9,7 +9,7 @@ NPC Finder is a private, invite-only web app for trusted friends.
 Current product pillars:
 
 - **Media Collections**: mixed-media collections, sharing, and discovery workflows
-- **Tasks Workbench**: inbox + kanban + recipe + job tracker workflows
+- **Tasks Workspace**: generic personal/team task workflows (job tracking template removed)
 
 Agents should prioritize work that improves product clarity, trust/safety, and user-facing reliability.
 
@@ -49,11 +49,11 @@ Agent rules:
 High-value entry points:
 
 - App shell/routes: `src/App.tsx`, `src/components/layouts/AuthenticatedAppLayout.tsx`
-- Main navigation: `src/components/shared/layout/Sidebar.tsx`
-- Media collections: `src/components/pages/media/*`, `src/services/mediaListsService.ts`, `src/hooks/useMediaListsQueries.ts`
+- Main navigation: `src/components/shared/layout/TopNav.tsx`
+- Media collections: `src/components/pages/media/*`, `src/services/collectionsService.ts`, `src/hooks/useCollectionsQueries.ts`
 - Tasks system: `src/components/pages/tasks/*`, `src/components/tasks/*`, `src/hooks/useTasksQueries.ts`
 - Auth/admin/roles: `src/contexts/AuthContext.tsx`, `src/contexts/AdminContext.tsx`, `docs/ROLE-SYSTEM.md`
-- Setup docs: `docs/QUICK-START.md`, `docs/DATABASE-MIGRATIONS.md`, `docs/API-SETUP.md`
+- Setup docs: `docs/QUICK-START.md`, `docs/DATABASE-MIGRATIONS.md`, `docs/CURRENT-APP-STATE.md`
 
 ## 5) Preferred Agent Workflow
 
@@ -130,13 +130,13 @@ Process:
 Return: root cause, fix, and validation steps.
 ```
 
-## 9) When To Use Traycer
+## 9) High-Value Review Modes
 
-Use Traycer for:
+Use deep review passes for:
 
-- broad architecture consistency audits
+- architecture consistency audits
 - security policy drift checks (RLS/auth/admin)
 - dead-code and duplication discovery
 - roadmap-level product coherence review
 
-Prompt pack is available in `docs/TRAYCER-PROMPTS.md`.
+When doing repo-wide reviews, use current docs in `docs/` and treat `docs/CURRENT-APP-STATE.md` as the first stop for product-surface assumptions.

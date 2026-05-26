@@ -57,7 +57,6 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
   const { themeColor } = useTheme();
 
   const effectiveTemplateType = board?.template_type || preselectedTemplate;
-  const isJobTracker = effectiveTemplateType === "job_tracker";
   const isKanban = effectiveTemplateType === "kanban";
 
   // Validate board name for duplicates
@@ -80,7 +79,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
       (b) =>
         b.name &&
         b.name.toLowerCase() === boardName.toLowerCase() &&
-        b.id !== board?.id
+        b.id !== board?.id,
     );
 
     if (isDuplicate) {
@@ -90,14 +89,13 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
     return "";
   };
 
-
   // Populate form when editing
   useEffect(() => {
     if (board) {
       setName(board.name);
       setIcon(board.icon || null);
       setIconColor(board.icon_color || themeColor);
-      setIsPublic(isJobTracker ? false : board.is_public || false);
+      setIsPublic(board.is_public || false);
       setNameError("");
       setIsNameAutoFilled(false);
     } else {
@@ -109,9 +107,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
       setNameError("");
       setIsNameAutoFilled(false);
     }
-  }, [board, isOpen, isJobTracker, themeColor]);
-
-
+  }, [board, isOpen, themeColor]);
 
   // Handle name change - clear auto-fill flag and validate
   const handleNameChange = (newName: string) => {
@@ -132,7 +128,9 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
     }
 
     // Determine board_type and template_type from edit or preselected template
-    const templateType = (board?.template_type || preselectedTemplate || "kanban") as TemplateType;
+    const templateType = (board?.template_type ||
+      preselectedTemplate ||
+      "kanban") as TemplateType;
     // For kanban/markdown, board_type is inferred automatically
     const boardType = getBoardTypeFromTemplate(templateType);
 
@@ -142,7 +140,7 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
       icon_color: iconColor || undefined,
       board_type: boardType,
       template_type: templateType,
-      ...(isJobTracker ? {} : { is_public: isPublic }),
+      is_public: isPublic,
     };
 
     if (board) {
@@ -243,20 +241,17 @@ const BoardFormModal: React.FC<BoardFormModalProps> = ({
             />
           </div>
 
-          {/* Privacy Toggle - hidden for job_tracker only */}
-          {!isJobTracker && (
-            <PrivacyToggle
-              variant="switch"
-              size="sm"
-              isPublic={isPublic}
-              onChange={setIsPublic}
-              showDescription
-              contextLabel="board"
-            />
-          )}
+          <PrivacyToggle
+            variant="switch"
+            size="sm"
+            isPublic={isPublic}
+            onChange={setIsPublic}
+            showDescription
+            contextLabel="board"
+          />
 
-          {/* Sharing Section - Only for existing boards that allow sharing (not job_tracker) */}
-          {board && !isJobTracker && (
+          {/* Sharing Section - Only for existing boards */}
+          {board && (
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">

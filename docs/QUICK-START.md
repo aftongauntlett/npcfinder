@@ -51,7 +51,7 @@ Find these in: Supabase Dashboard > Settings > API
 
 **Note**: This project works directly with production database via Supabase CLI. All database operations target the linked production project.
 
-See [API-SETUP.md](API-SETUP.md) for complete API key setup (TMDB, Google Books, OMDB, iTunes).
+External API setup is documented in the "External APIs (Optional)" section below.
 
 ### 4. Run Application
 
@@ -129,7 +129,7 @@ VITE_OMDB_API_KEY=your-key
 
 No setup needed - iTunes Search API is public and free.
 
-See [API-SETUP.md](API-SETUP.md) for detailed API configuration.
+No separate API setup doc is currently maintained.
 
 ## Common Issues
 
@@ -180,6 +180,8 @@ npm run lint         # Check code quality
 
 ## Next Steps
 
-- Configure external APIs: [API Setup](API-SETUP.md)
+- Configure optional external APIs using this guide's "External APIs (Optional)" section
 - Learn about database updates: [Database Migrations](DATABASE-MIGRATIONS.md)
 - Understand invite codes: [Invite System](INVITE-SYSTEM-QUICKSTART.md)
+
+For an app-surface snapshot before making product docs changes, see [CURRENT-APP-STATE.md](CURRENT-APP-STATE.md).

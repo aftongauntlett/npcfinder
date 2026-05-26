@@ -91,8 +91,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added - Tasks System
 
 - **Board-Based Task Management:** Complete task organization system
-  - 4 board templates: Job Tracker, Recipe Collection, Kanban, Markdown To-Do List (default)
-  - Custom fields per template (e.g., salary range for job applications, ingredients for recipes)
+  - 4 board templates: Template boards for specialized workflows + Markdown To-Do List (default)
+  - Custom fields per template (e.g., structured metadata and ingredients for recipes)
   - Sections/columns within boards for workflow organization
   - Rich task metadata: priority, due dates, tags, status tracking
   - Inbox for unorganized tasks
@@ -102,7 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Archive functionality for completed items
   - Date-based filtering (today, upcoming, overdue)
 - **URL Metadata Scraping:**
-  - Edge function for extracting job posting and recipe metadata
+  - Edge function for extracting URL metadata
   - Supports JSON-LD schema.org parsing
   - Authentication-protected endpoint
 - **UI Components:**

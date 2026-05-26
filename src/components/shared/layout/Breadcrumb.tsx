@@ -39,7 +39,7 @@ const Breadcrumb: React.FC = () => {
 // Helper function to get page name from path for special pages
 function getPageNameFromPath(path: string): string {
   if (path.includes("/media")) return "Media";
-  if (path.includes("/tasks")) return "Labs";
+  if (path.includes("/tasks")) return "Tasks";
   if (path.includes("/settings")) return "Settings";
   if (path.includes("/admin")) return "Admin Panel";
 

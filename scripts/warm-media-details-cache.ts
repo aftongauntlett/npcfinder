@@ -255,12 +255,9 @@ async function getExistingCacheKeys(
   return existing;
 }
 
-async function upsertCache(
-  details: { external_id: string; media_type: MediaType } & Record<
-    string,
-    unknown
-  >,
-) {
+async function upsertCache<
+  T extends { external_id: string; media_type: string },
+>(details: T) {
   const nowIso = new Date().toISOString();
   const expiresAtIso = new Date(
     Date.now() + 1000 * 60 * 60 * 24 * 180,

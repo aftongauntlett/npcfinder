@@ -20,17 +20,15 @@ import TaskSchedulingControls from "./partials/TaskSchedulingControls";
 import IconSelect from "@/components/shared/common/IconSelect";
 import CompactColorThemePicker from "@/components/settings/CompactColorThemePicker";
 
-import JobTaskSection from "./JobTaskSection";
 import RecipeTaskSection from "./RecipeTaskSection";
 import type { Task } from "../../services/tasksService.types";
 import {
   useTask,
   useUpdateTask,
   useDeleteTask,
-  useTasks,
 } from "../../hooks/useTasksQueries";
 import { useTaskFormState } from "../../hooks/tasks/useTaskFormState";
-import { isJobTrackerTask, isRecipeTask } from "../../utils/taskHelpers";
+import { isRecipeTask } from "../../utils/taskHelpers";
 
 interface TaskDetailModalProps {
   isOpen: boolean;
@@ -59,31 +57,34 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   } = useTaskFormState(task);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const { themeColor } = useTheme();
 
   // Icon + color
   const [icon, setIcon] = useState<string | null>(task.icon ?? null);
   const [iconColor, setIconColor] = useState<string>(
-    task.icon_color ?? themeColor
+    task.icon_color ?? themeColor,
   );
   const [showColorPicker, setShowColorPicker] = useState(false);
   const colorPickerRef = useRef<HTMLDivElement>(null);
-  
+
   // Optional settings disclosure
   const [showOptionalSettings, setShowOptionalSettings] = useState(true);
 
   // Close color picker when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (colorPickerRef.current && !colorPickerRef.current.contains(event.target as Node)) {
+      if (
+        colorPickerRef.current &&
+        !colorPickerRef.current.contains(event.target as Node)
+      ) {
         setShowColorPicker(false);
       }
     };
 
     if (showColorPicker) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [showColorPicker]);
 
@@ -96,50 +97,37 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   const [repeatFrequency, setRepeatFrequency] = useState<
     "daily" | "weekly" | "monthly" | "yearly"
   >(
-    (task.repeat_frequency as
-      | "daily"
-      | "weekly"
-      | "monthly"
-      | "yearly") || "weekly"
+    (task.repeat_frequency as "daily" | "weekly" | "monthly" | "yearly") ||
+      "weekly",
   );
   const [repeatInterval, setRepeatInterval] = useState<number>(
-    task.repeat_interval || 1
+    task.repeat_interval || 1,
   );
   const [isRepeatable, setIsRepeatable] = useState(!!task.is_repeatable);
 
   // Timer state
   const [hasTimer, setHasTimer] = useState(
-    !!task.timer_duration_seconds && task.timer_duration_seconds > 0
+    !!task.timer_duration_seconds && task.timer_duration_seconds > 0,
   );
   const [timerDuration, setTimerDuration] = useState<number>(
     task.timer_duration_seconds && task.timer_duration_seconds >= 3600
       ? Math.max(1, Math.floor(task.timer_duration_seconds / 3600))
       : task.timer_duration_seconds && task.timer_duration_seconds >= 60
-      ? Math.max(1, Math.floor(task.timer_duration_seconds / 60))
-      : task.timer_duration_seconds || 30
+        ? Math.max(1, Math.floor(task.timer_duration_seconds / 60))
+        : task.timer_duration_seconds || 30,
   );
   const [timerUnit, setTimerUnit] = useState<"minutes" | "hours" | "seconds">(
     task.timer_duration_seconds && task.timer_duration_seconds >= 3600
       ? "hours"
       : task.timer_duration_seconds && task.timer_duration_seconds >= 60
-      ? "minutes"
-      : "seconds"
-  );
-
-  // Fetch existing tasks for duplicate detection (only for job tracker)
-  const isJobTracker = isJobTrackerTask(task);
-  const { data: existingTasks = [] } = useTasks(
-    isJobTracker ? task.board_id ?? undefined : undefined
+        ? "minutes"
+        : "seconds",
   );
 
   // Template-specific item_data builders
-  const [jobItemDataBuilder, setJobItemDataBuilder] = useState<
-    (() => Record<string, unknown>) | null
-  >(null);
   const [recipeItemDataBuilder, setRecipeItemDataBuilder] = useState<
     (() => Record<string, unknown>) | null
   >(null);
-  const [isJobValid, setIsJobValid] = useState(true);
   const [isRecipeValid, setIsRecipeValid] = useState(true);
 
   const updateTask = useUpdateTask();
@@ -148,78 +136,16 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   // Detect template type using helper functions (declared earlier for useTasks hook)
   const isRecipe = isRecipeTask(task);
 
-  // Callbacks to receive item_data builders from child sections
-  const handleJobItemDataBuilder = useCallback(
-    (builder: () => Record<string, unknown>, isValid: boolean) => {
-      setJobItemDataBuilder(() => builder);
-      setIsJobValid(isValid);
-    },
-    []
-  );
-
   const handleRecipeItemDataBuilder = useCallback(
     (builder: () => Record<string, unknown>, isValid: boolean) => {
       setRecipeItemDataBuilder(() => builder);
       setIsRecipeValid(isValid);
     },
-    []
+    [],
   );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setDuplicateError(null);
-
-    // For job tracker tasks, check for duplicates before updating
-    // Mirrors the creation-time checks in CreateTaskModal
-    if (isJobTracker && jobItemDataBuilder) {
-      const jobData = jobItemDataBuilder();
-      const normalizeString = (str: string) => str.toLowerCase().trim();
-      const currentCompany = normalizeString(
-        (jobData.company_name as string) || ""
-      );
-      const currentPosition = normalizeString(
-        (jobData.position as string) || ""
-      );
-      const currentUrl = ((jobData.company_url as string) || "").trim();
-
-      for (const existingTask of existingTasks) {
-        // Skip comparing with the current task itself
-        if (existingTask.id === task.id) continue;
-
-        const taskCompany = normalizeString(
-          (existingTask.item_data?.company_name as string) || ""
-        );
-        const taskPosition = normalizeString(
-          (existingTask.item_data?.position as string) || ""
-        );
-        const taskUrl = (
-          (existingTask.item_data?.company_url as string) || ""
-        ).trim();
-
-        // Check URL match
-        if (currentUrl && taskUrl && currentUrl === taskUrl) {
-          setDuplicateError("You've already applied for this role");
-          return;
-        }
-
-        // Check company + position match
-        if (
-          currentCompany &&
-          taskCompany &&
-          currentPosition &&
-          taskPosition &&
-          currentCompany === taskCompany &&
-          currentPosition === taskPosition
-        ) {
-          setDuplicateError(
-            `You already have an application for ${
-              jobData.position as string
-            } at ${jobData.company_name as string}`
-          );
-          return;
-        }
-      }
-    }
 
     // Build base task updates
     const baseUpdates = buildBaseUpdates();
@@ -227,9 +153,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     // Determine template-specific item_data
     let item_data = task.item_data ? { ...task.item_data } : undefined;
 
-    if (isJobTracker && jobItemDataBuilder) {
-      item_data = jobItemDataBuilder();
-    } else if (isRecipe && recipeItemDataBuilder) {
+    if (isRecipe && recipeItemDataBuilder) {
       // For recipe, also include description from base form
       const recipeData = recipeItemDataBuilder();
       item_data = {
@@ -255,8 +179,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         ? timerUnit === "hours"
           ? timerDuration * 3600
           : timerUnit === "minutes"
-          ? timerDuration * 60
-          : timerDuration
+            ? timerDuration * 60
+            : timerDuration
         : null,
     };
 
@@ -288,28 +212,14 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       <Modal
         isOpen={isOpen}
         onClose={onClose}
-        title={
-          isJobTracker
-            ? "Edit Job Application"
-            : isRecipe
-            ? "Edit Recipe"
-            : "Edit Task"
-        }
+        title={isRecipe ? "Edit Recipe" : "Edit Task"}
         maxWidth="2xl"
         closeOnBackdropClick={true}
       >
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Duplicate Error */}
-          {duplicateError && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-800 font-medium">
-                {duplicateError}
-              </p>
-            </div>
-          )}
-          {/* Title - Hidden for job tracker */}
-          {!isJobTracker && (
+          {/* Title - Hidden for recipe */}
+          {!isRecipe && (
             <Input
               id="task-title"
               label="Task Title"
@@ -321,8 +231,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             />
           )}
 
-          {/* Description - Hidden for job tracker */}
-          {!isJobTracker && (
+          {/* Description - Hidden for recipe */}
+          {!isRecipe && (
             <Textarea
               id="task-description"
               label="Description"
@@ -331,14 +241,6 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
               placeholder="Add more details..."
               rows={4}
               maxLength={1000}
-            />
-          )}
-
-          {/* Job Tracker Specific Fields */}
-          {isJobTracker && (
-            <JobTaskSection
-              task={task}
-              onBuildItemData={handleJobItemDataBuilder}
             />
           )}
 
@@ -354,8 +256,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             />
           )}
 
-          {/* Optional Settings Disclosure - Hidden for job tracker and recipes */}
-          {!isJobTracker && !isRecipe && (
+          {/* Optional Settings Disclosure - Hidden for recipes */}
+          {!isRecipe && (
             <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
               <button
                 type="button"
@@ -384,7 +286,10 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 <div className="mt-6 space-y-6">
                   {/* Icon Appearance */}
                   <div>
-                    <label className="block text-sm font-semibold mb-2" style={{ color: themeColor }}>
+                    <label
+                      className="block text-sm font-semibold mb-2"
+                      style={{ color: themeColor }}
+                    >
                       Icon Appearance
                     </label>
                     <div className="grid grid-cols-12 gap-3">
@@ -406,7 +311,9 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                           onClick={() => setShowColorPicker(!showColorPicker)}
                           className="w-full flex items-center justify-center gap-2 px-4 h-[42px] rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 transition-colors bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white"
                         >
-                          <span className="text-sm font-medium">Icon Color</span>
+                          <span className="text-sm font-medium">
+                            Icon Color
+                          </span>
                           <div
                             className="w-5 h-5 rounded border border-gray-300 dark:border-gray-600"
                             style={{ backgroundColor: iconColor }}
@@ -503,9 +410,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
               variant="primary"
               className="flex-1"
               disabled={
-                isJobTracker
-                  ? !isJobValid || updateTask.isPending
-                  : isRecipe
+                isRecipe
                   ? !isRecipeValid || updateTask.isPending
                   : !title.trim() || updateTask.isPending
               }

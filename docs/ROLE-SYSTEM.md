@@ -357,11 +357,11 @@ The migration maintains backward compatibility:
 
 ## Related Files
 
-- **Migrations**: `supabase/migrations/20251207_add_role_system.sql`
-- **RLS Updates**: `supabase/migrations/20251207_update_rls_for_roles.sql`
+- **Migrations**: `supabase/migrations/20251207000005_add_role_system.sql`
+- **RLS Updates**: `supabase/migrations/20251207000006_update_rls_for_roles.sql`
 - **Frontend Context**: `src/contexts/AdminContext.tsx`
 - **Backend Library**: `src/lib/admin.ts`
 - **Route Protection**: `src/components/layouts/ProtectedAdminRoute.tsx`
-- **Navigation**: `src/components/shared/layout/NavList.tsx`
+- **Navigation**: `src/components/shared/layout/TopNav.tsx`
 - **Tests**: `tests/roleSystem.test.ts`
 - **Verification**: `scripts/verify-rls-comprehensive.js`

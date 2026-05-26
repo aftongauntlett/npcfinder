@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from "react";
 import { X } from "lucide-react";
-import { useSidebar } from "../../../contexts/SidebarContext";
 import Button from "./Button";
 
 // Module-level counter to track the number of open modals
@@ -34,7 +33,6 @@ const Modal: React.FC<ModalProps> = ({
   showHeader = true,
   ariaLabelledby,
 }) => {
-  const { isCollapsed, isMobile } = useSidebar();
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
 
@@ -94,13 +92,15 @@ const Modal: React.FC<ModalProps> = ({
       if (e.key !== "Tab") return;
 
       const focusableElements = modalRef.current?.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
       );
 
       if (!focusableElements || focusableElements.length === 0) return;
 
       const firstElement = focusableElements[0] as HTMLElement;
-      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+      const lastElement = focusableElements[
+        focusableElements.length - 1
+      ] as HTMLElement;
 
       if (e.shiftKey) {
         // Shift + Tab: if focused on first element, wrap to last
@@ -151,9 +151,7 @@ const Modal: React.FC<ModalProps> = ({
 
       {/* Modal Container */}
       <div
-        className={`fixed inset-0 z-50 overflow-y-auto pointer-events-none transition-all duration-300 ${
-          isMobile ? "" : isCollapsed ? "pl-16" : "pl-16 md:pl-[224px]"
-        }`}
+        className="fixed inset-0 z-50 overflow-y-auto pointer-events-none"
         onClick={handleBackdropClick}
       >
         <div className="flex min-h-full items-center justify-center p-4">

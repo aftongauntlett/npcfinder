@@ -8,16 +8,6 @@
  */
 
 /**
- * Status History Entry
- * Tracks the date and status for each status change in job tracker tasks
- */
-export interface StatusHistoryEntry {
-  status: string;
-  date: string; // YYYY-MM-DD format
-  notes?: string;
-}
-
-/**
  * Board Share
  * Represents sharing a board with another user
  */
@@ -61,12 +51,7 @@ export interface SharedBoardData {
  * Canonical set of supported board template types
  * Must match database CHECK constraint on task_boards.template_type
  */
-export type TemplateType =
-  | "job_tracker"
-  | "markdown"
-  | "recipe"
-  | "kanban"
-  | "custom";
+export type TemplateType = "markdown" | "recipe" | "kanban" | "custom";
 
 export interface Board {
   id: string;

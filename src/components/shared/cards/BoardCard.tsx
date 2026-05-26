@@ -13,7 +13,6 @@ import { getTaskIconOptionByName } from "@/utils/taskIcons";
 import { withOpacity } from "@/data/landingTheme";
 import KanbanBoard from "../../tasks/KanbanBoard";
 import SimpleListView from "../../tasks/SimpleListView";
-import { JobTrackerView } from "../../tasks/views/JobTrackerView";
 import { RecipeListView } from "../../tasks/views/RecipeListView";
 import type { BoardWithStats } from "@/services/tasksService.types";
 import type { Task } from "@/services/tasksService.types";
@@ -45,7 +44,7 @@ const BoardCard: React.FC<BoardCardProps> = ({
   // Get icon for board
   const taskIconOption = useMemo(
     () => getTaskIconOptionByName(board.icon),
-    [board.icon]
+    [board.icon],
   );
   const BoardIcon = taskIconOption?.icon ?? ListTodo;
   const isLucideIcon = taskIconOption == null;
@@ -106,18 +105,12 @@ const BoardCard: React.FC<BoardCardProps> = ({
   // Expanded content - template-aware preview
   const expandedContent = (
     <div>
-      {board.template_type === "job_tracker" ? (
-        <JobTrackerView
-          boardId={board.id}
-          onCreateTask={onCreateTask || (() => {})}
-          onEditTask={onEditTask || (() => {})}
-          onDeleteTask={onDeleteTask}
-        />
-      ) : board.template_type === "recipe" ? (
+      {board.template_type === "recipe" ? (
         <RecipeListView
           boardId={board.id}
           onCreateTask={onCreateTask || (() => {})}
           onViewRecipe={() => {}} // No-op in preview
+          onDeleteTask={onDeleteTask}
         />
       ) : board.template_type === "markdown" || board.board_type === "list" ? (
         <SimpleListView

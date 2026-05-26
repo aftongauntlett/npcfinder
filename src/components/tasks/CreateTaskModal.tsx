@@ -13,7 +13,7 @@ import Input from "../shared/ui/Input";
 import Textarea from "../shared/ui/Textarea";
 import Select from "../shared/ui/Select";
 import type { CreateTaskData } from "../../services/tasksService.types";
-import { useCreateTask, useTasks } from "../../hooks/useTasksQueries";
+import { useCreateTask } from "../../hooks/useTasksQueries";
 import { useUrlMetadata } from "../../hooks/useUrlMetadata";
 import { Link, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { useTheme } from "../../hooks/useTheme";
@@ -22,20 +22,9 @@ import TaskSchedulingControls from "./partials/TaskSchedulingControls";
 import IconSelect from "@/components/shared/common/IconSelect";
 import CompactColorThemePicker from "@/components/settings/CompactColorThemePicker";
 import {
-  applyJobMetadataToForm,
   applyRecipeMetadataToForm,
   applyGenericMetadataToForm,
 } from "../../utils/metadataFormHelpers";
-import { detectLocationTypeFromLocationText } from "../../utils/locationTypeDetection";
-
-// Helper to get local date in YYYY-MM-DD format (not UTC)
-const getLocalDateString = () => {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
 
 interface CreateTaskModalProps {
   isOpen: boolean;
@@ -60,7 +49,6 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     type: "success" | "warning" | "error";
     message: string;
   } | null>(null);
-  const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState<Date | null>(defaultDueDate || null);
@@ -75,44 +63,38 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   // Timer fields
   const [hasTimer, setHasTimer] = useState(false);
   const [timerDuration, setTimerDuration] = useState<number>(30);
-  const [timerUnit, setTimerUnit] = useState<"minutes" | "hours" | "seconds">("minutes");
-
+  const [timerUnit, setTimerUnit] = useState<"minutes" | "hours" | "seconds">(
+    "minutes",
+  );
 
   // Task icon + color
   const [icon, setIcon] = useState<string | null>("PencilSimple");
   const [iconColor, setIconColor] = useState<string>(themeColor);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const colorPickerRef = useRef<HTMLDivElement>(null);
-  
+
   // Optional settings disclosure
   const [showOptionalSettings, setShowOptionalSettings] = useState(false);
 
   // Close color picker when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (colorPickerRef.current && !colorPickerRef.current.contains(event.target as Node)) {
+      if (
+        colorPickerRef.current &&
+        !colorPickerRef.current.contains(event.target as Node)
+      ) {
         setShowColorPicker(false);
       }
     };
 
     if (showColorPicker) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [showColorPicker]);
 
   // Optional sections (progressive disclosure)
-
-  // Job tracker specific fields
-  const [companyName, setCompanyName] = useState("");
-  const [companyUrl, setCompanyUrl] = useState("");
-  const [position, setPosition] = useState("");
-  const [salaryRange, setSalaryRange] = useState("");
-  const [location, setLocation] = useState("");
-  const [locationType, setLocationType] = useState<"Remote" | "Hybrid" | "In-Office">("In-Office");
-  const [employmentType, setEmploymentType] = useState("");
-  const [jobDescription, setJobDescription] = useState("");
-  const [jobNotes, setJobNotes] = useState("");
 
   // Recipe specific fields
   const [recipeName, setRecipeName] = useState("");
@@ -128,7 +110,6 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
   const createTask = useCreateTask();
   const { fetchMetadata, loading: urlLoading } = useUrlMetadata();
-  const { data: existingTasks = [] } = useTasks(boardId || undefined);
 
   const handleUrlChange = async (value: string) => {
     setUrl(value);
@@ -139,34 +120,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
       const metadata = await fetchMetadata(value);
 
       if (metadata) {
-        // Use the kind discriminant to branch on metadata type
-        if (metadata.kind === "job" && metadata.jobPosting) {
-          const patch = applyJobMetadataToForm(metadata, value);
-
-          // Apply the patch to form state
-          if (patch.title) setTitle(patch.title);
-          if (patch.position) setPosition(patch.position);
-          if (patch.companyName) setCompanyName(patch.companyName);
-          if (patch.companyUrl) setCompanyUrl(patch.companyUrl);
-          if (patch.salaryRange) setSalaryRange(patch.salaryRange);
-          if (patch.location) setLocation(patch.location);
-          if (patch.locationType) setLocationType(patch.locationType);
-          if (patch.employmentType) setEmploymentType(patch.employmentType);
-          if (patch.description) setDescription(patch.description);
-
-          // Provide feedback to user
-          if (patch.extractedFields > 0) {
-            setUrlFeedback({
-              type: "success",
-              message: `Auto-filled ${patch.fieldNames.join(", ")}`,
-            });
-          } else {
-            setUrlFeedback({
-              type: "warning",
-              message: "Couldn't extract job details - please fill manually",
-            });
-          }
-        } else if (metadata.kind === "recipe" && metadata.recipe) {
+        if (metadata.kind === "recipe" && metadata.recipe) {
           const patch = applyRecipeMetadataToForm(metadata, value);
 
           // Apply the patch to form state
@@ -202,7 +156,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
           const patch = applyGenericMetadataToForm(
             metadata,
             title,
-            description
+            description,
           );
 
           // Apply the patch to form state
@@ -233,70 +187,12 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setDuplicateError(null);
-
-    // Auto-generate title for job tracker from company + position if not set
-    let finalTitle = title;
-    if (boardType === "job_tracker" && !title) {
-      finalTitle = `${position || "Position"} at ${companyName || "Company"}`;
-    }
-
-    // Check for job duplicates
-    if (boardType === "job_tracker") {
-      const normalizeString = (str: string) => str.toLowerCase().trim();
-      const currentCompany = normalizeString(companyName);
-      const currentPosition = normalizeString(position);
-      const currentUrl = (companyUrl || url || "").trim();
-
-      for (const task of existingTasks) {
-        const taskCompany = normalizeString(
-          (task.item_data?.company_name as string) || ""
-        );
-        const taskPosition = normalizeString(
-          (task.item_data?.position as string) || ""
-        );
-        const taskUrl = ((task.item_data?.company_url as string) || "").trim();
-
-        // Check URL match
-        if (currentUrl && taskUrl && currentUrl === taskUrl) {
-          setDuplicateError("You've already applied for this role");
-          return;
-        }
-
-        // Check company + position match
-        if (
-          currentCompany &&
-          taskCompany &&
-          currentPosition &&
-          taskPosition &&
-          currentCompany === taskCompany &&
-          currentPosition === taskPosition
-        ) {
-          setDuplicateError(
-            `You already have an application for ${position} at ${companyName}`
-          );
-          return;
-        }
-      }
-    }
+    const finalTitle = boardType === "recipe" ? recipeName || title : title;
 
     // Build item_data for template-specific boards
     let item_data: Record<string, unknown> | undefined;
 
-    if (boardType === "job_tracker") {
-      item_data = {
-        company_name: companyName || finalTitle,
-        company_url: companyUrl || url || "",
-        position: position || finalTitle,
-        salary_range: salaryRange || "",
-        location: location || "",
-        location_type: locationType,
-        employment_type: employmentType || "",
-        date_applied: getLocalDateString(),
-        job_description: jobDescription || "",
-        notes: jobNotes || "",
-      };
-    } else if (boardType === "recipe") {
+    if (boardType === "recipe") {
       item_data = {
         recipe_name: recipeName || title,
         name: recipeName || title,
@@ -333,8 +229,8 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         ? timerUnit === "hours"
           ? timerDuration * 3600
           : timerUnit === "minutes"
-          ? timerDuration * 60
-          : timerDuration
+            ? timerDuration * 60
+            : timerDuration
         : undefined,
     };
 
@@ -360,17 +256,6 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
           setIcon(null);
           setIconColor(themeColor);
           // Reset optional sections
-
-          // Reset job tracker fields
-          setCompanyName("");
-          setCompanyUrl("");
-          setPosition("");
-          setSalaryRange("");
-          setLocation("");
-          setLocationType("In-Office");
-          setEmploymentType("");
-          setJobDescription("");
-          setJobNotes("");
           // Reset recipe fields
           setRecipeName("");
           setRecipeUrl("");
@@ -395,13 +280,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={
-        boardType === "job_tracker"
-          ? "Add Job Application"
-          : boardType === "recipe"
-          ? "Add Recipe"
-          : "Create New Task"
-      }
+      title={boardType === "recipe" ? "Add Recipe" : "Create New Task"}
       maxWidth="2xl"
       closeOnBackdropClick={true}
     >
@@ -412,7 +291,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         }}
         className="p-6 space-y-6"
       >
-        {/* Quick Add from URL - Only for recipe boards (job tracker has it integrated below) */}
+        {/* Quick Add from URL - Only for recipe boards */}
         {boardType === "recipe" && (
           <div className="space-y-2">
             <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
@@ -441,8 +320,8 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                   urlFeedback.type === "success"
                     ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300"
                     : urlFeedback.type === "warning"
-                    ? "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300"
-                    : "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300"
+                      ? "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300"
+                      : "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300"
                 }`}
               >
                 {urlFeedback.type === "success" ? (
@@ -461,8 +340,8 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
           </div>
         )}
 
-        {/* Title - Hidden for job tracker and recipe since they have their own fields */}
-        {boardType !== "job_tracker" && boardType !== "recipe" && (
+        {/* Title - Hidden for recipe boards since they use recipe name */}
+        {boardType !== "recipe" && (
           <Input
             id="task-title"
             label="Task Title"
@@ -475,155 +354,16 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
           />
         )}
 
-        {/* Description - Hidden for job tracker (uses Notes field instead) */}
-        {boardType !== "job_tracker" && (
-          <Textarea
-            id="task-description"
-            label="Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Add more details..."
-            rows={3}
-            maxLength={1000}
-            required
-          />
-        )}
-
-        {/* Job Tracker Specific Fields */}
-        {boardType === "job_tracker" && (
-          <div className="space-y-6">
-            {/* Quick Add URL */}
-            <div className="space-y-2">
-              <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-                Quick add from URL
-              </span>
-              <Input
-                id="job-url"
-                type="url"
-                value={url}
-                onChange={(e) => void handleUrlChange(e.target.value)}
-                placeholder="Paste job posting URL to auto-fill..."
-                leftIcon={<Link className="w-4 h-4" />}
-                rightIcon={
-                  urlLoading ? (
-                    <Loader2
-                      className="w-4 h-4 animate-spin"
-                      style={{ color: themeColor }}
-                    />
-                  ) : undefined
-                }
-              />
-              {/* URL Feedback Message */}
-              {urlFeedback && (
-                <div
-                  className={`flex items-start gap-2 text-xs px-3 py-2 rounded-md ${
-                    urlFeedback.type === "success"
-                      ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300"
-                      : urlFeedback.type === "warning"
-                      ? "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300"
-                      : "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300"
-                  }`}
-                >
-                  {urlFeedback.type === "success" ? (
-                    <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                  ) : (
-                    <AlertCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                  )}
-                  <span>{urlFeedback.message}</span>
-                </div>
-              )}
-              {!urlFeedback && (
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Or fill in the details manually below
-                </p>
-              )}
-            </div>
-
-            {/* Core Job Details */}
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                  id="company-name"
-                  label="Company Name"
-                  type="text"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  placeholder="Company name"
-                  required
-                />
-                <Input
-                  id="position"
-                  label="Position"
-                  type="text"
-                  value={position}
-                  onChange={(e) => setPosition(e.target.value)}
-                  placeholder="Software Engineer"
-                  required
-                />
-              </div>
-
-              {/* Optional Details */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                  id="salary-range"
-                  label="Salary Range (optional)"
-                  type="text"
-                  value={salaryRange}
-                  onChange={(e) => setSalaryRange(e.target.value)}
-                  placeholder="$100k - $150k"
-                />
-                <Input
-                  id="location"
-                  label="Location (optional)"
-                  type="text"
-                  value={location}
-                  onChange={(e) => {
-                    const newLocation = e.target.value;
-                    setLocation(newLocation);
-                    // Auto-detect location type from manual entry
-                    setLocationType(detectLocationTypeFromLocationText(newLocation));
-                  }}
-                  placeholder="San Francisco, CA"
-                />
-              </div>
-
-              <Select
-                id="employment-type"
-                label="Employment Type (optional)"
-                value={employmentType}
-                onChange={(e) => setEmploymentType(e.target.value)}
-                placeholder="Select type"
-                options={[
-                  { value: "Full-time", label: "Full-time" },
-                  { value: "Part-time", label: "Part-time" },
-                  { value: "Contract", label: "Contract" },
-                ]}
-              />
-            </div>
-
-            {/* Additional Context */}
-            <div className="space-y-4 pt-2 border-t border-gray-200 dark:border-gray-700">
-              <Textarea
-                id="job-description"
-                label="Job Description (optional)"
-                value={jobDescription}
-                onChange={(e) => setJobDescription(e.target.value)}
-                placeholder="Paste or type the full job description here..."
-                rows={6}
-                resize="vertical"
-              />
-              <Textarea
-                id="job-notes"
-                label="Notes (optional)"
-                value={jobNotes}
-                onChange={(e) => setJobNotes(e.target.value)}
-                placeholder="Interview notes, contacts, follow-ups..."
-                rows={4}
-                resize="vertical"
-              />
-            </div>
-          </div>
-        )}
+        <Textarea
+          id="task-description"
+          label="Description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Add more details..."
+          rows={3}
+          maxLength={1000}
+          required
+        />
 
         {/* Recipe Specific Fields */}
         {boardType === "recipe" && (
@@ -638,7 +378,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 onChange={(e) => setRecipeName(e.target.value)}
                 placeholder="Chocolate Chip Cookies"
               />
-              
+
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <Input
                   id="prep-time"
@@ -737,135 +477,127 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
           </div>
         )}
 
-        {/* Optional Settings Disclosure - Hidden for job tracker */}
-        {boardType !== "job_tracker" && (
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-            <button
-              type="button"
-              onClick={() => setShowOptionalSettings(!showOptionalSettings)}
-              className="flex items-center justify-end gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors ml-auto"
+        {/* Optional Settings Disclosure */}
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+          <button
+            type="button"
+            onClick={() => setShowOptionalSettings(!showOptionalSettings)}
+            className="flex items-center justify-end gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors ml-auto"
+          >
+            <span>Optional settings</span>
+            <svg
+              className={`w-4 h-4 transition-transform ${
+                showOptionalSettings ? "rotate-90" : ""
+              }`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
             >
-              <span>Optional settings</span>
-              <svg
-                className={`w-4 h-4 transition-transform ${
-                  showOptionalSettings ? "rotate-90" : ""
-                }`}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </button>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </button>
 
-            {showOptionalSettings && (
-              <div className="mt-6 space-y-6">
-                {/* Icon Appearance */}
-                <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: themeColor }}>
-                    Icon Appearance
-                  </label>
-                  <div className="grid grid-cols-12 gap-3">
-                    <div className="col-span-8">
-                      <IconSelect
-                        id="task-icon"
-                        selectedIcon={icon}
-                        onIconChange={(value) => {
-                          setIcon(value);
-                          setShowColorPicker(false);
-                        }}
-                        icons={TASK_ICONS}
-                        iconColor={iconColor}
+          {showOptionalSettings && (
+            <div className="mt-6 space-y-6">
+              {/* Icon Appearance */}
+              <div>
+                <label
+                  className="block text-sm font-semibold mb-2"
+                  style={{ color: themeColor }}
+                >
+                  Icon Appearance
+                </label>
+                <div className="grid grid-cols-12 gap-3">
+                  <div className="col-span-8">
+                    <IconSelect
+                      id="task-icon"
+                      selectedIcon={icon}
+                      onIconChange={(value) => {
+                        setIcon(value);
+                        setShowColorPicker(false);
+                      }}
+                      icons={TASK_ICONS}
+                      iconColor={iconColor}
+                    />
+                  </div>
+                  <div className="col-span-4 relative" ref={colorPickerRef}>
+                    <button
+                      type="button"
+                      onClick={() => setShowColorPicker(!showColorPicker)}
+                      className="w-full flex items-center justify-center gap-2 px-4 h-[42px] rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 transition-colors bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white"
+                    >
+                      <span className="text-sm font-medium">Icon Color</span>
+                      <div
+                        className="w-5 h-5 rounded border border-gray-300 dark:border-gray-600"
+                        style={{ backgroundColor: iconColor }}
                       />
-                    </div>
-                    <div className="col-span-4 relative" ref={colorPickerRef}>
-                      <button
-                        type="button"
-                        onClick={() => setShowColorPicker(!showColorPicker)}
-                        className="w-full flex items-center justify-center gap-2 px-4 h-[42px] rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 transition-colors bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white"
-                      >
-                        <span className="text-sm font-medium">Icon Color</span>
-                        <div
-                          className="w-5 h-5 rounded border border-gray-300 dark:border-gray-600"
-                          style={{ backgroundColor: iconColor }}
+                    </button>
+                    {showColorPicker && (
+                      <div className="absolute top-full mt-2 right-0 z-50 bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg shadow-xl p-4 space-y-3 w-[280px]">
+                        <Input
+                          id="task-icon-hex"
+                          label="Color"
+                          type="text"
+                          value={iconColor}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                              setIconColor(value);
+                            }
+                          }}
+                          placeholder="#9333ea"
+                          maxLength={7}
                         />
-                      </button>
-                      {showColorPicker && (
-                        <div className="absolute top-full mt-2 right-0 z-50 bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg shadow-xl p-4 space-y-3 w-[280px]">
-                          <Input
-                            id="task-icon-hex"
-                            label="Color"
-                            type="text"
-                            value={iconColor}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                                setIconColor(value);
-                              }
-                            }}
-                            placeholder="#9333ea"
-                            maxLength={7}
-                          />
-                          <CompactColorThemePicker
-                            selectedColor={iconColor}
-                            onColorChange={setIconColor}
-                            title=""
-                            showPreview={false}
-                            pickerHeightPx={140}
-                            showHexInput={false}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowColorPicker(false)}
-                            className="w-full px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
-                          >
-                            Done
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                        <CompactColorThemePicker
+                          selectedColor={iconColor}
+                          onColorChange={setIconColor}
+                          title=""
+                          showPreview={false}
+                          pickerHeightPx={140}
+                          showHexInput={false}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowColorPicker(false)}
+                          className="w-full px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                        >
+                          Done
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
-
-                {/* TaskSchedulingControls now includes Date, Repeatable, Timer */}
-                <TaskSchedulingControls
-                  themeColor={themeColor}
-                  dueDate={dueDate}
-                  setDueDate={setDueDate}
-                    isRepeatable={isRepeatable}
-                    setIsRepeatable={setIsRepeatable}
-                    repeatFrequency={repeatFrequency}
-                    setRepeatFrequency={setRepeatFrequency}
-                    repeatInterval={repeatInterval}
-                    setRepeatInterval={setRepeatInterval}
-                    hasTimer={hasTimer}
-                    setHasTimer={setHasTimer}
-                  timerDuration={timerDuration}
-                  setTimerDuration={setTimerDuration}
-                  timerUnit={timerUnit}
-                  setTimerUnit={setTimerUnit}
-                  repeatFrequencySelectId="repeat-frequency"
-                  timerDurationSelectId="timer-duration"
-                  timerUnitSelectId="timer-unit"
-                />
               </div>
-            )}
-          </div>
-        )}
 
-        {/* Duplicate Error */}
-        {duplicateError && (
-          <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 mt-4">
-            <p className="text-sm text-red-800 dark:text-red-200">
-              {duplicateError}
-            </p>
-          </div>
-        )}
+              {/* TaskSchedulingControls now includes Date, Repeatable, Timer */}
+              <TaskSchedulingControls
+                themeColor={themeColor}
+                dueDate={dueDate}
+                setDueDate={setDueDate}
+                isRepeatable={isRepeatable}
+                setIsRepeatable={setIsRepeatable}
+                repeatFrequency={repeatFrequency}
+                setRepeatFrequency={setRepeatFrequency}
+                repeatInterval={repeatInterval}
+                setRepeatInterval={setRepeatInterval}
+                hasTimer={hasTimer}
+                setHasTimer={setHasTimer}
+                timerDuration={timerDuration}
+                setTimerDuration={setTimerDuration}
+                timerUnit={timerUnit}
+                setTimerUnit={setTimerUnit}
+                repeatFrequencySelectId="repeat-frequency"
+                timerDurationSelectId="timer-duration"
+                timerUnitSelectId="timer-unit"
+              />
+            </div>
+          )}
+        </div>
 
         {/* Spacer for consistent divider spacing - only when optional settings expanded */}
         {showOptionalSettings && <div className="h-2" />}
@@ -886,19 +618,17 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
             className="flex-1"
             disabled={
               createTask.isPending ||
-              (boardType === "job_tracker"
-                ? !companyName.trim() || !position.trim()
+              (boardType === "recipe"
+                ? !recipeName.trim() || !description.trim()
                 : !title.trim() || !description.trim()) ||
               (isRepeatable && !dueDate)
             }
           >
             {createTask.isPending
               ? "Creating..."
-              : boardType === "job_tracker"
-              ? "Add Job Application"
               : boardType === "recipe"
-              ? "Add Recipe"
-              : "Create Task"}
+                ? "Add Recipe"
+                : "Create Task"}
           </Button>
         </div>
       </form>

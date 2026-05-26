@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { Menu } from "lucide-react";
-import { useSidebar } from "../../contexts/SidebarContext";
 import { Button, Footer } from "@/components/shared";
 import { debounce } from "@/utils/debounce";
 
@@ -22,8 +20,6 @@ interface ContentLayoutProps {
 /**
  * ContentLayout - Reusable layout for content pages
  * Provides consistent header with title, description, and tabs
- * Mobile: Top navigation with hamburger menu
- * Desktop: Standard header with sidebar
  */
 const ContentLayout: React.FC<ContentLayoutProps> = ({
   title,
@@ -33,7 +29,6 @@ const ContentLayout: React.FC<ContentLayoutProps> = ({
   onTabChange,
   children,
 }) => {
-  const { toggleSidebar } = useSidebar();
   const [isScrolled, setIsScrolled] = useState(false);
 
   // Track scroll position for header background with debouncing
@@ -56,33 +51,16 @@ const ContentLayout: React.FC<ContentLayoutProps> = ({
       tabIndex={-1}
       className="min-h-screen focus:outline-none flex flex-col"
     >
-      {/* Mobile Header - Only visible on mobile */}
-      <header className="md:hidden sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 z-40 mb-6">
-        <div className="flex items-center justify-between px-4 py-3">
-          <h1 className="flex-1 text-lg font-bold text-gray-900 dark:text-white truncate font-heading">
-            {title}
-          </h1>
-          <Button
-            onClick={toggleSidebar}
-            variant="subtle"
-            size="icon"
-            icon={<Menu className="w-6 h-6" />}
-            aria-label="Toggle navigation menu"
-            className="mr-1"
-          />
-        </div>
-      </header>
-
-      {/* Page Header - Desktop styling */}
+      {/* Page Header */}
       <header
-        className={`z-30 hidden md:block transition-colors duration-200 ${
+        className={`z-30 transition-colors duration-200 ${
           isScrolled ? "bg-background/80 backdrop-blur-sm" : ""
         }`}
       >
-        <div className="container mx-auto px-6 pt-12">
+        <div className="container mx-auto px-4 sm:px-6 pt-8 sm:pt-12">
           {/* Title and Description */}
           <div className="mb-6">
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2 font-heading">
+            <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2 font-heading">
               {title}
             </h1>
             {description && (
@@ -93,7 +71,7 @@ const ContentLayout: React.FC<ContentLayoutProps> = ({
           {/* Tabs */}
           {tabs && tabs.length > 0 && (
             <nav
-              className="flex gap-0 border-b border-gray-200 dark:border-gray-700 -mb-px"
+              className="flex gap-0 border-b border-gray-200 dark:border-gray-700 -mb-px overflow-x-auto"
               role="tablist"
               aria-label={`${title} sections`}
             >
@@ -131,7 +109,7 @@ const ContentLayout: React.FC<ContentLayoutProps> = ({
       </header>
 
       {/* Page Content */}
-      <div className="flex-1 container mx-auto px-6 pb-8" role="main">
+      <div className="flex-1 container mx-auto px-4 sm:px-6 pb-8" role="main">
         {children}
       </div>
 

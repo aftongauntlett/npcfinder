@@ -1,9 +1,7 @@
 import React from "react";
-import { Menu } from "lucide-react";
 import MainLayout from "./MainLayout";
 import { Footer, Tabs } from "@/components/shared";
 import type { Tab } from "@/components/shared";
-import { useSidebar } from "@/contexts/SidebarContext";
 
 interface AppLayoutProps {
   title: string;
@@ -35,8 +33,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   onTabClose,
   children,
 }) => {
-  const { toggleSidebar } = useSidebar();
-
   return (
     <MainLayout>
       <main
@@ -47,22 +43,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({
         {/* Page Header */}
         <header>
           <div className="container mx-auto px-4 sm:px-6 pt-8 sm:pt-12">
-            {/* Mobile menu button and Title */}
+            {/* Page title and description */}
             <div className="mb-6">
-              <div className="flex items-center gap-3 mb-2">
+              <div className="mb-2">
                 <h1 className="flex-1 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white font-heading">
                   {title}
                 </h1>
-
-                {/* Mobile hamburger menu */}
-                <button
-                  type="button"
-                  onClick={toggleSidebar}
-                  className="md:hidden p-2 mr-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                  aria-label="Toggle navigation menu"
-                >
-                  <Menu className="w-6 h-6" />
-                </button>
               </div>
               {description && (
                 <p className="text-gray-600 dark:text-gray-400">
