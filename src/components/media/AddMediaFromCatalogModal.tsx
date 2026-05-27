@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Plus, Search } from "lucide-react";
 import { Button, Input, Modal } from "@/components/shared";
 import type { MediaItem } from "@/components/shared";
@@ -13,6 +13,9 @@ import Toast from "@/components/ui/Toast";
 type ExistingKey = `${string}:${string}`;
 
 type ResultFilter = "all" | "movies-tv" | "books" | "games" | "music";
+
+const SEARCH_DEBOUNCE_MS = 400;
+const MIN_QUERY_LENGTH = 2;
 
 function existingKey(
   item: Pick<MediaItem, "external_id" | "media_type">,
@@ -53,6 +56,7 @@ export default function AddMediaFromCatalogModal({
   const [totalBeforeCap, setTotalBeforeCap] = useState(0);
   const [wasCapped, setWasCapped] = useState(false);
   const [toast, setToast] = useState<{ message: string } | null>(null);
+  const requestTokenRef = useRef(0);
 
   useEffect(() => {
     if (isOpen) {
@@ -70,32 +74,69 @@ export default function AddMediaFromCatalogModal({
     return set;
   }, [existingItems]);
 
-  const runSearch = async () => {
-    const trimmed = query.trim();
-    if (!trimmed) {
-      setResults([]);
-      return;
-    }
+  const runSearch = useCallback(
+    async (rawQuery: string, requestToken = ++requestTokenRef.current) => {
+      const trimmed = rawQuery.trim();
+      if (trimmed.length < MIN_QUERY_LENGTH) {
+        if (requestToken === requestTokenRef.current) {
+          setResults([]);
+          setTotalBeforeCap(0);
+          setWasCapped(false);
+          setIsSearching(false);
+        }
+        return;
+      }
 
-    setIsSearching(true);
-    try {
-      const data = await searchMediaByScope(
-        trimmed,
-        lockSearchScope ? searchScope : "all",
-      );
-      setResults(data.results);
-      setTotalBeforeCap(data.totalBeforeCap);
-      setWasCapped(data.capped);
-    } catch (error) {
-      logger.error("Unified media search failed", { error, query: trimmed });
+      setIsSearching(true);
+      try {
+        const data = await searchMediaByScope(
+          trimmed,
+          lockSearchScope ? searchScope : "all",
+        );
+        if (requestToken !== requestTokenRef.current) {
+          return;
+        }
+        setResults(data.results);
+        setTotalBeforeCap(data.totalBeforeCap);
+        setWasCapped(data.capped);
+      } catch (error) {
+        if (requestToken !== requestTokenRef.current) {
+          return;
+        }
+        logger.error("Unified media search failed", { error, query: trimmed });
+        setResults([]);
+        setTotalBeforeCap(0);
+        setWasCapped(false);
+        setToast({ message: "Search failed" });
+      } finally {
+        if (requestToken === requestTokenRef.current) {
+          setIsSearching(false);
+        }
+      }
+    },
+    [lockSearchScope, searchScope],
+  );
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const trimmed = query.trim();
+    const requestToken = ++requestTokenRef.current;
+
+    if (trimmed.length < MIN_QUERY_LENGTH) {
       setResults([]);
       setTotalBeforeCap(0);
       setWasCapped(false);
-      setToast({ message: "Search failed" });
-    } finally {
       setIsSearching(false);
+      return;
     }
-  };
+
+    const timer = window.setTimeout(() => {
+      void runSearch(trimmed, requestToken);
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [isOpen, query, runSearch, lockSearchScope, searchScope]);
 
   const filteredResults = useMemo(() => {
     const activeFilter = lockSearchScope ? searchScope : resultFilter;
@@ -148,6 +189,7 @@ export default function AddMediaFromCatalogModal({
   };
 
   const handleClose = () => {
+    requestTokenRef.current += 1;
     onClose();
     setQuery("");
     setResults([]);
@@ -173,15 +215,19 @@ export default function AddMediaFromCatalogModal({
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
-                    void runSearch();
+                    const requestToken = ++requestTokenRef.current;
+                    void runSearch(query, requestToken);
                   }
                 }}
               />
             </div>
             <div className="pt-6">
               <Button
-                onClick={() => void runSearch()}
-                disabled={!query.trim() || isSearching}
+                onClick={() => {
+                  const requestToken = ++requestTokenRef.current;
+                  void runSearch(query, requestToken);
+                }}
+                disabled={query.trim().length < MIN_QUERY_LENGTH || isSearching}
               >
                 {isSearching ? "Searching..." : "Search"}
               </Button>

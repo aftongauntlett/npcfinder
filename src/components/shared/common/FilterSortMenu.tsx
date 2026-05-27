@@ -45,7 +45,10 @@ const FilterSortMenu: React.FC<FilterSortMenuProps> = ({
       const value = activeFilters[section.id];
       if (section.multiSelect) {
         const values = Array.isArray(value) ? value : [];
-        return !(values.length === 0 || (values.length === 1 && values[0] === "all"));
+        return !(
+          values.length === 0 ||
+          (values.length === 1 && values[0] === "all")
+        );
       }
 
       return value !== undefined && value !== "all";
@@ -91,7 +94,7 @@ const FilterSortMenu: React.FC<FilterSortMenuProps> = ({
   const handleOptionClick = (
     section: FilterSortSection,
     optionId: string,
-    event: React.MouseEvent
+    event: React.MouseEvent,
   ) => {
     event.stopPropagation();
 
@@ -137,7 +140,7 @@ const FilterSortMenu: React.FC<FilterSortMenuProps> = ({
   };
 
   return (
-    <div className="relative inline-block">
+    <div className={`relative inline-block ${isOpen ? "z-[120]" : ""}`}>
       {/* Trigger Button */}
       <button
         ref={triggerRef}
@@ -149,10 +152,10 @@ const FilterSortMenu: React.FC<FilterSortMenuProps> = ({
         className="inline-flex items-center justify-center w-8 h-8 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         type="button"
       >
-        <SlidersHorizontal 
+        <SlidersHorizontal
           className={`w-4 h-4 transition-colors ${
             isOpen || hasActiveFilters ? "text-theme-primary" : "text-gray-400"
-          }`} 
+          }`}
         />
       </button>
 
@@ -160,7 +163,7 @@ const FilterSortMenu: React.FC<FilterSortMenuProps> = ({
       {isOpen && (
         <div
           ref={dropdownRef}
-          className="absolute left-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-dropdown max-h-[400px] overflow-y-auto"
+          className="absolute left-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-[130] max-h-[400px] overflow-y-auto"
           role="listbox"
         >
           {sections.map((section, sectionIndex) => (

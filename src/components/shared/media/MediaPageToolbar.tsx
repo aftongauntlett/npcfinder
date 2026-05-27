@@ -1,4 +1,4 @@
-import { Plus, Minimize2 } from "lucide-react";
+import { Minimize2 } from "lucide-react";
 import Button from "../ui/Button";
 import FilterSortMenu from "../common/FilterSortMenu";
 import LocalSearchInput from "../common/LocalSearchInput";
@@ -41,15 +41,15 @@ export function MediaPageToolbar(props: MediaPageToolbarProps) {
     searchConfig,
     onCollapseAll,
     hasExpandedItems,
-    addLabel = "Add",
-    addIcon = <Plus size={18} />,
+    addLabel = "+ Add",
+    addIcon,
     rightActions,
     hideAddButton = false,
   } = props;
 
   const handleRemoveFilter = (sectionId: string, filterId: string) => {
     if (!filterConfig) return;
-    
+
     const section = filterConfig.sections.find((s) => s.id === sectionId);
     if (!section) return;
 
@@ -58,86 +58,80 @@ export function MediaPageToolbar(props: MediaPageToolbarProps) {
         ? (filterConfig.activeFilters[sectionId] as string[])
         : [];
       const newValues = currentValues.filter((id) => id !== filterId);
-      filterConfig.onFilterChange(sectionId, newValues.length === 0 ? ["all"] : newValues);
+      filterConfig.onFilterChange(
+        sectionId,
+        newValues.length === 0 ? ["all"] : newValues,
+      );
     } else {
       filterConfig.onFilterChange(sectionId, "all");
     }
   };
 
+  const actionButtonClassName =
+    "h-9 w-9 rounded-full border-0 bg-gray-100/80 shadow-sm backdrop-blur-sm hover:bg-gray-200/80 dark:bg-gray-700/70 dark:hover:bg-gray-600/80";
+
   return (
-    <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-      <div className="w-full flex items-center gap-3 sm:flex-1 min-w-0 flex-wrap">
-        {/* Search with Filter Button */}
+    <div className="mb-4 flex flex-col gap-3">
+      <div className="flex w-full items-center gap-2">
         {searchConfig && (
-          <div className="w-full flex items-center gap-2 sm:w-[420px] sm:max-w-full">
-            <div className="flex-1 min-w-0">
-              <LocalSearchInput
-                value={searchConfig.value}
-                onChange={searchConfig.onChange}
-                placeholder={searchConfig.placeholder || "Search..."}
-                filterButton={
-                  filterConfig?.type === "menu" ? (
-                    <FilterSortMenu
-                      sections={filterConfig.sections}
-                      activeFilters={filterConfig.activeFilters}
-                      onFilterChange={filterConfig.onFilterChange}
-                      label=""
-                    />
-                  ) : undefined
-                }
-              />
-            </div>
-
-            {/* Mobile: actions inline with search */}
-            <div className="flex items-center gap-2 sm:hidden">
-              {rightActions}
-              {!hideAddButton && (
-                <Button
-                  onClick={onAddClick}
-                  variant="action"
-                  size="icon"
-                  icon={addIcon}
-                  aria-label={addLabel}
-                  title={addLabel}
-                />
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Active Filter Chips */}
-        {filterConfig?.type === "menu" && (
-          <div className="hidden sm:block">
-            <ActiveFilterChips
-              sections={filterConfig.sections}
-              activeFilters={filterConfig.activeFilters}
-              onRemoveFilter={handleRemoveFilter}
+          <div className="min-w-0 flex-1">
+            <LocalSearchInput
+              value={searchConfig.value}
+              onChange={searchConfig.onChange}
+              placeholder={searchConfig.placeholder || "Search..."}
+              className="w-full"
+              filterButton={
+                filterConfig?.type === "menu" ? (
+                  <FilterSortMenu
+                    sections={filterConfig.sections}
+                    activeFilters={filterConfig.activeFilters}
+                    onFilterChange={filterConfig.onFilterChange}
+                    label=""
+                  />
+                ) : undefined
+              }
             />
           </div>
         )}
+
+        <div className="flex items-center gap-2">
+          {hasExpandedItems && onCollapseAll && (
+            <Button
+              onClick={onCollapseAll}
+              variant="subtle"
+              size="icon"
+              icon={<Minimize2 className="h-4 w-4" />}
+              aria-label="Collapse all items"
+              title="Collapse all items"
+              className={actionButtonClassName}
+            />
+          )}
+          {rightActions}
+          {!hideAddButton && (
+            <Button
+              onClick={onAddClick}
+              variant="action"
+              size="sm"
+              icon={addIcon}
+              aria-label={addLabel}
+              title={addLabel}
+              className="h-9 rounded-full border-0 px-3 text-sm font-semibold shadow-sm"
+            >
+              {addLabel}
+            </Button>
+          )}
+        </div>
       </div>
 
-      <div className="hidden sm:flex w-full sm:w-auto items-center justify-end gap-2">
-        {hasExpandedItems && onCollapseAll && (
-          <Button
-            onClick={onCollapseAll}
-            variant="subtle"
-            size="sm"
-            icon={<Minimize2 className="w-4 h-4" />}
-            aria-label="Collapse all items"
-            title="Collapse all items"
-            hideTextOnMobile
-          >
-            Collapse All
-          </Button>
-        )}
-        {rightActions}
-        {!hideAddButton && (
-          <Button onClick={onAddClick} variant="action" size="md" icon={addIcon}>
-            {addLabel}
-          </Button>
-        )}
-      </div>
+      {filterConfig?.type === "menu" && (
+        <div>
+          <ActiveFilterChips
+            sections={filterConfig.sections}
+            activeFilters={filterConfig.activeFilters}
+            onRemoveFilter={handleRemoveFilter}
+          />
+        </div>
+      )}
     </div>
   );
 }
