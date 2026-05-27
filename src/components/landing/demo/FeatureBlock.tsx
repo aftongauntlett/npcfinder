@@ -38,7 +38,7 @@ export const FeatureBlock: React.FC<FeatureBlockProps> = ({
       onMouseLeave={() => setIsHovered(false)}
       aria-labelledby={`feature-${title.replace(/\s+/g, "-").toLowerCase()}`}
     >
-      <div className="flex items-start gap-16">
+      <div className="flex items-start gap-12">
         {/* Content column */}
         <div className="flex-1">
           <div className="flex items-center gap-4 mb-5">
@@ -81,12 +81,12 @@ export const FeatureBlock: React.FC<FeatureBlockProps> = ({
         {/* Large animated icon on the right */}
         {Icon && (
           <div
-            className="hidden lg:flex items-center justify-center flex-shrink-0 w-48 h-48 relative"
+            className="hidden lg:flex items-center justify-center flex-shrink-0 w-40 h-40 relative"
             aria-hidden="true"
           >
             {/* Middle pulsing glow */}
             <motion.div
-              className="absolute inset-4 rounded-full"
+              className="absolute inset-3 rounded-full"
               style={{
                 background: `radial-gradient(circle, rgba(${rgbString}, 0.08), transparent 70%)`,
               }}
@@ -107,7 +107,7 @@ export const FeatureBlock: React.FC<FeatureBlockProps> = ({
 
             {/* Inner glow */}
             <motion.div
-              className="absolute inset-8 rounded-full blur-xl"
+              className="absolute inset-6 rounded-full blur-xl"
               style={{
                 backgroundColor: iconColor,
               }}
@@ -123,13 +123,13 @@ export const FeatureBlock: React.FC<FeatureBlockProps> = ({
 
             {/* Icon container with 3D effect */}
             <motion.div
-              className="relative z-10 flex items-center justify-center w-32 h-32 rounded-2xl"
+              className="relative z-10 flex items-center justify-center w-24 h-24 rounded-[22px]"
               style={{
                 background: `linear-gradient(135deg, rgba(${rgbString}, 0.2), rgba(${rgbString}, 0.08))`,
-                border: `1px solid rgba(${rgbString}, 0.2)`,
+                border: `1px solid rgba(${rgbString}, 0.16)`,
                 boxShadow: isHovered
-                  ? `0 20px 60px -10px rgba(${rgbString}, 0.4), inset 0 1px 0 rgba(255,255,255,0.1)`
-                  : `0 10px 30px -10px rgba(${rgbString}, 0.2)`,
+                  ? `0 16px 44px -10px rgba(${rgbString}, 0.35), inset 0 1px 0 rgba(255,255,255,0.1)`
+                  : `0 8px 24px -10px rgba(${rgbString}, 0.18)`,
               }}
               animate={
                 !prefersReducedMotion && isHovered
@@ -162,7 +162,7 @@ export const FeatureBlock: React.FC<FeatureBlockProps> = ({
               >
                 <Icon
                   weight="duotone"
-                  size={80}
+                  size={58}
                   style={{
                     color: iconColor,
                     filter: isHovered

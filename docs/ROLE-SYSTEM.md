@@ -98,7 +98,7 @@ CREATE POLICY "Anyone can view profiles" ON user_profiles
 
 This is safe because:
 
-- Profile data is meant to be visible to other users (for connections, recommendations, etc.)
+- Profile data is meant to be visible to other users (for connections, playlist sharing, etc.)
 - UPDATE and DELETE policies still enforce proper access control
 - Role integrity is protected by database triggers, not RLS policies
 
@@ -362,6 +362,6 @@ The migration maintains backward compatibility:
 - **Frontend Context**: `src/contexts/AdminContext.tsx`
 - **Backend Library**: `src/lib/admin.ts`
 - **Route Protection**: `src/components/layouts/ProtectedAdminRoute.tsx`
-- **Navigation**: `src/components/shared/layout/TopNav.tsx`
+- **Navigation**: `src/components/shared/layout/AppSidebar.tsx`
 - **Tests**: `tests/roleSystem.test.ts`
 - **Verification**: `scripts/verify-rls-comprehensive.js`

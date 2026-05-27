@@ -12,20 +12,20 @@ import LandingButton from "../landing/LandingButton";
 import HeroConstellation from "../effects/HeroConstellation";
 import { FeatureBlock } from "../landing/demo/FeatureBlock";
 import ModernCard from "../landing/demo/ModernCard";
-import {
-  LANDING_PEACH,
-  LANDING_TEAL,
-  LANDING_BLUE,
-} from "../../data/landingTheme";
+import { LANDING_PEACH } from "../../data/landingTheme";
 import { landingFeatures } from "../../data/landingFeatures";
-import {
-  landingFutureCategories,
-  futureDisclaimer,
-  futureVisionBlurb,
-} from "../../data/landingFuture";
 import { landingAvailability } from "../../data/landingAvailability";
 import { landingPrivacy } from "../../data/landingPrivacy";
 import { usePageMeta } from "../../hooks/usePageMeta";
+
+const TECH_STACK_CHIPS = [
+  "React",
+  "TypeScript",
+  "Supabase",
+  "TanStack Query",
+  "Framer Motion",
+  "Tailwind",
+];
 
 // Only load the starfield in dark mode.
 const StarryBackground = React.lazy(
@@ -38,7 +38,7 @@ const structuredData = {
   "@type": "WebApplication",
   name: "NPC Finder",
   description:
-    "A private media clubhouse for trusted friends to collect, share, and revisit what they love.",
+    "A private media tracker for notes, ratings, and personal timelines, with collaborative playlists for trusted friends.",
   url: "https://npcfinder.com",
   applicationCategory: "LifestyleApplication",
   operatingSystem: "Web",
@@ -55,9 +55,9 @@ const structuredData = {
 
 // Static page meta options (stable reference)
 const pageMetaOptions = {
-  title: "Private Media Clubhouse",
+  title: "Private Media Tracker",
   description:
-    "Archive and share movies, shows, books, games, and music with your trusted circle.",
+    "Track media with notes and ratings, keep a timeline, and share curated playlists with trusted friends.",
   ogImage: "/og-image.png",
   canonical: "https://npcfinder.com/",
 };
@@ -69,9 +69,6 @@ const DemoLanding: React.FC = () => {
   usePageMeta(pageMetaOptions);
   const prefersReducedMotion = useReducedMotion();
   const { resolvedTheme } = useTheme();
-  const futureCards = landingFutureCategories.flatMap(
-    (category) => category.features,
-  );
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
       {/* Structured Data for Search Engines */}
@@ -108,37 +105,26 @@ const DemoLanding: React.FC = () => {
             />
             <h1 className="text-2xl font-bold tracking-tight">NPC Finder</h1>
           </div>
-          <LandingButton
-            href="#availability"
-            variant="ghost"
-            icon={<Lock className="w-4 h-4" weight="duotone" />}
-            className="text-sm"
+          <a
+            href="#status"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/15 bg-slate-800/40 text-xs font-medium text-gray-200 transition-colors hover:bg-slate-700/50 hover:border-white/30 hover:text-white focus:outline-none focus:ring-2 focus:ring-teal-300/60"
+            aria-label="View invite-only and project status section"
           >
-            <span className="hidden sm:inline">Get Access</span>
-          </LandingButton>
+            <Lock className="w-4 h-4" weight="duotone" />
+            <span>Invite Only</span>
+          </a>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="relative z-10" id="main-content" role="main">
         {/* Hero Section */}
-        <section className="max-w-7xl mx-auto px-6 pt-8 pb-12 sm:pt-12 sm:pb-16 lg:pt-16 lg:pb-28">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-            {/* Left column - constellation (desktop only) */}
-            <div className="hidden lg:flex items-center justify-center pointer-events-auto">
-              <HeroConstellation
-                width={620}
-                height={560}
-                nodeCount={50}
-                animationSpeed={0.8}
-                className="opacity-60"
-              />
-            </div>
-
-            {/* Right column - text */}
-            <div className="relative z-10 pointer-events-auto lg:pl-4">
+        <section className="max-w-7xl mx-auto px-6 pt-8 pb-8 sm:pt-10 sm:pb-10 lg:pt-12 lg:pb-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-start lg:items-center">
+            {/* Left column - text */}
+            <div className="relative z-10 pointer-events-auto lg:pr-4 lg:order-1">
               <h2 className="text-[2rem] sm:text-[2.5rem] lg:text-[2.9rem] font-bold mb-6 leading-[1.12] tracking-tight">
-                A Quiet Corner of the Internet
+                Private Media Tracking
                 <br />
                 <span
                   className="block mt-1.5 text-[1.35rem] sm:text-[1.6rem] lg:text-[1.75rem] font-normal leading-[1.2] bg-clip-text text-transparent"
@@ -146,31 +132,41 @@ const DemoLanding: React.FC = () => {
                     backgroundImage: `linear-gradient(to right, ${LANDING_PEACH}, ${LANDING_PEACH}, ${LANDING_PEACH})`,
                   }}
                 >
-                  For the People Who Actually Text Back
+                  Track It. Note It. Remember It.
                 </span>
               </h2>
 
               <p className="text-base sm:text-lg text-neutral-300 mb-8 max-w-xl leading-relaxed font-light">
-                I got tired of social media feeling like a performance. I wanted
-                somewhere to honestly track what I&apos;m watching, reading, and
-                playing - and share it with the people I actually talk to. So I
-                built this. In my free time, by myself. No pitch deck, no ad
-                revenue, no growth targets. If it turns out to be useful to even
-                one other person, that&apos;s more than enough.
+                I built NPC Finder to track what I watch, read, play, and listen
+                to in one place. Notes and quick ratings help me focus and
+                remember why something mattered. The timeline captures when I
+                experienced it, and shared playlists let friends exchange
+                recommendations and notes.
               </p>
 
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-end gap-4">
-                <LandingButton href="#availability" variant="primary">
-                  Request Invite
-                </LandingButton>
+              <div className="ml-auto w-fit flex flex-col sm:flex-row items-end sm:items-center justify-end gap-3">
                 <LandingButton
                   href="https://github.com/aftongauntlett/npcfinder"
                   variant="ghost"
-                  icon={<GithubLogo className="w-5 h-5" weight="duotone" />}
+                  size="compact"
+                  icon={<GithubLogo className="w-4 h-4" weight="duotone" />}
                 >
                   View Source
                 </LandingButton>
+                <LandingButton href="/login" variant="primary" size="compact">
+                  Sign In
+                </LandingButton>
               </div>
+            </div>
+
+            {/* Right column - constellation (desktop only) */}
+            <div className="hidden lg:flex pointer-events-auto lg:order-2 min-h-[420px]">
+              <HeroConstellation
+                responsive
+                nodeCount={50}
+                animationSpeed={0.8}
+                className="w-full h-full opacity-60"
+              />
             </div>
           </div>
         </section>
@@ -178,19 +174,18 @@ const DemoLanding: React.FC = () => {
         {/* Features Section */}
         <motion.section
           id="features"
-          className="max-w-7xl mx-auto px-6 py-32"
+          className="max-w-7xl mx-auto px-6 pt-12 pb-24 sm:pt-14 sm:pb-24 lg:pt-16 lg:pb-24"
           initial={prefersReducedMotion ? undefined : { opacity: 0 }}
           whileInView={prefersReducedMotion ? undefined : { opacity: 1 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
         >
-          <div className="mb-16">
+          <div className="mb-12">
             <h3 className="text-4xl font-bold mb-3 tracking-tight">
-              What I&apos;ve Built So Far
+              What the App Does
             </h3>
             <p className="text-gray-400 max-w-2xl">
-              This is what actually works right now - media tracking, shared
-              collections, and private collaboration features. No fluff.
+              Core workflows that are available now.
             </p>
           </div>
 
@@ -239,80 +234,9 @@ const DemoLanding: React.FC = () => {
           </div>
         </motion.section>
 
-        {/* What's Next */}
-        <motion.section
-          id="roadmap"
-          className="max-w-7xl mx-auto px-6 py-32"
-          initial={prefersReducedMotion ? undefined : { opacity: 0 }}
-          whileInView={prefersReducedMotion ? undefined : { opacity: 1 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
-        >
-          <div className="mb-12">
-            <h3 className="text-4xl font-bold mb-6 tracking-tight">
-              Things I&apos;d Love to Build
-            </h3>
-
-            <div className="mb-3 flex items-end justify-between gap-4">
-              <h4 className="text-2xl font-semibold text-white tracking-tight">
-                {futureVisionBlurb.title}
-              </h4>
-              <p className="text-xs uppercase tracking-wider text-gray-400">
-                Updated {futureVisionBlurb.updatedAt}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              <ModernCard
-                iconColor={LANDING_PEACH}
-                title="The Dream"
-                description={futureVisionBlurb.content}
-                className="h-full"
-              />
-              <ModernCard
-                iconColor={LANDING_TEAL}
-                title="Reality Check"
-                description={futureVisionBlurb.realityCheck}
-                className="h-full"
-              />
-              <ModernCard
-                iconColor={LANDING_BLUE}
-                title="Non-Negotiables"
-                description={futureVisionBlurb.values}
-                className="h-full"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {futureCards.map((feature) => (
-              <ModernCard
-                key={feature.title}
-                iconColor={feature.color}
-                title={feature.title}
-                description={feature.description}
-                className="h-full"
-              />
-            ))}
-            <ModernCard
-              iconColor={LANDING_BLUE}
-              title="Want to Collaborate?"
-              description="If this goes live and you'd like to shape where it goes, reach out. Suggestions and feature requests are welcome, especially from people who'd actually use this with friends."
-              className="h-full"
-            />
-          </div>
-
-          <p className="text-gray-400 text-sm leading-relaxed mt-8">
-            <span className="font-medium" style={{ color: LANDING_TEAL }}>
-              Note:
-            </span>{" "}
-            {futureDisclaimer}
-          </p>
-        </motion.section>
-
         {/* Access & Availability Section */}
         <motion.section
-          id="availability"
+          id="status"
           className="max-w-7xl mx-auto px-6 py-32"
           initial={prefersReducedMotion ? undefined : { opacity: 0 }}
           whileInView={prefersReducedMotion ? undefined : { opacity: 1 }}
@@ -326,9 +250,19 @@ const DemoLanding: React.FC = () => {
             <p className="text-gray-400 max-w-2xl">
               {landingAvailability.description}
             </p>
+
+            <div className="mt-5 flex flex-wrap items-center gap-2.5 max-w-2xl">
+              {TECH_STACK_CHIPS.map((chip) => (
+                <span
+                  key={chip}
+                  className="inline-flex items-center rounded-full border border-white/15 bg-slate-800/40 px-3 py-1 text-xs font-medium text-gray-200"
+                >
+                  {chip}
+                </span>
+              ))}
+            </div>
           </div>
 
-          {/* Availability Points - Modern 2025 hover effects */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {landingAvailability.points.map((point, index) => (
               <ModernCard
@@ -337,61 +271,27 @@ const DemoLanding: React.FC = () => {
                 iconColor={point.iconColor}
                 title={point.title}
                 description={point.description}
-                className="h-full"
-              />
-            ))}
-          </div>
-
-          {/* Demo Video Coming Soon - Distinct callout style */}
-          <div
-            className="relative bg-gradient-to-br from-slate-800/30 via-slate-800/20 to-transparent rounded-xl p-8 mb-12 text-center"
-            style={{
-              borderWidth: "1px",
-              borderStyle: "solid",
-              borderColor: `${LANDING_PEACH}20`,
-            }}
-          >
-            <div className="flex flex-col items-center gap-3">
-              <div
-                className="w-14 h-14 flex items-center justify-center rounded-full"
-                style={{
-                  backgroundColor: `${LANDING_PEACH}10`,
-                  borderWidth: "1px",
-                  borderStyle: "solid",
-                  borderColor: `${LANDING_PEACH}30`,
-                }}
+                descriptionClassName="min-h-[4.75rem]"
+                className="h-full min-h-[220px]"
               >
-                <svg
-                  className="w-7 h-7"
-                  style={{ color: LANDING_PEACH }}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <div>
-                <h4 className="text-lg font-semibold text-white mb-2">
-                  Demo Video Coming Soon
-                </h4>
-                <p className="text-gray-400 text-sm max-w-md mx-auto">
-                  {landingAvailability.demoNote}
-                </p>
-              </div>
-            </div>
+                {point.ctaLabel && point.ctaHref ? (
+                  <div className="mt-auto pt-7 flex justify-end">
+                    <LandingButton
+                      href={point.ctaHref}
+                      variant="ghost"
+                      size="compact"
+                      icon={
+                        point.title === "Built in the Open" ? (
+                          <GithubLogo className="w-4 h-4" weight="duotone" />
+                        ) : undefined
+                      }
+                    >
+                      {point.ctaLabel}
+                    </LandingButton>
+                  </div>
+                ) : null}
+              </ModernCard>
+            ))}
           </div>
         </motion.section>
       </main>

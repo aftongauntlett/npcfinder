@@ -126,6 +126,26 @@ export const queryKeys = {
       [...queryKeys.collections.all, "my-role", collectionId, userId] as const,
   },
 
+  // Tracker
+  tracker: {
+    all: ["tracker"] as const,
+    items: (filter: "active" | "done") =>
+      [...queryKeys.tracker.all, "items", filter] as const,
+    stats: () => [...queryKeys.tracker.all, "stats"] as const,
+  },
+
+  // Playlists
+  playlists: {
+    all: ["playlists"] as const,
+    lists: () => [...queryKeys.playlists.all, "lists"] as const,
+    detail: (playlistId: string) =>
+      [...queryKeys.playlists.all, "detail", playlistId] as const,
+    items: (playlistId: string) =>
+      [...queryKeys.playlists.all, "items", playlistId] as const,
+    shares: (playlistId: string) =>
+      [...queryKeys.playlists.all, "shares", playlistId] as const,
+  },
+
   // Tasks
   // Note: All task queries must start with queryKeys.tasks.all prefix
   // to ensure proper invalidation when using queryClient.invalidateQueries

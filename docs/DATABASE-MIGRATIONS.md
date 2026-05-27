@@ -57,8 +57,8 @@ supabase/migrations/
 
 Complete production database schema as of December 5, 2025, including:
 
-- **All tables**: auth/profile/admin tables, invite system, social connection tables, media collections/recommendations/reviews, task workspace tables, and compatibility tables from earlier product phases
-- **All views**: security_barrier views for recommendation/task reporting and admin-safe read models
+- **All tables**: auth/profile/admin tables, invite system, social connection tables, and legacy product-phase tables captured at that time
+- **All views**: security_barrier views and admin-safe read models present at baseline creation
 - **All functions**: role/admin helpers, invite/auth helpers, timestamp/update triggers, and policy-support functions
 - **All triggers**: Admin protection, timestamp updates, status changes, auth user creation, etc.
 - **All RLS policies**: Security policies for every table
@@ -68,7 +68,11 @@ Complete production database schema as of December 5, 2025, including:
 
 **Source**: Generated from production database using `supabase db pull`
 
-Recent note: the job applications task template was removed via `20260518000000_remove_job_applications_template.sql`.
+Recent notes:
+
+- `20260518000000_remove_job_applications_template.sql` removed the job applications task template.
+- `20260526000001_tracker_playlists_media_catalog.sql` introduced the Tracker + Playlists core schema.
+- `20260526000002_destructive_cleanup_legacy_features.sql` removed legacy recommendations/tasks/old collection tables.
 
 **When to Use**:
 

@@ -3,19 +3,33 @@
 [![Status](https://img.shields.io/badge/Status-In%20Development-orange)](https://github.com/aftongauntlett/npcfinder)
 [![License](https://img.shields.io/badge/License-MIT-blue)](https://opensource.org/licenses/MIT)
 
-NPC Finder is an invite-only app for trusted friends to **archive and share media collections**.
+NPC Finder is a private media tracker and collaborative playlist app.
 
-You can curate mixed collections (movies, TV, books, music), share with your circle, and manage access with role-based permissions.
+I built it to keep notes, ratings, and a timeline across movies, TV, books, music, and games. The private-by-default model helps it stay focused and useful instead of feeling like a public social feed.
+
+This project is open source and in active development.
+
+The app now has two focused surfaces:
+
+- **Tracker**: private personal media diary split into genre routes (Movies & TV, Books, Music, Games) with status and note history
+- **Playlists**: mixed-media thematic curation built from your tracker entries, private by default, shared with invited users (view-only)
 
 **Live Site:** [npcfinder.com](https://npcfinder.com)  
 **Docs Index:** [docs/README.md](docs/README.md)
 
 ## Product Focus
 
-- **Primary:** Media collections + trusted social sharing
-- **Secondary:** Personal tools (`/app/tasks`)
-- **Current milestone:** Invite-only collaboration and role-safe sharing workflows
+- **Primary:** Tracker (personal diary) + Playlists (curation + invite sharing)
+- **Secondary:** Invite-only collaboration for trusted circles
+- **Current milestone:** Tracker and playlist-first experience with role-safe sharing workflows
 - **Security:** Supabase Auth + PostgreSQL RLS + invite-only onboarding
+
+## Why It Exists
+
+- Track what I watched, read, played, or listened to in one place
+- Leave short notes and ratings to improve focus and retention
+- Build a personal timeline I can revisit later
+- Share curated collections with friends and exchange recommendations
 
 For the current routed app surface, see [docs/CURRENT-APP-STATE.md](docs/CURRENT-APP-STATE.md).
 

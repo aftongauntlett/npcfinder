@@ -1,6 +1,6 @@
 import {
   KeyIcon as Key,
-  LockIcon as Lock,
+  LockOpenIcon as LockOpen,
   type Icon,
 } from "@phosphor-icons/react";
 import { LANDING_TEAL, LANDING_PURPLE } from "./landingTheme";
@@ -10,15 +10,14 @@ export interface AvailabilityPoint {
   iconColor: string;
   title: string;
   description: string;
+  ctaLabel?: string;
+  ctaHref?: string;
 }
 
 export interface AvailabilityData {
   title: string;
   description: string;
   points: AvailabilityPoint[];
-  demoNote: string;
-  ctaText: string;
-  ctaLink: string;
 }
 
 export interface DocLink {
@@ -28,29 +27,29 @@ export interface DocLink {
 }
 
 export const landingAvailability: AvailabilityData = {
-  title: "How to Get In",
+  title: "Project Status & Source",
   description:
-    "NPC Finder is currently a private beta and invite-only by me. Not in a hype-waitlist way - intentionally low-key so I know who has access while the product is still taking shape.",
+    "This project is public on GitHub and actively evolving. The product stays private by design while core workflows are refined.",
   points: [
     {
       icon: Key,
       iconColor: LANDING_TEAL,
-      title: "How Invites Work",
+      title: "Private Access Model",
       description:
-        "An admin generates a code tied to your email address. It expires after 30 days, works exactly once, and then it's gone. Small on purpose.",
+        "Access is invite-only for now so collaboration stays trusted while the product matures. If you have questions or want to test it out, contact me through my portfolio.",
+      ctaLabel: "Contact",
+      ctaHref: "https://www.aftongauntlett.com/#contact",
     },
     {
-      icon: Lock,
+      icon: LockOpen,
       iconColor: LANDING_PURPLE,
-      title: "No Public Registration",
+      title: "Built in the Open",
       description:
-        "There's no public sign-up. If you want access, reach out and tell me why you'd like to join. I review requests manually and keep access intentionally limited for now.",
+        "The source code is public on GitHub and development happens in the open. Features are actively iterated as the app continues to evolve.",
+      ctaLabel: "View Source",
+      ctaHref: "https://github.com/aftongauntlett/npcfinder",
     },
   ],
-  demoNote:
-    "A walkthrough video is coming soon. I'll show the core features and what the day-to-day actually looks like.",
-  ctaText: "Have an invite code? Come on in",
-  ctaLink: "/app",
 };
 
 export const availabilityDocLinks: DocLink[] = [

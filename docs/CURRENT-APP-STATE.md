@@ -1,14 +1,14 @@
 # Current App State (Agent Reference)
 
-Last updated: 2026-05-18
+Last updated: 2026-05-26
 
 This document is an internal source of truth for docs + agent work. Use it to avoid reintroducing removed features or linking to deleted docs.
 
 ## Product Surface (Current)
 
-- Invite-only social app for trusted circles
-- Primary experience: shared media collections
-- Secondary experience: generic tasks workspace
+- Private media tracker with collaborative playlists
+- Primary experience: Tracker (personal media diary)
+- Secondary experience: Playlists (mixed-media curation + invite-only sharing)
 - Admin + invite management: active
 
 ## Active Routes
@@ -17,36 +17,47 @@ This document is an internal source of truth for docs + agent work. Use it to av
   - `/` (landing)
   - `/login`, `/forgot-password`, `/reset-password`
 - Authenticated:
-  - `/app` (dashboard)
-  - `/app/media`
-  - `/app/media/:collectionId`
-  - `/app/tasks`
+  - `/app` -> redirects to `/app/tracker/movies-tv`
+  - `/app/tracker` -> redirects to `/app/tracker/movies-tv`
+  - `/app/tracker/movies-tv`
+  - `/app/tracker/books`
+  - `/app/tracker/music`
+  - `/app/tracker/games`
+  - `/app/playlists`
   - `/app/settings`
   - `/app/admin` (role-protected)
 
-No dedicated `/app/game` route is currently wired into the authenticated app router.
-
 ## Navigation Labels
 
-Top nav currently exposes:
+Sidebar currently exposes:
 
-- Dashboard
-- Tasks
-- Media
+- Tracker
+  - Movies & TV
+  - Books
+  - Music
+  - Games
+- Playlists
+- Settings
+- Admin (role-protected)
 
 ## Media Model (Current UX)
 
-- Collections-first UX under `/app/media`
-- Collections can be private or app-wide
-- Collection member roles: `viewer`, `editor`
-- "Mixed" collections are first-class and are the default create flow
+- Shared catalog model via `media`
+- Tracker model via `tracker_items` (`want_to`, `in_progress`, `done`) with genre-scoped routes
+- Playlists model via `playlists`, `playlist_items`, `playlist_shares`
+- Playlist item sourcing is from user tracker entries (not direct external API search)
+- Playlist sharing is invite-only and view-only for guests
+- Tracker is private and never shared
 
 ## Removed / Deprecated Product Areas
 
-- Dedicated game page/route has been removed from the routed app surface
-- Job tracking template has been removed (see migration `20260518000000_remove_job_applications_template.sql`)
+- Recommendations surface has been removed from routed app UX
+- Tasks/Kanban/Recipes surface has been removed from routed app UX
+- Top nav has been replaced by sidebar navigation
+- App-wide/public collections are removed from active UX
+- Collection member edit roles are removed from active UX
 
-Note: Some legacy game-related types/services remain in code for compatibility and ongoing cleanup, but they are not a top-level routed product area.
+Note: Remaining legacy files may still exist in the repository while migration and feature cleanup continues, but they are not part of the routed product surface.
 
 ## Documentation Policy
 

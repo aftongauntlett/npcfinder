@@ -16,6 +16,7 @@ interface HeroConstellationProps {
   height?: number;
   nodeCount?: number;
   animationSpeed?: number;
+  responsive?: boolean;
   className?: string;
 }
 
@@ -75,6 +76,7 @@ export default function HeroConstellation({
   height = 600,
   nodeCount = 100,
   animationSpeed = 1.0,
+  responsive = false,
   className = "",
 }: HeroConstellationProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -99,6 +101,9 @@ export default function HeroConstellation({
     damping: 20,
     mass: 0.5,
   });
+  const [canvasSize, setCanvasSize] = useState({ width, height });
+  const renderWidth = responsive ? canvasSize.width : width;
+  const renderHeight = responsive ? canvasSize.height : height;
   const canvasRectRef = useRef<DOMRect | null>(null);
   const lastMouseUpdateRef = useRef(0);
   const pointerInsideRef = useRef(false); // Comment 1: Track if pointer is inside canvas
@@ -111,10 +116,43 @@ export default function HeroConstellation({
   const updateRect = useCallback(() => {
     if (canvasRef.current) {
       requestAnimationFrame(() => {
-        canvasRectRef.current = canvasRef.current?.getBoundingClientRect() || null;
+        canvasRectRef.current =
+          canvasRef.current?.getBoundingClientRect() || null;
       });
     }
   }, []);
+
+  useEffect(() => {
+    if (!responsive) {
+      setCanvasSize({ width, height });
+      return;
+    }
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const updateCanvasSize = () => {
+      const rect = canvas.getBoundingClientRect();
+      const nextWidth = Math.max(1, Math.round(rect.width));
+      const nextHeight = Math.max(1, Math.round(rect.height));
+
+      setCanvasSize((prev) => {
+        if (prev.width === nextWidth && prev.height === nextHeight) {
+          return prev;
+        }
+        return { width: nextWidth, height: nextHeight };
+      });
+    };
+
+    updateCanvasSize();
+
+    const observer = new ResizeObserver(updateCanvasSize);
+    observer.observe(canvas);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [responsive, width, height]);
 
   // Pointer event handlers for particle displacement (Comment 3: Use PointerEvent)
   const handlePointerMove = useCallback(
@@ -136,21 +174,21 @@ export default function HeroConstellation({
       mouseX.set(localX);
       mouseY.set(localY);
     },
-    [mouseX, mouseY]
+    [mouseX, mouseY],
   );
 
   const handlePointerLeave = useCallback(() => {
     pointerInsideRef.current = false; // Comment 1: Clear flag when pointer leaves
     // Reset to canvas center to avoid tilt (Comment 1)
-    mouseX.set(width / 2);
-    mouseY.set(height / 2);
-  }, [mouseX, mouseY, width, height]);
+    mouseX.set(renderWidth / 2);
+    mouseY.set(renderHeight / 2);
+  }, [mouseX, mouseY, renderWidth, renderHeight]);
 
   const handlePointerCancel = useCallback(() => {
     pointerInsideRef.current = false; // Comment 3: Handle pointer cancel
-    mouseX.set(width / 2);
-    mouseY.set(height / 2);
-  }, [mouseX, mouseY, width, height]);
+    mouseX.set(renderWidth / 2);
+    mouseY.set(renderHeight / 2);
+  }, [mouseX, mouseY, renderWidth, renderHeight]);
 
   // Monitor prefers-reduced-motion changes at runtime (Comment 6)
   useEffect(() => {
@@ -200,7 +238,7 @@ export default function HeroConstellation({
           // Use variable connection distance for each node
           const maxDist = Math.min(
             nodeA.maxConnectionDistance,
-            nodeB.maxConnectionDistance
+            nodeB.maxConnectionDistance,
           );
 
           if (distance < maxDist) {
@@ -238,7 +276,7 @@ export default function HeroConstellation({
           0,
           node.baseX,
           node.baseY,
-          node.radius * 3
+          node.radius * 3,
         );
 
         // Use design token colors with all 4 brand colors sprinkled in
@@ -285,9 +323,11 @@ export default function HeroConstellation({
         ctx.shadowBlur = 0;
       }
     },
-    [safeNodeCount]
+    [safeNodeCount],
   );
   useEffect(() => {
+    if (renderWidth <= 0 || renderHeight <= 0) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -302,8 +342,8 @@ export default function HeroConstellation({
 
     // Set canvas dimensions with devicePixelRatio for sharp rendering (Comment 2)
     const dpr = window.devicePixelRatio || 1;
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
+    canvas.width = renderWidth * dpr;
+    canvas.height = renderHeight * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     // Store canvas bounding rect for mouse coordinate conversion (Comment 2)
     updateRect();
@@ -331,8 +371,8 @@ export default function HeroConstellation({
 
     // Always regenerate nodes based on current props (Comment 1)
     const nodes: Node[] = [];
-    const centerX = width / 2;
-    const centerY = height / 2;
+    const centerX = renderWidth / 2;
+    const centerY = renderHeight / 2;
     const minDistance = 50; // Minimum distance between nodes to prevent clustering
 
     for (let i = 0; i < safeNodeCount; i++) {
@@ -345,7 +385,8 @@ export default function HeroConstellation({
         // More even distribution across canvas (less clustering in center)
         const angle = Math.random() * Math.PI * 2;
         // Use linear distribution instead of squared for better spread
-        const distance = Math.random() * (Math.min(width, height) / 2) * 0.85;
+        const distance =
+          Math.random() * (Math.min(renderWidth, renderHeight) / 2) * 0.85;
         x = centerX + Math.cos(angle) * distance;
         y = centerY + Math.sin(angle) * distance;
         attempts++;
@@ -378,7 +419,7 @@ export default function HeroConstellation({
 
     // Static render for reduced motion or DevTools open
     if (reducedMotion || shouldPauseAnimations) {
-      renderStatic(ctx, width, height);
+      renderStatic(ctx, renderWidth, renderHeight);
       return;
     }
 
@@ -394,20 +435,20 @@ export default function HeroConstellation({
       prevTimeRef.current = currentTime;
 
       // Clear canvas (Comment 2: use CSS pixels since context is scaled)
-      ctx.clearRect(0, 0, width, height);
+      ctx.clearRect(0, 0, renderWidth, renderHeight);
 
       // Save context state
       ctx.save();
 
       // Translate to center for rotation
-      ctx.translate(width / 2, height / 2);
+      ctx.translate(renderWidth / 2, renderHeight / 2);
 
       // Apply slow rotation
       rotationRef.current += 0.0001 * animationSpeed;
       ctx.rotate(rotationRef.current);
 
       // Translate back (no tilt/drift - removed to prevent shift on hover)
-      ctx.translate(-width / 2, -height / 2);
+      ctx.translate(-renderWidth / 2, -renderHeight / 2);
 
       // Update and draw nodes
       const nodes = nodesRef.current;
@@ -459,7 +500,7 @@ export default function HeroConstellation({
         // Breathing/pulsing radius
         const pulseAmount =
           Math.sin(
-            elapsed * node.pulseSpeed * animationSpeed + node.pulsePhase
+            elapsed * node.pulseSpeed * animationSpeed + node.pulsePhase,
           ) * 0.5;
         const currentRadius = node.radius + pulseAmount;
 
@@ -497,7 +538,7 @@ export default function HeroConstellation({
           const nodeB = nodes[j];
           const maxDist = Math.min(
             nodeA.maxConnectionDistance,
-            nodeB.maxConnectionDistance
+            nodeB.maxConnectionDistance,
           );
 
           if (distance < maxDist) {
@@ -535,7 +576,7 @@ export default function HeroConstellation({
 
         // Calculate twinkle opacity (slow breathing effect) - subtle, stays mostly visible
         const twinkle = Math.sin(
-          elapsed * node.twinkleSpeed * animationSpeed + node.twinklePhase
+          elapsed * node.twinkleSpeed * animationSpeed + node.twinklePhase,
         );
         const twinkleOpacity = 0.75 + twinkle * 0.25; // Range: 0.5 to 1.0 (mostly visible, occasional subtle dim)
 
@@ -546,7 +587,7 @@ export default function HeroConstellation({
           0,
           pos.x,
           pos.y,
-          pos.radius * 3
+          pos.radius * 3,
         );
 
         // Pre-calculate opacity values to avoid string operations in loop
@@ -592,7 +633,7 @@ export default function HeroConstellation({
         animationFrameRef.current = requestAnimationFrame(animate);
       } else {
         // DevTools opened during animation - render static frame
-        renderStatic(ctx, width, height);
+        renderStatic(ctx, renderWidth, renderHeight);
       }
     };
 
@@ -613,8 +654,8 @@ export default function HeroConstellation({
       resizeObserver.disconnect();
     };
   }, [
-    width,
-    height,
+    renderWidth,
+    renderHeight,
     safeNodeCount,
     animationSpeed,
     reducedMotion,
@@ -632,7 +673,11 @@ export default function HeroConstellation({
     <canvas
       ref={canvasRef}
       className={className}
-      style={{ width: `${width}px`, height: `${height}px` }}
+      style={
+        responsive
+          ? { width: "100%", height: "100%" }
+          : { width: `${width}px`, height: `${height}px` }
+      }
     />
   );
 }

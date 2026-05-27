@@ -21,4 +21,4 @@ Complete guides for using, self-hosting, and contributing to NPC Finder.
 
 ---
 
-**Note:** NPC Finder is invite-only. Visit [npcfinder.com](https://npcfinder.com) to learn more or request access.
+**Note:** NPC Finder is private/invite-only, open source, and in active development. Visit [npcfinder.com](https://npcfinder.com) for the product overview and [GitHub](https://github.com/aftongauntlett/npcfinder) for source.

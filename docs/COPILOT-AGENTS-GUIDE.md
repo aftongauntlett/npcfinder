@@ -8,8 +8,8 @@ NPC Finder is a private, invite-only web app for trusted friends.
 
 Current product pillars:
 
-- **Media Collections**: mixed-media collections, sharing, and discovery workflows
-- **Tasks Workspace**: generic personal/team task workflows (job tracking template removed)
+- **Tracker**: private personal media diary workflows
+- **Playlists**: mixed-media curation with invite-only sharing (view-only guests)
 
 Agents should prioritize work that improves product clarity, trust/safety, and user-facing reliability.
 
@@ -49,9 +49,9 @@ Agent rules:
 High-value entry points:
 
 - App shell/routes: `src/App.tsx`, `src/components/layouts/AuthenticatedAppLayout.tsx`
-- Main navigation: `src/components/shared/layout/TopNav.tsx`
-- Media collections: `src/components/pages/media/*`, `src/services/collectionsService.ts`, `src/hooks/useCollectionsQueries.ts`
-- Tasks system: `src/components/pages/tasks/*`, `src/components/tasks/*`, `src/hooks/useTasksQueries.ts`
+- Main navigation: `src/components/shared/layout/AppSidebar.tsx`
+- Tracker surface: `src/components/pages/TrackerPage.tsx`, `src/services/trackerService.ts`, `src/hooks/useTrackerQueries.ts`
+- Playlists surface: `src/components/pages/PlaylistsPage.tsx`, `src/services/playlistsService.ts`, `src/hooks/usePlaylistsQueries.ts`
 - Auth/admin/roles: `src/contexts/AuthContext.tsx`, `src/contexts/AdminContext.tsx`, `docs/ROLE-SYSTEM.md`
 - Setup docs: `docs/QUICK-START.md`, `docs/DATABASE-MIGRATIONS.md`, `docs/CURRENT-APP-STATE.md`
 
@@ -72,7 +72,7 @@ For non-trivial tasks:
 
 Agents should default to these heuristics:
 
-- Prefer collections-first media experiences over re-introducing domain fragmentation
+- Prefer tracker + playlists patterns over re-introducing removed recommendations/tasks systems
 - Avoid adding parallel patterns when an existing shared component/hook exists
 - Respect invite-only and trusted-friend assumptions for social features
 - Keep role and permission enforcement at both frontend and DB policy levels

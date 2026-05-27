@@ -34,6 +34,28 @@ export interface UnifiedSearchResponse {
   capped: boolean;
 }
 
+export type UnifiedSearchScope =
+  | "all"
+  | "movies-tv"
+  | "books"
+  | "games"
+  | "music";
+
+function finalizeResults(results: MediaItem[]): UnifiedSearchResponse {
+  const filtered = results.filter((item) =>
+    isCanonicalMediaType(item.media_type),
+  );
+  filtered.sort((a, b) => a.title.localeCompare(b.title));
+
+  const capped = filtered.length > UNIFIED_SEARCH_CAP;
+
+  return {
+    results: filtered.slice(0, UNIFIED_SEARCH_CAP),
+    totalBeforeCap: filtered.length,
+    capped,
+  };
+}
+
 /**
  * Unified media search across all providers.
  *
@@ -67,16 +89,38 @@ export async function searchAllMedia(
     }
   }
 
-  const filtered = merged.filter((item) =>
-    isCanonicalMediaType(item.media_type),
-  );
-  filtered.sort((a, b) => a.title.localeCompare(b.title));
+  return finalizeResults(merged);
+}
 
-  const capped = filtered.length > UNIFIED_SEARCH_CAP;
+export async function searchMediaByScope(
+  query: string,
+  scope: UnifiedSearchScope,
+): Promise<UnifiedSearchResponse> {
+  const q = query.trim();
+  if (!q) {
+    return { results: [], totalBeforeCap: 0, capped: false };
+  }
 
-  return {
-    results: filtered.slice(0, UNIFIED_SEARCH_CAP),
-    totalBeforeCap: filtered.length,
-    capped,
-  };
+  if (scope === "all") {
+    return searchAllMedia(q);
+  }
+
+  try {
+    if (scope === "movies-tv") {
+      return finalizeResults(await searchMoviesAndTV(q));
+    }
+
+    if (scope === "books") {
+      return finalizeResults(await searchBooks(q));
+    }
+
+    if (scope === "games") {
+      return finalizeResults(await searchGames(q));
+    }
+
+    return finalizeResults(await searchMusic(q));
+  } catch (error) {
+    logger.warn("Scoped media search failed", { scope, error });
+    return { results: [], totalBeforeCap: 0, capped: false };
+  }
 }

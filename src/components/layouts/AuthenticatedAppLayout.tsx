@@ -4,11 +4,10 @@ import type { User } from "@supabase/supabase-js";
 import PageContainer from "./PageContainer";
 import ProtectedAdminRoute from "./ProtectedAdminRoute";
 import { useTheme } from "@/hooks/useTheme";
+import AppSidebar from "@/components/shared/layout/AppSidebar";
 // Lazy load authenticated components to avoid Supabase imports on landing page
-const HomePage = React.lazy(() => import("../pages/HomePage"));
-const TopNav = React.lazy(() => import("../shared/layout/TopNav"));
-const MediaPage = React.lazy(() => import("../pages/media/MediaPage"));
-const TasksPage = React.lazy(() => import("../pages/tasks/TasksPage"));
+const TrackerPage = React.lazy(() => import("../pages/TrackerPage"));
+const PlaylistsPage = React.lazy(() => import("../pages/PlaylistsPage"));
 const UserSettings = React.lazy(() => import("../pages/UserSettings"));
 const AdminPage = React.lazy(() => import("../pages/admin/AdminPage"));
 
@@ -16,7 +15,6 @@ const AdminPage = React.lazy(() => import("../pages/admin/AdminPage"));
 const StarryBackground = React.lazy(
   () => import("@/components/shared/common/StarryBackground"),
 );
-const GlobalTimerAlert = React.lazy(() => import("../tasks/GlobalTimerAlert"));
 
 interface AuthenticatedAppLayoutProps {
   user: User;
@@ -24,7 +22,7 @@ interface AuthenticatedAppLayoutProps {
 
 /**
  * Layout wrapper for authenticated app routes
- * Provides top navigation, background, and route configuration
+ * Provides sidebar navigation, background, and route configuration
  */
 const AuthenticatedAppLayout: React.FC<AuthenticatedAppLayoutProps> = ({
   user,
@@ -45,33 +43,56 @@ const AuthenticatedAppLayout: React.FC<AuthenticatedAppLayoutProps> = ({
           </div>
         }
       >
-        <TopNav currentUser={user} />
-        {/* Global timer completion alert - shows on all pages */}
-        <GlobalTimerAlert />
-        <Routes>
-          <Route index element={<HomePage user={user} />} />
+        <div className="flex min-h-screen">
+          <AppSidebar currentUser={user} />
 
-          {/* Media (Collections-first) */}
-          <Route path="media" element={<MediaPage />} />
-          <Route path="media/:collectionId" element={<MediaPage />} />
-          {/* Tasks - tabbed view with all templates */}
-          <Route path="tasks" element={<TasksPage />} />
-          <Route
-            path="settings"
-            element={<UserSettings currentUser={user} />}
-          />
-          {/* Admin route */}
-          <Route
-            path="admin"
-            element={
-              <ProtectedAdminRoute user={user}>
-                <AdminPage />
-              </ProtectedAdminRoute>
-            }
-          />
-          {/* Catch all - redirect to app home */}
-          <Route path="*" element={<Navigate to="/app" replace />} />
-        </Routes>
+          <div className="flex-1 min-w-0">
+            <Routes>
+              <Route
+                index
+                element={<Navigate to="/app/tracker/movies-tv" replace />}
+              />
+              <Route
+                path="tracker"
+                element={<Navigate to="/app/tracker/movies-tv" replace />}
+              />
+              <Route
+                path="tracker/movies-tv"
+                element={<TrackerPage scope="movies-tv" />}
+              />
+              <Route
+                path="tracker/books"
+                element={<TrackerPage scope="books" />}
+              />
+              <Route
+                path="tracker/music"
+                element={<TrackerPage scope="music" />}
+              />
+              <Route
+                path="tracker/games"
+                element={<TrackerPage scope="games" />}
+              />
+              <Route path="playlists" element={<PlaylistsPage />} />
+              <Route
+                path="settings"
+                element={<UserSettings currentUser={user} />}
+              />
+              <Route
+                path="admin"
+                element={
+                  <ProtectedAdminRoute user={user}>
+                    <AdminPage />
+                  </ProtectedAdminRoute>
+                }
+              />
+
+              <Route
+                path="*"
+                element={<Navigate to="/app/tracker/movies-tv" replace />}
+              />
+            </Routes>
+          </div>
+        </div>
       </React.Suspense>
     </PageContainer>
   );

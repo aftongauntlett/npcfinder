@@ -1,7 +1,7 @@
 import {
-  FilmStripIcon as FilmStrip,
-  ShieldCheckIcon as ShieldCheck,
-  UsersThreeIcon as UsersThree,
+  ClockCounterClockwiseIcon as ClockCounterClockwise,
+  ListStarIcon as ListStar,
+  BrainIcon as Brain,
   type Icon,
 } from "@phosphor-icons/react";
 import { LANDING_PEACH, LANDING_TEAL } from "./landingTheme";
@@ -15,30 +15,33 @@ interface FeatureData {
 
 export const landingFeatures: FeatureData[] = [
   {
-    icon: FilmStrip,
+    icon: ClockCounterClockwise,
     iconColor: LANDING_PEACH,
-    title: "Track Everything You Love",
+    title: "Personal Media Timeline",
     items: [
-      "Movies, TV, books, music, games - all in one place instead of scattered notes and apps",
-      "Write reviews, rate things, and share picks with people you actually want recommendations from",
+      "Track movies, TV, books, music, and games in one place with API-powered search and autofill.",
+      "Leave quick notes and ratings so future-you remembers why something mattered.",
+      "Keep a timeline of when you watched, read, played, or listened.",
     ],
   },
   {
-    icon: UsersThree,
+    icon: ListStar,
     iconColor: LANDING_TEAL,
     title: "Shared Collections",
     items: [
-      "Build mixed-media collections and share them with people you invite - nobody else can see them",
-      "Set roles so you stay in control of who can contribute vs. just browse",
+      "Build mixed-media playlists from items already in your tracker.",
+      "Share with invited friends and exchange notes and recommendations.",
+      "Collaborate without turning it into a public social feed.",
     ],
   },
   {
     iconColor: LANDING_PEACH,
-    icon: ShieldCheck,
-    title: "Private by Default",
+    icon: Brain,
+    title: "Built for Focus",
     items: [
-      "Invite-only - no sign-up button, no public access, no strangers",
-      "Row-Level Security at the database level means other users literally cannot read your data",
+      "Private by default, with invite-only access.",
+      "Encourages reflection and retention instead of engagement chasing.",
+      "Open source and actively developed in the open.",
     ],
   },
 ];

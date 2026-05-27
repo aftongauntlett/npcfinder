@@ -4,6 +4,7 @@ import { LANDING_TEAL, LANDING_PEACH } from "../../data/landingTheme";
 interface LandingButtonProps {
   children: ReactNode;
   variant?: "primary" | "secondary" | "tertiary" | "ghost";
+  size?: "default" | "compact";
   href?: string;
   onClick?: () => void;
   icon?: ReactNode;
@@ -13,6 +14,7 @@ interface LandingButtonProps {
 const LandingButton: FC<LandingButtonProps> = ({
   children,
   variant = "primary",
+  size = "default",
   href,
   onClick,
   icon,
@@ -21,7 +23,12 @@ const LandingButton: FC<LandingButtonProps> = ({
   const [isHovered, setIsHovered] = useState(false);
 
   const baseStyles =
-    "inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium relative overflow-hidden backdrop-blur-sm active:scale-95";
+    "inline-flex items-center font-medium relative overflow-hidden backdrop-blur-sm active:scale-95";
+
+  const sizeStyles =
+    size === "compact"
+      ? "gap-1.5 px-4 py-2 rounded-md text-sm"
+      : "gap-2 px-6 py-3 rounded-lg";
 
   const getStyles = () => {
     switch (variant) {
@@ -88,13 +95,15 @@ const LandingButton: FC<LandingButtonProps> = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       {...(isExternalLink && { target: "_blank", rel: "noopener noreferrer" })}
-      className={`${baseStyles} ${className} group`}
+      className={`${baseStyles} ${sizeStyles} ${className} group`}
       style={getStyles()}
     >
       {/* Content */}
       <span className="relative z-10 flex items-center gap-2">
         {icon && (
-          <span className="text-lg group-hover:animate-wiggle inline-block">
+          <span
+            className={`${size === "compact" ? "text-base" : "text-lg"} group-hover:animate-wiggle inline-block`}
+          >
             {icon}
           </span>
         )}

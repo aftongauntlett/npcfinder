@@ -1,17 +1,18 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, Search } from "lucide-react";
 import { Button, Input, Modal } from "@/components/shared";
 import type { MediaItem } from "@/components/shared";
 import { logger } from "@/lib/logger";
 import {
-  searchAllMedia,
+  searchMediaByScope,
   UNIFIED_SEARCH_CAP,
+  type UnifiedSearchScope,
 } from "@/services/unifiedMediaSearchService";
-import { useAddCollectionItem } from "@/hooks/useCollectionsQueries";
-import type { MediaDomain } from "@/services/collectionsServiceTypes";
 import Toast from "@/components/ui/Toast";
 
-type ExistingKey = `${string}:${string}`; // `${media_type}:${external_id}`
+type ExistingKey = `${string}:${string}`;
+
+type ResultFilter = "all" | "movies-tv" | "books" | "games" | "music";
 
 function existingKey(
   item: Pick<MediaItem, "external_id" | "media_type">,
@@ -19,70 +20,99 @@ function existingKey(
   return `${String(item.media_type)}:${String(item.external_id)}`;
 }
 
-export default function AddItemToCollectionModal(props: {
+interface AddMediaFromCatalogModalProps {
   isOpen: boolean;
   onClose: () => void;
-  collectionId: string;
-  mediaDomain: MediaDomain;
+  title?: string;
+  emptyHint?: string;
+  addLabel?: string;
+  searchScope?: UnifiedSearchScope;
+  lockSearchScope?: boolean;
+  searchPlaceholder?: string;
   existingItems?: Array<Pick<MediaItem, "external_id" | "media_type">>;
-}) {
-  type ResultFilter = "all" | "movies-tv" | "books" | "games" | "music";
+  onAdd: (item: MediaItem) => Promise<void>;
+}
 
+export default function AddMediaFromCatalogModal({
+  isOpen,
+  onClose,
+  title = "Add Item",
+  emptyHint = "Search to add items.",
+  addLabel = "Add",
+  searchScope = "all",
+  lockSearchScope = false,
+  searchPlaceholder = "Search movies, TV, books, games, music...",
+  existingItems,
+  onAdd,
+}: AddMediaFromCatalogModalProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<MediaItem[]>([]);
-  const [resultFilter, setResultFilter] = useState<ResultFilter>("all");
+  const [resultFilter, setResultFilter] = useState<ResultFilter>(searchScope);
   const [isSearching, setIsSearching] = useState(false);
+  const [isAddingId, setIsAddingId] = useState<string | null>(null);
   const [totalBeforeCap, setTotalBeforeCap] = useState(0);
   const [wasCapped, setWasCapped] = useState(false);
   const [toast, setToast] = useState<{ message: string } | null>(null);
 
-  const addItem = useAddCollectionItem(props.mediaDomain);
+  useEffect(() => {
+    if (isOpen) {
+      setResultFilter(searchScope);
+    }
+  }, [isOpen, searchScope]);
 
   const existing = useMemo(() => {
     const set = new Set<ExistingKey>();
-    for (const i of props.existingItems || []) {
-      if (i.external_id && i.media_type) set.add(existingKey(i));
+    for (const item of existingItems || []) {
+      if (item.external_id && item.media_type) {
+        set.add(existingKey(item));
+      }
     }
     return set;
-  }, [props.existingItems]);
+  }, [existingItems]);
 
   const runSearch = async () => {
-    const q = query.trim();
-    if (!q) {
+    const trimmed = query.trim();
+    if (!trimmed) {
       setResults([]);
       return;
     }
 
     setIsSearching(true);
     try {
-      const data = await searchAllMedia(q);
+      const data = await searchMediaByScope(
+        trimmed,
+        lockSearchScope ? searchScope : "all",
+      );
       setResults(data.results);
       setTotalBeforeCap(data.totalBeforeCap);
       setWasCapped(data.capped);
     } catch (error) {
-      logger.error("Unified media search failed", { error, query: q });
+      logger.error("Unified media search failed", { error, query: trimmed });
       setResults([]);
       setTotalBeforeCap(0);
       setWasCapped(false);
+      setToast({ message: "Search failed" });
     } finally {
       setIsSearching(false);
     }
   };
 
   const filteredResults = useMemo(() => {
-    if (resultFilter === "all") return results;
+    const activeFilter = lockSearchScope ? searchScope : resultFilter;
 
-    if (resultFilter === "movies-tv") {
+    if (activeFilter === "all") return results;
+
+    if (activeFilter === "movies-tv") {
       return results.filter(
         (item) => item.media_type === "movie" || item.media_type === "tv",
       );
     }
 
-    if (resultFilter === "books") {
+    if (activeFilter === "books") {
       return results.filter((item) => item.media_type === "book");
     }
 
-    if (resultFilter === "games") {
+    if (activeFilter === "games") {
       return results.filter((item) => item.media_type === "game");
     }
 
@@ -92,47 +122,45 @@ export default function AddItemToCollectionModal(props: {
         item.media_type === "album" ||
         item.media_type === "playlist",
     );
-  }, [results, resultFilter]);
+  }, [results, resultFilter, lockSearchScope, searchScope]);
 
   const handleAdd = async (item: MediaItem) => {
-    try {
-      await addItem.mutateAsync({ collectionId: props.collectionId, item });
-      setToast({ message: "Added to collection" });
-    } catch (error) {
-      // Duplicate (unique constraint) => show toast, treat as non-fatal.
-      if ((error as unknown as { code?: string }).code === "23505") {
-        setToast({ message: "Already in this collection" });
-        return;
-      }
+    const id = `${item.media_type}:${item.external_id}`;
+    setIsAddingId(id);
 
-      logger.error("Failed to add item to collection", {
-        error,
-        collectionId: props.collectionId,
-        externalId: item.external_id,
-        mediaType: item.media_type,
-      });
-      setToast({ message: "Failed to add item" });
+    try {
+      await onAdd(item);
+      setToast({ message: "Added" });
+    } catch (error) {
+      if ((error as { code?: string }).code === "23505") {
+        setToast({ message: "Already added" });
+      } else {
+        logger.error("Failed to add catalog media item", {
+          error,
+          externalId: item.external_id,
+          mediaType: item.media_type,
+        });
+        setToast({ message: "Failed to add item" });
+      }
+    } finally {
+      setIsAddingId(null);
     }
   };
 
-  const onClose = () => {
-    props.onClose();
+  const handleClose = () => {
+    onClose();
     setQuery("");
     setResults([]);
-    setResultFilter("all");
+    setResultFilter(searchScope);
     setTotalBeforeCap(0);
     setWasCapped(false);
     setIsSearching(false);
+    setIsAddingId(null);
   };
 
   return (
     <>
-      <Modal
-        isOpen={props.isOpen}
-        onClose={onClose}
-        title="Add Item"
-        maxWidth="4xl"
-      >
+      <Modal isOpen={isOpen} onClose={handleClose} title={title} maxWidth="4xl">
         <div className="p-6 space-y-4">
           <div className="flex gap-2">
             <div className="flex-1">
@@ -140,7 +168,7 @@ export default function AddItemToCollectionModal(props: {
                 label="Search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search movies, TV, books, games, music..."
+                placeholder={searchPlaceholder}
                 leftIcon={<Search className="w-4 h-4" />}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
@@ -160,7 +188,7 @@ export default function AddItemToCollectionModal(props: {
             </div>
           </div>
 
-          {results.length > 0 && (
+          {results.length > 0 && !lockSearchScope && (
             <div className="space-y-3">
               <div className="flex items-center gap-2 flex-wrap">
                 {[
@@ -188,7 +216,7 @@ export default function AddItemToCollectionModal(props: {
               {wasCapped && (
                 <div className="text-xs text-gray-500 dark:text-gray-400">
                   Showing {results.length} of{" "}
-                  {Math.max(totalBeforeCap, UNIFIED_SEARCH_CAP)} results — try a
+                  {Math.max(totalBeforeCap, UNIFIED_SEARCH_CAP)} results - try a
                   more specific query for more options.
                 </div>
               )}
@@ -201,19 +229,17 @@ export default function AddItemToCollectionModal(props: {
                 ? "Searching..."
                 : results.length > 0
                   ? "No results for this filter."
-                  : "Search to add items to this collection."}
+                  : emptyHint}
             </div>
           ) : (
             <div className="divide-y divide-gray-200 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
               {filteredResults.map((item) => {
-                const key = existingKey(item);
-                const alreadyAdded = existing.has(key);
+                const id = `${item.media_type}:${item.external_id}`;
+                const alreadyAdded = existing.has(existingKey(item));
+                const isAdding = isAddingId === id;
 
                 return (
-                  <div
-                    key={`${item.media_type}:${item.external_id}`}
-                    className="p-3 flex items-center gap-3"
-                  >
+                  <div key={id} className="p-3 flex items-center gap-3">
                     {item.poster_url ? (
                       <img
                         src={item.poster_url}
@@ -233,17 +259,21 @@ export default function AddItemToCollectionModal(props: {
                         {item.media_type
                           ? String(item.media_type).toUpperCase()
                           : "UNKNOWN"}
-                        {item.subtitle ? ` • ${item.subtitle}` : ""}
+                        {item.subtitle ? ` - ${item.subtitle}` : ""}
                       </div>
                     </div>
 
                     <Button
                       variant={alreadyAdded ? "subtle" : "secondary"}
-                      disabled={alreadyAdded}
+                      disabled={alreadyAdded || isAdding}
                       icon={<Plus className="w-4 h-4" />}
                       onClick={() => void handleAdd(item)}
                     >
-                      {alreadyAdded ? "Added" : "Add"}
+                      {alreadyAdded
+                        ? "Added"
+                        : isAdding
+                          ? "Adding..."
+                          : addLabel}
                     </Button>
                   </div>
                 );

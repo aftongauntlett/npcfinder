@@ -3,7 +3,6 @@
 
 import { supabase } from "../lib/supabase";
 import { logger } from "@/lib/logger";
-import type { BoardWithStats } from "./tasksService.types";
 
 // Verify current user has admin privileges before admin operations
 const verifyAdminAccess = async (): Promise<boolean> => {
@@ -36,10 +35,9 @@ const verifyAdminAccess = async (): Promise<boolean> => {
     const isAdmin = ["admin", "super_admin"].includes(profile?.role || "user");
 
     if (!isAdmin) {
-      logger.warn(
-        `Unauthorized admin operation attempted by user: ${user.id}`,
-        { role: profile?.role }
-      );
+      logger.warn(`Unauthorized admin operation attempted by user: ${user.id}`, {
+        role: profile?.role,
+      });
       return false;
     }
 
@@ -50,11 +48,17 @@ const verifyAdminAccess = async (): Promise<boolean> => {
   }
 };
 
+function firstRelation<T>(value: T | T[] | null | undefined): T | null {
+  if (!value) return null;
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value;
+}
+
 export interface AdminStats {
   totalUsers: number;
   totalMediaItems: number;
   totalRatings: number;
-  totalInviteCodes: number; // Admin-specific: total invite codes created
+  totalInviteCodes: number;
   newUsersThisWeek: number;
   newUsersThisMonth: number;
   activeUsers: number;
@@ -101,22 +105,24 @@ export const getAdminStats = async (): Promise<AdminStats> => {
   const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  // Run all independent count queries concurrently
   const [
     { count: inviteCodesCount },
-    { count: watchlistCount },
-    { count: watchedCount },
+    { count: trackerCount },
+    { count: playlistItemCount },
+    { count: ratingsCount },
     { count: userCount },
     { count: weekUsers },
     { count: monthUsers },
-    { data: recentWatchlist },
-    { data: recentArchive },
+    { data: recentTrackerUsers },
+    { data: recentPlaylistOwners },
   ] = await Promise.all([
     supabase.from("invite_codes").select("*", { count: "exact", head: true }),
-    supabase.from("user_watchlist").select("*", { count: "exact", head: true }),
+    supabase.from("tracker_items").select("*", { count: "exact", head: true }),
+    supabase.from("playlist_items").select("*", { count: "exact", head: true }),
     supabase
-      .from("user_watched_archive")
-      .select("*", { count: "exact", head: true }),
+      .from("tracker_items")
+      .select("*", { count: "exact", head: true })
+      .not("rating", "is", null),
     supabase.from("user_profiles").select("*", { count: "exact", head: true }),
     supabase
       .from("user_profiles")
@@ -127,38 +133,32 @@ export const getAdminStats = async (): Promise<AdminStats> => {
       .select("*", { count: "exact", head: true })
       .gte("created_at", oneMonthAgo.toISOString()),
     supabase
-      .from("user_watchlist")
+      .from("tracker_items")
       .select("user_id")
-      .gte("added_at", thirtyDaysAgo.toISOString()),
+      .gte("updated_at", thirtyDaysAgo.toISOString()),
     supabase
-      .from("user_watched_archive")
-      .select("user_id")
-      .gte("watched_at", thirtyDaysAgo.toISOString()),
+      .from("playlists")
+      .select("owner_id")
+      .gte("updated_at", thirtyDaysAgo.toISOString()),
   ]);
 
-  // Compute unique active users from combined datasets
-  const activeUserIds = new Set([
-    ...(recentWatchlist?.map((item) => item.user_id) || []),
-    ...(recentArchive?.map((item) => item.user_id) || []),
+  const activeUserIds = new Set<string>([
+    ...(recentTrackerUsers?.map((item) => item.user_id) || []),
+    ...(recentPlaylistOwners?.map((item) => item.owner_id) || []),
   ]);
 
-  const uniqueActiveUsers = activeUserIds.size;
-
-  // Calculate average ratings per user (watched items have ratings)
-  const avgRatings =
-    userCount && userCount > 0
-      ? Math.round((watchedCount || 0) / userCount)
-      : 0;
+  const totalUsers = userCount || 0;
+  const totalRatings = ratingsCount || 0;
 
   return {
-    totalUsers: userCount || 0,
-    totalMediaItems: (watchlistCount || 0) + (watchedCount || 0),
-    totalRatings: watchedCount || 0,
+    totalUsers,
+    totalMediaItems: (trackerCount || 0) + (playlistItemCount || 0),
+    totalRatings,
     totalInviteCodes: inviteCodesCount || 0,
     newUsersThisWeek: weekUsers || 0,
     newUsersThisMonth: monthUsers || 0,
-    activeUsers: uniqueActiveUsers,
-    avgRatingsPerUser: avgRatings,
+    activeUsers: activeUserIds.size,
+    avgRatingsPerUser: totalUsers > 0 ? Math.round(totalRatings / totalUsers) : 0,
   };
 };
 
@@ -169,9 +169,8 @@ export const getAdminStats = async (): Promise<AdminStats> => {
 export const getUsers = async (
   page: number,
   perPage: number,
-  searchTerm: string = ""
+  searchTerm: string = "",
 ): Promise<{ users: UserProfile[]; totalPages: number }> => {
-  // Verify admin access
   const hasAccess = await verifyAdminAccess();
   if (!hasAccess) {
     throw new Error("Unauthorized: Admin privileges required");
@@ -183,61 +182,42 @@ export const getUsers = async (
       count: "exact",
     });
 
-  // Apply search filter if there's a search term
   if (searchTerm.trim()) {
-    query = query.or(
-      `display_name.ilike.%${searchTerm}%,bio.ilike.%${searchTerm}%`
-    );
+    query = query.or(`display_name.ilike.%${searchTerm}%,bio.ilike.%${searchTerm}%`);
   }
 
-  // Get total count for pagination
   const { count } = await query;
   const totalPages = Math.ceil((count || 0) / perPage);
 
-  // Fetch all results for proper sorting (we'll sort in memory)
-  // Note: We fetch all matching results, then sort by role, then paginate
   const { data: allUserProfiles } = await query.order("created_at", {
     ascending: false,
   });
 
   const allUsers: UserProfile[] =
-    allUserProfiles?.map(
-      (profile: {
-        user_id: string;
-        display_name?: string;
-        email?: string;
-        bio?: string;
-        role?: "user" | "admin" | "super_admin";
-        created_at: string;
-        updated_at: string;
-      }) => ({
-        id: profile.user_id,
-        display_name: profile.display_name || "No Name Set",
-        email: profile.email,
-        bio: profile.bio,
-        role: profile.role || "user",
-        is_admin: ["admin", "super_admin"].includes(profile.role || "user"),
-        created_at: profile.created_at,
-        updated_at: profile.updated_at,
-      })
-    ) || [];
+    allUserProfiles?.map((profile) => ({
+      id: profile.user_id,
+      display_name: profile.display_name || "No Name Set",
+      email: profile.email,
+      bio: profile.bio,
+      role: profile.role || "user",
+      created_at: profile.created_at,
+      updated_at: profile.updated_at,
+    })) || [];
 
-  // Sort: super_admin first, then admin, then user
   const roleOrder = { super_admin: 0, admin: 1, user: 2 };
   allUsers.sort((a, b) => {
     const aOrder = roleOrder[a.role] ?? 3;
     const bOrder = roleOrder[b.role] ?? 3;
+
     if (aOrder !== bOrder) return aOrder - bOrder;
-    // Within same role, sort by created_at (newest first)
+
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
-  // Paginate the sorted results
   const startIdx = page * perPage;
   const endIdx = (page + 1) * perPage;
   const users = allUsers.slice(startIdx, endIdx);
 
-  // Log admin action for audit trail (L2)
   try {
     await supabase.rpc("log_admin_action", {
       p_action: "view_user_list",
@@ -245,7 +225,6 @@ export const getUsers = async (
       p_details: { page, perPage, searchTerm, totalUsers: count || 0 },
     });
   } catch (error) {
-    // Don't fail the operation if logging fails
     logger.warn("Failed to log admin action", { error });
   }
 
@@ -253,175 +232,207 @@ export const getUsers = async (
 };
 
 /**
- * Fetch popular media (most tracked items)
+ * Fetch popular media from tracker + playlists
  * SECURITY: Requires admin privileges
  */
 export const getPopularMedia = async (): Promise<PopularMedia[]> => {
-  // Verify admin access
   const hasAccess = await verifyAdminAccess();
   if (!hasAccess) {
     throw new Error("Unauthorized: Admin privileges required");
   }
 
-  // Fetch watchlist data
-  const { data: watchlistData } = await supabase
-    .from("user_watchlist")
-    .select("external_id, title, media_type");
+  const [{ data: trackerRows }, { data: playlistRows }] = await Promise.all([
+    supabase
+      .from("tracker_items")
+      .select("media_id, media:media_id(id, title, media_type, year)"),
+    supabase
+      .from("playlist_items")
+      .select("media_id, media:media_id(id, title, media_type, year)"),
+  ]);
 
-  // Fetch archive data
-  const { data: archiveData } = await supabase
-    .from("user_watched_archive")
-    .select("external_id, title, media_type");
-
-  // Combine and count occurrences
-  const allMedia = [...(watchlistData || []), ...(archiveData || [])];
-  const mediaCounts: Record<
+  const mediaCounts = new Map<
     string,
-    { count: number; title: string; type: string }
-  > = {};
+    { count: number; title: string; type: string; release_year?: number }
+  >();
 
-  allMedia.forEach((item) => {
-    if (item.external_id) {
-      if (!mediaCounts[item.external_id]) {
-        mediaCounts[item.external_id] = {
-          count: 0,
-          title: item.title || "Unknown",
-          type: item.media_type || "N/A",
-        };
-      }
-      mediaCounts[item.external_id].count++;
+  for (const row of [...(trackerRows || []), ...(playlistRows || [])]) {
+    const media = firstRelation(
+      row.media as
+        | { id: string; title: string; media_type: string; year?: number | null }
+        | Array<{
+            id: string;
+            title: string;
+            media_type: string;
+            year?: number | null;
+          }>
+        | null,
+    );
+
+    if (!media?.id) continue;
+
+    const existing = mediaCounts.get(media.id);
+    if (existing) {
+      existing.count += 1;
+      continue;
     }
-  });
 
-  // Get top 10
-  const topMedia = Object.entries(mediaCounts)
-    .sort(([, a], [, b]) => b.count - a.count)
-    .slice(0, 10)
+    mediaCounts.set(media.id, {
+      count: 1,
+      title: media.title || "Unknown",
+      type: media.media_type || "N/A",
+      release_year: media.year ?? undefined,
+    });
+  }
+
+  return Array.from(mediaCounts.entries())
     .map(([id, data]) => ({
       id,
       title: data.title,
       type: data.type,
+      release_year: data.release_year,
       trackingCount: data.count,
-    }));
-
-  return topMedia;
+    }))
+    .sort((a, b) => b.trackingCount - a.trackingCount)
+    .slice(0, 10);
 };
 
 /**
- * Fetch recent activity (movie recommendations)
+ * Fetch recent activity from tracker updates
  * SECURITY: Requires admin privileges
  */
 export const getRecentActivity = async (): Promise<RecentActivity[]> => {
-  // Verify admin access
   const hasAccess = await verifyAdminAccess();
   if (!hasAccess) {
     throw new Error("Unauthorized: Admin privileges required");
   }
 
-  const { data: recentRecs } = await supabase
-    .from("movie_recommendations")
-    .select(
-      "id, title, media_type, status, created_at, from_user_id, to_user_id"
-    )
+  const { data } = await supabase
+    .from("tracker_items")
+    .select("id, status, created_at, user_id, media:media_id(title, media_type)")
     .order("created_at", { ascending: false })
     .limit(10);
 
-  return recentRecs || [];
+  return (
+    data?.map((row) => {
+      const media = firstRelation(
+        row.media as
+          | { title?: string; media_type?: string }
+          | Array<{ title?: string; media_type?: string }>
+          | null,
+      );
+
+      return {
+        id: row.id,
+        title: media?.title || "Untitled",
+        media_type: media?.media_type || "unknown",
+        status: row.status,
+        created_at: row.created_at,
+        from_user_id: row.user_id,
+      };
+    }) || []
+  );
 };
 
 // =====================================================
-// ADMIN TASK OPERATIONS
+// Compatibility admin list APIs
 // =====================================================
 
-/**
- * Admin-specific type for board with user information
- * Extends BoardWithStats with admin-only fields
- */
-export interface BoardWithStatsAdmin extends BoardWithStats {
+export interface BoardWithStatsAdmin {
+  id: string;
+  name: string;
+  owner_id: string;
+  is_private: boolean;
+  item_count: number;
+  created_at: string;
+  updated_at: string;
   user_email?: string;
   user_display_name?: string;
 }
 
-/**
- * Admin-specific type for task with user information
- */
 export interface TaskAdmin {
   id: string;
   user_id: string;
-  board_id?: string;
-  section_id?: string;
   title: string;
-  description?: string;
   status: string;
-  due_date?: string;
   created_at: string;
   updated_at: string;
-  // Admin-specific fields
   user_email?: string;
   user_display_name?: string;
   board_title?: string;
 }
 
-/**
- * Fetch all boards from all users (admin-only)
- * SECURITY: Requires admin privileges. This intentionally bypasses user filtering.
- * USAGE: Only for admin panel views, NOT for regular app usage.
- */
 export const getAllBoardsAdmin = async (
   page = 0,
-  perPage = 50
+  perPage = 50,
 ): Promise<{
   boards: BoardWithStatsAdmin[];
   totalPages: number;
 }> => {
-  // Verify admin access
   const hasAccess = await verifyAdminAccess();
   if (!hasAccess) {
     throw new Error("Unauthorized: Admin privileges required");
   }
 
   try {
-    // Get total count
     const { count } = await supabase
-      .from("task_boards_with_stats")
+      .from("playlists")
       .select("*", { count: "exact", head: true });
 
-    // Fetch boards with user information
-    const { data: boards, error } = await supabase
-      .from("task_boards_with_stats")
+    const { data: playlists, error } = await supabase
+      .from("playlists")
       .select(
-        `
-        *,
-        user_profiles!task_boards_user_id_fkey (
-          display_name,
-          email
-        )
-      `
+        "id, owner_id, name, is_private, created_at, updated_at, user_profiles!playlists_owner_id_fkey(display_name, email)",
       )
       .order("created_at", { ascending: false })
       .range(page * perPage, (page + 1) * perPage - 1);
 
     if (error) throw error;
 
+    const playlistIds = (playlists || []).map((playlist) => playlist.id);
+    const { data: itemRows } =
+      playlistIds.length > 0
+        ? await supabase
+            .from("playlist_items")
+            .select("playlist_id")
+            .in("playlist_id", playlistIds)
+        : { data: [] as Array<{ playlist_id: string }> };
+
+    const itemCountMap = new Map<string, number>();
+    for (const row of itemRows || []) {
+      const key = String(row.playlist_id);
+      itemCountMap.set(key, (itemCountMap.get(key) || 0) + 1);
+    }
+
     const boardsWithUserInfo: BoardWithStatsAdmin[] =
-      boards?.map(
-        (board: BoardWithStats & {
-          user_profiles?: { display_name?: string; email?: string };
-        }) => ({
-          ...board,
-          user_email: board.user_profiles?.email,
-          user_display_name: board.user_profiles?.display_name,
-        })
-      ) || [];
+      playlists?.map((playlist) => {
+        const userProfile = firstRelation(
+          playlist.user_profiles as
+            | { display_name?: string; email?: string }
+            | Array<{ display_name?: string; email?: string }>
+            | null
+            | undefined,
+        );
+
+        return {
+          id: playlist.id,
+          owner_id: playlist.owner_id,
+          name: playlist.name,
+          is_private: playlist.is_private,
+          item_count: itemCountMap.get(playlist.id) || 0,
+          created_at: playlist.created_at,
+          updated_at: playlist.updated_at,
+          user_email: userProfile?.email,
+          user_display_name: userProfile?.display_name,
+        };
+      }) || [];
 
     const totalPages = Math.ceil((count || 0) / perPage);
 
-    // Log admin action for audit trail
     try {
       await supabase.rpc("log_admin_action", {
-        p_action: "view_all_boards",
+        p_action: "view_all_playlists",
         p_target_user_id: null,
-        p_details: { page, perPage, totalBoards: count || 0 },
+        p_details: { page, perPage, totalPlaylists: count || 0 },
       });
     } catch (logError) {
       logger.warn("Failed to log admin action", { error: logError });
@@ -434,44 +445,27 @@ export const getAllBoardsAdmin = async (
   }
 };
 
-/**
- * Fetch all tasks from all users (admin-only)
- * SECURITY: Requires admin privileges. This intentionally bypasses user filtering.
- * USAGE: Only for admin panel views, NOT for regular app usage.
- */
 export const getAllTasksAdmin = async (
   page = 0,
-  perPage = 100
+  perPage = 100,
 ): Promise<{
   tasks: TaskAdmin[];
   totalPages: number;
 }> => {
-  // Verify admin access
   const hasAccess = await verifyAdminAccess();
   if (!hasAccess) {
     throw new Error("Unauthorized: Admin privileges required");
   }
 
   try {
-    // Get total count
     const { count } = await supabase
-      .from("tasks")
+      .from("tracker_items")
       .select("*", { count: "exact", head: true });
 
-    // Fetch tasks with user and board information
-    const { data: tasks, error } = await supabase
-      .from("tasks")
+    const { data: trackerRows, error } = await supabase
+      .from("tracker_items")
       .select(
-        `
-        *,
-        user_profiles!tasks_user_id_fkey (
-          display_name,
-          email
-        ),
-        task_boards!tasks_board_id_fkey (
-          title
-        )
-      `
+        "id, user_id, status, created_at, updated_at, media:media_id(title), user_profiles!tracker_items_user_id_fkey(display_name, email)",
       )
       .order("created_at", { ascending: false })
       .range(page * perPage, (page + 1) * perPage - 1);
@@ -479,45 +473,40 @@ export const getAllTasksAdmin = async (
     if (error) throw error;
 
     const tasksWithUserInfo: TaskAdmin[] =
-      tasks?.map(
-        (task: {
-          id: string;
-          user_id: string;
-          board_id?: string;
-          section_id?: string;
-          title: string;
-          description?: string;
-          status: string;
-          due_date?: string;
-          created_at: string;
-          updated_at: string;
-          user_profiles?: { display_name?: string; email?: string };
-          task_boards?: { title?: string };
-        }) => ({
+      trackerRows?.map((task) => {
+        const media = firstRelation(
+          task.media as
+            | { title?: string }
+            | Array<{ title?: string }>
+            | null,
+        );
+        const userProfile = firstRelation(
+          task.user_profiles as
+            | { display_name?: string; email?: string }
+            | Array<{ display_name?: string; email?: string }>
+            | null,
+        );
+
+        return {
           id: task.id,
           user_id: task.user_id,
-          board_id: task.board_id,
-          section_id: task.section_id,
-          title: task.title,
-          description: task.description,
+          title: media?.title || "Untitled",
           status: task.status,
-          due_date: task.due_date,
           created_at: task.created_at,
           updated_at: task.updated_at,
-          user_email: task.user_profiles?.email,
-          user_display_name: task.user_profiles?.display_name,
-          board_title: task.task_boards?.title,
-        })
-      ) || [];
+          user_email: userProfile?.email,
+          user_display_name: userProfile?.display_name,
+          board_title: "Tracker",
+        };
+      }) || [];
 
     const totalPages = Math.ceil((count || 0) / perPage);
 
-    // Log admin action for audit trail
     try {
       await supabase.rpc("log_admin_action", {
-        p_action: "view_all_tasks",
+        p_action: "view_all_tracker_items",
         p_target_user_id: null,
-        p_details: { page, perPage, totalTasks: count || 0 },
+        p_details: { page, perPage, totalItems: count || 0 },
       });
     } catch (logError) {
       logger.warn("Failed to log admin action", { error: logError });
@@ -525,7 +514,7 @@ export const getAllTasksAdmin = async (
 
     return { tasks: tasksWithUserInfo, totalPages };
   } catch (error) {
-    logger.error("Failed to fetch all tasks for admin", { error });
+    logger.error("Failed to fetch all tracker items for admin", { error });
     throw error;
   }
 };
