@@ -35,6 +35,9 @@ const Modal: React.FC<ModalProps> = ({
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
+  const isAuthenticatedShell =
+    typeof document !== "undefined" &&
+    document.body.classList.contains("app-authenticated-shell");
 
   // Handle body scroll lock
   useEffect(() => {
@@ -151,14 +154,16 @@ const Modal: React.FC<ModalProps> = ({
 
       {/* Modal Container */}
       <div
-        className="fixed inset-0 z-50 overflow-y-auto pointer-events-none"
+        className={`fixed inset-0 z-50 overflow-y-auto pointer-events-none ${
+          isAuthenticatedShell ? "md:pl-60" : ""
+        }`}
         onClick={handleBackdropClick}
       >
-        <div className="flex min-h-full items-center justify-center p-4">
+        <div className="flex min-h-full items-start justify-center p-4 pt-10 sm:pt-12">
           <div
             ref={modalRef}
             tabIndex={-1}
-            className={`relative my-8 w-full ${maxWidthClasses[maxWidth]} bg-white dark:bg-gray-800 rounded-xl shadow-2xl focus:outline-none pointer-events-auto`}
+            className={`relative w-full ${maxWidthClasses[maxWidth]} bg-white dark:bg-gray-800 rounded-xl shadow-2xl focus:outline-none pointer-events-auto`}
             role="dialog"
             aria-modal="true"
             aria-labelledby={

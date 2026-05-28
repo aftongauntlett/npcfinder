@@ -7,22 +7,16 @@ import { logger } from "../../../lib/logger";
  * - secondary: Outlined style with glass effect, fills on hover
  * - subtle: Minimal ghost style with light background
  * - danger: Pastel red for destructive actions (delete, remove, etc.)
- * - action: Prominent glass button for high-frequency actions (Add, Create, etc.)
+ * - action: Solid emphasized button for high-frequency actions (Add, Create, etc.)
  */
 
-type ButtonVariant =
-  | "primary"
-  | "secondary"
-  | "subtle"
-  | "danger"
-  | "action";
+type ButtonVariant = "primary" | "secondary" | "subtle" | "danger" | "action";
 
 export type ButtonSize = "sm" | "md" | "lg" | "icon";
 
 export type IconPosition = "left" | "right";
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children?: React.ReactNode;
   variant?: ButtonVariant;
   size?: ButtonSize;
@@ -69,7 +63,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       hideTextOnMobile = false,
       ...props
     },
-    ref
+    ref,
   ) => {
     const isDisabled = disabled || loading;
     const isIconOnly = !children && !!icon;
@@ -79,14 +73,14 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     // Accessibility check
     if (isIconOnly && !ariaLabel && !props["aria-labelledby"]) {
       logger.warn(
-        "Button: Icon-only buttons require aria-label for accessibility"
+        "Button: Icon-only buttons require aria-label for accessibility",
       );
     }
 
     // Accessibility check for mobile-hidden text
     if (hideTextOnMobile && !ariaLabel && !props["aria-labelledby"]) {
       logger.warn(
-        "Button: Buttons with hideTextOnMobile require aria-label for accessibility"
+        "Button: Buttons with hideTextOnMobile require aria-label for accessibility",
       );
     }
 
@@ -137,12 +131,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         "focus-visible:ring-red-500 dark:focus-visible:ring-red-400",
       ],
       action: [
-        "border-2 border-primary/40 bg-primary/5 dark:bg-primary-light/5 text-primary dark:text-primary-light shadow-md",
-        "glass-button hover-sheen hover-glow",
-        "hover:border-primary/60 dark:hover:border-primary-light/60 hover:shadow-lg",
-        "hover:bg-primary/15 dark:hover:bg-primary-light/15",
-        "hover:[backdrop-filter:blur(12px)_saturate(130%)]",
-        "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+        "border-0 text-white shadow-sm",
+        "hover:opacity-95 hover:shadow-md",
+        "active:opacity-90",
+        "focus-visible:ring-primary",
       ],
     };
 
@@ -228,10 +220,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       }
       if (variant === "action") {
         return {
-          borderColor: "var(--color-primary)",
-          color: "var(--color-primary)",
-          ["--hover-bg" as string]: "var(--color-primary)",
-          ["--hover-text" as string]: "var(--color-text-on-primary)",
+          color: "var(--color-text-on-primary)",
+          backgroundColor: "var(--color-primary-dark)",
+          borderColor: "transparent",
         } as React.CSSProperties;
       }
       return undefined;
@@ -289,7 +280,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           ))}
       </button>
     );
-  }
+  },
 );
 
 Button.displayName = "Button";

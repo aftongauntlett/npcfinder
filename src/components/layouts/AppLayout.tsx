@@ -10,6 +10,7 @@ interface AppLayoutProps {
   activeTab?: string;
   onTabChange?: (tabId: string) => void;
   onTabClose?: (tabId: string) => void;
+  tabsRightActions?: React.ReactNode;
   children: React.ReactNode;
 }
 
@@ -31,6 +32,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   activeTab,
   onTabChange,
   onTabClose,
+  tabsRightActions,
   children,
 }) => {
   return (
@@ -65,6 +67,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
                 onTabChange={onTabChange}
                 onTabClose={onTabClose}
                 ariaLabel={`${title} sections`}
+                rightActions={tabsRightActions}
               />
             )}
           </div>

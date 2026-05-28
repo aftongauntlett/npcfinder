@@ -5,6 +5,7 @@ import Button from "../ui/Button";
 interface StarRatingProps {
   rating: number | null;
   onRatingChange: (rating: number | null) => void;
+  maxRating?: number;
   size?: "xs" | "sm" | "md" | "lg";
   readonly?: boolean;
   showClearButton?: boolean;
@@ -25,6 +26,7 @@ const RATING_LABELS: Record<number, string> = {
 export default function StarRating({
   rating,
   onRatingChange,
+  maxRating = 5,
   size = "md",
   readonly = false,
   showClearButton = true,
@@ -43,6 +45,7 @@ export default function StarRating({
   };
 
   const displayRating = hoverRating ?? rating;
+  const maxStars = Math.max(1, Math.floor(maxRating));
 
   const handleStarClick = (value: number) => {
     if (readonly) return;
@@ -66,7 +69,7 @@ export default function StarRating({
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       handleStarClick(value);
-    } else if (e.key === "ArrowRight" && value < 5) {
+    } else if (e.key === "ArrowRight" && value < maxStars) {
       e.preventDefault();
       onRatingChange(value + 1);
     } else if (e.key === "ArrowLeft" && value > 1) {
@@ -84,33 +87,35 @@ export default function StarRating({
           aria-label="Rating"
           onMouseLeave={() => !readonly && setHoverRating(null)}
         >
-          {[1, 2, 3, 4, 5].map((value) => (
-            <button
-              key={value}
-              type="button"
-              role="radio"
-              aria-checked={rating === value}
-              aria-label={`${value} star${value !== 1 ? "s" : ""}`}
-              disabled={readonly}
-              className={`${starSizes[size]} transition-all ${
-                readonly ? "cursor-default" : "cursor-pointer"
-              }`}
-              onClick={() => handleStarClick(value)}
-              onMouseEnter={() => !readonly && setHoverRating(value)}
-              onKeyDown={(e) => handleKeyDown(e, value)}
-              tabIndex={readonly ? -1 : 0}
-            >
-              <Star
-                className={`w-full h-full transition-colors ${
-                  displayRating && value <= displayRating
-                    ? useThemeColor
-                      ? "fill-primary text-primary"
-                      : "fill-yellow-400 text-yellow-400"
-                    : "fill-none text-gray-300 dark:text-gray-600"
+          {Array.from({ length: maxStars }, (_, index) => index + 1).map(
+            (value) => (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={rating === value}
+                aria-label={`${value} of ${maxStars} star${maxStars !== 1 ? "s" : ""}`}
+                disabled={readonly}
+                className={`${starSizes[size]} transition-all ${
+                  readonly ? "cursor-default" : "cursor-pointer"
                 }`}
-              />
-            </button>
-          ))}
+                onClick={() => handleStarClick(value)}
+                onMouseEnter={() => !readonly && setHoverRating(value)}
+                onKeyDown={(e) => handleKeyDown(e, value)}
+                tabIndex={readonly ? -1 : 0}
+              >
+                <Star
+                  className={`w-full h-full transition-colors ${
+                    displayRating && value <= displayRating
+                      ? useThemeColor
+                        ? "fill-primary text-primary"
+                        : "fill-yellow-400 text-yellow-400"
+                      : "fill-none text-gray-300 dark:text-gray-600"
+                  }`}
+                />
+              </button>
+            ),
+          )}
         </div>
 
         {!readonly && showClearButton && rating !== null && (
@@ -129,10 +134,12 @@ export default function StarRating({
       {showLabel && (
         <p className="form-label">
           {displayRating
-            ? RATING_LABELS[displayRating]
+            ? maxStars === 5
+              ? RATING_LABELS[displayRating] || `${displayRating}/${maxStars}`
+              : `${displayRating}/${maxStars}`
             : showPlaceholder
-            ? "No Review Yet"
-            : ""}
+              ? "No Review Yet"
+              : ""}
         </p>
       )}
     </div>

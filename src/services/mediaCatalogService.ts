@@ -15,6 +15,8 @@ export interface CatalogMedia {
   id: string;
   external_id: string;
   media_type: CatalogMediaType;
+  is_user_created: boolean;
+  created_by_user_id: string | null;
   title: string;
   subtitle: string | null;
   poster_url: string | null;
@@ -70,15 +72,35 @@ function normalizeYear(releaseDate?: string | null): number | null {
   return Number.isFinite(value) ? value : null;
 }
 
+async function getCurrentUserIdOrNull(): Promise<string | null> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  return user?.id ?? null;
+}
+
 export async function upsertMediaFromItem(
   item: MediaItem,
 ): Promise<ServiceResponse<CatalogMedia>> {
   try {
     const mediaType = normalizeCatalogMediaType(item.media_type);
+    const isUserCreated =
+      item.is_user_created === true ||
+      String(item.external_id).startsWith("custom:");
+    const createdByUserId = isUserCreated
+      ? await getCurrentUserIdOrNull()
+      : null;
 
     const insert = {
       external_id: item.external_id,
       media_type: mediaType,
+      ...(isUserCreated
+        ? {
+            is_user_created: true,
+            created_by_user_id: createdByUserId,
+          }
+        : {}),
       title: item.title,
       subtitle:
         item.subtitle ?? item.artist ?? item.authors ?? item.platforms ?? null,

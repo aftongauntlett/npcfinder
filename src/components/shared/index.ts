@@ -58,6 +58,9 @@ export { default as MediaUserRating } from "./media/MediaUserRating";
 export { Pagination } from "./common/Pagination";
 export { default as EmptyStateAddCard } from "./common/EmptyStateAddCard";
 export { default as LocalSearchInput } from "./common/LocalSearchInput";
+export { default as ViewModeToggle } from "./common/ViewModeToggle";
+export { default as ThemedDatePicker } from "./common/ThemedDatePicker";
+export type { ViewMode } from "./common/ViewModeToggle";
 
 // Search Components - Search modal components
 export { default as SearchMovieModal } from "./search/SearchMovieModal";

@@ -40,6 +40,9 @@ export interface MediaItem {
   metacritic?: number; // Metacritic score (0-100)
   playtime?: number; // Average playtime in hours
   description_raw?: string; // Raw HTML description from RAWG API
+  // Catalog provenance metadata
+  is_user_created?: boolean;
+  created_by_user_id?: string | null;
 }
 
 // Friend interface
@@ -94,13 +97,13 @@ export default function SendMediaModal({
 
   // Selection state
   const [selectedItem, setSelectedItem] = useState<MediaItem | null>(
-    preselectedItem || null
+    preselectedItem || null,
   );
   const [selectedFriends, setSelectedFriends] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
   const [recommendationType, setRecommendationType] = useState(
-    defaultRecommendationType
+    defaultRecommendationType,
   );
   const [message, setMessage] = useState("");
 
@@ -113,7 +116,7 @@ export default function SendMediaModal({
 
   // UI state
   const [step, setStep] = useState<"search" | "friends" | "details">(
-    preselectedItem ? "friends" : "search"
+    preselectedItem ? "friends" : "search",
   );
   const [sending, setSending] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -136,7 +139,7 @@ export default function SendMediaModal({
     try {
       // Use the connections service (works with mock or real data)
       const { data: friendsList, error: friendsError } = await getFriends(
-        user.id
+        user.id,
       );
 
       if (friendsError) {
@@ -190,7 +193,7 @@ export default function SendMediaModal({
     if (isOpen && preselectedItem) {
       setSelectedItem(preselectedItem);
       void checkExisting(preselectedItem.external_id).then(
-        setFriendsWithExistingRec
+        setFriendsWithExistingRec,
       );
       setStep("friends");
     }
@@ -252,7 +255,7 @@ export default function SendMediaModal({
   const toggleAllFriends = () => {
     // Filter out friends who already received this recommendation
     const availableFriends = friends.filter(
-      (f) => !friendsWithExistingRec.has(f.user_id)
+      (f) => !friendsWithExistingRec.has(f.user_id),
     );
     const availableFriendIds = availableFriends.map((f) => f.user_id);
 

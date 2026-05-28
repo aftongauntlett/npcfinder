@@ -14,6 +14,7 @@ Complete guides for using, self-hosting, and contributing to NPC Finder.
 - **[Role System](ROLE-SYSTEM.md)** - Role-based permissions and admin model
 - **[Copilot + Agent Guide](COPILOT-AGENTS-GUIDE.md)** - Repo-specific instructions for AI coding agents
 - **[Current App State](CURRENT-APP-STATE.md)** - Source-of-truth snapshot for current routes and product scope
+- **[Tracker Notes + Playlist Visibility PRD](PRD-TRACKER-NOTES-AND-PLAYLIST-VISIBILITY.md)** - Product + DB requirements for owner notes/completion dates in playlist context
 
 ## Quick Links
 

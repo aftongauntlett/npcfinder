@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import type { User } from "@supabase/supabase-js";
 import PageContainer from "./PageContainer";
@@ -28,6 +28,13 @@ const AuthenticatedAppLayout: React.FC<AuthenticatedAppLayoutProps> = ({
   user,
 }) => {
   const { resolvedTheme } = useTheme();
+
+  useEffect(() => {
+    document.body.classList.add("app-authenticated-shell");
+    return () => {
+      document.body.classList.remove("app-authenticated-shell");
+    };
+  }, []);
 
   return (
     <PageContainer className="relative">

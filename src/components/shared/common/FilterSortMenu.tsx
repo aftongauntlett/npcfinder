@@ -140,7 +140,7 @@ const FilterSortMenu: React.FC<FilterSortMenuProps> = ({
   };
 
   return (
-    <div className={`relative inline-block ${isOpen ? "z-[120]" : ""}`}>
+    <div className={`relative inline-block ${isOpen ? "z-tooltip" : ""}`}>
       {/* Trigger Button */}
       <button
         ref={triggerRef}
@@ -163,7 +163,7 @@ const FilterSortMenu: React.FC<FilterSortMenuProps> = ({
       {isOpen && (
         <div
           ref={dropdownRef}
-          className="absolute left-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-[130] max-h-[400px] overflow-y-auto"
+          className="absolute left-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-tooltip max-h-[400px] overflow-y-auto"
           role="listbox"
         >
           {sections.map((section, sectionIndex) => (

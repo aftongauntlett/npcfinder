@@ -14,7 +14,13 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Plus, Share2, Trash2 } from "lucide-react";
+import {
+  AlertTriangle,
+  GripVertical,
+  Plus,
+  Share2,
+  Trash2,
+} from "lucide-react";
 import AppLayout from "@/components/layouts/AppLayout";
 import AddTrackerMediaToPlaylistModal from "@/components/playlists/AddTrackerMediaToPlaylistModal";
 import SharePlaylistModal from "@/components/playlists/SharePlaylistModal";
@@ -39,6 +45,7 @@ import {
   EmptyState,
   Input,
   Modal,
+  StarRating,
   Textarea,
 } from "@/components/shared";
 
@@ -51,10 +58,12 @@ const pageMetaOptions = {
 function SortablePlaylistItemRow(props: {
   item: PlaylistItem;
   canEdit: boolean;
+  ownerRating: number | null;
   onUpdateNote: (note: string | null) => void;
   onRemove: () => void;
 }) {
-  const { item, canEdit, onUpdateNote, onRemove } = props;
+  const { item, canEdit, ownerRating, onUpdateNote, onRemove } = props;
+  const isUserCreated = item.media?.is_user_created === true;
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({
       id: item.id,
@@ -106,6 +115,13 @@ function SortablePlaylistItemRow(props: {
             </div>
           </div>
 
+          {isUserCreated && (
+            <div className="inline-flex items-center gap-1.5 rounded-md border border-amber-300/50 dark:border-amber-500/40 bg-amber-50/80 dark:bg-amber-500/10 px-2 py-1 text-[11px] font-medium text-amber-800 dark:text-amber-100">
+              <AlertTriangle className="w-3.5 h-3.5" />
+              User-created entry
+            </div>
+          )}
+
           <textarea
             rows={2}
             defaultValue={item.note || ""}
@@ -114,6 +130,32 @@ function SortablePlaylistItemRow(props: {
             placeholder={canEdit ? "Optional curation note" : "Owner note"}
             className="w-full px-2 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white"
           />
+
+          {isUserCreated && (
+            <p className="text-xs text-amber-700 dark:text-amber-200">
+              This item was added manually by a user and is not API-verified.
+              Metadata may be incomplete or inaccurate.
+            </p>
+          )}
+
+          {canEdit && (
+            <div className="pt-1">
+              <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
+                Your Tracker Rating
+              </p>
+              <StarRating
+                rating={ownerRating}
+                onRatingChange={() => {
+                  // Rating edits happen in Tracker item details.
+                }}
+                maxRating={10}
+                size="xs"
+                readonly
+                showClearButton={false}
+                className="!gap-1"
+              />
+            </div>
+          )}
         </div>
 
         {canEdit && (
@@ -200,6 +242,40 @@ export default function PlaylistsPage() {
     () => [...activeTrackerItems, ...historyTrackerItems],
     [activeTrackerItems, historyTrackerItems],
   );
+
+  const trackerRatingByMediaId = useMemo(() => {
+    const latestByMediaId = new Map<
+      string,
+      {
+        rating: number | null;
+        sortKey: string;
+      }
+    >();
+
+    for (const trackerItem of trackerMediaItems) {
+      const mediaId = trackerItem.media_id;
+      if (!mediaId) {
+        continue;
+      }
+
+      const sortKey = trackerItem.updated_at || trackerItem.created_at || "";
+      const existing = latestByMediaId.get(mediaId);
+
+      if (!existing || sortKey > existing.sortKey) {
+        latestByMediaId.set(mediaId, {
+          rating: trackerItem.rating ?? null,
+          sortKey,
+        });
+      }
+    }
+
+    return new Map(
+      Array.from(latestByMediaId.entries()).map(([mediaId, entry]) => [
+        mediaId,
+        entry.rating,
+      ]),
+    );
+  }, [trackerMediaItems]);
 
   const handleCreatePlaylist = async () => {
     const name = newPlaylistName.trim();
@@ -397,6 +473,12 @@ export default function PlaylistsPage() {
                           key={item.id}
                           item={item}
                           canEdit={canEdit}
+                          ownerRating={
+                            canEdit
+                              ? (trackerRatingByMediaId.get(item.media_id) ??
+                                null)
+                              : null
+                          }
                           onUpdateNote={(note) =>
                             void updatePlaylistItem.mutateAsync({
                               playlistId: selectedPlaylist.id,

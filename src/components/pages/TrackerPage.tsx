@@ -5,6 +5,7 @@ import {
   Film,
   MessageSquare,
   RotateCcw,
+  Star,
   Trash2,
 } from "lucide-react";
 import AppLayout from "@/components/layouts/AppLayout";
@@ -16,7 +17,10 @@ import {
   MediaPageToolbar,
   MediaPoster,
   Modal,
+  StarRating,
+  ThemedDatePicker,
   Textarea,
+  ViewModeToggle,
 } from "@/components/shared";
 import Toast from "@/components/ui/Toast";
 import {
@@ -50,8 +54,9 @@ const PAGE_META_BASE = {
 };
 
 type ViewMode = "active" | "history";
+type CardLayout = "list" | "grid";
 type MediaFilter = "all" | TrackerMediaType;
-type SortMode = "recent" | "title" | "year" | "added" | "completed";
+type SortMode = "recent" | "title" | "year" | "added" | "completed" | "rating";
 
 function mediaLabel(mediaType: string | undefined): string {
   if (!mediaType) return "Unknown";
@@ -69,28 +74,47 @@ function toggleLabel(status: TrackerStatus): string {
   return status === "done" ? "Move To Active" : "Mark Complete";
 }
 
-function toggleButtonClassName(status: TrackerStatus): string {
+function toggleButtonClassName(
+  status: TrackerStatus,
+  size: "sm" | "md" = "md",
+): string {
+  const sizeClass = size === "sm" ? "h-8 w-8" : "h-9 w-9";
+
   if (status === "done") {
-    return "h-9 w-9 rounded-full border-0 shadow-sm bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700/70 dark:text-slate-200 dark:hover:bg-slate-600/80";
+    return `${sizeClass} rounded-full border-0 shadow-sm !bg-slate-100 !text-slate-700 hover:!bg-slate-200 dark:!bg-slate-700/70 dark:!text-slate-200 dark:hover:!bg-slate-600/80`;
   }
 
-  return "h-9 w-9 rounded-full border-0 shadow-sm bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-500/25 dark:text-emerald-100 dark:hover:bg-emerald-500/35";
+  return `${sizeClass} rounded-full border-0 shadow-sm !bg-emerald-200 !text-emerald-800 hover:!bg-emerald-300 dark:!bg-emerald-500/30 dark:!text-emerald-100 dark:hover:!bg-emerald-500/40`;
 }
 
-function deleteButtonClassName(): string {
-  return "h-9 w-9 rounded-full border-0 shadow-sm bg-rose-100 text-rose-700 hover:bg-rose-200 dark:bg-rose-500/25 dark:text-rose-100 dark:hover:bg-rose-500/35";
+function deleteButtonClassName(size: "sm" | "md" = "md"): string {
+  const sizeClass = size === "sm" ? "h-8 w-8" : "h-9 w-9";
+  return `${sizeClass} rounded-full border-0 shadow-sm bg-rose-100 text-rose-700 hover:bg-rose-200 dark:bg-rose-500/25 dark:text-rose-100 dark:hover:bg-rose-500/35`;
 }
 
-function mediaTypeChipClassName(mediaType: string | undefined): string {
+function shouldHideSubtitle(
+  mediaType: string | undefined,
+  subtitle: string | null | undefined,
+): boolean {
+  if (!subtitle) return true;
+
+  const normalized = subtitle.trim().toLowerCase();
+
   if (mediaType === "movie") {
-    return "bg-blue-100 text-blue-700 dark:bg-blue-500/25 dark:text-blue-100";
+    return normalized === "movie" || normalized === "film";
   }
 
   if (mediaType === "tv") {
-    return "bg-orange-100 text-orange-700 dark:bg-orange-500/25 dark:text-orange-100";
+    return (
+      normalized === "tv" ||
+      normalized === "tv show" ||
+      normalized === "show" ||
+      normalized === "series" ||
+      normalized === "television"
+    );
   }
 
-  return "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300";
+  return false;
 }
 
 function formatTrackDuration(milliseconds: number): string {
@@ -127,6 +151,33 @@ function formatReleaseDate(value?: string | null): string | null {
   });
 }
 
+function toDateInputValue(value?: string | null): string {
+  if (!value) return "";
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return "";
+  }
+
+  const year = String(parsed.getFullYear());
+  const month = String(parsed.getMonth() + 1).padStart(2, "0");
+  const day = String(parsed.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function toCompletedAtIso(dateValue: string): string | null {
+  if (!dateValue) {
+    return null;
+  }
+
+  const parsed = new Date(`${dateValue}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return parsed.toISOString();
+}
+
 function TrackerMediaCard(props: {
   item: TrackerItem;
   onOpen: () => void;
@@ -136,6 +187,9 @@ function TrackerMediaCard(props: {
 }) {
   const { item, onOpen, onToggleStatus, onDelete, isBusy } = props;
   const hasNote = (item.note || "").trim().length > 0;
+  const hasRating = typeof item.rating === "number" && item.rating > 0;
+  const subtitle = item.media?.subtitle;
+  const showSubtitle = !shouldHideSubtitle(item.media?.media_type, subtitle);
 
   return (
     <div
@@ -148,7 +202,7 @@ function TrackerMediaCard(props: {
           onOpen();
         }
       }}
-      className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 p-3 sm:p-4 hover:border-primary/50 dark:hover:border-primary-light/50 transition-colors cursor-pointer"
+      className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 p-3 sm:p-4 hover:border-primary/50 dark:hover:border-primary-light/50 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/10 dark:hover:shadow-primary-light/10 cursor-pointer"
       aria-label={`Open details for ${item.media?.title || "Untitled"}`}
     >
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
@@ -162,19 +216,22 @@ function TrackerMediaCard(props: {
           />
         </div>
 
-        <div className="flex-1 min-w-0 space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="flex-1 min-w-0 space-y-1">
+          <div className="flex flex-wrap items-center gap-1.5">
             <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white leading-tight">
               {item.media?.title || "Untitled"}
             </h3>
 
-            <span
-              className={`px-2 py-0.5 rounded-full text-xs font-medium ${mediaTypeChipClassName(
-                item.media?.media_type,
-              )}`}
-            >
-              {mediaLabel(item.media?.media_type)}
-            </span>
+            {hasRating && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-500/25 dark:text-amber-100"
+                title={`Your rating: ${item.rating}/10`}
+                aria-label={`Rated ${item.rating} out of 10`}
+              >
+                <Star className="w-3 h-3 fill-current" />
+                {item.rating}/10
+              </span>
+            )}
 
             {hasNote && (
               <span
@@ -187,14 +244,14 @@ function TrackerMediaCard(props: {
             )}
           </div>
 
-          {item.media?.subtitle && (
+          {showSubtitle && subtitle && (
             <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-1">
-              {item.media.subtitle}
+              {subtitle}
             </p>
           )}
 
           {item.media?.description && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
+            <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
               {item.media.description}
             </p>
           )}
@@ -244,10 +301,17 @@ function TrackerDetailsModal(props: {
   item: TrackerItem | null;
   isSaving: boolean;
   onClose: () => void;
-  onSaveNote: (item: TrackerItem, note: string) => Promise<void>;
+  onSaveNote: (
+    item: TrackerItem,
+    note: string,
+    rating: number | null,
+    completedAt?: string | null,
+  ) => Promise<void>;
 }) {
   const { item, isSaving, onClose, onSaveNote } = props;
   const [note, setNote] = useState("");
+  const [rating, setRating] = useState<number | null>(null);
+  const [completedDate, setCompletedDate] = useState("");
   const [movieTvDetails, setMovieTvDetails] =
     useState<DetailedMediaInfo | null>(null);
   const [bookDetails, setBookDetails] = useState<BookDetailedInfo | null>(null);
@@ -257,6 +321,14 @@ function TrackerDetailsModal(props: {
   useEffect(() => {
     setNote(item?.note || "");
   }, [item?.id, item?.note]);
+
+  useEffect(() => {
+    setCompletedDate(toDateInputValue(item?.completed_at));
+  }, [item?.id, item?.completed_at]);
+
+  useEffect(() => {
+    setRating(item?.rating ?? null);
+  }, [item?.id, item?.rating]);
 
   useEffect(() => {
     let cancelled = false;
@@ -327,13 +399,30 @@ function TrackerDetailsModal(props: {
     return null;
   }
 
+  const originalCompletedDate = toDateInputValue(item.completed_at);
+  const completedDateChanged =
+    item.status === "done" && completedDate !== originalCompletedDate;
+
   const handleSaveAndClose = async () => {
-    await onSaveNote(item, note);
+    const completedAt =
+      item.status === "done" ? toCompletedAtIso(completedDate) : undefined;
+
+    await onSaveNote(item, note, rating, completedAt);
     onClose();
   };
 
   const noteChanged = note.trim() !== (item.note || "").trim();
+  const ratingChanged =
+    item.status === "done" && (item.rating ?? null) !== rating;
   const mediaType = item.media?.media_type;
+  const historyDateLabel =
+    mediaType === "book"
+      ? "Date Read"
+      : mediaType === "game"
+        ? "Date Played"
+        : mediaType === "song" || mediaType === "album"
+          ? "Date Listened"
+          : "Date Watched";
 
   const detailRows: Array<{
     label: string;
@@ -550,9 +639,9 @@ function TrackerDetailsModal(props: {
               </p>
             )}
 
-            {(detailRows.length > 0 || isLoadingDetails) && (
-              <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-800/60 p-3">
-                <h4 className="text-xs uppercase tracking-wide font-semibold text-gray-600 dark:text-gray-300 mb-2">
+            <div className="space-y-5">
+              <section className="space-y-3">
+                <h4 className="text-sm font-semibold text-primary dark:text-primary-light">
                   More Details
                 </h4>
 
@@ -561,13 +650,13 @@ function TrackerDetailsModal(props: {
                     Loading details...
                   </p>
                 ) : (
-                  <div className="space-y-3">
+                  <>
                     {compactDetailRows.length > 0 && (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <dl className="space-y-2">
                           {leftColumnRows.map((row) => (
                             <div key={`${row.label}-${row.value}`}>
-                              <dt className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                              <dt className="text-[11px] uppercase tracking-wide text-gray-700 dark:text-gray-200">
                                 {row.label}
                               </dt>
                               <dd className="text-sm text-gray-900 dark:text-gray-100 break-words">
@@ -580,7 +669,7 @@ function TrackerDetailsModal(props: {
                         <dl className="space-y-2">
                           {rightColumnRows.map((row) => (
                             <div key={`${row.label}-${row.value}`}>
-                              <dt className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                              <dt className="text-[11px] uppercase tracking-wide text-gray-700 dark:text-gray-200">
                                 {row.label}
                               </dt>
                               <dd className="text-sm text-gray-900 dark:text-gray-100 break-words">
@@ -596,7 +685,7 @@ function TrackerDetailsModal(props: {
                       <dl className="space-y-2 border-t border-gray-200/80 dark:border-gray-700/80 pt-3">
                         {fullWidthDetailRows.map((row) => (
                           <div key={`${row.label}-${row.value}`}>
-                            <dt className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                            <dt className="text-[11px] uppercase tracking-wide text-gray-700 dark:text-gray-200">
                               {row.label}
                             </dt>
                             <dd className="text-sm text-gray-900 dark:text-gray-100 break-words">
@@ -606,36 +695,205 @@ function TrackerDetailsModal(props: {
                         ))}
                       </dl>
                     )}
-                  </div>
+                  </>
                 )}
-              </div>
-            )}
-          </div>
-        </div>
+              </section>
 
-        <div className="space-y-3">
-          <Textarea
-            id={`tracker-note-${item.id}`}
-            label="Personal Note"
-            value={note}
-            onChange={(event) => setNote(event.target.value)}
-            placeholder="Private note about this item"
-            rows={4}
-          />
+              {item.status === "done" && (
+                <section className="space-y-3 border-t border-gray-200/80 dark:border-gray-700/80 pt-4">
+                  <h4 className="text-sm font-semibold text-primary dark:text-primary-light">
+                    Edit
+                  </h4>
 
-          <div className="flex justify-end">
-            <Button
-              variant="primary"
-              size="sm"
-              disabled={!noteChanged || isSaving}
-              onClick={() => void handleSaveAndClose()}
-            >
-              Save Note
-            </Button>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
+                    <div className="space-y-1">
+                      <p className="text-[11px] uppercase tracking-wide text-gray-700 dark:text-gray-200">
+                        {historyDateLabel}
+                      </p>
+                      <ThemedDatePicker
+                        id={`tracker-completed-date-${item.id}`}
+                        value={completedDate}
+                        onChange={setCompletedDate}
+                        ariaLabel={historyDateLabel}
+                        className="max-w-[220px]"
+                        helperText="Auto-set when marked complete."
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-[11px] uppercase tracking-wide text-gray-700 dark:text-gray-200">
+                        Rating
+                      </p>
+                      <StarRating
+                        rating={rating}
+                        onRatingChange={setRating}
+                        maxRating={10}
+                        size="xs"
+                        showClearButton
+                        className="!gap-1"
+                      />
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Rate this item out of 10 stars.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-[11px] uppercase tracking-wide text-gray-700 dark:text-gray-200">
+                      Personal Note
+                    </p>
+                    <Textarea
+                      id={`tracker-note-${item.id}`}
+                      value={note}
+                      onChange={(event) => setNote(event.target.value)}
+                      placeholder="Private note about this item"
+                      rows={4}
+                      textareaClassName="rounded-xl"
+                    />
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      disabled={
+                        (!noteChanged &&
+                          !completedDateChanged &&
+                          !ratingChanged) ||
+                        isSaving
+                      }
+                      onClick={() => void handleSaveAndClose()}
+                    >
+                      Save Changes
+                    </Button>
+                  </div>
+                </section>
+              )}
+            </div>
           </div>
         </div>
       </div>
     </Modal>
+  );
+}
+
+function TrackerMediaGridCard(props: {
+  item: TrackerItem;
+  onOpen: () => void;
+  onToggleStatus: () => void;
+  onDelete: () => void;
+  isBusy: boolean;
+}) {
+  const { item, onOpen, onToggleStatus, onDelete, isBusy } = props;
+  const hasNote = (item.note || "").trim().length > 0;
+  const hasRating = typeof item.rating === "number" && item.rating > 0;
+  const subtitle = item.media?.subtitle;
+  const showSubtitle = !shouldHideSubtitle(item.media?.media_type, subtitle);
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onOpen();
+        }
+      }}
+      className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/85 dark:bg-gray-800/80 p-2.5 hover:border-primary/50 dark:hover:border-primary-light/50 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/10 dark:hover:shadow-primary-light/10 cursor-pointer flex flex-col"
+      aria-label={`Open details for ${item.media?.title || "Untitled"}`}
+    >
+      <MediaPoster
+        src={item.media?.poster_url}
+        alt={item.media?.title || "Untitled"}
+        size="md"
+        aspectRatio="2/3"
+        showOverlay={false}
+        className="mx-auto w-[68%]"
+      />
+
+      <div className="mt-2 flex flex-1 flex-col gap-1.5">
+        <div className="flex items-start gap-1.5">
+          <h3 className="text-sm font-semibold leading-snug text-gray-900 dark:text-white line-clamp-2 pr-1">
+            {item.media?.title || "Untitled"}
+          </h3>
+        </div>
+
+        {showSubtitle && subtitle && (
+          <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
+            {subtitle}
+          </p>
+        )}
+
+        {item.media?.description && (
+          <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
+            {item.media.description}
+          </p>
+        )}
+
+        <div className="mt-auto flex items-center justify-between gap-2 pt-1">
+          <div className="flex items-center gap-1.5">
+            {hasNote && (
+              <span
+                className="inline-flex items-center text-amber-500 dark:text-amber-300"
+                title="Has note"
+                aria-label="Has note"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+              </span>
+            )}
+
+            {hasRating && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-500/25 dark:text-amber-100"
+                title={`Your rating: ${item.rating}/10`}
+                aria-label={`Rated ${item.rating} out of 10`}
+              >
+                <Star className="w-3 h-3 fill-current" />
+                {item.rating}/10
+              </span>
+            )}
+          </div>
+
+          <div className="ml-auto flex items-center justify-end gap-1.5">
+            <Button
+              variant="subtle"
+              size="icon"
+              icon={
+                item.status === "done" ? (
+                  <RotateCcw className="w-4 h-4" />
+                ) : (
+                  <Check className="w-4 h-4" />
+                )
+              }
+              disabled={isBusy}
+              onClick={(event) => {
+                event.stopPropagation();
+                onToggleStatus();
+              }}
+              aria-label={toggleLabel(item.status)}
+              title={toggleLabel(item.status)}
+              className={toggleButtonClassName(item.status, "sm")}
+            />
+
+            <Button
+              variant="subtle"
+              size="icon"
+              icon={<Trash2 className="w-4 h-4" />}
+              disabled={isBusy}
+              onClick={(event) => {
+                event.stopPropagation();
+                onDelete();
+              }}
+              aria-label="Remove from tracker"
+              title="Remove from tracker"
+              className={deleteButtonClassName("sm")}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -657,16 +915,21 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [pendingMoveToActiveId, setPendingMoveToActiveId] = useState<
+    string | null
+  >(null);
   const [toast, setToast] = useState<{ message: string } | null>(null);
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
   const [sortMode, setSortMode] = useState<SortMode>("recent");
   const [searchQuery, setSearchQuery] = useState("");
+  const [cardLayout, setCardLayout] = useState<CardLayout>("list");
 
   useEffect(() => {
     setMediaFilter("all");
     setSearchQuery("");
     setSelectedItemId(null);
     setPendingDeleteId(null);
+    setPendingMoveToActiveId(null);
     setToast(null);
     setViewMode("active");
   }, [resolvedScope]);
@@ -746,6 +1009,17 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
         return (b.completed_at || "").localeCompare(a.completed_at || "");
       }
 
+      if (sortMode === "rating") {
+        const ratingA = a.rating || 0;
+        const ratingB = b.rating || 0;
+
+        if (ratingB !== ratingA) {
+          return ratingB - ratingA;
+        }
+
+        return (b.completed_at || "").localeCompare(a.completed_at || "");
+      }
+
       return (b.updated_at || "").localeCompare(a.updated_at || "");
     });
 
@@ -773,6 +1047,12 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
     [allTrackerItems, pendingDeleteId],
   );
 
+  const pendingMoveToActiveItem = useMemo(
+    () =>
+      allTrackerItems.find((item) => item.id === pendingMoveToActiveId) || null,
+    [allTrackerItems, pendingMoveToActiveId],
+  );
+
   const filterSections = useMemo(
     () => [
       {
@@ -795,32 +1075,77 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
           { id: "year", label: "Year" },
           { id: "added", label: "Date Added" },
           { id: "completed", label: "Completed Date" },
+          ...(viewMode === "history"
+            ? [{ id: "rating", label: "Rating" }]
+            : []),
         ],
       },
     ],
-    [scopeConfig.label, scopeConfig.mediaTypes],
+    [scopeConfig.label, scopeConfig.mediaTypes, viewMode],
   );
 
+  useEffect(() => {
+    if (viewMode !== "history" && sortMode === "rating") {
+      setSortMode("recent");
+    }
+  }, [sortMode, viewMode]);
+
   const handleToggleStatus = async (item: TrackerItem) => {
-    const nextStatus: TrackerStatus =
-      item.status === "done" ? "in_progress" : "done";
+    if (item.status === "done") {
+      setPendingMoveToActiveId(item.id);
+      return;
+    }
 
     await updateTrackerItem.mutateAsync({
       trackerItemId: item.id,
-      updates: { status: nextStatus },
+      updates: { status: "done" },
     });
 
-    setToast({
-      message: nextStatus === "done" ? "Moved to history" : "Moved to active",
-    });
+    setToast({ message: "Moved to history" });
   };
 
-  const handleSaveNote = async (item: TrackerItem, note: string) => {
+  const handleConfirmMoveToActive = async () => {
+    if (!pendingMoveToActiveId) {
+      return;
+    }
+
+    await updateTrackerItem.mutateAsync({
+      trackerItemId: pendingMoveToActiveId,
+      updates: {
+        status: "in_progress",
+        note: null,
+        completed_at: null,
+      },
+    });
+
+    setPendingMoveToActiveId(null);
+    setToast({ message: "Moved to active" });
+  };
+
+  const handleSaveNote = async (
+    item: TrackerItem,
+    note: string,
+    rating: number | null,
+    completedAt?: string | null,
+  ) => {
     const trimmed = note.trim();
+    const updates: Partial<
+      Pick<TrackerItem, "note" | "completed_at" | "rating">
+    > = {
+      note: trimmed.length > 0 ? trimmed : null,
+    };
+
+    if (item.status === "done") {
+      updates.rating = rating;
+    }
+
+    if (item.status === "done" && completedAt !== undefined) {
+      updates.completed_at = completedAt;
+    }
 
     await updateTrackerItem.mutateAsync({
       trackerItemId: item.id,
-      updates: { note: trimmed.length > 0 ? trimmed : null },
+      updates,
     });
   };
 
@@ -865,6 +1190,13 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
       tabs={tabs}
       activeTab={viewMode}
       onTabChange={(tabId) => setViewMode(tabId as ViewMode)}
+      tabsRightActions={
+        <ViewModeToggle
+          value={cardLayout}
+          onChange={setCardLayout}
+          optionsLabel="Tracker view"
+        />
+      }
     >
       <div className="container mx-auto px-4 sm:px-6 space-y-4">
         <MediaPageToolbar
@@ -914,6 +1246,19 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
                   : `Add ${scopeConfig.label.toLowerCase()} and start tracking.`
             }
           />
+        ) : cardLayout === "grid" ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 pb-2">
+            {filteredItems.map((item) => (
+              <TrackerMediaGridCard
+                key={item.id}
+                item={item}
+                isBusy={isItemActionPending}
+                onOpen={() => setSelectedItemId(item.id)}
+                onToggleStatus={() => void handleToggleStatus(item)}
+                onDelete={() => handleRequestDelete(item)}
+              />
+            ))}
+          </div>
         ) : (
           <div className="space-y-3 pb-2">
             {filteredItems.map((item) => (
@@ -951,6 +1296,22 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
         cancelText="Cancel"
         variant="danger"
         isLoading={removeTrackerItem.isPending}
+      />
+
+      <ConfirmationModal
+        isOpen={Boolean(pendingMoveToActiveItem)}
+        onClose={() => {
+          if (!updateTrackerItem.isPending) {
+            setPendingMoveToActiveId(null);
+          }
+        }}
+        onConfirm={() => void handleConfirmMoveToActive()}
+        title="Move to active?"
+        message={`Moving "${pendingMoveToActiveItem?.media?.title || "this item"}" to active will reset its completed date and personal note.`}
+        confirmText={updateTrackerItem.isPending ? "Moving..." : "Move"}
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={updateTrackerItem.isPending}
       />
 
       <AddMediaFromCatalogModal
