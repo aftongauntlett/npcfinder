@@ -28,6 +28,11 @@ export interface PlaylistItem {
   position: number;
   created_at: string;
   media: CatalogMedia | null;
+  owner_tracker_note: string | null;
+  owner_tracker_completed_at: string | null;
+  owner_tracker_rating: number | null;
+  owner_media_is_edited: boolean;
+  owner_media_edited_fields: string[];
 }
 
 export interface PlaylistShareWithUser {
@@ -220,16 +225,86 @@ export async function getPlaylistItems(
   playlistId: string,
 ): Promise<ServiceResponse<PlaylistItem[]>> {
   try {
-    const { data, error } = await supabase
-      .from("playlist_items")
-      .select("*, media:media_id(*)")
-      .eq("playlist_id", playlistId)
-      .order("position", { ascending: true })
-      .order("created_at", { ascending: true });
+    const { data, error } = await supabase.rpc(
+      "get_playlist_items_with_owner_context",
+      {
+        check_playlist_id: playlistId,
+      },
+    );
 
-    if (error) throw error;
+    if (error) {
+      const message = String(error.message || "");
+      const rpcMissing =
+        message.includes("get_playlist_items_with_owner_context") ||
+        message.includes("Could not find the function") ||
+        error.code === "42883" ||
+        error.code === "PGRST202";
 
-    return { data: (data || []) as PlaylistItem[], error: null };
+      if (!rpcMissing) {
+        throw error;
+      }
+
+      logger.warn("Owner-context playlist RPC unavailable, using fallback", {
+        playlistId,
+        error,
+      });
+
+      const fallback = await supabase
+        .from("playlist_items")
+        .select("*, media:media_id(*)")
+        .eq("playlist_id", playlistId)
+        .order("position", { ascending: true })
+        .order("created_at", { ascending: true });
+
+      if (fallback.error) {
+        throw fallback.error;
+      }
+
+      const fallbackItems = (
+        (fallback.data || []) as Array<
+          Omit<
+            PlaylistItem,
+            | "owner_tracker_note"
+            | "owner_tracker_completed_at"
+            | "owner_tracker_rating"
+            | "owner_media_is_edited"
+            | "owner_media_edited_fields"
+          >
+        >
+      ).map((row) => ({
+        ...row,
+        owner_tracker_note: null,
+        owner_tracker_completed_at: null,
+        owner_tracker_rating: null,
+        owner_media_is_edited: false,
+        owner_media_edited_fields: [],
+      }));
+
+      return { data: fallbackItems, error: null };
+    }
+
+    const items = (
+      (data || []) as Array<
+        Omit<PlaylistItem, "media"> & {
+          media: CatalogMedia | null;
+        }
+      >
+    ).map((row) => ({
+      ...row,
+      owner_tracker_note: row.owner_tracker_note ?? null,
+      owner_tracker_completed_at: row.owner_tracker_completed_at ?? null,
+      owner_tracker_rating:
+        typeof row.owner_tracker_rating === "number"
+          ? row.owner_tracker_rating
+          : null,
+      owner_media_is_edited: row.owner_media_is_edited === true,
+      owner_media_edited_fields: Array.isArray(row.owner_media_edited_fields)
+        ? row.owner_media_edited_fields
+        : [],
+      media: row.media,
+    }));
+
+    return { data: items, error: null };
   } catch (error) {
     logger.error("Failed to load playlist items", { error, playlistId });
     return { data: null, error: error as Error };
@@ -267,7 +342,17 @@ export async function addPlaylistItem(params: {
 
     if (error) throw error;
 
-    return { data: data as PlaylistItem, error: null };
+    return {
+      data: {
+        ...(data as PlaylistItem),
+        owner_tracker_note: null,
+        owner_tracker_completed_at: null,
+        owner_tracker_rating: null,
+        owner_media_is_edited: false,
+        owner_media_edited_fields: [],
+      },
+      error: null,
+    };
   } catch (error) {
     logger.error("Failed to add playlist item", {
       error,
@@ -292,7 +377,17 @@ export async function updatePlaylistItem(
 
     if (error) throw error;
 
-    return { data: data as PlaylistItem, error: null };
+    return {
+      data: {
+        ...(data as PlaylistItem),
+        owner_tracker_note: null,
+        owner_tracker_completed_at: null,
+        owner_tracker_rating: null,
+        owner_media_is_edited: false,
+        owner_media_edited_fields: [],
+      },
+      error: null,
+    };
   } catch (error) {
     logger.error("Failed to update playlist item", { error, playlistItemId });
     return { data: null, error: error as Error };

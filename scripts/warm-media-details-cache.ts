@@ -5,23 +5,23 @@
  *
  * Purpose:
  * - Populates/refreshes the shared `media_details_cache` table for canonical media
- *   types referenced by both `user_watchlist` and `media_list_items`.
+ *   types referenced by the current tracker/playlists schema.
  * - Designed to be run manually when you want to refresh stale data.
  *
  * IMPORTANT (Supabase permissions):
  * - This script uses the Supabase *service role* key.
  * - Depending on your DB grants, the service role may NOT have direct table access
- *   to `public.user_watchlist` and/or `public.media_details_cache`.
+ *   to `public.media`, `public.tracker_items`, and/or `public.media_details_cache`.
  * - If you get permission errors, temporarily run these SQL grants in Supabase:
  *
- *     GRANT SELECT ON TABLE public.user_watchlist TO service_role;
- *     GRANT SELECT ON TABLE public.media_list_items TO service_role;
+ *     GRANT SELECT ON TABLE public.media TO service_role;
+ *     GRANT SELECT ON TABLE public.tracker_items TO service_role;
  *     GRANT SELECT, INSERT, UPDATE ON TABLE public.media_details_cache TO service_role;
  *
  * - After warming, revoke them to return to least-privilege:
  *
- *     REVOKE SELECT ON TABLE public.user_watchlist FROM service_role;
- *     REVOKE SELECT ON TABLE public.media_list_items FROM service_role;
+ *     REVOKE SELECT ON TABLE public.media FROM service_role;
+ *     REVOKE SELECT ON TABLE public.tracker_items FROM service_role;
  *     REVOKE SELECT, INSERT, UPDATE ON TABLE public.media_details_cache FROM service_role;
  *
  * Usage:
@@ -36,6 +36,9 @@
  *
  *   # Force refresh for a single user
  *   npm run cache:warm:media-details -- --user-id <UUID> --force
+ *
+ *   # Restrict to one media type (recommended for targeted refresh)
+ *   npm run cache:warm:media-details -- --media-type tv --force
  *
  * Requirements in .env.local:
  * - VITE_SUPABASE_URL
@@ -60,14 +63,32 @@ type MediaType =
   | "album"
   | "playlist";
 
-type WatchlistRow = {
+const canonicalMediaTypes: MediaType[] = [
+  "movie",
+  "tv",
+  "book",
+  "game",
+  "song",
+  "album",
+  "playlist",
+];
+
+type MediaRow = {
   external_id: string;
   media_type: MediaType;
 };
 
-type CollectionRow = {
-  external_id: string;
-  media_type: MediaType;
+type TrackerItemWithMediaRow = {
+  media:
+    | {
+        external_id: string;
+        media_type: MediaType;
+      }
+    | Array<{
+        external_id: string;
+        media_type: MediaType;
+      }>
+    | null;
 };
 
 type CacheKeyRow = {
@@ -105,6 +126,24 @@ const userId =
     : undefined;
 const allUsers = args.get("all") === true || !userId;
 const forceRefresh = args.get("force") === true;
+const requestedMediaType =
+  typeof args.get("media-type") === "string"
+    ? String(args.get("media-type")).trim().toLowerCase()
+    : undefined;
+
+if (
+  requestedMediaType &&
+  !canonicalMediaTypes.includes(requestedMediaType as MediaType)
+) {
+  console.error(
+    `❌ Invalid --media-type: ${requestedMediaType}. Expected one of: ${canonicalMediaTypes.join(", ")}`,
+  );
+  process.exit(1);
+}
+
+const selectedMediaTypes: MediaType[] = requestedMediaType
+  ? [requestedMediaType as MediaType]
+  : canonicalMediaTypes;
 
 if (args.get("help") === true) {
   console.log("\nUsage:");
@@ -113,6 +152,9 @@ if (args.get("help") === true) {
   console.log("  npm run cache:warm:media-details -- --force");
   console.log(
     "  npm run cache:warm:media-details -- --user-id <UUID> --force\n",
+  );
+  console.log(
+    "  npm run cache:warm:media-details -- --media-type tv --force\n",
   );
   process.exit(0);
 }
@@ -140,73 +182,89 @@ async function fetchUniqueWatchlistPairs(): Promise<
   >();
   const pageSize = 1000;
 
-  for (let from = 0; ; from += pageSize) {
-    let query = supabase
-      .from("user_watchlist")
-      .select("external_id, media_type")
-      .in("media_type", [
-        "movie",
-        "tv",
-        "book",
-        "game",
-        "song",
-        "album",
-        "playlist",
-      ])
-      .range(from, from + pageSize - 1);
+  if (allUsers) {
+    let useCacheFallback = false;
 
-    if (!allUsers) {
-      query = query.eq("user_id", userId!);
+    for (let from = 0; ; from += pageSize) {
+      const { data, error } = await supabase
+        .from("media")
+        .select("external_id, media_type")
+        .in("media_type", selectedMediaTypes)
+        .range(from, from + pageSize - 1);
+
+      if (error) {
+        const code = (error as { code?: string }).code;
+        if (code === "42501") {
+          useCacheFallback = true;
+          break;
+        }
+
+        throw error;
+      }
+
+      const rows = (data || []) as MediaRow[];
+      rows.forEach((row) => {
+        uniquePairsMap.set(key(row.external_id, row.media_type), {
+          external_id: row.external_id,
+          media_type: row.media_type,
+        });
+      });
+
+      if (rows.length < pageSize) break;
     }
 
-    const { data, error } = await query;
-    if (error) throw error;
+    if (useCacheFallback) {
+      console.warn(
+        "⚠️ service_role cannot read public.media; falling back to existing media_details_cache keys.",
+      );
 
-    const rows = (data || []) as WatchlistRow[];
-    rows.forEach((row) => {
-      uniquePairsMap.set(key(row.external_id, row.media_type), {
-        external_id: row.external_id,
-        media_type: row.media_type,
-      });
-    });
+      for (let from = 0; ; from += pageSize) {
+        const { data, error } = await supabase
+          .from("media_details_cache")
+          .select("external_id, media_type")
+          .in("media_type", selectedMediaTypes)
+          .range(from, from + pageSize - 1);
 
-    if (rows.length < pageSize) break;
+        if (error) throw error;
+
+        const rows = (data || []) as MediaRow[];
+        rows.forEach((row) => {
+          uniquePairsMap.set(key(row.external_id, row.media_type), {
+            external_id: row.external_id,
+            media_type: row.media_type,
+          });
+        });
+
+        if (rows.length < pageSize) break;
+      }
+    }
+
+    return Array.from(uniquePairsMap.values());
   }
-
-  return Array.from(uniquePairsMap.values());
-}
-
-async function fetchUniqueCollectionPairs(): Promise<
-  Array<{ external_id: string; media_type: MediaType }>
-> {
-  const uniquePairsMap = new Map<
-    string,
-    { external_id: string; media_type: MediaType }
-  >();
-  const pageSize = 1000;
 
   for (let from = 0; ; from += pageSize) {
     const { data, error } = await supabase
-      .from("media_list_items")
-      .select("external_id, media_type")
-      .in("media_type", [
-        "movie",
-        "tv",
-        "book",
-        "game",
-        "song",
-        "album",
-        "playlist",
-      ])
+      .from("tracker_items")
+      .select("media:media_id (external_id, media_type)")
+      .eq("user_id", userId!)
       .range(from, from + pageSize - 1);
 
     if (error) throw error;
 
-    const rows = (data || []) as CollectionRow[];
+    const rows = (data || []) as TrackerItemWithMediaRow[];
     rows.forEach((row) => {
-      uniquePairsMap.set(key(row.external_id, row.media_type), {
-        external_id: row.external_id,
-        media_type: row.media_type,
+      const raw = row.media;
+      const mediaRows = Array.isArray(raw) ? raw : raw ? [raw] : [];
+
+      mediaRows.forEach((mediaRow) => {
+        if (!selectedMediaTypes.includes(mediaRow.media_type)) {
+          return;
+        }
+
+        uniquePairsMap.set(key(mediaRow.external_id, mediaRow.media_type), {
+          external_id: mediaRow.external_id,
+          media_type: mediaRow.media_type,
+        });
       });
     });
 
@@ -235,15 +293,7 @@ async function getExistingCacheKeys(
       .from("media_details_cache")
       .select("external_id, media_type")
       .in("external_id", chunk)
-      .in("media_type", [
-        "movie",
-        "tv",
-        "book",
-        "game",
-        "song",
-        "album",
-        "playlist",
-      ]);
+      .in("media_type", selectedMediaTypes);
 
     if (error) throw error;
 
@@ -397,26 +447,13 @@ async function main() {
   console.log("\n🔧 Warming media_details_cache…\n");
 
   console.log(
-    `Scope: ${allUsers ? "all users" : `user ${userId}`}. Mode: ${forceRefresh ? "force refresh" : "fill missing"}.\n`,
+    `Scope: ${allUsers ? "all users" : `user ${userId}`}. Types: ${selectedMediaTypes.join(", ")}. Mode: ${forceRefresh ? "force refresh" : "fill missing"}.\n`,
   );
 
-  const [watchlistPairs, collectionPairs] = await Promise.all([
-    fetchUniqueWatchlistPairs(),
-    fetchUniqueCollectionPairs(),
-  ]);
-
-  const combinedMap = new Map<
-    string,
-    { external_id: string; media_type: MediaType }
-  >();
-  [...watchlistPairs, ...collectionPairs].forEach((pair) => {
-    combinedMap.set(key(pair.external_id, pair.media_type), pair);
-  });
-
-  const uniquePairs = Array.from(combinedMap.values());
+  const uniquePairs = await fetchUniqueWatchlistPairs();
 
   console.log(
-    `Found ${uniquePairs.length} unique items across watchlist (${watchlistPairs.length}) and collections (${collectionPairs.length}).`,
+    `Found ${uniquePairs.length} unique items in ${allUsers ? "media catalog" : "user tracker"}.`,
   );
 
   const existingKeys = await getExistingCacheKeys(uniquePairs);
@@ -461,7 +498,19 @@ async function main() {
 }
 
 main().catch((e) => {
-  const message = e instanceof Error ? e.message : String(e);
+  const message =
+    e instanceof Error
+      ? e.message
+      : (() => {
+          try {
+            return JSON.stringify(e);
+          } catch {
+            return String(e);
+          }
+        })();
   console.error("\n❌ Cache warm failed:", message);
+  if (e && typeof e === "object") {
+    console.error("Details:", e);
+  }
   process.exit(1);
 });

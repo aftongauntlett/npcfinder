@@ -3,7 +3,11 @@ import {
   BookOpen,
   Check,
   Film,
+  Loader2,
   MessageSquare,
+  Minus,
+  Pencil,
+  Plus,
   RotateCcw,
   Star,
   Trash2,
@@ -46,8 +50,16 @@ import type {
   BookDetailedInfo,
   GameDetailedInfo,
 } from "@/services/mediaDetailsCacheService";
-import type { DetailedMediaInfo } from "@/utils/tmdbDetails";
-import type { TrackerItem, TrackerStatus } from "@/services/trackerService";
+import {
+  fetchTvSeasonEpisodes,
+  type DetailedMediaInfo,
+  type TvSeasonEpisodeInfo,
+} from "@/utils/tmdbDetails";
+import type {
+  TrackerChapterNote,
+  TrackerItem,
+  TrackerStatus,
+} from "@/services/trackerService";
 
 const PAGE_META_BASE = {
   noIndex: true,
@@ -178,6 +190,288 @@ function toCompletedAtIso(dateValue: string): string | null {
   return parsed.toISOString();
 }
 
+function toPositiveInt(value: string): number | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const parsed = Number(trimmed);
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return null;
+  }
+
+  return Math.floor(parsed);
+}
+
+function normalizeChapterNotes(
+  notes: TrackerChapterNote[] | null | undefined,
+): TrackerChapterNote[] {
+  if (!Array.isArray(notes)) {
+    return [];
+  }
+
+  return notes
+    .filter((note) => {
+      if (!note || typeof note !== "object") return false;
+      if (typeof note.id !== "string") return false;
+      if (typeof note.chapter !== "string") return false;
+      if (typeof note.note !== "string") return false;
+      if (typeof note.created_at !== "string") return false;
+      return note.chapter.trim().length > 0 && note.note.trim().length > 0;
+    })
+    .map((note) => ({
+      id: note.id,
+      chapter: note.chapter.trim(),
+      note: note.note.trim(),
+      created_at: note.created_at,
+    }));
+}
+
+type EditableMediaFieldKey =
+  | "title"
+  | "subtitle"
+  | "poster_url"
+  | "release_date"
+  | "description"
+  | "genres"
+  | "authors"
+  | "artist"
+  | "album"
+  | "track_duration"
+  | "track_count"
+  | "preview_url"
+  | "platforms"
+  | "metacritic"
+  | "playtime"
+  | "isbn"
+  | "page_count"
+  | "publisher";
+
+type EditableMediaDraft = Record<EditableMediaFieldKey, string>;
+
+type EditableMediaFieldDefinition = {
+  key: EditableMediaFieldKey;
+  label: string;
+  kind: "text" | "number" | "textarea" | "date";
+  mediaTypes?: TrackerMediaType[];
+};
+
+const EDITABLE_MEDIA_FIELDS: EditableMediaFieldDefinition[] = [
+  { key: "title", label: "Title", kind: "text" },
+  { key: "subtitle", label: "Subtitle", kind: "text" },
+  { key: "release_date", label: "Year", kind: "date" },
+  { key: "genres", label: "Genres", kind: "text" },
+  { key: "poster_url", label: "Poster URL", kind: "text" },
+  { key: "authors", label: "Authors", kind: "text", mediaTypes: ["book"] },
+  {
+    key: "publisher",
+    label: "Publisher",
+    kind: "text",
+    mediaTypes: ["book"],
+  },
+  { key: "isbn", label: "ISBN", kind: "text", mediaTypes: ["book"] },
+  {
+    key: "page_count",
+    label: "Page Count",
+    kind: "number",
+    mediaTypes: ["book"],
+  },
+  {
+    key: "platforms",
+    label: "Platforms",
+    kind: "text",
+    mediaTypes: ["game"],
+  },
+  {
+    key: "metacritic",
+    label: "Metacritic",
+    kind: "number",
+    mediaTypes: ["game"],
+  },
+  {
+    key: "playtime",
+    label: "Playtime",
+    kind: "number",
+    mediaTypes: ["game"],
+  },
+  {
+    key: "artist",
+    label: "Artist",
+    kind: "text",
+    mediaTypes: ["song", "album"],
+  },
+  {
+    key: "album",
+    label: "Album",
+    kind: "text",
+    mediaTypes: ["song"],
+  },
+  {
+    key: "track_duration",
+    label: "Track Length",
+    kind: "number",
+    mediaTypes: ["song"],
+  },
+  {
+    key: "track_count",
+    label: "Track Count",
+    kind: "number",
+    mediaTypes: ["album"],
+  },
+  {
+    key: "preview_url",
+    label: "Preview URL",
+    kind: "text",
+    mediaTypes: ["song", "album"],
+  },
+  { key: "description", label: "Description", kind: "textarea" },
+];
+
+const EDITABLE_MEDIA_FIELD_LABELS = new Map(
+  EDITABLE_MEDIA_FIELDS.map((field) => [field.key, field.label]),
+);
+
+function emptyEditableMediaDraft(): EditableMediaDraft {
+  return EDITABLE_MEDIA_FIELDS.reduce((draft, field) => {
+    draft[field.key] = "";
+    return draft;
+  }, {} as EditableMediaDraft);
+}
+
+function toEditableDraftValue(value: unknown): string {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  return String(value);
+}
+
+function getEditableMediaFields(
+  mediaType: TrackerMediaType | undefined,
+): EditableMediaFieldDefinition[] {
+  return EDITABLE_MEDIA_FIELDS.filter(
+    (field) =>
+      !field.mediaTypes ||
+      (mediaType ? field.mediaTypes.includes(mediaType) : false),
+  );
+}
+
+function toReleaseDateDraftValue(releaseDate: unknown, year: unknown): string {
+  const normalizedReleaseDate =
+    typeof releaseDate === "string" ? toDateInputValue(releaseDate) : "";
+  if (normalizedReleaseDate) {
+    return normalizedReleaseDate;
+  }
+
+  const normalizedYear =
+    typeof year === "string" || typeof year === "number"
+      ? toPositiveInt(String(year))
+      : null;
+  if (!normalizedYear) {
+    return "";
+  }
+
+  return `${String(normalizedYear).padStart(4, "0")}-01-01`;
+}
+
+function buildEditableMediaDraft(
+  media: TrackerItem["media"] | null,
+): EditableMediaDraft {
+  const next = emptyEditableMediaDraft();
+  if (!media) {
+    return next;
+  }
+
+  for (const field of EDITABLE_MEDIA_FIELDS) {
+    if (field.key === "release_date" && field.kind === "date") {
+      next[field.key] = toReleaseDateDraftValue(media.release_date, media.year);
+      continue;
+    }
+
+    next[field.key] = toEditableDraftValue(media[field.key]);
+  }
+
+  return next;
+}
+
+function buildMediaOverridesFromDraft(
+  draft: EditableMediaDraft,
+  fields: EditableMediaFieldDefinition[] = EDITABLE_MEDIA_FIELDS,
+): Record<string, unknown> {
+  const overrides: Record<string, unknown> = {};
+
+  for (const field of fields) {
+    const rawValue = draft[field.key].trim();
+
+    if (field.kind === "date") {
+      if (!rawValue) {
+        overrides[field.key] = null;
+        if (field.key === "release_date") {
+          overrides.year = null;
+        }
+        continue;
+      }
+
+      overrides[field.key] = rawValue;
+
+      if (field.key === "release_date") {
+        const parsedDate = new Date(`${rawValue}T00:00:00`);
+        overrides.year = Number.isNaN(parsedDate.getTime())
+          ? null
+          : parsedDate.getFullYear();
+      }
+
+      continue;
+    }
+
+    if (field.kind === "number") {
+      if (!rawValue) {
+        overrides[field.key] = null;
+        continue;
+      }
+
+      const parsed = Number(rawValue);
+      overrides[field.key] = Number.isFinite(parsed)
+        ? Math.round(parsed)
+        : null;
+      continue;
+    }
+
+    overrides[field.key] = rawValue.length > 0 ? rawValue : null;
+  }
+
+  return overrides;
+}
+
+function hasEditableMetadataChanged(
+  draft: EditableMediaDraft,
+  baseline: EditableMediaDraft,
+  fields: EditableMediaFieldDefinition[],
+): boolean {
+  return fields.some((field) => draft[field.key] !== baseline[field.key]);
+}
+
+function formatEditedFieldLabel(fieldKey: string): string {
+  return (
+    EDITABLE_MEDIA_FIELD_LABELS.get(fieldKey as EditableMediaFieldKey) ||
+    fieldKey
+      .split("_")
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ")
+  );
+}
+
+function ratingBadgeClassName(rating: number): string {
+  if (rating <= 3) {
+    return "bg-rose-100 text-rose-700 dark:bg-rose-500/25 dark:text-rose-100";
+  }
+
+  if (rating <= 7) {
+    return "bg-amber-100 text-amber-700 dark:bg-amber-500/25 dark:text-amber-100";
+  }
+
+  return "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-100";
+}
+
 function TrackerMediaCard(props: {
   item: TrackerItem;
   onOpen: () => void;
@@ -188,6 +482,7 @@ function TrackerMediaCard(props: {
   const { item, onOpen, onToggleStatus, onDelete, isBusy } = props;
   const hasNote = (item.note || "").trim().length > 0;
   const hasRating = typeof item.rating === "number" && item.rating > 0;
+  const hasEditedMetadata = (item.media_edited_fields?.length || 0) > 0;
   const subtitle = item.media?.subtitle;
   const showSubtitle = !shouldHideSubtitle(item.media?.media_type, subtitle);
 
@@ -224,7 +519,9 @@ function TrackerMediaCard(props: {
 
             {hasRating && (
               <span
-                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-500/25 dark:text-amber-100"
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${ratingBadgeClassName(
+                  item.rating || 0,
+                )}`}
                 title={`Your rating: ${item.rating}/10`}
                 aria-label={`Rated ${item.rating} out of 10`}
               >
@@ -240,6 +537,17 @@ function TrackerMediaCard(props: {
                 aria-label="Has note"
               >
                 <MessageSquare className="w-3.5 h-3.5" />
+              </span>
+            )}
+
+            {hasEditedMetadata && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-100"
+                title="Metadata edited"
+                aria-label="Metadata edited"
+              >
+                <Pencil className="w-3 h-3" />
+                Edited
               </span>
             )}
           </div>
@@ -306,17 +614,46 @@ function TrackerDetailsModal(props: {
     note: string,
     rating: number | null,
     completedAt?: string | null,
+    progressUpdates?: Partial<
+      Pick<
+        TrackerItem,
+        | "tv_current_season"
+        | "tv_current_episode"
+        | "book_current_page"
+        | "book_chapter_notes"
+      >
+    >,
+  ) => Promise<void>;
+  onSaveMetadata: (
+    item: TrackerItem,
+    mediaOverrides: Record<string, unknown>,
   ) => Promise<void>;
 }) {
-  const { item, isSaving, onClose, onSaveNote } = props;
+  const { item, isSaving, onClose, onSaveNote, onSaveMetadata } = props;
   const [note, setNote] = useState("");
   const [rating, setRating] = useState<number | null>(null);
   const [completedDate, setCompletedDate] = useState("");
+  const [tvCurrentSeason, setTvCurrentSeason] = useState("");
+  const [tvCurrentEpisode, setTvCurrentEpisode] = useState("");
+  const [bookCurrentPage, setBookCurrentPage] = useState("");
+  const [chapterNotes, setChapterNotes] = useState<TrackerChapterNote[]>([]);
+  const [chapterDraft, setChapterDraft] = useState("");
+  const [chapterNoteDraft, setChapterNoteDraft] = useState("");
   const [movieTvDetails, setMovieTvDetails] =
     useState<DetailedMediaInfo | null>(null);
   const [bookDetails, setBookDetails] = useState<BookDetailedInfo | null>(null);
   const [gameDetails, setGameDetails] = useState<GameDetailedInfo | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [seasonEpisodes, setSeasonEpisodes] = useState<
+    TvSeasonEpisodeInfo[] | null
+  >(null);
+  const [isLoadingSeasonEpisodes, setIsLoadingSeasonEpisodes] = useState(false);
+  const [seasonEpisodesUnavailable, setSeasonEpisodesUnavailable] =
+    useState(false);
+  const [isEditingMetadata, setIsEditingMetadata] = useState(false);
+  const [metadataDraft, setMetadataDraft] = useState<EditableMediaDraft>(
+    emptyEditableMediaDraft,
+  );
 
   useEffect(() => {
     setNote(item?.note || "");
@@ -329,6 +666,38 @@ function TrackerDetailsModal(props: {
   useEffect(() => {
     setRating(item?.rating ?? null);
   }, [item?.id, item?.rating]);
+
+  useEffect(() => {
+    setTvCurrentSeason(
+      item?.tv_current_season ? String(item.tv_current_season) : "",
+    );
+  }, [item?.id, item?.tv_current_season]);
+
+  useEffect(() => {
+    setTvCurrentEpisode(
+      item?.tv_current_episode ? String(item.tv_current_episode) : "",
+    );
+  }, [item?.id, item?.tv_current_episode]);
+
+  useEffect(() => {
+    setBookCurrentPage(
+      item?.book_current_page ? String(item.book_current_page) : "",
+    );
+  }, [item?.id, item?.book_current_page]);
+
+  useEffect(() => {
+    setChapterNotes(normalizeChapterNotes(item?.book_chapter_notes));
+  }, [item?.id, item?.book_chapter_notes]);
+
+  useEffect(() => {
+    setChapterDraft("");
+    setChapterNoteDraft("");
+  }, [item?.id]);
+
+  useEffect(() => {
+    setMetadataDraft(buildEditableMediaDraft(item?.media || null));
+    setIsEditingMetadata(false);
+  }, [item?.id, item?.media]);
 
   useEffect(() => {
     let cancelled = false;
@@ -395,6 +764,56 @@ function TrackerDetailsModal(props: {
     };
   }, [item?.id, item?.media?.external_id, item?.media?.media_type]);
 
+  const mediaType = item?.media?.media_type;
+  const isTv = mediaType === "tv";
+  const isBook = mediaType === "book";
+  const normalizedTvSeason = toPositiveInt(tvCurrentSeason);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    setSeasonEpisodes(null);
+    setSeasonEpisodesUnavailable(false);
+
+    const externalId = item?.media?.external_id;
+    if (!isTv || !externalId || !normalizedTvSeason) {
+      setIsLoadingSeasonEpisodes(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setIsLoadingSeasonEpisodes(true);
+
+    void (async () => {
+      try {
+        const episodes = await fetchTvSeasonEpisodes(
+          externalId,
+          normalizedTvSeason,
+        );
+        if (cancelled) {
+          return;
+        }
+
+        if (episodes && episodes.length > 0) {
+          setSeasonEpisodes(episodes);
+          setSeasonEpisodesUnavailable(false);
+        } else {
+          setSeasonEpisodes([]);
+          setSeasonEpisodesUnavailable(true);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingSeasonEpisodes(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [item?.id, item?.media?.external_id, isTv, normalizedTvSeason]);
+
   if (!item) {
     return null;
   }
@@ -402,6 +821,133 @@ function TrackerDetailsModal(props: {
   const originalCompletedDate = toDateInputValue(item.completed_at);
   const completedDateChanged =
     item.status === "done" && completedDate !== originalCompletedDate;
+
+  const tvSeasons =
+    isTv && Array.isArray(movieTvDetails?.seasons)
+      ? movieTvDetails.seasons.filter((season) => season.season_number > 0)
+      : [];
+
+  const selectedTvSeason = normalizedTvSeason
+    ? tvSeasons.find((season) => season.season_number === normalizedTvSeason)
+    : null;
+
+  const maxSeasonCount =
+    isTv && (movieTvDetails?.number_of_seasons || 0) > 0
+      ? movieTvDetails?.number_of_seasons || null
+      : tvSeasons.length > 0
+        ? tvSeasons.length
+        : null;
+
+  const totalEpisodes =
+    isTv && (movieTvDetails?.number_of_episodes || 0) > 0
+      ? movieTvDetails?.number_of_episodes || 0
+      : tvSeasons.reduce(
+          (total, season) => total + Math.max(0, season.episode_count || 0),
+          0,
+        );
+
+  const maxEpisodeForSeason = normalizedTvSeason
+    ? seasonEpisodes?.length || selectedTvSeason?.episode_count || null
+    : null;
+
+  const normalizedTvEpisodeRaw = toPositiveInt(tvCurrentEpisode);
+  const normalizedTvEpisode =
+    normalizedTvEpisodeRaw && maxEpisodeForSeason
+      ? Math.min(normalizedTvEpisodeRaw, maxEpisodeForSeason)
+      : normalizedTvEpisodeRaw;
+
+  const watchedEpisodes = (() => {
+    if (!isTv || !normalizedTvSeason || !normalizedTvEpisode) {
+      return 0;
+    }
+
+    const priorSeasonEpisodes = tvSeasons
+      .filter((season) => season.season_number < normalizedTvSeason)
+      .reduce(
+        (total, season) => total + Math.max(0, season.episode_count || 0),
+        0,
+      );
+
+    if (tvSeasons.length === 0) {
+      return normalizedTvEpisode;
+    }
+
+    return priorSeasonEpisodes + normalizedTvEpisode;
+  })();
+
+  const currentEpisodeTitle =
+    normalizedTvEpisode && seasonEpisodes?.length
+      ? seasonEpisodes.find(
+          (episode) => episode.episode_number === normalizedTvEpisode,
+        )?.name || null
+      : null;
+
+  const adjustTvSeason = (delta: number) => {
+    const currentSeason = normalizedTvSeason ?? 1;
+    let nextSeason = Math.max(1, currentSeason + delta);
+
+    if (maxSeasonCount) {
+      nextSeason = Math.min(nextSeason, maxSeasonCount);
+    }
+
+    setTvCurrentSeason(String(nextSeason));
+    if (!normalizedTvEpisode) {
+      setTvCurrentEpisode("1");
+    }
+  };
+
+  const adjustTvEpisode = (delta: number) => {
+    const seasonValue = normalizedTvSeason ?? 1;
+    if (!normalizedTvSeason) {
+      setTvCurrentSeason(String(seasonValue));
+    }
+
+    const currentEpisode = normalizedTvEpisode ?? 1;
+    let nextEpisode = Math.max(1, currentEpisode + delta);
+
+    if (maxEpisodeForSeason) {
+      nextEpisode = Math.min(nextEpisode, maxEpisodeForSeason);
+    }
+
+    setTvCurrentEpisode(String(nextEpisode));
+  };
+
+  const overallCompletionPercent =
+    isTv && totalEpisodes > 0
+      ? Math.min(100, Math.round((watchedEpisodes / totalEpisodes) * 100))
+      : null;
+
+  const normalizedBookCurrentPage = toPositiveInt(bookCurrentPage);
+  const effectiveBookPageCount =
+    bookDetails?.page_count || item.media?.page_count || null;
+  const safeBookCurrentPage =
+    normalizedBookCurrentPage && effectiveBookPageCount
+      ? Math.min(normalizedBookCurrentPage, effectiveBookPageCount)
+      : normalizedBookCurrentPage;
+
+  const bookCompletionPercent =
+    isBook && effectiveBookPageCount && safeBookCurrentPage
+      ? Math.min(
+          100,
+          Math.round((safeBookCurrentPage / effectiveBookPageCount) * 100),
+        )
+      : null;
+
+  const normalizedChapterNotes = normalizeChapterNotes(chapterNotes);
+  const originalChapterNotes = normalizeChapterNotes(item.book_chapter_notes);
+
+  const tvProgressChanged =
+    isTv &&
+    ((item.tv_current_season ?? null) !== (normalizedTvSeason ?? null) ||
+      (item.tv_current_episode ?? null) !== (normalizedTvEpisode ?? null));
+
+  const bookProgressChanged =
+    isBook &&
+    ((item.book_current_page ?? null) !== (safeBookCurrentPage ?? null) ||
+      JSON.stringify(normalizedChapterNotes) !==
+        JSON.stringify(originalChapterNotes));
+
+  const progressChanged = tvProgressChanged || bookProgressChanged;
 
   const handleSaveAndClose = async () => {
     const completedAt =
@@ -411,10 +957,80 @@ function TrackerDetailsModal(props: {
     onClose();
   };
 
+  const handleSaveProgress = async () => {
+    const progressUpdates: Partial<
+      Pick<
+        TrackerItem,
+        | "tv_current_season"
+        | "tv_current_episode"
+        | "book_current_page"
+        | "book_chapter_notes"
+      >
+    > = {};
+
+    if (isTv) {
+      progressUpdates.tv_current_season = normalizedTvSeason;
+      progressUpdates.tv_current_episode = normalizedTvSeason
+        ? normalizedTvEpisode
+        : null;
+    }
+
+    if (isBook) {
+      progressUpdates.book_current_page = safeBookCurrentPage;
+      progressUpdates.book_chapter_notes = normalizedChapterNotes;
+    }
+
+    await onSaveNote(item, note, rating, undefined, progressUpdates);
+  };
+
+  const handleAddChapterNote = () => {
+    const chapter = chapterDraft.trim();
+    const chapterNote = chapterNoteDraft.trim();
+
+    if (!chapter || !chapterNote) {
+      return;
+    }
+
+    const newNote: TrackerChapterNote = {
+      id: crypto.randomUUID(),
+      chapter,
+      note: chapterNote,
+      created_at: new Date().toISOString(),
+    };
+
+    setChapterNotes((current) => [...current, newNote]);
+    setChapterDraft("");
+    setChapterNoteDraft("");
+  };
+
+  const handleRemoveChapterNote = (noteId: string) => {
+    setChapterNotes((current) =>
+      current.filter((noteEntry) => noteEntry.id !== noteId),
+    );
+  };
+
+  const handleSaveMetadata = async () => {
+    const overrides = buildMediaOverridesFromDraft(
+      metadataDraft,
+      editableMetadataFields,
+    );
+    await onSaveMetadata(item, overrides);
+    setIsEditingMetadata(false);
+  };
+
   const noteChanged = note.trim() !== (item.note || "").trim();
   const ratingChanged =
     item.status === "done" && (item.rating ?? null) !== rating;
-  const mediaType = item.media?.media_type;
+  const editableMetadataFields = getEditableMediaFields(mediaType);
+  const currentMediaDraft = buildEditableMediaDraft(item.media);
+  const metadataChanged = hasEditableMetadataChanged(
+    metadataDraft,
+    currentMediaDraft,
+    editableMetadataFields,
+  );
+  const editedFieldLabels = Array.from(
+    new Set((item.media_edited_fields || []).map(formatEditedFieldLabel)),
+  );
   const historyDateLabel =
     mediaType === "book"
       ? "Date Read"
@@ -641,11 +1257,130 @@ function TrackerDetailsModal(props: {
 
             <div className="space-y-5">
               <section className="space-y-3">
-                <h4 className="text-sm font-semibold text-primary dark:text-primary-light">
-                  More Details
-                </h4>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="text-sm font-semibold text-primary dark:text-primary-light">
+                    More Details
+                  </h4>
 
-                {isLoadingDetails ? (
+                  <div className="flex items-center gap-2">
+                    {editedFieldLabels.length > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-100">
+                        <Pencil className="w-3 h-3" />
+                        Edited
+                      </span>
+                    )}
+
+                    <Button
+                      variant={isEditingMetadata ? "subtle" : "secondary"}
+                      size="sm"
+                      icon={<Pencil className="w-4 h-4" />}
+                      onClick={() => {
+                        if (isEditingMetadata) {
+                          setMetadataDraft(currentMediaDraft);
+                          setIsEditingMetadata(false);
+                          return;
+                        }
+
+                        setMetadataDraft(currentMediaDraft);
+                        setIsEditingMetadata(true);
+                      }}
+                    >
+                      {isEditingMetadata ? "Cancel Edit" : "Edit Metadata"}
+                    </Button>
+                  </div>
+                </div>
+
+                {!isEditingMetadata && editedFieldLabels.length > 0 && (
+                  <p className="text-xs text-sky-700 dark:text-sky-200">
+                    Changed fields: {editedFieldLabels.join(", ")}
+                  </p>
+                )}
+
+                {isEditingMetadata ? (
+                  <div className="space-y-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/40 p-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {editableMetadataFields
+                        .filter((field) => field.kind !== "textarea")
+                        .map((field) => (
+                          <div key={field.key} className="space-y-1">
+                            <p className="text-[11px] uppercase tracking-wide text-gray-700 dark:text-gray-200">
+                              {field.label}
+                            </p>
+                            {field.kind === "date" ? (
+                              <ThemedDatePicker
+                                id={`tracker-metadata-${item.id}-${field.key}`}
+                                value={metadataDraft[field.key]}
+                                onChange={(nextValue) =>
+                                  setMetadataDraft((current) => ({
+                                    ...current,
+                                    [field.key]: nextValue,
+                                  }))
+                                }
+                                ariaLabel={field.label}
+                                className="w-full"
+                              />
+                            ) : (
+                              <input
+                                type={
+                                  field.kind === "number" ? "number" : "text"
+                                }
+                                value={metadataDraft[field.key]}
+                                onChange={(event) =>
+                                  setMetadataDraft((current) => ({
+                                    ...current,
+                                    [field.key]: event.target.value,
+                                  }))
+                                }
+                                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white"
+                              />
+                            )}
+                          </div>
+                        ))}
+                    </div>
+
+                    {editableMetadataFields
+                      .filter((field) => field.kind === "textarea")
+                      .map((field) => (
+                        <div key={field.key} className="space-y-1">
+                          <p className="text-[11px] uppercase tracking-wide text-gray-700 dark:text-gray-200">
+                            {field.label}
+                          </p>
+                          <textarea
+                            value={metadataDraft[field.key]}
+                            onChange={(event) =>
+                              setMetadataDraft((current) => ({
+                                ...current,
+                                [field.key]: event.target.value,
+                              }))
+                            }
+                            rows={4}
+                            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white"
+                          />
+                        </div>
+                      ))}
+
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="subtle"
+                        size="sm"
+                        onClick={() => {
+                          setMetadataDraft(currentMediaDraft);
+                          setIsEditingMetadata(false);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        disabled={!metadataChanged || isSaving}
+                        onClick={() => void handleSaveMetadata()}
+                      >
+                        Save Metadata
+                      </Button>
+                    </div>
+                  </div>
+                ) : isLoadingDetails ? (
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     Loading details...
                   </p>
@@ -698,6 +1433,268 @@ function TrackerDetailsModal(props: {
                   </>
                 )}
               </section>
+
+              {item.status !== "done" && (isTv || isBook) && (
+                <section className="space-y-3 border-t border-gray-200/80 dark:border-gray-700/80 pt-4">
+                  <h4 className="text-sm font-semibold text-primary dark:text-primary-light">
+                    Progress
+                  </h4>
+
+                  {isTv && (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <p className="text-[11px] uppercase tracking-wide text-gray-700 dark:text-gray-200">
+                            Current Season
+                          </p>
+                          <div className="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-2">
+                            <Button
+                              variant="subtle"
+                              size="icon"
+                              icon={<Minus className="w-4 h-4" />}
+                              aria-label="Decrease current season"
+                              title="Decrease current season"
+                              onClick={() => adjustTvSeason(-1)}
+                              disabled={
+                                isSaving || (normalizedTvSeason ?? 1) <= 1
+                              }
+                              className="h-8 w-8"
+                            />
+                            <div className="min-w-[120px] text-center">
+                              <p className="text-base font-semibold text-gray-900 dark:text-white">
+                                S{normalizedTvSeason || 1}
+                              </p>
+                              <p className="text-[11px] text-gray-600 dark:text-gray-300 truncate">
+                                {selectedTvSeason?.name ||
+                                  (normalizedTvSeason
+                                    ? `Season ${normalizedTvSeason}`
+                                    : "Season not available")}
+                              </p>
+                            </div>
+                            <Button
+                              variant="subtle"
+                              size="icon"
+                              icon={<Plus className="w-4 h-4" />}
+                              aria-label="Increase current season"
+                              title="Increase current season"
+                              onClick={() => adjustTvSeason(1)}
+                              disabled={
+                                isSaving ||
+                                (maxSeasonCount !== null &&
+                                  (normalizedTvSeason || 1) >= maxSeasonCount)
+                              }
+                              className="h-8 w-8"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <p className="text-[11px] uppercase tracking-wide text-gray-700 dark:text-gray-200">
+                            Current Episode
+                          </p>
+                          <div className="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-2">
+                            <Button
+                              variant="subtle"
+                              size="icon"
+                              icon={<Minus className="w-4 h-4" />}
+                              aria-label="Decrease current episode"
+                              title="Decrease current episode"
+                              onClick={() => adjustTvEpisode(-1)}
+                              disabled={
+                                isSaving || (normalizedTvEpisode ?? 1) <= 1
+                              }
+                              className="h-8 w-8"
+                            />
+                            <div className="min-w-[120px] text-center">
+                              <p className="text-base font-semibold text-gray-900 dark:text-white">
+                                E{normalizedTvEpisode || 1}
+                              </p>
+                              <p className="text-[11px] text-gray-600 dark:text-gray-300 truncate">
+                                {currentEpisodeTitle ||
+                                  "Episode title not loaded"}
+                              </p>
+                            </div>
+                            <Button
+                              variant="subtle"
+                              size="icon"
+                              icon={<Plus className="w-4 h-4" />}
+                              aria-label="Increase current episode"
+                              title="Increase current episode"
+                              onClick={() => adjustTvEpisode(1)}
+                              disabled={
+                                isSaving ||
+                                (maxEpisodeForSeason !== null &&
+                                  (normalizedTvEpisode || 1) >=
+                                    maxEpisodeForSeason)
+                              }
+                              className="h-8 w-8"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {isLoadingSeasonEpisodes && normalizedTvSeason && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 inline-flex items-center gap-1.5">
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          Loading episode names for Season {normalizedTvSeason}
+                        </p>
+                      )}
+
+                      {!isLoadingSeasonEpisodes &&
+                        seasonEpisodesUnavailable &&
+                        normalizedTvSeason && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Episode names are not available for this
+                            show/season. Manual tracking is still enabled.
+                          </p>
+                        )}
+
+                      {totalEpisodes > 0 ? (
+                        <div className="space-y-1.5">
+                          <div className="h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                            <div
+                              className="h-full bg-primary dark:bg-primary-light transition-all"
+                              style={{
+                                width: `${overallCompletionPercent || 0}%`,
+                              }}
+                            />
+                          </div>
+                          <p className="text-xs text-gray-600 dark:text-gray-300">
+                            S{normalizedTvSeason || "-"}E
+                            {normalizedTvEpisode || "-"} · {watchedEpisodes}/
+                            {totalEpisodes} episodes (
+                            {overallCompletionPercent || 0}%)
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Episode totals are not available for this show. Manual
+                          tracking is still enabled.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {isBook && (
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <p className="text-[11px] uppercase tracking-wide text-gray-700 dark:text-gray-200">
+                          Current Page
+                        </p>
+                        <input
+                          type="number"
+                          min={1}
+                          value={bookCurrentPage}
+                          onChange={(event) =>
+                            setBookCurrentPage(event.target.value)
+                          }
+                          placeholder="e.g. 142"
+                          className="w-full max-w-[220px] rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white"
+                        />
+                      </div>
+
+                      {effectiveBookPageCount && (
+                        <div className="space-y-1.5">
+                          <div className="h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                            <div
+                              className="h-full bg-primary dark:bg-primary-light transition-all"
+                              style={{
+                                width: `${bookCompletionPercent || 0}%`,
+                              }}
+                            />
+                          </div>
+                          <p className="text-xs text-gray-600 dark:text-gray-300">
+                            Page {safeBookCurrentPage || 0}/
+                            {effectiveBookPageCount} (
+                            {bookCompletionPercent || 0}%)
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="space-y-2 border-t border-gray-200/80 dark:border-gray-700/80 pt-3">
+                        <p className="text-[11px] uppercase tracking-wide text-gray-700 dark:text-gray-200">
+                          Chapter Notes
+                        </p>
+                        <input
+                          type="text"
+                          value={chapterDraft}
+                          onChange={(event) =>
+                            setChapterDraft(event.target.value)
+                          }
+                          placeholder="Chapter label (e.g. Chapter 7)"
+                          className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white"
+                        />
+                        <Textarea
+                          id={`tracker-chapter-note-${item.id}`}
+                          value={chapterNoteDraft}
+                          onChange={(event) =>
+                            setChapterNoteDraft(event.target.value)
+                          }
+                          placeholder="What stood out in this chapter?"
+                          rows={3}
+                          textareaClassName="rounded-xl"
+                        />
+                        <div className="flex justify-end">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={handleAddChapterNote}
+                            disabled={
+                              chapterDraft.trim().length === 0 ||
+                              chapterNoteDraft.trim().length === 0
+                            }
+                          >
+                            Add Chapter Note
+                          </Button>
+                        </div>
+
+                        {normalizedChapterNotes.length > 0 && (
+                          <div className="space-y-2">
+                            {normalizedChapterNotes.map((chapterEntry) => (
+                              <div
+                                key={chapterEntry.id}
+                                className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 px-3 py-2"
+                              >
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
+                                      {chapterEntry.chapter}
+                                    </p>
+                                    <p className="text-sm text-gray-800 dark:text-gray-100 whitespace-pre-wrap">
+                                      {chapterEntry.note}
+                                    </p>
+                                  </div>
+                                  <Button
+                                    variant="subtle"
+                                    size="icon"
+                                    icon={<Trash2 className="w-4 h-4" />}
+                                    aria-label="Remove chapter note"
+                                    title="Remove chapter note"
+                                    onClick={() =>
+                                      handleRemoveChapterNote(chapterEntry.id)
+                                    }
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      disabled={!progressChanged || isSaving}
+                      onClick={() => void handleSaveProgress()}
+                    >
+                      Save Progress
+                    </Button>
+                  </div>
+                </section>
+              )}
 
               {item.status === "done" && (
                 <section className="space-y-3 border-t border-gray-200/80 dark:border-gray-700/80 pt-4">
@@ -769,6 +1766,88 @@ function TrackerDetailsModal(props: {
                   </div>
                 </section>
               )}
+
+              {item.status === "done" && (isTv || isBook) && (
+                <section className="space-y-3 border-t border-gray-200/80 dark:border-gray-700/80 pt-4">
+                  <h4 className="text-sm font-semibold text-primary dark:text-primary-light">
+                    Progress
+                  </h4>
+
+                  {isTv && (
+                    <div className="space-y-1.5">
+                      {totalEpisodes > 0 ? (
+                        <>
+                          <div className="h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                            <div
+                              className="h-full bg-primary dark:bg-primary-light"
+                              style={{
+                                width: `${overallCompletionPercent || 0}%`,
+                              }}
+                            />
+                          </div>
+                          <p className="text-xs text-gray-600 dark:text-gray-300">
+                            S{item.tv_current_season || "-"}E
+                            {item.tv_current_episode || "-"} · {watchedEpisodes}
+                            /{totalEpisodes} episodes (
+                            {overallCompletionPercent || 0}%)
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          No TV progress saved yet.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {isBook && (
+                    <div className="space-y-2">
+                      {effectiveBookPageCount && item.book_current_page ? (
+                        <>
+                          <div className="h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                            <div
+                              className="h-full bg-primary dark:bg-primary-light"
+                              style={{
+                                width: `${bookCompletionPercent || 0}%`,
+                              }}
+                            />
+                          </div>
+                          <p className="text-xs text-gray-600 dark:text-gray-300">
+                            Page {item.book_current_page}/
+                            {effectiveBookPageCount} (
+                            {bookCompletionPercent || 0}%)
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          No reading progress saved yet.
+                        </p>
+                      )}
+
+                      {originalChapterNotes.length > 0 && (
+                        <div className="space-y-2 border-t border-gray-200/80 dark:border-gray-700/80 pt-3">
+                          <p className="text-[11px] uppercase tracking-wide text-gray-700 dark:text-gray-200">
+                            Chapter Notes
+                          </p>
+                          {originalChapterNotes.map((chapterEntry) => (
+                            <div
+                              key={chapterEntry.id}
+                              className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 px-3 py-2"
+                            >
+                              <p className="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
+                                {chapterEntry.chapter}
+                              </p>
+                              <p className="text-sm text-gray-800 dark:text-gray-100 whitespace-pre-wrap">
+                                {chapterEntry.note}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </section>
+              )}
             </div>
           </div>
         </div>
@@ -787,6 +1866,7 @@ function TrackerMediaGridCard(props: {
   const { item, onOpen, onToggleStatus, onDelete, isBusy } = props;
   const hasNote = (item.note || "").trim().length > 0;
   const hasRating = typeof item.rating === "number" && item.rating > 0;
+  const hasEditedMetadata = (item.media_edited_fields?.length || 0) > 0;
   const subtitle = item.media?.subtitle;
   const showSubtitle = !shouldHideSubtitle(item.media?.media_type, subtitle);
 
@@ -846,12 +1926,25 @@ function TrackerMediaGridCard(props: {
 
             {hasRating && (
               <span
-                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-500/25 dark:text-amber-100"
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${ratingBadgeClassName(
+                  item.rating || 0,
+                )}`}
                 title={`Your rating: ${item.rating}/10`}
                 aria-label={`Rated ${item.rating} out of 10`}
               >
                 <Star className="w-3 h-3 fill-current" />
                 {item.rating}/10
+              </span>
+            )}
+
+            {hasEditedMetadata && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-100"
+                title="Metadata edited"
+                aria-label="Metadata edited"
+              >
+                <Pencil className="w-3 h-3" />
+                Edited
               </span>
             )}
           </div>
@@ -1127,10 +2220,28 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
     note: string,
     rating: number | null,
     completedAt?: string | null,
+    progressUpdates?: Partial<
+      Pick<
+        TrackerItem,
+        | "tv_current_season"
+        | "tv_current_episode"
+        | "book_current_page"
+        | "book_chapter_notes"
+      >
+    >,
   ) => {
     const trimmed = note.trim();
     const updates: Partial<
-      Pick<TrackerItem, "note" | "completed_at" | "rating">
+      Pick<
+        TrackerItem,
+        | "note"
+        | "completed_at"
+        | "rating"
+        | "tv_current_season"
+        | "tv_current_episode"
+        | "book_current_page"
+        | "book_chapter_notes"
+      >
     > = {
       note: trimmed.length > 0 ? trimmed : null,
     };
@@ -1143,9 +2254,36 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
       updates.completed_at = completedAt;
     }
 
+    if (progressUpdates) {
+      if ("tv_current_season" in progressUpdates) {
+        updates.tv_current_season = progressUpdates.tv_current_season ?? null;
+      }
+      if ("tv_current_episode" in progressUpdates) {
+        updates.tv_current_episode = progressUpdates.tv_current_episode ?? null;
+      }
+      if ("book_current_page" in progressUpdates) {
+        updates.book_current_page = progressUpdates.book_current_page ?? null;
+      }
+      if ("book_chapter_notes" in progressUpdates) {
+        updates.book_chapter_notes = progressUpdates.book_chapter_notes ?? [];
+      }
+    }
+
     await updateTrackerItem.mutateAsync({
       trackerItemId: item.id,
       updates,
+    });
+  };
+
+  const handleSaveMetadata = async (
+    item: TrackerItem,
+    mediaOverrides: Record<string, unknown>,
+  ) => {
+    await updateTrackerItem.mutateAsync({
+      trackerItemId: item.id,
+      updates: {
+        media_overrides: mediaOverrides,
+      },
     });
   };
 
@@ -1280,6 +2418,7 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
         isSaving={updateTrackerItem.isPending}
         onClose={() => setSelectedItemId(null)}
         onSaveNote={handleSaveNote}
+        onSaveMetadata={handleSaveMetadata}
       />
 
       <ConfirmationModal

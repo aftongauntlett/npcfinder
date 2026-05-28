@@ -147,6 +147,29 @@ async function fetchMovieOrTvDetails(
     awards_text: awardsText,
     box_office: boxOffice,
     imdb_id: imdbId || null,
+    number_of_seasons:
+      mediaType === "tv" ? (data.number_of_seasons ?? null) : null,
+    number_of_episodes:
+      mediaType === "tv" ? (data.number_of_episodes ?? null) : null,
+    seasons:
+      mediaType === "tv"
+        ? (data.seasons || [])
+            .filter(
+              (season: { season_number?: number }) =>
+                (season.season_number || 0) > 0,
+            )
+            .map(
+              (season: {
+                season_number?: number;
+                name?: string;
+                episode_count?: number;
+              }) => ({
+                season_number: season.season_number || 0,
+                name: season.name || `Season ${season.season_number || 0}`,
+                episode_count: season.episode_count || 0,
+              }),
+            )
+        : [],
   };
 }
 

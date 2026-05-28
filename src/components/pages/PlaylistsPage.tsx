@@ -17,6 +17,7 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   AlertTriangle,
   GripVertical,
+  Pencil,
   Plus,
   Share2,
   Trash2,
@@ -39,14 +40,17 @@ import {
 } from "@/hooks/usePlaylistsQueries";
 import { useTrackerItems } from "@/hooks/useTrackerQueries";
 import type { PlaylistItem } from "@/services/playlistsService";
+import type { TrackerItem } from "@/services/trackerService";
 import {
   Button,
   ConfirmationModal,
   EmptyState,
   Input,
+  MediaPoster,
   Modal,
   StarRating,
   Textarea,
+  ViewModeToggle,
 } from "@/components/shared";
 
 const pageMetaOptions = {
@@ -59,11 +63,13 @@ function SortablePlaylistItemRow(props: {
   item: PlaylistItem;
   canEdit: boolean;
   ownerRating: number | null;
+  onOpen: () => void;
   onUpdateNote: (note: string | null) => void;
   onRemove: () => void;
 }) {
-  const { item, canEdit, ownerRating, onUpdateNote, onRemove } = props;
+  const { item, canEdit, ownerRating, onOpen, onUpdateNote, onRemove } = props;
   const isUserCreated = item.media?.is_user_created === true;
+  const isOwnerEdited = item.owner_media_is_edited;
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({
       id: item.id,
@@ -79,13 +85,23 @@ function SortablePlaylistItemRow(props: {
     <div
       ref={setNodeRef}
       style={style}
-      className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3"
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onOpen();
+        }
+      }}
+      className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 cursor-pointer hover:border-primary/50 dark:hover:border-primary-light/50 transition-colors"
     >
       <div className="flex items-start gap-3">
         <button
           type="button"
           aria-label="Drag to reorder"
           className={`mt-1 ${canEdit ? "cursor-grab text-gray-400" : "text-gray-300"}`}
+          onClick={(event) => event.stopPropagation()}
           {...attributes}
           {...listeners}
           disabled={!canEdit}
@@ -122,12 +138,20 @@ function SortablePlaylistItemRow(props: {
             </div>
           )}
 
+          {isOwnerEdited && (
+            <div className="inline-flex items-center gap-1.5 rounded-md border border-sky-300/50 dark:border-sky-500/40 bg-sky-50/80 dark:bg-sky-500/10 px-2 py-1 text-[11px] font-medium text-sky-800 dark:text-sky-100">
+              <Pencil className="w-3.5 h-3.5" />
+              Owner edited metadata
+            </div>
+          )}
+
           <textarea
             rows={2}
             defaultValue={item.note || ""}
             onBlur={(event) => onUpdateNote(event.target.value.trim() || null)}
+            onClick={(event) => event.stopPropagation()}
             disabled={!canEdit}
-            placeholder={canEdit ? "Optional curation note" : "Owner note"}
+            placeholder={canEdit ? "Optional curation note" : "Curation note"}
             className="w-full px-2 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white"
           />
 
@@ -163,13 +187,238 @@ function SortablePlaylistItemRow(props: {
             variant="danger"
             size="sm"
             icon={<Trash2 className="w-4 h-4" />}
-            onClick={onRemove}
+            onClick={(event) => {
+              event.stopPropagation();
+              onRemove();
+            }}
           >
             Remove
           </Button>
         )}
       </div>
     </div>
+  );
+}
+
+function formatTrackerDate(value: string | null | undefined): string {
+  if (!value) return "";
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  return parsed.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatEditedFieldLabel(fieldKey: string): string {
+  return fieldKey
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function ratingTextClassName(rating: number): string {
+  if (rating <= 3) {
+    return "text-rose-700 dark:text-rose-300";
+  }
+
+  if (rating <= 7) {
+    return "text-amber-700 dark:text-amber-300";
+  }
+
+  return "text-emerald-700 dark:text-emerald-300";
+}
+
+function PlaylistItemDetailsModal(props: {
+  item: PlaylistItem | null;
+  isOwner: boolean;
+  viewerTrackerItem: TrackerItem | null;
+  onClose: () => void;
+}) {
+  const { item, isOwner, viewerTrackerItem, onClose } = props;
+
+  if (!item) {
+    return null;
+  }
+
+  const ownerTrackerNote = item.owner_tracker_note?.trim() || "";
+  const ownerTrackerCompletedAt = formatTrackerDate(
+    item.owner_tracker_completed_at,
+  );
+  const ownerTrackerRating = item.owner_tracker_rating ?? null;
+  const viewerTrackerNote = viewerTrackerItem?.note?.trim() || "";
+  const viewerTrackerCompletedAt = formatTrackerDate(
+    viewerTrackerItem?.completed_at,
+  );
+  const viewerTrackerRating = viewerTrackerItem?.rating ?? null;
+  const ownerEditedFieldLabels = (item.owner_media_edited_fields || []).map(
+    formatEditedFieldLabel,
+  );
+  const hasOwnerEditedMetadata =
+    item.owner_media_is_edited || ownerEditedFieldLabels.length > 0;
+  const hasOwnerTrackerContext =
+    ownerTrackerNote.length > 0 ||
+    ownerTrackerCompletedAt.length > 0 ||
+    typeof ownerTrackerRating === "number";
+  const hasViewerTrackerContext =
+    viewerTrackerNote.length > 0 ||
+    viewerTrackerCompletedAt.length > 0 ||
+    typeof viewerTrackerRating === "number";
+  const showCompareView =
+    !isOwner && hasOwnerTrackerContext && hasViewerTrackerContext;
+  const curationNote = item.note?.trim() || "";
+
+  return (
+    <Modal
+      isOpen={Boolean(item)}
+      onClose={onClose}
+      title={item.media?.title || "Playlist Item"}
+      maxWidth="4xl"
+    >
+      <div className="p-6 space-y-5">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-shrink-0">
+            <MediaPoster
+              src={item.media?.poster_url}
+              alt={item.media?.title || "Untitled"}
+              size="md"
+              aspectRatio="2/3"
+              showOverlay={false}
+              className="w-36"
+            />
+          </div>
+
+          <div className="flex-1 min-w-0 space-y-2">
+            {item.media?.subtitle && (
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {item.media.subtitle}
+              </p>
+            )}
+
+            {item.media?.description && (
+              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                {item.media.description}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {curationNote && (
+          <section className="space-y-1 border-t border-gray-200/80 dark:border-gray-700/80 pt-4">
+            <h4 className="text-sm font-semibold text-primary dark:text-primary-light">
+              Playlist Note
+            </h4>
+            <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+              {curationNote}
+            </p>
+          </section>
+        )}
+
+        {hasOwnerTrackerContext && (
+          <section className="space-y-2 border-t border-gray-200/80 dark:border-gray-700/80 pt-4">
+            <h4 className="text-sm font-semibold text-primary dark:text-primary-light">
+              {isOwner ? "Your Tracker Context" : "Owner Tracker Context"}
+            </h4>
+
+            {ownerTrackerCompletedAt && (
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                Completed: {ownerTrackerCompletedAt}
+              </p>
+            )}
+
+            {typeof ownerTrackerRating === "number" && (
+              <p
+                className={`text-sm ${ratingTextClassName(ownerTrackerRating)}`}
+              >
+                Rating: {ownerTrackerRating}/10
+              </p>
+            )}
+
+            {ownerTrackerNote && (
+              <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                {ownerTrackerNote}
+              </p>
+            )}
+          </section>
+        )}
+
+        {hasOwnerEditedMetadata && (
+          <section className="space-y-2 border-t border-gray-200/80 dark:border-gray-700/80 pt-4">
+            <h4 className="text-sm font-semibold text-primary dark:text-primary-light inline-flex items-center gap-1.5">
+              <Pencil className="w-4 h-4" />
+              {isOwner ? "Metadata Edited By You" : "Metadata Edited By Owner"}
+            </h4>
+
+            {ownerEditedFieldLabels.length > 0 && (
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                Changed fields: {ownerEditedFieldLabels.join(", ")}
+              </p>
+            )}
+          </section>
+        )}
+
+        {showCompareView && (
+          <section className="space-y-3 border-t border-gray-200/80 dark:border-gray-700/80 pt-4">
+            <h4 className="text-sm font-semibold text-primary dark:text-primary-light">
+              Compare Tracker Context
+            </h4>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-3 space-y-1.5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
+                  Owner
+                </p>
+                {ownerTrackerCompletedAt && (
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                    Completed: {ownerTrackerCompletedAt}
+                  </p>
+                )}
+                {typeof ownerTrackerRating === "number" && (
+                  <p
+                    className={`text-sm ${ratingTextClassName(ownerTrackerRating)}`}
+                  >
+                    Rating: {ownerTrackerRating}/10
+                  </p>
+                )}
+                {ownerTrackerNote && (
+                  <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                    {ownerTrackerNote}
+                  </p>
+                )}
+              </div>
+
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-3 space-y-1.5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
+                  You
+                </p>
+                {viewerTrackerCompletedAt && (
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                    Completed: {viewerTrackerCompletedAt}
+                  </p>
+                )}
+                {typeof viewerTrackerRating === "number" && (
+                  <p
+                    className={`text-sm ${ratingTextClassName(viewerTrackerRating)}`}
+                  >
+                    Rating: {viewerTrackerRating}/10
+                  </p>
+                )}
+                {viewerTrackerNote && (
+                  <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                    {viewerTrackerNote}
+                  </p>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+      </div>
+    </Modal>
   );
 }
 
@@ -185,6 +434,8 @@ export default function PlaylistsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [itemsViewMode, setItemsViewMode] = useState<"list" | "grid">("list");
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
   const [newPlaylistName, setNewPlaylistName] = useState("");
   const [newPlaylistDescription, setNewPlaylistDescription] = useState("");
@@ -218,6 +469,10 @@ export default function PlaylistsPage() {
       setSelectedPlaylistId(playlists[0].id);
     }
   }, [selectedPlaylistId, playlists]);
+
+  useEffect(() => {
+    setSelectedItemId(null);
+  }, [selectedPlaylistId]);
 
   const canEdit =
     !!user?.id && !!selectedPlaylist && selectedPlaylist.owner_id === user.id;
@@ -276,6 +531,54 @@ export default function PlaylistsPage() {
       ]),
     );
   }, [trackerMediaItems]);
+
+  const latestTrackerItemByMediaId = useMemo(() => {
+    const latestByMediaId = new Map<
+      string,
+      {
+        item: TrackerItem;
+        sortKey: string;
+      }
+    >();
+
+    for (const trackerItem of trackerMediaItems) {
+      const mediaId = trackerItem.media_id;
+      if (!mediaId) {
+        continue;
+      }
+
+      const sortKey = trackerItem.updated_at || trackerItem.created_at || "";
+      const existing = latestByMediaId.get(mediaId);
+
+      if (!existing || sortKey > existing.sortKey) {
+        latestByMediaId.set(mediaId, {
+          item: trackerItem,
+          sortKey,
+        });
+      }
+    }
+
+    return new Map(
+      Array.from(latestByMediaId.entries()).map(([mediaId, entry]) => [
+        mediaId,
+        entry.item,
+      ]),
+    );
+  }, [trackerMediaItems]);
+
+  const selectedPlaylistItem = useMemo(
+    () => localItems.find((item) => item.id === selectedItemId) || null,
+    [localItems, selectedItemId],
+  );
+
+  const selectedViewerTrackerItem = useMemo(
+    () =>
+      selectedPlaylistItem
+        ? (latestTrackerItemByMediaId.get(selectedPlaylistItem.media_id) ??
+          null)
+        : null,
+    [latestTrackerItemByMediaId, selectedPlaylistItem],
+  );
 
   const handleCreatePlaylist = async () => {
     const name = newPlaylistName.trim();
@@ -443,6 +746,17 @@ export default function PlaylistsPage() {
                 )}
               </div>
 
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {localItems.length} item{localItems.length === 1 ? "" : "s"}
+                </p>
+                <ViewModeToggle
+                  value={itemsViewMode}
+                  onChange={setItemsViewMode}
+                  optionsLabel="Playlist items view mode"
+                />
+              </div>
+
               {itemsLoading ? (
                 <div className="text-sm text-gray-500 dark:text-gray-400">
                   Loading items...
@@ -458,45 +772,98 @@ export default function PlaylistsPage() {
                   }
                 />
               ) : (
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={(event) => void handleDragEnd(event)}
-                >
-                  <SortableContext
-                    items={localItems.map((item) => item.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <div className="space-y-2">
+                <>
+                  {itemsViewMode === "list" ? (
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={(event) => void handleDragEnd(event)}
+                    >
+                      <SortableContext
+                        items={localItems.map((item) => item.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <div className="space-y-2">
+                          {localItems.map((item) => (
+                            <SortablePlaylistItemRow
+                              key={item.id}
+                              item={item}
+                              canEdit={canEdit}
+                              ownerRating={
+                                canEdit
+                                  ? (trackerRatingByMediaId.get(
+                                      item.media_id,
+                                    ) ?? null)
+                                  : null
+                              }
+                              onOpen={() => setSelectedItemId(item.id)}
+                              onUpdateNote={(note) =>
+                                void updatePlaylistItem.mutateAsync({
+                                  playlistId: selectedPlaylist.id,
+                                  playlistItemId: item.id,
+                                  updates: { note },
+                                })
+                              }
+                              onRemove={() =>
+                                void removePlaylistItem.mutateAsync({
+                                  playlistId: selectedPlaylist.id,
+                                  playlistItemId: item.id,
+                                })
+                              }
+                            />
+                          ))}
+                        </div>
+                      </SortableContext>
+                    </DndContext>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
                       {localItems.map((item) => (
-                        <SortablePlaylistItemRow
+                        <button
                           key={item.id}
-                          item={item}
-                          canEdit={canEdit}
-                          ownerRating={
-                            canEdit
-                              ? (trackerRatingByMediaId.get(item.media_id) ??
-                                null)
-                              : null
-                          }
-                          onUpdateNote={(note) =>
-                            void updatePlaylistItem.mutateAsync({
-                              playlistId: selectedPlaylist.id,
-                              playlistItemId: item.id,
-                              updates: { note },
-                            })
-                          }
-                          onRemove={() =>
-                            void removePlaylistItem.mutateAsync({
-                              playlistId: selectedPlaylist.id,
-                              playlistItemId: item.id,
-                            })
-                          }
-                        />
+                          type="button"
+                          onClick={() => setSelectedItemId(item.id)}
+                          className="text-left rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 hover:border-primary/50 dark:hover:border-primary-light/50 transition-colors"
+                        >
+                          <div className="flex items-start gap-3">
+                            <MediaPoster
+                              src={item.media?.poster_url}
+                              alt={item.media?.title || "Untitled"}
+                              size="sm"
+                              aspectRatio="2/3"
+                              showOverlay={false}
+                              className="w-16"
+                            />
+
+                            <div className="min-w-0 flex-1 space-y-1">
+                              <p className="font-semibold text-gray-900 dark:text-white truncate">
+                                {item.media?.title || "Untitled"}
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                {item.media?.media_type || "unknown"}
+                                {item.media?.subtitle
+                                  ? ` • ${item.media.subtitle}`
+                                  : ""}
+                              </p>
+
+                              {item.owner_media_is_edited && (
+                                <p className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-100">
+                                  <Pencil className="w-3 h-3" />
+                                  Owner edited metadata
+                                </p>
+                              )}
+
+                              {item.note && (
+                                <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2">
+                                  {item.note}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </button>
                       ))}
                     </div>
-                  </SortableContext>
-                </DndContext>
+                  )}
+                </>
               )}
             </>
           )}
@@ -525,6 +892,13 @@ export default function PlaylistsPage() {
             mediaId,
           });
         }}
+      />
+
+      <PlaylistItemDetailsModal
+        item={selectedPlaylistItem}
+        isOwner={canEdit}
+        viewerTrackerItem={selectedViewerTrackerItem}
+        onClose={() => setSelectedItemId(null)}
       />
 
       <Modal

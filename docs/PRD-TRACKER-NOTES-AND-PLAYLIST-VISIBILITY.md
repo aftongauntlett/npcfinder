@@ -1,7 +1,23 @@
 # PRD: Tracker Notes + Completion Date Visibility via Playlists
 
-Last updated: 2026-05-27
-Status: Product decisions confirmed (implementation pending)
+Last updated: 2026-05-28
+Status: Core implementation complete; tests and profile-phase follow-up pending
+
+## Implementation Status Snapshot (2026-05-28)
+
+Completed:
+
+1. Tracker note/completion-date edit behavior shipped, including done-date handling.
+2. Playlist owner-context read path shipped using DB owner-context RPC with live-or-snapshot fallback.
+3. Playlist list/grid parity and details modal shipped, including owner context display.
+4. Historical snapshot retention behavior shipped for owner note/completed date.
+5. User-editable API metadata shipped with edited indicators and changed-field labels.
+6. Optional compare panel shipped for owner vs viewer context, including note/date/rating.
+
+Remaining before full PRD closure:
+
+1. Testing plan in section 13 is not fully implemented as automated coverage yet.
+2. Rollout phase 4 (profiles MVP exposing only public playlists) remains future scope.
 
 ## Starter Prompt for Agent
 
@@ -323,3 +339,52 @@ Update playlist read path in `playlistsService`:
 4. Support both public playlists and private playlists with explicit sharing.
 5. Historical playlist entries may remain even after owner removes media from tracker.
 6. When tracker row no longer exists, playlist should display preserved owner note/date snapshot.
+
+## 16. User-Editable API Metadata (New Scope)
+
+### 16.1 Product Intent
+
+1. API search should hydrate media fields once, then users can edit their own stored copy.
+2. If source API data is wrong, owners can correct fields without waiting for provider fixes.
+3. Edited records must be visibly marked so viewers understand metadata differs from source API.
+
+### 16.2 Required Behavior
+
+1. Add an Edit action in the media details modal (Tracker and playlist owner surface where applicable).
+2. Main item view should stay clean/read-only; edits happen in explicit edit mode/modal form.
+3. Owner can edit only their own item metadata and personal journal fields (note/date/rating).
+4. Edited items display an "Edited" indicator similar to existing "User-created entry" treatment.
+5. UI should optionally show which fields changed from API source (for example title/year/overview).
+6. Playlist viewers must see the playlist owner's edited values, not their own values, in that playlist context.
+7. Personal tracker view always shows current user's own values only.
+
+### 16.3 Ownership + Privacy Rules
+
+1. Edits are user-scoped; no user can mutate another user's metadata or journal fields.
+2. Read access to owner-edited values is limited to approved playlist visibility paths.
+3. Cross-user compare features must be read-only and must not expose private tracker rows outside allowed contexts.
+
+### 16.4 Compare View (Nice-to-Have)
+
+1. If both owner and viewer have journal data for the same media, provide an optional compare panel.
+2. Compare panel may show side-by-side note, completion date, and rating.
+3. Compare panel must be explicitly labeled and read-only for both sides.
+
+### 16.5 Data Modeling Requirements
+
+1. Persist a source-api baseline and user-edited values separately (or preserve field-level diff metadata).
+2. Persist edit provenance metadata sufficient to:
+   - determine whether item is edited
+   - compute changed field list
+   - show owner-edited indicators in playlist context
+3. Preserve existing rule: tracker owner remains canonical writer for their own item state.
+
+### 16.6 Acceptance Criteria (Additional)
+
+1. Owner can edit API-derived metadata for their own item and save changes.
+2. Edited indicator appears after save and persists across reloads.
+3. Changed-field summary is visible in details modal for edited items.
+4. Viewer opening owner's playlist sees owner's edited values and owner context labels.
+5. Viewer cannot edit owner values anywhere.
+6. Viewer sees own values only in own tracker screens.
+7. Optional compare view renders only when both sides have data and respects visibility rules.

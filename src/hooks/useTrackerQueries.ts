@@ -54,7 +54,17 @@ export function useUpdateTrackerItem() {
       updates: Partial<
         Pick<
           trackerService.TrackerItem,
-          "status" | "rating" | "note" | "completed_at"
+          | "status"
+          | "rating"
+          | "note"
+          | "api_media_source_snapshot"
+          | "media_overrides"
+          | "media_edited_fields"
+          | "completed_at"
+          | "tv_current_season"
+          | "tv_current_episode"
+          | "book_current_page"
+          | "book_chapter_notes"
         >
       >;
     }) => {

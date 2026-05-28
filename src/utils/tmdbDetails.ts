@@ -8,12 +8,14 @@ import { logger } from "@/lib/logger";
 
 function getEnvVar(key: string): string | undefined {
   // Vite runtime
-  const viteEnv = (import.meta as unknown as { env?: Record<string, string> }).env;
+  const viteEnv = (import.meta as unknown as { env?: Record<string, string> })
+    .env;
   if (viteEnv?.[key]) return viteEnv[key];
 
   // Node runtime (one-off scripts)
-  const nodeEnv = (globalThis as unknown as { process?: { env?: Record<string, string> } })
-    .process?.env;
+  const nodeEnv = (
+    globalThis as unknown as { process?: { env?: Record<string, string> } }
+  ).process?.env;
   return nodeEnv?.[key];
 }
 
@@ -52,7 +54,7 @@ interface OMDBResponse {
  * Fetch OMDB data (Rotten Tomatoes, Metacritic, Awards, Box Office)
  */
 async function fetchOMDBData(
-  imdbId: string
+  imdbId: string,
 ): Promise<Partial<OMDBResponse> | null> {
   const apiKey = getEnvVar("VITE_OMDB_API_KEY");
   if (!apiKey) {
@@ -108,6 +110,13 @@ export interface DetailedMediaInfo {
   awards_text: string | null;
   box_office: string | null;
   imdb_id: string | null;
+  number_of_seasons?: number | null;
+  number_of_episodes?: number | null;
+  seasons?: Array<{
+    season_number: number;
+    name: string;
+    episode_count: number;
+  }>;
 }
 
 interface TMDBMovieDetails {
@@ -121,6 +130,13 @@ interface TMDBMovieDetails {
   vote_average?: number;
   vote_count?: number;
   runtime?: number;
+  number_of_seasons?: number;
+  number_of_episodes?: number;
+  seasons?: Array<{
+    season_number?: number;
+    name?: string;
+    episode_count?: number;
+  }>;
   genres?: Array<{ id: number; name: string }>;
   credits?: {
     crew?: Array<{ job: string; name: string }>;
@@ -132,6 +148,18 @@ interface TMDBMovieDetails {
   };
 }
 
+interface TMDBSeasonDetails {
+  episodes?: Array<{
+    episode_number?: number;
+    name?: string;
+  }>;
+}
+
+export interface TvSeasonEpisodeInfo {
+  episode_number: number;
+  name: string;
+}
+
 /**
  * Fetch detailed information for a specific movie/TV show
  */
@@ -140,7 +168,7 @@ export async function fetchDetailedMediaInfo(
   mediaType: "movie" | "tv",
   options?: {
     includeOmdb?: boolean;
-  }
+  },
 ): Promise<DetailedMediaInfo | null> {
   const apiKey = getEnvVar("VITE_TMDB_API_KEY");
   if (!apiKey) {
@@ -182,13 +210,13 @@ export async function fetchDetailedMediaInfo(
             ?.name || null;
         writer =
           data.credits.crew.find(
-            (c) => c.job === "Screenplay" || c.job === "Writer"
+            (c) => c.job === "Screenplay" || c.job === "Writer",
           )?.name || null;
       } else {
         // For TV shows
         director =
           data.credits.crew.find(
-            (c) => c.job === "Creator" || c.job === "Executive Producer"
+            (c) => c.job === "Creator" || c.job === "Executive Producer",
           )?.name || null;
         producer =
           data.credits.crew.find((c) => c.job === "Producer")?.name || null;
@@ -224,7 +252,7 @@ export async function fetchDetailedMediaInfo(
 
     if (omdbData?.Ratings) {
       const rtRating = omdbData.Ratings.find((r) =>
-        r.Source.includes("Rotten Tomatoes")
+        r.Source.includes("Rotten Tomatoes"),
       );
       if (rtRating) {
         // RT sometimes has format "95%" or "Fresh 95%"
@@ -235,7 +263,7 @@ export async function fetchDetailedMediaInfo(
       }
 
       const metacriticRating = omdbData.Ratings.find((r) =>
-        r.Source.includes("Metacritic")
+        r.Source.includes("Metacritic"),
       );
       if (metacriticRating) {
         // Metacritic format is "85/100"
@@ -271,6 +299,20 @@ export async function fetchDetailedMediaInfo(
       awards_text: omdbData?.Awards || null,
       box_office: omdbData?.BoxOffice || null,
       imdb_id: imdbId || null,
+      number_of_seasons:
+        mediaType === "tv" ? (data.number_of_seasons ?? null) : null,
+      number_of_episodes:
+        mediaType === "tv" ? (data.number_of_episodes ?? null) : null,
+      seasons:
+        mediaType === "tv"
+          ? (data.seasons || [])
+              .filter((season) => (season.season_number || 0) > 0)
+              .map((season) => ({
+                season_number: season.season_number || 0,
+                name: season.name || `Season ${season.season_number || 0}`,
+                episode_count: season.episode_count || 0,
+              }))
+          : [],
     };
   } catch (error) {
     logger.error("Failed to fetch detailed media info", {
@@ -283,10 +325,69 @@ export async function fetchDetailedMediaInfo(
 }
 
 /**
+ * Fetch episode numbers and names for a TV season.
+ */
+export async function fetchTvSeasonEpisodes(
+  externalId: string,
+  seasonNumber: number,
+): Promise<TvSeasonEpisodeInfo[] | null> {
+  const apiKey = getEnvVar("VITE_TMDB_API_KEY");
+  if (!apiKey) {
+    logger.error("TMDB API key not configured");
+    return null;
+  }
+
+  if (!externalId || !Number.isFinite(seasonNumber) || seasonNumber < 1) {
+    return null;
+  }
+
+  try {
+    const seasonUrl = `https://api.themoviedb.org/3/tv/${externalId}/season/${seasonNumber}?api_key=${apiKey}&language=en-US`;
+    const response = await tmdbLimiter.add(() => fetch(seasonUrl));
+
+    if (!response.ok) {
+      logger.warn("TMDB season details request failed", {
+        externalId,
+        seasonNumber,
+        status: response.status,
+      });
+      return null;
+    }
+
+    const data: TMDBSeasonDetails = await response.json();
+    const episodes = Array.isArray(data.episodes) ? data.episodes : [];
+
+    return episodes
+      .map((episode) => {
+        const episodeNumber = Number(episode.episode_number);
+        const episodeName =
+          typeof episode.name === "string" ? episode.name : "";
+
+        if (!Number.isFinite(episodeNumber) || episodeNumber < 1) {
+          return null;
+        }
+
+        return {
+          episode_number: Math.floor(episodeNumber),
+          name: episodeName.trim() || `Episode ${Math.floor(episodeNumber)}`,
+        };
+      })
+      .filter((episode): episode is TvSeasonEpisodeInfo => episode !== null);
+  } catch (error) {
+    logger.error("Failed to fetch TMDB season details", {
+      error,
+      externalId,
+      seasonNumber,
+    });
+    return null;
+  }
+}
+
+/**
  * Batch fetch details for multiple items (with rate limiting)
  */
 export async function fetchMultipleMediaDetails(
-  items: Array<{ external_id: string; media_type: "movie" | "tv" }>
+  items: Array<{ external_id: string; media_type: "movie" | "tv" }>,
 ): Promise<Map<string, DetailedMediaInfo>> {
   const results = new Map<string, DetailedMediaInfo>();
 
@@ -294,11 +395,15 @@ export async function fetchMultipleMediaDetails(
   // Include OMDB during prefetch so expanded details have awards/ratings.
   const settled = await Promise.allSettled(
     items.map(async (item) => {
-      const details = await fetchDetailedMediaInfo(item.external_id, item.media_type, {
-        includeOmdb: true,
-      });
+      const details = await fetchDetailedMediaInfo(
+        item.external_id,
+        item.media_type,
+        {
+          includeOmdb: true,
+        },
+      );
       return { id: item.external_id, details };
-    })
+    }),
   );
 
   settled.forEach((result) => {
@@ -326,11 +431,11 @@ export interface SimilarMediaItem {
 export async function fetchSimilarMedia(
   externalId: string,
   mediaType: "movie" | "tv",
-  limit: number = 10
+  limit: number = 10,
 ): Promise<SimilarMediaItem[]> {
   const apiKey = import.meta.env.VITE_TMDB_API_KEY;
   if (!apiKey) {
-    logger.error("TMDB API key not configured");
+    logger.warn("TMDB API key not configured");
     return [];
   }
 
@@ -359,7 +464,7 @@ export async function fetchSimilarMedia(
       overview: item.overview || null,
     }));
   } catch (error) {
-    logger.error("Failed to fetch similar media", {
+    logger.warn("Failed to fetch similar media", {
       error,
       externalId,
       mediaType,
@@ -374,11 +479,11 @@ export async function fetchSimilarMedia(
 export async function fetchTrendingMedia(
   mediaType: "movie" | "tv" | "all" = "all",
   timeWindow: "day" | "week" = "week",
-  limit: number = 20
+  limit: number = 20,
 ): Promise<SimilarMediaItem[]> {
   const apiKey = import.meta.env.VITE_TMDB_API_KEY;
   if (!apiKey) {
-    logger.error("TMDB API key not configured");
+    logger.warn("TMDB API key not configured");
     return [];
   }
 
@@ -407,7 +512,7 @@ export async function fetchTrendingMedia(
       overview: item.overview || null,
     }));
   } catch (error) {
-    logger.error("Failed to fetch trending media", {
+    logger.warn("Failed to fetch trending media", {
       error,
       mediaType,
       timeWindow,
@@ -421,11 +526,11 @@ export async function fetchTrendingMedia(
  */
 export async function fetchPopularMedia(
   mediaType: "movie" | "tv" = "movie",
-  limit: number = 20
+  limit: number = 20,
 ): Promise<SimilarMediaItem[]> {
   const apiKey = import.meta.env.VITE_TMDB_API_KEY;
   if (!apiKey) {
-    logger.error("TMDB API key not configured");
+    logger.warn("TMDB API key not configured");
     return [];
   }
 
@@ -454,7 +559,7 @@ export async function fetchPopularMedia(
       overview: item.overview || null,
     }));
   } catch (error) {
-    logger.error("Failed to fetch popular media", { error, mediaType });
+    logger.warn("Failed to fetch popular media", { error, mediaType });
     return [];
   }
 }
