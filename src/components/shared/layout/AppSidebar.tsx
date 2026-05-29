@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
+  ChevronDown,
   LayoutDashboard,
   ListMusic,
   Settings,
@@ -56,16 +57,16 @@ const BASE_ITEMS: SidebarItem[] = [
         icon: Book,
       },
       {
-        id: "tracker-music",
-        label: TRACKER_SCOPES.music.navLabel,
-        path: TRACKER_SCOPES.music.path,
-        icon: Music2,
-      },
-      {
         id: "tracker-games",
         label: TRACKER_SCOPES.games.navLabel,
         path: TRACKER_SCOPES.games.path,
         icon: Gamepad2,
+      },
+      {
+        id: "tracker-music",
+        label: TRACKER_SCOPES.music.navLabel,
+        path: TRACKER_SCOPES.music.path,
+        icon: Music2,
       },
     ],
   },
@@ -82,9 +83,18 @@ export default function AppSidebar({ currentUser }: AppSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { role } = useAdmin();
+  const isTrackerRoute = location.pathname.startsWith("/app/tracker");
 
   const [isOpen, setIsOpen] = useState(false);
+  const [isTrackerExpanded, setIsTrackerExpanded] = useState(isTrackerRoute);
   const [isSigningOut, setIsSigningOut] = useState(false);
+
+  useEffect(() => {
+    // Collapse tracker submenu when user navigates away from tracker pages.
+    if (!isTrackerRoute) {
+      setIsTrackerExpanded(false);
+    }
+  }, [isTrackerRoute]);
 
   const navItems = useMemo(() => {
     const items = [...BASE_ITEMS];
@@ -110,6 +120,10 @@ export default function AppSidebar({ currentUser }: AppSidebarProps) {
   const isActive = (path: string) => {
     if (path.startsWith("/app/tracker")) {
       return location.pathname.startsWith("/app/tracker");
+    }
+
+    if (path.startsWith("/app/playlists")) {
+      return location.pathname.startsWith("/app/playlists");
     }
 
     return location.pathname.startsWith(path);
@@ -180,24 +194,47 @@ export default function AppSidebar({ currentUser }: AppSidebarProps) {
             {navItems.map((item) => {
               const Icon = item.icon;
               const parentActive = isActive(item.path);
+              const isTrackerGroup = item.id === "tracker" && !!item.children;
+              const childContainerId = `${item.id}-children`;
 
               return (
                 <div key={item.id} className="space-y-1">
                   <button
                     type="button"
-                    onClick={() => navigateAndClose(item.path)}
-                    className={`w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                    onClick={() => {
+                      if (isTrackerGroup) {
+                        setIsTrackerExpanded((prev) => !prev);
+                        return;
+                      }
+                      navigateAndClose(item.path);
+                    }}
+                    aria-expanded={
+                      isTrackerGroup ? isTrackerExpanded : undefined
+                    }
+                    aria-controls={
+                      isTrackerGroup ? childContainerId : undefined
+                    }
+                    className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors ${
                       parentActive
                         ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light"
                         : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                     }`}
                   >
-                    <Icon className="w-4 h-4" />
-                    <span>{item.label}</span>
+                    <span className="inline-flex items-center gap-3">
+                      <Icon className="w-4 h-4" />
+                      <span>{item.label}</span>
+                    </span>
+                    {isTrackerGroup && (
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform ${
+                          isTrackerExpanded ? "rotate-180" : "rotate-0"
+                        }`}
+                      />
+                    )}
                   </button>
 
-                  {item.children && (
-                    <div className="pl-5 space-y-1">
+                  {item.children && (!isTrackerGroup || isTrackerExpanded) && (
+                    <div id={childContainerId} className="pl-5 space-y-1">
                       {item.children.map((child) => {
                         const ChildIcon = child.icon;
                         const childActive = location.pathname === child.path;

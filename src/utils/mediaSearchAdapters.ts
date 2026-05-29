@@ -38,6 +38,56 @@ interface TMDBResponse {
   results: TMDBResult[];
 }
 
+const SEARCH_RESULT_CAP = 5;
+
+function normalizeForDedupe(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function sanitizeYear(
+  rawYear: string | null | undefined,
+  options?: {
+    minYear?: number;
+  },
+): string | null {
+  if (!rawYear) {
+    return null;
+  }
+
+  const trimmed = rawYear.trim();
+  if (!/^\d{4}$/.test(trimmed)) {
+    return null;
+  }
+
+  const year = Number(trimmed);
+  const maxYear = new Date().getFullYear() + 1;
+
+  if (year > maxYear) {
+    return null;
+  }
+
+  if (options?.minYear !== undefined && year < options.minYear) {
+    return null;
+  }
+
+  return String(year);
+}
+
+function sanitizeYearFromReleaseDate(
+  releaseDate: string | null | undefined,
+): string | null {
+  if (!releaseDate) {
+    return null;
+  }
+
+  const yearPrefix = releaseDate.match(/^(\d{4})/)?.[1] || null;
+  return sanitizeYear(yearPrefix);
+}
+
 /**
  * Search iTunes API and convert results to generic MediaItem format
  */
@@ -98,19 +148,26 @@ export async function searchMoviesAndTV(query: string): Promise<MediaItem[]> {
   const response = await tmdbLimiter.add(() => fetch(url));
   const data: TMDBResponse = await response.json();
 
-  return data.results
+  const filtered = data.results
     .filter((item) => item.media_type === "movie" || item.media_type === "tv")
-    .map((item) => ({
+    .filter((item) => Boolean(item.poster_path));
+
+  return filtered.slice(0, SEARCH_RESULT_CAP).map((item) => {
+    const rawReleaseDate = item.release_date || item.first_air_date || null;
+    const sanitizedYear = sanitizeYearFromReleaseDate(rawReleaseDate);
+
+    return {
       external_id: String(item.id),
       title: item.title || item.name || "Unknown Title",
       subtitle: item.media_type === "movie" ? "Movie" : "TV Show",
       poster_url: item.poster_path
         ? `https://image.tmdb.org/t/p/w200${item.poster_path}`
         : null,
-      release_date: item.release_date || item.first_air_date || null,
+      release_date: sanitizedYear ? rawReleaseDate : null,
       description: item.overview || null,
       media_type: item.media_type,
-    }));
+    };
+  });
 }
 
 /**
@@ -148,9 +205,11 @@ interface RAWGResult {
   name: string;
   released?: string;
   background_image?: string;
+  added_by_status?: Record<string, number | undefined>;
   platforms?: RAWGPlatform[];
   genres?: RAWGGenre[];
   rating?: number;
+  rating_count?: number;
   metacritic?: number;
   playtime?: number;
 }
@@ -161,6 +220,65 @@ interface RAWGGameDetails extends RAWGResult {
 
 interface RAWGResponse {
   results: RAWGResult[];
+}
+
+function addedByStatusSuggestsNonBaseGame(
+  addedByStatus?: Record<string, number | undefined>,
+): boolean {
+  if (!addedByStatus) {
+    return false;
+  }
+
+  const nonBaseStatusKeys = [
+    "dlc",
+    "expansion",
+    "expansions",
+    "addon",
+    "add-on",
+    "addons",
+    "add-ons",
+    "bundle",
+    "bundles",
+    "pack",
+    "packs",
+    "edition",
+    "editions",
+  ];
+
+  return nonBaseStatusKeys.some((key) => {
+    const count = addedByStatus[key];
+    return typeof count === "number" && count > 0;
+  });
+}
+
+function nameSuggestsNonBaseGame(name: string): boolean {
+  return /\s-\s|(^|\W)(dlc|expansion|pack|bundle|edition)(\W|$)/i.test(name);
+}
+
+function dedupeRawgResultsByName(results: RAWGResult[]): RAWGResult[] {
+  const deduped = new Map<string, RAWGResult>();
+
+  for (const game of results) {
+    const dedupeKey = normalizeForDedupe(game.name || "");
+    if (!dedupeKey) {
+      continue;
+    }
+
+    const existing = deduped.get(dedupeKey);
+    if (!existing) {
+      deduped.set(dedupeKey, game);
+      continue;
+    }
+
+    const existingRatingCount = existing.rating_count || 0;
+    const incomingRatingCount = game.rating_count || 0;
+
+    if (incomingRatingCount > existingRatingCount) {
+      deduped.set(dedupeKey, game);
+    }
+  }
+
+  return Array.from(deduped.values());
 }
 
 /**
@@ -175,7 +293,7 @@ export async function searchGames(query: string): Promise<MediaItem[]> {
 
   const url = `https://api.rawg.io/api/games?key=${apiKey}&search=${encodeURIComponent(
     query,
-  )}&page_size=25`;
+  )}&page_size=20`;
 
   try {
     const response = await fetch(url);
@@ -185,7 +303,28 @@ export async function searchGames(query: string): Promise<MediaItem[]> {
 
     const data: RAWGResponse = await response.json();
 
-    return data.results.map((game) => ({
+    const imageAndDateFiltered = data.results.filter(
+      (game) => Boolean(game.background_image) && Boolean(game.released),
+    );
+
+    const deduped = dedupeRawgResultsByName(imageAndDateFiltered);
+
+    const baseGameFiltered = deduped.filter((game) => {
+      const nonBaseByStatus = addedByStatusSuggestsNonBaseGame(
+        game.added_by_status,
+      );
+      const nonBaseByName = nameSuggestsNonBaseGame(game.name || "");
+      return !nonBaseByStatus && !nonBaseByName;
+    });
+
+    const gamesToMap =
+      baseGameFiltered.length > 0
+        ? baseGameFiltered
+        : deduped.length === 1
+          ? deduped
+          : [];
+
+    return gamesToMap.slice(0, SEARCH_RESULT_CAP).map((game) => ({
       external_id: String(game.id),
       title: game.name || "Unknown Game",
       subtitle: game.platforms

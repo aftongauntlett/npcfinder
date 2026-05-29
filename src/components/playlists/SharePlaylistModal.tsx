@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Users, UserPlus, Trash2 } from "lucide-react";
+import { Check, Link2, Trash2, UserPlus, Users } from "lucide-react";
 import { Button, ConfirmDialog, Input, Modal } from "@/components/shared";
 import { useUserSearch } from "@/hooks/useUserSearch";
 import {
@@ -13,6 +13,7 @@ interface SharePlaylistModalProps {
   onClose: () => void;
   playlistId: string;
   playlistName: string;
+  playlistSlug?: string;
 }
 
 export default function SharePlaylistModal({
@@ -20,9 +21,11 @@ export default function SharePlaylistModal({
   onClose,
   playlistId,
   playlistName,
+  playlistSlug,
 }: SharePlaylistModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [copiedLink, setCopiedLink] = useState(false);
   const [confirmUnshare, setConfirmUnshare] = useState<{
     userId: string;
     userName: string;
@@ -76,9 +79,26 @@ export default function SharePlaylistModal({
     setConfirmUnshare(null);
   };
 
+  const shareUrl =
+    playlistSlug && typeof window !== "undefined"
+      ? `${window.location.origin}/app/playlists/${playlistSlug}`
+      : "";
+
+  const handleCopyLink = async () => {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopiedLink(true);
+      window.setTimeout(() => setCopiedLink(false), 1200);
+    } catch {
+      setCopiedLink(false);
+    }
+  };
+
   const close = () => {
     setSearchQuery("");
     setSelectedUserIds([]);
+    setCopiedLink(false);
     onClose();
   };
 
@@ -100,6 +120,28 @@ export default function SharePlaylistModal({
               Shared users can view only.
             </p>
           </div>
+
+          {shareUrl && (
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                {shareUrl}
+              </p>
+              <Button
+                variant="subtle"
+                size="sm"
+                icon={
+                  copiedLink ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    <Link2 className="w-4 h-4" />
+                  )
+                }
+                onClick={() => void handleCopyLink()}
+              >
+                {copiedLink ? "Copied" : "Copy Link"}
+              </Button>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Input

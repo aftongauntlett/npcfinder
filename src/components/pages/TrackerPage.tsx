@@ -65,10 +65,22 @@ const PAGE_META_BASE = {
   noIndex: true,
 };
 
-type ViewMode = "active" | "history";
 type CardLayout = "list" | "grid";
 type MediaFilter = "all" | TrackerMediaType;
 type SortMode = "recent" | "title" | "year" | "added" | "completed" | "rating";
+
+function hasInProgressTab(scope: TrackerScopeId): boolean {
+  return scope === "books" || scope === "games";
+}
+
+function hasSingleFavoritesTab(scope: TrackerScopeId): boolean {
+  return scope === "music";
+}
+
+function defaultViewMode(scope: TrackerScopeId): ViewMode {
+  if (hasSingleFavoritesTab(scope)) return "favorites";
+  return "todo";
+}
 
 function mediaLabel(mediaType: string | undefined): string {
   if (!mediaType) return "Unknown";
@@ -82,21 +94,36 @@ function mediaLabel(mediaType: string | undefined): string {
   return mediaType;
 }
 
-function toggleLabel(status: TrackerStatus): string {
-  return status === "done" ? "Move To Active" : "Mark Complete";
+type ViewMode = "todo" | "in_progress" | "complete" | "favorites";
+
+function moveForwardLabel(status: TrackerStatus): string {
+  if (status === "want_to") return "Move to In Progress";
+  if (status === "in_progress") return "Mark Complete";
+  return "Complete";
 }
 
-function toggleButtonClassName(
+function moveBackwardLabel(status: TrackerStatus): string {
+  if (status === "done") return "Move to In Progress";
+  if (status === "in_progress") return "Move to To-Do";
+  return "Move Back";
+}
+
+function forwardButtonClassName(
   status: TrackerStatus,
   size: "sm" | "md" = "md",
 ): string {
   const sizeClass = size === "sm" ? "h-8 w-8" : "h-9 w-9";
 
-  if (status === "done") {
-    return `${sizeClass} rounded-full border-0 shadow-sm !bg-slate-100 !text-slate-700 hover:!bg-slate-200 dark:!bg-slate-700/70 dark:!text-slate-200 dark:hover:!bg-slate-600/80`;
+  if (status === "in_progress") {
+    return `${sizeClass} rounded-full border-0 shadow-sm !bg-emerald-200 !text-emerald-800 hover:!bg-emerald-300 dark:!bg-emerald-500/30 dark:!text-emerald-100 dark:hover:!bg-emerald-500/40`;
   }
 
-  return `${sizeClass} rounded-full border-0 shadow-sm !bg-emerald-200 !text-emerald-800 hover:!bg-emerald-300 dark:!bg-emerald-500/30 dark:!text-emerald-100 dark:hover:!bg-emerald-500/40`;
+  return `${sizeClass} rounded-full border-0 shadow-sm !bg-sky-200 !text-sky-800 hover:!bg-sky-300 dark:!bg-sky-500/30 dark:!text-sky-100 dark:hover:!bg-sky-500/40`;
+}
+
+function backwardButtonClassName(size: "sm" | "md" = "md"): string {
+  const sizeClass = size === "sm" ? "h-8 w-8" : "h-9 w-9";
+  return `${sizeClass} rounded-full border-0 shadow-sm !bg-slate-100 !text-slate-700 hover:!bg-slate-200 dark:!bg-slate-700/70 dark:!text-slate-200 dark:hover:!bg-slate-600/80`;
 }
 
 function deleteButtonClassName(size: "sm" | "md" = "md"): string {
@@ -472,19 +499,56 @@ function ratingBadgeClassName(rating: number): string {
   return "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-100";
 }
 
+function trackerCardProgressLabel(item: TrackerItem): string | null {
+  if (item.status === "done") return null;
+
+  if (item.status === "want_to") {
+    return "To-Do";
+  }
+
+  const mediaType = item.media?.media_type;
+
+  if (mediaType === "tv") {
+    const season = item.tv_current_season ?? 1;
+    const episode = item.tv_current_episode ?? 1;
+    return `S${season}E${episode}`;
+  }
+
+  if (mediaType === "book") {
+    const current = item.book_current_page;
+    const total = item.media?.page_count;
+
+    if (current && total) return `Page ${current}/${total}`;
+    if (current) return `Page ${current}`;
+  }
+
+  return "In Progress";
+}
+
 function TrackerMediaCard(props: {
   item: TrackerItem;
   onOpen: () => void;
-  onToggleStatus: () => void;
+  onMoveForward: () => void;
+  onMoveBackward: () => void;
   onDelete: () => void;
   isBusy: boolean;
+  showProgress: boolean;
 }) {
-  const { item, onOpen, onToggleStatus, onDelete, isBusy } = props;
+  const {
+    item,
+    onOpen,
+    onMoveForward,
+    onMoveBackward,
+    onDelete,
+    isBusy,
+    showProgress,
+  } = props;
   const hasNote = (item.note || "").trim().length > 0;
   const hasRating = typeof item.rating === "number" && item.rating > 0;
   const hasEditedMetadata = (item.media_edited_fields?.length || 0) > 0;
   const subtitle = item.media?.subtitle;
   const showSubtitle = !shouldHideSubtitle(item.media?.media_type, subtitle);
+  const progressLabel = showProgress ? trackerCardProgressLabel(item) : null;
 
   return (
     <div
@@ -516,6 +580,12 @@ function TrackerMediaCard(props: {
             <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white leading-tight">
               {item.media?.title || "Untitled"}
             </h3>
+
+            {progressLabel && (
+              <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium bg-violet-100 text-violet-700 dark:bg-violet-500/25 dark:text-violet-100">
+                {progressLabel}
+              </span>
+            )}
 
             {hasRating && (
               <span
@@ -566,25 +636,37 @@ function TrackerMediaCard(props: {
         </div>
 
         <div className="sm:self-center flex items-center gap-2">
-          <Button
-            variant="subtle"
-            size="icon"
-            icon={
-              item.status === "done" ? (
-                <RotateCcw className="w-4 h-4" />
-              ) : (
-                <Check className="w-4 h-4" />
-              )
-            }
-            disabled={isBusy}
-            onClick={(event) => {
-              event.stopPropagation();
-              onToggleStatus();
-            }}
-            aria-label={toggleLabel(item.status)}
-            title={toggleLabel(item.status)}
-            className={toggleButtonClassName(item.status)}
-          />
+          {item.status !== "want_to" && (
+            <Button
+              variant="subtle"
+              size="icon"
+              icon={<RotateCcw className="w-4 h-4" />}
+              disabled={isBusy}
+              onClick={(event) => {
+                event.stopPropagation();
+                onMoveBackward();
+              }}
+              aria-label={moveBackwardLabel(item.status)}
+              title={moveBackwardLabel(item.status)}
+              className={backwardButtonClassName()}
+            />
+          )}
+
+          {item.status !== "done" && (
+            <Button
+              variant="subtle"
+              size="icon"
+              icon={<Check className="w-4 h-4" />}
+              disabled={isBusy}
+              onClick={(event) => {
+                event.stopPropagation();
+                onMoveForward();
+              }}
+              aria-label={moveForwardLabel(item.status)}
+              title={moveForwardLabel(item.status)}
+              className={forwardButtonClassName(item.status)}
+            />
+          )}
 
           <Button
             variant="subtle"
@@ -1859,16 +1941,27 @@ function TrackerDetailsModal(props: {
 function TrackerMediaGridCard(props: {
   item: TrackerItem;
   onOpen: () => void;
-  onToggleStatus: () => void;
+  onMoveForward: () => void;
+  onMoveBackward: () => void;
   onDelete: () => void;
   isBusy: boolean;
+  showProgress: boolean;
 }) {
-  const { item, onOpen, onToggleStatus, onDelete, isBusy } = props;
+  const {
+    item,
+    onOpen,
+    onMoveForward,
+    onMoveBackward,
+    onDelete,
+    isBusy,
+    showProgress,
+  } = props;
   const hasNote = (item.note || "").trim().length > 0;
   const hasRating = typeof item.rating === "number" && item.rating > 0;
   const hasEditedMetadata = (item.media_edited_fields?.length || 0) > 0;
   const subtitle = item.media?.subtitle;
   const showSubtitle = !shouldHideSubtitle(item.media?.media_type, subtitle);
+  const progressLabel = showProgress ? trackerCardProgressLabel(item) : null;
 
   return (
     <div
@@ -1899,6 +1992,14 @@ function TrackerMediaGridCard(props: {
             {item.media?.title || "Untitled"}
           </h3>
         </div>
+
+        {progressLabel && (
+          <div>
+            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium bg-violet-100 text-violet-700 dark:bg-violet-500/25 dark:text-violet-100">
+              {progressLabel}
+            </span>
+          </div>
+        )}
 
         {showSubtitle && subtitle && (
           <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
@@ -1950,25 +2051,37 @@ function TrackerMediaGridCard(props: {
           </div>
 
           <div className="ml-auto flex items-center justify-end gap-1.5">
-            <Button
-              variant="subtle"
-              size="icon"
-              icon={
-                item.status === "done" ? (
-                  <RotateCcw className="w-4 h-4" />
-                ) : (
-                  <Check className="w-4 h-4" />
-                )
-              }
-              disabled={isBusy}
-              onClick={(event) => {
-                event.stopPropagation();
-                onToggleStatus();
-              }}
-              aria-label={toggleLabel(item.status)}
-              title={toggleLabel(item.status)}
-              className={toggleButtonClassName(item.status, "sm")}
-            />
+            {item.status !== "want_to" && (
+              <Button
+                variant="subtle"
+                size="icon"
+                icon={<RotateCcw className="w-4 h-4" />}
+                disabled={isBusy}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onMoveBackward();
+                }}
+                aria-label={moveBackwardLabel(item.status)}
+                title={moveBackwardLabel(item.status)}
+                className={backwardButtonClassName("sm")}
+              />
+            )}
+
+            {item.status !== "done" && (
+              <Button
+                variant="subtle"
+                size="icon"
+                icon={<Check className="w-4 h-4" />}
+                disabled={isBusy}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onMoveForward();
+                }}
+                aria-label={moveForwardLabel(item.status)}
+                title={moveForwardLabel(item.status)}
+                className={forwardButtonClassName(item.status, "sm")}
+              />
+            )}
 
             <Button
               variant="subtle"
@@ -2004,13 +2117,12 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
     description: scopeConfig.pageDescription,
   });
 
-  const [viewMode, setViewMode] = useState<ViewMode>("active");
+  const [viewMode, setViewMode] = useState<ViewMode>(
+    defaultViewMode(resolvedScope),
+  );
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const [pendingMoveToActiveId, setPendingMoveToActiveId] = useState<
-    string | null
-  >(null);
   const [toast, setToast] = useState<{ message: string } | null>(null);
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
   const [sortMode, setSortMode] = useState<SortMode>("recent");
@@ -2022,9 +2134,8 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
     setSearchQuery("");
     setSelectedItemId(null);
     setPendingDeleteId(null);
-    setPendingMoveToActiveId(null);
     setToast(null);
-    setViewMode("active");
+    setViewMode(defaultViewMode(resolvedScope));
   }, [resolvedScope]);
 
   const { data: activeItems = [], isLoading: activeLoading } =
@@ -2052,13 +2163,57 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
     [historyItems, resolvedScope],
   );
 
-  const trackerItems =
-    viewMode === "history" ? scopedHistoryItems : scopedActiveItems;
+  const scopedTodoItems = useMemo(
+    () => scopedActiveItems.filter((item) => item.status === "want_to"),
+    [scopedActiveItems],
+  );
+
+  const scopedInProgressItems = useMemo(
+    () => scopedActiveItems.filter((item) => item.status === "in_progress"),
+    [scopedActiveItems],
+  );
+
+  const scopedCompleteItems = scopedHistoryItems;
+
   const allTrackerItems = useMemo(
     () => [...scopedActiveItems, ...scopedHistoryItems],
     [scopedActiveItems, scopedHistoryItems],
   );
-  const isLoading = viewMode === "history" ? historyLoading : activeLoading;
+
+  const trackerItems = useMemo(() => {
+    if (hasSingleFavoritesTab(resolvedScope)) {
+      return allTrackerItems;
+    }
+
+    if (viewMode === "complete") {
+      return scopedCompleteItems;
+    }
+
+    if (viewMode === "in_progress") {
+      return scopedInProgressItems;
+    }
+
+    if (hasInProgressTab(resolvedScope)) {
+      return scopedTodoItems;
+    }
+
+    return scopedActiveItems;
+  }, [
+    allTrackerItems,
+    resolvedScope,
+    scopedActiveItems,
+    scopedCompleteItems,
+    scopedInProgressItems,
+    scopedTodoItems,
+    viewMode,
+  ]);
+
+  const isLoading =
+    viewMode === "favorites"
+      ? activeLoading || historyLoading
+      : viewMode === "complete"
+        ? historyLoading
+        : activeLoading;
 
   const filteredItems = useMemo(() => {
     const search = searchQuery.trim().toLowerCase();
@@ -2140,12 +2295,6 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
     [allTrackerItems, pendingDeleteId],
   );
 
-  const pendingMoveToActiveItem = useMemo(
-    () =>
-      allTrackerItems.find((item) => item.id === pendingMoveToActiveId) || null,
-    [allTrackerItems, pendingMoveToActiveId],
-  );
-
   const filterSections = useMemo(
     () => [
       {
@@ -2168,7 +2317,7 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
           { id: "year", label: "Year" },
           { id: "added", label: "Date Added" },
           { id: "completed", label: "Completed Date" },
-          ...(viewMode === "history"
+          ...(viewMode === "complete" || viewMode === "favorites"
             ? [{ id: "rating", label: "Rating" }]
             : []),
         ],
@@ -2178,41 +2327,57 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
   );
 
   useEffect(() => {
-    if (viewMode !== "history" && sortMode === "rating") {
+    if (
+      viewMode !== "complete" &&
+      viewMode !== "favorites" &&
+      sortMode === "rating"
+    ) {
       setSortMode("recent");
     }
   }, [sortMode, viewMode]);
 
-  const handleToggleStatus = async (item: TrackerItem) => {
+  const handleMoveForward = async (item: TrackerItem) => {
     if (item.status === "done") {
-      setPendingMoveToActiveId(item.id);
       return;
     }
+
+    const nextStatus: TrackerStatus =
+      item.status === "want_to" ? "in_progress" : "done";
 
     await updateTrackerItem.mutateAsync({
       trackerItemId: item.id,
-      updates: { status: "done" },
+      updates: { status: nextStatus },
     });
 
-    setToast({ message: "Moved to history" });
+    setToast({
+      message:
+        nextStatus === "in_progress"
+          ? "Moved to in progress"
+          : "Marked complete",
+    });
   };
 
-  const handleConfirmMoveToActive = async () => {
-    if (!pendingMoveToActiveId) {
+  const handleMoveBackward = async (item: TrackerItem) => {
+    if (item.status === "want_to") {
       return;
     }
 
+    const previousStatus: TrackerStatus =
+      item.status === "done" ? "in_progress" : "want_to";
+
     await updateTrackerItem.mutateAsync({
-      trackerItemId: pendingMoveToActiveId,
+      trackerItemId: item.id,
       updates: {
-        status: "in_progress",
-        note: null,
-        completed_at: null,
+        status: previousStatus,
       },
     });
 
-    setPendingMoveToActiveId(null);
-    setToast({ message: "Moved to active" });
+    setToast({
+      message:
+        previousStatus === "in_progress"
+          ? "Moved to in progress"
+          : "Moved to to-do",
+    });
   };
 
   const handleSaveNote = async (
@@ -2308,18 +2473,57 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
   const isItemActionPending =
     updateTrackerItem.isPending || removeTrackerItem.isPending;
 
-  const tabs = [
-    {
-      id: "active",
-      label: "Active",
-      badge: scopedActiveItems.length,
-    },
-    {
-      id: "history",
-      label: "History",
-      badge: scopedHistoryItems.length,
-    },
-  ];
+  const tabs = useMemo(() => {
+    if (hasSingleFavoritesTab(resolvedScope)) {
+      return [
+        {
+          id: "favorites",
+          label: "Favorite Songs",
+          badge: allTrackerItems.length,
+        },
+      ];
+    }
+
+    if (hasInProgressTab(resolvedScope)) {
+      return [
+        {
+          id: "todo",
+          label: "To-Do",
+          badge: scopedTodoItems.length,
+        },
+        {
+          id: "in_progress",
+          label: "In Progress",
+          badge: scopedInProgressItems.length,
+        },
+        {
+          id: "complete",
+          label: "Complete",
+          badge: scopedCompleteItems.length,
+        },
+      ];
+    }
+
+    return [
+      {
+        id: "todo",
+        label: "To-Do",
+        badge: scopedActiveItems.length,
+      },
+      {
+        id: "complete",
+        label: "Complete",
+        badge: scopedCompleteItems.length,
+      },
+    ];
+  }, [
+    allTrackerItems.length,
+    resolvedScope,
+    scopedActiveItems.length,
+    scopedCompleteItems.length,
+    scopedInProgressItems.length,
+    scopedTodoItems.length,
+  ]);
 
   return (
     <AppLayout
@@ -2370,18 +2574,26 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
           </div>
         ) : filteredItems.length === 0 ? (
           <EmptyState
-            icon={viewMode === "history" ? BookOpen : Film}
+            icon={viewMode === "complete" ? BookOpen : Film}
             title={
-              viewMode === "history"
-                ? "No history yet"
-                : "Nothing active right now"
+              viewMode === "favorites"
+                ? "No favorite songs yet"
+                : viewMode === "complete"
+                  ? "Nothing completed yet"
+                  : viewMode === "in_progress"
+                    ? "Nothing in progress right now"
+                    : "Nothing in your to-do list"
             }
             description={
               searchQuery || mediaFilter !== "all"
                 ? "No tracker items match your current search and filters."
-                : viewMode === "history"
-                  ? "Mark items as watched to build your timeline."
-                  : `Add ${scopeConfig.label.toLowerCase()} and start tracking.`
+                : viewMode === "favorites"
+                  ? "Add songs or albums and use status actions to build your favorites list."
+                  : viewMode === "complete"
+                    ? "Move items through in progress to build your completed list."
+                    : viewMode === "in_progress"
+                      ? "Use the check action on to-do items to start progress."
+                      : `Add ${scopeConfig.label.toLowerCase()} and start tracking.`
             }
           />
         ) : cardLayout === "grid" ? (
@@ -2392,8 +2604,10 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
                 item={item}
                 isBusy={isItemActionPending}
                 onOpen={() => setSelectedItemId(item.id)}
-                onToggleStatus={() => void handleToggleStatus(item)}
+                onMoveForward={() => void handleMoveForward(item)}
+                onMoveBackward={() => void handleMoveBackward(item)}
                 onDelete={() => handleRequestDelete(item)}
+                showProgress={viewMode !== "complete"}
               />
             ))}
           </div>
@@ -2405,8 +2619,10 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
                 item={item}
                 isBusy={isItemActionPending}
                 onOpen={() => setSelectedItemId(item.id)}
-                onToggleStatus={() => void handleToggleStatus(item)}
+                onMoveForward={() => void handleMoveForward(item)}
+                onMoveBackward={() => void handleMoveBackward(item)}
                 onDelete={() => handleRequestDelete(item)}
+                showProgress={viewMode !== "complete"}
               />
             ))}
           </div>
@@ -2435,22 +2651,6 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
         cancelText="Cancel"
         variant="danger"
         isLoading={removeTrackerItem.isPending}
-      />
-
-      <ConfirmationModal
-        isOpen={Boolean(pendingMoveToActiveItem)}
-        onClose={() => {
-          if (!updateTrackerItem.isPending) {
-            setPendingMoveToActiveId(null);
-          }
-        }}
-        onConfirm={() => void handleConfirmMoveToActive()}
-        title="Move to active?"
-        message={`Moving "${pendingMoveToActiveItem?.media?.title || "this item"}" to active will reset its completed date and personal note.`}
-        confirmText={updateTrackerItem.isPending ? "Moving..." : "Move"}
-        cancelText="Cancel"
-        variant="danger"
-        isLoading={updateTrackerItem.isPending}
       />
 
       <AddMediaFromCatalogModal

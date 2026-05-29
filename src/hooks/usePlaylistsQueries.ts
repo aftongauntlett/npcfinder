@@ -13,13 +13,13 @@ export function usePlaylists() {
   });
 }
 
-export function usePlaylist(playlistId: string | null) {
+export function usePlaylist(slug: string | null) {
   return useQuery({
-    queryKey: queryKeys.playlists.detail(playlistId || ""),
-    enabled: !!playlistId,
+    queryKey: queryKeys.playlists.detail(slug || ""),
+    enabled: !!slug,
     queryFn: async () => {
-      if (!playlistId) return null;
-      const { data, error } = await playlistsService.getPlaylist(playlistId);
+      if (!slug) return null;
+      const { data, error } = await playlistsService.getPlaylist(slug);
       if (error) throw error;
       return data;
     },
@@ -62,6 +62,7 @@ export function useCreatePlaylist() {
       name: string;
       description?: string | null;
       is_private?: boolean;
+      icon?: string;
     }) => {
       const { data, error } = await playlistsService.createPlaylist(params);
       if (error) throw error;
@@ -85,6 +86,8 @@ export function useUpdatePlaylist() {
         name?: string;
         description?: string | null;
         is_private?: boolean;
+        tags?: string[];
+        icon?: string;
       };
     }) => {
       const { data, error } = await playlistsService.updatePlaylist(
@@ -94,13 +97,10 @@ export function useUpdatePlaylist() {
       if (error) throw error;
       return data;
     },
-    onSuccess: async (_data, variables) => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.playlists.all }),
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.playlists.detail(variables.playlistId),
-        }),
-      ]);
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.playlists.all,
+      });
     },
   });
 }

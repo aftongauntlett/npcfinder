@@ -9,15 +9,64 @@ export interface Playlist {
   id: string;
   owner_id: string;
   name: string;
+  slug: string;
+  icon: string;
   description: string | null;
   is_private: boolean;
+  tags: string[];
   created_at: string;
   updated_at: string;
+}
+
+/** Convert a string to a URL-safe slug (lowercase, hyphens). */
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+/**
+ * Find a unique slug for a playlist name.
+ * Tries the clean slug first, then appends -2, -3, … up to -99, then a random suffix.
+ * Pass `excludeId` when renaming an existing playlist so its own current slug isn't treated as taken.
+ */
+async function generateUniqueSlug(
+  name: string,
+  excludeId?: string,
+): Promise<string> {
+  const base = slugify(name) || "playlist";
+
+  const checkSlug = async (candidate: string): Promise<boolean> => {
+    let q = supabase
+      .from("playlists")
+      .select("id")
+      .eq("slug", candidate)
+      .limit(1);
+    if (excludeId) q = q.neq("id", excludeId);
+    const { data } = await q;
+    return !data || data.length === 0;
+  };
+
+  if (await checkSlug(base)) return base;
+
+  for (let i = 2; i <= 99; i++) {
+    const candidate = `${base}-${i}`;
+    if (await checkSlug(candidate)) return candidate;
+  }
+
+  // Extremely unlikely fallback
+  return `${base}-${crypto.randomUUID().slice(0, 8)}`;
 }
 
 export interface PlaylistWithMeta extends Playlist {
   item_count: number;
   share_count: number;
+  /** Display name of the owner — populated for shared playlists */
+  owner_display_name: string | null;
 }
 
 export interface PlaylistItem {
@@ -65,7 +114,7 @@ export async function getPlaylists(): Promise<
     const { data, error } = await supabase
       .from("playlists")
       .select(
-        "id, owner_id, name, description, is_private, created_at, updated_at",
+        "id, owner_id, name, slug, icon, description, is_private, tags, created_at, updated_at",
       )
       .order("updated_at", { ascending: false });
 
@@ -113,11 +162,37 @@ export async function getPlaylists(): Promise<
       );
     }
 
+    // Fetch display names for owners of shared playlists
+    const currentUserId = await getCurrentUserId().catch(() => null);
+    const ownerIds = [
+      ...new Set(
+        rows.filter((r) => r.owner_id !== currentUserId).map((r) => r.owner_id),
+      ),
+    ];
+    const ownerDisplayNames = new Map<string, string | null>();
+    if (ownerIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("user_profiles")
+        .select("user_id, display_name")
+        .in("user_id", ownerIds);
+      for (const p of profiles || []) {
+        ownerDisplayNames.set(
+          p.user_id,
+          (p as { user_id: string; display_name: string | null }).display_name,
+        );
+      }
+    }
+
     return {
       data: rows.map((row) => ({
         ...row,
+        tags: Array.isArray(row.tags) ? row.tags : [],
         item_count: itemsByPlaylist.get(row.id) || 0,
         share_count: sharesByPlaylist.get(row.id) || 0,
+        owner_display_name:
+          row.owner_id === currentUserId
+            ? null
+            : (ownerDisplayNames.get(row.owner_id) ?? null),
       })),
       error: null,
     };
@@ -128,20 +203,56 @@ export async function getPlaylists(): Promise<
 }
 
 export async function getPlaylist(
-  playlistId: string,
-): Promise<ServiceResponse<Playlist>> {
+  slug: string,
+): Promise<ServiceResponse<PlaylistWithMeta>> {
   try {
     const { data, error } = await supabase
       .from("playlists")
       .select("*")
-      .eq("id", playlistId)
+      .eq("slug", slug)
       .single();
 
     if (error) throw error;
 
-    return { data: data as Playlist, error: null };
+    const row = data as Playlist;
+    const playlistId = row.id;
+
+    const [{ data: itemRows }, { data: shareRows }] = await Promise.all([
+      supabase
+        .from("playlist_items")
+        .select("id")
+        .eq("playlist_id", playlistId),
+      supabase
+        .from("playlist_shares")
+        .select("id")
+        .eq("playlist_id", playlistId),
+    ]);
+
+    const currentUserId = await getCurrentUserId().catch(() => null);
+    let owner_display_name: string | null = null;
+    if (row.owner_id !== currentUserId) {
+      const { data: profile } = await supabase
+        .from("user_profiles")
+        .select("display_name")
+        .eq("user_id", row.owner_id)
+        .maybeSingle();
+      owner_display_name =
+        (profile as { display_name: string | null } | null)?.display_name ??
+        null;
+    }
+
+    return {
+      data: {
+        ...row,
+        tags: Array.isArray(row.tags) ? row.tags : [],
+        item_count: (itemRows || []).length,
+        share_count: (shareRows || []).length,
+        owner_display_name,
+      },
+      error: null,
+    };
   } catch (error) {
-    logger.error("Failed to load playlist", { error, playlistId });
+    logger.error("Failed to load playlist", { error, slug });
     return { data: null, error: error as Error };
   }
 }
@@ -150,15 +261,19 @@ export async function createPlaylist(params: {
   name: string;
   description?: string | null;
   is_private?: boolean;
+  icon?: string;
 }): Promise<ServiceResponse<Playlist>> {
   try {
     const userId = await getCurrentUserId();
+    const slug = await generateUniqueSlug(params.name);
 
     const { data, error } = await supabase
       .from("playlists")
       .insert({
         owner_id: userId,
         name: params.name,
+        slug,
+        icon: params.icon ?? "list-music",
         description: params.description ?? null,
         is_private: params.is_private ?? true,
       })
@@ -176,19 +291,29 @@ export async function createPlaylist(params: {
 
 export async function updatePlaylist(
   playlistId: string,
-  updates: Partial<Pick<Playlist, "name" | "description" | "is_private">>,
+  updates: Partial<
+    Pick<Playlist, "name" | "description" | "is_private" | "tags" | "icon">
+  >,
 ): Promise<ServiceResponse<Playlist>> {
   try {
+    const newSlug =
+      updates.name !== undefined
+        ? await generateUniqueSlug(updates.name, playlistId)
+        : undefined;
+
     const { data, error } = await supabase
       .from("playlists")
       .update({
         ...(updates.name !== undefined ? { name: updates.name } : {}),
+        ...(newSlug !== undefined ? { slug: newSlug } : {}),
         ...(updates.description !== undefined
           ? { description: updates.description }
           : {}),
         ...(updates.is_private !== undefined
           ? { is_private: updates.is_private }
           : {}),
+        ...(updates.tags !== undefined ? { tags: updates.tags } : {}),
+        ...(updates.icon !== undefined ? { icon: updates.icon } : {}),
       })
       .eq("id", playlistId)
       .select("*")

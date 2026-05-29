@@ -78,6 +78,7 @@ export { default as Breadcrumb } from "./layout/Breadcrumb";
 // Common Components - Reusable utility components
 export { default as StarRating } from "./common/StarRating";
 export { default as StatusBadge } from "./common/StatusBadge";
+export { default as TagInput } from "./common/TagInput";
 export { default as GenreChips } from "./common/GenreChips";
 export { default as Accordion } from "./common/Accordion";
 export { default as AccordionListCard } from "./common/AccordionListCard";

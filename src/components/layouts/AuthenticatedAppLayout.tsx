@@ -7,7 +7,9 @@ import { useTheme } from "@/hooks/useTheme";
 import AppSidebar from "@/components/shared/layout/AppSidebar";
 // Lazy load authenticated components to avoid Supabase imports on landing page
 const TrackerPage = React.lazy(() => import("../pages/TrackerPage"));
-const PlaylistsPage = React.lazy(() => import("../pages/PlaylistsPage"));
+const PlaylistsLibraryPage = React.lazy(
+  () => import("../pages/PlaylistsLibraryPage"),
+);
 const UserSettings = React.lazy(() => import("../pages/UserSettings"));
 const AdminPage = React.lazy(() => import("../pages/admin/AdminPage"));
 
@@ -79,7 +81,19 @@ const AuthenticatedAppLayout: React.FC<AuthenticatedAppLayoutProps> = ({
                 path="tracker/games"
                 element={<TrackerPage scope="games" />}
               />
-              <Route path="playlists" element={<PlaylistsPage />} />
+              <Route path="playlists" element={<PlaylistsLibraryPage />} />
+              <Route
+                path="playlists/mine"
+                element={<Navigate to="/app/playlists?tab=mine" replace />}
+              />
+              <Route
+                path="playlists/shared"
+                element={<Navigate to="/app/playlists?tab=shared" replace />}
+              />
+              <Route
+                path="playlists/:slug"
+                element={<PlaylistsLibraryPage />}
+              />
               <Route
                 path="settings"
                 element={<UserSettings currentUser={user} />}
