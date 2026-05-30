@@ -1,30 +1,115 @@
-import { Fragment } from "react";
-import { ChevronDown, GripVertical, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  BookOpen,
+  Disc3,
+  Film,
+  Gamepad2,
+  ListMusic,
+  Music2,
+  Star,
+  Trash2,
+  Tv,
+} from "lucide-react";
 import { CSS } from "@dnd-kit/utilities";
 import { useSortable } from "@dnd-kit/sortable";
-import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/shared";
 import type { PlaylistItem } from "@/services/playlistsService";
-import type { TrackerItem } from "@/services/trackerService";
 
 interface PlaylistItemRowProps {
   item: PlaylistItem;
   index: number;
   canEdit: boolean;
   ownerRating: number | null;
-  viewerRating: number | null;
-  viewerTrackerItem: TrackerItem | null;
-  isOwner: boolean;
-  isExpanded: boolean;
-  onToggleExpand: () => void;
   onRemove: () => void;
 }
 
-function formatEditedFieldLabel(fieldKey: string): string {
-  return fieldKey
-    .split("_")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
+function getTypeChip(mediaType?: string | null) {
+  const normalized = (mediaType || "").toLowerCase();
+
+  if (normalized === "movie") {
+    return {
+      label: "Movie",
+      Icon: Film,
+      className:
+        "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+    };
+  }
+
+  if (normalized === "tv") {
+    return {
+      label: "TV",
+      Icon: Tv,
+      className:
+        "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300",
+    };
+  }
+
+  if (normalized === "game") {
+    return {
+      label: "Game",
+      Icon: Gamepad2,
+      className:
+        "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+    };
+  }
+
+  if (normalized === "book") {
+    return {
+      label: "Book",
+      Icon: BookOpen,
+      className:
+        "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+    };
+  }
+
+  if (normalized === "album") {
+    return {
+      label: "Album",
+      Icon: Disc3,
+      className:
+        "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/40 dark:text-fuchsia-300",
+    };
+  }
+
+  if (normalized === "song") {
+    return {
+      label: "Song",
+      Icon: Music2,
+      className:
+        "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300",
+    };
+  }
+
+  if (normalized === "playlist") {
+    return {
+      label: "Playlist",
+      Icon: ListMusic,
+      className:
+        "bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300",
+    };
+  }
+
+  return {
+    label: "Media",
+    Icon: ListMusic,
+    className: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
+  };
+}
+
+function getRatingColorClass(rating: number | null): string {
+  if (rating === null) {
+    return "text-gray-500 dark:text-gray-400";
+  }
+
+  if (rating <= 3) {
+    return "text-red-600 dark:text-red-400";
+  }
+
+  if (rating <= 6) {
+    return "text-orange-500 dark:text-orange-400";
+  }
+
+  return "text-green-600 dark:text-green-400";
 }
 
 export default function PlaylistItemRow({
@@ -32,13 +117,11 @@ export default function PlaylistItemRow({
   index,
   canEdit,
   ownerRating,
-  viewerRating,
-  viewerTrackerItem,
-  isOwner,
-  isExpanded,
-  onToggleExpand,
   onRemove,
 }: PlaylistItemRowProps) {
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [isDescriptionTruncated, setIsDescriptionTruncated] = useState(false);
+  const descriptionRef = useRef<HTMLParagraphElement | null>(null);
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({
       id: item.id,
@@ -52,170 +135,163 @@ export default function PlaylistItemRow({
 
   const media = item.media;
   const comment = item.note?.trim() ?? "";
+  const description = media?.description?.trim() ?? "";
+  const {
+    Icon: TypeIcon,
+    className: typeClassName,
+    label: typeLabel,
+  } = getTypeChip(media?.media_type);
+  const numericRating = typeof ownerRating === "number" ? ownerRating : null;
+  const ratingColorClass = getRatingColorClass(numericRating);
 
-  const ownerTrackerNote = item.owner_tracker_note?.trim() ?? "";
-  const viewerTrackerNote = viewerTrackerItem?.note?.trim() ?? "";
-  const ownerEditedFieldLabels = (item.owner_media_edited_fields ?? []).map(
-    formatEditedFieldLabel,
-  );
+  useEffect(() => {
+    if (!description) {
+      setIsDescriptionTruncated(false);
+      return;
+    }
+
+    const descriptionElement = descriptionRef.current;
+    if (!descriptionElement) {
+      return;
+    }
+
+    const measureTruncation = () => {
+      if (isDescriptionExpanded) {
+        return;
+      }
+
+      const isOverflowing =
+        descriptionElement.scrollHeight > descriptionElement.clientHeight + 1;
+      setIsDescriptionTruncated(isOverflowing);
+    };
+
+    // Wait for clamp styles/layout to settle before checking overflow.
+    const frame = window.requestAnimationFrame(measureTruncation);
+    const resizeObserver = new ResizeObserver(measureTruncation);
+    resizeObserver.observe(descriptionElement);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      resizeObserver.disconnect();
+    };
+  }, [description, isDescriptionExpanded]);
 
   return (
-    <Fragment>
-      <tr
-        ref={setNodeRef}
-        style={style}
-        className="group border-b border-gray-100 dark:border-gray-700/60 hover:bg-gray-50 dark:hover:bg-gray-700/30 cursor-pointer transition-colors"
-        onClick={onToggleExpand}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            onToggleExpand();
-          }
-        }}
-        tabIndex={0}
-        role="button"
-        aria-label={`Toggle details for ${media?.title ?? "item"}`}
-      >
-        <td className="w-10 pl-3 pr-2 py-2 text-center">
-          {canEdit ? (
-            <button
-              type="button"
-              aria-label="Drag to reorder"
-              className="cursor-grab text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              onClick={(event) => event.stopPropagation()}
-              {...attributes}
-              {...listeners}
-            >
-              <GripVertical className="w-4 h-4" />
-            </button>
-          ) : (
-            <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">
-              {index + 1}
-            </span>
-          )}
-        </td>
-
-        <td className="py-2 pr-3 max-w-[16rem]">
-          <div className="flex items-center gap-2 min-w-0">
-            <p className="flex-1 min-w-0 font-medium text-sm text-gray-900 dark:text-white truncate">
-              {media?.title ?? "Untitled"}
-            </p>
-            <motion.span
-              animate={{ rotate: isExpanded ? 180 : 0 }}
-              transition={{ duration: 0.2, ease: "easeInOut" }}
-              className="shrink-0 text-gray-400 dark:text-gray-500"
-            >
-              <ChevronDown className="w-3.5 h-3.5" />
-            </motion.span>
-          </div>
-        </td>
-
-        <td className="py-2 pr-3 text-xs text-gray-500 dark:text-gray-400 capitalize whitespace-nowrap">
-          {media?.media_type ?? "—"}
-        </td>
-
-        <td className="py-2 pr-3 text-xs text-gray-700 dark:text-gray-300 tabular-nums whitespace-nowrap">
-          {ownerRating ?? "—"}
-        </td>
-
-        <td className="py-2 pr-3 text-xs text-gray-500 dark:text-gray-400 max-w-[20rem] truncate">
-          {comment || "—"}
-        </td>
-
-        {canEdit && (
-          <td
-            className="py-2 pr-3 text-right"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <Button
-              variant="danger"
-              size="icon"
-              aria-label="Remove from playlist"
-              icon={<Trash2 className="w-3.5 h-3.5" />}
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={onRemove}
-            />
-          </td>
-        )}
-      </tr>
-
-      <AnimatePresence initial={false}>
-        {isExpanded && (
-          <motion.tr
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15, ease: "easeInOut" }}
-            className="border-b border-gray-100 dark:border-gray-700/60 bg-gray-50/60 dark:bg-gray-900/30"
-          >
-            <td colSpan={canEdit ? 6 : 5} className="px-4 py-0">
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.18, ease: "easeInOut" }}
-                className="overflow-hidden"
+    <article
+      ref={setNodeRef}
+      style={style}
+      className="group rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden transition-colors hover:border-primary/40 dark:hover:border-primary-light/40"
+    >
+      <div className="p-3 sm:p-4">
+        <div className="flex items-start gap-3">
+          <div className="pt-1">
+            {canEdit ? (
+              <button
+                type="button"
+                aria-label="Drag to reorder"
+                className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-100 dark:bg-gray-700 text-[11px] text-gray-500 dark:text-gray-300 tabular-nums cursor-grab hover:text-gray-700 dark:hover:text-gray-100"
+                {...attributes}
+                {...listeners}
               >
-                <div className="space-y-2 text-xs text-gray-600 dark:text-gray-300 py-3">
-                  {media?.subtitle && (
-                    <p>
-                      <span className="font-semibold text-gray-700 dark:text-gray-200">
-                        Subtitle:
-                      </span>{" "}
-                      {media.subtitle}
-                    </p>
-                  )}
+                {index + 1}
+              </button>
+            ) : (
+              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-100 dark:bg-gray-700 text-[11px] text-gray-500 dark:text-gray-300 tabular-nums">
+                {index + 1}
+              </span>
+            )}
+          </div>
 
-                  {media?.description && (
-                    <p className="leading-relaxed text-gray-600 dark:text-gray-400">
-                      {media.description}
-                    </p>
-                  )}
+          <div className="w-12 h-16 rounded-md overflow-hidden bg-gray-200 dark:bg-gray-700 shrink-0">
+            {media?.poster_url ? (
+              <img
+                src={media.poster_url}
+                alt={`${media?.title ?? "Media"} cover`}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-500 dark:text-gray-400">
+                <TypeIcon className="w-3.5 h-3.5" />
+              </div>
+            )}
+          </div>
 
-                  {ownerTrackerNote && (
-                    <p>
-                      <span className="font-semibold text-gray-700 dark:text-gray-200">
-                        Owner Note:
-                      </span>{" "}
-                      {ownerTrackerNote}
-                    </p>
-                  )}
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-semibold text-sm text-gray-900 dark:text-white truncate max-w-full">
+                    {media?.title ?? "Untitled"}
+                  </p>
 
-                  {!isOwner && (viewerRating !== null || viewerTrackerNote) && (
-                    <div className="space-y-1">
-                      {viewerRating !== null && (
-                        <p>
-                          <span className="font-semibold text-gray-700 dark:text-gray-200">
-                            Your Rating:
-                          </span>{" "}
-                          {viewerRating}
-                        </p>
-                      )}
-                      {viewerTrackerNote && (
-                        <p>
-                          <span className="font-semibold text-gray-700 dark:text-gray-200">
-                            Your Note:
-                          </span>{" "}
-                          {viewerTrackerNote}
-                        </p>
-                      )}
-                    </div>
-                  )}
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium ${typeClassName}`}
+                  >
+                    <TypeIcon className="w-3 h-3" />
+                    {typeLabel}
+                  </span>
 
-                  {ownerEditedFieldLabels.length > 0 && (
-                    <p>
-                      <span className="font-semibold text-gray-700 dark:text-gray-200">
-                        Owner Edited Fields:
-                      </span>{" "}
-                      {ownerEditedFieldLabels.join(", ")}
-                    </p>
+                  {numericRating !== null && (
+                    <span
+                      className={`inline-flex items-center gap-1 text-xs tabular-nums whitespace-nowrap ${ratingColorClass}`}
+                    >
+                      <Star className="w-3.5 h-3.5 fill-current" />
+                      {numericRating}/10
+                    </span>
                   )}
                 </div>
-              </motion.div>
-            </td>
-          </motion.tr>
-        )}
-      </AnimatePresence>
-    </Fragment>
+              </div>
+
+              {canEdit && (
+                <Button
+                  variant="subtle"
+                  size="icon"
+                  aria-label="Remove from playlist"
+                  icon={<Trash2 className="w-3.5 h-3.5" />}
+                  onClick={onRemove}
+                />
+              )}
+            </div>
+
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              {description ? (
+                <div className="space-y-0.5">
+                  <p
+                    ref={descriptionRef}
+                    className={`leading-relaxed ${
+                      isDescriptionExpanded ? "" : "line-clamp-2"
+                    }`}
+                  >
+                    {description}
+                  </p>
+                  {isDescriptionTruncated && (
+                    <button
+                      type="button"
+                      className="text-xs text-primary dark:text-primary-light hover:underline"
+                      onClick={() =>
+                        setIsDescriptionExpanded((current) => !current)
+                      }
+                    >
+                      {isDescriptionExpanded ? "See less" : "See more"}
+                    </button>
+                  )}
+                </div>
+              ) : (
+                "No description"
+              )}
+            </div>
+
+            {comment && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+                <span className="font-medium text-gray-700 dark:text-gray-300">
+                  Comment:
+                </span>{" "}
+                {comment}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </article>
   );
 }

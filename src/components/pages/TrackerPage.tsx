@@ -96,14 +96,24 @@ function mediaLabel(mediaType: string | undefined): string {
 
 type ViewMode = "todo" | "in_progress" | "complete" | "favorites";
 
-function moveForwardLabel(status: TrackerStatus): string {
-  if (status === "want_to") return "Move to In Progress";
+function moveForwardLabel(
+  status: TrackerStatus,
+  hasIntermediateStatus: boolean,
+): string {
+  if (status === "want_to") {
+    return hasIntermediateStatus ? "Move to In Progress" : "Mark Complete";
+  }
   if (status === "in_progress") return "Mark Complete";
   return "Complete";
 }
 
-function moveBackwardLabel(status: TrackerStatus): string {
-  if (status === "done") return "Move to In Progress";
+function moveBackwardLabel(
+  status: TrackerStatus,
+  hasIntermediateStatus: boolean,
+): string {
+  if (status === "done") {
+    return hasIntermediateStatus ? "Move to In Progress" : "Move to To-Do";
+  }
   if (status === "in_progress") return "Move to To-Do";
   return "Move Back";
 }
@@ -533,6 +543,7 @@ function TrackerMediaCard(props: {
   onDelete: () => void;
   isBusy: boolean;
   showProgress: boolean;
+  hasIntermediateStatus: boolean;
 }) {
   const {
     item,
@@ -542,6 +553,7 @@ function TrackerMediaCard(props: {
     onDelete,
     isBusy,
     showProgress,
+    hasIntermediateStatus,
   } = props;
   const hasNote = (item.note || "").trim().length > 0;
   const hasRating = typeof item.rating === "number" && item.rating > 0;
@@ -646,8 +658,8 @@ function TrackerMediaCard(props: {
                 event.stopPropagation();
                 onMoveBackward();
               }}
-              aria-label={moveBackwardLabel(item.status)}
-              title={moveBackwardLabel(item.status)}
+              aria-label={moveBackwardLabel(item.status, hasIntermediateStatus)}
+              title={moveBackwardLabel(item.status, hasIntermediateStatus)}
               className={backwardButtonClassName()}
             />
           )}
@@ -662,8 +674,8 @@ function TrackerMediaCard(props: {
                 event.stopPropagation();
                 onMoveForward();
               }}
-              aria-label={moveForwardLabel(item.status)}
-              title={moveForwardLabel(item.status)}
+              aria-label={moveForwardLabel(item.status, hasIntermediateStatus)}
+              title={moveForwardLabel(item.status, hasIntermediateStatus)}
               className={forwardButtonClassName(item.status)}
             />
           )}
@@ -1946,6 +1958,7 @@ function TrackerMediaGridCard(props: {
   onDelete: () => void;
   isBusy: boolean;
   showProgress: boolean;
+  hasIntermediateStatus: boolean;
 }) {
   const {
     item,
@@ -1955,6 +1968,7 @@ function TrackerMediaGridCard(props: {
     onDelete,
     isBusy,
     showProgress,
+    hasIntermediateStatus,
   } = props;
   const hasNote = (item.note || "").trim().length > 0;
   const hasRating = typeof item.rating === "number" && item.rating > 0;
@@ -2061,8 +2075,11 @@ function TrackerMediaGridCard(props: {
                   event.stopPropagation();
                   onMoveBackward();
                 }}
-                aria-label={moveBackwardLabel(item.status)}
-                title={moveBackwardLabel(item.status)}
+                aria-label={moveBackwardLabel(
+                  item.status,
+                  hasIntermediateStatus,
+                )}
+                title={moveBackwardLabel(item.status, hasIntermediateStatus)}
                 className={backwardButtonClassName("sm")}
               />
             )}
@@ -2077,8 +2094,11 @@ function TrackerMediaGridCard(props: {
                   event.stopPropagation();
                   onMoveForward();
                 }}
-                aria-label={moveForwardLabel(item.status)}
-                title={moveForwardLabel(item.status)}
+                aria-label={moveForwardLabel(
+                  item.status,
+                  hasIntermediateStatus,
+                )}
+                title={moveForwardLabel(item.status, hasIntermediateStatus)}
                 className={forwardButtonClassName(item.status, "sm")}
               />
             )}
@@ -2110,6 +2130,7 @@ interface TrackerPageProps {
 export default function TrackerPage({ scope }: TrackerPageProps) {
   const resolvedScope = resolveTrackerScope(scope);
   const scopeConfig = TRACKER_SCOPES[resolvedScope];
+  const scopeHasIntermediateStatus = hasInProgressTab(resolvedScope);
 
   usePageMeta({
     ...PAGE_META_BASE,
@@ -2342,7 +2363,11 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
     }
 
     const nextStatus: TrackerStatus =
-      item.status === "want_to" ? "in_progress" : "done";
+      item.status === "want_to"
+        ? scopeHasIntermediateStatus
+          ? "in_progress"
+          : "done"
+        : "done";
 
     await updateTrackerItem.mutateAsync({
       trackerItemId: item.id,
@@ -2363,7 +2388,11 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
     }
 
     const previousStatus: TrackerStatus =
-      item.status === "done" ? "in_progress" : "want_to";
+      item.status === "done"
+        ? scopeHasIntermediateStatus
+          ? "in_progress"
+          : "want_to"
+        : "want_to";
 
     await updateTrackerItem.mutateAsync({
       trackerItemId: item.id,
@@ -2608,6 +2637,7 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
                 onMoveBackward={() => void handleMoveBackward(item)}
                 onDelete={() => handleRequestDelete(item)}
                 showProgress={viewMode !== "complete"}
+                hasIntermediateStatus={scopeHasIntermediateStatus}
               />
             ))}
           </div>
@@ -2623,6 +2653,7 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
                 onMoveBackward={() => void handleMoveBackward(item)}
                 onDelete={() => handleRequestDelete(item)}
                 showProgress={viewMode !== "complete"}
+                hasIntermediateStatus={scopeHasIntermediateStatus}
               />
             ))}
           </div>

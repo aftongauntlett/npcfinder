@@ -121,6 +121,12 @@ export default function EditPlaylistModal({
             size="sm"
             align="right"
           />
+          {!isPublic && (
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Private playlists are automatically removed from your profile Top
+              8.
+            </p>
+          )}
         </div>
 
         <div className="flex justify-end gap-2 pt-1">

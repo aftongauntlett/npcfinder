@@ -9,9 +9,14 @@ import { logger } from "@/lib/logger";
 
 export interface UserProfile {
   user_id: string;
+  username: string;
   display_name: string | null;
   bio: string | null;
   profile_picture_url: string | null;
+  birthday?: string | null;
+  location?: string | null;
+  personal_links?: string[];
+  invited_by_user_id?: string | null;
   visible_cards?: string[]; // Array of card IDs to show on dashboard
   theme_color?: string; // User's chosen theme color (hex code)
   secondary_theme_color?: string | null; // User's chosen secondary theme color (hex code), null means auto
@@ -30,7 +35,7 @@ interface ProfileResult<T> {
  * Get user profile by user ID
  */
 export const getUserProfile = async (
-  userId: string
+  userId: string,
 ): Promise<ProfileResult<UserProfile>> => {
   try {
     const { data, error } = await supabase
@@ -45,9 +50,14 @@ export const getUserProfile = async (
         return {
           data: {
             user_id: userId,
+            username: `user_${userId.slice(0, 8)}`,
             display_name: null,
             bio: null,
             profile_picture_url: null,
+            birthday: null,
+            location: null,
+            personal_links: [],
+            invited_by_user_id: null,
           },
           error: null,
         };
@@ -63,19 +73,59 @@ export const getUserProfile = async (
 };
 
 /**
+ * Get user profile by username
+ */
+export const getUserProfileByUsername = async (
+  username: string,
+): Promise<ProfileResult<UserProfile>> => {
+  try {
+    const normalizedUsername = username.trim();
+
+    const { data, error } = await supabase
+      .from("user_profiles")
+      .select("*")
+      .ilike("username", normalizedUsername)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (!data) {
+      return { data: null, error: null };
+    }
+
+    return { data, error: null };
+  } catch (error) {
+    logger.error("Failed to get profile by username", { error, username });
+    return { data: null, error: error as PostgrestError };
+  }
+};
+
+/**
  * Create or update user profile
  * Uses upsert with conflict resolution on user_id
  */
 export const upsertUserProfile = async (
   userId: string,
-  profileData: Partial<Omit<UserProfile, "user_id">>
+  profileData: Partial<Omit<UserProfile, "user_id">>,
 ): Promise<ProfileResult<UserProfile>> => {
   try {
     const updateData: Record<string, unknown> = {
       user_id: userId,
+      ...(profileData.username !== undefined
+        ? { username: profileData.username || null }
+        : {}),
       display_name: profileData.display_name || null,
       bio: profileData.bio || null,
       profile_picture_url: profileData.profile_picture_url || null,
+      ...(profileData.birthday !== undefined
+        ? { birthday: profileData.birthday || null }
+        : {}),
+      ...(profileData.location !== undefined
+        ? { location: profileData.location || null }
+        : {}),
+      ...(profileData.personal_links !== undefined
+        ? { personal_links: profileData.personal_links }
+        : {}),
       updated_at: new Date().toISOString(),
     };
 
@@ -114,7 +164,7 @@ export const upsertUserProfile = async (
  */
 export const updateUserProfile = async (
   userId: string,
-  updates: Partial<Omit<UserProfile, "user_id">>
+  updates: Partial<Omit<UserProfile, "user_id">>,
 ): Promise<ProfileResult<UserProfile>> => {
   try {
     const { data, error } = await supabase
@@ -137,7 +187,7 @@ export const updateUserProfile = async (
  */
 export const getDisplayName = async (
   userId: string,
-  userEmail?: string
+  userEmail?: string,
 ): Promise<string> => {
   const { data } = await getUserProfile(userId);
   return data?.display_name || userEmail || "User";

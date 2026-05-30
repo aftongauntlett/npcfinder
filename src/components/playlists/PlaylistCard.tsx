@@ -27,12 +27,20 @@ export default function PlaylistCard({
       {/* Title row: icon + name + shared badge */}
       <div className="flex items-center gap-2.5">
         <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 dark:bg-primary-light/10">
-          {(() => {
-            const Icon = getPlaylistIcon(playlist.icon);
-            return (
-              <Icon className="w-4 h-4 text-primary dark:text-primary-light" />
-            );
-          })()}
+          {playlist.icon_image_url ? (
+            <img
+              src={playlist.icon_image_url}
+              alt=""
+              className="w-full h-full rounded-lg object-cover"
+            />
+          ) : (
+            (() => {
+              const Icon = getPlaylistIcon(playlist.icon);
+              return (
+                <Icon className="w-4 h-4 text-primary dark:text-primary-light" />
+              );
+            })()
+          )}
         </div>
         <p className="flex-1 min-w-0 font-semibold text-gray-900 dark:text-white line-clamp-1">
           {playlist.name}

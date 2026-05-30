@@ -3,9 +3,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ListMusic, Users } from "lucide-react";
 import AppLayout from "@/components/layouts/AppLayout";
 import CreatePlaylistModal from "@/components/playlists/CreatePlaylistModal";
-import EditPlaylistModal from "@/components/playlists/EditPlaylistModal";
 import AddTrackerMediaToPlaylistModal from "@/components/playlists/AddTrackerMediaToPlaylistModal";
-import SharePlaylistModal from "@/components/playlists/SharePlaylistModal";
 import PlaylistDetailModal from "@/components/playlists/PlaylistDetailModal";
 import PlaylistCard from "@/components/playlists/PlaylistCard";
 import {
@@ -32,7 +30,7 @@ import type { TrackerItem } from "@/services/trackerService";
 type PlaylistTab = "mine" | "shared";
 type VisibilityFilter = "all" | "private" | "public";
 type SortMode = "updated" | "title" | "items";
-type PlaylistActionModal = "share" | "add" | "edit" | "delete" | null;
+type PlaylistActionModal = "add" | "delete" | null;
 
 function parseTab(value: string | null): PlaylistTab {
   return value === "shared" ? "shared" : "mine";
@@ -439,9 +437,7 @@ export default function PlaylistsLibraryPage() {
         trackerRatingByMediaId={trackerRatingByMediaId}
         onReorder={handleDetailReorder}
         onRemove={handleDetailRemove}
-        onRequestShare={() => openActionFromDetail("share")}
         onRequestAddItems={() => openActionFromDetail("add")}
-        onRequestEdit={() => openActionFromDetail("edit")}
         onRequestDelete={() => openActionFromDetail("delete")}
       />
 
@@ -461,24 +457,6 @@ export default function PlaylistsLibraryPage() {
           void navigate(`/app/playlists/${playlistSlug}?${params.toString()}`);
         }}
       />
-
-      <SharePlaylistModal
-        isOpen={
-          actionModal === "share" && !detailSlug && Boolean(actionPlaylistId)
-        }
-        onClose={closeActionModal}
-        playlistId={actionPlaylistId ?? ""}
-        playlistName={actionPlaylist?.name ?? "Playlist"}
-        playlistSlug={actionPlaylist?.slug}
-      />
-
-      {actionModal === "edit" && !detailSlug && actionPlaylist && (
-        <EditPlaylistModal
-          playlist={actionPlaylist}
-          isOpen={true}
-          onClose={closeActionModal}
-        />
-      )}
 
       <AddTrackerMediaToPlaylistModal
         isOpen={

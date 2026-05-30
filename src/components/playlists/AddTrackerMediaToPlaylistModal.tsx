@@ -13,6 +13,37 @@ interface AddTrackerMediaToPlaylistModalProps {
   title?: string;
 }
 
+type MediaFilter = "all" | "movie" | "tv" | "book" | "game" | "music";
+
+const FILTER_OPTIONS: Array<{ id: MediaFilter; label: string }> = [
+  { id: "all", label: "All" },
+  { id: "movie", label: "Movies" },
+  { id: "tv", label: "TV" },
+  { id: "book", label: "Books" },
+  { id: "game", label: "Games" },
+  { id: "music", label: "Music" },
+];
+
+function matchesMediaFilter(
+  mediaType: string | null | undefined,
+  filter: MediaFilter,
+): boolean {
+  if (filter === "all") return true;
+
+  const normalized = (mediaType || "").toLowerCase();
+
+  if (filter === "music") {
+    return (
+      normalized === "song" ||
+      normalized === "album" ||
+      normalized === "playlist" ||
+      normalized === "music"
+    );
+  }
+
+  return normalized === filter;
+}
+
 export default function AddTrackerMediaToPlaylistModal({
   isOpen,
   onClose,
@@ -22,6 +53,7 @@ export default function AddTrackerMediaToPlaylistModal({
   title = "Add From Tracker",
 }: AddTrackerMediaToPlaylistModalProps) {
   const [query, setQuery] = useState("");
+  const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
   const [isAddingMediaId, setIsAddingMediaId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string } | null>(null);
 
@@ -40,9 +72,15 @@ export default function AddTrackerMediaToPlaylistModal({
 
   const filteredItems = useMemo(() => {
     const search = query.trim().toLowerCase();
-    if (!search) return sortedItems;
-
     return sortedItems.filter((item) => {
+      if (!matchesMediaFilter(item.media?.media_type, mediaFilter)) {
+        return false;
+      }
+
+      if (!search) {
+        return true;
+      }
+
       const haystack = [
         item.media?.title || "",
         item.media?.subtitle || "",
@@ -53,6 +91,45 @@ export default function AddTrackerMediaToPlaylistModal({
 
       return haystack.includes(search);
     });
+  }, [mediaFilter, query, sortedItems]);
+
+  const filterCounts = useMemo(() => {
+    const search = query.trim().toLowerCase();
+    const counts: Record<MediaFilter, number> = {
+      all: 0,
+      movie: 0,
+      tv: 0,
+      book: 0,
+      game: 0,
+      music: 0,
+    };
+
+    for (const item of sortedItems) {
+      const haystack = [
+        item.media?.title || "",
+        item.media?.subtitle || "",
+        item.media?.description || "",
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      if (search && !haystack.includes(search)) {
+        continue;
+      }
+
+      counts.all += 1;
+
+      if (matchesMediaFilter(item.media?.media_type, "movie"))
+        counts.movie += 1;
+      if (matchesMediaFilter(item.media?.media_type, "tv")) counts.tv += 1;
+      if (matchesMediaFilter(item.media?.media_type, "book")) counts.book += 1;
+      if (matchesMediaFilter(item.media?.media_type, "game")) counts.game += 1;
+      if (matchesMediaFilter(item.media?.media_type, "music")) {
+        counts.music += 1;
+      }
+    }
+
+    return counts;
   }, [query, sortedItems]);
 
   const handleAdd = async (mediaId: string) => {
@@ -69,6 +146,7 @@ export default function AddTrackerMediaToPlaylistModal({
 
   const handleClose = () => {
     setQuery("");
+    setMediaFilter("all");
     setIsAddingMediaId(null);
     onClose();
   };
@@ -86,9 +164,33 @@ export default function AddTrackerMediaToPlaylistModal({
             leftIcon={<Search className="w-4 h-4" />}
           />
 
+          <div className="flex flex-wrap items-center gap-2">
+            {FILTER_OPTIONS.map((option) => {
+              const isActive = mediaFilter === option.id;
+
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setMediaFilter(option.id)}
+                  className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                    isActive
+                      ? "border-primary bg-primary/10 text-primary dark:border-primary-light dark:bg-primary-light/15 dark:text-primary-light"
+                      : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  }`}
+                >
+                  <span>{option.label}</span>
+                  <span className="ml-1.5 rounded-full bg-black/10 dark:bg-white/10 px-1.5 py-0.5 text-[10px] leading-none">
+                    {filterCounts[option.id]}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
           {filteredItems.length === 0 ? (
             <div className="text-sm text-gray-500 dark:text-gray-400">
-              No tracker items found for this search.
+              No tracker items found for this search/filter.
             </div>
           ) : (
             <div className="divide-y divide-gray-200 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden max-h-[60vh] overflow-y-auto">

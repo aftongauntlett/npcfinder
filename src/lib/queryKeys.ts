@@ -40,6 +40,22 @@ export const queryKeys = {
     all: ["friends"] as const,
     withRecs: (mediaType?: MediaType) =>
       [...queryKeys.friends.all, "with-recs", mediaType] as const,
+    directory: (
+      query: string,
+      page: number,
+      pageSize: number,
+      excludeUserId?: string,
+    ) =>
+      [
+        ...queryKeys.friends.all,
+        "directory",
+        query,
+        page,
+        pageSize,
+        excludeUserId ?? null,
+      ] as const,
+    tags: () => [...queryKeys.friends.all, "tags"] as const,
+    tagMembers: () => [...queryKeys.friends.all, "tag-members"] as const,
   },
 
   // Stats
@@ -53,6 +69,8 @@ export const queryKeys = {
   profiles: {
     all: ["profiles"] as const,
     detail: (userId: string) => [...queryKeys.profiles.all, userId] as const,
+    byUsername: (username: string) =>
+      [...queryKeys.profiles.all, "username", username] as const,
     current: () => [...queryKeys.profiles.all, "current"] as const,
   },
 

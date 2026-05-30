@@ -10,6 +10,8 @@ const TrackerPage = React.lazy(() => import("../pages/TrackerPage"));
 const PlaylistsLibraryPage = React.lazy(
   () => import("../pages/PlaylistsLibraryPage"),
 );
+const FriendsPage = React.lazy(() => import("../pages/FriendsPage"));
+const ProfilePage = React.lazy(() => import("../pages/ProfilePage"));
 const UserSettings = React.lazy(() => import("../pages/UserSettings"));
 const AdminPage = React.lazy(() => import("../pages/admin/AdminPage"));
 
@@ -82,6 +84,13 @@ const AuthenticatedAppLayout: React.FC<AuthenticatedAppLayoutProps> = ({
                 element={<TrackerPage scope="games" />}
               />
               <Route path="playlists" element={<PlaylistsLibraryPage />} />
+              <Route path="friends" element={<FriendsPage />} />
+              <Route
+                path="social"
+                element={<Navigate to="/app/profile" replace />}
+              />
+              <Route path="profile" element={<ProfilePage />} />
+              <Route path="profile/:username" element={<ProfilePage />} />
               <Route
                 path="playlists/mine"
                 element={<Navigate to="/app/playlists?tab=mine" replace />}

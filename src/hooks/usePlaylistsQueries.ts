@@ -88,12 +88,32 @@ export function useUpdatePlaylist() {
         is_private?: boolean;
         tags?: string[];
         icon?: string;
+        icon_image_url?: string | null;
+        profile_showcase_rank?: number | null;
       };
     }) => {
       const { data, error } = await playlistsService.updatePlaylist(
         params.playlistId,
         params.updates,
       );
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.playlists.all,
+      });
+    },
+  });
+}
+
+export function useSetProfileShowcaseOrder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (orderedPlaylistIds: string[]) => {
+      const { data, error } =
+        await playlistsService.setProfileShowcaseOrder(orderedPlaylistIds);
       if (error) throw error;
       return data;
     },

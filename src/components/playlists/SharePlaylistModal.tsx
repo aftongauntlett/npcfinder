@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { Check, Link2, Trash2, UserPlus, Users } from "lucide-react";
 import { Button, ConfirmDialog, Input, Modal } from "@/components/shared";
-import { useUserSearch } from "@/hooks/useUserSearch";
+import { useUserDirectory } from "@/hooks/useUserDirectory";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   usePlaylistShares,
   useSharePlaylist,
@@ -23,6 +24,7 @@ export default function SharePlaylistModal({
   playlistName,
   playlistSlug,
 }: SharePlaylistModalProps) {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -34,7 +36,7 @@ export default function SharePlaylistModal({
   const { data: shares = [], isLoading: isSharesLoading } = usePlaylistShares(
     isOpen ? playlistId : null,
   );
-  const { data: searchResults } = useUserSearch(searchQuery, 1, 20);
+  const { data: directoryResults } = useUserDirectory(searchQuery, 1, 20);
 
   const shareMutation = useSharePlaylist();
   const unshareMutation = useUnsharePlaylist();
@@ -44,8 +46,9 @@ export default function SharePlaylistModal({
     [shares],
   );
 
-  const availableUsers = (searchResults?.users || []).filter(
-    (user) => user.is_connected && !existingIds.has(user.user_id),
+  const availableUsers = (directoryResults?.users || []).filter(
+    (candidate) =>
+      candidate.user_id !== user?.id && !existingIds.has(candidate.user_id),
   );
 
   const toggleUser = (userId: string) => {
@@ -116,8 +119,8 @@ export default function SharePlaylistModal({
               <Users className="w-5 h-5 text-primary" />
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Share with connected users by display name (username-style).
-              Shared users can view only.
+              Share with anyone in the app by name or username. Shared users can
+              view only.
             </p>
           </div>
 
@@ -155,7 +158,7 @@ export default function SharePlaylistModal({
               <div className="max-h-44 overflow-y-auto space-y-2">
                 {availableUsers.length === 0 ? (
                   <div className="text-sm text-gray-500 dark:text-gray-400">
-                    No connected users found.
+                    No users found.
                   </div>
                 ) : (
                   availableUsers.map((user) => {
@@ -174,7 +177,12 @@ export default function SharePlaylistModal({
                       >
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-sm text-gray-900 dark:text-white">
-                            {user.display_name || "Unknown User"}
+                            {user.display_name ||
+                              user.username ||
+                              "Unknown User"}
+                          </span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            @{user.username}
                           </span>
                           {selected && (
                             <span className="text-xs text-primary">

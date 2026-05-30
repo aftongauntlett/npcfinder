@@ -74,7 +74,7 @@ const ForgotPassword: React.FC = () => {
               </p>
               <Button
                 variant="primary"
-                onClick={() => navigate("/signin")}
+                onClick={() => navigate("/login")}
                 className="w-full mt-6"
               >
                 Back to Sign In
@@ -145,7 +145,7 @@ const ForgotPassword: React.FC = () => {
                 type="button"
                 variant="subtle"
                 icon={<ArrowLeft className="w-4 h-4" />}
-                onClick={() => navigate("/signin")}
+                onClick={() => navigate("/login")}
                 className="w-full"
               >
                 Back to Sign In

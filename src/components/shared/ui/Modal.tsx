@@ -10,10 +10,12 @@ let originalOverflowStyle = "";
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  title?: string;
+  title?: React.ReactNode;
+  headerActions?: React.ReactNode;
   children: React.ReactNode;
   maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "4xl" | "5xl" | "6xl";
   showCloseButton?: boolean;
+  disableClose?: boolean;
   closeOnBackdropClick?: boolean;
   showHeader?: boolean;
   ariaLabelledby?: string;
@@ -26,9 +28,11 @@ const Modal: React.FC<ModalProps> = ({
   isOpen,
   onClose,
   title,
+  headerActions,
   children,
   maxWidth = "2xl",
   showCloseButton = true,
+  disableClose = false,
   closeOnBackdropClick = true,
   showHeader = true,
   ariaLabelledby,
@@ -78,14 +82,14 @@ const Modal: React.FC<ModalProps> = ({
     if (!isOpen) return;
 
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if (e.key === "Escape" && !disableClose) {
         onClose();
       }
     };
 
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
-  }, [isOpen, onClose]);
+  }, [disableClose, isOpen, onClose]);
 
   // Handle focus trap
   useEffect(() => {
@@ -138,7 +142,7 @@ const Modal: React.FC<ModalProps> = ({
   };
 
   const handleBackdropClick = (e: React.MouseEvent) => {
-    if (closeOnBackdropClick && e.target === e.currentTarget) {
+    if (closeOnBackdropClick && !disableClose && e.target === e.currentTarget) {
       onClose();
     }
   };
@@ -181,14 +185,20 @@ const Modal: React.FC<ModalProps> = ({
                     {title}
                   </h2>
                 )}
-                {showCloseButton && (
-                  <Button
-                    onClick={onClose}
-                    variant="subtle"
-                    size="icon"
-                    icon={<X className="w-5 h-5" />}
-                    aria-label="Close modal"
-                  />
+                {(headerActions || showCloseButton) && (
+                  <div className="flex items-center gap-1.5">
+                    {headerActions}
+                    {showCloseButton && (
+                      <Button
+                        onClick={onClose}
+                        variant="subtle"
+                        size="icon"
+                        icon={<X className="w-5 h-5" />}
+                        aria-label="Close modal"
+                        disabled={disableClose}
+                      />
+                    )}
+                  </div>
                 )}
               </div>
             )}

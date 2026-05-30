@@ -14,7 +14,6 @@ import {
 } from "@/components/shared";
 import MainLayout from "../layouts/MainLayout";
 import ContentLayout from "../layouts/ContentLayout";
-import ProfileInformationSection from "../settings/ProfileInformationSection";
 import CompactColorThemePicker from "../settings/CompactColorThemePicker";
 import PasswordChangeSection from "../settings/PasswordChangeSection";
 import { DEFAULT_THEME_COLOR } from "../../styles/colorThemes";
@@ -27,10 +26,7 @@ interface UserSettingsProps {
   currentUser: User;
 }
 
-interface ProfileData {
-  display_name: string;
-  bio: string;
-  visible_cards: string[];
+interface AppearanceData {
   theme_color: string; // Hex color
   secondary_theme_color: string | null; // Manual secondary color, null means use auto
   auto_secondary_color: boolean; // Whether to auto-generate secondary
@@ -44,7 +40,7 @@ interface Message {
 // Static page meta options (stable reference)
 const pageMetaOptions = {
   title: "Settings",
-  description: "Manage your profile, preferences, and account settings",
+  description: "Manage app appearance and account security",
   noIndex: true,
 };
 
@@ -63,13 +59,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
   // Use cached profile query instead of direct API call
   const { data: cachedProfile, isLoading: profileLoading } = useProfileQuery();
 
-  // Default to all cards visible
-  const allCardIds = ["media", "tasks"];
-
-  const [profile, setProfile] = useState<ProfileData>({
-    display_name: "",
-    bio: "",
-    visible_cards: allCardIds,
+  const [appearance, setAppearance] = useState<AppearanceData>({
     theme_color: DEFAULT_THEME_COLOR,
     secondary_theme_color: null,
     auto_secondary_color: true,
@@ -87,24 +77,13 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
   useEffect(() => {
     if (!cachedProfile) return;
 
-    const normalizedVisibleCards = Array.from(
-      new Set(
-        (cachedProfile.visible_cards || allCardIds).map((cardId) =>
-          cardId === "labs" ? "tasks" : cardId,
-        ),
-      ),
-    );
-
-    const loadedProfile = {
-      display_name: cachedProfile.display_name || currentUser.email || "",
-      bio: cachedProfile.bio || "",
-      visible_cards: normalizedVisibleCards,
+    const loadedAppearance = {
       theme_color: cachedProfile.theme_color || DEFAULT_THEME_COLOR,
       secondary_theme_color: cachedProfile.secondary_theme_color || null,
       auto_secondary_color: cachedProfile.auto_secondary_color ?? true,
     };
 
-    setProfile(loadedProfile);
+    setAppearance(loadedAppearance);
 
     // Apply theme color immediately
     if (cachedProfile.theme_color) {
@@ -117,22 +96,10 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
       changeAutoSecondaryColor(cachedProfile.auto_secondary_color);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cachedProfile, currentUser]);
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    const { name, value } = e.target;
-    setProfile((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    setHasUnsavedChanges(true);
-    setMessage(null);
-  };
+  }, [cachedProfile]);
 
   const handleThemeColorChange = (color: string) => {
-    setProfile((prev) => ({
+    setAppearance((prev) => ({
       ...prev,
       theme_color: color,
     }));
@@ -141,7 +108,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
   };
 
   const handleSecondaryColorChange = (color: string | null) => {
-    setProfile((prev) => ({
+    setAppearance((prev) => ({
       ...prev,
       secondary_theme_color: color,
     }));
@@ -150,7 +117,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
   };
 
   const handleAutoSecondaryToggle = (auto: boolean) => {
-    setProfile((prev) => ({
+    setAppearance((prev) => ({
       ...prev,
       auto_secondary_color: auto,
     }));
@@ -189,15 +156,15 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
     setMessage(null);
 
     // Apply theme color IMMEDIATELY before saving to ensure UI updates
-    changeThemeColor(profile.theme_color);
-    changeSecondaryThemeColor(profile.secondary_theme_color || null);
-    changeAutoSecondaryColor(profile.auto_secondary_color);
+    changeThemeColor(appearance.theme_color);
+    changeSecondaryThemeColor(appearance.secondary_theme_color || null);
+    changeAutoSecondaryColor(appearance.auto_secondary_color);
 
     try {
-      const { error } = await updateUserProfile(currentUser.id, profile);
+      const { error } = await updateUserProfile(currentUser.id, appearance);
 
       if (error) {
-        setMessage({ type: "error", text: "Failed to save profile" });
+        setMessage({ type: "error", text: "Failed to save appearance" });
       } else {
         // Invalidate the profile cache so it refetches with new data
         await queryClient.invalidateQueries({
@@ -205,10 +172,13 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
         });
 
         setHasUnsavedChanges(false);
-        setMessage({ type: "success", text: "Profile updated successfully!" });
+        setMessage({
+          type: "success",
+          text: "Appearance updated successfully!",
+        });
       }
     } catch (error) {
-      logger.error("Error saving profile:", error);
+      logger.error("Error saving appearance:", error);
       setMessage({ type: "error", text: "An unexpected error occurred" });
     } finally {
       setIsSaving(false);
@@ -219,10 +189,10 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
     return (
       <MainLayout>
         <ContentLayout
-          title="Profile Settings"
-          description="Customize your profile and dashboard preferences"
+          title="Settings"
+          description="Manage app appearance and account security"
         >
-          <SkeletonCard variant="settings" className="min-h-[600px]" />
+          <SkeletonCard variant="settings" className="min-h-[420px]" />
         </ContentLayout>
       </MainLayout>
     );
@@ -231,8 +201,8 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
   return (
     <MainLayout>
       <ContentLayout
-        title="Profile Settings"
-        description="Customize your profile and dashboard preferences"
+        title="Settings"
+        description="Manage app appearance and account security"
       >
         {/* Unsaved Changes Confirmation Dialog */}
         <ConfirmDialog
@@ -271,25 +241,9 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
               e.preventDefault();
               void handleSave(e);
             }}
-            className="space-y-6"
+            className="space-y-4"
           >
-            {/* Top Row: Profile Information + Change Password */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card variant="glass" spacing="lg" border>
-                <ProfileInformationSection
-                  displayName={profile.display_name}
-                  currentUser={currentUser}
-                  onChange={handleChange}
-                />
-              </Card>
-
-              <Card variant="glass" spacing="lg" border>
-                <PasswordChangeSection />
-              </Card>
-            </div>
-
-            {/* Appearance */}
-            <Card variant="glass" spacing="lg" border>
+            <Card variant="glass" spacing="md" border>
               <div className="space-y-4">
                 <h3 className="text-base font-medium text-gray-900 dark:text-white mb-1">
                   Appearance
@@ -311,18 +265,21 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
 
                 <div className="pt-6 border-t border-gray-200/80 dark:border-gray-700/30">
                   <CompactColorThemePicker
-                    selectedColor={profile.theme_color}
+                    title=""
+                    selectedColor={appearance.theme_color}
                     onColorChange={handleThemeColorChange}
-                    secondaryColor={profile.secondary_theme_color}
+                    secondaryColor={appearance.secondary_theme_color}
                     onSecondaryColorChange={handleSecondaryColorChange}
-                    autoSecondary={profile.auto_secondary_color}
+                    autoSecondary={appearance.auto_secondary_color}
                     onAutoSecondaryToggle={handleAutoSecondaryToggle}
+                    showPreview={false}
+                    showGuidanceText={false}
+                    pickerHeightPx={124}
                   />
                 </div>
               </div>
             </Card>
 
-            {/* Action Buttons */}
             <div className="flex gap-3 justify-end">
               <Button
                 type="button"
@@ -337,10 +294,14 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
                 loading={isSaving}
                 disabled={isSaving}
               >
-                {isSaving ? "Saving..." : "Save Changes"}
+                {isSaving ? "Saving..." : "Save Appearance"}
               </Button>
             </div>
           </form>
+
+          <Card variant="glass" spacing="md" border>
+            <PasswordChangeSection />
+          </Card>
         </motion.div>
       </ContentLayout>
     </MainLayout>

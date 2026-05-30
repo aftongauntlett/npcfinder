@@ -14,11 +14,13 @@ import {
   Menu,
   X,
   UserCircle2,
+  Users,
 } from "lucide-react";
 import { useAdmin } from "@/contexts/AdminContext";
 import { TRACKER_SCOPES } from "@/data/trackerScopes";
 import { signOut } from "@/lib/auth";
 import { logger } from "@/lib/logger";
+import { useProfileQuery } from "@/hooks/useProfileQuery";
 
 interface AppSidebarProps {
   currentUser: { id: string; email?: string } | null;
@@ -37,52 +39,11 @@ interface SidebarItem {
   }>;
 }
 
-const BASE_ITEMS: SidebarItem[] = [
-  {
-    id: "tracker",
-    label: "Tracker",
-    path: TRACKER_SCOPES["movies-tv"].path,
-    icon: LayoutDashboard,
-    children: [
-      {
-        id: "tracker-movies-tv",
-        label: TRACKER_SCOPES["movies-tv"].navLabel,
-        path: TRACKER_SCOPES["movies-tv"].path,
-        icon: Film,
-      },
-      {
-        id: "tracker-books",
-        label: TRACKER_SCOPES.books.navLabel,
-        path: TRACKER_SCOPES.books.path,
-        icon: Book,
-      },
-      {
-        id: "tracker-games",
-        label: TRACKER_SCOPES.games.navLabel,
-        path: TRACKER_SCOPES.games.path,
-        icon: Gamepad2,
-      },
-      {
-        id: "tracker-music",
-        label: TRACKER_SCOPES.music.navLabel,
-        path: TRACKER_SCOPES.music.path,
-        icon: Music2,
-      },
-    ],
-  },
-  {
-    id: "playlists",
-    label: "Playlists",
-    path: "/app/playlists",
-    icon: ListMusic,
-  },
-  { id: "settings", label: "Settings", path: "/app/settings", icon: Settings },
-];
-
 export default function AppSidebar({ currentUser }: AppSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { role } = useAdmin();
+  const { data: profile } = useProfileQuery();
   const isTrackerRoute = location.pathname.startsWith("/app/tracker");
 
   const [isOpen, setIsOpen] = useState(false);
@@ -96,8 +57,63 @@ export default function AppSidebar({ currentUser }: AppSidebarProps) {
     }
   }, [isTrackerRoute]);
 
+  const profilePath = profile?.username
+    ? `/app/profile/${profile.username}`
+    : "/app/profile";
+
   const navItems = useMemo(() => {
-    const items = [...BASE_ITEMS];
+    const items: SidebarItem[] = [
+      {
+        id: "tracker",
+        label: "Tracker",
+        path: TRACKER_SCOPES["movies-tv"].path,
+        icon: LayoutDashboard,
+        children: [
+          {
+            id: "tracker-movies-tv",
+            label: TRACKER_SCOPES["movies-tv"].navLabel,
+            path: TRACKER_SCOPES["movies-tv"].path,
+            icon: Film,
+          },
+          {
+            id: "tracker-books",
+            label: TRACKER_SCOPES.books.navLabel,
+            path: TRACKER_SCOPES.books.path,
+            icon: Book,
+          },
+          {
+            id: "tracker-games",
+            label: TRACKER_SCOPES.games.navLabel,
+            path: TRACKER_SCOPES.games.path,
+            icon: Gamepad2,
+          },
+          {
+            id: "tracker-music",
+            label: TRACKER_SCOPES.music.navLabel,
+            path: TRACKER_SCOPES.music.path,
+            icon: Music2,
+          },
+        ],
+      },
+      {
+        id: "playlists",
+        label: "Playlists",
+        path: "/app/playlists",
+        icon: ListMusic,
+      },
+      {
+        id: "social",
+        label: "Social",
+        path: profilePath,
+        icon: Users,
+      },
+      {
+        id: "settings",
+        label: "Settings",
+        path: "/app/settings",
+        icon: Settings,
+      },
+    ];
 
     if (role === "admin" || role === "super_admin") {
       items.push({
@@ -109,7 +125,7 @@ export default function AppSidebar({ currentUser }: AppSidebarProps) {
     }
 
     return items;
-  }, [role]);
+  }, [profilePath, role]);
 
   const displayName = useMemo(() => {
     const email = currentUser?.email;
@@ -124,6 +140,14 @@ export default function AppSidebar({ currentUser }: AppSidebarProps) {
 
     if (path.startsWith("/app/playlists")) {
       return location.pathname.startsWith("/app/playlists");
+    }
+
+    if (path.startsWith("/app/profile")) {
+      return (
+        location.pathname.startsWith("/app/profile") ||
+        location.pathname.startsWith("/app/friends") ||
+        location.pathname.startsWith("/app/social")
+      );
     }
 
     return location.pathname.startsWith(path);
@@ -193,8 +217,13 @@ export default function AppSidebar({ currentUser }: AppSidebarProps) {
           <nav className="p-3 space-y-1" aria-label="App navigation">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const parentActive = isActive(item.path);
-              const isTrackerGroup = item.id === "tracker" && !!item.children;
+              const parentActive = item.children
+                ? item.children.some((child) => isActive(child.path))
+                : isActive(item.path);
+              const isCollapsibleGroup =
+                !!item.children && item.id === "tracker";
+              const isGroupExpanded =
+                item.id === "tracker" ? isTrackerExpanded : false;
               const childContainerId = `${item.id}-children`;
 
               return (
@@ -202,17 +231,19 @@ export default function AppSidebar({ currentUser }: AppSidebarProps) {
                   <button
                     type="button"
                     onClick={() => {
-                      if (isTrackerGroup) {
-                        setIsTrackerExpanded((prev) => !prev);
+                      if (isCollapsibleGroup) {
+                        if (item.id === "tracker") {
+                          setIsTrackerExpanded((prev) => !prev);
+                        }
                         return;
                       }
                       navigateAndClose(item.path);
                     }}
                     aria-expanded={
-                      isTrackerGroup ? isTrackerExpanded : undefined
+                      isCollapsibleGroup ? isGroupExpanded : undefined
                     }
                     aria-controls={
-                      isTrackerGroup ? childContainerId : undefined
+                      isCollapsibleGroup ? childContainerId : undefined
                     }
                     className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors ${
                       parentActive
@@ -224,39 +255,40 @@ export default function AppSidebar({ currentUser }: AppSidebarProps) {
                       <Icon className="w-4 h-4" />
                       <span>{item.label}</span>
                     </span>
-                    {isTrackerGroup && (
+                    {isCollapsibleGroup && (
                       <ChevronDown
                         className={`w-4 h-4 transition-transform ${
-                          isTrackerExpanded ? "rotate-180" : "rotate-0"
+                          isGroupExpanded ? "rotate-180" : "rotate-0"
                         }`}
                       />
                     )}
                   </button>
 
-                  {item.children && (!isTrackerGroup || isTrackerExpanded) && (
-                    <div id={childContainerId} className="pl-5 space-y-1">
-                      {item.children.map((child) => {
-                        const ChildIcon = child.icon;
-                        const childActive = location.pathname === child.path;
+                  {item.children &&
+                    (!isCollapsibleGroup || isGroupExpanded) && (
+                      <div id={childContainerId} className="pl-5 space-y-1">
+                        {item.children.map((child) => {
+                          const ChildIcon = child.icon;
+                          const childActive = isActive(child.path);
 
-                        return (
-                          <button
-                            key={child.id}
-                            type="button"
-                            onClick={() => navigateAndClose(child.path)}
-                            className={`w-full flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs transition-colors ${
-                              childActive
-                                ? "bg-primary/15 text-primary dark:bg-primary/25 dark:text-primary-light"
-                                : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-                            }`}
-                          >
-                            <ChildIcon className="w-3.5 h-3.5" />
-                            <span>{child.label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
+                          return (
+                            <button
+                              key={child.id}
+                              type="button"
+                              onClick={() => navigateAndClose(child.path)}
+                              className={`w-full flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs transition-colors ${
+                                childActive
+                                  ? "bg-primary/15 text-primary dark:bg-primary/25 dark:text-primary-light"
+                                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                              }`}
+                            >
+                              <ChildIcon className="w-3.5 h-3.5" />
+                              <span>{child.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                 </div>
               );
             })}

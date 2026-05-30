@@ -79,7 +79,7 @@ const ResetPassword: React.FC = () => {
         setPasswordReset(true);
         // Redirect to sign in after 3 seconds
         setTimeout(() => {
-          navigate("/signin");
+          navigate("/login");
         }, 3000);
       }
     } catch (err) {

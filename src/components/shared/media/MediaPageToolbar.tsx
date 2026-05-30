@@ -32,6 +32,7 @@ interface MediaPageToolbarProps {
   hideAddButton?: boolean;
   onCollapseAll?: () => void;
   hasExpandedItems?: boolean;
+  compactSpacing?: boolean;
 }
 
 export function MediaPageToolbar(props: MediaPageToolbarProps) {
@@ -45,6 +46,7 @@ export function MediaPageToolbar(props: MediaPageToolbarProps) {
     addIcon,
     rightActions,
     hideAddButton = false,
+    compactSpacing = false,
   } = props;
 
   const handleRemoveFilter = (sectionId: string, filterId: string) => {
@@ -70,8 +72,10 @@ export function MediaPageToolbar(props: MediaPageToolbarProps) {
   const actionButtonClassName =
     "h-9 w-9 rounded-full border-0 bg-gray-100/80 shadow-sm backdrop-blur-sm hover:bg-gray-200/80 dark:bg-gray-700/70 dark:hover:bg-gray-600/80";
 
+  const containerSpacingClass = compactSpacing ? "mb-2 gap-2" : "mb-4 gap-3";
+
   return (
-    <div className="relative z-20 mb-4 flex flex-col gap-3">
+    <div className={`relative z-20 flex flex-col ${containerSpacingClass}`}>
       <div className="flex w-full items-center gap-2">
         {searchConfig && (
           <div className="min-w-0 flex-1">

@@ -14,6 +14,7 @@ interface CompactColorThemePickerProps {
   showPreview?: boolean;
   pickerHeightPx?: number;
   showHexInput?: boolean;
+  showGuidanceText?: boolean;
   // Secondary color support
   secondaryColor?: string | null;
   onSecondaryColorChange?: (color: string | null) => void;
@@ -28,6 +29,7 @@ const CompactColorThemePicker: React.FC<CompactColorThemePickerProps> = ({
   showPreview = true,
   pickerHeightPx = 160,
   showHexInput = true,
+  showGuidanceText = true,
   secondaryColor,
   onSecondaryColorChange,
   autoSecondary = true,
@@ -40,12 +42,14 @@ const CompactColorThemePicker: React.FC<CompactColorThemePickerProps> = ({
           <h3 className="text-base font-medium text-gray-900 dark:text-white">
             {title}
           </h3>
-          <p className="text-sm text-gray-700 dark:text-gray-300">
-            Choose your primary theme color. This will be used for links,
-            buttons, and accents throughout the app. A complementary secondary
-            color will be automatically generated to create visual harmony. (You
-            can customize this below)
-          </p>
+          {showGuidanceText && (
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              Choose your primary theme color. This will be used for links,
+              buttons, and accents throughout the app. A complementary secondary
+              color will be automatically generated to create visual harmony.
+              (You can customize this below)
+            </p>
+          )}
         </div>
       ) : null}
 
@@ -171,12 +175,14 @@ const CompactColorThemePicker: React.FC<CompactColorThemePickerProps> = ({
             <h3 className="text-base font-medium text-gray-900 dark:text-white">
               Customize Secondary Color
             </h3>
-            <p className="text-sm text-gray-700 dark:text-gray-300">
-              Choose a color that complements your primary. Good secondary
-              colors provide contrast while maintaining visual harmony -
-              consider analogous colors (next to each other on the color wheel)
-              or triadic colors for balanced palettes.
-            </p>
+            {showGuidanceText && (
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                Choose a color that complements your primary. Good secondary
+                colors provide contrast while maintaining visual harmony -
+                consider analogous colors (next to each other on the color
+                wheel) or triadic colors for balanced palettes.
+              </p>
+            )}
           </div>
 
           <div
@@ -243,7 +249,7 @@ const CompactColorThemePicker: React.FC<CompactColorThemePickerProps> = ({
                       backgroundColor:
                         secondaryColor || getComplementaryColor(selectedColor),
                       color: getContrastColor(
-                        secondaryColor || getComplementaryColor(selectedColor)
+                        secondaryColor || getComplementaryColor(selectedColor),
                       ),
                     }}
                   >
@@ -279,7 +285,8 @@ const CompactColorThemePicker: React.FC<CompactColorThemePickerProps> = ({
                           secondaryColor ||
                           getComplementaryColor(selectedColor),
                         color: getContrastColor(
-                          secondaryColor || getComplementaryColor(selectedColor)
+                          secondaryColor ||
+                            getComplementaryColor(selectedColor),
                         ),
                       }}
                     >

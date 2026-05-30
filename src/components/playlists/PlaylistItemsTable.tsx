@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   DndContext,
   PointerSensor,
@@ -31,18 +31,11 @@ interface PlaylistItemsTableProps {
 
 export default function PlaylistItemsTable({
   items,
-  isOwner,
   canEdit,
-  trackerItemByMediaId,
-  trackerRatingByMediaId,
   onReorder,
   onRemove,
   onAddItems,
 }: PlaylistItemsTableProps) {
-  const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
-  const stickyHeaderClass =
-    "sticky top-0 z-[1] bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700";
-
   const orderedItems = useMemo(
     () =>
       [...items].sort((a, b) => {
@@ -93,70 +86,25 @@ export default function PlaylistItemsTable({
     );
   }
 
-  const table = (
-    <table className="w-full text-sm border-collapse">
-      <thead>
-        <tr>
-          <th className={`w-10 pl-3 pr-2 py-2 ${stickyHeaderClass}`} />
-          <th
-            className={`py-2 pr-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap ${stickyHeaderClass}`}
-          >
-            Title
-          </th>
-          <th
-            className={`py-2 pr-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap ${stickyHeaderClass}`}
-          >
-            Type
-          </th>
-          <th
-            className={`py-2 pr-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap ${stickyHeaderClass}`}
-          >
-            Rating
-          </th>
-          <th
-            className={`py-2 pr-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap ${stickyHeaderClass}`}
-          >
-            Comment
-          </th>
-          {canEdit && <th className={`py-2 pr-3 w-10 ${stickyHeaderClass}`} />}
-        </tr>
-      </thead>
-      <tbody>
-        {orderedItems.map((item, index) => {
-          const isExpanded = expandedItemId === item.id;
-
-          return (
-            <PlaylistItemRow
-              key={item.id}
-              item={item}
-              index={index}
-              canEdit={canEdit}
-              isOwner={isOwner}
-              ownerRating={item.owner_tracker_rating}
-              viewerRating={trackerRatingByMediaId.get(item.media_id) ?? null}
-              viewerTrackerItem={
-                trackerItemByMediaId.get(item.media_id) ?? null
-              }
-              isExpanded={isExpanded}
-              onToggleExpand={() =>
-                setExpandedItemId((current) =>
-                  current === item.id ? null : item.id,
-                )
-              }
-              onRemove={() => onRemove(item)}
-            />
-          );
-        })}
-      </tbody>
-    </table>
+  const list = (
+    <div className="space-y-2 sm:space-y-3">
+      {orderedItems.map((item, index) => {
+        return (
+          <PlaylistItemRow
+            key={item.id}
+            item={item}
+            index={index}
+            canEdit={canEdit}
+            ownerRating={item.owner_tracker_rating}
+            onRemove={() => onRemove(item)}
+          />
+        );
+      })}
+    </div>
   );
 
   if (!canEdit) {
-    return (
-      <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-800">
-        <div className="overflow-x-auto">{table}</div>
-      </div>
-    );
+    return list;
   }
 
   return (
@@ -169,9 +117,7 @@ export default function PlaylistItemsTable({
         items={orderedItems.map((item) => item.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-800">
-          <div className="overflow-x-auto">{table}</div>
-        </div>
+        {list}
       </SortableContext>
     </DndContext>
   );

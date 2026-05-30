@@ -11,9 +11,11 @@ export interface Playlist {
   name: string;
   slug: string;
   icon: string;
+  icon_image_url: string | null;
   description: string | null;
   is_private: boolean;
   tags: string[];
+  profile_showcase_rank: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -27,6 +29,30 @@ function slugify(text: string): string {
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
+}
+
+function buildCollisionResistantSlug(name: string): string {
+  const base = slugify(name) || "playlist";
+  return `${base}-${crypto.randomUUID().slice(0, 8)}`;
+}
+
+function isSlugConflictError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const code =
+    "code" in error && typeof error.code === "string" ? error.code : "";
+  const message =
+    "message" in error && typeof error.message === "string"
+      ? error.message.toLowerCase()
+      : "";
+  const details =
+    "details" in error && typeof error.details === "string"
+      ? error.details.toLowerCase()
+      : "";
+
+  return code === "23505" && `${message} ${details}`.includes("slug");
 }
 
 /**
@@ -114,7 +140,7 @@ export async function getPlaylists(): Promise<
     const { data, error } = await supabase
       .from("playlists")
       .select(
-        "id, owner_id, name, slug, icon, description, is_private, tags, created_at, updated_at",
+        "id, owner_id, name, slug, icon, icon_image_url, description, is_private, tags, profile_showcase_rank, created_at, updated_at",
       )
       .order("updated_at", { ascending: false });
 
@@ -265,24 +291,93 @@ export async function createPlaylist(params: {
 }): Promise<ServiceResponse<Playlist>> {
   try {
     const userId = await getCurrentUserId();
-    const slug = await generateUniqueSlug(params.name);
+    const name = params.name.trim();
+    const icon = params.icon ?? "list-music";
+    const description = params.description ?? null;
+    const isPrivate = params.is_private ?? true;
 
-    const { data, error } = await supabase
-      .from("playlists")
-      .insert({
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const slug = buildCollisionResistantSlug(name);
+      const { error: insertError } = await supabase.from("playlists").insert({
         owner_id: userId,
-        name: params.name,
+        name,
         slug,
-        icon: params.icon ?? "list-music",
-        description: params.description ?? null,
-        is_private: params.is_private ?? true,
-      })
-      .select("*")
-      .single();
+        icon,
+        icon_image_url: null,
+        description,
+        is_private: isPrivate,
+      });
 
-    if (error) throw error;
+      if (insertError) {
+        if (isSlugConflictError(insertError)) {
+          continue;
+        }
 
-    return { data: data as Playlist, error: null };
+        throw insertError;
+      }
+
+      const { data, error: selectError } = await supabase
+        .from("playlists")
+        .select("*")
+        .eq("owner_id", userId)
+        .eq("slug", slug)
+        .maybeSingle();
+
+      if (selectError) {
+        logger.warn("Playlist created but fetch after insert failed", {
+          error: selectError,
+          userId,
+          slug,
+        });
+
+        return {
+          data: {
+            id: "",
+            owner_id: userId,
+            name,
+            slug,
+            icon,
+            icon_image_url: null,
+            description,
+            is_private: isPrivate,
+            tags: [],
+            profile_showcase_rank: null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+          error: null,
+        };
+      }
+
+      if (!data) {
+        logger.warn("Playlist created but fetch returned no row", {
+          userId,
+          slug,
+        });
+
+        return {
+          data: {
+            id: "",
+            owner_id: userId,
+            name,
+            slug,
+            icon,
+            icon_image_url: null,
+            description,
+            is_private: isPrivate,
+            tags: [],
+            profile_showcase_rank: null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+          error: null,
+        };
+      }
+
+      return { data: data as Playlist, error: null };
+    }
+
+    throw new Error("Could not allocate a unique playlist slug");
   } catch (error) {
     logger.error("Failed to create playlist", { error, params });
     return { data: null, error: error as Error };
@@ -292,7 +387,16 @@ export async function createPlaylist(params: {
 export async function updatePlaylist(
   playlistId: string,
   updates: Partial<
-    Pick<Playlist, "name" | "description" | "is_private" | "tags" | "icon">
+    Pick<
+      Playlist,
+      | "name"
+      | "description"
+      | "is_private"
+      | "tags"
+      | "icon"
+      | "icon_image_url"
+      | "profile_showcase_rank"
+    >
   >,
 ): Promise<ServiceResponse<Playlist>> {
   try {
@@ -300,6 +404,10 @@ export async function updatePlaylist(
       updates.name !== undefined
         ? await generateUniqueSlug(updates.name, playlistId)
         : undefined;
+    const shouldClearShowcaseRank = updates.is_private === true;
+    const nextShowcaseRank = shouldClearShowcaseRank
+      ? null
+      : updates.profile_showcase_rank;
 
     const { data, error } = await supabase
       .from("playlists")
@@ -314,6 +422,12 @@ export async function updatePlaylist(
           : {}),
         ...(updates.tags !== undefined ? { tags: updates.tags } : {}),
         ...(updates.icon !== undefined ? { icon: updates.icon } : {}),
+        ...(updates.icon_image_url !== undefined
+          ? { icon_image_url: updates.icon_image_url }
+          : {}),
+        ...(nextShowcaseRank !== undefined
+          ? { profile_showcase_rank: nextShowcaseRank }
+          : {}),
       })
       .eq("id", playlistId)
       .select("*")
@@ -627,34 +741,35 @@ export async function sharePlaylist(params: {
   try {
     if (params.userIds.length === 0) return { data: true, error: null };
 
-    const userId = await getCurrentUserId();
+    const requesterId = await getCurrentUserId();
+    const recipients = Array.from(
+      new Set(params.userIds.filter((candidate) => candidate !== requesterId)),
+    );
 
-    const { data: connections, error: connError } = await supabase
-      .from("connections")
-      .select("user_id, friend_id")
-      .or(`user_id.eq.${userId},friend_id.eq.${userId}`);
-
-    if (connError) throw connError;
-
-    const connectedUserIds = new Set<string>();
-    for (const connection of connections || []) {
-      if (connection.user_id === userId) {
-        connectedUserIds.add(connection.friend_id);
-      }
-      if (connection.friend_id === userId) {
-        connectedUserIds.add(connection.user_id);
-      }
+    if (recipients.length === 0) {
+      return { data: true, error: null };
     }
 
-    const invalidUserIds = params.userIds.filter(
-      (candidate) => !connectedUserIds.has(candidate),
+    const { data: existingProfiles, error: profileError } = await supabase
+      .from("user_profiles")
+      .select("user_id")
+      .in("user_id", recipients);
+
+    if (profileError) throw profileError;
+
+    const validRecipientIds = new Set(
+      (existingProfiles || []).map((profile) => profile.user_id),
+    );
+
+    const invalidUserIds = recipients.filter(
+      (candidate) => !validRecipientIds.has(candidate),
     );
 
     if (invalidUserIds.length > 0) {
-      throw new Error("Can only share playlists with connected users");
+      throw new Error("Can only share playlists with existing app users");
     }
 
-    const rows = params.userIds.map((sharedWithUserId) => ({
+    const rows = recipients.map((sharedWithUserId) => ({
       playlist_id: params.playlistId,
       shared_with_user_id: sharedWithUserId,
     }));
@@ -694,6 +809,71 @@ export async function unsharePlaylist(params: {
       error,
       playlistId: params.playlistId,
       userId: params.userId,
+    });
+    return { data: null, error: error as Error };
+  }
+}
+
+export async function setProfileShowcaseOrder(
+  orderedPlaylistIds: string[],
+): Promise<ServiceResponse<true>> {
+  try {
+    const userId = await getCurrentUserId();
+    const nextIds = Array.from(
+      new Set(orderedPlaylistIds.filter(Boolean)),
+    ).slice(0, 8);
+
+    const { data: ownedPlaylists, error: ownedError } = await supabase
+      .from("playlists")
+      .select("id, is_private")
+      .eq("owner_id", userId);
+
+    if (ownedError) throw ownedError;
+
+    const ownedPlaylistRows =
+      (ownedPlaylists as Array<{ id: string; is_private: boolean }> | null) ||
+      [];
+    const ownedIdSet = new Set(ownedPlaylistRows.map((row) => row.id));
+    const privateIdSet = new Set(
+      ownedPlaylistRows.filter((row) => row.is_private).map((row) => row.id),
+    );
+
+    const invalidIds = nextIds.filter((id) => !ownedIdSet.has(id));
+    if (invalidIds.length > 0) {
+      throw new Error("Top 8 can only include your own playlists");
+    }
+
+    const privateIds = nextIds.filter((id) => privateIdSet.has(id));
+    if (privateIds.length > 0) {
+      throw new Error("Private playlists cannot be featured in Top 8");
+    }
+
+    const { error: clearError } = await supabase
+      .from("playlists")
+      .update({ profile_showcase_rank: null })
+      .eq("owner_id", userId)
+      .not("profile_showcase_rank", "is", null);
+
+    if (clearError) throw clearError;
+
+    const updateResults = await Promise.all(
+      nextIds.map((playlistId, index) =>
+        supabase
+          .from("playlists")
+          .update({ profile_showcase_rank: index + 1 })
+          .eq("id", playlistId)
+          .eq("owner_id", userId),
+      ),
+    );
+
+    const firstError = updateResults.find((result) => result.error)?.error;
+    if (firstError) throw firstError;
+
+    return { data: true, error: null };
+  } catch (error) {
+    logger.error("Failed to update profile showcase order", {
+      error,
+      orderedPlaylistIds,
     });
     return { data: null, error: error as Error };
   }
