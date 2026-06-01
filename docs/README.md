@@ -10,6 +10,8 @@ Complete guides for using, self-hosting, and contributing to NPC Finder.
 
 - **[Self-Hosting Guide](QUICK-START.md)** - Complete setup guide for running your own instance
 - **[Database Migrations](DATABASE-MIGRATIONS.md)** - Manage database schema changes
+- **[Backend Security Testing Runbook](BACKEND-SECURITY-TESTING-RUNBOOK.md)** - Automated runbook parity suite and manual fallback checks
+- **[Privacy + Compliance Notes](PRIVACY-AND-COMPLIANCE.md)** - Privacy/terms routes, consent logging, and account deletion retention behavior
 - **[Invite System](INVITE-SYSTEM-QUICKSTART.md)** - How the invite system works and admin management
 - **[Role System](ROLE-SYSTEM.md)** - Role-based permissions and admin model
 - **[Copilot + Agent Guide](COPILOT-AGENTS-GUIDE.md)** - Repo-specific instructions for AI coding agents

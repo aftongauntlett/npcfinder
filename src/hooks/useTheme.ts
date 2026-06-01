@@ -8,15 +8,13 @@ interface ThemeContextValue {
   resolvedTheme: ResolvedTheme;
   themeColor: string; // Hex color string
   secondaryThemeColor: string | null;
-  autoSecondaryColor: boolean;
   changeTheme: (newTheme: ThemeOption) => void;
   changeThemeColor: (newColor: string) => void; // Accepts hex color
   changeSecondaryThemeColor: (newColor: string | null) => void;
-  changeAutoSecondaryColor: (auto: boolean) => void;
 }
 
 export const ThemeContext = React.createContext<ThemeContextValue | undefined>(
-  undefined
+  undefined,
 );
 
 export const useTheme = (): ThemeContextValue => {

@@ -10,20 +10,19 @@ import {
   Book,
   Music2,
   Gamepad2,
-  LogOut,
   Menu,
   X,
-  UserCircle2,
   Users,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { useAdmin } from "@/contexts/AdminContext";
 import { TRACKER_SCOPES } from "@/data/trackerScopes";
-import { signOut } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { useProfileQuery } from "@/hooks/useProfileQuery";
 
 interface AppSidebarProps {
-  currentUser: { id: string; email?: string } | null;
+  currentUser?: { id: string; email?: string } | null;
 }
 
 interface SidebarItem {
@@ -39,7 +38,9 @@ interface SidebarItem {
   }>;
 }
 
-export default function AppSidebar({ currentUser }: AppSidebarProps) {
+export default function AppSidebar({
+  currentUser: _currentUser,
+}: AppSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { role } = useAdmin();
@@ -48,7 +49,25 @@ export default function AppSidebar({ currentUser }: AppSidebarProps) {
 
   const [isOpen, setIsOpen] = useState(false);
   const [isTrackerExpanded, setIsTrackerExpanded] = useState(isTrackerRoute);
-  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("sidebar-collapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleCollapsed = () => {
+    setIsCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("sidebar-collapsed", String(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     // Collapse tracker submenu when user navigates away from tracker pages.
@@ -127,12 +146,6 @@ export default function AppSidebar({ currentUser }: AppSidebarProps) {
     return items;
   }, [profilePath, role]);
 
-  const displayName = useMemo(() => {
-    const email = currentUser?.email;
-    if (!email) return "Account";
-    return email.split("@")[0] || "Account";
-  }, [currentUser?.email]);
-
   const isActive = (path: string) => {
     if (path.startsWith("/app/tracker")) {
       return location.pathname.startsWith("/app/tracker");
@@ -151,17 +164,6 @@ export default function AppSidebar({ currentUser }: AppSidebarProps) {
     }
 
     return location.pathname.startsWith(path);
-  };
-
-  const handleSignOut = async () => {
-    setIsSigningOut(true);
-    try {
-      await signOut();
-    } catch (error) {
-      logger.error("Failed to sign out", { error });
-    } finally {
-      setIsSigningOut(false);
-    }
   };
 
   const navigateAndClose = (path: string) => {
@@ -193,28 +195,45 @@ export default function AppSidebar({ currentUser }: AppSidebarProps) {
 
       <aside
         className={`
-          fixed md:sticky top-0 left-0 h-screen w-60 z-40
-          border-r border-gray-200 dark:border-gray-700
+          fixed md:sticky top-0 left-0 h-screen z-40
+          border-r border-gray-200/60 dark:border-white/5
           bg-white/95 dark:bg-gray-900/95 backdrop-blur
-          transition-transform duration-200
+          transition-all duration-200
+          ${isCollapsed ? "w-16" : "w-48"}
           ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
         `}
       >
-        <div className="h-full flex flex-col">
-          <div className="px-4 py-5 border-b border-gray-200 dark:border-gray-700">
+        <div className="h-full flex flex-col overflow-hidden">
+          {/* Header / Logo */}
+          <div
+            className={`py-5 border-b border-gray-200 dark:border-gray-700 flex items-center ${
+              isCollapsed ? "justify-center px-0" : "px-4"
+            }`}
+          >
             <button
               type="button"
               onClick={() => navigateAndClose(TRACKER_SCOPES["movies-tv"].path)}
-              className="flex items-center gap-2 text-left"
+              className="flex items-center gap-2 text-left min-w-0"
+              title="NPC Finder"
             >
-              <img src="/quest-marker.svg" alt="" className="w-6 h-6" />
-              <span className="font-heading font-bold text-lg text-gray-900 dark:text-white">
-                NPC Finder
-              </span>
+              <img
+                src="/quest-marker.svg"
+                alt=""
+                className="w-6 h-6 shrink-0"
+              />
+              {!isCollapsed && (
+                <span className="font-heading font-bold text-lg text-gray-900 dark:text-white truncate">
+                  NPC Finder
+                </span>
+              )}
             </button>
           </div>
 
-          <nav className="p-3 space-y-1" aria-label="App navigation">
+          {/* Nav */}
+          <nav
+            className="p-2 space-y-1 flex-1 overflow-y-auto"
+            aria-label="App navigation"
+          >
             {navItems.map((item) => {
               const Icon = item.icon;
               const parentActive = item.children
@@ -223,14 +242,20 @@ export default function AppSidebar({ currentUser }: AppSidebarProps) {
               const isCollapsibleGroup =
                 !!item.children && item.id === "tracker";
               const isGroupExpanded =
-                item.id === "tracker" ? isTrackerExpanded : false;
+                !isCollapsed && item.id === "tracker"
+                  ? isTrackerExpanded
+                  : false;
               const childContainerId = `${item.id}-children`;
 
               return (
-                <div key={item.id} className="space-y-1">
+                <div key={item.id} className="space-y-0.5">
                   <button
                     type="button"
                     onClick={() => {
+                      if (isCollapsed) {
+                        navigateAndClose(item.path);
+                        return;
+                      }
                       if (isCollapsibleGroup) {
                         if (item.id === "tracker") {
                           setIsTrackerExpanded((prev) => !prev);
@@ -240,33 +265,47 @@ export default function AppSidebar({ currentUser }: AppSidebarProps) {
                       navigateAndClose(item.path);
                     }}
                     aria-expanded={
-                      isCollapsibleGroup ? isGroupExpanded : undefined
+                      isCollapsibleGroup && !isCollapsed
+                        ? isGroupExpanded
+                        : undefined
                     }
                     aria-controls={
-                      isCollapsibleGroup ? childContainerId : undefined
+                      isCollapsibleGroup && !isCollapsed
+                        ? childContainerId
+                        : undefined
                     }
-                    className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors ${
+                    title={isCollapsed ? item.label : undefined}
+                    className={`w-full flex items-center rounded-lg py-2 text-sm transition-colors ${
+                      isCollapsed
+                        ? "justify-center px-0"
+                        : "justify-between px-3"
+                    } ${
                       parentActive
                         ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light"
                         : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                     }`}
                   >
-                    <span className="inline-flex items-center gap-3">
-                      <Icon className="w-4 h-4" />
-                      <span>{item.label}</span>
+                    <span
+                      className={`inline-flex items-center ${
+                        isCollapsed ? "" : "gap-3"
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      {!isCollapsed && <span>{item.label}</span>}
                     </span>
-                    {isCollapsibleGroup && (
+                    {isCollapsibleGroup && !isCollapsed && (
                       <ChevronDown
-                        className={`w-4 h-4 transition-transform ${
+                        className={`w-4 h-4 transition-transform shrink-0 ${
                           isGroupExpanded ? "rotate-180" : "rotate-0"
                         }`}
                       />
                     )}
                   </button>
 
-                  {item.children &&
+                  {!isCollapsed &&
+                    item.children &&
                     (!isCollapsibleGroup || isGroupExpanded) && (
-                      <div id={childContainerId} className="pl-5 space-y-1">
+                      <div id={childContainerId} className="pl-5 space-y-0.5">
                         {item.children.map((child) => {
                           const ChildIcon = child.icon;
                           const childActive = isActive(child.path);
@@ -294,20 +333,24 @@ export default function AppSidebar({ currentUser }: AppSidebarProps) {
             })}
           </nav>
 
-          <div className="mt-auto p-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
-            <div className="flex items-center gap-2 px-2 py-1 text-sm text-gray-600 dark:text-gray-300">
-              <UserCircle2 className="w-4 h-4" />
-              <span className="truncate">{displayName}</span>
-            </div>
-
+          {/* Footer — collapse toggle only */}
+          <div className="p-2 border-t border-gray-200/60 dark:border-white/5">
             <button
               type="button"
-              onClick={() => void handleSignOut()}
-              disabled={isSigningOut}
-              className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-60"
+              onClick={toggleCollapsed}
+              title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              className={`hidden md:flex w-full items-center rounded-lg py-2 text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
+                isCollapsed ? "justify-center px-0" : "gap-3 px-3"
+              }`}
             >
-              <LogOut className="w-4 h-4" />
-              <span>{isSigningOut ? "Signing out..." : "Sign Out"}</span>
+              {isCollapsed ? (
+                <PanelLeftOpen className="w-4 h-4 shrink-0" />
+              ) : (
+                <>
+                  <PanelLeftClose className="w-4 h-4 shrink-0" />
+                  <span>Collapse</span>
+                </>
+              )}
             </button>
           </div>
         </div>

@@ -1,51 +1,57 @@
-import React, { useState } from "react";
-import { Lightbulb } from "lucide-react";
-import Button from "../ui/Button";
-import FeedbackModal from "../common/FeedbackModal";
+import React from "react";
+import { Link } from "react-router-dom";
+import { ArrowUp, Github } from "lucide-react";
 
 const Footer: React.FC = () => {
-  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
-
   return (
-    <footer className="mt-16 py-6 border-t border-gray-200 dark:border-gray-700">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
-          {/* Copyright & Creator */}
-          <p className="text-gray-500 dark:text-gray-400 text-center sm:text-left">
-            © {new Date().getFullYear()} NPC Finder · Built by{" "}
-            <a
-              href="https://aftongauntlett.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary-dark hover:text-primary underline transition-colors"
+    <footer className="py-4">
+      <div className="container mx-auto px-4 border-t border-gray-200/60 dark:border-white/5 pt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2 text-xs">
+          <nav
+            className="flex items-center justify-center sm:justify-start gap-4"
+            aria-label="Footer legal links"
+          >
+            <Link
+              to="/privacy"
+              className="text-gray-500 dark:text-gray-500 hover:text-teal-600 dark:hover:text-teal-300 transition-colors"
             >
-              Afton Gauntlett
-            </a>
+              Privacy
+            </Link>
+            <Link
+              to="/terms"
+              className="text-gray-500 dark:text-gray-500 hover:text-teal-600 dark:hover:text-teal-300 transition-colors"
+            >
+              Terms
+            </Link>
+          </nav>
+
+          <p className="text-gray-500 dark:text-gray-500 text-center">
+            © {new Date().getFullYear()} NPC Finder
           </p>
 
-          {/* Action Links */}
-          <nav
-            className="flex items-center gap-4"
-            aria-label="Footer navigation"
-          >
-            <Button
-              onClick={() => setIsFeedbackModalOpen(true)}
-              variant="subtle"
-              size="sm"
-              icon={<Lightbulb className="w-4 h-4" aria-hidden="true" />}
-              className="inline-flex items-center gap-1.5 font-medium text-primary hover:opacity-80"
-              aria-label="Submit a suggestion"
+          <div className="flex items-center justify-center sm:justify-end gap-4">
+            <a
+              href="https://github.com/aftongauntlett/npcfinder"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-gray-500 dark:text-gray-500 hover:text-teal-600 dark:hover:text-teal-300 transition-colors"
+              aria-label="View source on GitHub"
             >
-              Suggestions
-            </Button>
-          </nav>
+              <Github className="w-3.5 h-3.5" />
+              <span>View Source</span>
+            </a>
+
+            <button
+              type="button"
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              className="inline-flex items-center text-gray-500 dark:text-gray-500 hover:text-teal-600 dark:hover:text-teal-300 transition-colors"
+              aria-label="Scroll to top"
+            >
+              <ArrowUp className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </div>
-
-      <FeedbackModal
-        isOpen={isFeedbackModalOpen}
-        onClose={() => setIsFeedbackModalOpen(false)}
-      />
     </footer>
   );
 };

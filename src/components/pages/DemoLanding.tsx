@@ -4,7 +4,6 @@ import {
   GithubLogoIcon as GithubLogo,
   LockIcon as Lock,
   QuestionIcon as Question,
-  LinkedinLogoIcon as LinkedinLogo,
   ArrowUpIcon as ArrowUp,
 } from "@phosphor-icons/react";
 import { useTheme } from "@/hooks/useTheme";
@@ -298,45 +297,46 @@ const DemoLanding: React.FC = () => {
 
       {/* Footer */}
       <footer
-        className="relative z-10 border-t border-white/5 backdrop-blur-md"
+        className="relative z-10 backdrop-blur-md"
         aria-label="Site footer"
       >
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-500">
-            <p>
-              © 2025 NPC Finder • Built by{" "}
+        <div className="max-w-7xl mx-auto px-6 py-8 border-t border-white/5">
+          <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-4 text-sm text-gray-500">
+            <div className="flex items-center justify-center md:justify-start gap-4">
               <a
-                href="https://aftongauntlett.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary-dark hover:text-primary underline transition-colors"
+                href="/privacy"
+                className="hover:text-teal-300 transition-colors"
+                aria-label="Read privacy policy"
               >
-                Afton Gauntlett
+                Privacy
               </a>
-            </p>
-            <div className="flex items-center gap-4">
               <a
-                href="https://github.com/aftongauntlett"
+                href="/terms"
+                className="hover:text-teal-300 transition-colors"
+                aria-label="Read terms of service"
+              >
+                Terms
+              </a>
+            </div>
+
+            <p className="text-xs text-gray-500 text-center">
+              © 2025 NPC Finder
+            </p>
+
+            <div className="flex items-center justify-center md:justify-end gap-4">
+              <a
+                href="https://github.com/aftongauntlett/npcfinder"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 hover:text-gray-300 transition-colors"
-                aria-label="View GitHub profile"
+                aria-label="View source on GitHub"
               >
                 <GithubLogo className="w-4 h-4" weight="duotone" />
-                <span className="hidden sm:inline">GitHub</span>
-              </a>
-              <a
-                href="https://www.linkedin.com/in/afton-gauntlett/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 hover:text-gray-300 transition-colors"
-                aria-label="Connect on LinkedIn"
-              >
-                <LinkedinLogo className="w-4 h-4" weight="duotone" />
-                <span className="hidden sm:inline">LinkedIn</span>
+                <span className="hidden sm:inline">View Source</span>
               </a>
 
               <button
+                type="button"
                 onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
                 className="flex items-center gap-1.5 hover:text-gray-300 transition-colors"
                 aria-label="Scroll to top"

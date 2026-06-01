@@ -18,9 +18,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>("light");
   const [themeColor, setThemeColor] = useState<string>(DEFAULT_THEME_COLOR);
   const [secondaryThemeColor, setSecondaryThemeColor] = useState<string | null>(
-    null
+    null,
   );
-  const [autoSecondaryColor, setAutoSecondaryColor] = useState<boolean>(true);
 
   useEffect(() => {
     const loadTheme = () => {
@@ -43,11 +42,6 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
           if (/^#[0-9A-Fa-f]{6}$/.test(savedSecondaryColor)) {
             setSecondaryThemeColor(savedSecondaryColor);
           }
-        }
-
-        const savedAutoSecondary = localStorage.getItem("autoSecondaryColor");
-        if (savedAutoSecondary !== null) {
-          setAutoSecondaryColor(savedAutoSecondary === "true");
         }
       } catch (error) {
         logger.error("Failed to load theme from localStorage", { error });
@@ -90,48 +84,50 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   // Apply theme color CSS custom properties
   useEffect(() => {
-    const secondaryHex = autoSecondaryColor ? null : secondaryThemeColor;
-    const colorVariations = createColorVariations(themeColor, secondaryHex);
+    const colorVariations = createColorVariations(
+      themeColor,
+      secondaryThemeColor,
+    );
     const root = document.documentElement;
 
     root.style.setProperty("--color-primary", colorVariations.primary);
     root.style.setProperty("--color-primary-dark", colorVariations.primaryDark);
     root.style.setProperty(
       "--color-primary-light",
-      colorVariations.primaryLight
+      colorVariations.primaryLight,
     );
     root.style.setProperty("--color-primary-pale", colorVariations.primaryPale);
     root.style.setProperty("--color-primary-ring", colorVariations.primaryRing);
     root.style.setProperty(
       "--color-text-on-primary",
-      colorVariations.textOnPrimary
+      colorVariations.textOnPrimary,
     );
 
     root.style.setProperty("--color-secondary", colorVariations.secondary);
     root.style.setProperty(
       "--color-secondary-dark",
-      colorVariations.secondaryDark
+      colorVariations.secondaryDark,
     );
     root.style.setProperty(
       "--color-secondary-light",
-      colorVariations.secondaryLight
+      colorVariations.secondaryLight,
     );
     root.style.setProperty(
       "--color-secondary-pale",
-      colorVariations.secondaryPale
+      colorVariations.secondaryPale,
     );
     root.style.setProperty(
       "--color-secondary-ring",
-      colorVariations.secondaryRing
+      colorVariations.secondaryRing,
     );
     root.style.setProperty(
       "--color-text-on-secondary",
-      colorVariations.textOnSecondary
+      colorVariations.textOnSecondary,
     );
 
     // CSS variables update automatically without forced reflow
     // Removed: void root.offsetHeight; (force repaint)
-  }, [themeColor, autoSecondaryColor, secondaryThemeColor]);
+  }, [themeColor, secondaryThemeColor]);
   const changeTheme = useCallback((newTheme: ThemeOption) => {
     setTheme(newTheme);
     try {
@@ -174,41 +170,25 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     }
   }, []);
 
-  const changeAutoSecondaryColor = useCallback((auto: boolean) => {
-    setAutoSecondaryColor(auto);
-    try {
-      localStorage.setItem("autoSecondaryColor", auto.toString());
-    } catch (error) {
-      logger.error("Failed to save auto secondary color to localStorage", {
-        error,
-        auto,
-      });
-    }
-  }, []);
-
   const value = useMemo(
     () => ({
       theme,
       resolvedTheme,
       themeColor,
       secondaryThemeColor,
-      autoSecondaryColor,
       changeTheme,
       changeThemeColor,
       changeSecondaryThemeColor,
-      changeAutoSecondaryColor,
     }),
     [
       theme,
       resolvedTheme,
       themeColor,
       secondaryThemeColor,
-      autoSecondaryColor,
       changeTheme,
       changeThemeColor,
       changeSecondaryThemeColor,
-      changeAutoSecondaryColor,
-    ]
+    ],
   );
 
   return (

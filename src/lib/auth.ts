@@ -24,13 +24,13 @@ interface AuthResult<T> {
 export const signUp = async (
   email: string,
   password: string,
-  inviteCode: string
+  inviteCode: string,
 ): Promise<AuthResult<User>> => {
   try {
     // SECURITY: Check server-side rate limit first (authoritative)
     const { data: rateLimitCheck, error: rateLimitError } = await supabase.rpc(
       "check_signup_rate_limit",
-      { user_email: email }
+      { user_email: email },
     );
 
     if (rateLimitError) {
@@ -41,7 +41,7 @@ export const signUp = async (
     } else if (rateLimitCheck && !rateLimitCheck.allowed) {
       const error = new Error(
         rateLimitCheck.error ||
-          "Too many signup attempts. Please try again later."
+          "Too many signup attempts. Please try again later.",
       ) as AuthError;
       error.name = "RateLimitError";
       throw error;
@@ -51,7 +51,7 @@ export const signUp = async (
     const rateLimitKey = `signup:${email.toLowerCase()}`;
     if (!signUpRateLimiter.checkLimit(rateLimitKey)) {
       const error = new Error(
-        "Too many signup attempts. Please try again later."
+        "Too many signup attempts. Please try again later.",
       ) as AuthError;
       error.name = "RateLimitError";
       throw error;
@@ -61,12 +61,12 @@ export const signUp = async (
     // Now includes email validation for extra security
     const { data: isValid, error: validateError } = await validateInviteCode(
       inviteCode,
-      email
+      email,
     );
 
     if (validateError || !isValid) {
       const error = new Error(
-        "Invalid invite code or email does not match the intended recipient"
+        "Invalid invite code or email does not match the intended recipient",
       ) as AuthError;
       error.name = "InviteCodeError";
       throw error;
@@ -84,7 +84,7 @@ export const signUp = async (
     // Step 3: Consume the invite code (mark as used)
     const { error: consumeError } = await consumeInviteCode(
       inviteCode,
-      data.user.id
+      data.user.id,
     );
 
     if (consumeError) {
@@ -123,13 +123,13 @@ export const signUp = async (
  */
 export const signIn = async (
   email: string,
-  password: string
+  password: string,
 ): Promise<AuthResult<Session>> => {
   try {
     // SECURITY: Check server-side rate limit first (authoritative)
     const { data: rateLimitCheck, error: rateLimitError } = await supabase.rpc(
       "check_signin_rate_limit",
-      { user_email: email }
+      { user_email: email },
     );
 
     if (rateLimitError) {
@@ -140,7 +140,7 @@ export const signIn = async (
     } else if (rateLimitCheck && !rateLimitCheck.allowed) {
       const error = new Error(
         rateLimitCheck.error ||
-          "Too many login attempts. Please try again in 15 minutes."
+          "Too many login attempts. Please try again in 15 minutes.",
       ) as AuthError;
       error.name = "RateLimitError";
       throw error;
@@ -150,7 +150,7 @@ export const signIn = async (
     const rateLimitKey = `signin:${email.toLowerCase()}`;
     if (!signInRateLimiter.checkLimit(rateLimitKey)) {
       const error = new Error(
-        "Too many login attempts. Please try again in 15 minutes."
+        "Too many login attempts. Please try again in 15 minutes.",
       ) as AuthError;
       error.name = "RateLimitError";
       throw error;
@@ -180,6 +180,23 @@ export const signIn = async (
   } catch (error) {
     logger.error("Sign in failed", { error, email });
     return { data: null, error: error as AuthError };
+  }
+};
+
+/**
+ * Delete the current user's account permanently.
+ * Calls the server-side delete-user edge function.
+ * User data tied to auth.users is deleted server-side, while the
+ * legal consent ledgers remain retained for compliance.
+ */
+export const deleteAccount = async (): Promise<{ error: Error | null }> => {
+  try {
+    const { error } = await supabase.functions.invoke("delete-user");
+    if (error) throw error;
+    return { error: null };
+  } catch (error) {
+    logger.error("Account deletion failed", { error });
+    return { error: error as Error };
   }
 };
 
@@ -244,7 +261,7 @@ export const getSession = async (): Promise<AuthResult<Session>> => {
  * Listen to auth state changes
  */
 export const onAuthStateChange = (
-  callback: (event: string, session: Session | null) => void
+  callback: (event: string, session: Session | null) => void,
 ) => {
   // Check if Supabase is configured before setting up listener
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -263,7 +280,7 @@ export const onAuthStateChange = (
  * User must be logged in to update their password
  */
 export const updatePassword = async (
-  newPassword: string
+  newPassword: string,
 ): Promise<{ error: AuthError | null }> => {
   try {
     const { error } = await supabase.auth.updateUser({
@@ -285,7 +302,7 @@ export const updatePassword = async (
  * No authentication required - just needs valid email
  */
 export const sendPasswordResetEmail = async (
-  email: string
+  email: string,
 ): Promise<{ error: AuthError | null }> => {
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {

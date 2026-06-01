@@ -1,6 +1,6 @@
 # Current App State (Agent Reference)
 
-Last updated: 2026-05-26
+Last updated: 2026-06-01
 
 This document is an internal source of truth for docs + agent work. Use it to avoid reintroducing removed features or linking to deleted docs.
 
@@ -15,6 +15,8 @@ This document is an internal source of truth for docs + agent work. Use it to av
 
 - Public:
   - `/` (landing)
+  - `/privacy` (privacy policy)
+  - `/terms` (terms of service)
   - `/login`, `/forgot-password`, `/reset-password`
 - Authenticated:
   - `/app` -> redirects to `/app/tracker/movies-tv`
@@ -64,3 +66,21 @@ Note: Remaining legacy files may still exist in the repository while migration a
 - Do not link to deleted docs such as `API-SETUP.md`, `APP-PURPOSE-AND-DIRECTION.md`, or `TRAYCER-PROMPTS.md`
 - Keep root docs focused on currently accessible flows and existing files
 - If routes or nav labels change, update this file first, then update `README.md` and `docs/README.md`
+
+## Security + Compliance Baseline
+
+- Backend security runbook parity suite is active in `tests/backendSecurityRunbook.test.ts`
+- Seeded execution flow is available via `npm run test:backend-security:seeded`
+- Privacy policy is publicly available at `/privacy`
+- Terms of service is publicly available at `/terms`
+- Privacy consent is captured in `public.privacy_consent` by an `auth.users` insert trigger
+- Terms consent is captured in `public.terms_consent` by an `auth.users` insert trigger
+- Account deletion remains server-side via edge function; legal consent ledgers are intentionally retained
+
+## Recent UX Notes
+
+- Auth screen shows legal links in sign-in mode and consent text links in signup mode
+- Landing footer exposes always-visible legal links (`/privacy`, `/terms`)
+- Settings theme customization includes compact/preview color picker layouts with primary + secondary color controls
+- Feedback submission is now an inline card on Settings (no footer modal trigger)
+- Footer copyright presentation is intentionally smaller/muted and no longer includes author attribution

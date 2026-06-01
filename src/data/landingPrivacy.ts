@@ -28,7 +28,7 @@ export interface PrivacyData {
 export const landingPrivacy: PrivacyData = {
   title: "Why It's Private",
   description:
-    "NPC Finder is intentionally invite-only. It keeps the space small and trusted while avoiding public social pressure.",
+    "NPC Finder is intentionally invite-only. It keeps the space small and trusted while avoiding public social pressure. Full privacy policy: /privacy.",
   points: [
     {
       icon: ShieldCheck,

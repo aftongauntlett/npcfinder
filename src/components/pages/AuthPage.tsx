@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { signIn, signUp } from "../../lib/auth";
 import { Button, Input } from "@/components/shared";
 import { logger } from "@/lib/logger";
@@ -75,7 +75,7 @@ const AuthPage: React.FC = () => {
         const { error: signUpError } = await signUp(
           email,
           password,
-          inviteCode
+          inviteCode,
         );
         if (signUpError) {
           // Provide user-friendly error messages
@@ -86,14 +86,14 @@ const AuthPage: React.FC = () => {
             signUpError.message.includes("invalid")
           ) {
             setError(
-              "This email is already registered. Please sign in instead."
+              "This email is already registered. Please sign in instead.",
             );
           } else {
             setError(signUpError.message);
           }
         } else {
           setMessage(
-            "Account created! Please check your email to verify your account, then sign in."
+            "Account created! Please check your email to verify your account, then sign in.",
           );
           setIsLogin(true);
           setPassword("");
@@ -209,6 +209,26 @@ const AuthPage: React.FC = () => {
               {isLogin ? "Sign In" : "Create Account"}
             </Button>
 
+            {!isLogin && (
+              <p className="text-xs text-gray-600 dark:text-gray-300 text-center -mt-1">
+                By creating an account, you agree to our{" "}
+                <Link
+                  to="/privacy"
+                  className="text-teal-600 dark:text-teal-300 underline underline-offset-2 hover:text-teal-500 dark:hover:text-teal-200"
+                >
+                  Privacy Policy
+                </Link>{" "}
+                and{" "}
+                <Link
+                  to="/terms"
+                  className="text-teal-600 dark:text-teal-300 underline underline-offset-2 hover:text-teal-500 dark:hover:text-teal-200"
+                >
+                  Terms of Service
+                </Link>
+                .
+              </p>
+            )}
+
             {/* Forgot Password Link (only show on login) */}
             {isLogin && (
               <div className="text-center">
@@ -223,6 +243,26 @@ const AuthPage: React.FC = () => {
                 >
                   Forgot your password?
                 </Button>
+              </div>
+            )}
+
+            {isLogin && (
+              <div className="text-center -mt-1">
+                <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center justify-center gap-3">
+                  <Link
+                    to="/privacy"
+                    className="underline-offset-2 hover:underline hover:text-teal-600 dark:hover:text-teal-300"
+                  >
+                    Privacy Policy
+                  </Link>
+                  <span aria-hidden="true">•</span>
+                  <Link
+                    to="/terms"
+                    className="underline-offset-2 hover:underline hover:text-teal-600 dark:hover:text-teal-300"
+                  >
+                    Terms of Service
+                  </Link>
+                </div>
               </div>
             )}
           </form>
@@ -259,6 +299,22 @@ const AuthPage: React.FC = () => {
           >
             ← Back to Home
           </Button>
+
+          <div className="mt-3 flex items-center justify-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+            <Link
+              to="/privacy"
+              className="underline-offset-2 hover:underline hover:text-teal-600 dark:hover:text-teal-300"
+            >
+              Privacy
+            </Link>
+            <span aria-hidden="true">•</span>
+            <Link
+              to="/terms"
+              className="underline-offset-2 hover:underline hover:text-teal-600 dark:hover:text-teal-300"
+            >
+              Terms
+            </Link>
+          </div>
         </div>
       </div>
     </div>

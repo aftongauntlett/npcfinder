@@ -1,6 +1,8 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import DemoLanding from "./components/pages/DemoLanding";
+import PrivacyPolicyPage from "./components/pages/PrivacyPolicyPage";
+import TermsOfServicePage from "./components/pages/TermsOfServicePage";
 import AuthPage from "./components/pages/AuthPage";
 import ForgotPassword from "./components/pages/ForgotPassword";
 import ResetPassword from "./components/pages/ResetPassword";
@@ -70,6 +72,8 @@ const App: React.FC = () => {
           <Routes>
             {/* Public routes - NO AUTH REQUIRED */}
             <Route path="/" element={<DemoLanding />} />
+            <Route path="/privacy" element={<PrivacyPolicyPage />} />
+            <Route path="/terms" element={<TermsOfServicePage />} />
 
             {/* All authenticated routes wrapped in AuthProvider */}
             <Route

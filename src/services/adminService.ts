@@ -35,9 +35,12 @@ const verifyAdminAccess = async (): Promise<boolean> => {
     const isAdmin = ["admin", "super_admin"].includes(profile?.role || "user");
 
     if (!isAdmin) {
-      logger.warn(`Unauthorized admin operation attempted by user: ${user.id}`, {
-        role: profile?.role,
-      });
+      logger.warn(
+        `Unauthorized admin operation attempted by user: ${user.id}`,
+        {
+          role: profile?.role,
+        },
+      );
       return false;
     }
 
@@ -56,6 +59,7 @@ function firstRelation<T>(value: T | T[] | null | undefined): T | null {
 
 export interface AdminStats {
   totalUsers: number;
+  deletedUsers: number;
   totalMediaItems: number;
   totalRatings: number;
   totalInviteCodes: number;
@@ -113,6 +117,7 @@ export const getAdminStats = async (): Promise<AdminStats> => {
     { count: userCount },
     { count: weekUsers },
     { count: monthUsers },
+    { count: deletedCount },
     { data: recentTrackerUsers },
     { data: recentPlaylistOwners },
   ] = await Promise.all([
@@ -133,6 +138,9 @@ export const getAdminStats = async (): Promise<AdminStats> => {
       .select("*", { count: "exact", head: true })
       .gte("created_at", oneMonthAgo.toISOString()),
     supabase
+      .from("deleted_users_log")
+      .select("*", { count: "exact", head: true }),
+    supabase
       .from("tracker_items")
       .select("user_id")
       .gte("updated_at", thirtyDaysAgo.toISOString()),
@@ -152,13 +160,15 @@ export const getAdminStats = async (): Promise<AdminStats> => {
 
   return {
     totalUsers,
+    deletedUsers: deletedCount || 0,
     totalMediaItems: (trackerCount || 0) + (playlistItemCount || 0),
     totalRatings,
     totalInviteCodes: inviteCodesCount || 0,
     newUsersThisWeek: weekUsers || 0,
     newUsersThisMonth: monthUsers || 0,
     activeUsers: activeUserIds.size,
-    avgRatingsPerUser: totalUsers > 0 ? Math.round(totalRatings / totalUsers) : 0,
+    avgRatingsPerUser:
+      totalUsers > 0 ? Math.round(totalRatings / totalUsers) : 0,
   };
 };
 
@@ -183,7 +193,9 @@ export const getUsers = async (
     });
 
   if (searchTerm.trim()) {
-    query = query.or(`display_name.ilike.%${searchTerm}%,bio.ilike.%${searchTerm}%`);
+    query = query.or(
+      `display_name.ilike.%${searchTerm}%,bio.ilike.%${searchTerm}%`,
+    );
   }
 
   const { count } = await query;
@@ -258,7 +270,12 @@ export const getPopularMedia = async (): Promise<PopularMedia[]> => {
   for (const row of [...(trackerRows || []), ...(playlistRows || [])]) {
     const media = firstRelation(
       row.media as
-        | { id: string; title: string; media_type: string; year?: number | null }
+        | {
+            id: string;
+            title: string;
+            media_type: string;
+            year?: number | null;
+          }
         | Array<{
             id: string;
             title: string;
@@ -308,7 +325,9 @@ export const getRecentActivity = async (): Promise<RecentActivity[]> => {
 
   const { data } = await supabase
     .from("tracker_items")
-    .select("id, status, created_at, user_id, media:media_id(title, media_type)")
+    .select(
+      "id, status, created_at, user_id, media:media_id(title, media_type)",
+    )
     .order("created_at", { ascending: false })
     .limit(10);
 
@@ -475,10 +494,7 @@ export const getAllTasksAdmin = async (
     const tasksWithUserInfo: TaskAdmin[] =
       trackerRows?.map((task) => {
         const media = firstRelation(
-          task.media as
-            | { title?: string }
-            | Array<{ title?: string }>
-            | null,
+          task.media as { title?: string } | Array<{ title?: string }> | null,
         );
         const userProfile = firstRelation(
           task.user_profiles as

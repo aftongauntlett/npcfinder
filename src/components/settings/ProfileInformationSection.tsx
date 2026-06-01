@@ -4,9 +4,6 @@ import { Button, Input, Textarea } from "@/components/shared";
 import { ImagePlus, Trash2 } from "lucide-react";
 
 interface ProfileInformationSectionProps {
-  username: string;
-  usernameError?: string;
-  displayName: string;
   bio: string;
   birthday: string;
   location: string;
@@ -23,9 +20,6 @@ interface ProfileInformationSectionProps {
 }
 
 const ProfileInformationSection: React.FC<ProfileInformationSectionProps> = ({
-  username,
-  usernameError,
-  displayName,
   bio,
   birthday,
   location,
@@ -118,29 +112,6 @@ const ProfileInformationSection: React.FC<ProfileInformationSectionProps> = ({
       </div>
 
       <div className="space-y-4">
-        <Input
-          id="username"
-          name="username"
-          label="Username"
-          type="text"
-          value={username}
-          onChange={onChange}
-          placeholder="your-handle"
-          helperText="Used for your profile URL. Changing it will break previously shared profile links."
-          error={usernameError}
-        />
-
-        <Input
-          id="display_name"
-          name="display_name"
-          label="Display Name"
-          type="text"
-          value={displayName}
-          onChange={onChange}
-          placeholder="Your display name"
-          helperText="This is how your name appears in the greeting"
-        />
-
         <Textarea
           id="bio"
           name="bio"

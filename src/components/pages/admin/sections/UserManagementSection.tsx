@@ -25,6 +25,7 @@ interface UserManagementSectionProps {
   totalPages: number;
   itemsPerPage: number;
   totalItems: number;
+  deletedUsers: number;
   onPageChange: (page: number) => void;
   onItemsPerPageChange: (itemsPerPage: number) => void;
   onToggleRole: (user: User) => void;
@@ -41,6 +42,7 @@ const UserManagementSection: React.FC<UserManagementSectionProps> = ({
   totalPages,
   itemsPerPage,
   totalItems,
+  deletedUsers,
   onPageChange,
   onItemsPerPageChange,
   onToggleRole,
@@ -49,13 +51,23 @@ const UserManagementSection: React.FC<UserManagementSectionProps> = ({
 }) => {
   return (
     <section className="space-y-4">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
           User Management
         </h2>
         <span className="flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
-          {totalItems}
+          {totalItems} active
         </span>
+        {deletedUsers > 0 && (
+          <span className="flex items-center justify-center h-5 px-1.5 text-xs font-semibold rounded-full bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800">
+            {deletedUsers} deleted
+          </span>
+        )}
+        {deletedUsers > 0 && (
+          <span className="text-xs text-gray-400 dark:text-gray-500">
+            {totalItems + deletedUsers} total ever
+          </span>
+        )}
       </div>
 
       {/* User Search */}

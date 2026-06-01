@@ -23,6 +23,7 @@ The app now has two focused surfaces:
 - **Secondary:** Invite-only collaboration for trusted circles
 - **Current milestone:** Tracker and playlist-first experience with role-safe sharing workflows
 - **Security:** Supabase Auth + PostgreSQL RLS + invite-only onboarding
+- **Legal baseline:** Public privacy + terms routes with consent ledger capture on signup
 
 ## Why It Exists
 
@@ -60,6 +61,8 @@ npm run build
 npm run lint
 npm run typecheck
 npm test
+npm run test:backend-security
+npm run test:backend-security:seeded
 ```
 
 ## Documentation
@@ -67,6 +70,8 @@ npm test
 - [docs/README.md](docs/README.md) - full documentation index
 - [docs/QUICK-START.md](docs/QUICK-START.md) - setup + deployment
 - [docs/DATABASE-MIGRATIONS.md](docs/DATABASE-MIGRATIONS.md) - schema workflow
+- [docs/BACKEND-SECURITY-TESTING-RUNBOOK.md](docs/BACKEND-SECURITY-TESTING-RUNBOOK.md) - automated backend security runbook parity tests
+- [docs/PRIVACY-AND-COMPLIANCE.md](docs/PRIVACY-AND-COMPLIANCE.md) - privacy/terms routes, consent logging, and compliance baseline notes
 - [docs/INVITE-SYSTEM-QUICKSTART.md](docs/INVITE-SYSTEM-QUICKSTART.md) - invite onboarding and admin flow
 - [docs/ROLE-SYSTEM.md](docs/ROLE-SYSTEM.md) - roles and authorization model
 - [docs/COPILOT-AGENTS-GUIDE.md](docs/COPILOT-AGENTS-GUIDE.md) - AI agent workflow and guardrails

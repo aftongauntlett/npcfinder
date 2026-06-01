@@ -790,9 +790,6 @@ export default function ProfilePage() {
                 className="space-y-4"
               >
                 <ProfileInformationSection
-                  username={editableProfile.username}
-                  usernameError={usernameError}
-                  displayName={editableProfile.display_name}
                   bio={editableProfile.bio}
                   birthday={editableProfile.birthday}
                   location={editableProfile.location}
@@ -976,31 +973,28 @@ export default function ProfilePage() {
             </Card>
           )}
 
-          {topPlaylists.length === 0 ? (
-            <EmptyState
-              icon={ListMusic}
-              title="No featured playlists yet"
-              description={
-                isOwnProfile
-                  ? "Use the search above to choose up to eight playlists for your profile."
-                  : "This person has not featured playlists yet."
-              }
-            />
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {topPlaylists.map((playlist) => (
-                <div key={playlist.id}>
-                  <PlaylistCard
-                    playlist={playlist}
-                    isOwner={playlist.owner_id === user?.id}
-                    onClick={() => {
-                      void navigate(`/app/playlists/${playlist.slug}`);
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
+          {!isOwnProfile &&
+            (topPlaylists.length === 0 ? (
+              <EmptyState
+                icon={ListMusic}
+                title="No featured playlists yet"
+                description="This person has not featured playlists yet."
+              />
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {topPlaylists.map((playlist) => (
+                  <div key={playlist.id}>
+                    <PlaylistCard
+                      playlist={playlist}
+                      isOwner={playlist.owner_id === user?.id}
+                      onClick={() => {
+                        void navigate(`/app/playlists/${playlist.slug}`);
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            ))}
         </div>
       </div>
     </AppLayout>

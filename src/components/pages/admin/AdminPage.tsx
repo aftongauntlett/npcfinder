@@ -112,6 +112,7 @@ const AdminPage: React.FC = () => {
               totalPages={totalUserPages}
               itemsPerPage={itemsPerPage}
               totalItems={stats?.totalUsers ?? 0}
+              deletedUsers={stats?.deletedUsers ?? 0}
               onPageChange={setUserPage}
               onItemsPerPageChange={handleItemsPerPageChange}
               onToggleRole={handleToggleRoleClick}

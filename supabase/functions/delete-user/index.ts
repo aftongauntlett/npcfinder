@@ -5,8 +5,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
  * Delete User Edge Function (M3)
  *
  * Completely deletes a user account including auth.users record.
- * This requires service role privileges and must be called after
- * deleting all user data from the database.
+ * This requires service role privileges and runs fully server-side.
+ * Data linked by foreign keys is removed via database cascades.
+ * Legal consent ledger records are intentionally retained.
  *
  * SECURITY:
  * - Verifies authentication token
@@ -35,7 +36,7 @@ serve(async (req) => {
         {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
@@ -45,7 +46,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
       {
         global: { headers: { Authorization: authHeader } },
-      }
+      },
     );
 
     // Get authenticated user
@@ -60,7 +61,7 @@ serve(async (req) => {
         {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
@@ -76,19 +77,20 @@ serve(async (req) => {
           autoRefreshToken: false,
           persistSession: false,
         },
-      }
+      },
     );
 
-    // Delete auth.users record
-    // Note: All user data should already be deleted by privacy.ts before calling this
+    // Delete auth.users record (server-side).
+    // Database cascade rules remove user-owned records.
+    // Privacy/terms consent ledgers intentionally remain for legal audit.
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(
-      user.id
+      user.id,
     );
 
     if (deleteError) {
       console.error(
         "Failed to delete auth user:",
-        deleteError.message || "Unknown error"
+        deleteError.message || "Unknown error",
       );
       throw deleteError;
     }
@@ -103,7 +105,7 @@ serve(async (req) => {
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      },
     );
   } catch (error) {
     const errorMessage =
@@ -116,7 +118,7 @@ serve(async (req) => {
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      },
     );
   }
 });
