@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { useAdmin } from "@/contexts/AdminContext";
 import { TRACKER_SCOPES } from "@/data/trackerScopes";
-import { logger } from "@/lib/logger";
 import { useProfileQuery } from "@/hooks/useProfileQuery";
 
 interface AppSidebarProps {
@@ -75,6 +74,11 @@ export default function AppSidebar({
       setIsTrackerExpanded(false);
     }
   }, [isTrackerRoute]);
+
+  useEffect(() => {
+    // Always close mobile menu when route changes.
+    setIsOpen(false);
+  }, [location.pathname]);
 
   const profilePath = profile?.username
     ? `/app/profile/${profile.username}`
@@ -171,22 +175,123 @@ export default function AppSidebar({
     setIsOpen(false);
   };
 
+  const renderNavItems = ({
+    isCompact,
+    idPrefix,
+  }: {
+    isCompact: boolean;
+    idPrefix: string;
+  }) =>
+    navItems.map((item) => {
+      const Icon = item.icon;
+      const parentActive = item.children
+        ? item.children.some((child) => isActive(child.path))
+        : isActive(item.path);
+      const isCollapsibleGroup = !!item.children && item.id === "tracker";
+      const isGroupExpanded =
+        !isCompact && item.id === "tracker" ? isTrackerExpanded : false;
+      const childContainerId = `${idPrefix}-${item.id}-children`;
+
+      return (
+        <div key={`${idPrefix}-${item.id}`} className="space-y-0.5">
+          <button
+            type="button"
+            onClick={() => {
+              if (isCompact) {
+                navigateAndClose(item.path);
+                return;
+              }
+
+              if (isCollapsibleGroup) {
+                if (item.id === "tracker") {
+                  setIsTrackerExpanded((prev) => !prev);
+                }
+                return;
+              }
+
+              navigateAndClose(item.path);
+            }}
+            aria-expanded={
+              isCollapsibleGroup && !isCompact ? isGroupExpanded : undefined
+            }
+            aria-controls={
+              isCollapsibleGroup && !isCompact ? childContainerId : undefined
+            }
+            title={isCompact ? item.label : undefined}
+            className={`w-full flex items-center rounded-lg py-2 text-sm transition-colors ${
+              isCompact ? "justify-center px-0" : "justify-between px-3"
+            } ${
+              parentActive
+                ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light"
+                : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+            }`}
+          >
+            <span
+              className={`inline-flex items-center ${isCompact ? "" : "gap-3"}`}
+            >
+              <Icon className="w-4 h-4 shrink-0" />
+              {!isCompact && <span>{item.label}</span>}
+            </span>
+            {isCollapsibleGroup && !isCompact && (
+              <ChevronDown
+                className={`w-4 h-4 transition-transform shrink-0 ${
+                  isGroupExpanded ? "rotate-180" : "rotate-0"
+                }`}
+              />
+            )}
+          </button>
+
+          {!isCompact &&
+            item.children &&
+            (!isCollapsibleGroup || isGroupExpanded) && (
+              <div id={childContainerId} className="pl-5 space-y-0.5">
+                {item.children.map((child) => {
+                  const ChildIcon = child.icon;
+                  const childActive = isActive(child.path);
+
+                  return (
+                    <button
+                      key={`${idPrefix}-${child.id}`}
+                      type="button"
+                      onClick={() => navigateAndClose(child.path)}
+                      className={`w-full flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs transition-colors ${
+                        childActive
+                          ? "bg-primary/15 text-primary dark:bg-primary/25 dark:text-primary-light"
+                          : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      }`}
+                    >
+                      <ChildIcon className="w-3.5 h-3.5" />
+                      <span>{child.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+        </div>
+      );
+    });
+
   return (
     <>
       <div className="md:hidden sticky top-0 z-50 border-b border-gray-200/80 dark:border-gray-700/80 bg-white/90 dark:bg-gray-900/90 backdrop-blur">
         <div className="h-14 px-4 flex items-center justify-between">
           <Link
             to={TRACKER_SCOPES["movies-tv"].path}
-            className="font-semibold text-gray-900 dark:text-white"
+            className="flex items-center gap-2 min-w-0 text-gray-900 dark:text-white"
           >
-            NPC Finder
+            <img src="/quest-marker.svg" alt="" className="w-5 h-5 shrink-0" />
+            <span className="font-semibold truncate">NPC Finder</span>
           </Link>
 
           <button
             type="button"
             onClick={() => setIsOpen((prev) => !prev)}
             className="rounded-lg p-2 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200"
-            aria-label="Toggle sidebar"
+            aria-label={
+              isOpen ? "Close navigation menu" : "Open navigation menu"
+            }
+            aria-expanded={isOpen}
+            aria-controls="mobile-app-menu"
           >
             {isOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
           </button>
@@ -195,12 +300,11 @@ export default function AppSidebar({
 
       <aside
         className={`
-          fixed md:sticky top-0 left-0 h-screen z-40
+          hidden md:block md:sticky md:top-0 md:h-screen md:z-40
           border-r border-gray-200/60 dark:border-white/5
           bg-white/95 dark:bg-gray-900/95 backdrop-blur
           transition-all duration-200
           ${isCollapsed ? "w-16" : "w-48"}
-          ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
         `}
       >
         <div className="h-full flex flex-col overflow-hidden">
@@ -234,103 +338,7 @@ export default function AppSidebar({
             className="p-2 space-y-1 flex-1 overflow-y-auto"
             aria-label="App navigation"
           >
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const parentActive = item.children
-                ? item.children.some((child) => isActive(child.path))
-                : isActive(item.path);
-              const isCollapsibleGroup =
-                !!item.children && item.id === "tracker";
-              const isGroupExpanded =
-                !isCollapsed && item.id === "tracker"
-                  ? isTrackerExpanded
-                  : false;
-              const childContainerId = `${item.id}-children`;
-
-              return (
-                <div key={item.id} className="space-y-0.5">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (isCollapsed) {
-                        navigateAndClose(item.path);
-                        return;
-                      }
-                      if (isCollapsibleGroup) {
-                        if (item.id === "tracker") {
-                          setIsTrackerExpanded((prev) => !prev);
-                        }
-                        return;
-                      }
-                      navigateAndClose(item.path);
-                    }}
-                    aria-expanded={
-                      isCollapsibleGroup && !isCollapsed
-                        ? isGroupExpanded
-                        : undefined
-                    }
-                    aria-controls={
-                      isCollapsibleGroup && !isCollapsed
-                        ? childContainerId
-                        : undefined
-                    }
-                    title={isCollapsed ? item.label : undefined}
-                    className={`w-full flex items-center rounded-lg py-2 text-sm transition-colors ${
-                      isCollapsed
-                        ? "justify-center px-0"
-                        : "justify-between px-3"
-                    } ${
-                      parentActive
-                        ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light"
-                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                    }`}
-                  >
-                    <span
-                      className={`inline-flex items-center ${
-                        isCollapsed ? "" : "gap-3"
-                      }`}
-                    >
-                      <Icon className="w-4 h-4 shrink-0" />
-                      {!isCollapsed && <span>{item.label}</span>}
-                    </span>
-                    {isCollapsibleGroup && !isCollapsed && (
-                      <ChevronDown
-                        className={`w-4 h-4 transition-transform shrink-0 ${
-                          isGroupExpanded ? "rotate-180" : "rotate-0"
-                        }`}
-                      />
-                    )}
-                  </button>
-
-                  {!isCollapsed &&
-                    item.children &&
-                    (!isCollapsibleGroup || isGroupExpanded) && (
-                      <div id={childContainerId} className="pl-5 space-y-0.5">
-                        {item.children.map((child) => {
-                          const ChildIcon = child.icon;
-                          const childActive = isActive(child.path);
-
-                          return (
-                            <button
-                              key={child.id}
-                              type="button"
-                              onClick={() => navigateAndClose(child.path)}
-                              className={`w-full flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs transition-colors ${
-                                childActive
-                                  ? "bg-primary/15 text-primary dark:bg-primary/25 dark:text-primary-light"
-                                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-                              }`}
-                            >
-                              <ChildIcon className="w-3.5 h-3.5" />
-                              <span>{child.label}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                </div>
-              );
-            })}
+            {renderNavItems({ isCompact: isCollapsed, idPrefix: "desktop" })}
           </nav>
 
           {/* Footer — collapse toggle only */}
@@ -357,12 +365,23 @@ export default function AppSidebar({
       </aside>
 
       {isOpen && (
-        <button
-          type="button"
-          onClick={() => setIsOpen(false)}
-          className="md:hidden fixed inset-0 bg-black/20 z-30"
-          aria-label="Close sidebar overlay"
-        />
+        <>
+          <button
+            type="button"
+            onClick={() => setIsOpen(false)}
+            className="md:hidden fixed inset-0 top-14 bg-black/20 z-30"
+            aria-label="Close navigation menu overlay"
+          />
+
+          <div
+            id="mobile-app-menu"
+            className="md:hidden fixed top-14 inset-x-0 z-40 border-b border-gray-200/80 dark:border-gray-700/80 bg-white/95 dark:bg-gray-900/95 backdrop-blur max-h-[calc(100vh-3.5rem)] overflow-y-auto"
+          >
+            <nav className="p-2 space-y-1" aria-label="Mobile app navigation">
+              {renderNavItems({ isCompact: false, idPrefix: "mobile" })}
+            </nav>
+          </div>
+        </>
       )}
     </>
   );

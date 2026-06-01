@@ -54,7 +54,7 @@ const AuthenticatedAppLayout: React.FC<AuthenticatedAppLayoutProps> = ({
           </div>
         }
       >
-        <div className="flex min-h-screen">
+        <div className="flex min-h-screen flex-col md:flex-row">
           <AppSidebar currentUser={user} />
 
           <div className="flex-1 min-w-0">
