@@ -18,6 +18,7 @@ import ContentLayout from "@/components/layouts/ContentLayout";
 import { Button, Card } from "@/components/shared";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import {
+  checkForDuplicates,
   importItems,
   parseImportFile,
   type ImportedItem,
@@ -151,7 +152,8 @@ const CATEGORY_ORDER: Array<SourceDef["category"]> = [
 type PageState =
   | { phase: "select" }
   | { phase: "configure"; source: SourceDef }
-  | { phase: "preview"; source: SourceDef; items: ImportedItem[] }
+  | { phase: "checking"; source: SourceDef }
+  | { phase: "preview"; source: SourceDef; newItems: ImportedItem[]; skippedCount: number }
   | { phase: "importing"; source: SourceDef; items: ImportedItem[]; done: number }
   | { phase: "done"; source: SourceDef; result: ImportResult };
 
@@ -295,7 +297,11 @@ export default function ImportPage() {
   };
 
   const handleBack = () => {
-    if (pageState.phase === "configure" || pageState.phase === "done") {
+    if (
+      pageState.phase === "configure" ||
+      pageState.phase === "checking" ||
+      pageState.phase === "done"
+    ) {
       setPageState({ phase: "select" });
       setFileName(null);
       setParseError(null);
@@ -311,27 +317,39 @@ export default function ImportPage() {
       setParseError(null);
       setFileName(name);
 
-      let items: ImportedItem[] = [];
+      let parsed: ImportedItem[] = [];
       try {
-        items = parseImportFile(source.id, text);
+        parsed = parseImportFile(source.id, text);
       } catch {
-        setParseError("Could not read that file. Make sure you uploaded the correct file for this source.");
+        setParseError(
+          "Could not read that file. Make sure you uploaded the correct file for this source.",
+        );
         return;
       }
 
-      if (items.length === 0) {
+      if (parsed.length === 0) {
         setParseError(
           "No items were found in that file. Double-check that you exported from the right section and uploaded the correct file.",
         );
         return;
       }
 
-      setPageState({ phase: "preview", source, items });
+      setPageState({ phase: "checking", source });
+
+      void checkForDuplicates(parsed).then(({ newItems, alreadyTracked }) => {
+        setPageState({
+          phase: "preview",
+          source,
+          newItems,
+          skippedCount: alreadyTracked.length,
+        });
+      });
     },
     [],
   );
 
   const handleImport = async (source: SourceDef, items: ImportedItem[]) => {
+    if (items.length === 0) return;
     setPageState({ phase: "importing", source, items, done: 0 });
 
     const result = await importItems(items, (done) => {
@@ -351,10 +369,6 @@ export default function ImportPage() {
           description="Bring your existing data into NPC Finder from the platforms you already use."
         >
           <div className="space-y-8 max-w-3xl">
-            <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/40 px-4 py-3 text-sm text-blue-800 dark:text-blue-200">
-              <strong>Note:</strong> Imported items are kept separate from ones you add manually through Search. If you've already added something by hand, it won't be overwritten — but you may see it twice. You can delete duplicates from your Tracker.
-            </div>
-
             {grouped.map(({ category, meta, sources }) => {
               const Icon = meta.icon;
               return (
@@ -465,8 +479,22 @@ export default function ImportPage() {
     );
   }
 
+  if (pageState.phase === "checking") {
+    return (
+      <MainLayout>
+        <ContentLayout title="Checking your library…" description="Looking for items you've already added.">
+          <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Comparing with your existing tracker…
+          </div>
+        </ContentLayout>
+      </MainLayout>
+    );
+  }
+
   if (pageState.phase === "preview") {
-    const { source, items } = pageState;
+    const { source, newItems, skippedCount } = pageState;
+    const items = newItems;
 
     const statusCounts = items.reduce(
       (acc, item) => {
@@ -477,13 +505,18 @@ export default function ImportPage() {
     );
 
     const ratedCount = items.filter((i) => i.rating !== null).length;
+    const totalFound = items.length + skippedCount;
     const PREVIEW_LIMIT = 15;
 
     return (
       <MainLayout>
         <ContentLayout
           title={`Preview — ${source.name} Import`}
-          description={`${items.length.toLocaleString()} item${items.length === 1 ? "" : "s"} found`}
+          description={
+            skippedCount > 0
+              ? `${totalFound.toLocaleString()} items found — ${items.length.toLocaleString()} new, ${skippedCount.toLocaleString()} already in your library`
+              : `${items.length.toLocaleString()} new item${items.length === 1 ? "" : "s"} ready to import`
+          }
         >
           <div className="max-w-2xl space-y-6">
             <button
@@ -499,10 +532,10 @@ export default function ImportPage() {
             <Card border spacing="md">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
                 <div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <p className="text-2xl font-bold text-primary">
                     {items.length.toLocaleString()}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Total items</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">To import</p>
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-green-600 dark:text-green-400">
@@ -524,8 +557,15 @@ export default function ImportPage() {
                 </div>
               </div>
 
+              {skippedCount > 0 && (
+                <div className="mt-4 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-3">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                  {skippedCount.toLocaleString()} item{skippedCount === 1 ? "" : "s"} already in your library — will be skipped
+                </div>
+              )}
+
               {source.noteAfterUpload && (
-                <p className="mt-4 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-3">
+                <p className={`text-xs text-gray-500 dark:text-gray-400 ${skippedCount > 0 ? "mt-2" : "mt-4 border-t border-gray-200 dark:border-gray-700 pt-3"}`}>
                   {source.noteAfterUpload}
                 </p>
               )}
@@ -572,12 +612,24 @@ export default function ImportPage() {
               </div>
             </div>
 
-            <Button
-              onClick={() => void handleImport(source, items)}
-              className="w-full sm:w-auto"
-            >
-              Import {items.length.toLocaleString()} item{items.length === 1 ? "" : "s"}
-            </Button>
+            {items.length > 0 ? (
+              <Button
+                onClick={() => void handleImport(source, items)}
+                className="w-full sm:w-auto"
+              >
+                Import {items.length.toLocaleString()} new item{items.length === 1 ? "" : "s"}
+              </Button>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Everything in this file is already in your library — nothing to import!
+                </div>
+                <Button variant="secondary" onClick={handleBack}>
+                  Go back
+                </Button>
+              </div>
+            )}
           </div>
         </ContentLayout>
       </MainLayout>

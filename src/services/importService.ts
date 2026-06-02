@@ -323,6 +323,65 @@ export function parseImportFile(
   }
 }
 
+// --- Duplicate detection ---
+
+export interface DuplicateCheckResult {
+  newItems: ImportedItem[];
+  alreadyTracked: ImportedItem[];
+}
+
+function dedupKey(title: string, year: number | null, mediaType: string): string {
+  return `${title.toLowerCase().trim()}||${year ?? ""}||${mediaType}`;
+}
+
+function yearFromReleaseDate(releaseDate: string | null | undefined): number | null {
+  if (!releaseDate) return null;
+  const y = parseInt(releaseDate.split("-")[0], 10);
+  return isNaN(y) ? null : y;
+}
+
+export async function checkForDuplicates(
+  items: ImportedItem[],
+): Promise<DuplicateCheckResult> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { newItems: items, alreadyTracked: [] };
+
+  // Fetch all existing tracker items for this user (title + year + media_type only)
+  const { data: existing } = await supabase
+    .from("tracker_items")
+    .select("media:media_id(title, year, media_type)")
+    .eq("user_id", user.id);
+
+  if (!existing || existing.length === 0) {
+    return { newItems: items, alreadyTracked: [] };
+  }
+
+  const existingKeys = new Set<string>();
+  for (const row of existing) {
+    const m = row.media as unknown as { title: string; year: number | null; media_type: string } | null;
+    if (!m?.title) continue;
+    existingKeys.add(dedupKey(m.title, m.year, m.media_type));
+  }
+
+  const newItems: ImportedItem[] = [];
+  const alreadyTracked: ImportedItem[] = [];
+
+  for (const item of items) {
+    const year = yearFromReleaseDate(item.mediaItem.release_date);
+    const key = dedupKey(item.mediaItem.title, year, item.mediaItem.media_type ?? "");
+    if (existingKeys.has(key)) {
+      alreadyTracked.push(item);
+    } else {
+      newItems.push(item);
+    }
+  }
+
+  return { newItems, alreadyTracked };
+}
+
 // --- Batch importer ---
 
 const BATCH_CONCURRENCY = 5;
