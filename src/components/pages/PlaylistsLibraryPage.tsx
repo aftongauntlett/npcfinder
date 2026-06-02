@@ -5,6 +5,8 @@ import AppLayout from "@/components/layouts/AppLayout";
 import CreatePlaylistModal from "@/components/playlists/CreatePlaylistModal";
 import AddTrackerMediaToPlaylistModal from "@/components/playlists/AddTrackerMediaToPlaylistModal";
 import PlaylistDetailModal from "@/components/playlists/PlaylistDetailModal";
+import EditPlaylistModal from "@/components/playlists/EditPlaylistModal";
+import SharePlaylistModal from "@/components/playlists/SharePlaylistModal";
 import PlaylistCard from "@/components/playlists/PlaylistCard";
 import {
   ConfirmationModal,
@@ -22,15 +24,15 @@ import {
   usePlaylists,
   useRemovePlaylistItem,
   useReorderPlaylistItems,
+  useUpdatePlaylist,
 } from "@/hooks/usePlaylistsQueries";
 import { useTrackerItems } from "@/hooks/useTrackerQueries";
-import type { PlaylistItem } from "@/services/playlistsService";
+import type { PlaylistItem, PlaylistWithMeta } from "@/services/playlistsService";
 import type { TrackerItem } from "@/services/trackerService";
 
 type PlaylistTab = "mine" | "shared";
 type VisibilityFilter = "all" | "private" | "public";
 type SortMode = "updated" | "title" | "items";
-type PlaylistActionModal = "add" | "delete" | null;
 
 function parseTab(value: string | null): PlaylistTab {
   return value === "shared" ? "shared" : "mine";
@@ -86,8 +88,19 @@ export default function PlaylistsLibraryPage() {
   );
   const [showCreate, setShowCreate] = useState(false);
 
-  const [actionModal, setActionModal] = useState<PlaylistActionModal>(null);
-  const [actionSlug, setActionSlug] = useState<string | null>(null);
+  // Card-level action modals
+  const [cardActionPlaylist, setCardActionPlaylist] =
+    useState<PlaylistWithMeta | null>(null);
+  const [cardActionType, setCardActionType] = useState<
+    "edit" | "share" | "delete" | null
+  >(null);
+
+  // Add-items action (triggered from within detail modal)
+  const [addItemsSlug, setAddItemsSlug] = useState<string | null>(null);
+  const { data: addItemsPlaylist } = usePlaylist(addItemsSlug);
+  const { data: addItemsItems = [] } = usePlaylistItems(
+    addItemsPlaylist?.id ?? null,
+  );
 
   const { data: allPlaylists = [], isLoading: isPlaylistsLoading } =
     usePlaylists();
@@ -189,10 +202,7 @@ export default function PlaylistsLibraryPage() {
   const removePlaylistItem = useRemovePlaylistItem();
   const addPlaylistItem = useAddPlaylistItem();
   const deletePlaylist = useDeletePlaylist();
-
-  const { data: actionPlaylist } = usePlaylist(actionSlug);
-  const actionPlaylistId = actionPlaylist?.id ?? null;
-  const { data: actionItems = [] } = usePlaylistItems(actionPlaylistId);
+  const updatePlaylist = useUpdatePlaylist();
 
   const tabs = useMemo(
     () => [
@@ -299,16 +309,19 @@ export default function PlaylistsLibraryPage() {
     void navigate(`${basePath}?${params.toString()}`, { replace });
   };
 
-  const openActionFromDetail = (action: Exclude<PlaylistActionModal, null>) => {
+  const openAddItemsFromDetail = () => {
     if (!detailSlug) return;
-    setActionSlug(detailSlug);
-    setActionModal(action);
+    setAddItemsSlug(detailSlug);
     closeDetail();
   };
 
-  const closeActionModal = () => {
-    setActionModal(null);
-    setActionSlug(null);
+  const closeAddItemsModal = () => {
+    setAddItemsSlug(null);
+  };
+
+  const closeCardAction = () => {
+    setCardActionPlaylist(null);
+    setCardActionType(null);
   };
 
   const handleDetailReorder = async (reordered: PlaylistItem[]) => {
@@ -327,15 +340,22 @@ export default function PlaylistsLibraryPage() {
     });
   };
 
-  const handleDeleteActionPlaylist = async () => {
-    if (!actionPlaylistId) return;
-    await deletePlaylist.mutateAsync(actionPlaylistId);
-    closeActionModal();
+  const handleDeleteCardPlaylist = async () => {
+    if (!cardActionPlaylist) return;
+    await deletePlaylist.mutateAsync(cardActionPlaylist.id);
+    closeCardAction();
   };
 
-  const existingActionMediaIds = useMemo(
-    () => actionItems.map((item) => item.media_id),
-    [actionItems],
+  const handleToggleVisibility = (playlist: PlaylistWithMeta) => {
+    void updatePlaylist.mutateAsync({
+      playlistId: playlist.id,
+      updates: { is_private: !playlist.is_private },
+    });
+  };
+
+  const existingAddItemsMediaIds = useMemo(
+    () => addItemsItems.map((item) => item.media_id),
+    [addItemsItems],
   );
 
   const isOwnerTab = activeTab === "mine";
@@ -412,14 +432,46 @@ export default function PlaylistsLibraryPage() {
           />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filteredPlaylists.map((playlist) => (
-              <PlaylistCard
-                key={playlist.id}
-                playlist={playlist}
-                isOwner={playlist.owner_id === user?.id}
-                onClick={() => openPlaylist(playlist.slug)}
-              />
-            ))}
+            {filteredPlaylists.map((playlist) => {
+              const isOwner = playlist.owner_id === user?.id;
+              return (
+                <PlaylistCard
+                  key={playlist.id}
+                  playlist={playlist}
+                  isOwner={isOwner}
+                  onClick={() => openPlaylist(playlist.slug)}
+                  onEdit={
+                    isOwner
+                      ? () => {
+                          setCardActionPlaylist(playlist);
+                          setCardActionType("edit");
+                        }
+                      : undefined
+                  }
+                  onDelete={
+                    isOwner
+                      ? () => {
+                          setCardActionPlaylist(playlist);
+                          setCardActionType("delete");
+                        }
+                      : undefined
+                  }
+                  onShare={
+                    isOwner
+                      ? () => {
+                          setCardActionPlaylist(playlist);
+                          setCardActionType("share");
+                        }
+                      : undefined
+                  }
+                  onToggleVisibility={
+                    isOwner
+                      ? () => handleToggleVisibility(playlist)
+                      : undefined
+                  }
+                />
+              );
+            })}
           </div>
         )}
       </div>
@@ -437,8 +489,7 @@ export default function PlaylistsLibraryPage() {
         trackerRatingByMediaId={trackerRatingByMediaId}
         onReorder={handleDetailReorder}
         onRemove={handleDetailRemove}
-        onRequestAddItems={() => openActionFromDetail("add")}
-        onRequestDelete={() => openActionFromDetail("delete")}
+        onRequestAddItems={openAddItemsFromDetail}
       />
 
       <CreatePlaylistModal
@@ -459,30 +510,44 @@ export default function PlaylistsLibraryPage() {
       />
 
       <AddTrackerMediaToPlaylistModal
-        isOpen={
-          actionModal === "add" && !detailSlug && Boolean(actionPlaylistId)
-        }
-        onClose={closeActionModal}
+        isOpen={Boolean(addItemsSlug) && Boolean(addItemsPlaylist?.id)}
+        onClose={closeAddItemsModal}
         title="Add From Tracker"
         trackerItems={trackerItems}
-        existingMediaIds={existingActionMediaIds}
+        existingMediaIds={existingAddItemsMediaIds}
         onAdd={async (mediaId) => {
-          if (!actionPlaylistId) return;
+          if (!addItemsPlaylist?.id) return;
           await addPlaylistItem.mutateAsync({
-            playlistId: actionPlaylistId,
+            playlistId: addItemsPlaylist.id,
             mediaId,
           });
         }}
       />
 
+      {cardActionPlaylist && cardActionType === "edit" && (
+        <EditPlaylistModal
+          isOpen
+          playlist={cardActionPlaylist}
+          onClose={closeCardAction}
+        />
+      )}
+
+      {cardActionPlaylist && cardActionType === "share" && (
+        <SharePlaylistModal
+          isOpen
+          onClose={closeCardAction}
+          playlistId={cardActionPlaylist.id}
+          playlistName={cardActionPlaylist.name}
+          playlistSlug={cardActionPlaylist.slug}
+        />
+      )}
+
       <ConfirmationModal
-        isOpen={
-          actionModal === "delete" && !detailSlug && Boolean(actionPlaylist)
-        }
-        onClose={closeActionModal}
-        onConfirm={() => void handleDeleteActionPlaylist()}
+        isOpen={cardActionType === "delete" && Boolean(cardActionPlaylist)}
+        onClose={closeCardAction}
+        onConfirm={() => void handleDeleteCardPlaylist()}
         title="Delete playlist?"
-        message={`This permanently removes "${actionPlaylist?.name ?? "this playlist"}" and all of its items.`}
+        message={`This permanently removes "${cardActionPlaylist?.name ?? "this playlist"}" and all of its items.`}
         confirmText={deletePlaylist.isPending ? "Deleting..." : "Delete"}
         cancelText="Cancel"
         variant="danger"

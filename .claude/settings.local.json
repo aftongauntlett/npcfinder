@@ -5,7 +5,8 @@
       "Bash(rmdir /Users/test/Developer/repos/npc-finder/src/components/pages/game/)",
       "Bash(rm /Users/test/Developer/repos/npc-finder/src/hooks/useGameLaunch.ts)",
       "Bash(rm /Users/test/Developer/repos/npc-finder/src/hooks/useGameLibraryQueries.ts)",
-      "Bash(rm /Users/test/Developer/repos/npc-finder/src/hooks/useGameQueries.ts)"
+      "Bash(rm /Users/test/Developer/repos/npc-finder/src/hooks/useGameQueries.ts)",
+      "Bash(npx tsc *)"
     ]
   }
 }

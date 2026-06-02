@@ -13,6 +13,7 @@ const PlaylistsLibraryPage = React.lazy(
 const FriendsPage = React.lazy(() => import("../pages/FriendsPage"));
 const ProfilePage = React.lazy(() => import("../pages/ProfilePage"));
 const UserSettings = React.lazy(() => import("../pages/UserSettings"));
+const ImportPage = React.lazy(() => import("../pages/ImportPage"));
 const AdminPage = React.lazy(() => import("../pages/admin/AdminPage"));
 
 // Star background is only used in dark mode; lazy-load so it doesn't ship in light mode.
@@ -107,6 +108,7 @@ const AuthenticatedAppLayout: React.FC<AuthenticatedAppLayoutProps> = ({
                 path="settings"
                 element={<UserSettings currentUser={user} />}
               />
+              <Route path="import" element={<ImportPage />} />
               <Route
                 path="admin"
                 element={

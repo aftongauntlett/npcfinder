@@ -70,7 +70,7 @@ type MediaFilter = "all" | TrackerMediaType;
 type SortMode = "recent" | "title" | "year" | "added" | "completed" | "rating";
 
 function hasInProgressTab(scope: TrackerScopeId): boolean {
-  return scope === "books" || scope === "games";
+  return scope === "books" || scope === "games" || scope === "movies-tv";
 }
 
 function hasSingleFavoritesTab(scope: TrackerScopeId): boolean {
@@ -509,6 +509,55 @@ function ratingBadgeClassName(rating: number): string {
   return "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-100";
 }
 
+function TrackerCardProgressBar({
+  item,
+  showProgress,
+}: {
+  item: TrackerItem;
+  showProgress: boolean;
+}) {
+  if (!showProgress || item.status !== "in_progress") return null;
+
+  const mediaType = item.media?.media_type;
+
+  if (mediaType === "book") {
+    const currentPage = item.book_current_page;
+    const totalPages = item.media?.page_count;
+    if (!currentPage || !totalPages) return null;
+
+    const percent = Math.min(100, Math.round((currentPage / totalPages) * 100));
+    return (
+      <div className="space-y-1 pt-1.5 max-w-xs">
+        <div className="h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+          <div
+            className="h-full bg-primary dark:bg-primary-light transition-all"
+            style={{ width: `${percent}%` }}
+          />
+        </div>
+        <p className="text-[10px] text-gray-500 dark:text-gray-400">
+          Page {currentPage}/{totalPages} · {percent}%
+        </p>
+      </div>
+    );
+  }
+
+  if (mediaType === "tv") {
+    const season = item.tv_current_season;
+    const episode = item.tv_current_episode;
+    if (!season && !episode) return null;
+
+    return (
+      <div className="pt-1.5 max-w-xs">
+        <div className="h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+          <div className="h-full w-full bg-primary/70 dark:bg-primary-light/70" />
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
 function trackerCardProgressLabel(item: TrackerItem): string | null {
   if (item.status === "done") return null;
 
@@ -645,6 +694,8 @@ function TrackerMediaCard(props: {
               {item.media.description}
             </p>
           )}
+
+          <TrackerCardProgressBar item={item} showProgress={showProgress} />
         </div>
 
         <div className="sm:self-center flex items-center gap-2">
@@ -1554,7 +1605,7 @@ function TrackerDetailsModal(props: {
                               }
                               className="h-8 w-8"
                             />
-                            <div className="min-w-[120px] text-center">
+                            <div className="w-[120px] text-center">
                               <p className="text-base font-semibold text-gray-900 dark:text-white">
                                 S{normalizedTvSeason || 1}
                               </p>
@@ -1599,7 +1650,7 @@ function TrackerDetailsModal(props: {
                               }
                               className="h-8 w-8"
                             />
-                            <div className="min-w-[120px] text-center">
+                            <div className="w-[120px] text-center">
                               <p className="text-base font-semibold text-gray-900 dark:text-white">
                                 E{normalizedTvEpisode || 1}
                               </p>
@@ -1660,12 +1711,12 @@ function TrackerDetailsModal(props: {
                             {overallCompletionPercent || 0}%)
                           </p>
                         </div>
-                      ) : (
+                      ) : tvSeasons.length === 0 ? (
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                           Episode totals are not available for this show. Manual
                           tracking is still enabled.
                         </p>
-                      )}
+                      ) : null}
                     </div>
                   )}
 
@@ -1861,87 +1912,6 @@ function TrackerDetailsModal(props: {
                 </section>
               )}
 
-              {item.status === "done" && (isTv || isBook) && (
-                <section className="space-y-3 border-t border-gray-200/80 dark:border-gray-700/80 pt-4">
-                  <h4 className="text-sm font-semibold text-primary dark:text-primary-light">
-                    Progress
-                  </h4>
-
-                  {isTv && (
-                    <div className="space-y-1.5">
-                      {totalEpisodes > 0 ? (
-                        <>
-                          <div className="h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                            <div
-                              className="h-full bg-primary dark:bg-primary-light"
-                              style={{
-                                width: `${overallCompletionPercent || 0}%`,
-                              }}
-                            />
-                          </div>
-                          <p className="text-xs text-gray-600 dark:text-gray-300">
-                            S{item.tv_current_season || "-"}E
-                            {item.tv_current_episode || "-"} · {watchedEpisodes}
-                            /{totalEpisodes} episodes (
-                            {overallCompletionPercent || 0}%)
-                          </p>
-                        </>
-                      ) : (
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          No TV progress saved yet.
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {isBook && (
-                    <div className="space-y-2">
-                      {effectiveBookPageCount && item.book_current_page ? (
-                        <>
-                          <div className="h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                            <div
-                              className="h-full bg-primary dark:bg-primary-light"
-                              style={{
-                                width: `${bookCompletionPercent || 0}%`,
-                              }}
-                            />
-                          </div>
-                          <p className="text-xs text-gray-600 dark:text-gray-300">
-                            Page {item.book_current_page}/
-                            {effectiveBookPageCount} (
-                            {bookCompletionPercent || 0}%)
-                          </p>
-                        </>
-                      ) : (
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          No reading progress saved yet.
-                        </p>
-                      )}
-
-                      {originalChapterNotes.length > 0 && (
-                        <div className="space-y-2 border-t border-gray-200/80 dark:border-gray-700/80 pt-3">
-                          <p className="text-[11px] uppercase tracking-wide text-gray-700 dark:text-gray-200">
-                            Chapter Notes
-                          </p>
-                          {originalChapterNotes.map((chapterEntry) => (
-                            <div
-                              key={chapterEntry.id}
-                              className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 px-3 py-2"
-                            >
-                              <p className="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
-                                {chapterEntry.chapter}
-                              </p>
-                              <p className="text-sm text-gray-800 dark:text-gray-100 whitespace-pre-wrap">
-                                {chapterEntry.note}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </section>
-              )}
             </div>
           </div>
         </div>
@@ -1997,7 +1967,7 @@ function TrackerMediaGridCard(props: {
         size="md"
         aspectRatio="2/3"
         showOverlay={false}
-        className="mx-auto w-[68%]"
+        className="mx-auto w-[52%]"
       />
 
       <div className="mt-2 flex flex-1 flex-col gap-1.5">
@@ -2026,6 +1996,8 @@ function TrackerMediaGridCard(props: {
             {item.media.description}
           </p>
         )}
+
+        <TrackerCardProgressBar item={item} showProgress={showProgress} />
 
         <div className="mt-auto flex items-center justify-between gap-2 pt-1">
           <div className="flex items-center gap-1.5">
@@ -2362,9 +2334,11 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
       return;
     }
 
+    const itemHasIntermediateStatus =
+      scopeHasIntermediateStatus && item.media?.media_type === "tv";
     const nextStatus: TrackerStatus =
       item.status === "want_to"
-        ? scopeHasIntermediateStatus
+        ? itemHasIntermediateStatus
           ? "in_progress"
           : "done"
         : "done";
@@ -2387,9 +2361,11 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
       return;
     }
 
+    const itemHasIntermediateStatus =
+      scopeHasIntermediateStatus && item.media?.media_type === "tv";
     const previousStatus: TrackerStatus =
       item.status === "done"
-        ? scopeHasIntermediateStatus
+        ? itemHasIntermediateStatus
           ? "in_progress"
           : "want_to"
         : "want_to";

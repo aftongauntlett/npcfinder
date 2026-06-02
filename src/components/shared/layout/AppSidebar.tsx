@@ -15,6 +15,7 @@ import {
   Users,
   PanelLeftClose,
   PanelLeftOpen,
+  Upload,
 } from "lucide-react";
 import { useAdmin } from "@/contexts/AdminContext";
 import { TRACKER_SCOPES } from "@/data/trackerScopes";
@@ -129,6 +130,12 @@ export default function AppSidebar({
         label: "Social",
         path: profilePath,
         icon: Users,
+      },
+      {
+        id: "import",
+        label: "Import",
+        path: "/app/import",
+        icon: Upload,
       },
       {
         id: "settings",
