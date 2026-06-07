@@ -62,16 +62,21 @@ const AuthenticatedAppLayout: React.FC<AuthenticatedAppLayoutProps> = ({
             <Routes>
               <Route
                 index
-                element={<Navigate to="/app/tracker/movies-tv" replace />}
+                element={<Navigate to="/app/tracker/movies" replace />}
               />
               <Route
                 path="tracker"
-                element={<Navigate to="/app/tracker/movies-tv" replace />}
+                element={<Navigate to="/app/tracker/movies" replace />}
               />
               <Route
                 path="tracker/movies-tv"
-                element={<TrackerPage scope="movies-tv" />}
+                element={<Navigate to="/app/tracker/movies" replace />}
               />
+              <Route
+                path="tracker/movies"
+                element={<TrackerPage scope="movies" />}
+              />
+              <Route path="tracker/tv" element={<TrackerPage scope="tv" />} />
               <Route
                 path="tracker/books"
                 element={<TrackerPage scope="books" />}
@@ -120,7 +125,7 @@ const AuthenticatedAppLayout: React.FC<AuthenticatedAppLayoutProps> = ({
 
               <Route
                 path="*"
-                element={<Navigate to="/app/tracker/movies-tv" replace />}
+                element={<Navigate to="/app/tracker/movies" replace />}
               />
             </Routes>
           </div>

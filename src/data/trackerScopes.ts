@@ -1,4 +1,4 @@
-export type TrackerScopeId = "movies-tv" | "books" | "games" | "music";
+export type TrackerScopeId = "movies" | "tv" | "books" | "games" | "music";
 
 export type TrackerMediaType =
   | "movie"
@@ -28,16 +28,27 @@ export interface TrackerScopeConfig {
 }
 
 export const TRACKER_SCOPES: Record<TrackerScopeId, TrackerScopeConfig> = {
-  "movies-tv": {
-    id: "movies-tv",
-    label: "Movies & TV",
-    navLabel: "Movies & TV",
-    path: "/app/tracker/movies-tv",
-    pageTitle: "Tracker: Movies & TV",
+  movies: {
+    id: "movies",
+    label: "Movies",
+    navLabel: "Movies",
+    path: "/app/tracker/movies",
+    pageTitle: "Tracker: Movies",
     pageDescription:
       "Track what you are watching with quick status toggles and private notes.",
     searchScope: "movies-tv",
-    mediaTypes: ["movie", "tv"],
+    mediaTypes: ["movie"],
+  },
+  tv: {
+    id: "tv",
+    label: "TV Shows",
+    navLabel: "TV Shows",
+    path: "/app/tracker/tv",
+    pageTitle: "Tracker: TV Shows",
+    pageDescription:
+      "Track what you are watching with quick status toggles and private notes.",
+    searchScope: "movies-tv",
+    mediaTypes: ["tv"],
   },
   books: {
     id: "books",
@@ -75,7 +86,8 @@ export const TRACKER_SCOPES: Record<TrackerScopeId, TrackerScopeConfig> = {
 };
 
 export const TRACKER_SCOPE_ORDER: TrackerScopeId[] = [
-  "movies-tv",
+  "movies",
+  "tv",
   "books",
   "music",
   "games",
@@ -86,7 +98,7 @@ export function resolveTrackerScope(rawScope?: string): TrackerScopeId {
     return rawScope as TrackerScopeId;
   }
 
-  return "movies-tv";
+  return "movies";
 }
 
 export function mediaTypeAllowedInScope(

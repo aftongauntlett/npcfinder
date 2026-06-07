@@ -214,14 +214,58 @@ async function fetchBookDetails(externalId: string) {
   };
 }
 
-async function fetchGameDetails(externalId: string) {
+async function fetchGameDetails(externalId: string, serviceClient?: ReturnType<typeof createClient>) {
   const apiKey = Deno.env.get("RAWG_API_KEY");
   if (!apiKey) {
     throw new Error("RAWG key is not configured");
   }
 
+  let rawgId = externalId;
+
+  // Steam game IDs (steam_game_APPID) need a title search to find the RAWG ID
+  if (externalId.startsWith("steam_game_")) {
+    if (!serviceClient) {
+      throw new Error("serviceClient required for Steam game lookup");
+    }
+
+    const { data: mediaRow } = await serviceClient
+      .from("media")
+      .select("title")
+      .eq("external_id", externalId)
+      .maybeSingle();
+
+    if (!mediaRow?.title) {
+      throw new Error(`No media record found for ${externalId}`);
+    }
+
+    const searchRes = await fetch(
+      `https://api.rawg.io/api/games?key=${apiKey}&search=${encodeURIComponent(mediaRow.title)}&page_size=5`,
+    );
+    if (!searchRes.ok) {
+      throw new Error(`RAWG search failed (${searchRes.status})`);
+    }
+
+    const searchData = await searchRes.json();
+    const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const titleNorm = norm(mediaRow.title);
+
+    const match =
+      (searchData.results ?? []).find((r: { name?: string }) => {
+        const n = norm(r.name ?? "");
+        return n === titleNorm || n.includes(titleNorm) || titleNorm.includes(n);
+      }) ??
+      searchData.results?.[0] ??
+      null;
+
+    if (!match) {
+      throw new Error(`RAWG: no match found for "${mediaRow.title}"`);
+    }
+
+    rawgId = String(match.id);
+  }
+
   const response = await fetch(
-    `https://api.rawg.io/api/games/${encodeURIComponent(externalId)}?key=${apiKey}`,
+    `https://api.rawg.io/api/games/${encodeURIComponent(rawgId)}?key=${apiKey}`,
   );
   if (!response.ok) {
     throw new Error(`RAWG fetch failed (${response.status})`);
@@ -230,7 +274,7 @@ async function fetchGameDetails(externalId: string) {
   const data = await response.json();
 
   return {
-    external_id: String(data?.id || externalId),
+    external_id: externalId, // always preserve the original ID used for cache keying
     media_type: "game" as const,
     title: data?.name || "Unknown Game",
     poster_url: data?.background_image || null,
@@ -296,7 +340,7 @@ async function fetchMusicDetails(
   };
 }
 
-async function fetchDetails(externalId: string, mediaType: MediaType) {
+async function fetchDetails(externalId: string, mediaType: MediaType, serviceClient?: ReturnType<typeof createClient>) {
   if (mediaType === "movie" || mediaType === "tv") {
     return fetchMovieOrTvDetails(externalId, mediaType);
   }
@@ -306,7 +350,7 @@ async function fetchDetails(externalId: string, mediaType: MediaType) {
   }
 
   if (mediaType === "game") {
-    return fetchGameDetails(externalId);
+    return fetchGameDetails(externalId, serviceClient);
   }
 
   return fetchMusicDetails(externalId, mediaType);
@@ -372,14 +416,14 @@ serve(async (req) => {
       );
     }
 
-    const details = await fetchDetails(externalId, mediaType);
-    const nowIso = new Date().toISOString();
-    const expiresAtIso = new Date(Date.now() + ttlMs).toISOString();
-
     const serviceClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
+
+    const details = await fetchDetails(externalId, mediaType, serviceClient);
+    const nowIso = new Date().toISOString();
+    const expiresAtIso = new Date(Date.now() + ttlMs).toISOString();
 
     const { error: upsertError } = await serviceClient
       .from("media_details_cache")

@@ -70,7 +70,7 @@ type MediaFilter = "all" | TrackerMediaType;
 type SortMode = "recent" | "title" | "year" | "added" | "completed" | "rating";
 
 function hasInProgressTab(scope: TrackerScopeId): boolean {
-  return scope === "books" || scope === "games" || scope === "movies-tv";
+  return scope === "books" || scope === "games" || scope === "tv";
 }
 
 function hasSingleFavoritesTab(scope: TrackerScopeId): boolean {
@@ -559,11 +559,7 @@ function TrackerCardProgressBar({
 }
 
 function trackerCardProgressLabel(item: TrackerItem): string | null {
-  if (item.status === "done") return null;
-
-  if (item.status === "want_to") {
-    return "To-Do";
-  }
+  if (item.status !== "in_progress") return null;
 
   const mediaType = item.media?.media_type;
 
@@ -581,7 +577,7 @@ function trackerCardProgressLabel(item: TrackerItem): string | null {
     if (current) return `Page ${current}`;
   }
 
-  return "In Progress";
+  return null;
 }
 
 function TrackerMediaCard(props: {
@@ -2290,17 +2286,21 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
 
   const filterSections = useMemo(
     () => [
-      {
-        id: "mediaType",
-        title: "Media Type",
-        options: [
-          { id: "all", label: `All ${scopeConfig.label}` },
-          ...scopeConfig.mediaTypes.map((mediaType) => ({
-            id: mediaType,
-            label: mediaLabel(mediaType),
-          })),
-        ],
-      },
+      ...(scopeConfig.mediaTypes.length > 1
+        ? [
+            {
+              id: "mediaType",
+              title: "Media Type",
+              options: [
+                { id: "all", label: `All ${scopeConfig.label}` },
+                ...scopeConfig.mediaTypes.map((mediaType) => ({
+                  id: mediaType,
+                  label: mediaLabel(mediaType),
+                })),
+              ],
+            },
+          ]
+        : []),
       {
         id: "sort",
         title: "Sort By",

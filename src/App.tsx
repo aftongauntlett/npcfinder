@@ -10,6 +10,7 @@ import AuthenticatedAppLayout from "./components/layouts/AuthenticatedAppLayout"
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { AdminProvider } from "./contexts/AdminContext";
+import { EnrichmentProvider } from "./contexts/EnrichmentContext";
 import ErrorBoundary from "./components/shared/ui/ErrorBoundary";
 
 // Authenticated App Wrapper
@@ -44,12 +45,14 @@ const AuthenticatedApp: React.FC = () => {
         element={
           user ? (
             <AdminProvider>
-              <ErrorBoundary
-                fallbackTitle="App Error"
-                fallbackMessage="The application encountered an error. Your data is safe. Please try again."
-              >
-                <AuthenticatedAppLayout user={user} />
-              </ErrorBoundary>
+              <EnrichmentProvider>
+                <ErrorBoundary
+                  fallbackTitle="App Error"
+                  fallbackMessage="The application encountered an error. Your data is safe. Please try again."
+                >
+                  <AuthenticatedAppLayout user={user} />
+                </ErrorBoundary>
+              </EnrichmentProvider>
             </AdminProvider>
           ) : (
             <Navigate to="/login" replace />

@@ -21,10 +21,13 @@ import {
   checkForDuplicates,
   importItems,
   parseImportFile,
+  fetchSteamGames,
   type ImportedItem,
   type ImportResult,
   type ImportSource,
 } from "@/services/importService";
+import { useEnrichment } from "@/contexts/EnrichmentContext";
+import { TRACKER_SCOPES } from "@/data/trackerScopes";
 
 const PAGE_META = {
   title: "Import Library",
@@ -38,7 +41,7 @@ interface SourceDef {
   id: ImportSource;
   name: string;
   category: "books" | "movies-tv" | "music" | "games";
-  fileType: "csv" | "json";
+  fileType: "csv" | "json" | "steam";
   accept: string;
   description: string;
   instructions: string[];
@@ -54,11 +57,11 @@ const SOURCES: SourceDef[] = [
     accept: ".csv",
     description: "Import your read, reading, and want-to-read books",
     instructions: [
-      'Go to goodreads.com and sign in to your account.',
+      "Go to goodreads.com and sign in to your account.",
       'Click your profile picture in the top-right, then choose "My Books".',
       'On the left sidebar, scroll down and click "Import and export".',
       'Click the "Export Library" button. A CSV file will download to your computer.',
-      'Come back here and upload that file.',
+      "Come back here and upload that file.",
     ],
     noteAfterUpload:
       "Ratings (1–5 stars) are imported. Books marked as Read are set to Done; Currently Reading to In Progress; Want to Read to Want To.",
@@ -71,12 +74,12 @@ const SOURCES: SourceDef[] = [
     accept: ".csv",
     description: "Import your watched films, diary, ratings, or watchlist",
     instructions: [
-      'Go to letterboxd.com and sign in.',
+      "Go to letterboxd.com and sign in.",
       'Click your username in the top-right and choose "Settings".',
       'Click "Import & Export" in the left menu.',
       'Under "Export Your Data", click "Export your data". A ZIP file will download.',
-      'Open the ZIP file on your computer (double-click it). Inside, find diary.csv (your watched history), ratings.csv (your rated films), or watchlist.csv.',
-      'Upload whichever CSV file you want to import.',
+      "Open the ZIP file on your computer (double-click it). Inside, find diary.csv (your watched history), ratings.csv (your rated films), or watchlist.csv.",
+      "Upload whichever CSV file you want to import.",
     ],
     noteAfterUpload:
       "Diary and ratings entries are imported as Done. Watchlist entries are imported as Want To. Half-star ratings are converted to the 1–10 scale.",
@@ -89,11 +92,11 @@ const SOURCES: SourceDef[] = [
     accept: ".csv",
     description: "Import your IMDb ratings for movies and TV shows",
     instructions: [
-      'Go to imdb.com and sign in.',
+      "Go to imdb.com and sign in.",
       'Click your account name in the top-right, then choose "Your ratings".',
-      'On the Your Ratings page, click the three-dot menu (⋯) near the top-right of the list.',
+      "On the Your Ratings page, click the three-dot menu (⋯) near the top-right of the list.",
       'Choose "Export" from the dropdown. A CSV file will download.',
-      'Come back here and upload that file.',
+      "Come back here and upload that file.",
     ],
     noteAfterUpload:
       "All rated titles are imported as Done. IMDb ratings (1–10) are carried over directly. TV series are automatically separated from movies.",
@@ -106,12 +109,12 @@ const SOURCES: SourceDef[] = [
     accept: ".json",
     description: "Import your saved songs and albums from your Spotify library",
     instructions: [
-      'Go to spotify.com and sign in to your account.',
+      "Go to spotify.com and sign in to your account.",
       'Click your profile picture (top-right) and choose "Account".',
       'Scroll down to "Privacy settings" and click it.',
       'Scroll to "Download your data" and click "Request data". Spotify will prepare your data — this usually takes a few minutes.',
-      'You will get an email when it is ready. Download the ZIP file from that email.',
-      'Open the ZIP file. Find the file named YourLibrary.json and upload it here.',
+      "You will get an email when it is ready. Download the ZIP file from that email.",
+      "Open the ZIP file. Find the file named YourLibrary.json and upload it here.",
     ],
     noteAfterUpload:
       "Saved tracks are imported as songs (Want To). Saved albums are imported as albums (Want To). Playlists are not included.",
@@ -120,15 +123,14 @@ const SOURCES: SourceDef[] = [
     id: "steam",
     name: "Steam",
     category: "games",
-    fileType: "csv",
-    accept: ".csv",
+    fileType: "steam",
+    accept: "",
     description: "Import your Steam game library",
     instructions: [
-      'Go to store.steampowered.com and sign in.',
-      'Click your username in the top-right and choose "Account details".',
-      'Under "Store & Purchase History", click "Request the data associated with your Steam account".',
-      'On the data request page, make sure "Games" is checked and submit the request. Steam will email you when your data is ready (usually within a few hours).',
-      'Download the ZIP from the email. Inside, find games.csv and upload it here.',
+      "Make sure your Steam profile is public. Go to steamcommunity.com/id/[yourname] or your numeric Steam ID.",
+      'Go to your profile and click "Edit Profile".',
+      'Under "Profile Visibility", select "Public" and save.',
+      "Come back here and paste your Steam profile URL or custom ID.",
     ],
     noteAfterUpload:
       "Games with any recorded playtime are imported as Done. Games with zero hours are imported as Want To.",
@@ -136,10 +138,26 @@ const SOURCES: SourceDef[] = [
 ];
 
 const CATEGORY_META = {
-  books: { label: "Books", icon: Book, color: "text-emerald-600 dark:text-emerald-400" },
-  "movies-tv": { label: "Movies & TV", icon: Film, color: "text-blue-600 dark:text-blue-400" },
-  music: { label: "Music", icon: Music2, color: "text-purple-600 dark:text-purple-400" },
-  games: { label: "Games", icon: Gamepad2, color: "text-orange-600 dark:text-orange-400" },
+  books: {
+    label: "Books",
+    icon: Book,
+    color: "text-emerald-600 dark:text-emerald-400",
+  },
+  "movies-tv": {
+    label: "Movies & TV",
+    icon: Film,
+    color: "text-blue-600 dark:text-blue-400",
+  },
+  music: {
+    label: "Music",
+    icon: Music2,
+    color: "text-purple-600 dark:text-purple-400",
+  },
+  games: {
+    label: "Games",
+    icon: Gamepad2,
+    color: "text-orange-600 dark:text-orange-400",
+  },
 };
 
 const CATEGORY_ORDER: Array<SourceDef["category"]> = [
@@ -153,25 +171,38 @@ type PageState =
   | { phase: "select" }
   | { phase: "configure"; source: SourceDef }
   | { phase: "checking"; source: SourceDef }
-  | { phase: "preview"; source: SourceDef; newItems: ImportedItem[]; skippedCount: number }
-  | { phase: "importing"; source: SourceDef; items: ImportedItem[]; done: number }
+  | {
+      phase: "preview";
+      source: SourceDef;
+      newItems: ImportedItem[];
+      skippedCount: number;
+    }
+  | {
+      phase: "importing";
+      source: SourceDef;
+      items: ImportedItem[];
+      done: number;
+    }
   | { phase: "done"; source: SourceDef; result: ImportResult };
 
 // --- Sub-components ---
 
-function StatusBadge({
-  status,
-}: {
-  status: ImportedItem["status"];
-}) {
+function StatusBadge({ status }: { status: ImportedItem["status"] }) {
   const map = {
     done: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
-    in_progress: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300",
+    in_progress:
+      "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300",
     want_to: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
   };
-  const label = { done: "Done", in_progress: "In Progress", want_to: "Want To" };
+  const label = {
+    done: "Done",
+    in_progress: "In Progress",
+    want_to: "Want To",
+  };
   return (
-    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${map[status]}`}>
+    <span
+      className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${map[status]}`}
+    >
       {label[status]}
     </span>
   );
@@ -242,12 +273,17 @@ function DropZone({
           : "border-gray-300 dark:border-gray-600 hover:border-primary/60 hover:bg-gray-50 dark:hover:bg-gray-800/50"
       }`}
       onClick={() => inputRef.current?.click()}
-      onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setDragging(true);
+      }}
       onDragLeave={() => setDragging(false)}
       onDrop={handleDrop}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") inputRef.current?.click(); }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") inputRef.current?.click();
+      }}
       aria-label={`Upload ${fileType.toUpperCase()} file`}
     >
       <Upload className="w-6 h-6 text-gray-400" />
@@ -274,15 +310,81 @@ function DropZone({
   );
 }
 
+function SteamInputZone({
+  onSubmit,
+  isLoading,
+  error,
+}: {
+  onSubmit: (steamId: string) => void;
+  isLoading: boolean;
+  error: string | null;
+}) {
+  const [input, setInput] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (input.trim()) {
+      onSubmit(input.trim());
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-3">
+      <div className="relative">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="paste your Steam profile URL or custom ID"
+          className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          disabled={isLoading}
+        />
+      </div>
+
+      {error && (
+        <div className="flex items-start gap-2 text-sm text-red-600 dark:text-red-400">
+          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      <div className="flex gap-2">
+        <Button
+          type="submit"
+          disabled={!input.trim() || isLoading}
+          className="flex-1"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              Fetching games…
+            </>
+          ) : (
+            "Fetch your library"
+          )}
+        </Button>
+      </div>
+
+      <p className="text-xs text-gray-500 dark:text-gray-400">
+        Examples: steamcommunity.com/id/yourname,
+        steamcommunity.com/profiles/12345678
+      </p>
+    </form>
+  );
+}
+
 // --- Main page ---
 
 export default function ImportPage() {
   usePageMeta(PAGE_META);
   const navigate = useNavigate();
 
+  const enrichment = useEnrichment();
   const [pageState, setPageState] = useState<PageState>({ phase: "select" });
   const [fileName, setFileName] = useState<string | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
+  const [steamLoading, setSteamLoading] = useState(false);
+  const [steamError, setSteamError] = useState<string | null>(null);
 
   const grouped = CATEGORY_ORDER.map((cat) => ({
     category: cat,
@@ -348,6 +450,42 @@ export default function ImportPage() {
     [],
   );
 
+  const handleSteamSubmit = useCallback(
+    async (steamId: string, source: SourceDef) => {
+      setSteamError(null);
+      setSteamLoading(true);
+
+      try {
+        const parsed = await fetchSteamGames(steamId);
+
+        if (parsed.length === 0) {
+          setSteamError("No games found in your library.");
+          setSteamLoading(false);
+          return;
+        }
+
+        setPageState({ phase: "checking", source });
+        setSteamLoading(false);
+
+        const { newItems, alreadyTracked } = await checkForDuplicates(parsed);
+        setPageState({
+          phase: "preview",
+          source,
+          newItems,
+          skippedCount: alreadyTracked.length,
+        });
+      } catch (error) {
+        setSteamError(
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch your Steam library. Make sure your profile is public.",
+        );
+        setSteamLoading(false);
+      }
+    },
+    [],
+  );
+
   const handleImport = async (source: SourceDef, items: ImportedItem[]) => {
     if (items.length === 0) return;
     setPageState({ phase: "importing", source, items, done: 0 });
@@ -355,6 +493,10 @@ export default function ImportPage() {
     const result = await importItems(items, (done) => {
       setPageState({ phase: "importing", source, items, done });
     });
+
+    if (source.id === "steam") {
+      void enrichment.start();
+    }
 
     setPageState({ phase: "done", source, result });
   };
@@ -434,7 +576,7 @@ export default function ImportPage() {
             {/* Step-by-step instructions */}
             <Card border spacing="md">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
-                How to export from {source.name}
+                How to import from {source.name}
               </h3>
               <ol className="space-y-3">
                 {source.instructions.map((step, i) => (
@@ -450,27 +592,67 @@ export default function ImportPage() {
               </ol>
             </Card>
 
-            {/* Upload */}
+            {/* Upload or input section */}
             <div className="space-y-3">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                Upload your file
+                {source.fileType === "steam"
+                  ? "Enter your Steam profile"
+                  : "Upload your file"}
               </h3>
-              <DropZone
-                accept={source.accept}
-                fileType={source.fileType}
-                fileName={fileName}
-                onClear={() => {
-                  setFileName(null);
-                  setParseError(null);
-                }}
-                onFile={(text, name) => handleFile(text, name, source)}
-              />
+              {source.fileType === "steam" ? (
+                <>
+                  <SteamInputZone
+                    onSubmit={(steamId) =>
+                      void handleSteamSubmit(steamId, source)
+                    }
+                    isLoading={steamLoading}
+                    error={steamError}
+                  />
+                  <div className="mt-6 pt-5 border-t border-gray-200 dark:border-gray-700 space-y-2">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                      Already imported your Steam library?
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Fetches descriptions, genres, cover art, and ratings from
+                      RAWG for any Steam games currently missing that data. Runs
+                      in the background — you can navigate away once it starts.
+                    </p>
+                    {enrichment.isRunning ? (
+                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                        <Loader2 className="w-4 h-4 animate-spin shrink-0 text-primary" />
+                        Running in the background — you'll get a notification
+                        when it's done.
+                      </div>
+                    ) : (
+                      <Button
+                        variant="secondary"
+                        onClick={() => void enrichment.start()}
+                      >
+                        Refresh game details from RAWG
+                      </Button>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <DropZone
+                    accept={source.accept}
+                    fileType={source.fileType as "csv" | "json"}
+                    fileName={fileName}
+                    onClear={() => {
+                      setFileName(null);
+                      setParseError(null);
+                    }}
+                    onFile={(text, name) => handleFile(text, name, source)}
+                  />
 
-              {parseError && (
-                <div className="flex items-start gap-2 text-sm text-red-600 dark:text-red-400">
-                  <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                  <span>{parseError}</span>
-                </div>
+                  {parseError && (
+                    <div className="flex items-start gap-2 text-sm text-red-600 dark:text-red-400">
+                      <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                      <span>{parseError}</span>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -482,7 +664,10 @@ export default function ImportPage() {
   if (pageState.phase === "checking") {
     return (
       <MainLayout>
-        <ContentLayout title="Checking your library…" description="Looking for items you've already added.">
+        <ContentLayout
+          title="Checking your library…"
+          description="Looking for items you've already added."
+        >
           <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
             <Loader2 className="w-4 h-4 animate-spin" />
             Comparing with your existing tracker…
@@ -535,37 +720,49 @@ export default function ImportPage() {
                   <p className="text-2xl font-bold text-primary">
                     {items.length.toLocaleString()}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">To import</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    To import
+                  </p>
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                     {(statusCounts["done"] ?? 0).toLocaleString()}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Done</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    Done
+                  </p>
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                     {(statusCounts["want_to"] ?? 0).toLocaleString()}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Want To</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    Want To
+                  </p>
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-gray-700 dark:text-gray-300">
                     {ratedCount.toLocaleString()}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">With rating</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    With rating
+                  </p>
                 </div>
               </div>
 
               {skippedCount > 0 && (
                 <div className="mt-4 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-3">
                   <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
-                  {skippedCount.toLocaleString()} item{skippedCount === 1 ? "" : "s"} already in your library — will be skipped
+                  {skippedCount.toLocaleString()} item
+                  {skippedCount === 1 ? "" : "s"} already in your library — will
+                  be skipped
                 </div>
               )}
 
               {source.noteAfterUpload && (
-                <p className={`text-xs text-gray-500 dark:text-gray-400 ${skippedCount > 0 ? "mt-2" : "mt-4 border-t border-gray-200 dark:border-gray-700 pt-3"}`}>
+                <p
+                  className={`text-xs text-gray-500 dark:text-gray-400 ${skippedCount > 0 ? "mt-2" : "mt-4 border-t border-gray-200 dark:border-gray-700 pt-3"}`}
+                >
                   {source.noteAfterUpload}
                 </p>
               )}
@@ -574,7 +771,8 @@ export default function ImportPage() {
             {/* Item list preview */}
             <div>
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                Preview ({Math.min(items.length, PREVIEW_LIMIT)} of {items.length.toLocaleString()})
+                Preview ({Math.min(items.length, PREVIEW_LIMIT)} of{" "}
+                {items.length.toLocaleString()})
               </h3>
               <div className="rounded-lg border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700/60 overflow-hidden">
                 {items.slice(0, PREVIEW_LIMIT).map((item, i) => (
@@ -605,7 +803,8 @@ export default function ImportPage() {
                 {items.length > PREVIEW_LIMIT && (
                   <div className="px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50">
                     <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                      + {(items.length - PREVIEW_LIMIT).toLocaleString()} more items
+                      + {(items.length - PREVIEW_LIMIT).toLocaleString()} more
+                      items
                     </p>
                   </div>
                 )}
@@ -617,14 +816,43 @@ export default function ImportPage() {
                 onClick={() => void handleImport(source, items)}
                 className="w-full sm:w-auto"
               >
-                Import {items.length.toLocaleString()} new item{items.length === 1 ? "" : "s"}
+                Import {items.length.toLocaleString()} new item
+                {items.length === 1 ? "" : "s"}
               </Button>
             ) : (
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
                   <CheckCircle2 className="w-4 h-4" />
-                  Everything in this file is already in your library — nothing to import!
+                  Everything in this file is already in your library — nothing
+                  to import!
                 </div>
+                {source.id === "steam" && (
+                  <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-2">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      Want to refresh game details?
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Fetches descriptions, genres, cover art, and ratings from
+                      RAWG for any Steam games currently missing that data.
+                      Runs in the background — you can navigate away once it
+                      starts.
+                    </p>
+                    {enrichment.isRunning ? (
+                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                        <Loader2 className="w-4 h-4 animate-spin shrink-0 text-primary" />
+                        Running in the background — you'll get a notification
+                        when it's done.
+                      </div>
+                    ) : (
+                      <Button
+                        variant="secondary"
+                        onClick={() => void enrichment.start()}
+                      >
+                        Refresh game details from RAWG
+                      </Button>
+                    )}
+                  </div>
+                )}
                 <Button variant="secondary" onClick={handleBack}>
                   Go back
                 </Button>
@@ -642,14 +870,18 @@ export default function ImportPage() {
 
     return (
       <MainLayout>
-        <ContentLayout title="Importing…" description="Please keep this page open.">
+        <ContentLayout
+          title="Importing…"
+          description="Please keep this page open."
+        >
           <div className="max-w-md space-y-6">
             <Card border spacing="md">
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <Loader2 className="w-5 h-5 text-primary animate-spin" />
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    {done.toLocaleString()} / {items.length.toLocaleString()} items processed
+                    {done.toLocaleString()} / {items.length.toLocaleString()}{" "}
+                    items processed
                   </span>
                 </div>
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
@@ -659,7 +891,8 @@ export default function ImportPage() {
                   />
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  This may take a minute for large libraries. Don't close this tab.
+                  This may take a minute for large libraries. Don't close this
+                  tab.
                 </p>
               </div>
             </Card>
@@ -675,14 +908,18 @@ export default function ImportPage() {
 
   return (
     <MainLayout>
-      <ContentLayout title="Import Complete" description={`Finished importing from ${source.name}`}>
+      <ContentLayout
+        title="Import Complete"
+        description={`Finished importing from ${source.name}`}
+      >
         <div className="max-w-md space-y-6">
           <Card border spacing="md">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <CheckCircle2 className="w-6 h-6 text-green-500" />
                 <span className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {result.imported.toLocaleString()} item{result.imported === 1 ? "" : "s"} imported
+                  {result.imported.toLocaleString()} item
+                  {result.imported === 1 ? "" : "s"} imported
                 </span>
               </div>
 
@@ -691,17 +928,32 @@ export default function ImportPage() {
                   <p className="font-semibold text-green-700 dark:text-green-300">
                     {result.imported.toLocaleString()}
                   </p>
-                  <p className="text-green-600 dark:text-green-400 text-xs">Imported</p>
+                  <p className="text-green-600 dark:text-green-400 text-xs">
+                    Imported
+                  </p>
                 </div>
                 {result.failed > 0 && (
                   <div className="rounded-lg bg-red-50 dark:bg-red-950/40 px-3 py-2">
                     <p className="font-semibold text-red-700 dark:text-red-300">
                       {result.failed.toLocaleString()}
                     </p>
-                    <p className="text-red-600 dark:text-red-400 text-xs">Failed</p>
+                    <p className="text-red-600 dark:text-red-400 text-xs">
+                      Failed
+                    </p>
                   </div>
                 )}
               </div>
+
+              {source.id === "steam" && (
+                <div className="flex items-start gap-2 pt-1 border-t border-gray-200 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-400">
+                  <Loader2 className="w-4 h-4 mt-0.5 shrink-0 animate-spin text-primary" />
+                  <span>
+                    Descriptions, genres, and images are loading from RAWG in
+                    the background — this takes a few minutes for large
+                    libraries. You can navigate away now.
+                  </span>
+                </div>
+              )}
 
               {hasErrors && (
                 <details className="text-xs text-gray-500 dark:text-gray-400">
@@ -710,7 +962,10 @@ export default function ImportPage() {
                   </summary>
                   <ul className="mt-2 space-y-1 max-h-32 overflow-y-auto">
                     {result.errors.map((e, i) => (
-                      <li key={i} className="truncate text-red-500 dark:text-red-400">
+                      <li
+                        key={i}
+                        className="truncate text-red-500 dark:text-red-400"
+                      >
                         {e}
                       </li>
                     ))}
@@ -721,7 +976,15 @@ export default function ImportPage() {
           </Card>
 
           <div className="flex flex-wrap gap-3">
-            <Button onClick={() => void navigate("/app/tracker/movies-tv")}>
+            <Button
+              onClick={() =>
+                void navigate(
+                  source.id === "steam"
+                    ? TRACKER_SCOPES.games.path
+                    : TRACKER_SCOPES.movies.path,
+                )
+              }
+            >
               Go to Tracker
             </Button>
             <Button

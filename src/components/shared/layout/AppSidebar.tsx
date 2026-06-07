@@ -7,6 +7,7 @@ import {
   Settings,
   ShieldCheck,
   Film,
+  Tv,
   Book,
   Music2,
   Gamepad2,
@@ -90,14 +91,20 @@ export default function AppSidebar({
       {
         id: "tracker",
         label: "Tracker",
-        path: TRACKER_SCOPES["movies-tv"].path,
+        path: TRACKER_SCOPES.movies.path,
         icon: LayoutDashboard,
         children: [
           {
-            id: "tracker-movies-tv",
-            label: TRACKER_SCOPES["movies-tv"].navLabel,
-            path: TRACKER_SCOPES["movies-tv"].path,
+            id: "tracker-movies",
+            label: TRACKER_SCOPES.movies.navLabel,
+            path: TRACKER_SCOPES.movies.path,
             icon: Film,
+          },
+          {
+            id: "tracker-tv",
+            label: TRACKER_SCOPES.tv.navLabel,
+            path: TRACKER_SCOPES.tv.path,
+            icon: Tv,
           },
           {
             id: "tracker-books",
@@ -159,7 +166,7 @@ export default function AppSidebar({
 
   const isActive = (path: string) => {
     if (path.startsWith("/app/tracker")) {
-      return location.pathname.startsWith("/app/tracker");
+      return location.pathname.startsWith(path);
     }
 
     if (path.startsWith("/app/playlists")) {
@@ -263,7 +270,7 @@ export default function AppSidebar({
                       onClick={() => navigateAndClose(child.path)}
                       className={`w-full flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs transition-colors ${
                         childActive
-                          ? "bg-primary/15 text-primary dark:bg-primary/25 dark:text-primary-light"
+                          ? "bg-primary/15 text-primary dark:bg-primary/25 dark:text-primary-light font-semibold"
                           : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
                       }`}
                     >
@@ -283,7 +290,7 @@ export default function AppSidebar({
       <div className="md:hidden sticky top-0 z-50 border-b border-gray-200/80 dark:border-gray-700/80 bg-white/90 dark:bg-gray-900/90 backdrop-blur">
         <div className="h-14 px-4 flex items-center justify-between">
           <Link
-            to={TRACKER_SCOPES["movies-tv"].path}
+            to={TRACKER_SCOPES.movies.path}
             className="flex items-center gap-2 min-w-0 text-gray-900 dark:text-white"
           >
             <img src="/quest-marker.svg" alt="" className="w-5 h-5 shrink-0" />
@@ -323,7 +330,7 @@ export default function AppSidebar({
           >
             <button
               type="button"
-              onClick={() => navigateAndClose(TRACKER_SCOPES["movies-tv"].path)}
+              onClick={() => navigateAndClose(TRACKER_SCOPES.movies.path)}
               className="flex items-center gap-2 text-left min-w-0"
               title="NPC Finder"
             >

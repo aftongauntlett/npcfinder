@@ -9,6 +9,7 @@ export interface ImportedItem {
   status: TrackerStatus;
   rating: number | null;
   completedAt: string | null;
+  note?: string | null;
 }
 
 export interface ImportResult {
@@ -170,7 +171,9 @@ export function parseLetterboxdCSV(text: string): ImportedItem[] {
       name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
     const year = parseInt(row["Year"] ?? "0", 10);
-    const rating = hasRating ? letterboxdRatingToOurs(row["Rating"] ?? "") : null;
+    const rating = hasRating
+      ? letterboxdRatingToOurs(row["Rating"] ?? "")
+      : null;
     const watchedDate = hasWatchedDate ? (row["Watched Date"] ?? "") : null;
     const completedAt = watchedDate ? toISODate(watchedDate) : null;
     const status: TrackerStatus = isWatchlist ? "want_to" : "done";
@@ -229,7 +232,12 @@ export function parseSpotifyLibraryJSON(text: string): ImportedItem[] {
   const items: ImportedItem[] = [];
 
   let data: {
-    tracks?: Array<{ artist: string; album: string; track: string; uri: string }>;
+    tracks?: Array<{
+      artist: string;
+      album: string;
+      track: string;
+      uri: string;
+    }>;
     albums?: Array<{ artist: string; album: string; uri: string }>;
   };
 
@@ -305,6 +313,66 @@ export function parseSteamExportCSV(text: string): ImportedItem[] {
   return items;
 }
 
+export function parseSteamGames(
+  games: Array<{
+    appId: number;
+    name: string;
+    hoursPlayed: number;
+    posterUrl?: string | null;
+    lastPlayed?: string | null;
+  }>,
+): ImportedItem[] {
+  const items: ImportedItem[] = [];
+
+  for (const game of games) {
+    const played = game.hoursPlayed > 0.5;
+    const status: TrackerStatus = played ? "done" : "want_to";
+    const hours = Math.round(game.hoursPlayed * 10) / 10;
+
+    items.push({
+      mediaItem: {
+        external_id: `steam_game_${game.appId}`,
+        title: game.name,
+        media_type: "game",
+        poster_url: game.posterUrl ?? null,
+        playtime: hours > 0 ? Math.round(hours) : undefined,
+      },
+      status,
+      rating: null,
+      completedAt: played ? (game.lastPlayed ?? null) : null,
+      note: played ? `${hours} hours played on Steam` : null,
+    });
+  }
+
+  return items;
+}
+
+export async function fetchSteamGames(
+  steamId: string,
+): Promise<ImportedItem[]> {
+  const { data, error } = await supabase.functions.invoke("fetch-steam-games", {
+    body: { steamId },
+  });
+
+  if (error) {
+    throw new Error(error.message || "Failed to fetch Steam library");
+  }
+
+  if (!data?.games) {
+    throw new Error("No games found in your Steam library");
+  }
+
+  return parseSteamGames(data.games);
+}
+
+// --- RAWG game enrichment (server-side) ---
+
+// Fires the enrich-steam-games edge function and returns immediately.
+// The server runs enrichment in the background — caller does not need to await.
+export async function triggerSteamEnrichment(): Promise<void> {
+  await supabase.functions.invoke("enrich-steam-games");
+}
+
 export function parseImportFile(
   source: ImportSource,
   text: string,
@@ -330,11 +398,17 @@ export interface DuplicateCheckResult {
   alreadyTracked: ImportedItem[];
 }
 
-function dedupKey(title: string, year: number | null, mediaType: string): string {
+function dedupKey(
+  title: string,
+  year: number | null,
+  mediaType: string,
+): string {
   return `${title.toLowerCase().trim()}||${year ?? ""}||${mediaType}`;
 }
 
-function yearFromReleaseDate(releaseDate: string | null | undefined): number | null {
+function yearFromReleaseDate(
+  releaseDate: string | null | undefined,
+): number | null {
   if (!releaseDate) return null;
   const y = parseInt(releaseDate.split("-")[0], 10);
   return isNaN(y) ? null : y;
@@ -349,30 +423,50 @@ export async function checkForDuplicates(
 
   if (!user) return { newItems: items, alreadyTracked: [] };
 
-  // Fetch all existing tracker items for this user (title + year + media_type only)
+  // Fetch external_id + title/year/type so we can dedup by stable ID first,
+  // then fall back to title+year+type for sources without stable IDs.
   const { data: existing } = await supabase
     .from("tracker_items")
-    .select("media:media_id(title, year, media_type)")
+    .select("media:media_id(external_id, title, year, media_type)")
     .eq("user_id", user.id);
 
   if (!existing || existing.length === 0) {
     return { newItems: items, alreadyTracked: [] };
   }
 
-  const existingKeys = new Set<string>();
+  const existingExternalIds = new Set<string>();
+  const existingTitleKeys = new Set<string>();
+
   for (const row of existing) {
-    const m = row.media as unknown as { title: string; year: number | null; media_type: string } | null;
-    if (!m?.title) continue;
-    existingKeys.add(dedupKey(m.title, m.year, m.media_type));
+    const m = row.media as unknown as {
+      external_id: string;
+      title: string;
+      year: number | null;
+      media_type: string;
+    } | null;
+    if (!m) continue;
+    if (m.external_id) existingExternalIds.add(m.external_id);
+    if (m.title) existingTitleKeys.add(dedupKey(m.title, m.year, m.media_type));
   }
 
   const newItems: ImportedItem[] = [];
   const alreadyTracked: ImportedItem[] = [];
 
   for (const item of items) {
+    // external_id is the most reliable signal — stable across re-imports even
+    // after metadata (year, title) gets enriched/updated later.
+    if (existingExternalIds.has(item.mediaItem.external_id)) {
+      alreadyTracked.push(item);
+      continue;
+    }
+    // Fall back to title+year+type for sources that may not have stable IDs.
     const year = yearFromReleaseDate(item.mediaItem.release_date);
-    const key = dedupKey(item.mediaItem.title, year, item.mediaItem.media_type ?? "");
-    if (existingKeys.has(key)) {
+    const key = dedupKey(
+      item.mediaItem.title,
+      year,
+      item.mediaItem.media_type ?? "",
+    );
+    if (existingTitleKeys.has(key)) {
       alreadyTracked.push(item);
     } else {
       newItems.push(item);
@@ -417,20 +511,19 @@ export async function importItems(
           throw mediaResult.error ?? new Error("Media catalog upsert failed");
         }
 
-        const { error } = await supabase
-          .from("tracker_items")
-          .upsert(
-            {
-              user_id: userId,
-              media_id: mediaResult.data.id,
-              status: item.status,
-              rating: item.rating ?? null,
-              completed_at:
-                item.completedAt ??
-                (item.status === "done" ? new Date().toISOString() : null),
-            },
-            { onConflict: "user_id,media_id", ignoreDuplicates: true },
-          );
+        const { error } = await supabase.from("tracker_items").upsert(
+          {
+            user_id: userId,
+            media_id: mediaResult.data.id,
+            status: item.status,
+            rating: item.rating ?? null,
+            completed_at:
+              item.completedAt ??
+              (item.status === "done" ? new Date().toISOString() : null),
+            note: item.note ?? null,
+          },
+          { onConflict: "user_id,media_id", ignoreDuplicates: true },
+        );
 
         if (error) throw error;
       }),
@@ -443,10 +536,15 @@ export async function importItems(
       } else {
         result.failed++;
         const title = batch[j]?.mediaItem.title ?? "Unknown";
+        const reason: unknown = outcome.reason;
         const msg =
-          outcome.reason instanceof Error
-            ? outcome.reason.message
-            : String(outcome.reason);
+          reason instanceof Error
+            ? reason.message
+            : reason !== null &&
+                typeof reason === "object" &&
+                "message" in reason
+              ? String((reason as { message: unknown }).message)
+              : String(reason);
         result.errors.push(`${title}: ${msg}`);
         logger.error("Import item failed", { error: outcome.reason, title });
       }
