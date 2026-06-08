@@ -23,7 +23,6 @@ interface MediaDetailsContentProps {
   developer?: string;
   platforms?: string;
   metacritic?: number;
-  playtime?: number;
   rawgRating?: number; // RAWG rating out of 5
   pageCount?: number;
   authors?: string;
@@ -55,7 +54,6 @@ export default function MediaDetailsContent({
   developer,
   platforms,
   metacritic,
-  playtime,
   rawgRating,
   pageCount,
   authors,
@@ -138,17 +136,6 @@ export default function MediaDetailsContent({
     return "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700";
   };
 
-  // Helper function to format playtime
-  const formatPlaytime = (minutes: number): string => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    if (hours > 0) {
-      return `${hours} ${hours === 1 ? "hour" : "hours"}${
-        mins > 0 ? ` ${mins} ${mins === 1 ? "minute" : "minutes"}` : ""
-      }`;
-    }
-    return `${mins} ${mins === 1 ? "minute" : "minutes"}`;
-  };
   // Helper function to format track duration from milliseconds
   const formatTrackDuration = (milliseconds: number): string => {
     const minutes = Math.floor(milliseconds / 60000);
@@ -307,19 +294,6 @@ export default function MediaDetailsContent({
                       </span>
                     </div>
                   )}
-                </div>
-              </div>
-            )}
-            {playtime && (
-              <div>
-                <h4 className="section-title">Info</h4>
-                <div className="space-y-2">
-                  <div className="text-sm">
-                    <span className="metadata-label">Avg Playtime:</span>{" "}
-                    <span className="metadata-value">
-                      {formatPlaytime(playtime)}
-                    </span>
-                  </div>
                 </div>
               </div>
             )}

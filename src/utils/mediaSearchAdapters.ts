@@ -333,7 +333,10 @@ export async function searchGames(query: string): Promise<MediaItem[]> {
         .join(", "),
       poster_url: game.background_image || null,
       release_date: game.released || null,
-      description: game.genres?.map((g) => g.name).join(", ") || null,
+      // RAWG's search endpoint doesn't return descriptions — the real one is
+      // resolved once and persisted when the game is added (see
+      // resolveGameDescription in mediaCatalogService).
+      description: null,
       media_type: "game",
       // Additional game-specific fields for SendMediaModal
       slug: game.slug,
@@ -341,7 +344,6 @@ export async function searchGames(query: string): Promise<MediaItem[]> {
       genres: game.genres?.map((g) => g.name).join(", "),
       rating: game.rating,
       metacritic: game.metacritic,
-      playtime: game.playtime,
     }));
   } catch (error) {
     logger.error("Failed to search games", { error, query });

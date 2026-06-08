@@ -383,7 +383,6 @@ async function fetchGameDetailedInfo(externalId: string) {
     genres: details.genres?.map((g) => g.name).join(", ") || null,
     rating: details.rating || null,
     metacritic: details.metacritic || null,
-    playtime: details.playtime || null,
   };
 }
 

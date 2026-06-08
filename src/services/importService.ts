@@ -340,7 +340,7 @@ export function parseSteamGames(
       status,
       rating: null,
       completedAt: played ? (game.lastPlayed ?? null) : null,
-      note: played ? `${hours} hours played on Steam` : null,
+      note: null,
     });
   }
 

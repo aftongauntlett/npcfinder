@@ -152,6 +152,15 @@ export const queryKeys = {
     stats: () => [...queryKeys.tracker.all, "stats"] as const,
   },
 
+  // Cached media details (TMDB/RAWG/Google Books "more details" lookups)
+  mediaDetails: {
+    all: ["mediaDetails"] as const,
+    byExternalId: (
+      mediaType: string | undefined,
+      externalId: string | undefined,
+    ) => [...queryKeys.mediaDetails.all, mediaType, externalId] as const,
+  },
+
   // Playlists
   playlists: {
     all: ["playlists"] as const,

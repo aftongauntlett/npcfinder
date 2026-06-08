@@ -31,6 +31,13 @@ const json = (body, status = 200) =>
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Edge functions are killed after a wall-clock limit well under what it takes
+// to process a large Steam library (each game costs ~1s between RAWG calls
+// and rate-limit delays). Stop well before that limit and chain a follow-up
+// invocation so the whole backlog gets processed across multiple runs instead
+// of silently stalling partway through.
+const BATCH_BUDGET_MS = 100_000;
+
 function titlesMatch(a, b) {
   const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
   const na = norm(a);
@@ -46,76 +53,134 @@ async function runEnrichment() {
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+  // Only consider games we haven't already looked up — `description IS NULL`
+  // alone would re-check titles RAWG already told us it has nothing for, and
+  // `steam_enrichment_checked_at IS NULL` alone would re-check titles that
+  // already got a description some other way (e.g. resolved at import time).
   const { data: games, error } = await supabase
     .from("media")
     .select("id, title")
     .like("external_id", "steam_game_%")
-    .is("description", null);
+    .is("description", null)
+    .is("steam_enrichment_checked_at", null);
 
   if (error || !games?.length) {
     console.log("[enrich-steam-games] Nothing to enrich");
     return;
   }
 
-  console.log(`[enrich-steam-games] Enriching ${games.length} games`);
+  console.log(`[enrich-steam-games] Enriching up to ${games.length} games this run`);
+
+  const startedAt = Date.now();
+  let processed = 0;
 
   for (const game of games) {
+    if (Date.now() - startedAt > BATCH_BUDGET_MS) {
+      console.log(
+        `[enrich-steam-games] Time budget reached after ${processed} games — chaining a follow-up run for the rest`,
+      );
+      break;
+    }
+
+    // Always stamp `steam_enrichment_checked_at`, even when RAWG has nothing
+    // for this title — that's what lets the client tell "hasn't been
+    // enriched yet" apart from "RAWG had no match" for games still missing a
+    // description.
+    const updates = { steam_enrichment_checked_at: new Date().toISOString() };
+
     try {
       const searchRes = await fetch(
         `https://api.rawg.io/api/games?key=${RAWG_API_KEY}&search=${encodeURIComponent(game.title)}&page_size=3`,
       );
-      if (!searchRes.ok) {
-        await delay(400);
-        continue;
-      }
 
-      const searchData = await searchRes.json();
-      const rawgGame =
-        searchData.results?.find((r) => titlesMatch(game.title, r.name)) ??
-        null;
+      if (searchRes.ok) {
+        const searchData = await searchRes.json();
+        const rawgGame =
+          searchData.results?.find((r) => titlesMatch(game.title, r.name)) ??
+          null;
 
-      if (!rawgGame) {
-        await delay(200);
-        continue;
-      }
+        if (rawgGame) {
+          await delay(200);
 
-      await delay(200);
+          const detailRes = await fetch(
+            `https://api.rawg.io/api/games/${rawgGame.id}?key=${RAWG_API_KEY}`,
+          );
+          const detail = detailRes.ok ? await detailRes.json() : null;
 
-      const detailRes = await fetch(
-        `https://api.rawg.io/api/games/${rawgGame.id}?key=${RAWG_API_KEY}`,
-      );
-      const detail = detailRes.ok ? await detailRes.json() : null;
-
-      const updates = {};
-      if (rawgGame.background_image) updates.poster_url = rawgGame.background_image;
-      if (detail?.description_raw) updates.description = detail.description_raw;
-      if (rawgGame.genres?.length)
-        updates.genres = rawgGame.genres.map((g) => g.name).join(", ");
-      if (rawgGame.platforms?.length)
-        updates.platforms = rawgGame.platforms
-          .map((p) => p.platform.name)
-          .join(", ");
-      if (rawgGame.metacritic) updates.metacritic = rawgGame.metacritic;
-      if (rawgGame.playtime) updates.playtime = rawgGame.playtime;
-      if (rawgGame.released) updates.release_date = rawgGame.released;
-
-      if (Object.keys(updates).length > 0) {
-        const { error: updateErr } = await supabase
-          .from("media")
-          .update(updates)
-          .eq("id", game.id);
-        if (updateErr) {
-          console.error(`[enrich-steam-games] DB update failed: ${game.title}`, updateErr);
+          if (rawgGame.background_image) updates.poster_url = rawgGame.background_image;
+          if (detail?.description_raw) updates.description = detail.description_raw;
+          if (rawgGame.genres?.length)
+            updates.genres = rawgGame.genres.map((g) => g.name).join(", ");
+          if (rawgGame.platforms?.length)
+            updates.platforms = rawgGame.platforms
+              .map((p) => p.platform.name)
+              .join(", ");
+          if (rawgGame.metacritic) updates.metacritic = rawgGame.metacritic;
+          if (rawgGame.released) updates.release_date = rawgGame.released;
+          // Don't write `playtime` here — it holds the user's actual Steam
+          // hours, not RAWG's average-player stat. Overwriting it would
+          // destroy real data the import already captured.
+        } else {
+          console.log(`[enrich-steam-games] No RAWG match for "${game.title}"`);
         }
+      } else {
+        console.error(
+          `[enrich-steam-games] RAWG search failed (${searchRes.status}) for "${game.title}"`,
+        );
       }
     } catch (err) {
       console.error(`[enrich-steam-games] Failed: ${game.title}`, err);
     }
 
+    const { error: updateErr } = await supabase
+      .from("media")
+      .update(updates)
+      .eq("id", game.id);
+    if (updateErr) {
+      console.error(`[enrich-steam-games] DB update failed: ${game.title}`, updateErr);
+    }
+
+    processed += 1;
     await delay(200);
   }
 
-  console.log("[enrich-steam-games] Complete");
+  console.log(`[enrich-steam-games] Batch finished — processed ${processed} games`);
+
+  // See if there's still a backlog (either the time budget cut us off, or
+  // more Steam games were imported while this run was in flight). If so,
+  // chain another invocation rather than leaving the rest unprocessed —
+  // the client's polling already waits for the count to reach zero/stabilize.
+  const { count: remaining } = await supabase
+    .from("media")
+    .select("*", { count: "exact", head: true })
+    .like("external_id", "steam_game_%")
+    .is("description", null)
+    .is("steam_enrichment_checked_at", null);
+
+  if (remaining && remaining > 0) {
+    console.log(`[enrich-steam-games] ${remaining} games still unprocessed — chaining follow-up run`);
+    EdgeRuntime.waitUntil(
+      fetch(`${SUPABASE_URL}/functions/v1/enrich-steam-games`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          "Content-Type": "application/json",
+        },
+      })
+        .then((res) => {
+          if (!res.ok) {
+            console.error(
+              `[enrich-steam-games] Follow-up invocation responded ${res.status}`,
+            );
+          }
+        })
+        .catch((err) =>
+          console.error("[enrich-steam-games] Failed to chain follow-up run", err),
+        ),
+    );
+  } else {
+    console.log("[enrich-steam-games] Complete — backlog cleared");
+  }
 }
 
 serve(async (req) => {

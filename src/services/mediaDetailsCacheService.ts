@@ -39,7 +39,6 @@ export interface GameDetailedInfo {
   genres: string | null;
   rating: number | null;
   metacritic: number | null;
-  playtime: number | null;
 }
 
 export interface MusicDetailedInfo {

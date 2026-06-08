@@ -1,6 +1,41 @@
 import type { MediaItem } from "@/components/shared";
 import { logger } from "@/lib/logger";
 import { supabase } from "@/lib/supabase";
+import { fetchGameDetails } from "@/utils/mediaSearchAdapters";
+
+// RAWG game IDs are numeric. Imported games (e.g. `steam_game_<appId>`) use
+// other id schemes and are enriched separately via background jobs, so we
+// only fetch RAWG details here for items we know RAWG can resolve directly.
+const RAWG_ID_PATTERN = /^\d+$/;
+
+/**
+ * Games never carry a real description from search results (RAWG's search
+ * endpoint doesn't return one). Resolve the real description once, here, so
+ * it gets persisted to the catalog and never needs to be fetched again.
+ */
+async function resolveGameDescription(item: MediaItem): Promise<string | null> {
+  if (item.description) return item.description;
+  if (item.description_raw) return item.description_raw;
+
+  // The catalog is shared across users — if this game was already added by
+  // anyone before, its real description is already stored. Reuse it instead
+  // of hitting RAWG again.
+  const { data: existing } = await supabase
+    .from("media")
+    .select("description")
+    .eq("external_id", item.external_id)
+    .eq("media_type", "game")
+    .maybeSingle();
+
+  if (existing?.description) return existing.description;
+
+  if (!RAWG_ID_PATTERN.test(String(item.external_id))) {
+    return null;
+  }
+
+  const details = await fetchGameDetails(item.external_id);
+  return details?.description_raw ?? null;
+}
 
 export type CatalogMediaType =
   | "movie"
@@ -36,6 +71,10 @@ export interface CatalogMedia {
   isbn: string | null;
   page_count: number | null;
   publisher: string | null;
+  // Set by the Steam enrichment job once it has looked this game up on RAWG
+  // (whether or not it found a match). Used to flag titles RAWG has no data
+  // for, distinguishing them from titles that simply haven't been checked yet.
+  steam_enrichment_checked_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -92,6 +131,11 @@ export async function upsertMediaFromItem(
       ? await getCurrentUserIdOrNull()
       : null;
 
+    const description =
+      mediaType === "game"
+        ? await resolveGameDescription(item)
+        : (item.description ?? item.description_raw ?? null);
+
     const insert = {
       external_id: item.external_id,
       media_type: mediaType,
@@ -106,7 +150,7 @@ export async function upsertMediaFromItem(
         item.subtitle ?? item.artist ?? item.authors ?? item.platforms ?? null,
       poster_url: item.poster_url,
       release_date: item.release_date ?? null,
-      description: item.description ?? item.description_raw ?? null,
+      description,
       year: normalizeYear(item.release_date),
       genres: item.genres ?? item.genre ?? item.categories ?? null,
       authors: item.authors ?? null,

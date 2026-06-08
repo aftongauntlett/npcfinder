@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  AlertTriangle,
   BookOpen,
   Check,
   Film,
@@ -37,15 +38,11 @@ import {
 import { usePageMeta } from "@/hooks/usePageMeta";
 import {
   useAddTrackerItem,
+  useMediaDetailsWithCache,
   useRemoveTrackerItem,
   useTrackerItems,
   useUpdateTrackerItem,
 } from "@/hooks/useTrackerQueries";
-import {
-  getBookDetailsWithCache,
-  getGameDetailsWithCache,
-  getMediaDetailsWithCache,
-} from "@/services/mediaDetailsWithCache";
 import type {
   BookDetailedInfo,
   GameDetailedInfo,
@@ -166,24 +163,24 @@ function shouldHideSubtitle(
   return false;
 }
 
+// Steam-imported games whose RAWG enrichment ran but found no match never
+// get a description — flag them so users know to fix the title up manually
+// rather than waiting on a background job that already gave up.
+function isMissingRawgMatch(item: TrackerItem): boolean {
+  const media = item.media;
+  return Boolean(
+    media &&
+      media.media_type === "game" &&
+      media.external_id?.startsWith("steam_game_") &&
+      !media.description &&
+      media.steam_enrichment_checked_at,
+  );
+}
+
 function formatTrackDuration(milliseconds: number): string {
   const minutes = Math.floor(milliseconds / 60000);
   const seconds = Math.floor((milliseconds % 60000) / 1000);
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-}
-
-function formatPlaytime(hours: number): string {
-  if (!Number.isFinite(hours) || hours <= 0) {
-    return "-";
-  }
-
-  if (hours < 1) {
-    const minutes = Math.round(hours * 60);
-    return `${minutes} min`;
-  }
-
-  const rounded = Math.round(hours * 10) / 10;
-  return `${rounded} hrs`;
 }
 
 function formatReleaseDate(value?: string | null): string | null {
@@ -603,6 +600,7 @@ function TrackerMediaCard(props: {
   const hasNote = (item.note || "").trim().length > 0;
   const hasRating = typeof item.rating === "number" && item.rating > 0;
   const hasEditedMetadata = (item.media_edited_fields?.length || 0) > 0;
+  const missingRawgMatch = isMissingRawgMatch(item);
   const subtitle = item.media?.subtitle;
   const showSubtitle = !shouldHideSubtitle(item.media?.media_type, subtitle);
   const progressLabel = showProgress ? trackerCardProgressLabel(item) : null;
@@ -675,6 +673,17 @@ function TrackerMediaCard(props: {
               >
                 <Pencil className="w-3 h-3" />
                 Edited
+              </span>
+            )}
+
+            {missingRawgMatch && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-100"
+                title="RAWG had no info for this game — try editing its title to match RAWG's listing"
+                aria-label="No RAWG match found"
+              >
+                <AlertTriangle className="w-3 h-3" />
+                No RAWG match
               </span>
             )}
           </div>
@@ -780,11 +789,22 @@ function TrackerDetailsModal(props: {
   const [chapterNotes, setChapterNotes] = useState<TrackerChapterNote[]>([]);
   const [chapterDraft, setChapterDraft] = useState("");
   const [chapterNoteDraft, setChapterNoteDraft] = useState("");
-  const [movieTvDetails, setMovieTvDetails] =
-    useState<DetailedMediaInfo | null>(null);
-  const [bookDetails, setBookDetails] = useState<BookDetailedInfo | null>(null);
-  const [gameDetails, setGameDetails] = useState<GameDetailedInfo | null>(null);
-  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const detailsMediaType = item?.media?.media_type;
+  const detailsExternalId = item?.media?.external_id;
+  const { data: cachedDetails, isLoading: isLoadingDetails } =
+    useMediaDetailsWithCache(detailsMediaType, detailsExternalId);
+  const movieTvDetails =
+    detailsMediaType === "movie" || detailsMediaType === "tv"
+      ? ((cachedDetails ?? null) as DetailedMediaInfo | null)
+      : null;
+  const bookDetails =
+    detailsMediaType === "book"
+      ? ((cachedDetails ?? null) as BookDetailedInfo | null)
+      : null;
+  const gameDetails =
+    detailsMediaType === "game"
+      ? ((cachedDetails ?? null) as GameDetailedInfo | null)
+      : null;
   const [seasonEpisodes, setSeasonEpisodes] = useState<
     TvSeasonEpisodeInfo[] | null
   >(null);
@@ -839,71 +859,6 @@ function TrackerDetailsModal(props: {
     setMetadataDraft(buildEditableMediaDraft(item?.media || null));
     setIsEditingMetadata(false);
   }, [item?.id, item?.media]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    setMovieTvDetails(null);
-    setBookDetails(null);
-    setGameDetails(null);
-
-    const mediaType = item?.media?.media_type;
-    const externalId = item?.media?.external_id;
-
-    if (!mediaType || !externalId) {
-      setIsLoadingDetails(false);
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    if (
-      mediaType !== "movie" &&
-      mediaType !== "tv" &&
-      mediaType !== "book" &&
-      mediaType !== "game"
-    ) {
-      setIsLoadingDetails(false);
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    setIsLoadingDetails(true);
-
-    void (async () => {
-      try {
-        if (mediaType === "movie" || mediaType === "tv") {
-          const details = await getMediaDetailsWithCache(externalId, mediaType);
-          if (!cancelled) {
-            setMovieTvDetails(details);
-          }
-          return;
-        }
-
-        if (mediaType === "book") {
-          const details = await getBookDetailsWithCache(externalId);
-          if (!cancelled) {
-            setBookDetails(details);
-          }
-          return;
-        }
-
-        const details = await getGameDetailsWithCache(externalId);
-        if (!cancelled) {
-          setGameDetails(details);
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoadingDetails(false);
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [item?.id, item?.media?.external_id, item?.media?.media_type]);
 
   const mediaType = item?.media?.media_type;
   const isTv = mediaType === "tv";
@@ -1198,6 +1153,12 @@ function TrackerDetailsModal(props: {
     gameDetails?.release_date ||
     item.media?.release_date;
 
+  const displayDescription =
+    movieTvDetails?.overview ||
+    bookDetails?.description ||
+    gameDetails?.description ||
+    item.media?.description;
+
   const releaseLabel = formatReleaseDate(releaseDate);
   if (releaseLabel) {
     detailRows.push({ label: "Release", value: releaseLabel });
@@ -1292,7 +1253,9 @@ function TrackerDetailsModal(props: {
     const platforms = gameDetails?.platforms || item.media?.platforms;
     const metacritic = gameDetails?.metacritic || item.media?.metacritic;
     const rating = gameDetails?.rating;
-    const playtime = gameDetails?.playtime || item.media?.playtime;
+    // The user's own hours played (from Steam import or manual entry) — not
+    // RAWG's average-playtime stat, which we don't track.
+    const hoursPlayed = item.media?.playtime;
 
     if (platforms) {
       detailRows.push({
@@ -1310,10 +1273,10 @@ function TrackerDetailsModal(props: {
       detailRows.push({ label: "Rating", value: `${rating.toFixed(1)}/5` });
     }
 
-    if (playtime) {
+    if (hoursPlayed) {
       detailRows.push({
-        label: "Avg Playtime",
-        value: formatPlaytime(playtime),
+        label: "Hours Played",
+        value: `${hoursPlayed} hr${hoursPlayed === 1 ? "" : "s"}`,
       });
     }
   }
@@ -1390,10 +1353,22 @@ function TrackerDetailsModal(props: {
               </p>
             )}
 
-            {item.media?.description && (
+            {displayDescription && (
               <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                {item.media.description}
+                {displayDescription}
               </p>
+            )}
+
+            {!displayDescription && isMissingRawgMatch(item) && (
+              <div className="flex items-start gap-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 px-3 py-2 text-sm text-amber-700 dark:text-amber-200">
+                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                <span>
+                  RAWG didn't have a listing for this title, so we couldn't
+                  pull a description, genres, or platforms. Try editing the
+                  title below to match RAWG's listing more closely, then
+                  re-import or wait for the next enrichment run.
+                </span>
+              </div>
             )}
 
             <div className="space-y-5">
@@ -1939,6 +1914,7 @@ function TrackerMediaGridCard(props: {
   const hasNote = (item.note || "").trim().length > 0;
   const hasRating = typeof item.rating === "number" && item.rating > 0;
   const hasEditedMetadata = (item.media_edited_fields?.length || 0) > 0;
+  const missingRawgMatch = isMissingRawgMatch(item);
   const subtitle = item.media?.subtitle;
   const showSubtitle = !shouldHideSubtitle(item.media?.media_type, subtitle);
   const progressLabel = showProgress ? trackerCardProgressLabel(item) : null;
@@ -1963,7 +1939,7 @@ function TrackerMediaGridCard(props: {
         size="md"
         aspectRatio="2/3"
         showOverlay={false}
-        className="mx-auto w-[52%]"
+        className="mx-auto w-20"
       />
 
       <div className="mt-2 flex flex-1 flex-col gap-1.5">
@@ -2028,6 +2004,17 @@ function TrackerMediaGridCard(props: {
               >
                 <Pencil className="w-3 h-3" />
                 Edited
+              </span>
+            )}
+
+            {missingRawgMatch && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-100"
+                title="RAWG had no info for this game — try editing its title to match RAWG's listing"
+                aria-label="No RAWG match found"
+              >
+                <AlertTriangle className="w-3 h-3" />
+                No RAWG match
               </span>
             )}
           </div>
@@ -2334,11 +2321,9 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
       return;
     }
 
-    const itemHasIntermediateStatus =
-      scopeHasIntermediateStatus && item.media?.media_type === "tv";
     const nextStatus: TrackerStatus =
       item.status === "want_to"
-        ? itemHasIntermediateStatus
+        ? scopeHasIntermediateStatus
           ? "in_progress"
           : "done"
         : "done";
@@ -2361,11 +2346,9 @@ export default function TrackerPage({ scope }: TrackerPageProps) {
       return;
     }
 
-    const itemHasIntermediateStatus =
-      scopeHasIntermediateStatus && item.media?.media_type === "tv";
     const previousStatus: TrackerStatus =
       item.status === "done"
-        ? itemHasIntermediateStatus
+        ? scopeHasIntermediateStatus
           ? "in_progress"
           : "want_to"
         : "want_to";

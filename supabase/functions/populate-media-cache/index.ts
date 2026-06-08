@@ -228,11 +228,18 @@ async function fetchGameDetails(externalId: string, serviceClient?: ReturnType<t
       throw new Error("serviceClient required for Steam game lookup");
     }
 
-    const { data: mediaRow } = await serviceClient
+    const { data: mediaRow, error: mediaRowError } = await serviceClient
       .from("media")
       .select("title")
       .eq("external_id", externalId)
+      .eq("media_type", "game")
       .maybeSingle();
+
+    if (mediaRowError) {
+      throw new Error(
+        `Media lookup failed for ${externalId}: ${mediaRowError.message}`,
+      );
+    }
 
     if (!mediaRow?.title) {
       throw new Error(`No media record found for ${externalId}`);
@@ -294,7 +301,6 @@ async function fetchGameDetails(externalId: string, serviceClient?: ReturnType<t
       : null,
     rating: data?.rating || null,
     metacritic: data?.metacritic || null,
-    playtime: data?.playtime || null,
   };
 }
 
