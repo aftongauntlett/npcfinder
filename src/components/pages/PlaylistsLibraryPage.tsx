@@ -26,9 +26,10 @@ import {
   useReorderPlaylistItems,
   useUpdatePlaylist,
 } from "@/hooks/usePlaylistsQueries";
-import { useTrackerItems } from "@/hooks/useTrackerQueries";
+import { useAddTrackerItem, useTrackerItems } from "@/hooks/useTrackerQueries";
 import type { PlaylistItem, PlaylistWithMeta } from "@/services/playlistsService";
 import type { TrackerItem } from "@/services/trackerService";
+import type { CatalogMedia } from "@/services/mediaCatalogService";
 
 type PlaylistTab = "mine" | "shared";
 type VisibilityFilter = "all" | "private" | "public";
@@ -64,6 +65,10 @@ function resolveLatestByMediaId(
   }
 
   return map;
+}
+
+function isCatalogMedia(value: CatalogMedia | null): value is CatalogMedia {
+  return value !== null;
 }
 
 export default function PlaylistsLibraryPage() {
@@ -201,6 +206,7 @@ export default function PlaylistsLibraryPage() {
   const reorderPlaylistItems = useReorderPlaylistItems();
   const removePlaylistItem = useRemovePlaylistItem();
   const addPlaylistItem = useAddPlaylistItem();
+  const addTrackerItem = useAddTrackerItem();
   const deletePlaylist = useDeletePlaylist();
   const updatePlaylist = useUpdatePlaylist();
 
@@ -358,6 +364,11 @@ export default function PlaylistsLibraryPage() {
     [addItemsItems],
   );
 
+  const existingAddItemsMedia = useMemo(
+    () => addItemsItems.map((item) => item.media).filter(isCatalogMedia),
+    [addItemsItems],
+  );
+
   const isOwnerTab = activeTab === "mine";
 
   return (
@@ -512,14 +523,29 @@ export default function PlaylistsLibraryPage() {
       <AddTrackerMediaToPlaylistModal
         isOpen={Boolean(addItemsSlug) && Boolean(addItemsPlaylist?.id)}
         onClose={closeAddItemsModal}
-        title="Add From Tracker"
+        title="Add To Playlist"
         trackerItems={trackerItems}
         existingMediaIds={existingAddItemsMediaIds}
+        existingMediaItems={existingAddItemsMedia}
         onAdd={async (mediaId) => {
           if (!addItemsPlaylist?.id) return;
           await addPlaylistItem.mutateAsync({
             playlistId: addItemsPlaylist.id,
             mediaId,
+          });
+        }}
+        onAddExternal={async (item) => {
+          if (!addItemsPlaylist?.id) return;
+          const trackerItem = await addTrackerItem.mutateAsync({
+            item,
+            status: "want_to",
+          });
+          if (!trackerItem) {
+            throw new Error("Tracker item was not created");
+          }
+          await addPlaylistItem.mutateAsync({
+            playlistId: addItemsPlaylist.id,
+            mediaId: trackerItem.media_id,
           });
         }}
       />
