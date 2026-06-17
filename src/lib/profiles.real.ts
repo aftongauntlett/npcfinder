@@ -21,6 +21,7 @@ export interface UserProfile {
   theme_color?: string; // User's chosen theme color (hex code)
   secondary_theme_color?: string | null; // User's chosen secondary theme color (hex code), null means auto
   auto_secondary_color?: boolean; // Whether to auto-generate secondary color
+  font_family?: string; // User's chosen global font family
   role?: "user" | "admin" | "super_admin"; // User role
   created_at?: string;
   updated_at?: string;
@@ -137,6 +138,10 @@ export const upsertUserProfile = async (
     // Include theme_color if provided
     if (profileData.theme_color !== undefined) {
       updateData.theme_color = profileData.theme_color;
+    }
+
+    if (profileData.font_family !== undefined) {
+      updateData.font_family = profileData.font_family;
     }
 
     // Note: role is managed by admin functions, not through profile updates

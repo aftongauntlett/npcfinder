@@ -3,23 +3,28 @@ import type { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
+import { HexColorPicker } from "react-colorful";
 import { updateUserProfile } from "../../lib/profiles";
-import { signOut, deleteAccount } from "../../lib/auth";
+import { deleteAccount } from "../../lib/auth";
 import { logger } from "../../lib/logger";
 import {
   Button,
   ConfirmDialog,
   Card,
   Input,
-  SkeletonCard,
   Select,
+  SkeletonCard,
 } from "@/components/shared";
 import MainLayout from "../layouts/MainLayout";
 import ContentLayout from "../layouts/ContentLayout";
-import CompactColorThemePicker from "../settings/CompactColorThemePicker";
 import PasswordChangeSection from "../settings/PasswordChangeSection";
 import FeedbackSection from "../settings/FeedbackSection";
 import { DEFAULT_THEME_COLOR } from "../../styles/colorThemes";
+import {
+  DEFAULT_FONT_FAMILY,
+  FONT_OPTIONS,
+  getFontStack,
+} from "../../styles/fontThemes";
 import { useTheme } from "../../hooks/useTheme";
 import { useNavigationBlock } from "../../hooks/useNavigationBlock";
 import { usePageMeta } from "../../hooks/usePageMeta";
@@ -32,6 +37,7 @@ interface UserSettingsProps {
 interface AppearanceData {
   theme_color: string; // Hex color
   secondary_theme_color: string | null; // Manual secondary color, null means use auto
+  font_family: string;
 }
 
 interface Message {
@@ -46,11 +52,138 @@ const pageMetaOptions = {
   noIndex: true,
 };
 
+const isValidHexColor = (color: string) => /^#[0-9A-Fa-f]{6}$/.test(color);
+
+const componentToHex = (component: number) =>
+  Math.round(component).toString(16).padStart(2, "0");
+
+const hexToRgbInput = (hexColor: string): string => {
+  if (!isValidHexColor(hexColor)) return "";
+
+  const hex = hexColor.slice(1);
+  const red = parseInt(hex.slice(0, 2), 16);
+  const green = parseInt(hex.slice(2, 4), 16);
+  const blue = parseInt(hex.slice(4, 6), 16);
+
+  return `${red}, ${green}, ${blue}`;
+};
+
+const hexToHslInput = (hexColor: string): string => {
+  if (!isValidHexColor(hexColor)) return "";
+
+  const hex = hexColor.slice(1);
+  const red = parseInt(hex.slice(0, 2), 16) / 255;
+  const green = parseInt(hex.slice(2, 4), 16) / 255;
+  const blue = parseInt(hex.slice(4, 6), 16) / 255;
+  const max = Math.max(red, green, blue);
+  const min = Math.min(red, green, blue);
+  const lightness = (max + min) / 2;
+  let hue = 0;
+  let saturation = 0;
+
+  if (max !== min) {
+    const delta = max - min;
+    saturation =
+      lightness > 0.5
+        ? delta / (2 - max - min)
+        : delta / (max + min);
+    switch (max) {
+      case red:
+        hue = (green - blue) / delta + (green < blue ? 6 : 0);
+        break;
+      case green:
+        hue = (blue - red) / delta + 2;
+        break;
+      case blue:
+        hue = (red - green) / delta + 4;
+        break;
+    }
+    hue *= 60;
+  }
+
+  return `${Math.round(hue)}, ${Math.round(saturation * 100)}%, ${Math.round(
+    lightness * 100,
+  )}%`;
+};
+
+const parseColorParts = (value: string): number[] =>
+  value
+    .replace(/rgba?\(|hsla?\(|\)/gi, "")
+    .replace(/\//g, " ")
+    .split(/[\s,]+/)
+    .filter(Boolean)
+    .slice(0, 3)
+    .map((part) => Number(part.replace("%", "")));
+
+const rgbInputToHex = (value: string): string | null => {
+  const [red, green, blue] = parseColorParts(value);
+  if (
+    [red, green, blue].some(
+      (component) =>
+        component === undefined ||
+        Number.isNaN(component) ||
+        component < 0 ||
+        component > 255,
+    )
+  ) {
+    return null;
+  }
+
+  return `#${componentToHex(red)}${componentToHex(green)}${componentToHex(
+    blue,
+  )}`;
+};
+
+const hslInputToHex = (value: string): string | null => {
+  const [rawHue, rawSaturation, rawLightness] = parseColorParts(value);
+  if (
+    [rawHue, rawSaturation, rawLightness].some(
+      (component) => component === undefined || Number.isNaN(component),
+    ) ||
+    rawSaturation < 0 ||
+    rawSaturation > 100 ||
+    rawLightness < 0 ||
+    rawLightness > 100
+  ) {
+    return null;
+  }
+
+  const hue = (((rawHue % 360) + 360) % 360) / 360;
+  const saturation = rawSaturation / 100;
+  const lightness = rawLightness / 100;
+
+  if (saturation === 0) {
+    const gray = lightness * 255;
+    return `#${componentToHex(gray)}${componentToHex(gray)}${componentToHex(
+      gray,
+    )}`;
+  }
+
+  const q =
+    lightness < 0.5
+      ? lightness * (1 + saturation)
+      : lightness + saturation - lightness * saturation;
+  const p = 2 * lightness - q;
+  const hueToRgb = (t: number) => {
+    let adjusted = t;
+    if (adjusted < 0) adjusted += 1;
+    if (adjusted > 1) adjusted -= 1;
+    if (adjusted < 1 / 6) return p + (q - p) * 6 * adjusted;
+    if (adjusted < 1 / 2) return q;
+    if (adjusted < 2 / 3) return p + (q - p) * (2 / 3 - adjusted) * 6;
+    return p;
+  };
+
+  return `#${componentToHex(hueToRgb(hue + 1 / 3) * 255)}${componentToHex(
+    hueToRgb(hue) * 255,
+  )}${componentToHex(hueToRgb(hue - 1 / 3) * 255)}`;
+};
+
 const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
   usePageMeta(pageMetaOptions);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { theme, changeTheme, changeThemeColor, changeSecondaryThemeColor } =
+  const { changeThemeColor, changeSecondaryThemeColor, changeFontFamily } =
     useTheme();
 
   // Use cached profile query instead of direct API call
@@ -59,7 +192,14 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
   const [appearance, setAppearance] = useState<AppearanceData>({
     theme_color: DEFAULT_THEME_COLOR,
     secondary_theme_color: null,
+    font_family: DEFAULT_FONT_FAMILY,
   });
+  const [rgbInput, setRgbInput] = useState(() =>
+    hexToRgbInput(DEFAULT_THEME_COLOR),
+  );
+  const [hslInput, setHslInput] = useState(() =>
+    hexToHslInput(DEFAULT_THEME_COLOR),
+  );
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [message, setMessage] = useState<Message | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
@@ -70,7 +210,6 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
     username: "",
     display_name: "",
   });
-  const [isSigningOut, setIsSigningOut] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
@@ -84,6 +223,13 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
   // Warn before closing browser/tab with unsaved changes
   useNavigationBlock({ when: hasUnsavedChanges });
 
+  useEffect(() => {
+    if (!isValidHexColor(appearance.theme_color)) return;
+
+    setRgbInput(hexToRgbInput(appearance.theme_color));
+    setHslInput(hexToHslInput(appearance.theme_color));
+  }, [appearance.theme_color]);
+
   // Load profile from cache when available
   useEffect(() => {
     if (!cachedProfile) return;
@@ -91,6 +237,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
     const loadedAppearance = {
       theme_color: cachedProfile.theme_color || DEFAULT_THEME_COLOR,
       secondary_theme_color: cachedProfile.secondary_theme_color || null,
+      font_family: cachedProfile.font_family || DEFAULT_FONT_FAMILY,
     };
 
     setAppearance(loadedAppearance);
@@ -107,6 +254,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
     if (cachedProfile.secondary_theme_color !== undefined) {
       changeSecondaryThemeColor(cachedProfile.secondary_theme_color || null);
     }
+    changeFontFamily(cachedProfile.font_family || DEFAULT_FONT_FAMILY);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cachedProfile]);
 
@@ -189,15 +337,35 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
     }));
     setHasUnsavedChanges(true);
     setMessage(null);
+    if (/^#[0-9A-Fa-f]{6}$/.test(color)) {
+      changeThemeColor(color);
+    }
   };
 
-  const handleSecondaryColorChange = (color: string | null) => {
+  const handleFontFamilyChange = (fontFamily: string) => {
     setAppearance((prev) => ({
       ...prev,
-      secondary_theme_color: color,
+      font_family: fontFamily,
     }));
     setHasUnsavedChanges(true);
     setMessage(null);
+    changeFontFamily(fontFamily);
+  };
+
+  const handleRgbInputChange = (value: string) => {
+    setRgbInput(value);
+    const hexColor = rgbInputToHex(value);
+    if (hexColor) {
+      handleThemeColorChange(hexColor);
+    }
+  };
+
+  const handleHslInputChange = (value: string) => {
+    setHslInput(value);
+    const hexColor = hslInputToHex(value);
+    if (hexColor) {
+      handleThemeColorChange(hexColor);
+    }
   };
 
   const handleNavigateAway = (path: string) => {
@@ -233,6 +401,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
     // Apply theme color IMMEDIATELY before saving to ensure UI updates
     changeThemeColor(appearance.theme_color);
     changeSecondaryThemeColor(appearance.secondary_theme_color || null);
+    changeFontFamily(appearance.font_family);
 
     try {
       const { error } = await updateUserProfile(currentUser.id, appearance);
@@ -256,16 +425,6 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
       setMessage({ type: "error", text: "An unexpected error occurred" });
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleSignOut = async () => {
-    setIsSigningOut(true);
-    try {
-      await signOut();
-    } catch (error) {
-      logger.error("Failed to sign out", { error });
-      setIsSigningOut(false);
     }
   };
 
@@ -296,6 +455,8 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
       </MainLayout>
     );
   }
+
+  const selectedFontStack = getFontStack(appearance.font_family);
 
   return (
     <MainLayout>
@@ -335,156 +496,217 @@ const UserSettings: React.FC<UserSettingsProps> = ({ currentUser }) => {
           transition={{ duration: 0.2 }}
           className="space-y-6"
         >
-          {/* Password */}
-          <Card variant="glass" spacing="md" border>
-            <PasswordChangeSection />
-          </Card>
-
-          {/* Account Details */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              void handleSaveAccount(e);
-            }}
-            className="space-y-4"
-          >
-            <Card variant="glass" spacing="md" border>
-              <div className="space-y-4">
-                <h3 className="text-base font-medium text-gray-900 dark:text-white mb-1">
-                  Account
-                </h3>
-                {accountMessage && (
-                  <div
-                    role="alert"
-                    className={`p-3 rounded-lg text-sm ${
-                      accountMessage.type === "success"
-                        ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                        : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                    }`}
-                  >
-                    {accountMessage.text}
-                  </div>
-                )}
-                <Input
-                  id="username"
-                  name="username"
-                  label="Username"
-                  type="text"
-                  value={accountFields.username}
-                  onChange={handleAccountFieldChange}
-                  placeholder="your-handle"
-                  helperText="Used for your profile URL. Changing it will break previously shared profile links."
-                  error={usernameError}
-                />
-                <Input
-                  id="display_name"
-                  name="display_name"
-                  label="Display Name"
-                  type="text"
-                  value={accountFields.display_name}
-                  onChange={handleAccountFieldChange}
-                  placeholder="Your display name"
-                  helperText="This is how your name appears in the greeting"
-                />
-              </div>
-              <div className="flex justify-end pt-2">
-                <Button
-                  type="submit"
-                  variant="primary"
-                  loading={isSavingAccount}
-                  disabled={isSavingAccount}
-                >
-                  {isSavingAccount ? "Saving..." : "Save Account"}
-                </Button>
-              </div>
-            </Card>
-          </form>
-
-          {/* Appearance */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              void handleSave(e);
-            }}
-            className="space-y-4"
-          >
-            <Card variant="glass" spacing="md" border>
-              <div className="space-y-4">
-                <h3 className="text-base font-medium text-gray-900 dark:text-white mb-1">
-                  Appearance
-                </h3>
-                <Select
-                  id="theme"
-                  label="Light or Dark Mode"
-                  value={theme}
-                  onChange={(e) => {
-                    changeTheme(e.target.value as "light" | "dark" | "system");
-                  }}
-                  helperText="Choose Light or Dark mode, or follow your system setting"
-                  options={[
-                    { value: "system", label: "System" },
-                    { value: "light", label: "Light" },
-                    { value: "dark", label: "Dark" },
-                  ]}
-                />
-
-                <div className="pt-6 border-t border-gray-200/80 dark:border-gray-700/30">
-                  <CompactColorThemePicker
-                    title=""
-                    selectedColor={appearance.theme_color}
-                    onColorChange={handleThemeColorChange}
-                    secondaryColor={appearance.secondary_theme_color}
-                    onSecondaryColorChange={handleSecondaryColorChange}
-                    showPreview={false}
-                    showGuidanceText={false}
-                    pickerHeightPx={90}
+          {/* Account + Password — 2 column layout */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+            {/* Account Details */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                void handleSaveAccount(e);
+              }}
+              className="h-full"
+            >
+              <Card
+                variant="glass"
+                spacing="md"
+                border
+                className="h-full flex flex-col justify-between"
+              >
+                <div className="space-y-4">
+                  <h3 className="text-base font-medium text-gray-900 dark:text-white mb-1">
+                    Account
+                  </h3>
+                  {accountMessage && (
+                    <div
+                      role="alert"
+                      className={`p-3 rounded-lg text-sm ${
+                        accountMessage.type === "success"
+                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                          : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                      }`}
+                    >
+                      {accountMessage.text}
+                    </div>
+                  )}
+                  <Input
+                    id="username"
+                    name="username"
+                    label="Username"
+                    type="text"
+                    value={accountFields.username}
+                    onChange={handleAccountFieldChange}
+                    placeholder="your-handle"
+                    helperText="Used for your profile URL. Changing it will break previously shared profile links."
+                    error={usernameError}
+                  />
+                  <Input
+                    id="display_name"
+                    name="display_name"
+                    label="Display Name"
+                    type="text"
+                    value={accountFields.display_name}
+                    onChange={handleAccountFieldChange}
+                    placeholder="Your display name"
+                    helperText="This is how your name appears in the greeting"
                   />
                 </div>
-              </div>
-              <div className="flex gap-3 justify-end pt-2">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => handleNavigateAway("/app")}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  loading={isSaving}
-                  disabled={isSaving}
-                >
-                  {isSaving ? "Saving..." : "Save Appearance"}
-                </Button>
-              </div>
+                <div className="flex justify-end pt-2">
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    loading={isSavingAccount}
+                    disabled={isSavingAccount}
+                  >
+                    {isSavingAccount ? "Saving..." : "Save Account"}
+                  </Button>
+                </div>
+              </Card>
+            </form>
+
+            {/* Change Password */}
+            <Card variant="glass" spacing="md" border className="h-full">
+              <PasswordChangeSection />
             </Card>
-          </form>
+          </div>
 
-          <FeedbackSection />
-
-          {/* Sign Out */}
-          <Card variant="glass" spacing="md" border>
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-medium text-gray-900 dark:text-white">
-                  Sign Out
-                </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                  Sign out of your account on this device.
-                </p>
-              </div>
-              <Button
-                type="button"
-                variant="danger"
-                onClick={() => void handleSignOut()}
-                loading={isSigningOut}
-                disabled={isSigningOut}
+          {/* Appearance + Feedback - 2 column layout */}
+          <div className="relative z-20 grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+            {/* Appearance */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                void handleSave(e);
+              }}
+              className="h-full"
+            >
+              <Card
+                variant="glass"
+                spacing="md"
+                border
+                className="h-full min-h-[520px] flex flex-col justify-between"
               >
-                {isSigningOut ? "Signing out…" : "Sign Out"}
-              </Button>
-            </div>
-          </Card>
+                <div className="space-y-5">
+                  <h3 className="text-base font-medium text-gray-900 dark:text-white mb-1">
+                    Appearance
+                  </h3>
+                  <div className="space-y-5">
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(140px,0.65fr)] gap-4 items-start">
+                        <h4 className="text-sm font-bold text-primary">
+                          Example Color
+                        </h4>
+                        <h4 className="hidden text-sm font-bold text-primary sm:block">
+                          Hex Code
+                        </h4>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(140px,0.65fr)] gap-4 items-start">
+                        <HexColorPicker
+                          color={appearance.theme_color}
+                          onChange={handleThemeColorChange}
+                          style={{ width: "100%", height: "220px" }}
+                        />
+                        <div className="space-y-3">
+                          <Input
+                            label="Hex Code"
+                            type="text"
+                            value={appearance.theme_color}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                                handleThemeColorChange(value);
+                              }
+                            }}
+                            placeholder="#9333ea"
+                            maxLength={7}
+                            aria-label="Hex Code"
+                            containerClassName="sm:[&>label]:sr-only"
+                            inputClassName="py-2 text-sm"
+                          />
+                          <Input
+                            label="RGB"
+                            type="text"
+                            value={rgbInput}
+                            onChange={(e) =>
+                              handleRgbInputChange(e.target.value)
+                            }
+                            placeholder="14, 255, 216"
+                            inputClassName="py-2 text-sm"
+                          />
+                          <Input
+                            label="HSL"
+                            type="text"
+                            value={hslInput}
+                            onChange={(e) =>
+                              handleHslInputChange(e.target.value)
+                            }
+                            placeholder="174, 100%, 53%"
+                            inputClassName="py-2 text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(140px,0.65fr)] gap-4 items-start">
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-bold text-primary">
+                          Example Text
+                        </h4>
+                        <div
+                          className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-gray-900/30 p-4 space-y-3"
+                          style={{ fontFamily: selectedFontStack }}
+                        >
+                          <div
+                            className="text-lg font-bold leading-tight"
+                            style={{
+                              color: appearance.theme_color,
+                            }}
+                          >
+                            Title text
+                          </div>
+                          <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+                            Example body text shows how your selected font will
+                            feel across the app.
+                          </p>
+                        </div>
+                      </div>
+
+                      <Select
+                        id="font-family"
+                        label="Font"
+                        value={appearance.font_family}
+                        onChange={(e) => handleFontFamilyChange(e.target.value)}
+                        helperText="Applies to your app text after saving."
+                        options={FONT_OPTIONS.map((option) => ({
+                          value: option.value,
+                          label: option.label,
+                          style: { fontFamily: option.stack },
+                        }))}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-3 justify-end pt-5">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => handleNavigateAway("/app")}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    loading={isSaving}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? "Saving..." : "Save Appearance"}
+                  </Button>
+                </div>
+              </Card>
+            </form>
+
+            <FeedbackSection />
+          </div>
 
           {/* Danger Zone */}
           <div className="rounded-xl border border-red-300 dark:border-red-800 overflow-hidden">

@@ -4,6 +4,11 @@ import {
   DEFAULT_THEME_COLOR,
   createColorVariations,
 } from "../styles/colorThemes";
+import {
+  DEFAULT_FONT_FAMILY,
+  getFontStack,
+  isFontFamilyValue,
+} from "../styles/fontThemes";
 import { logger } from "@/lib/logger";
 
 type ThemeOption = "light" | "dark" | "system";
@@ -20,6 +25,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [secondaryThemeColor, setSecondaryThemeColor] = useState<string | null>(
     null,
   );
+  const [fontFamily, setFontFamily] = useState<string>(DEFAULT_FONT_FAMILY);
 
   useEffect(() => {
     const loadTheme = () => {
@@ -42,6 +48,11 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
           if (/^#[0-9A-Fa-f]{6}$/.test(savedSecondaryColor)) {
             setSecondaryThemeColor(savedSecondaryColor);
           }
+        }
+
+        const savedFontFamily = localStorage.getItem("fontFamily");
+        if (isFontFamilyValue(savedFontFamily)) {
+          setFontFamily(savedFontFamily);
         }
       } catch (error) {
         logger.error("Failed to load theme from localStorage", { error });
@@ -128,12 +139,35 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     // CSS variables update automatically without forced reflow
     // Removed: void root.offsetHeight; (force repaint)
   }, [themeColor, secondaryThemeColor]);
+
+  useEffect(() => {
+    const fontStack = getFontStack(fontFamily);
+    const root = document.documentElement;
+
+    root.style.setProperty("--font-sans", fontStack);
+    root.style.setProperty("--font-heading", fontStack);
+  }, [fontFamily]);
+
   const changeTheme = useCallback((newTheme: ThemeOption) => {
     setTheme(newTheme);
     try {
       localStorage.setItem("theme", newTheme);
     } catch (error) {
       logger.error("Failed to save theme to localStorage", { error, newTheme });
+    }
+  }, []);
+
+  const changeFontFamily = useCallback((newFontFamily: string) => {
+    if (!isFontFamilyValue(newFontFamily)) return;
+
+    setFontFamily(newFontFamily);
+    try {
+      localStorage.setItem("fontFamily", newFontFamily);
+    } catch (error) {
+      logger.error("Failed to save font family to localStorage", {
+        error,
+        newFontFamily,
+      });
     }
   }, []);
 
@@ -176,18 +210,22 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       resolvedTheme,
       themeColor,
       secondaryThemeColor,
+      fontFamily,
       changeTheme,
       changeThemeColor,
       changeSecondaryThemeColor,
+      changeFontFamily,
     }),
     [
       theme,
       resolvedTheme,
       themeColor,
       secondaryThemeColor,
+      fontFamily,
       changeTheme,
       changeThemeColor,
       changeSecondaryThemeColor,
+      changeFontFamily,
     ],
   );
 

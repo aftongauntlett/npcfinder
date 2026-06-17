@@ -41,13 +41,7 @@ export default {
       fontFamily: {
         sans: "var(--font-sans)",
         mono: "var(--font-mono)",
-        heading: [
-          "Montserrat",
-          "ui-sans-serif",
-          "system-ui",
-          "-apple-system",
-          "sans-serif",
-        ],
+        heading: "var(--font-heading)",
       },
       spacing: {
         xs: "var(--space-xs)",

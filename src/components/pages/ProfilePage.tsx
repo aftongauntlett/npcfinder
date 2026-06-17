@@ -213,9 +213,6 @@ export default function ProfilePage() {
   const [profileMessage, setProfileMessage] = useState<Message | null>(null);
   const [showcaseMessage, setShowcaseMessage] = useState<Message | null>(null);
   const [showcaseQuery, setShowcaseQuery] = useState("");
-  const [usernameError, setUsernameError] = useState<string | undefined>(
-    undefined,
-  );
   const setProfileShowcaseOrder = useSetProfileShowcaseOrder();
 
   const { data: friendsDirectoryData } = useUserDirectory("", 1, 1, user?.id);
@@ -389,7 +386,6 @@ export default function ProfilePage() {
 
     if (name === "username") {
       value = value.replace(/[^A-Za-z0-9._-]/g, "").slice(0, 30);
-      setUsernameError(undefined);
     }
 
     setEditableProfile((prev) => ({
@@ -473,7 +469,6 @@ export default function ProfilePage() {
     setEditableProfile(toEditableProfile(profile));
     setHasProfileChanges(false);
     setProfileMessage(null);
-    setUsernameError(undefined);
     setIsEditModalOpen(true);
   };
 
@@ -482,20 +477,16 @@ export default function ProfilePage() {
     setIsEditModalOpen(false);
     setHasProfileChanges(false);
     setProfileMessage(null);
-    setUsernameError(undefined);
   };
 
   const handleSaveProfile = async () => {
     if (!user || !profile) return;
-
-    setUsernameError(undefined);
 
     if (!editableProfile.username || editableProfile.username.length < 3) {
       setProfileMessage({
         type: "error",
         text: "Username must be at least 3 characters.",
       });
-      setUsernameError("Username must be at least 3 characters.");
       return;
     }
 
@@ -515,7 +506,6 @@ export default function ProfilePage() {
             (error.details || "").toLowerCase().includes("lower(username)"));
 
         if (duplicateUsername) {
-          setUsernameError("This username is already in use.");
           setProfileMessage({
             type: "error",
             text: "Username already in use. Please choose another.",
@@ -790,6 +780,8 @@ export default function ProfilePage() {
                 className="space-y-4"
               >
                 <ProfileInformationSection
+                  displayName={editableProfile.display_name}
+                  username={editableProfile.username}
                   bio={editableProfile.bio}
                   birthday={editableProfile.birthday}
                   location={editableProfile.location}

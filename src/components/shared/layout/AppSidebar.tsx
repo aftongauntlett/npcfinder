@@ -12,15 +12,20 @@ import {
   Music2,
   Gamepad2,
   Menu,
+  Moon,
+  Sun,
   X,
   Users,
   PanelLeftClose,
   PanelLeftOpen,
   Upload,
+  LogOut,
 } from "lucide-react";
 import { useAdmin } from "@/contexts/AdminContext";
 import { TRACKER_SCOPES } from "@/data/trackerScopes";
 import { useProfileQuery } from "@/hooks/useProfileQuery";
+import { useTheme } from "@/hooks/useTheme";
+import { signOut } from "@/lib/auth";
 
 interface AppSidebarProps {
   currentUser?: { id: string; email?: string } | null;
@@ -46,10 +51,12 @@ export default function AppSidebar({
   const navigate = useNavigate();
   const { role } = useAdmin();
   const { data: profile } = useProfileQuery();
+  const { resolvedTheme, changeTheme } = useTheme();
   const isTrackerRoute = location.pathname.startsWith("/app/tracker");
 
   const [isOpen, setIsOpen] = useState(false);
   const [isTrackerExpanded, setIsTrackerExpanded] = useState(isTrackerRoute);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(() => {
     try {
       return localStorage.getItem("sidebar-collapsed") === "true";
@@ -85,7 +92,6 @@ export default function AppSidebar({
   const profilePath = profile?.username
     ? `/app/profile/${profile.username}`
     : "/app/profile";
-
   const navItems = useMemo(() => {
     const items: SidebarItem[] = [
       {
@@ -187,6 +193,14 @@ export default function AppSidebar({
   const navigateAndClose = (path: string) => {
     void navigate(path);
     setIsOpen(false);
+  };
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+    const { error } = await signOut();
+    if (error) {
+      setIsSigningOut(false);
+    }
   };
 
   const renderNavItems = ({
@@ -354,6 +368,52 @@ export default function AppSidebar({
           >
             {renderNavItems({ isCompact: isCollapsed, idPrefix: "desktop" })}
           </nav>
+
+          {/* Account controls */}
+          <div className="px-2 pb-2">
+            <div className="space-y-1">
+              <button
+                type="button"
+                onClick={() =>
+                  changeTheme(resolvedTheme === "dark" ? "light" : "dark")
+                }
+                title={
+                  resolvedTheme === "dark"
+                    ? "Switch to light mode"
+                    : "Switch to dark mode"
+                }
+                className={`flex w-full items-center rounded-lg py-2 text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
+                  isCollapsed ? "justify-center px-0" : "gap-3 px-3"
+                }`}
+              >
+                {resolvedTheme === "dark" ? (
+                  <>
+                    <Sun className="w-4 h-4 shrink-0" />
+                    {!isCollapsed && <span>Light</span>}
+                  </>
+                ) : (
+                  <>
+                    <Moon className="w-4 h-4 shrink-0" />
+                    {!isCollapsed && <span>Dark</span>}
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSignOut()}
+                disabled={isSigningOut}
+                title="Sign out"
+                className={`flex w-full items-center rounded-lg py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
+                  isCollapsed ? "justify-center px-0" : "gap-3 px-3"
+                }`}
+              >
+                <LogOut className="w-4 h-4 shrink-0" />
+                {!isCollapsed && (
+                  <span>{isSigningOut ? "Signing out" : "Sign out"}</span>
+                )}
+              </button>
+            </div>
+          </div>
 
           {/* Footer — collapse toggle only */}
           <div className="p-2 border-t border-gray-200/60 dark:border-white/5">

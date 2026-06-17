@@ -43,7 +43,7 @@ const DEFAULT_DURATION = 5000;
  */
 export const globalErrorStore = create<GlobalErrorState>((set, get) => {
   // Map to track timeout IDs for each error
-  const timeoutMap = new Map<string, NodeJS.Timeout>();
+  const timeoutMap = new Map<string, ReturnType<typeof setTimeout>>();
 
   return {
     errors: [],

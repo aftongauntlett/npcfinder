@@ -62,84 +62,86 @@ const FeedbackSection: React.FC = () => {
   };
 
   return (
-    <Card variant="glass" spacing="md" border>
+    <Card variant="glass" spacing="md" border className="h-full flex flex-col">
       <form
         onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
           void handleSubmit(e);
         }}
-        className="space-y-4"
+        className="h-full flex flex-col"
       >
-        <div>
-          <h3 className="text-base font-medium text-gray-900 dark:text-white mb-1">
-            Feedback
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Have a suggestion or found a bug? Send feedback directly from your
-            settings.
-          </p>
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-base font-medium text-gray-900 dark:text-white mb-1">
+              Feedback
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Have a suggestion or found a bug? Send feedback directly from
+              your settings.
+            </p>
+          </div>
+
+          {success && (
+            <div
+              className="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-sm text-green-700 dark:text-green-300"
+              role="status"
+            >
+              <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <span>Your feedback has been submitted successfully.</span>
+            </div>
+          )}
+
+          {error && (
+            <div
+              className="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-600 dark:text-red-400"
+              role="alert"
+            >
+              <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <Input
+            id="feedback-name"
+            label="Name (optional)"
+            type="text"
+            value={name}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setName(e.target.value)
+            }
+            placeholder="Your name"
+            disabled={isSubmitting}
+            maxLength={100}
+          />
+
+          <Input
+            id="feedback-email"
+            label="Email (optional)"
+            type="email"
+            value={email}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setEmail(e.target.value)
+            }
+            placeholder="your.email@example.com"
+            disabled={isSubmitting}
+            maxLength={100}
+          />
+
+          <Textarea
+            id="feedback-description"
+            label="Description"
+            value={description}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+              setDescription(e.target.value)
+            }
+            placeholder="Describe your suggestion, bug report, or feedback..."
+            rows={6}
+            disabled={isSubmitting}
+            maxLength={MAX_DESCRIPTION_LENGTH}
+            required
+          />
         </div>
 
-        {success && (
-          <div
-            className="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-sm text-green-700 dark:text-green-300"
-            role="status"
-          >
-            <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-            <span>Your feedback has been submitted successfully.</span>
-          </div>
-        )}
-
-        {error && (
-          <div
-            className="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-600 dark:text-red-400"
-            role="alert"
-          >
-            <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        <Input
-          id="feedback-name"
-          label="Name (optional)"
-          type="text"
-          value={name}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setName(e.target.value)
-          }
-          placeholder="Your name"
-          disabled={isSubmitting}
-          maxLength={100}
-        />
-
-        <Input
-          id="feedback-email"
-          label="Email (optional)"
-          type="email"
-          value={email}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setEmail(e.target.value)
-          }
-          placeholder="your.email@example.com"
-          disabled={isSubmitting}
-          maxLength={100}
-        />
-
-        <Textarea
-          id="feedback-description"
-          label="Description"
-          value={description}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-            setDescription(e.target.value)
-          }
-          placeholder="Describe your suggestion, bug report, or feedback..."
-          rows={6}
-          disabled={isSubmitting}
-          maxLength={MAX_DESCRIPTION_LENGTH}
-          required
-        />
-
-        <div className="flex items-center justify-between pt-1 gap-3">
+        <div className="mt-auto flex items-center justify-between pt-5 gap-3">
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {description.length}/{MAX_DESCRIPTION_LENGTH}
           </p>

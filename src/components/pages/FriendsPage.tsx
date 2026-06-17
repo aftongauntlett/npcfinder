@@ -90,7 +90,10 @@ export default function FriendsPage() {
   const assignMutation = useAssignUserToTag();
   const removeMutation = useRemoveUserFromTag();
 
-  const users = directoryData?.users || [];
+  const users = useMemo(
+    () => directoryData?.users || [],
+    [directoryData?.users],
+  );
   const totalCount = directoryData?.totalCount || 0;
 
   const selectedTagIds = useMemo(() => {

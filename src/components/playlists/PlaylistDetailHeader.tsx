@@ -1,7 +1,7 @@
 import { Plus } from "lucide-react";
 import { Button } from "@/components/shared";
 import type { PlaylistWithMeta } from "@/services/playlistsService";
-import { getPlaylistIcon } from "./PlaylistIconPicker";
+import { getPlaylistIcon } from "./playlistIconOptions";
 
 interface PlaylistDetailHeaderProps {
   playlist: PlaylistWithMeta;

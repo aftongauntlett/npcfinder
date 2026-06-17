@@ -4,6 +4,8 @@ import { Button, Input, Textarea } from "@/components/shared";
 import { ImagePlus, Trash2 } from "lucide-react";
 
 interface ProfileInformationSectionProps {
+  displayName: string;
+  username: string;
   bio: string;
   birthday: string;
   location: string;
@@ -20,6 +22,8 @@ interface ProfileInformationSectionProps {
 }
 
 const ProfileInformationSection: React.FC<ProfileInformationSectionProps> = ({
+  displayName,
+  username,
   bio,
   birthday,
   location,

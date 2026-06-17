@@ -214,7 +214,7 @@ export const debouncedPrefetch = (
   prefetchFn: () => Promise<void>,
   delay: number = 300
 ): (() => void) => {
-  let timeoutId: NodeJS.Timeout | null = null;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
   return () => {
     if (timeoutId) {

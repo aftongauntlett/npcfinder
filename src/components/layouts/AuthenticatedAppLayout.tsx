@@ -4,6 +4,8 @@ import type { User } from "@supabase/supabase-js";
 import PageContainer from "./PageContainer";
 import ProtectedAdminRoute from "./ProtectedAdminRoute";
 import { useTheme } from "@/hooks/useTheme";
+import { useProfileQuery } from "@/hooks/useProfileQuery";
+import { DEFAULT_FONT_FAMILY } from "@/styles/fontThemes";
 import AppSidebar from "@/components/shared/layout/AppSidebar";
 // Lazy load authenticated components to avoid Supabase imports on landing page
 const TrackerPage = React.lazy(() => import("../pages/TrackerPage"));
@@ -32,7 +34,13 @@ interface AuthenticatedAppLayoutProps {
 const AuthenticatedAppLayout: React.FC<AuthenticatedAppLayoutProps> = ({
   user,
 }) => {
-  const { resolvedTheme } = useTheme();
+  const {
+    resolvedTheme,
+    changeThemeColor,
+    changeSecondaryThemeColor,
+    changeFontFamily,
+  } = useTheme();
+  const { data: profile } = useProfileQuery();
 
   useEffect(() => {
     document.body.classList.add("app-authenticated-shell");
@@ -40,6 +48,23 @@ const AuthenticatedAppLayout: React.FC<AuthenticatedAppLayoutProps> = ({
       document.body.classList.remove("app-authenticated-shell");
     };
   }, []);
+
+  useEffect(() => {
+    if (!profile) return;
+
+    if (profile.theme_color) {
+      changeThemeColor(profile.theme_color);
+    }
+    if (profile.secondary_theme_color !== undefined) {
+      changeSecondaryThemeColor(profile.secondary_theme_color || null);
+    }
+    changeFontFamily(profile.font_family || DEFAULT_FONT_FAMILY);
+  }, [
+    profile,
+    changeThemeColor,
+    changeSecondaryThemeColor,
+    changeFontFamily,
+  ]);
 
   return (
     <PageContainer className="relative">

@@ -12,6 +12,7 @@ export type SelectOption = {
   label: string;
   disabled?: boolean;
   leftIcon?: React.ReactNode;
+  style?: React.CSSProperties;
 };
 
 export interface SelectProps
@@ -234,7 +235,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
               .trim()
               .replace(/\s+/g, " ")}
           >
-            {displayValue}
+            <span style={selectedOption?.style}>{displayValue}</span>
           </button>
 
           {/* Left Icon */}
@@ -301,7 +302,9 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
                         {option.leftIcon}
                       </span>
                     ) : null}
-                    <span className="truncate">{option.label}</span>
+                    <span className="truncate" style={option.style}>
+                      {option.label}
+                    </span>
                   </span>
                   {value === option.value && (
                     <Check

@@ -1,6 +1,6 @@
 import { Globe, Lock, Pencil, Share2, Trash2, Users } from "lucide-react";
 import type { PlaylistWithMeta } from "@/services/playlistsService";
-import { getPlaylistIcon } from "./PlaylistIconPicker";
+import { getPlaylistIcon } from "./playlistIconOptions";
 
 interface PlaylistCardProps {
   playlist: PlaylistWithMeta;
