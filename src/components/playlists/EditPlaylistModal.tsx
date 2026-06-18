@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { ImagePlus, X } from "lucide-react";
 import { Button, Input, Modal, Textarea } from "@/components/shared";
 import PrivacyToggle from "@/components/shared/common/PrivacyToggle";
-import TagInput from "@/components/shared/common/TagInput";
 import { useUpdatePlaylist } from "@/hooks/usePlaylistsQueries";
 import { uploadPlaylistIconImage } from "@/lib/playlistIcons";
 import type { PlaylistWithMeta } from "@/services/playlistsService";
@@ -21,7 +20,6 @@ export default function EditPlaylistModal({
 }: EditPlaylistModalProps) {
   const [name, setName] = useState(playlist.name);
   const [description, setDescription] = useState(playlist.description ?? "");
-  const [tags, setTags] = useState<string[]>(playlist.tags);
   const [isPublic, setIsPublic] = useState(!playlist.is_private);
   const [icon, setIcon] = useState(playlist.icon);
   const [iconImageUrl, setIconImageUrl] = useState<string | null>(
@@ -34,7 +32,6 @@ export default function EditPlaylistModal({
     if (isOpen) {
       setName(playlist.name);
       setDescription(playlist.description ?? "");
-      setTags(playlist.tags);
       setIsPublic(!playlist.is_private);
       setIcon(playlist.icon);
       setIconImageUrl(playlist.icon_image_url);
@@ -44,7 +41,6 @@ export default function EditPlaylistModal({
   const hasChanges =
     name.trim() !== playlist.name ||
     (description.trim() || null) !== playlist.description ||
-    JSON.stringify(tags) !== JSON.stringify(playlist.tags) ||
     isPublic === playlist.is_private ||
     icon !== playlist.icon ||
     iconImageUrl !== playlist.icon_image_url;
@@ -69,7 +65,6 @@ export default function EditPlaylistModal({
       updates: {
         name: trimmedName,
         description: description.trim() || null,
-        tags,
         icon,
         icon_image_url: iconImageUrl,
         is_private: !isPublic,
@@ -98,20 +93,6 @@ export default function EditPlaylistModal({
           rows={3}
           placeholder="Optional description"
         />
-
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Tags
-          </label>
-          <TagInput
-            tags={tags}
-            onChange={setTags}
-            placeholder="Add tag and press Enter…"
-          />
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Press Enter or comma to add. Tags are lowercase.
-          </p>
-        </div>
 
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">

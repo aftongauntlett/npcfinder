@@ -5,6 +5,7 @@ import { getPlaylistIcon } from "./playlistIconOptions";
 interface PlaylistCardProps {
   playlist: PlaylistWithMeta;
   isOwner: boolean;
+  relation?: "shared" | "public";
   onClick: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
@@ -12,20 +13,16 @@ interface PlaylistCardProps {
   onToggleVisibility?: () => void;
 }
 
-const MAX_VISIBLE_TAGS = 3;
-
 export default function PlaylistCard({
   playlist,
   isOwner,
+  relation = "shared",
   onClick,
   onEdit,
   onDelete,
   onShare,
   onToggleVisibility,
 }: PlaylistCardProps) {
-  const visibleTags = playlist.tags.slice(0, MAX_VISIBLE_TAGS);
-  const extraCount = playlist.tags.length - visibleTags.length;
-
   return (
     <div
       role="button"
@@ -59,8 +56,12 @@ export default function PlaylistCard({
         </p>
         {!isOwner && (
           <span className="shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-100">
-            <Users className="w-3 h-3" />
-            Shared
+            {relation === "public" ? (
+              <Globe className="w-3 h-3" />
+            ) : (
+              <Users className="w-3 h-3" />
+            )}
+            {relation === "public" ? "Public" : "Shared"}
           </span>
         )}
       </div>
@@ -72,25 +73,6 @@ export default function PlaylistCard({
             ? "No description yet."
             : `From ${playlist.owner_display_name ?? "someone"}`)}
       </p>
-
-      {/* Tags */}
-      {playlist.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {visibleTags.map((tag) => (
-            <span
-              key={tag}
-              className="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-[11px] text-gray-600 dark:text-gray-300"
-            >
-              {tag}
-            </span>
-          ))}
-          {extraCount > 0 && (
-            <span className="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-[11px] text-gray-500 dark:text-gray-400">
-              +{extraCount}
-            </span>
-          )}
-        </div>
-      )}
 
       {/* Meta row + action buttons */}
       <div className="flex items-center justify-between gap-2">

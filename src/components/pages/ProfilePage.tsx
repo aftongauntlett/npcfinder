@@ -13,6 +13,7 @@ import {
 import PlaylistCard from "@/components/playlists/PlaylistCard";
 import {
   usePlaylists,
+  usePublicPlaylists,
   useSetProfileShowcaseOrder,
 } from "@/hooks/usePlaylistsQueries";
 import { useProfileQuery } from "@/hooks/useProfileQuery";
@@ -265,10 +266,14 @@ export default function ProfilePage() {
   );
 
   const { data: playlists = [] } = usePlaylists();
+  const { data: publicPlaylists = [] } = usePublicPlaylists();
+  const profilePlaylistSource = isOwnProfile ? playlists : publicPlaylists;
   const profileOwnerPlaylists = useMemo(
     () =>
-      playlists.filter((playlist) => playlist.owner_id === profile?.user_id),
-    [playlists, profile?.user_id],
+      profilePlaylistSource.filter(
+        (playlist) => playlist.owner_id === profile?.user_id,
+      ),
+    [profilePlaylistSource, profile?.user_id],
   );
 
   const topPlaylists = useMemo(
@@ -979,6 +984,7 @@ export default function ProfilePage() {
                     <PlaylistCard
                       playlist={playlist}
                       isOwner={playlist.owner_id === user?.id}
+                      relation="public"
                       onClick={() => {
                         void navigate(`/app/playlists/${playlist.slug}`);
                       }}

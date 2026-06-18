@@ -14,7 +14,6 @@ export interface Playlist {
   icon_image_url: string | null;
   description: string | null;
   is_private: boolean;
-  tags: string[];
   profile_showcase_rank: number | null;
   created_at: string;
   updated_at: string;
@@ -137,12 +136,34 @@ export async function getPlaylists(): Promise<
   ServiceResponse<PlaylistWithMeta[]>
 > {
   try {
-    const { data, error } = await supabase
+    const currentUserId = await getCurrentUserId();
+    const { data: directShares, error: directSharesError } = await supabase
+      .from("playlist_shares")
+      .select("playlist_id")
+      .eq("shared_with_user_id", currentUserId);
+
+    if (directSharesError) throw directSharesError;
+
+    const sharedPlaylistIds = Array.from(
+      new Set((directShares || []).map((row) => String(row.playlist_id))),
+    );
+
+    let request = supabase
       .from("playlists")
       .select(
-        "id, owner_id, name, slug, icon, icon_image_url, description, is_private, tags, profile_showcase_rank, created_at, updated_at",
+        "id, owner_id, name, slug, icon, icon_image_url, description, is_private, profile_showcase_rank, created_at, updated_at",
       )
       .order("updated_at", { ascending: false });
+
+    if (sharedPlaylistIds.length > 0) {
+      request = request.or(
+        `owner_id.eq.${currentUserId},id.in.(${sharedPlaylistIds.join(",")})`,
+      );
+    } else {
+      request = request.eq("owner_id", currentUserId);
+    }
+
+    const { data, error } = await request;
 
     if (error) throw error;
 
@@ -189,7 +210,6 @@ export async function getPlaylists(): Promise<
     }
 
     // Fetch display names for owners of shared playlists
-    const currentUserId = await getCurrentUserId().catch(() => null);
     const ownerIds = [
       ...new Set(
         rows.filter((r) => r.owner_id !== currentUserId).map((r) => r.owner_id),
@@ -212,7 +232,6 @@ export async function getPlaylists(): Promise<
     return {
       data: rows.map((row) => ({
         ...row,
-        tags: Array.isArray(row.tags) ? row.tags : [],
         item_count: itemsByPlaylist.get(row.id) || 0,
         share_count: sharesByPlaylist.get(row.id) || 0,
         owner_display_name:
@@ -224,6 +243,94 @@ export async function getPlaylists(): Promise<
     };
   } catch (error) {
     logger.error("Failed to load playlists", { error });
+    return { data: null, error: error as Error };
+  }
+}
+
+export async function getPublicPlaylists(): Promise<
+  ServiceResponse<PlaylistWithMeta[]>
+> {
+  try {
+    const currentUserId = await getCurrentUserId();
+    const { data, error } = await supabase
+      .from("playlists")
+      .select(
+        "id, owner_id, name, slug, icon, icon_image_url, description, is_private, profile_showcase_rank, created_at, updated_at",
+      )
+      .eq("is_private", false)
+      .neq("owner_id", currentUserId)
+      .order("updated_at", { ascending: false });
+
+    if (error) throw error;
+
+    const rows = (data || []) as Playlist[];
+    const ids = rows.map((row) => row.id);
+    if (ids.length === 0) {
+      return { data: [], error: null };
+    }
+
+    const [
+      { data: itemCounts, error: itemCountError },
+      { data: shareCounts, error: shareCountError },
+    ] = await Promise.all([
+      supabase
+        .from("playlist_items")
+        .select("playlist_id")
+        .in("playlist_id", ids),
+      supabase
+        .from("playlist_shares")
+        .select("playlist_id")
+        .in("playlist_id", ids),
+    ]);
+
+    if (itemCountError) throw itemCountError;
+    if (shareCountError) throw shareCountError;
+
+    const itemsByPlaylist = new Map<string, number>();
+    for (const row of itemCounts || []) {
+      const playlistId = String(row.playlist_id);
+      itemsByPlaylist.set(
+        playlistId,
+        (itemsByPlaylist.get(playlistId) || 0) + 1,
+      );
+    }
+
+    const sharesByPlaylist = new Map<string, number>();
+    for (const row of shareCounts || []) {
+      const playlistId = String(row.playlist_id);
+      sharesByPlaylist.set(
+        playlistId,
+        (sharesByPlaylist.get(playlistId) || 0) + 1,
+      );
+    }
+
+    const ownerIds = [...new Set(rows.map((row) => row.owner_id))];
+    const ownerDisplayNames = new Map<string, string | null>();
+    if (ownerIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("user_profiles")
+        .select("user_id, display_name")
+        .in("user_id", ownerIds);
+      for (const profile of profiles || []) {
+        ownerDisplayNames.set(
+          profile.user_id,
+          (profile as { user_id: string; display_name: string | null })
+            .display_name,
+        );
+      }
+    }
+
+    return {
+      data: rows.map((row) => ({
+        ...row,
+        item_count: itemsByPlaylist.get(row.id) || 0,
+        share_count: sharesByPlaylist.get(row.id) || 0,
+        owner_display_name: ownerDisplayNames.get(row.owner_id) ?? null,
+      })),
+      error: null,
+    };
+  } catch (error) {
+    logger.error("Failed to load public playlists", { error });
     return { data: null, error: error as Error };
   }
 }
@@ -270,7 +377,6 @@ export async function getPlaylist(
     return {
       data: {
         ...row,
-        tags: Array.isArray(row.tags) ? row.tags : [],
         item_count: (itemRows || []).length,
         share_count: (shareRows || []).length,
         owner_display_name,
@@ -340,7 +446,6 @@ export async function createPlaylist(params: {
             icon_image_url: null,
             description,
             is_private: isPrivate,
-            tags: [],
             profile_showcase_rank: null,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
@@ -365,7 +470,6 @@ export async function createPlaylist(params: {
             icon_image_url: null,
             description,
             is_private: isPrivate,
-            tags: [],
             profile_showcase_rank: null,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
@@ -392,7 +496,6 @@ export async function updatePlaylist(
       | "name"
       | "description"
       | "is_private"
-      | "tags"
       | "icon"
       | "icon_image_url"
       | "profile_showcase_rank"
@@ -420,7 +523,6 @@ export async function updatePlaylist(
         ...(updates.is_private !== undefined
           ? { is_private: updates.is_private }
           : {}),
-        ...(updates.tags !== undefined ? { tags: updates.tags } : {}),
         ...(updates.icon !== undefined ? { icon: updates.icon } : {}),
         ...(updates.icon_image_url !== undefined
           ? { icon_image_url: updates.icon_image_url }

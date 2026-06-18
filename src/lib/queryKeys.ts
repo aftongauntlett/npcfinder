@@ -165,6 +165,7 @@ export const queryKeys = {
   playlists: {
     all: ["playlists"] as const,
     lists: () => [...queryKeys.playlists.all, "lists"] as const,
+    publicLists: () => [...queryKeys.playlists.all, "public-lists"] as const,
     detail: (playlistId: string) =>
       [...queryKeys.playlists.all, "detail", playlistId] as const,
     items: (playlistId: string) =>

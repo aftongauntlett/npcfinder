@@ -119,8 +119,8 @@ export default function SharePlaylistModal({
               <Users className="w-5 h-5 text-primary" />
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Share with anyone in the app by name or username. Shared users can
-              view only.
+              Invite specific people by name or username. Invited people can
+              view this playlist even if it is private.
             </p>
           </div>
 
@@ -148,10 +148,10 @@ export default function SharePlaylistModal({
 
           <div className="space-y-2">
             <Input
-              label="Invite users"
+              label="Invite people"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search connected users"
+              placeholder="Search people"
             />
 
             {searchQuery.trim().length > 0 && (
@@ -213,7 +213,7 @@ export default function SharePlaylistModal({
 
           <div className="space-y-2">
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Shared users
+              Invited people
             </h3>
 
             {isSharesLoading ? (
@@ -222,7 +222,7 @@ export default function SharePlaylistModal({
               </div>
             ) : shares.length === 0 ? (
               <div className="text-sm text-gray-500 dark:text-gray-400">
-                No shares yet.
+                No invites yet.
               </div>
             ) : (
               <div className="space-y-2">

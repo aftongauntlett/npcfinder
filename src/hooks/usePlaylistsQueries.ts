@@ -13,6 +13,17 @@ export function usePlaylists() {
   });
 }
 
+export function usePublicPlaylists() {
+  return useQuery({
+    queryKey: queryKeys.playlists.publicLists(),
+    queryFn: async () => {
+      const { data, error } = await playlistsService.getPublicPlaylists();
+      if (error) throw error;
+      return data || [];
+    },
+  });
+}
+
 export function usePlaylist(slug: string | null) {
   return useQuery({
     queryKey: queryKeys.playlists.detail(slug || ""),
@@ -86,7 +97,6 @@ export function useUpdatePlaylist() {
         name?: string;
         description?: string | null;
         is_private?: boolean;
-        tags?: string[];
         icon?: string;
         icon_image_url?: string | null;
         profile_showcase_rank?: number | null;
@@ -246,9 +256,12 @@ export function useSharePlaylist() {
       return data;
     },
     onSuccess: async (_data, variables) => {
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.playlists.shares(variables.playlistId),
-      });
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.playlists.shares(variables.playlistId),
+        }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.playlists.all }),
+      ]);
     },
   });
 }
@@ -263,9 +276,12 @@ export function useUnsharePlaylist() {
       return data;
     },
     onSuccess: async (_data, variables) => {
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.playlists.shares(variables.playlistId),
-      });
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.playlists.shares(variables.playlistId),
+        }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.playlists.all }),
+      ]);
     },
   });
 }

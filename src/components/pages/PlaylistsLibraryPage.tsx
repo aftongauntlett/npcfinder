@@ -22,6 +22,7 @@ import {
   usePlaylist,
   usePlaylistItems,
   usePlaylists,
+  usePublicPlaylists,
   useRemovePlaylistItem,
   useReorderPlaylistItems,
   useUpdatePlaylist,
@@ -31,11 +32,12 @@ import type { PlaylistItem, PlaylistWithMeta } from "@/services/playlistsService
 import type { TrackerItem } from "@/services/trackerService";
 import type { CatalogMedia } from "@/services/mediaCatalogService";
 
-type PlaylistTab = "mine" | "shared";
+type PlaylistTab = "mine" | "shared" | "browse";
 type VisibilityFilter = "all" | "private" | "public";
 type SortMode = "updated" | "title" | "items";
 
 function parseTab(value: string | null): PlaylistTab {
+  if (value === "browse") return "browse";
   return value === "shared" ? "shared" : "mine";
 }
 
@@ -109,6 +111,8 @@ export default function PlaylistsLibraryPage() {
 
   const { data: allPlaylists = [], isLoading: isPlaylistsLoading } =
     usePlaylists();
+  const { data: publicPlaylists = [], isLoading: isPublicPlaylistsLoading } =
+    usePublicPlaylists();
 
   const myCount = useMemo(
     () => allPlaylists.filter((p) => p.owner_id === user?.id).length,
@@ -118,15 +122,17 @@ export default function PlaylistsLibraryPage() {
     () => allPlaylists.filter((p) => p.owner_id !== user?.id).length,
     [allPlaylists, user?.id],
   );
+  const publicCount = publicPlaylists.length;
 
   const tabPlaylists = useMemo(
-    () =>
-      allPlaylists.filter((p) =>
-        activeTab === "mine"
-          ? p.owner_id === user?.id
-          : p.owner_id !== user?.id,
-      ),
-    [activeTab, allPlaylists, user?.id],
+    () => {
+      if (activeTab === "browse") return publicPlaylists;
+
+      return allPlaylists.filter((p) =>
+        activeTab === "mine" ? p.owner_id === user?.id : p.owner_id !== user?.id,
+      );
+    },
+    [activeTab, allPlaylists, publicPlaylists, user?.id],
   );
 
   const filteredPlaylists = useMemo(() => {
@@ -134,7 +140,7 @@ export default function PlaylistsLibraryPage() {
 
     let list = tabPlaylists;
 
-    if (visibilityFilter !== "all") {
+    if (activeTab !== "browse" && visibilityFilter !== "all") {
       list = list.filter((playlist) =>
         visibilityFilter === "private"
           ? playlist.is_private
@@ -147,7 +153,6 @@ export default function PlaylistsLibraryPage() {
         const haystack = [
           playlist.name,
           playlist.description ?? "",
-          playlist.tags.join(" "),
         ]
           .join(" ")
           .toLowerCase();
@@ -173,7 +178,7 @@ export default function PlaylistsLibraryPage() {
     });
 
     return sorted;
-  }, [search, sortMode, tabPlaylists, visibilityFilter]);
+  }, [activeTab, search, sortMode, tabPlaylists, visibilityFilter]);
 
   const detailSlug = slug ?? null;
   const { data: detailPlaylist, isLoading: isDetailPlaylistLoading } =
@@ -214,12 +219,13 @@ export default function PlaylistsLibraryPage() {
     () => [
       { id: "mine", label: "My Playlists", badge: myCount },
       { id: "shared", label: "Shared With Me", badge: sharedCount },
+      { id: "browse", label: "Browse Public", badge: publicCount },
     ],
-    [myCount, sharedCount],
+    [myCount, publicCount, sharedCount],
   );
 
-  const filterSections = useMemo<FilterSortSection[]>(
-    () => [
+  const filterSections = useMemo<FilterSortSection[]>(() => {
+    const sections: FilterSortSection[] = [
       {
         id: "visibility",
         title: "Visibility",
@@ -238,16 +244,20 @@ export default function PlaylistsLibraryPage() {
           { id: "items", label: "Item Count" },
         ],
       },
-    ],
-    [],
-  );
+    ];
+
+    return activeTab === "browse"
+      ? sections.filter((section) => section.id !== "visibility")
+      : sections;
+  }, [activeTab]);
 
   const setTab = (tab: PlaylistTab) => {
     const params = new URLSearchParams(searchParams);
     params.set("tab", tab);
     if (search.trim()) params.set("q", search.trim());
     else params.delete("q");
-    if (visibilityFilter !== "all") params.set("visibility", visibilityFilter);
+    if (tab !== "browse" && visibilityFilter !== "all")
+      params.set("visibility", visibilityFilter);
     else params.delete("visibility");
     if (sortMode !== "updated") params.set("sort", sortMode);
     else params.delete("sort");
@@ -259,7 +269,8 @@ export default function PlaylistsLibraryPage() {
     params.set("tab", activeTab);
     if (search.trim()) params.set("q", search.trim());
     else params.delete("q");
-    if (visibilityFilter !== "all") params.set("visibility", visibilityFilter);
+    if (activeTab !== "browse" && visibilityFilter !== "all")
+      params.set("visibility", visibilityFilter);
     else params.delete("visibility");
     if (sortMode !== "updated") params.set("sort", sortMode);
     else params.delete("sort");
@@ -271,7 +282,8 @@ export default function PlaylistsLibraryPage() {
     params.set("tab", activeTab);
     if (search.trim()) params.set("q", search.trim());
     else params.delete("q");
-    if (visibilityFilter !== "all") params.set("visibility", visibilityFilter);
+    if (activeTab !== "browse" && visibilityFilter !== "all")
+      params.set("visibility", visibilityFilter);
     else params.delete("visibility");
     if (sortMode !== "updated") params.set("sort", sortMode);
     else params.delete("sort");
@@ -294,14 +306,16 @@ export default function PlaylistsLibraryPage() {
     replace = true,
   ) => {
     const params = new URLSearchParams(searchParams);
-    params.set("tab", next.tab ?? activeTab);
+    const nextTab = next.tab ?? activeTab;
+    params.set("tab", nextTab);
 
     const nextSearch = next.q ?? search;
     if (nextSearch.trim()) params.set("q", nextSearch.trim());
     else params.delete("q");
 
     const nextVisibility = next.visibility ?? visibilityFilter;
-    if (nextVisibility !== "all") params.set("visibility", nextVisibility);
+    if (nextTab !== "browse" && nextVisibility !== "all")
+      params.set("visibility", nextVisibility);
     else params.delete("visibility");
 
     const nextSort = next.sort ?? sortMode;
@@ -370,6 +384,10 @@ export default function PlaylistsLibraryPage() {
   );
 
   const isOwnerTab = activeTab === "mine";
+  const isLoadingCurrentTab =
+    activeTab === "browse" ? isPublicPlaylistsLoading : isPlaylistsLoading;
+  const hasActiveListFilters =
+    Boolean(search) || (activeTab !== "browse" && visibilityFilter !== "all");
 
   return (
     <AppLayout
@@ -414,7 +432,7 @@ export default function PlaylistsLibraryPage() {
           hideAddButton={!isOwnerTab}
         />
 
-        {isPlaylistsLoading ? (
+        {isLoadingCurrentTab ? (
           <div className="text-sm text-gray-500 dark:text-gray-400">
             Loading playlists...
           </div>
@@ -422,21 +440,25 @@ export default function PlaylistsLibraryPage() {
           <EmptyState
             icon={isOwnerTab ? ListMusic : Users}
             title={
-              search || visibilityFilter !== "all"
+              hasActiveListFilters
                 ? "No playlists match your filters"
                 : isOwnerTab
                   ? "No playlists yet"
-                  : "Nothing shared with you yet"
+                  : activeTab === "browse"
+                    ? "No public playlists yet"
+                    : "Nothing shared with you yet"
             }
             description={
-              search || visibilityFilter !== "all"
+              hasActiveListFilters
                 ? "Try adjusting search text or filters."
                 : isOwnerTab
                   ? "Create your first playlist to start curating collections."
-                  : "Shared playlists from your connections will appear here."
+                  : activeTab === "browse"
+                    ? "Public playlists from other people will appear here."
+                    : "Playlist invites from other people will appear here."
             }
             action={
-              isOwnerTab && !search && visibilityFilter === "all"
+              isOwnerTab && !hasActiveListFilters
                 ? { label: "New Playlist", onClick: () => setShowCreate(true) }
                 : undefined
             }
@@ -450,6 +472,7 @@ export default function PlaylistsLibraryPage() {
                   key={playlist.id}
                   playlist={playlist}
                   isOwner={isOwner}
+                  relation={activeTab === "browse" ? "public" : "shared"}
                   onClick={() => openPlaylist(playlist.slug)}
                   onEdit={
                     isOwner
@@ -511,7 +534,7 @@ export default function PlaylistsLibraryPage() {
           params.set("tab", activeTab);
           if (search.trim()) params.set("q", search.trim());
           else params.delete("q");
-          if (visibilityFilter !== "all")
+          if (activeTab !== "browse" && visibilityFilter !== "all")
             params.set("visibility", visibilityFilter);
           else params.delete("visibility");
           if (sortMode !== "updated") params.set("sort", sortMode);
