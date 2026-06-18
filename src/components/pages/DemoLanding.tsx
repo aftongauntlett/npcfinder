@@ -135,7 +135,7 @@ const DemoLanding: React.FC = () => {
                 </span>
               </h2>
 
-              <p className="text-base sm:text-lg text-neutral-300 mb-8 max-w-xl leading-relaxed font-light">
+              <p className="text-base sm:text-lg text-neutral-200 mb-8 max-w-xl leading-relaxed font-normal">
                 I built NPC Finder to track what I watch, read, play, and listen
                 to in one place. Notes and quick ratings help me focus and
                 remember why something mattered. The timeline captures when I
