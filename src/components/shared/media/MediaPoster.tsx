@@ -5,7 +5,7 @@ interface MediaPosterProps {
   src?: string | null;
   alt: string;
   aspectRatio?: "2/3" | "1/1" | "16/9";
-  size?: "sm" | "md" | "lg" | "xl";
+  size?: "xs" | "sm" | "md" | "lg" | "xl";
   fallbackIcon?: LucideIcon;
   showOverlay?: boolean;
   overlayContent?: React.ReactNode;
@@ -25,6 +25,7 @@ export default function MediaPoster({
   const [imgError, setImgError] = useState(false);
 
   const sizeClasses = {
+    xs: "w-20",
     sm: "w-16 h-20",
     md: "w-full sm:w-48",
     lg: "w-56",
@@ -39,9 +40,7 @@ export default function MediaPoster({
 
   const aspectRatioClass = aspectRatioClasses[aspectRatio];
 
-  const containerClass = `relative rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-200 ${
-    size === "sm" ? sizeClasses.sm : sizeClasses[size]
-  } ${aspectRatioClass} ${className}`;
+  const containerClass = `relative rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-200 ${sizeClasses[size]} ${aspectRatioClass} ${className}`;
 
   if (!src || imgError) {
     return (
@@ -49,13 +48,15 @@ export default function MediaPoster({
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-800">
           <FallbackIcon
             className={`${
-              size === "sm" ? "w-8 h-8" : "w-16 h-16"
+              size === "sm" || size === "xs" ? "w-8 h-8" : "w-16 h-16"
             } text-gray-400 dark:text-gray-600 mb-2`}
             aria-hidden="true"
           />
-          <span className="text-xs text-gray-500 dark:text-gray-500">
-            No Image
-          </span>
+          {size !== "xs" && (
+            <span className="text-xs text-gray-500 dark:text-gray-500">
+              No Image
+            </span>
+          )}
         </div>
       </div>
     );

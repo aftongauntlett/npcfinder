@@ -245,15 +245,15 @@ export default function HeroConstellation({
             // Use brighter lines with varied colors
             const lineColorIndex = (i + j) % 10;
             if (lineColorIndex < 6) {
-              ctx.strokeStyle = withOpacity("#FFFFFF", 0.25); // Brighter white lines
+              ctx.strokeStyle = withOpacity("#FFFFFF", 0.35); // Brighter white lines
             } else if (lineColorIndex === 6) {
-              ctx.strokeStyle = withOpacity(LANDING_PEACH, 0.25); // Peach lines
+              ctx.strokeStyle = withOpacity(LANDING_PEACH, 0.35); // Peach lines
             } else if (lineColorIndex === 7) {
-              ctx.strokeStyle = withOpacity(LANDING_TEAL, 0.25); // Teal lines
+              ctx.strokeStyle = withOpacity(LANDING_TEAL, 0.35); // Teal lines
             } else if (lineColorIndex === 8) {
-              ctx.strokeStyle = withOpacity(LANDING_PURPLE, 0.25); // Purple lines
+              ctx.strokeStyle = withOpacity(LANDING_PURPLE, 0.35); // Purple lines
             } else {
-              ctx.strokeStyle = withOpacity(LANDING_BLUE, 0.25); // Blue lines
+              ctx.strokeStyle = withOpacity(LANDING_BLUE, 0.35); // Blue lines
             }
 
             ctx.beginPath();
@@ -312,7 +312,7 @@ export default function HeroConstellation({
 
         gradient.addColorStop(1, withOpacity("#FFFFFF", 0));
 
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur = 10;
         ctx.shadowColor = shadowColor;
 
         ctx.fillStyle = gradient;
@@ -543,7 +543,7 @@ export default function HeroConstellation({
 
           if (distance < maxDist) {
             // Brighter, more visible lines
-            const opacity = (1 - distance / maxDist) * 0.25; // Increased from 0.15
+            const opacity = (1 - distance / maxDist) * 0.4; // Increased for more contrast
 
             // Alternate between colors with more variety
             const lineColorIndex = (i + j) % 10;
@@ -591,30 +591,30 @@ export default function HeroConstellation({
         );
 
         // Pre-calculate opacity values to avoid string operations in loop
-        const opacity0 = 0.8 * twinkleOpacity;
-        const opacity1 = 0.4 * twinkleOpacity;
-        const opacity2 = 0.6 * twinkleOpacity;
-        const opacity3 = 0.3 * twinkleOpacity;
+        const opacity0 = Math.min(1, 1.05 * twinkleOpacity);
+        const opacity1 = 0.55 * twinkleOpacity;
+        const opacity2 = 0.85 * twinkleOpacity;
+        const opacity3 = 0.45 * twinkleOpacity;
 
         // Use design token colors with purple accent nodes (Comment 3)
         if (i % 7 === 0) {
           // Purple nodes - sparse accent
           gradient.addColorStop(0, withOpacity(LANDING_PURPLE, opacity0));
           gradient.addColorStop(0.5, withOpacity(LANDING_PURPLE, opacity1));
-          ctx.shadowColor = withOpacity(LANDING_PURPLE, opacity3);
+          ctx.shadowColor = withOpacity(LANDING_PURPLE, 0.6 * twinkleOpacity);
         } else if (i % 2 === 0) {
           gradient.addColorStop(0, withOpacity("#FFFFFF", opacity0));
           gradient.addColorStop(0.5, withOpacity("#FFFFFF", opacity1));
-          ctx.shadowColor = withOpacity("#FFFFFF", 0.18 * twinkleOpacity);
+          ctx.shadowColor = withOpacity("#FFFFFF", 0.3 * twinkleOpacity);
         } else {
           gradient.addColorStop(0, withOpacity(LANDING_PEACH, opacity2));
           gradient.addColorStop(0.5, withOpacity(LANDING_PEACH, opacity3));
-          ctx.shadowColor = withOpacity(LANDING_PEACH, 0.4 * twinkleOpacity);
+          ctx.shadowColor = withOpacity(LANDING_PEACH, 0.55 * twinkleOpacity);
         }
         gradient.addColorStop(1, withOpacity("#FFFFFF", 0));
 
         // Apply shadow blur for additional glow using design tokens (Comment 3)
-        ctx.shadowBlur = 6;
+        ctx.shadowBlur = 9;
 
         ctx.fillStyle = gradient;
         ctx.beginPath();

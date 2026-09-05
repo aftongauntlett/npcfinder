@@ -81,9 +81,14 @@ export default {
           "25%": { transform: "rotate(-5deg)" },
           "75%": { transform: "rotate(5deg)" },
         },
+        breatheGlow: {
+          "0%, 100%": { opacity: "0.35", transform: "scale(0.94)" },
+          "50%": { opacity: "0.65", transform: "scale(1.05)" },
+        },
       },
       animation: {
         wiggle: "wiggle 0.3s ease-in-out",
+        "breathe-glow": "breatheGlow 6s ease-in-out infinite",
       },
     },
   },

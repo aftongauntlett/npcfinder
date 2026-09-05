@@ -1,18 +1,15 @@
 import React from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import {
-  GithubLogoIcon as GithubLogo,
-  LockIcon as Lock,
-  QuestionIcon as Question,
-  ArrowUpIcon as ArrowUp,
-} from "@phosphor-icons/react";
-import { useTheme } from "@/hooks/useTheme";
+import { GithubLogoIcon as GithubLogo } from "@phosphor-icons/react";
+import LandingLayout from "../landing/LandingLayout";
 import LandingButton from "../landing/LandingButton";
 import HeroConstellation from "../effects/HeroConstellation";
 import { FeatureBlock } from "../landing/demo/FeatureBlock";
+import { ScreenshotShowcase } from "../landing/demo/ScreenshotShowcase";
 import ModernCard from "../landing/demo/ModernCard";
-import { LANDING_PEACH } from "../../data/landingTheme";
+import { LANDING_PEACH, LANDING_PURPLE } from "../../data/landingTheme";
 import { landingFeatures } from "../../data/landingFeatures";
+import { landingScreenshots } from "../../data/landingScreenshots";
 import { landingAvailability } from "../../data/landingAvailability";
 import { landingPrivacy } from "../../data/landingPrivacy";
 import { usePageMeta } from "../../hooks/usePageMeta";
@@ -25,11 +22,6 @@ const TECH_STACK_CHIPS = [
   "Framer Motion",
   "Tailwind",
 ];
-
-// Only load the starfield in dark mode.
-const StarryBackground = React.lazy(
-  () => import("@/components/shared/common/StarryBackground"),
-);
 
 // Structured data for search engines (static, outside component)
 const structuredData = {
@@ -67,57 +59,15 @@ const pageMetaOptions = {
 const DemoLanding: React.FC = () => {
   usePageMeta(pageMetaOptions);
   const prefersReducedMotion = useReducedMotion();
-  const { resolvedTheme } = useTheme();
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
+    <LandingLayout>
       {/* Structured Data for Search Engines */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
 
-      {/* Skip Navigation */}
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-slate-800 focus:text-white focus:rounded focus:outline-none focus:ring-2 focus:ring-white"
-      >
-        Skip to main content
-      </a>
-
-      {resolvedTheme === "dark" && !prefersReducedMotion && (
-        <React.Suspense fallback={null}>
-          <StarryBackground />
-        </React.Suspense>
-      )}
-
-      {/* Header */}
-      <header
-        className="relative z-10 border-b border-white/5 backdrop-blur-md"
-        aria-label="Site header"
-      >
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Question
-              className="w-9 h-9"
-              style={{ color: LANDING_PEACH }}
-              weight="duotone"
-            />
-            <h1 className="text-2xl font-bold tracking-tight">NPC Finder</h1>
-          </div>
-          <a
-            href="#status"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/15 bg-slate-800/40 text-xs font-medium text-gray-200 transition-colors hover:bg-slate-700/50 hover:border-white/30 hover:text-white focus:outline-none focus:ring-2 focus:ring-teal-300/60"
-            aria-label="View invite-only and project status section"
-          >
-            <Lock className="w-4 h-4" weight="duotone" />
-            <span>Invite Only</span>
-          </a>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="relative z-10" id="main-content" role="main">
-        {/* Hero Section */}
+      {/* Hero Section */}
         <section className="max-w-7xl mx-auto px-6 pt-8 pb-8 sm:pt-10 sm:pb-10 lg:pt-12 lg:pb-12">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-start lg:items-center">
             {/* Left column - text */}
@@ -144,6 +94,9 @@ const DemoLanding: React.FC = () => {
               </p>
 
               <div className="ml-auto w-fit flex flex-col sm:flex-row items-end sm:items-center justify-end gap-3">
+                <LandingButton href="#features" variant="primary" size="compact">
+                  Learn More
+                </LandingButton>
                 <LandingButton
                   href="https://github.com/aftongauntlett/npcfinder"
                   variant="ghost"
@@ -152,19 +105,27 @@ const DemoLanding: React.FC = () => {
                 >
                   View Source
                 </LandingButton>
-                <LandingButton href="/login" variant="primary" size="compact">
-                  Sign In
-                </LandingButton>
               </div>
             </div>
 
             {/* Right column - constellation (desktop only) */}
-            <div className="hidden lg:flex pointer-events-auto lg:order-2 min-h-[420px]">
+            <div className="hidden lg:flex relative pointer-events-auto lg:order-2 min-h-[420px]">
+              {/* Subtle breathing glow behind the constellation */}
+              <div
+                aria-hidden="true"
+                className={`absolute inset-0 -z-10 ${
+                  prefersReducedMotion ? "" : "animate-breathe-glow"
+                }`}
+                style={{
+                  background: `radial-gradient(circle at 50% 50%, ${LANDING_PEACH}33 0%, ${LANDING_PURPLE}22 45%, transparent 70%)`,
+                  filter: "blur(40px)",
+                }}
+              />
               <HeroConstellation
                 responsive
                 nodeCount={50}
                 animationSpeed={0.8}
-                className="w-full h-full opacity-60"
+                className="w-full h-full opacity-75"
               />
             </div>
           </div>
@@ -197,6 +158,36 @@ const DemoLanding: React.FC = () => {
                 iconColor={feature.iconColor}
                 title={feature.title}
                 items={feature.items}
+              />
+            ))}
+          </div>
+        </motion.section>
+
+        {/* Demo Screenshots Section */}
+        <motion.section
+          id="demo"
+          className="max-w-7xl mx-auto px-6 py-24 sm:py-28 lg:py-32"
+          initial={prefersReducedMotion ? undefined : { opacity: 0 }}
+          whileInView={prefersReducedMotion ? undefined : { opacity: 1 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+        >
+          <div className="mb-16">
+            <h3 className="text-4xl font-bold mb-3 tracking-tight">
+              See It In Action
+            </h3>
+            <p className="text-gray-400 max-w-2xl">
+              A quick tour through the core screens, from importing your
+              history to rating and remembering what mattered.
+            </p>
+          </div>
+
+          <div className="space-y-24 sm:space-y-28 lg:space-y-32">
+            {landingScreenshots.map((screenshot, index) => (
+              <ScreenshotShowcase
+                key={screenshot.title}
+                screenshot={screenshot}
+                reverse={index % 2 === 1}
               />
             ))}
           </div>
@@ -293,61 +284,7 @@ const DemoLanding: React.FC = () => {
             ))}
           </div>
         </motion.section>
-      </main>
-
-      {/* Footer */}
-      <footer
-        className="relative z-10 backdrop-blur-md"
-        aria-label="Site footer"
-      >
-        <div className="max-w-7xl mx-auto px-6 py-8 border-t border-white/5">
-          <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-4 text-sm text-gray-500">
-            <div className="flex items-center justify-center md:justify-start gap-4">
-              <a
-                href="/privacy"
-                className="hover:text-teal-300 transition-colors"
-                aria-label="Read privacy policy"
-              >
-                Privacy
-              </a>
-              <a
-                href="/terms"
-                className="hover:text-teal-300 transition-colors"
-                aria-label="Read terms of service"
-              >
-                Terms
-              </a>
-            </div>
-
-            <p className="text-xs text-gray-500 text-center">
-              © 2025 NPC Finder
-            </p>
-
-            <div className="flex items-center justify-center md:justify-end gap-4">
-              <a
-                href="https://github.com/aftongauntlett/npcfinder"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 hover:text-gray-300 transition-colors"
-                aria-label="View source on GitHub"
-              >
-                <GithubLogo className="w-4 h-4" weight="duotone" />
-                <span className="hidden sm:inline">View Source</span>
-              </a>
-
-              <button
-                type="button"
-                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                className="flex items-center gap-1.5 hover:text-gray-300 transition-colors"
-                aria-label="Scroll to top"
-              >
-                <ArrowUp className="w-4 h-4" weight="duotone" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </footer>
-    </div>
+    </LandingLayout>
   );
 };
 

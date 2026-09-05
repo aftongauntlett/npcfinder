@@ -1936,10 +1936,10 @@ function TrackerMediaGridCard(props: {
       <MediaPoster
         src={item.media?.poster_url}
         alt={item.media?.title || "Untitled"}
-        size="md"
+        size="xs"
         aspectRatio="2/3"
         showOverlay={false}
-        className="mx-auto w-20"
+        className="mx-auto"
       />
 
       <div className="mt-2 flex flex-1 flex-col gap-1.5">

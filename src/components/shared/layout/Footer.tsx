@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { ArrowUp, Github } from "lucide-react";
+import { ArrowUp, ExternalLink } from "lucide-react";
 
 const Footer: React.FC = () => {
   return (
@@ -34,11 +34,11 @@ const Footer: React.FC = () => {
               href="https://github.com/aftongauntlett/npcfinder"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-gray-500 dark:text-gray-500 hover:text-teal-600 dark:hover:text-teal-300 transition-colors"
+              className="group inline-flex items-center gap-1.5 text-gray-500 dark:text-gray-500 hover:text-teal-600 dark:hover:text-teal-300 transition-colors"
               aria-label="View source on GitHub"
             >
-              <Github className="w-3.5 h-3.5" />
               <span>View Source</span>
+              <ExternalLink className="w-3.5 h-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
             </a>
 
             <button

@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import DemoLanding from "./components/pages/DemoLanding";
 import PrivacyPolicyPage from "./components/pages/PrivacyPolicyPage";
 import TermsOfServicePage from "./components/pages/TermsOfServicePage";
+import NotFoundPage from "./components/pages/NotFoundPage";
 import AuthPage from "./components/pages/AuthPage";
 import ForgotPassword from "./components/pages/ForgotPassword";
 import ResetPassword from "./components/pages/ResetPassword";
@@ -14,25 +15,31 @@ import { EnrichmentProvider } from "./contexts/EnrichmentContext";
 import ErrorBoundary from "./components/shared/ui/ErrorBoundary";
 
 // Authenticated App Wrapper
+const AuthLoadingScreen: React.FC = () => (
+  <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+    <div className="text-white text-2xl animate-pulse">
+      Checking authentication...
+    </div>
+  </div>
+);
+
 const AuthenticatedApp: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="text-white text-2xl animate-pulse">
-          Checking authentication...
-        </div>
-      </div>
-    );
-  }
 
   return (
     <Routes>
       {/* Login/Signup page (invite-only) */}
       <Route
         path="/login"
-        element={user ? <Navigate to="/app" replace /> : <AuthPage />}
+        element={
+          authLoading ? (
+            <AuthLoadingScreen />
+          ) : user ? (
+            <Navigate to="/app" replace />
+          ) : (
+            <AuthPage />
+          )
+        }
       />
 
       {/* Password reset pages (no auth required) */}
@@ -43,7 +50,9 @@ const AuthenticatedApp: React.FC = () => {
       <Route
         path="/app/*"
         element={
-          user ? (
+          authLoading ? (
+            <AuthLoadingScreen />
+          ) : user ? (
             <AdminProvider>
               <EnrichmentProvider>
                 <ErrorBoundary
@@ -60,8 +69,8 @@ const AuthenticatedApp: React.FC = () => {
         }
       />
 
-      {/* Catch all - redirect to landing */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* Catch all - unknown route (no auth check needed) */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 };
