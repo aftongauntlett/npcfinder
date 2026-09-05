@@ -38,7 +38,7 @@ export const landingAvailability: AvailabilityData = {
       description:
         "Access is invite-only for now so collaboration stays trusted while the product matures. If you have questions or want to test it out, contact me through my portfolio.",
       ctaLabel: "Contact",
-      ctaHref: "https://www.aftongauntlett.com/#contact",
+      ctaHref: "mailto:hello@aftongauntlett.com",
     },
     {
       icon: LockOpen,

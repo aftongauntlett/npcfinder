@@ -1,6 +1,9 @@
 import React from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { GithubLogoIcon as GithubLogo } from "@phosphor-icons/react";
+import {
+  GithubLogoIcon as GithubLogo,
+  EnvelopeSimpleIcon as Envelope,
+} from "@phosphor-icons/react";
 import LandingLayout from "../landing/LandingLayout";
 import LandingButton from "../landing/LandingButton";
 import HeroConstellation from "../effects/HeroConstellation";
@@ -273,7 +276,9 @@ const DemoLanding: React.FC = () => {
                       icon={
                         point.title === "Built in the Open" ? (
                           <GithubLogo className="w-4 h-4" weight="duotone" />
-                        ) : undefined
+                        ) : (
+                          <Envelope className="w-4 h-4" weight="duotone" />
+                        )
                       }
                     >
                       {point.ctaLabel}
