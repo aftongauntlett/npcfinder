@@ -1,79 +1,21 @@
-import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import React, { Suspense } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import DemoLanding from "./components/pages/DemoLanding";
-import PrivacyPolicyPage from "./components/pages/PrivacyPolicyPage";
-import TermsOfServicePage from "./components/pages/TermsOfServicePage";
-import NotFoundPage from "./components/pages/NotFoundPage";
-import AuthPage from "./components/pages/AuthPage";
-import ForgotPassword from "./components/pages/ForgotPassword";
-import ResetPassword from "./components/pages/ResetPassword";
-import AuthenticatedAppLayout from "./components/layouts/AuthenticatedAppLayout";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import { AdminProvider } from "./contexts/AdminContext";
-import { EnrichmentProvider } from "./contexts/EnrichmentContext";
 import ErrorBoundary from "./components/shared/ui/ErrorBoundary";
+import AuthLoadingScreen from "./components/shared/ui/AuthLoadingScreen";
 
-// Authenticated App Wrapper
-const AuthLoadingScreen: React.FC = () => (
-  <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-    <div className="text-white text-2xl animate-pulse">
-      Checking authentication...
-    </div>
-  </div>
+// Lazy-loaded so the public landing page doesn't ship the Supabase/auth/app
+// bundle - none of it is needed until a visitor navigates away from "/".
+const PrivacyPolicyPage = React.lazy(
+  () => import("./components/pages/PrivacyPolicyPage"),
 );
-
-const AuthenticatedApp: React.FC = () => {
-  const { user, loading: authLoading } = useAuth();
-
-  return (
-    <Routes>
-      {/* Login/Signup page (invite-only) */}
-      <Route
-        path="/login"
-        element={
-          authLoading ? (
-            <AuthLoadingScreen />
-          ) : user ? (
-            <Navigate to="/app" replace />
-          ) : (
-            <AuthPage />
-          )
-        }
-      />
-
-      {/* Password reset pages (no auth required) */}
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
-
-      {/* Protected app routes */}
-      <Route
-        path="/app/*"
-        element={
-          authLoading ? (
-            <AuthLoadingScreen />
-          ) : user ? (
-            <AdminProvider>
-              <EnrichmentProvider>
-                <ErrorBoundary
-                  fallbackTitle="App Error"
-                  fallbackMessage="The application encountered an error. Your data is safe. Please try again."
-                >
-                  <AuthenticatedAppLayout user={user} />
-                </ErrorBoundary>
-              </EnrichmentProvider>
-            </AdminProvider>
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
-      />
-
-      {/* Catch all - unknown route (no auth check needed) */}
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
-  );
-};
+const TermsOfServicePage = React.lazy(
+  () => import("./components/pages/TermsOfServicePage"),
+);
+const AuthenticatedRoot = React.lazy(
+  () => import("./components/app/AuthenticatedRoot"),
+);
 
 // Main App component
 const App: React.FC = () => {
@@ -84,16 +26,31 @@ const App: React.FC = () => {
           <Routes>
             {/* Public routes - NO AUTH REQUIRED */}
             <Route path="/" element={<DemoLanding />} />
-            <Route path="/privacy" element={<PrivacyPolicyPage />} />
-            <Route path="/terms" element={<TermsOfServicePage />} />
+            <Route
+              path="/privacy"
+              element={
+                <Suspense fallback={null}>
+                  <PrivacyPolicyPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/terms"
+              element={
+                <Suspense fallback={null}>
+                  <TermsOfServicePage />
+                </Suspense>
+              }
+            />
 
-            {/* All authenticated routes wrapped in AuthProvider */}
+            {/* Everything else (login, password reset, the authenticated
+                app) is lazy-loaded together since it all needs Supabase. */}
             <Route
               path="/*"
               element={
-                <AuthProvider>
-                  <AuthenticatedApp />
-                </AuthProvider>
+                <Suspense fallback={<AuthLoadingScreen />}>
+                  <AuthenticatedRoot />
+                </Suspense>
               }
             />
           </Routes>

@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { X, Undo } from "lucide-react";
-import { Button } from "@/components/shared";
+import Button from "@/components/shared/ui/Button";
 
 /**
  * Toast Component

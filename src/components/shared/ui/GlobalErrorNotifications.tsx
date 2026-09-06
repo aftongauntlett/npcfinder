@@ -1,6 +1,6 @@
 import React from "react";
 import { useGlobalError } from "@/hooks/useGlobalError";
-import { Alert } from "@/components/shared";
+import Alert from "@/components/shared/ui/Alert";
 import Toast from "@/components/ui/Toast";
 
 /**

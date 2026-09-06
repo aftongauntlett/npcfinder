@@ -12,22 +12,28 @@
     <meta name="theme-color" content="#9333ea" />
     <meta name="robots" content="index, follow" />
 
-    <!-- Preconnect to external APIs (establish early connections) -->
-    <link rel="preconnect" href="https://api.themoviedb.org" crossorigin />
-    <link rel="preconnect" href="https://api.rawg.io" crossorigin />
-    <link rel="preconnect" href="https://www.googleapis.com" crossorigin />
-    <link rel="preconnect" href="https://itunes.apple.com" crossorigin />
-
-    <!-- DNS prefetch for Supabase (faster DNS resolution) -->
+    <!-- DNS prefetch for external APIs (not needed until user interacts, so no full preconnect) -->
+    <link rel="dns-prefetch" href="https://api.themoviedb.org" />
+    <link rel="dns-prefetch" href="https://api.rawg.io" />
+    <link rel="dns-prefetch" href="https://www.googleapis.com" />
+    <link rel="dns-prefetch" href="https://itunes.apple.com" />
     <link rel="dns-prefetch" href="https://supabase.co" />
 
-    <!-- Google Fonts -->
+    <!-- Google Fonts: preconnect + non-blocking stylesheet load -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
+      rel="preload"
+      as="style"
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap"
-      rel="stylesheet"
+      onload="this.onload=null;this.rel='stylesheet'"
     />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap"
+      />
+    </noscript>
 
     <!-- Canonical URL (will be overridden by usePageMeta on specific pages) -->
     <link rel="canonical" href="https://npcfinder.com/" />

@@ -1,7 +1,7 @@
 import { Component, ErrorInfo, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { AlertCircle, RefreshCw, Home } from "lucide-react";
-import { Button } from "@/components/shared";
+import Button from "@/components/shared/ui/Button";
 import { logError } from "@/lib/logger";
 
 interface ErrorBoundaryProps {
